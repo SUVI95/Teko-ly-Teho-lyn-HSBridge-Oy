@@ -312,6 +312,11 @@
           }
         });
         
+        // Check if module 4 is completed - if so, unlock all modules
+        const module4Completed = completedModules.has('moduuli4-prompt-tyonhakijalle') || 
+          (summary.checklists.find(c => c.module_id === 'moduuli4-prompt-tyonhakijalle')?.completed_items || 0) >= 
+          (summary.checklists.find(c => c.module_id === 'moduuli4-prompt-tyonhakijalle')?.total_items || 1);
+        
         const container = document.getElementById('modulesContainer');
         container.className = 'modules-grid';
         container.innerHTML = modules.map((module, index) => {
@@ -339,8 +344,12 @@
           const isCompleted = completedModules.has(module.id);
           
           // Check if all previous modules are completed (more flexible check)
+          // If module 4 is completed, unlock all modules
           let isLocked = false;
-          if (index > 0) {
+          if (module4Completed) {
+            // All modules unlocked after completing module 4
+            isLocked = false;
+          } else if (index > 0) {
             const previousModule = modules[index - 1];
             if (!previousModule.isHomework) {
               const prevProgress = summary.modules.find(m => m.module_id === previousModule.id);
