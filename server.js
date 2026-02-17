@@ -66,7 +66,15 @@ app.get('/module/:moduleId', authenticateToken, async (req, res) => {
     if (previousModuleId) {
       try {
         const pool = require('./database/db');
-        // Check if previous module has completed checklist items
+        
+        // Check if previous module has any progress (sections viewed or checklist completed)
+        const progressResult = await pool.query(
+          `SELECT COUNT(DISTINCT section_id) as sections_viewed
+           FROM student_progress
+           WHERE user_id = $1 AND module_id = $2`,
+          [userId, previousModuleId]
+        );
+        
         const checklistResult = await pool.query(
           `SELECT COUNT(*) as total, SUM(CASE WHEN completed THEN 1 ELSE 0 END) as completed
            FROM checklist_items
@@ -74,16 +82,26 @@ app.get('/module/:moduleId', authenticateToken, async (req, res) => {
           [userId, previousModuleId]
         );
         
+        const sectionsViewed = parseInt(progressResult.rows[0].sections_viewed) || 0;
         const { total, completed } = checklistResult.rows[0];
-        // If there are checklist items, require all to be completed
-        // Otherwise, allow access if there's any progress
-        if (total > 0 && parseInt(completed) < parseInt(total)) {
+        const checklistCompleted = parseInt(completed) || 0;
+        const checklistTotal = parseInt(total) || 0;
+        
+        // Allow access if:
+        // 1. User has viewed at least 3 sections (indicating they've gone through the module), OR
+        // 2. All checklist items are completed (if checklist exists)
+        // This is more flexible - if no checklist exists, progress through sections is enough
+        const hasProgress = sectionsViewed >= 3;
+        const hasCompletedChecklist = checklistTotal > 0 && checklistCompleted >= checklistTotal;
+        
+        if (!hasProgress && !hasCompletedChecklist) {
           return res.status(403).send(`
             <html>
               <body style="font-family: Arial; text-align: center; padding: 50px; background: #050810; color: #e2e8f0;">
                 <h1>🔒 Moduuli on lukittu</h1>
-                <p>Sinun täytyy suorittaa edellinen moduuli ensin.</p>
-                <a href="/" style="color: #63b3ed; text-decoration: none; padding: 10px 20px; border: 1px solid #63b3ed; border-radius: 8px; display: inline-block; margin-top: 20px;">← Takaisin etusivulle</a>
+                <p>Sinun täytyy suorittaa edellinen moduuli ensin. Vieritä moduulia läpi ja merkitse tarkistuslistan kohdat valmiiksi.</p>
+                <a href="/module/${previousModuleId}" style="color: #63b3ed; text-decoration: none; padding: 10px 20px; border: 1px solid #63b3ed; border-radius: 8px; display: inline-block; margin-top: 20px; margin-right: 10px;">← Takaisin edelliseen moduuliin</a>
+                <a href="/" style="color: #63b3ed; text-decoration: none; padding: 10px 20px; border: 1px solid #63b3ed; border-radius: 8px; display: inline-block; margin-top: 20px;">← Etusivulle</a>
               </body>
             </html>
           `);
