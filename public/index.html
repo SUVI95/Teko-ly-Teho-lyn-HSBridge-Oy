@@ -315,19 +315,14 @@
         const container = document.getElementById('modulesContainer');
         container.className = 'modules-grid';
         container.innerHTML = modules.map((module, index) => {
-          // Homework module is unlocked after module 4 is completed
+          // Homework module is always accessible
           if (module.isHomework) {
-            const module4Completed = completedModules.has('moduuli4-prompt-tyonhakijalle');
-            const isLocked = !module4Completed;
-            
             return `
-              <div class="module-card ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="window.location.href='/homework'"` : ''}>
+              <div class="module-card" onclick="window.location.href='/homework'">
                 <div class="module-icon">${module.icon}</div>
                 <h2>${module.title}</h2>
                 <p>${module.description}</p>
-                ${isLocked ? `
-                  <div class="locked-badge">🔒 Lukittu - Suorita ensin kaikki moduulit</div>
-                ` : '<div class="progress-text">Valmis lataamaan 📥</div>'}
+                <div class="progress-text">Aina saatavilla 📥</div>
               </div>
             `;
           }
@@ -342,7 +337,24 @@
           
           const progress = totalSections > 0 ? (completedSections / totalSections) * 100 : 0;
           const isCompleted = completedModules.has(module.id);
-          const isLocked = index > 0 && !completedModules.has(modules[index - 1].id);
+          
+          // Check if all previous modules are completed (more flexible check)
+          let isLocked = false;
+          if (index > 0) {
+            const previousModule = modules[index - 1];
+            if (!previousModule.isHomework) {
+              const prevProgress = summary.modules.find(m => m.module_id === previousModule.id);
+              const prevChecklist = summary.checklists.find(c => c.module_id === previousModule.id);
+              const prevSectionsViewed = parseInt(prevProgress?.total_sections || 0);
+              const prevChecklistCompleted = parseInt(prevChecklist?.completed_items || 0);
+              const prevChecklistTotal = parseInt(prevChecklist?.total_items || 0);
+              
+              // Unlock if previous module has progress (3+ sections viewed) OR all checklist completed
+              const prevHasProgress = prevSectionsViewed >= 3;
+              const prevAllChecklistDone = prevChecklistTotal > 0 && prevChecklistCompleted >= prevChecklistTotal;
+              isLocked = !prevHasProgress && !prevAllChecklistDone;
+            }
+          }
           
           return `
             <div class="module-card ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="window.location.href='/module/${module.id}'"` : ''}>

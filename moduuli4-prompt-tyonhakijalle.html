@@ -407,23 +407,23 @@
 
     <div class="checklist-card">
       <h3>✅ Tarkistuslista – Moduuli 4</h3>
-      <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="understand-prompt-importance">
         <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
         <div class="check-text"><h4>Ymmärrän miksi prompt-kirjoittaminen on tärkeää</h4><p>Epäselvä prompt → epäselvä vastaus. Tarkka prompt → täsmähyödyllinen tulos.</p></div>
       </div>
-      <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="know-what-persona-is">
         <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
         <div class="check-text"><h4>Tiedän mikä on persoona ja miksi se muuttaa vastauksen</h4><p>Persoona määrittää sävyn, ajattelutavan, prioriteetit ja näkökulman.</p></div>
       </div>
-      <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="can-use-three-personas">
         <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
         <div class="check-text"><h4>Osaan käyttää vähintään kolmea persoonaa työnhaussa</h4><p>Rekrytoija, urastrategi, coach, toimitusjohtaja tai HR-psykologi.</p></div>
       </div>
-      <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="understand-target-persona">
         <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
         <div class="check-text"><h4>Ymmärrän kohderyhmäpersoonan merkityksen</h4><p>Hakemukseni puhuttelee aina tiettyä henkilöä, ei kaikkia.</p></div>
       </div>
-      <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="insight-multiple-perspectives">
         <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
         <div class="check-text"><h4>Oivallus: tekoäly on tuhansia näkökulmia</h4><p>Voin pyytää saman asian eri persoonilta ja vertailla tuloksia.</p></div>
       </div>
@@ -445,8 +445,8 @@
       <p>Sinä tiedät nyt, miten avata ne. Käytä persoonaa, määritä kohderyhmä ja pyydä kriittistä arviota – ja tekoäly muuttuu yleisvastaajasta henkilökohtaiseksi strategiksi.</p>
       <div class="outro-actions">
         <a href="#hero" class="btn-secondary">↑ Kertaa moduuli</a>
-        <a href="/homework" class="btn-primary" id="completeBtn" style="display:none;">
-          Siirry kotitehtäviin 📚
+        <a href="/" class="btn-primary" id="completeBtn" style="display:none;">
+          Kurssi suoritettu! Siirry etusivulle 🎓
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
         </a>
       </div>
@@ -488,14 +488,37 @@ async function saveSectionProgress(sectionId, completed = false) {
   }
 }
 
+// Save checklist item
+async function saveChecklistItem(itemId, completed) {
+  try {
+    await fetch(`${API_URL}/progress/module/${MODULE_ID}/checklist/${itemId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ completed })
+    });
+  } catch (error) {
+    console.error('Error saving checklist item:', error);
+  }
+}
+
 async function checkModuleCompletion() {
   try {
+    // Check visual state first
+    const allItems = document.querySelectorAll('.check-item');
+    const visuallyChecked = document.querySelectorAll('.check-item.checked');
+    
+    if (visuallyChecked.length === allItems.length && allItems.length > 0) {
+      document.getElementById('completeBtn').style.display = 'inline-flex';
+      return;
+    }
+    
+    // Also check database state
     const response = await fetch(`${API_URL}/progress/module/${MODULE_ID}`, {
       credentials: 'include'
     });
     if (response.ok) {
       const data = await response.json();
-      const allItems = document.querySelectorAll('.check-item');
       const checkedItems = data.checklist?.filter(item => item.completed) || [];
       if (checkedItems.length === allItems.length && allItems.length > 0) {
         document.getElementById('completeBtn').style.display = 'inline-flex';
@@ -503,6 +526,12 @@ async function checkModuleCompletion() {
     }
   } catch (error) {
     console.error('Error checking completion:', error);
+    // Fallback: check visual state
+    const allItems = document.querySelectorAll('.check-item');
+    const visuallyChecked = document.querySelectorAll('.check-item.checked');
+    if (visuallyChecked.length === allItems.length && allItems.length > 0) {
+      document.getElementById('completeBtn').style.display = 'inline-flex';
+    }
   }
 }
 
@@ -510,6 +539,12 @@ function toggleCheck(el){
   el.classList.toggle('checked');
   const allItems=document.querySelectorAll('.check-item');
   const checkedItems=document.querySelectorAll('.check-item.checked');
+  
+  const itemId = el.getAttribute('data-item-id');
+  if (itemId) {
+    saveChecklistItem(itemId, el.classList.contains('checked'));
+  }
+  
   if(checkedItems.length===allItems.length){
     document.getElementById('completion-msg').style.display='block';
     document.getElementById('completion-msg').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -536,7 +571,30 @@ document.querySelectorAll('.section[data-index]').forEach(section => {
   sectionObserver.observe(section);
 });
 
-checkModuleCompletion();
+// Load saved progress
+async function loadProgress() {
+  try {
+    const response = await fetch(`${API_URL}/progress/module/${MODULE_ID}`, {
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      data.checklist.forEach(item => {
+        const checkItem = document.querySelector(`[data-item-id="${item.item_id}"]`);
+        if (checkItem && item.completed) {
+          checkItem.classList.add('checked');
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error loading progress:', error);
+  }
+}
+
+loadProgress().then(() => {
+  checkModuleCompletion();
+});
 </script>
 </body>
 </html>

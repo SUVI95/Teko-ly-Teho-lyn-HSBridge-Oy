@@ -35,7 +35,7 @@ app.get('/api/health', (req, res) => {
 app.use(express.static('public'));
 app.use('/homework', express.static('public/homework'));
 
-// Homework page
+// Homework page (always accessible, no prerequisites)
 app.get('/homework', authenticateToken, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'homework.html'));
 });
