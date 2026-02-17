@@ -33,6 +33,12 @@ app.get('/api/health', (req, res) => {
 
 // Static files
 app.use(express.static('public'));
+app.use('/homework', express.static('public/homework'));
+
+// Homework page
+app.get('/homework', authenticateToken, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'homework.html'));
+});
 
 // Serve HTML files
 app.get('/', (req, res) => {
