@@ -548,7 +548,17 @@
           credentials: 'include'
         });
         
-        const summary = await summaryResponse.ok ? await summaryResponse.json() : { modules: [], checklists: [] };
+        let summary = { modules: [], checklists: [] };
+        if (summaryResponse.ok) {
+          try {
+            summary = await summaryResponse.json();
+          } catch (parseError) {
+            console.error('Error parsing summary response:', parseError);
+            summary = { modules: [], checklists: [] };
+          }
+        } else {
+          console.warn('Summary response not ok:', summaryResponse.status);
+        }
         window.currentSummary = summary; // Store for statistics
         
         const modules = [
@@ -726,53 +736,98 @@
         }).join('');
       } catch (error) {
         console.error('Error loading modules:', error);
-        document.getElementById('modulesContainer').innerHTML = '<p style="color: #fc8181;">Virhe moduulien lataamisessa</p>';
+        console.error('Error details:', error.message, error.stack);
+        const container = document.getElementById('modulesContainer');
+        if (container) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: #fc8181;">
+              <p style="margin-bottom: 1rem;">Virhe moduulien lataamisessa</p>
+              <p style="font-size: 0.9rem; color: var(--muted);">Virhe: ${error.message}</p>
+              <button onclick="location.reload()" style="margin-top: 1rem; padding: 8px 16px; background: var(--accent); color: #fff; border: none; border-radius: 8px; cursor: pointer;">
+                Päivitä sivu
+              </button>
+            </div>
+          `;
+        }
       }
     }
     
     // Update statistics
     function updateStatistics(overallProgress, completedModules, totalSections) {
-      document.getElementById('statsContainer').style.display = 'grid';
-      
-      // Update progress ring
-      const circle = document.getElementById('overallProgressCircle');
-      const radius = 52;
-      const circumference = 2 * Math.PI * radius;
-      const offset = circumference - (overallProgress / 100) * circumference;
-      circle.style.strokeDasharray = `${circumference} ${circumference}`;
-      circle.style.strokeDashoffset = offset;
-      
-      document.getElementById('overallProgressText').textContent = overallProgress + '%';
-      document.getElementById('completedModules').textContent = completedModules + '/4';
-      document.getElementById('totalSections').textContent = totalSections;
-      
-      // Count completed checklist items
-      const summary = window.currentSummary || { checklists: [] };
-      let completedChecklistItems = 0;
-      summary.checklists.forEach(c => {
-        completedChecklistItems += parseInt(c.completed_items || 0);
-      });
-      document.getElementById('checklistItems').textContent = completedChecklistItems;
+      try {
+        const statsContainer = document.getElementById('statsContainer');
+        if (!statsContainer) {
+          console.warn('Stats container not found');
+          return;
+        }
+        statsContainer.style.display = 'grid';
+        
+        // Update progress ring
+        const circle = document.getElementById('overallProgressCircle');
+        if (circle) {
+          const radius = 52;
+          const circumference = 2 * Math.PI * radius;
+          const offset = circumference - (overallProgress / 100) * circumference;
+          circle.style.strokeDasharray = `${circumference} ${circumference}`;
+          circle.style.strokeDashoffset = offset;
+        }
+        
+        const overallProgressText = document.getElementById('overallProgressText');
+        if (overallProgressText) overallProgressText.textContent = overallProgress + '%';
+        
+        const completedModulesEl = document.getElementById('completedModules');
+        if (completedModulesEl) completedModulesEl.textContent = completedModules + '/4';
+        
+        const totalSectionsEl = document.getElementById('totalSections');
+        if (totalSectionsEl) totalSectionsEl.textContent = totalSections;
+        
+        // Count completed checklist items
+        const summary = window.currentSummary || { checklists: [] };
+        let completedChecklistItems = 0;
+        if (summary.checklists && Array.isArray(summary.checklists)) {
+          summary.checklists.forEach(c => {
+            completedChecklistItems += parseInt(c.completed_items || 0);
+          });
+        }
+        const checklistItemsEl = document.getElementById('checklistItems');
+        if (checklistItemsEl) checklistItemsEl.textContent = completedChecklistItems;
+      } catch (error) {
+        console.error('Error updating statistics:', error);
+      }
     }
     
     // Update achievements
     function updateAchievements(completedModules, overallProgress) {
-      const achievements = [
-        { id: 'first', icon: 'star', earned: completedModules >= 1, title: 'Ensimmäinen moduuli' },
-        { id: 'halfway', icon: 'medal', earned: completedModules >= 2, title: 'Puoliväli' },
-        { id: 'almost', icon: 'trophy', earned: completedModules >= 3, title: 'Melkein valmis' },
-        { id: 'complete', icon: 'check', earned: completedModules >= 4, title: 'Kurssi suoritettu' },
-        { id: 'perfect', icon: 'star', earned: overallProgress >= 100, title: 'Täydellinen' }
-      ];
-      
-      const container = document.getElementById('achievementsGrid');
-      if (achievements.some(a => a.earned)) {
-        document.getElementById('achievementsContainer').style.display = 'block';
-        container.innerHTML = achievements.map(achievement => `
-          <div class="achievement-badge ${achievement.earned ? 'earned' : ''}" title="${achievement.title}">
-            ${iconSVGs[achievement.icon]}
-          </div>
-        `).join('');
+      try {
+        const achievements = [
+          { id: 'first', icon: 'star', earned: completedModules >= 1, title: 'Ensimmäinen moduuli' },
+          { id: 'halfway', icon: 'medal', earned: completedModules >= 2, title: 'Puoliväli' },
+          { id: 'almost', icon: 'trophy', earned: completedModules >= 3, title: 'Melkein valmis' },
+          { id: 'complete', icon: 'check', earned: completedModules >= 4, title: 'Kurssi suoritettu' },
+          { id: 'perfect', icon: 'star', earned: overallProgress >= 100, title: 'Täydellinen' }
+        ];
+        
+        const container = document.getElementById('achievementsGrid');
+        const achievementsContainer = document.getElementById('achievementsContainer');
+        
+        if (!container || !achievementsContainer) {
+          console.warn('Achievements container not found');
+          return;
+        }
+        
+        if (achievements.some(a => a.earned)) {
+          achievementsContainer.style.display = 'block';
+          container.innerHTML = achievements.map(achievement => {
+            const icon = iconSVGs[achievement.icon] || '';
+            return `
+              <div class="achievement-badge ${achievement.earned ? 'earned' : ''}" title="${achievement.title}">
+                ${icon}
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (error) {
+        console.error('Error updating achievements:', error);
       }
     }
     
