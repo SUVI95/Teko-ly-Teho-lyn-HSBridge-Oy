@@ -111,7 +111,12 @@ app.get('/module/:moduleId', authenticateToken, async (req, res) => {
   res.sendFile(modulePath);
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📚 Learning platform ready!`);
-});
+// Only start server if not in Vercel environment
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📚 Learning platform ready!`);
+  });
+}
+
+module.exports = app;
