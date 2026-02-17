@@ -208,6 +208,25 @@
     color: var(--muted);
   }
 
+  /* Part sections */
+  .part-section {
+    margin-bottom: 4rem;
+  }
+
+  .part-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border);
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
   /* Statistics Dashboard */
   .stats-grid {
     display: grid;
@@ -562,33 +581,38 @@
         window.currentSummary = summary; // Store for statistics
         
         const modules = [
+          // Osa 1: Perusmoduulit
           {
             id: 'moduuli1-tietosuoja',
             title: 'Moduuli 1: Tietosuoja ja vastuullinen tekoälyn käyttö',
             description: 'Opi mitä tietoja voit jakaa tekoälylle ja mitä ei koskaan.',
             icon: 'shield',
-            order: 1
+            order: 1,
+            part: 1
           },
           {
             id: 'moduuli2-tekoaly-uhka-vai-mahdollisuus',
             title: 'Moduuli 2: Tekoäly – Uhka vai mahdollisuus?',
             description: 'Ymmärrä tekoäly, sen toiminta ja vaikutus työn tulevaisuuteen.',
             icon: 'robot',
-            order: 2
+            order: 2,
+            part: 1
           },
           {
             id: 'moduuli3-master-prompt',
             title: 'Moduuli 3: Master Prompt – Oppaasi tekoälyn maailmassa',
             description: 'Opi luomaan tehokkaita promteja ja saamaan parhaat tulokset.',
             icon: 'sparkles',
-            order: 3
+            order: 3,
+            part: 1
           },
           {
             id: 'moduuli4-prompt-tyonhakijalle',
             title: 'Moduuli 4: PROMPT Työnhakijalle',
             description: 'Käytä tekoälyä työnhaun apuna ja erotu hakijoiden joukosta.',
             icon: 'briefcase',
-            order: 4
+            order: 4,
+            part: 1
           },
           {
             id: 'homework',
@@ -596,12 +620,24 @@
             description: 'Lataa ja suorita harjoitustehtävät vahvistaaksesi oppimasi.',
             icon: 'book',
             order: 5,
-            isHomework: true
+            isHomework: true,
+            part: 1
+          },
+          // Osa 2: Edistynyt sisältö
+          {
+            id: 'moduuli5-ai-myynnissa-ja-markkinoinnissa',
+            title: 'Moduuli 5: AI myynnissä ja markkinoinnissa',
+            description: 'Opi käyttämään tekoälyä myynnin ja markkinoinnin vahvistamiseen.',
+            icon: 'briefcase',
+            order: 6,
+            part: 2,
+            requiresPart1: true
           }
         ];
         
-        // Check which modules are completed (only count the 4 main modules, not homework)
+        // Check which modules are completed (only count main modules, not homework)
         const mainModules = modules.filter(m => !m.isHomework);
+        const part1Modules = mainModules.filter(m => m.part === 1);
         const completedModules = new Set();
         let totalProgress = 0;
         let maxProgress = mainModules.length * 100; // Each module is worth 100%
@@ -657,14 +693,146 @@
         // Update achievements
         updateAchievements(completedModulesCount, overallProgress);
         
-        // Check if module 4 is completed - if so, unlock all modules
-        const module4Progress = summary.modules.find(m => m.module_id === 'moduuli4-prompt-tyonhakijalle');
-        const module4Checklist = summary.checklists.find(c => c.module_id === 'moduuli4-prompt-tyonhakijalle');
+        // Check if module 4 is completed - if so, unlock all Part 1 modules
         const module4Completed = completedModules.has('moduuli4-prompt-tyonhakijalle');
         
+        // Check if all Part 1 modules (1-4) are completed
+        const part1MainModules = part1Modules.filter(m => !m.isHomework);
+        let allPart1Completed = true;
+        part1MainModules.forEach(module => {
+          if (!completedModules.has(module.id)) {
+            allPart1Completed = false;
+          }
+        });
+        
         const container = document.getElementById('modulesContainer');
-        container.className = 'modules-grid';
-        container.innerHTML = modules.map((module, index) => {
+        container.className = '';
+        
+        // Group modules by part
+        const part1ModulesList = modules.filter(m => m.part === 1);
+        const part2Modules = modules.filter(m => m.part === 2);
+        
+        let html = '';
+        
+        // Render Part 1
+        if (part1ModulesList.length > 0) {
+          html += '<div class="part-section"><h2 class="part-title">Osa 1: Perusmoduulit</h2><div class="modules-grid">';
+          part1ModulesList.forEach((module, index) => {
+            html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, true);
+          });
+          html += '</div></div>';
+        }
+        
+        // Render Part 2
+        if (part2Modules.length > 0) {
+          html += '<div class="part-section"><h2 class="part-title">Osa 2: Edistynyt sisältö</h2><div class="modules-grid">';
+          part2Modules.forEach((module, index) => {
+            html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
+          });
+          html += '</div></div>';
+        }
+        
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading modules:', error);
+        console.error('Error details:', error.message, error.stack);
+        const container = document.getElementById('modulesContainer');
+        if (container) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: #fc8181;">
+              <p style="margin-bottom: 1rem;">Virhe moduulien lataamisessa</p>
+              <p style="font-size: 0.9rem; color: var(--muted);">Virhe: ${error.message}</p>
+              <button onclick="location.reload()" style="margin-top: 1rem; padding: 8px 16px; background: var(--accent); color: #fff; border: none; border-radius: 8px; cursor: pointer;">
+                Päivitä sivu
+              </button>
+            </div>
+          `;
+        }
+      }
+    }
+    
+    // Render module card
+    function renderModuleCard(module, index, allModules, summary, completedModules, module4Completed, allPart1Completed = true) {
+      // Homework module is always accessible
+      if (module.isHomework) {
+        return `
+          <div class="module-card" onclick="window.location.href='/homework'">
+            <div class="module-icon">${iconSVGs[module.icon]}</div>
+            <h2>${module.title}</h2>
+            <p>${module.description}</p>
+            <div class="progress-text">Aina saatavilla</div>
+          </div>
+        `;
+      }
+      
+      const moduleProgress = summary.modules.find(m => m.module_id === module.id);
+      const checklistProgress = summary.checklists.find(c => c.module_id === module.id);
+      
+      const totalSections = parseInt(moduleProgress?.total_sections || 0);
+      const completedSections = parseInt(moduleProgress?.completed_sections || 0);
+      const totalItems = parseInt(checklistProgress?.total_items || 0);
+      const completedItems = parseInt(checklistProgress?.completed_items || 0);
+      
+      // Calculate progress: sections (50%) + checklist (50%), or sections (100%) if no checklist
+      let sectionProgress = totalSections > 0 ? (completedSections / totalSections) * 50 : 0;
+      let checklistProgressPercent = totalItems > 0 ? (completedItems / totalItems) * 50 : 0;
+      if (totalItems === 0 && totalSections > 0) {
+        sectionProgress = (completedSections / totalSections) * 100;
+      }
+      const progress = Math.round(sectionProgress + checklistProgressPercent);
+      
+      const isCompleted = completedModules.has(module.id);
+      
+      // Check if module is locked
+      let isLocked = false;
+      const isPart2 = module.part === 2;
+      
+      if (isPart2 && module.requiresPart1) {
+        // Part 2 modules require all Part 1 modules to be completed
+        isLocked = !allPart1Completed;
+      } else if (!isPart2) {
+        // Part 1 modules: unlock if module 4 is completed OR previous module has progress
+        if (module4Completed) {
+          isLocked = false;
+        } else {
+          const moduleIndex = allModules.findIndex(m => m.id === module.id);
+          if (moduleIndex > 0) {
+            const previousModule = allModules[moduleIndex - 1];
+            if (!previousModule.isHomework && previousModule.part === 1) {
+              const prevProgress = summary.modules.find(m => m.module_id === previousModule.id);
+              const prevChecklist = summary.checklists.find(c => c.module_id === previousModule.id);
+              const prevSectionsViewed = parseInt(prevProgress?.total_sections || 0);
+              const prevChecklistCompleted = parseInt(prevChecklist?.completed_items || 0);
+              const prevChecklistTotal = parseInt(prevChecklist?.total_items || 0);
+              
+              const prevHasProgress = prevSectionsViewed > 0;
+              const prevAllChecklistDone = prevChecklistTotal > 0 && prevChecklistCompleted >= prevChecklistTotal;
+              isLocked = !prevHasProgress && !prevAllChecklistDone;
+            }
+          }
+        }
+      }
+      
+      return `
+        <div class="module-card ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="window.location.href='/module/${module.id}'"` : ''}>
+          ${isCompleted ? '<div class="completion-badge">✓</div>' : ''}
+          <div class="module-icon">${iconSVGs[module.icon]}</div>
+          <h2>${module.title}</h2>
+          <p>${module.description}</p>
+          ${isLocked ? `
+            <div class="locked-badge">
+              ${iconSVGs.lock}
+              ${isPart2 ? 'Lukittu - Suorita ensin kaikki Osa 1 moduulit' : 'Lukittu - Suorita ensin edellinen moduuli'}
+            </div>
+          ` : progress > 0 ? `
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${progress}%"></div>
+            </div>
+            <div class="progress-text">${completedSections}/${totalSections} osiota suoritettu${isCompleted ? ' ✓' : ''}</div>
+          ` : '<div class="progress-text">Ei vielä aloitettu</div>'}
+        </div>
+      `;
+    }
           // Homework module is always accessible
           if (module.isHomework) {
             return `
