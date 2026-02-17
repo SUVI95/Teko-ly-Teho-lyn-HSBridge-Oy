@@ -475,6 +475,20 @@ async function saveSectionProgress(sectionId, completed = false) {
   }
 }
 
+// Save checklist item
+async function saveChecklistItem(itemId, completed) {
+  try {
+    await fetch(`${API_URL}/progress/module/${MODULE_ID}/checklist/${itemId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ completed })
+    });
+  } catch (error) {
+    console.error('Error saving checklist item:', error);
+  }
+}
+
 async function checkModuleCompletion() {
   try {
     const response = await fetch(`${API_URL}/progress/module/${MODULE_ID}`, {
@@ -497,6 +511,12 @@ function toggleCheck(el){
   el.classList.toggle('checked');
   const allItems=document.querySelectorAll('.check-item');
   const checkedItems=document.querySelectorAll('.check-item.checked');
+  
+  const itemId = el.getAttribute('data-item-id');
+  if (itemId) {
+    saveChecklistItem(itemId, el.classList.contains('checked'));
+  }
+  
   if(checkedItems.length===allItems.length){
     document.getElementById('completion-msg').style.display='block';
     document.getElementById('completion-msg').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -523,7 +543,30 @@ document.querySelectorAll('.section[data-index]').forEach(section => {
   sectionObserver.observe(section);
 });
 
-checkModuleCompletion();
+// Load saved progress
+async function loadProgress() {
+  try {
+    const response = await fetch(`${API_URL}/progress/module/${MODULE_ID}`, {
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      data.checklist.forEach(item => {
+        const checkItem = document.querySelector(`[data-item-id="${item.item_id}"]`);
+        if (checkItem && item.completed) {
+          checkItem.classList.add('checked');
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error loading progress:', error);
+  }
+}
+
+loadProgress().then(() => {
+  checkModuleCompletion();
+});
 </script>
 </body>
 </html>
