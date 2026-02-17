@@ -491,12 +491,22 @@ async function saveChecklistItem(itemId, completed) {
 
 async function checkModuleCompletion() {
   try {
+    // Check visual state first (in case items are checked but not saved yet)
+    const allItems = document.querySelectorAll('.check-item');
+    const visuallyChecked = document.querySelectorAll('.check-item.checked');
+    
+    // If all items are visually checked, show button immediately
+    if (visuallyChecked.length === allItems.length && allItems.length > 0) {
+      document.getElementById('nextModuleBtn').style.display = 'inline-flex';
+      return;
+    }
+    
+    // Also check database state
     const response = await fetch(`${API_URL}/progress/module/${MODULE_ID}`, {
       credentials: 'include'
     });
     if (response.ok) {
       const data = await response.json();
-      const allItems = document.querySelectorAll('.check-item');
       const checkedItems = data.checklist?.filter(item => item.completed) || [];
       if (checkedItems.length === allItems.length && allItems.length > 0) {
         document.getElementById('nextModuleBtn').style.display = 'inline-flex';
@@ -504,6 +514,12 @@ async function checkModuleCompletion() {
     }
   } catch (error) {
     console.error('Error checking completion:', error);
+    // Fallback: check visual state
+    const allItems = document.querySelectorAll('.check-item');
+    const visuallyChecked = document.querySelectorAll('.check-item.checked');
+    if (visuallyChecked.length === allItems.length && allItems.length > 0) {
+      document.getElementById('nextModuleBtn').style.display = 'inline-flex';
+    }
   }
 }
 
