@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moduuli 4 – PROMPT Työnhakijalle</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #050810; --surface: #0d1117; --surface2: #111827;
+    --border: rgba(99,179,237,0.15); --accent: #63b3ed; --accent2: #9f7aea;
+    --accent3: #68d391; --accent4: #f6ad55; --text: #e2e8f0; --muted: #718096; --glow: rgba(99,179,237,0.4);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  #stars-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(5,8,16,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-logo { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; }
+  .nav-progress { display: flex; gap: 6px; align-items: center; }
+  .nav-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); cursor: pointer; transition: all 0.3s; }
+  .nav-dot.active { background: var(--accent); box-shadow: 0 0 8px var(--glow); }
+  .nav-dot.done { background: var(--accent3); }
+  .section { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 2rem 4rem; position: relative; z-index: 1; }
+  .section-inner { max-width: 900px; width: 100%; }
+  .module-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(99,179,237,0.1); border: 1px solid rgba(99,179,237,0.3); border-radius: 100px; padding: 6px 16px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 2rem; }
+  .module-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);} }
+  h1.hero-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 700; line-height: 1.1; margin-bottom: 1.5rem; background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero-sub { font-size: 1.2rem; color: var(--muted); max-width: 600px; margin: 0 auto 3rem; line-height: 1.7; }
+  .hero-cta { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; padding: 14px 32px; border-radius: 100px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; text-decoration: none; box-shadow: 0 0 30px rgba(99,179,237,0.3); }
+  .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(99,179,237,0.5); }
+  .section-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+  h2.section-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; line-height: 1.2; margin-bottom: 1rem; color: #fff; }
+  h2.section-title span { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .section-lead { font-size: 1.05rem; color: var(--muted); line-height: 1.8; margin-bottom: 3rem; max-width: 680px; }
+  .glow-line { width: 80px; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; margin-bottom: 2rem; box-shadow: 0 0 12px var(--glow); }
+
+  /* WHY PROMPTS MATTER */
+  .insight-card { background: linear-gradient(135deg, rgba(99,179,237,0.08), rgba(159,122,234,0.08)); border: 1px solid rgba(99,179,237,0.2); border-radius: 20px; padding: 2.5rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; }
+  .insight-card::before { content: ''; position: absolute; top: -1px; left: 20px; width: 120px; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .insight-card p { font-size: 1.05rem; line-height: 1.8; color: var(--text); margin-bottom: 0.75rem; }
+  .insight-card p:last-child { margin-bottom: 0; }
+  .insight-card .hl { color: var(--accent); font-weight: 600; }
+
+  /* PROMPT COMPARE */
+  .prompt-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; }
+  @media (max-width: 640px) { .prompt-compare { grid-template-columns: 1fr; } }
+  .pc-card { border-radius: 14px; padding: 1.75rem; border: 1px solid; }
+  .pc-card.weak { background: rgba(246,173,85,0.04); border-color: rgba(246,173,85,0.2); }
+  .pc-card.strong { background: rgba(104,211,145,0.04); border-color: rgba(104,211,145,0.2); }
+  .pc-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px; }
+  .weak .pc-label { color: var(--accent4); }
+  .strong .pc-label { color: var(--accent3); }
+  .pc-prompt { font-size: 0.92rem; color: var(--text); font-style: italic; line-height: 1.6; margin-bottom: 0.75rem; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 0.75rem 1rem; font-family: monospace; }
+  .pc-result { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+
+  /* PERSONA SECTION */
+  .what-persona { background: linear-gradient(135deg, rgba(159,122,234,0.06), rgba(99,179,237,0.06)); border: 1px solid rgba(159,122,234,0.2); border-radius: 20px; padding: 2.5rem; margin-bottom: 2rem; }
+  .what-persona h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 1rem; }
+  .what-persona p { font-size: 0.92rem; color: var(--muted); line-height: 1.7; margin-bottom: 0.75rem; }
+  .persona-defines { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-top: 1.25rem; }
+  @media (max-width: 480px) { .persona-defines { grid-template-columns: 1fr; } }
+  .pd-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text); }
+  .pd-item .pd-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+  /* 5 PERSONAS GRID */
+  .personas-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-top: 2rem; }
+  @media (max-width: 620px) { .personas-grid { grid-template-columns: 1fr; } }
+  .persona-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; transition: all 0.3s; opacity: 0; transform: translateY(20px); position: relative; overflow: hidden; }
+  .persona-card.full-width { grid-column: 1 / -1; }
+  .persona-card.visible { opacity: 1; transform: translateY(0); }
+  .persona-card:hover { border-color: rgba(99,179,237,0.35); transform: translateY(-3px); box-shadow: 0 0 25px rgba(99,179,237,0.08); }
+  .persona-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transform: scaleX(0); transform-origin: left; transition: transform 0.4s; }
+  .persona-card:hover::after { transform: scaleX(1); }
+  .persona-header { display: flex; align-items: center; gap: 12px; margin-bottom: 0.75rem; }
+  .persona-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(99,179,237,0.1); border: 1px solid rgba(99,179,237,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+  .persona-card h4 { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; color: #fff; }
+  .persona-card .persona-trait { font-size: 0.72rem; font-weight: 600; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 1px; }
+  .persona-card ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+  .persona-card ul li { font-size: 0.85rem; color: var(--muted); display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
+  .persona-card ul li::before { content: '→'; color: var(--accent3); flex-shrink: 0; font-weight: 700; margin-top: 1px; }
+  .persona-card .example-prompt { margin-top: 1rem; background: rgba(99,179,237,0.05); border: 1px solid rgba(99,179,237,0.12); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.8rem; color: var(--accent); font-style: italic; line-height: 1.5; font-family: monospace; }
+
+  /* AUDIENCE SECTION */
+  .audience-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2rem; margin-bottom: 1.5rem; }
+  .audience-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 1.25rem; }
+  .audience-examples { display: flex; flex-direction: column; gap: 1rem; }
+  .ae-row { display: grid; grid-template-columns: 160px 1fr; gap: 1rem; align-items: start; }
+  @media (max-width: 520px) { .ae-row { grid-template-columns: 1fr; } }
+  .ae-audience { background: rgba(99,179,237,0.08); border: 1px solid rgba(99,179,237,0.15); border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.8rem; font-weight: 600; color: var(--accent); text-align: center; }
+  .ae-prompt { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.82rem; color: var(--text); line-height: 1.5; font-family: monospace; }
+
+  /* BIG INSIGHT */
+  .big-insight { background: linear-gradient(135deg, rgba(99,179,237,0.08), rgba(159,122,234,0.1)); border: 1px solid rgba(99,179,237,0.2); border-radius: 24px; padding: 3rem; text-align: center; margin-top: 2rem; }
+  .big-insight .insight-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+  .big-insight h3 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; color: #fff; margin-bottom: 0.75rem; }
+  .big-insight p { font-size: 1rem; color: var(--muted); line-height: 1.7; max-width: 500px; margin: 0 auto; }
+  .big-insight .sub-text { font-size: 1.3rem; color: var(--accent); font-weight: 600; margin-top: 0.5rem; }
+
+  /* LEARNING GOALS */
+  .goals-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-top: 2rem; }
+  @media (max-width: 600px) { .goals-grid { grid-template-columns: 1fr; } }
+  .goal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; transition: all 0.3s; opacity: 0; transform: scale(0.95); }
+  .goal-card.visible { opacity: 1; transform: scale(1); }
+  .goal-card:hover { border-color: rgba(99,179,237,0.3); transform: translateY(-2px); }
+  .goal-num { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px; }
+  .goal-num::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .goal-card h4 { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+  .goal-card p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+
+  /* CHECKLIST */
+  .checklist-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem; }
+  .checklist-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; }
+  .check-item { display: flex; align-items: flex-start; gap: 14px; padding: 1rem 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.2s; border-radius: 8px; }
+  .check-item:last-child { border-bottom: none; }
+  .check-item:hover { background: rgba(99,179,237,0.04); padding-left: 8px; }
+  .check-box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid rgba(99,179,237,0.4); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.3s; margin-top: 1px; }
+  .check-item.checked .check-box { background: var(--accent3); border-color: var(--accent3); }
+  .check-box svg { width: 12px; height: 12px; stroke: #fff; opacity: 0; transition: opacity 0.2s; }
+  .check-item.checked .check-box svg { opacity: 1; }
+  .check-text h4 { font-size: 0.95rem; font-weight: 600; color: var(--text); margin-bottom: 0.2rem; transition: color 0.2s; }
+  .check-item.checked .check-text h4 { color: var(--accent3); text-decoration: line-through; text-decoration-color: rgba(104,211,145,0.4); }
+  .check-text p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+
+  /* OUTRO */
+  #outro { text-align: center; }
+  .outro-box { background: linear-gradient(135deg, rgba(99,179,237,0.08), rgba(159,122,234,0.08)); border: 1px solid rgba(99,179,237,0.2); border-radius: 24px; padding: 4rem 3rem; position: relative; overflow: hidden; }
+  .outro-box::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at center, rgba(99,179,237,0.06) 0%, transparent 60%); animation: rotate 20s linear infinite; pointer-events: none; }
+  @keyframes rotate { from{transform:rotate(0deg);}to{transform:rotate(360deg);} }
+  .outro-box h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 700; color: #fff; margin-bottom: 1rem; position: relative; }
+  .outro-box p { font-size: 1rem; color: var(--muted); margin-bottom: 2.5rem; line-height: 1.7; max-width: 520px; margin-left: auto; margin-right: auto; position: relative; }
+  .outro-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; }
+  .btn-primary { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; padding: 14px 28px; border-radius: 100px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; transition: all 0.3s; box-shadow: 0 0 25px rgba(99,179,237,0.3); text-decoration: none; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(99,179,237,0.5); }
+  .btn-secondary { display: inline-flex; align-items: center; gap: 10px; background: transparent; color: var(--text); padding: 14px 28px; border-radius: 100px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: 1px solid var(--border); transition: all 0.3s; text-decoration: none; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: rgba(99,179,237,0.05); }
+
+  #progress-bar { position: fixed; top: 60px; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 101; transition: width 0.3s; box-shadow: 0 0 10px var(--glow); }
+  .scroll-hint { position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: 0.4; animation: bounceScroll 2.5s infinite; }
+  .scroll-hint span { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  @keyframes bounceScroll { 0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(8px);} }
+  .fade-in { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+  @media (max-width: 768px) { .section { padding: 70px 1.25rem 3rem; } .outro-box { padding: 3rem 1.5rem; } }
+</style>
+</head>
+<body>
+
+<canvas id="stars-canvas"></canvas>
+<div id="progress-bar"></div>
+
+<nav>
+  <div class="nav-logo">⚡ AI Kurssi · Moduuli 4</div>
+  <div class="nav-progress" id="navDots"></div>
+</nav>
+
+<!-- HERO -->
+<section class="section" id="hero" data-index="0" style="text-align:center;">
+  <div class="section-inner">
+    <div class="module-badge"><span class="dot"></span> Moduuli 4 · Prompt-kirjoittaminen</div>
+    <h1 class="hero-title">PROMPT<br>Työnhakijalle</h1>
+    <p class="hero-sub">Tee tekoälystä kilpailuetusi työmarkkinoilla. Opi kirjoittamaan prompteja, jotka tuottavat tuloksia.</p>
+    <a href="#why-prompts" class="hero-cta">
+      Aloita oppiminen
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+    </a>
+  </div>
+  <div class="scroll-hint">
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    <span>Vieritä alas</span>
+  </div>
+</section>
+
+<!-- WHY PROMPTS MATTER -->
+<section class="section" id="why-prompts" data-index="1">
+  <div class="section-inner fade-in">
+    <div class="section-tag">Perusteet</div>
+    <h2 class="section-title">Miksi prompt-kirjoittaminen <span>ratkaisee?</span></h2>
+    <div class="glow-line"></div>
+    <div class="insight-card">
+      <p>Tekoäly antaa vastauksen sen perusteella, mitä sille kirjoitat. <span class="hl">Epäselvä prompt tuottaa epäselvän vastauksen.</span> Selkeä ja tarkasti ohjattu prompt tuottaa paremman, hyödyllisemmän ja tarkemman lopputuloksen.</p>
+      <p style="font-size:0.92rem;color:var(--muted);">Tämä ei ole tekniikka – tämä on taito. Ja kuten kaikki taidot, sen oppii harjoittelemalla.</p>
+    </div>
+
+    <div class="prompt-compare">
+      <div class="pc-card weak">
+        <div class="pc-label">❌ Heikko prompt</div>
+        <div class="pc-prompt">"Miten saan töitä?"</div>
+        <div class="pc-result">Tulos: Epämääräisiä yleisohjeita. Tekoäly ei tiedä kuka sinä olet, mitä haet tai mikä tilanne on.</div>
+      </div>
+      <div class="pc-card strong">
+        <div class="pc-label">✅ Vahva prompt</div>
+        <div class="pc-prompt">"Olet kokenut rekrytoija. Kerro suoraan, miksi hakemukseni ei herätä kiinnostusta?"</div>
+        <div class="pc-result">Tulos: Rehellinen, konkreettinen analyysi hakemuksestasi rekrytoijan näkökulmasta.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PERSONA -->
+<section class="section" id="persona" data-index="2">
+  <div class="section-inner fade-in">
+    <div class="section-tag">Avaintekniikka</div>
+    <h2 class="section-title">Miksi <span>persoona</span> muuttaa kaiken?</h2>
+    <div class="glow-line"></div>
+    <p class="section-lead">Kun lisäät promptiin persoonan, ohjaat tekoälyä vastaamaan tietystä näkökulmasta. Sama kysymys – täysin eri vastaus.</p>
+
+    <div class="what-persona">
+      <h3>💡 Miten persoona toimii?</h3>
+      <p>Persoona määrittää: kuka "vastaa", millä sävyllä, mitä priorisoidaan ja mistä näkökulmasta ongelma ratkaistaan.</p>
+      <div class="persona-defines">
+        <div class="pd-item"><span class="pd-icon">🎙️</span> Äänen sävy</div>
+        <div class="pd-item"><span class="pd-icon">🧠</span> Ajattelutapa</div>
+        <div class="pd-item"><span class="pd-icon">📌</span> Prioriteetit</div>
+        <div class="pd-item"><span class="pd-icon">🔭</span> Ratkaisun näkökulma</div>
+      </div>
+    </div>
+
+    <div class="prompt-compare" style="margin-top:0;">
+      <div class="pc-card weak">
+        <div class="pc-label">❌ Ilman persoonaa</div>
+        <div class="pc-prompt">"Selitä tekoäly."</div>
+        <div class="pc-result">Vastaus on yleinen ja neutraali. Tekoäly ei tiedä, kenelle se vastaa.</div>
+      </div>
+      <div class="pc-card strong">
+        <div class="pc-label">✅ Persoonan kanssa</div>
+        <div class="pc-prompt">"Selitä tekoäly yritysjohtajalle."</div>
+        <div class="pc-result">Strateginen näkökulma, liiketoimintahyödyt, riskit. Täysin relevantti juuri oikealle kohderyhmälle.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 PERSONAS -->
+<section class="section" id="five-personas" data-index="3">
+  <div class="section-inner fade-in">
+    <div class="section-tag">Työnhakijan toolkit</div>
+    <h2 class="section-title">5 persoonaa <span>työnhaussa</span></h2>
+    <div class="glow-line"></div>
+    <p class="section-lead">Nämä viisi persoonaa ovat tehokkaimmillaan työnhakuprosessissa. Valitse yksi, testaa, vertaa vastauksia.</p>
+
+    <div class="personas-grid">
+      <div class="persona-card" data-delay="0">
+        <div class="persona-header">
+          <div class="persona-icon">🧑‍💼</div>
+          <div><h4>Kokenut rekrytoija</h4><div class="persona-trait">Analyyttinen · Rehellinen</div></div>
+        </div>
+        <ul>
+          <li>Saat rehellistä palautetta hakemuksestasi</li>
+          <li>Näet tilanteen työnantajan silmin</li>
+        </ul>
+        <div class="example-prompt">"Olet kokenut rekrytoija. Kerro suoraan, miksi hakemukseni ei herätä kiinnostusta."</div>
+      </div>
+
+      <div class="persona-card" data-delay="100">
+        <div class="persona-header">
+          <div class="persona-icon">🎯</div>
+          <div><h4>Huipputason urastrategi</h4><div class="persona-trait">Strateginen · Tavoitteellinen</div></div>
+        </div>
+        <ul>
+          <li>Saat selkeän 30 päivän toimintasuunnitelman</li>
+          <li>Konkreettiset päivittäiset toimenpiteet</li>
+        </ul>
+        <div class="example-prompt">"Olet huipputason urastrategi. Laadi minulle 30 päivän suunnitelma työllistymiseksi."</div>
+      </div>
+
+      <div class="persona-card" data-delay="200">
+        <div class="persona-header">
+          <div class="persona-icon">💪</div>
+          <div><h4>Tiukka mutta kannustava coach</h4><div class="persona-trait">Motivoiva · Vaativa</div></div>
+        </div>
+        <ul>
+          <li>Motivaatiota ja vastuuta tuloksista</li>
+          <li>Toimintaa heti, ei tekosyitä</li>
+        </ul>
+        <div class="example-prompt">"Olet tiukka coach. Anna minulle tehtävä, joka vie lähemmäs työllistymistä tänään."</div>
+      </div>
+
+      <div class="persona-card" data-delay="300">
+        <div class="persona-header">
+          <div class="persona-icon">👔</div>
+          <div><h4>Yrityksen toimitusjohtaja</h4><div class="persona-trait">Tuloskeskeinen · Strateginen</div></div>
+        </div>
+        <ul>
+          <li>Mitä yritys oikeasti arvostaa hakijassa</li>
+          <li>Miten esität itsesi tuottavan arvoa</li>
+        </ul>
+        <div class="example-prompt">"Olet toimitusjohtaja. Mitä näet CV:ssäni ja haluaisitko haastatella minut?"</div>
+      </div>
+
+      <div class="persona-card full-width" data-delay="400">
+        <div class="persona-header">
+          <div class="persona-icon">🧬</div>
+          <div><h4>HR-asiantuntija + työpsykologi</h4><div class="persona-trait">Analyyttinen · Ihmislähtöinen</div></div>
+        </div>
+        <ul>
+          <li>Millaisen vaikutelman annat – tietoisesti ja tiedostamatta</li>
+          <li>Hakemuksen ja viestinnän syvä analyysi</li>
+        </ul>
+        <div class="example-prompt">"Olet HR-asiantuntija ja työpsykologi. Analysoi hakemukseni: millaisen vaikutelman se antaa persoonastani?"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIENCE / TARGET -->
+<section class="section" id="audience" data-index="4">
+  <div class="section-inner fade-in">
+    <div class="section-tag">Kohderyhmäpersoona</div>
+    <h2 class="section-title">Kohderyhmä <span>muuttaa viestin</span></h2>
+    <div class="glow-line"></div>
+    <p class="section-lead">Kun haet töitä, kohderyhmä on aina joku konkreettinen henkilö. Jos kirjoitat hakemuksen "kaikille", se ei puhuttele ketään.</p>
+
+    <div class="audience-card">
+      <h3>🎯 Sama pyyntö – täysin eri vastaus</h3>
+      <div class="audience-examples">
+        <div class="ae-row">
+          <div class="ae-audience">Kiireinen rekrytoija</div>
+          <div class="ae-prompt">"Kirjoita perustelu kiireiselle rekrytoijalle, joka lukee 100 hakemusta päivässä."</div>
+        </div>
+        <div class="ae-row">
+          <div class="ae-audience">Toimitusjohtaja</div>
+          <div class="ae-prompt">"Kirjoita perustelu yrityksen toimitusjohtajalle, joka keskittyy tuloksiin ja liiketoimintaan."</div>
+        </div>
+        <div class="ae-row">
+          <div class="ae-audience">Tiiminvetäjä</div>
+          <div class="ae-prompt">"Kirjoita perustelu tulevalle tiiminvetäjälleni, joka arvostaa yhteistyötä ja tiimidynamiikkaa."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="big-insight">
+      <span class="insight-icon">🤯</span>
+      <h3>Mahtavin oivallus</h3>
+      <p>Tekoäly ei ole yksi ääni.</p>
+      <div class="sub-text">Se on tuhansia näkökulmia –<br>sinun käytössäsi, juuri nyt.</div>
+    </div>
+  </div>
+</section>
+
+<!-- LEARNING GOALS -->
+<section class="section" id="goals" data-index="5">
+  <div class="section-inner fade-in">
+    <div class="section-tag">Oppimistavoitteet</div>
+    <h2 class="section-title">Mitä opit <span>tässä moduulissa?</span></h2>
+    <div class="glow-line"></div>
+
+    <div class="goals-grid">
+      <div class="goal-card" data-delay="0">
+        <div class="goal-num">01 · Henkilötyypit</div>
+        <h4>Aseta rooli ja persoonallisuus</h4>
+        <p>Opit antamaan tekoälylle selkeän roolin, joka ohjaa sen vastauksia tarkoituksenmukaisesti.</p>
+      </div>
+      <div class="goal-card" data-delay="100">
+        <div class="goal-num">02 · Kohderyhmäpersoona</div>
+        <h4>Selitä asioita yksinkertaisesti</h4>
+        <p>Opit määrittämään, kenelle vastaus on tarkoitettu, jolloin sisältö ja sävy osuvat kohdalleen.</p>
+      </div>
+      <div class="goal-card" data-delay="200">
+        <div class="goal-num">03 · Vaiheittainen</div>
+        <h4>Pienet askeleet kohti menestystä</h4>
+        <p>Opit pyytämään tekoälyltä vaiheistettuja, konkreettisia toimenpiteitä – ei vain yleisiä ohjeita.</p>
+      </div>
+      <div class="goal-card" data-delay="300">
+        <div class="goal-num">04 · Kriittinen arviointi</div>
+        <h4>Pyydä parantamaan omaa vastaustaan</h4>
+        <p>Opit pyytämään tekoälyä arvioimaan ja itsekorjaamaan vastauksensa, jotta saat parhaan mahdollisen tuloksen.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section class="section" id="summary" data-index="6">
+  <div class="section-inner fade-in">
+    <div class="section-tag">Yhteenveto</div>
+    <h2 class="section-title">Moduuli 4 <span>hallussa</span></h2>
+    <div class="glow-line"></div>
+    <p class="section-lead">Klikkaa jokainen kohta, kun olet varma, että ymmärrät sen.</p>
+
+    <div class="checklist-card">
+      <h3>✅ Tarkistuslista – Moduuli 4</h3>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+        <div class="check-text"><h4>Ymmärrän miksi prompt-kirjoittaminen on tärkeää</h4><p>Epäselvä prompt → epäselvä vastaus. Tarkka prompt → täsmähyödyllinen tulos.</p></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+        <div class="check-text"><h4>Tiedän mikä on persoona ja miksi se muuttaa vastauksen</h4><p>Persoona määrittää sävyn, ajattelutavan, prioriteetit ja näkökulman.</p></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+        <div class="check-text"><h4>Osaan käyttää vähintään kolmea persoonaa työnhaussa</h4><p>Rekrytoija, urastrategi, coach, toimitusjohtaja tai HR-psykologi.</p></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+        <div class="check-text"><h4>Ymmärrän kohderyhmäpersoonan merkityksen</h4><p>Hakemukseni puhuttelee aina tiettyä henkilöä, ei kaikkia.</p></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+        <div class="check-text"><h4>Oivallus: tekoäly on tuhansia näkökulmia</h4><p>Voin pyytää saman asian eri persoonilta ja vertailla tuloksia.</p></div>
+      </div>
+    </div>
+
+    <div id="completion-msg" style="display:none; text-align:center; margin-top:2rem; padding:1.5rem; background: rgba(104,211,145,0.08); border: 1px solid rgba(104,211,145,0.25); border-radius:16px;">
+      <div style="font-size:2.5rem; margin-bottom:0.75rem;">🎉</div>
+      <h3 style="font-family:'Space Grotesk',sans-serif; font-size:1.2rem; color:var(--accent3); margin-bottom:0.5rem;">Moduuli 4 suoritettu!</h3>
+      <p style="color:var(--muted); font-size:0.9rem;">Olet nyt valmis – tekoäly on sinun kilpailuetusi. Mene ja käytä sitä!</p>
+    </div>
+  </div>
+</section>
+
+<!-- OUTRO -->
+<section class="section" id="outro" data-index="7">
+  <div class="section-inner">
+    <div class="outro-box">
+      <h2>Tekoäly ei ole yksi ääni.<br>Se on tuhansia <span style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">näkökulmia.</span></h2>
+      <p>Sinä tiedät nyt, miten avata ne. Käytä persoonaa, määritä kohderyhmä ja pyydä kriittistä arviota – ja tekoäly muuttuu yleisvastaajasta henkilökohtaiseksi strategiksi.</p>
+      <div class="outro-actions">
+        <a href="#hero" class="btn-secondary">↑ Kertaa moduuli</a>
+        <a href="/" class="btn-primary" id="completeBtn" style="display:none;">
+          Kurssi suoritettu! 🎓
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+const canvas=document.getElementById('stars-canvas');const ctx=canvas.getContext('2d');let stars=[];
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+function initStars(){stars=[];for(let i=0;i<160;i++){stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.2+0.2,alpha:Math.random()*0.6+0.1,speed:Math.random()*0.3+0.05,twinkle:Math.random()*Math.PI*2});}}
+function drawStars(){ctx.clearRect(0,0,canvas.width,canvas.height);stars.forEach(s=>{s.twinkle+=0.015;const a=s.alpha*(0.6+0.4*Math.sin(s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(180,210,255,${a})`;ctx.fill();s.y-=s.speed;if(s.y<-2){s.y=canvas.height+2;s.x=Math.random()*canvas.width;}});requestAnimationFrame(drawStars);}
+resize();initStars();drawStars();window.addEventListener('resize',()=>{resize();initStars();});
+const sections=document.querySelectorAll('.section[data-index]');const navDots=document.getElementById('navDots');
+sections.forEach((s,i)=>{const dot=document.createElement('div');dot.className='nav-dot'+(i===0?' active':'');dot.title=`Sivu ${i+1}`;dot.addEventListener('click',()=>s.scrollIntoView({behavior:'smooth'}));navDots.appendChild(dot);});
+const progressBar=document.getElementById('progress-bar');
+function updateProgress(){const scrollTop=window.scrollY;const docHeight=document.documentElement.scrollHeight-window.innerHeight;const pct=docHeight>0?(scrollTop/docHeight)*100:0;progressBar.style.width=pct+'%';const dots=navDots.querySelectorAll('.nav-dot');let activeIdx=0;sections.forEach((s,i)=>{const rect=s.getBoundingClientRect();if(rect.top<=window.innerHeight*0.5)activeIdx=i;});dots.forEach((d,i)=>{d.classList.remove('active','done');if(i===activeIdx)d.classList.add('active');else if(i<activeIdx)d.classList.add('done');});}
+window.addEventListener('scroll',updateProgress,{passive:true});
+const fadeEls=document.querySelectorAll('.fade-in');const fadeObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');fadeObserver.unobserve(e.target);}});},{threshold:0.15});
+fadeEls.forEach(el=>fadeObserver.observe(el));
+const personaCards=document.querySelectorAll('.persona-card');const pcObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const delay=parseInt(e.target.dataset.delay)||0;setTimeout(()=>e.target.classList.add('visible'),delay);pcObs.unobserve(e.target);}});},{threshold:0.2});
+personaCards.forEach(c=>pcObs.observe(c));
+const goalCards=document.querySelectorAll('.goal-card');const gcObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const delay=parseInt(e.target.dataset.delay)||0;setTimeout(()=>e.target.classList.add('visible'),delay);gcObs.unobserve(e.target);}});},{threshold:0.2});
+goalCards.forEach(c=>gcObs.observe(c));
+function toggleCheck(el){el.classList.toggle('checked');const allItems=document.querySelectorAll('.check-item');const checkedItems=document.querySelectorAll('.check-item.checked');if(checkedItems.length===allItems.length){document.getElementById('completion-msg').style.display='block';document.getElementById('completion-msg').scrollIntoView({behavior:'smooth',block:'nearest'});}else{document.getElementById('completion-msg').style.display='none';}}
+</script>
+</body>
+</html>

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moduuli 1 – Tietosuoja ja vastuullinen tekoälyn käyttö</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #050810;
+    --surface: #0d1117;
+    --surface2: #111827;
+    --border: rgba(99,179,237,0.15);
+    --accent: #63b3ed;
+    --accent2: #9f7aea;
+    --accent3: #68d391;
+    --accent4: #f6ad55;
+    --text: #e2e8f0;
+    --muted: #718096;
+    --glow: rgba(99,179,237,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+  #stars-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(5,8,16,0.85); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem; height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; }
+  .nav-progress { display: flex; gap: 6px; align-items: center; }
+  .nav-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); cursor: pointer; transition: all 0.3s; }
+  .nav-dot.active { background: var(--accent); box-shadow: 0 0 8px var(--glow); }
+  .nav-dot.done { background: var(--accent3); }
+
+  .section { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 2rem 4rem; position: relative; z-index: 1; }
+  .section-inner { max-width: 900px; width: 100%; }
+
+  #hero { text-align: center; }
+  .module-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(99,179,237,0.1); border: 1px solid rgba(99,179,237,0.3); border-radius: 100px; padding: 6px 16px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 2rem; }
+  .module-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+
+  h1.hero-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 700; line-height: 1.1; margin-bottom: 1.5rem; background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero-sub { font-size: 1.2rem; color: var(--muted); max-width: 600px; margin: 0 auto 3rem; line-height: 1.7; }
+  .hero-cta { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; padding: 14px 32px; border-radius: 100px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; text-decoration: none; box-shadow: 0 0 30px rgba(99,179,237,0.3); }
+  .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(99,179,237,0.5); }
+  .hero-cta svg { transition: transform 0.3s; }
+  .hero-cta:hover svg { transform: translateX(4px); }
+
+  .section-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+  h2.section-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; line-height: 1.2; margin-bottom: 1rem; color: #fff; }
+  h2.section-title span { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .section-lead { font-size: 1.05rem; color: var(--muted); line-height: 1.8; margin-bottom: 3rem; max-width: 680px; }
+  .glow-line { width: 80px; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; margin-bottom: 2rem; box-shadow: 0 0 12px var(--glow); }
+
+  /* INTRO CARD */
+  .intro-card {
+    background: linear-gradient(135deg, rgba(99,179,237,0.08), rgba(159,122,234,0.08));
+    border: 1px solid rgba(99,179,237,0.2); border-radius: 20px; padding: 2.5rem; margin-bottom: 2rem; position: relative; overflow: hidden;
+  }
+  .intro-card::before { content: ''; position: absolute; top: -1px; left: 20px; width: 120px; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .intro-card p { font-size: 1.1rem; line-height: 1.8; color: var(--text); margin-bottom: 0.75rem; }
+  .intro-card p:last-child { margin-bottom: 0; }
+  .intro-card .highlight { color: var(--accent); font-weight: 600; }
+
+  /* SHIELD HERO */
+  .shield-hero { text-align: center; background: linear-gradient(135deg, rgba(246,173,85,0.06), rgba(254,100,100,0.06)); border: 1px solid rgba(246,173,85,0.2); border-radius: 20px; padding: 3rem 2rem; margin-bottom: 2rem; }
+  .shield-hero .icon { font-size: 4rem; margin-bottom: 1rem; display: block; }
+  .shield-hero h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 1rem; }
+  .shield-hero p { color: var(--muted); font-size: 0.95rem; line-height: 1.7; max-width: 560px; margin: 0 auto; }
+
+  /* LINKEDIN RULE */
+  .linkedin-rule { background: linear-gradient(135deg, rgba(99,179,237,0.08), rgba(10,102,194,0.08)); border: 1px solid rgba(99,179,237,0.25); border-radius: 20px; padding: 2.5rem; margin-bottom: 2rem; }
+  .rule-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(99,179,237,0.12); border-radius: 100px; padding: 4px 14px; font-size: 0.75rem; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.25rem; }
+  .linkedin-rule h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: 1rem; }
+  .linkedin-rule p { font-size: 0.92rem; color: var(--muted); line-height: 1.7; }
+
+  /* TEST YOURSELF */
+  .test-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; margin-top: 2rem; }
+  .test-box h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 1.25rem; }
+  .test-item { display: flex; gap: 12px; align-items: flex-start; padding: 1rem; border-radius: 10px; margin-bottom: 0.75rem; cursor: pointer; border: 1px solid transparent; transition: all 0.3s; }
+  .test-item:last-child { margin-bottom: 0; }
+  .test-item:hover { background: rgba(99,179,237,0.04); }
+  .test-verdict { flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; }
+  .test-item.safe .test-verdict { background: rgba(104,211,145,0.15); color: var(--accent3); }
+  .test-item.danger .test-verdict { background: rgba(254,100,100,0.1); color: #fc8181; }
+  .test-item-text { font-size: 0.9rem; color: var(--text); line-height: 1.5; }
+  .test-item-text small { display: block; margin-top: 0.25rem; font-size: 0.78rem; color: var(--muted); }
+
+  /* NEVER SHARE */
+  .never-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-top: 1.5rem; }
+  @media (max-width: 620px) { .never-grid { grid-template-columns: 1fr; } }
+  .never-card { background: var(--surface); border: 1px solid rgba(254,100,100,0.15); border-radius: 14px; padding: 1.5rem; position: relative; overflow: hidden; transition: all 0.3s; opacity: 0; transform: translateY(20px); }
+  .never-card.visible { opacity: 1; transform: translateY(0); }
+  .never-card:hover { border-color: rgba(254,100,100,0.4); box-shadow: 0 0 20px rgba(254,100,100,0.08); }
+  .danger-tag { display: inline-flex; align-items: center; gap: 5px; background: rgba(254,100,100,0.1); border-radius: 100px; padding: 3px 10px; font-size: 0.68rem; font-weight: 700; color: #fc8181; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.75rem; }
+  .card-icon { font-size: 1.5rem; margin-bottom: 0.6rem; display: block; }
+  .never-card h4 { font-size: 0.95rem; font-weight: 600; color: #fff; margin-bottom: 0.4rem; }
+  .never-card p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+
+  /* PRINCIPLES */
+  .principles-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-top: 2rem; }
+  @media (max-width: 600px) { .principles-grid { grid-template-columns: 1fr; } }
+  .principle-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.75rem; display: flex; gap: 1.25rem; align-items: flex-start; transition: all 0.3s; opacity: 0; transform: scale(0.95); }
+  .principle-card.visible { opacity: 1; transform: scale(1); }
+  .principle-card:hover { border-color: rgba(99,179,237,0.3); background: rgba(99,179,237,0.04); transform: translateY(-2px); }
+  .principle-num { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, rgba(99,179,237,0.2), rgba(159,122,234,0.2)); border: 1px solid rgba(99,179,237,0.2); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--accent); flex-shrink: 0; }
+  .principle-card h4 { font-size: 0.95rem; font-weight: 600; color: #fff; margin-bottom: 0.3rem; }
+  .principle-card p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+
+  /* CHECKLIST */
+  .checklist-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem; }
+  .checklist-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; }
+  .check-item { display: flex; align-items: flex-start; gap: 14px; padding: 1rem 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.2s; border-radius: 8px; }
+  .check-item:last-child { border-bottom: none; }
+  .check-item:hover { background: rgba(99,179,237,0.04); padding-left: 8px; }
+  .check-box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid rgba(99,179,237,0.4); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.3s; margin-top: 1px; }
+  .check-item.checked .check-box { background: var(--accent3); border-color: var(--accent3); }
+  .check-box svg { width: 12px; height: 12px; stroke: #fff; opacity: 0; transition: opacity 0.2s; }
+  .check-item.checked .check-box svg { opacity: 1; }
+  .check-text h4 { font-size: 0.95rem; font-weight: 600; color: var(--text); margin-bottom: 0.2rem; transition: color 0.2s; }
+  .check-item.checked .check-text h4 { color: var(--accent3); text-decoration: line-through; text-decoration-color: rgba(104,211,145,0.4); }
+  .check-text p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+
+  /* OUTRO */
+  #outro { text-align: center; }
+  .outro-box { background: linear-gradient(135deg, rgba(99,179,237,0.08), rgba(159,122,234,0.08)); border: 1px solid rgba(99,179,237,0.2); border-radius: 24px; padding: 4rem 3rem; position: relative; overflow: hidden; }
+  .outro-box::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at center, rgba(99,179,237,0.06) 0%, transparent 60%); animation: rotate 20s linear infinite; pointer-events: none; }
+  @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .outro-box h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 700; color: #fff; margin-bottom: 1rem; position: relative; }
+  .outro-box p { font-size: 1rem; color: var(--muted); margin-bottom: 2.5rem; line-height: 1.7; max-width: 520px; margin-left: auto; margin-right: auto; position: relative; }
+  .outro-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; }
+  .btn-primary { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; padding: 14px 28px; border-radius: 100px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; transition: all 0.3s; box-shadow: 0 0 25px rgba(99,179,237,0.3); text-decoration: none; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(99,179,237,0.5); }
+  .btn-secondary { display: inline-flex; align-items: center; gap: 10px; background: transparent; color: var(--text); padding: 14px 28px; border-radius: 100px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: 1px solid var(--border); transition: all 0.3s; text-decoration: none; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: rgba(99,179,237,0.05); }
+
+  #progress-bar { position: fixed; top: 60px; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 101; transition: width 0.3s; box-shadow: 0 0 10px var(--glow); }
+
+  .scroll-hint { position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: 0.4; animation: bounceScroll 2.5s infinite; }
+  .scroll-hint span { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  @keyframes bounceScroll { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(8px); } }
+
+  .fade-in { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 768px) { .section { padding: 70px 1.25rem 3rem; } .outro-box { padding: 3rem 1.5rem; } .checklist-card { padding: 1.75rem; } }
+</style>
+</head>
+<body>
+
+<canvas id="stars-canvas"></canvas>
+<div id="progress-bar"></div>
+
+<nav>
+  <div class="nav-logo">🛡️ AI Kurssi · Moduuli 1</div>
+  <div class="nav-progress" id="navDots"></div>
+</nav>
+
+<!-- HERO -->
+<section class="section" id="hero" data-index="0">
+  <div class="section-inner" style="text-align:center;">
+    <div class="module-badge"><span class="dot"></span> Moduuli 1 · Tietosuoja</div>
+    <h1 class="hero-title">Tietosuoja &amp;<br>vastuullinen tekoäly</h1>
+    <p class="hero-sub">Ennen kuin käytät tekoälyä työnhaussa, sinun täytyy tietää: mitä voit jakaa – ja mitä ei koskaan.</p>
+    <a href="#why-matters" class="hero-cta">
+      Aloita oppiminen
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </a>
+  </div>
+  <div class="scroll-hint">
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+    <span>Vieritä alas</span>
+  </div>
+</section>
+
+<!-- WHY IT MATTERS -->
+<section class="section" id="why-matters" data-index="1">
+  <div class="section-inner fade-in">
+    <div class="section-tag">Miksi tämä on tärkeää</div>
+    <h2 class="section-title">Tekoäly on <span>tehokas työkalu</span> – käytä sitä viisaasti</h2>
+    <div class="glow-line"></div>
+    <div class="intro-card">
+      <p>Tekoäly voi olla uskomaton uraavustajasi – se auttaa sinua kirjoittamaan CV:n, valmistautumaan haastatteluun ja löytämään uusia mahdollisuuksia.</p>
+      <p>Mutta tekoäly on myös <span class="highlight">ulkopuolinen palvelu</span>. Kaikki mitä sille kerrot, tallennetaan ja käsitellään sen palvelimilla. Tiedät jo, miten tärkeää on pitää omat tietosi turvassa – sama pätee tekoälyn käytössä.</p>
+      <p>Tässä moduulissa opit tarkalleen, mitä voit jakaa ja mitä ei koskaan pidä jakaa tekoälylle.</p>
+    </div>
+    <div class="shield-hero">
+      <span class="icon">🛡️</span>
+      <h3>Vastuullinen käyttö suojaa sinua</h3>
+      <p>Oikein käytettynä tekoäly on valtava kilpailuetu. Väärin käytettynä se voi vaarantaa yksityisyytesi, taloutesi – tai jopa työsuhteesi.</p>
+    </div>
+  </div>
+</section>
+
+<!-- LINKEDIN RULE -->
+<section class="section" id="linkedin" data-index="2">
+  <div class="section-inner fade-in">
+    <div class="section-tag">Kultainen sääntö</div>
+    <h2 class="section-title">The <span>LinkedIn-sääntö</span></h2>
+    <div class="glow-line"></div>
+    <p class="section-lead">Tämä yksi sääntö kattaa lähes kaikki tilanteet. Muista se aina kun käytät tekoälyä.</p>
+
+    <div class="linkedin-rule">
+      <div class="rule-badge">💡 Kultainen sääntö</div>
+      <h3>Jos et julkaisisi sitä LinkedInissä, älä jaa sitä tekoälylle.</h3>
+      <p>LinkedIn on ammatillinen verkosto – siellä jakamasi tiedot ovat julkisia. Kun käytät AI-työkaluja, kysy itseltäsi: <em style="color:var(--accent);">"Haluaisinko, että tämä näkyy miljoonalle ihmiselle?"</em></p>
+      <p style="margin-top:0.75rem;">Jos vastaus on ei, se ei kuulu tekoälylle jaettavaksi. Tämä koskee kaikkea – työkokemus, projektit, osaaminen, henkilötiedot.</p>
+    </div>
+
+    <div class="test-box">
+      <h3>🧪 Testaa itsesi – mitä voi jakaa?</h3>
+      <div class="test-item safe">
+        <div class="test-verdict">✓</div>
+        <div class="test-item-text">
+          Ammattinimike ja työnantaja
+          <small>Tämä näkyy LinkedInissä – voi jakaa tekoälylle</small>
+        </div>
+      </div>
+      <div class="test-item safe">
+        <div class="test-verdict">✓</div>
+        <div class="test-item-text">
+          Ammatilliset taidot ja osaamisalueet
+          <small>Julkista tietoa – turvallista jakaa</small>
+        </div>
+      </div>
+      <div class="test-item safe">
+        <div class="test-verdict">✓</div>
+        <div class="test-item-text">
+          Ura-tavoitteesi (yleisellä tasolla)
+          <small>Auttaa tekoälyä antamaan parempia neuvoja</small>
+        </div>
+      </div>
+      <div class="test-item danger">
+        <div class="test-verdict">✗</div>
+        <div class="test-item-text">
+          Henkilötunnus tai pankkitiedot
+          <small>Ei koskaan – identiteettivarkausriski</small>
+        </div>
+      </div>
+      <div class="test-item danger">
+        <div class="test-verdict">✗</div>
+        <div class="test-item-text">
+          Työnantajan luottamukselliset tiedot
+          <small>Ei – voi rikkoa työsopimuksen ja lain</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NEVER SHARE -->
+<section class="section" id="never-share" data-index="3">
+  <div class="section-inner fade-in">
+    <div class="section-tag">Kriittiset rajat</div>
+    <h2 class="section-title">Älä <span>koskaan</span> jaa tekoälylle</h2>
+    <div class="glow-line"></div>
+    <p class="section-lead">Nämä neljä tietotyyppiä ovat ehdottomia rajoja. Älä koskaan jaa näitä – ei edes jos vaikuttaa turvalliselta tai tarpeelliselta.</p>
+
+    <div class="never-grid">
+      <div class="never-card" data-delay="0">
+        <span class="danger-tag">🔴 Kriittinen</span>
+        <span class="card-icon">🪪</span>
+        <h4>Henkilötunnus &amp; pankkitiedot</h4>
+        <p>Erittäin arkaluonteisia taloudellisia ja henkilökohtaisia tietoja. Niiden jakaminen voi johtaa identiteettivarkauksiin tai talousrikoksiin.</p>
+      </div>
+      <div class="never-card" data-delay="100">
+        <span class="danger-tag">🔴 Kriittinen</span>
+        <span class="card-icon">🔑</span>
+        <h4>Salasanat</h4>
+        <p>Salasanat antavat pääsyn kaikkiin tileihisi. Niiden paljastaminen tekoälytyökaluille vaarantaa kaikki siihen liitetyt tilit.</p>
+      </div>
+      <div class="never-card" data-delay="200">
+        <span class="danger-tag">🔴 Kriittinen</span>
+        <span class="card-icon">🏥</span>
+        <h4>Terveystiedot</h4>
+        <p>Yksityisiä ja suojattuja tietoja. Niiden jakaminen voi rikkoa yksityisyyden suojalakeja ja johtaa henkilökohtaisten tietojen väärinkäyttöön.</p>
+      </div>
+      <div class="never-card" data-delay="300">
+        <span class="danger-tag">🟠 Varoitus</span>
+        <span class="card-icon">🏢</span>
+        <h4>Luottamukselliset yritystiedot</h4>
+        <p>Yrityssalaisuudet, kauppasopimukset ja julkaisemattomat tuotetiedot. Niiden jakaminen voi johtaa oikeudellisiin ongelmiin.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 PRINCIPLES -->
+<section class="section" id="principles" data-index="4">
+  <div class="section-inner fade-in">
+    <div class="section-tag">Yhteenveto</div>
+    <h2 class="section-title">Käytä tekoälyä <span>viisaasti</span></h2>
+    <div class="glow-line"></div>
+    <p class="section-lead">Noudattamalla näitä neljää periaatetta varmistat vastuullisen ja eettisen tekoälyn käytön työnhakuprosessissasi.</p>
+
+    <div class="principles-grid">
+      <div class="principle-card" data-delay="0">
+        <div class="principle-num">1</div>
+        <div>
+          <h4>Tunnista arkaluonteiset tiedot</h4>
+          <p>Kysy aina itseltäsi ennen jakamista: onko tämä tieto sellaista, jonka haluaisin julkiseksi?</p>
+        </div>
+      </div>
+      <div class="principle-card" data-delay="100">
+        <div class="principle-num">2</div>
+        <div>
+          <h4>Noudata LinkedIn-sääntöä</h4>
+          <p>Jos et julkaisisi LinkedInissä, älä jaa tekoälylle – yksinkertainen ja tehokas muistisääntö.</p>
+        </div>
+      </div>
+      <div class="principle-card" data-delay="200">
+        <div class="principle-num">3</div>
+        <div>
+          <h4>Käytä tekoälyä parantamaan, ei väärentämään</h4>
+          <p>Tekoäly on avustaja – se parantaa oikeaa osaamistasi, ei korvaa totuutta tai luo valheita.</p>
+        </div>
+      </div>
+      <div class="principle-card" data-delay="300">
+        <div class="principle-num">4</div>
+        <div>
+          <h4>Rehellisyys rakentaa luottamusta</h4>
+          <p>Työnantajat arvostavat aitoutta. Tekoäly auttaa sinua esittämään itsesi parhaassa valossa – rehellisesti.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section class="section" id="summary" data-index="5">
+  <div class="section-inner fade-in">
+    <div class="section-tag">Tarkistuslista</div>
+    <h2 class="section-title">Moduuli 1 <span>hallussa</span></h2>
+    <div class="glow-line"></div>
+    <p class="section-lead">Klikkaa jokainen kohta, kun olet varma, että ymmärrät sen.</p>
+
+    <div class="checklist-card">
+      <h3>✅ Tarkistuslista – Moduuli 1</h3>
+
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="understand-privacy">
+        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+        <div class="check-text"><h4>Ymmärrän miksi tietosuoja on tärkeää tekoälyn käytössä</h4><p>Tekoäly on ulkopuolinen palvelu – kaikki jaettu tieto käsitellään sen palvelimilla.</p></div>
+      </div>
+
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="linkedin-rule">
+        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+        <div class="check-text"><h4>Osaan LinkedIn-säännön</h4><p>Jos en julkaisisi sitä LinkedInissä, en jaa sitä tekoälylle.</p></div>
+      </div>
+
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="know-never-share">
+        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+        <div class="check-text"><h4>Tiedän mitä ei koskaan saa jakaa tekoälylle</h4><p>Henkilötunnus, pankkitiedot, salasanat, terveystiedot, yrityssalaisuudet.</p></div>
+      </div>
+
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="understand-principles">
+        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+        <div class="check-text"><h4>Ymmärrän vastuullisen tekoälyn käytön neljä periaatetta</h4><p>Tunnista, noudata sääntöä, paranna älä vääristä, rehellisyys rakentaa luottamusta.</p></div>
+      </div>
+
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="can-test-sharing">
+        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+        <div class="check-text"><h4>Osaan testata tiedon jaettavuuden itse</h4><p>Voin soveltaa LinkedIn-sääntöä mihin tahansa tilanteeseen ennen jakamista.</p></div>
+      </div>
+    </div>
+
+    <div id="completion-msg" style="display:none; text-align:center; margin-top:2rem; padding:1.5rem; background: rgba(104,211,145,0.08); border: 1px solid rgba(104,211,145,0.25); border-radius:16px;">
+      <div style="font-size:2.5rem; margin-bottom:0.75rem;">🎉</div>
+      <h3 style="font-family:'Space Grotesk',sans-serif; font-size:1.2rem; color:var(--accent3); margin-bottom:0.5rem;">Moduuli 1 suoritettu!</h3>
+      <p style="color:var(--muted); font-size:0.9rem;">Hienoa työtä! Olet valmis etenemään seuraavaan moduuliin.</p>
+    </div>
+  </div>
+</section>
+
+<!-- OUTRO -->
+<section class="section" id="outro" data-index="6">
+  <div class="section-inner">
+    <div class="outro-box">
+      <h2>Tietosuoja ei ole este.<br>Se on sinun <span style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">suojasi.</span></h2>
+      <p>Nyt tiedät säännöt. Seuraavassa moduulissa opit, miten tekoäly toimii – ja miten hyödyntää sen täysi potentiaali turvallisesti.</p>
+      <div class="outro-actions">
+        <a href="#hero" class="btn-secondary">↑ Kertaa moduuli</a>
+        <a href="/module/moduuli2-tekoaly-uhka-vai-mahdollisuus" class="btn-primary" id="nextModuleBtn" style="display:none;">
+          Seuraava moduuli
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+const canvas = document.getElementById('stars-canvas');
+const ctx = canvas.getContext('2d');
+let stars = [];
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+function initStars() { stars = []; for (let i = 0; i < 160; i++) { stars.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*1.2+0.2, alpha: Math.random()*0.6+0.1, speed: Math.random()*0.3+0.05, twinkle: Math.random()*Math.PI*2 }); } }
+function drawStars() { ctx.clearRect(0,0,canvas.width,canvas.height); stars.forEach(s => { s.twinkle+=0.015; const a=s.alpha*(0.6+0.4*Math.sin(s.twinkle)); ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle=`rgba(180,210,255,${a})`; ctx.fill(); s.y-=s.speed; if(s.y<-2){s.y=canvas.height+2;s.x=Math.random()*canvas.width;} }); requestAnimationFrame(drawStars); }
+resize(); initStars(); drawStars(); window.addEventListener('resize',()=>{resize();initStars();});
+
+const sections = document.querySelectorAll('.section[data-index]');
+const navDots = document.getElementById('navDots');
+sections.forEach((s,i)=>{ const dot=document.createElement('div'); dot.className='nav-dot'+(i===0?' active':''); dot.title=`Sivu ${i+1}`; dot.addEventListener('click',()=>s.scrollIntoView({behavior:'smooth'})); navDots.appendChild(dot); });
+
+const progressBar = document.getElementById('progress-bar');
+function updateProgress() { const scrollTop=window.scrollY; const docHeight=document.documentElement.scrollHeight-window.innerHeight; const pct=docHeight>0?(scrollTop/docHeight)*100:0; progressBar.style.width=pct+'%'; const dots=navDots.querySelectorAll('.nav-dot'); let activeIdx=0; sections.forEach((s,i)=>{ const rect=s.getBoundingClientRect(); if(rect.top<=window.innerHeight*0.5)activeIdx=i; }); dots.forEach((d,i)=>{ d.classList.remove('active','done'); if(i===activeIdx)d.classList.add('active'); else if(i<activeIdx)d.classList.add('done'); }); }
+window.addEventListener('scroll',updateProgress,{passive:true});
+
+const fadeEls=document.querySelectorAll('.fade-in');
+const fadeObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');fadeObserver.unobserve(e.target);}});},{threshold:0.15});
+fadeEls.forEach(el=>fadeObserver.observe(el));
+
+const neverCards=document.querySelectorAll('.never-card');
+const ncObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const delay=parseInt(e.target.dataset.delay)||0;setTimeout(()=>e.target.classList.add('visible'),delay);ncObserver.unobserve(e.target);}});},{threshold:0.2});
+neverCards.forEach(c=>ncObserver.observe(c));
+
+const principleCards=document.querySelectorAll('.principle-card');
+const pcObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const delay=parseInt(e.target.dataset.delay)||0;setTimeout(()=>e.target.classList.add('visible'),delay);pcObserver.unobserve(e.target);}});},{threshold:0.2});
+principleCards.forEach(c=>pcObserver.observe(c));
+
+// ── PROGRESS TRACKING ──────────────────────────
+const API_URL = 'http://localhost:3000/api';
+const MODULE_ID = 'moduuli1-tietosuoja';
+
+// Load saved progress
+async function loadProgress() {
+  try {
+    const response = await fetch(`${API_URL}/progress/module/${MODULE_ID}`, {
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      data.checklist.forEach(item => {
+        const checkItem = document.querySelector(`[data-item-id="${item.item_id}"]`);
+        if (checkItem && item.completed) {
+          checkItem.classList.add('checked');
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error loading progress:', error);
+  }
+}
+
+// Save checklist item
+async function saveChecklistItem(itemId, completed) {
+  try {
+    await fetch(`${API_URL}/progress/module/${MODULE_ID}/checklist/${itemId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ completed })
+    });
+  } catch (error) {
+    console.error('Error saving checklist item:', error);
+  }
+}
+
+// Save section progress
+async function saveSectionProgress(sectionId, completed = false) {
+  try {
+    await fetch(`${API_URL}/progress/module/${MODULE_ID}/section/${sectionId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ 
+        completed,
+        progressData: { lastViewed: new Date().toISOString() }
+      })
+    });
+  } catch (error) {
+    console.error('Error saving section progress:', error);
+  }
+}
+
+// Check if module is completed
+async function checkModuleCompletion() {
+  try {
+    const response = await fetch(`${API_URL}/progress/module/${MODULE_ID}`, {
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      const allItems = document.querySelectorAll('.check-item');
+      const checkedItems = data.checklist.filter(item => item.completed);
+      
+      if (checkedItems.length === allItems.length && allItems.length > 0) {
+        document.getElementById('nextModuleBtn').style.display = 'inline-flex';
+      }
+    }
+  } catch (error) {
+    console.error('Error checking completion:', error);
+  }
+}
+
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+  const allItems = document.querySelectorAll('.check-item');
+  const checkedItems = document.querySelectorAll('.check-item.checked');
+  
+  const itemId = el.getAttribute('data-item-id');
+  if (itemId) {
+    saveChecklistItem(itemId, el.classList.contains('checked'));
+  }
+  
+  if (checkedItems.length === allItems.length) {
+    document.getElementById('completion-msg').style.display = 'block';
+    document.getElementById('completion-msg').scrollIntoView({behavior:'smooth',block:'nearest'});
+    saveSectionProgress('summary', true);
+    setTimeout(checkModuleCompletion, 500);
+  } else {
+    document.getElementById('completion-msg').style.display = 'none';
+  }
+}
+
+// Track section views
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const section = entry.target;
+      const sectionIndex = section.getAttribute('data-index');
+      if (sectionIndex) {
+        saveSectionProgress(sectionIndex, false);
+      }
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.section[data-index]').forEach(section => {
+  sectionObserver.observe(section);
+});
+
+// Load progress on page load
+loadProgress().then(() => {
+  checkModuleCompletion();
+});
+</script>
+</body>
+</html>

@@ -1280,7 +1280,7 @@
     <div class="checklist-card">
       <h3>✅ Tarkistuslista – Moduuli 2</h3>
 
-      <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="understand-ai">
         <div class="check-box">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -1292,7 +1292,7 @@
         </div>
       </div>
 
-      <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="know-how-ai-works">
         <div class="check-box">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -1304,7 +1304,7 @@
         </div>
       </div>
 
-      <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="understand-impact">
         <div class="check-box">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -1316,7 +1316,7 @@
         </div>
       </div>
 
-      <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="history-adaptation">
         <div class="check-box">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -1328,7 +1328,7 @@
         </div>
       </div>
 
-      <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="linkedin-rule">
         <div class="check-box">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -1340,7 +1340,7 @@
         </div>
       </div>
 
-      <div class="check-item" onclick="toggleCheck(this)">
+      <div class="check-item" onclick="toggleCheck(this)" data-item-id="know-privacy">
         <div class="check-box">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -1373,12 +1373,12 @@
         <a href="#hero" class="btn-secondary">
           ↑ Kertaa moduuli
         </a>
-        <button class="btn-primary" onclick="alert('Moduuli 3 tulossa pian! 🚀')">
+        <a href="/module/moduuli3-master-prompt" class="btn-primary" id="nextModuleBtn" style="display:none;">
           Seuraava moduuli
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
           </svg>
-        </button>
+        </a>
       </div>
     </div>
   </div>
@@ -1532,17 +1532,151 @@ const ncObserver = new IntersectionObserver(entries => {
 neverCards.forEach(c => ncObserver.observe(c));
 
 // ── CHECKLIST ───────────────────────────────
+const API_URL = 'http://localhost:3000/api';
+const MODULE_ID = 'moduuli2-tekoaly-uhka-vai-mahdollisuus';
+
+// Load saved progress
+async function loadProgress() {
+  try {
+    const response = await fetch(`${API_URL}/progress/module/${MODULE_ID}`, {
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      
+      // Restore checklist items
+      data.checklist.forEach(item => {
+        const checkItem = document.querySelector(`[data-item-id="${item.item_id}"]`);
+        if (checkItem && item.completed) {
+          checkItem.classList.add('checked');
+        }
+      });
+      
+      // Restore section progress
+      data.progress.forEach(progress => {
+        if (progress.completed && progress.section_id) {
+          const section = document.querySelector(`[data-index="${progress.section_id}"]`);
+          if (section) {
+            // Mark section as visited/completed visually if needed
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error loading progress:', error);
+  }
+}
+
+// Save checklist item
+async function saveChecklistItem(itemId, completed) {
+  try {
+    await fetch(`${API_URL}/progress/module/${MODULE_ID}/checklist/${itemId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ completed })
+    });
+  } catch (error) {
+    console.error('Error saving checklist item:', error);
+  }
+}
+
+// Save section progress
+async function saveSectionProgress(sectionId, completed = false) {
+  try {
+    await fetch(`${API_URL}/progress/module/${MODULE_ID}/section/${sectionId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ 
+        completed,
+        progressData: { lastViewed: new Date().toISOString() }
+      })
+    });
+  } catch (error) {
+    console.error('Error saving section progress:', error);
+  }
+}
+
 function toggleCheck(el) {
+  const wasChecked = el.classList.contains('checked');
   el.classList.toggle('checked');
+  const isChecked = el.classList.contains('checked');
+  
+  const itemId = el.getAttribute('data-item-id');
+  if (itemId) {
+    saveChecklistItem(itemId, isChecked);
+  }
+  
   const allItems = document.querySelectorAll('.check-item');
   const checkedItems = document.querySelectorAll('.check-item.checked');
   if (checkedItems.length === allItems.length) {
     document.getElementById('completion-msg').style.display = 'block';
     document.getElementById('completion-msg').scrollIntoView({ behavior:'smooth', block:'nearest' });
+    // Mark summary section as completed
+    saveSectionProgress('summary', true);
   } else {
     document.getElementById('completion-msg').style.display = 'none';
   }
 }
+
+// Track section views
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const section = entry.target;
+      const sectionIndex = section.getAttribute('data-index');
+      if (sectionIndex) {
+        saveSectionProgress(sectionIndex, false);
+      }
+    }
+  });
+}, { threshold: 0.5 });
+
+// Observe all sections
+document.querySelectorAll('.section[data-index]').forEach(section => {
+  sectionObserver.observe(section);
+});
+
+// Check if module is completed and show next module button
+async function checkModuleCompletion() {
+  try {
+    const response = await fetch(`${API_URL}/progress/module/${MODULE_ID}`, {
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      const allItems = document.querySelectorAll('.check-item');
+      const checkedItems = data.checklist.filter(item => item.completed);
+      
+      if (checkedItems.length === allItems.length && allItems.length > 0) {
+        document.getElementById('nextModuleBtn').style.display = 'inline-flex';
+      }
+    }
+  } catch (error) {
+    console.error('Error checking completion:', error);
+  }
+}
+
+// Load progress on page load
+loadProgress().then(() => {
+  checkModuleCompletion();
+});
+
+// Update toggleCheck to check completion
+const originalToggleCheck = toggleCheck;
+toggleCheck = function(el) {
+  originalToggleCheck(el);
+  setTimeout(() => {
+    const allItems = document.querySelectorAll('.check-item');
+    const checkedItems = document.querySelectorAll('.check-item.checked');
+    if (checkedItems.length === allItems.length && allItems.length > 0) {
+      checkModuleCompletion();
+    }
+  }, 500);
+};
 </script>
 </body>
 </html>

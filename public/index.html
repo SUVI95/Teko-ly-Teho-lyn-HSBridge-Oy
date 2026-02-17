@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tekoälykurssi - Etusivu</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Space+Grotesk:wght@400;500;700&display=swap');
+  
+  :root {
+    --bg: #050810;
+    --surface: #0d1117;
+    --surface2: #111827;
+    --border: rgba(99,179,237,0.15);
+    --accent: #63b3ed;
+    --accent2: #9f7aea;
+    --accent3: #68d391;
+    --text: #e2e8f0;
+    --muted: #718096;
+  }
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+  
+  nav {
+    background: rgba(5,8,16,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .nav-logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .nav-user {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .user-info {
+    text-align: right;
+  }
+  
+  .user-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  
+  .user-email {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  
+  .btn-logout {
+    padding: 8px 16px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .btn-logout:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+  
+  .welcome-section {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+  
+  .welcome-section h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .welcome-section p {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+  
+  .module-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+  
+  .module-card:hover:not(.locked) {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: 0 0 30px rgba(99,179,237,0.2);
+  }
+  
+  .module-card.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: rgba(99,179,237,0.1);
+  }
+  
+  .locked-badge {
+    background: rgba(246,173,85,0.1);
+    border: 1px solid rgba(246,173,85,0.3);
+    color: var(--accent4);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 1rem;
+  }
+  
+  .module-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+  
+  .module-card h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  
+  .module-card p {
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+  
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.3s;
+  }
+  
+  .progress-text {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  
+  .loading {
+    text-align: center;
+    padding: 4rem;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo">🤖 Tekoälykurssi</div>
+    <div class="nav-user">
+      <div class="user-info">
+        <div class="user-name" id="userName">Ladataan...</div>
+        <div class="user-email" id="userEmail"></div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Kirjaudu ulos</button>
+    </div>
+  </nav>
+  
+  <div class="container">
+    <div class="welcome-section">
+      <h1>Tervetuloa oppimaan!</h1>
+      <p>Valitse moduuli ja jatka oppimista siitä mihin jäit</p>
+    </div>
+    
+    <div id="modulesContainer" class="loading">Ladataan moduuleja...</div>
+  </div>
+  
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+    
+    // Check authentication
+    async function checkAuth() {
+      try {
+        const response = await fetch(`${API_URL}/auth/me`, {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          window.location.href = '/login';
+          return null;
+        }
+        
+        const data = await response.json();
+        return data.user;
+      } catch (error) {
+        window.location.href = '/login';
+        return null;
+      }
+    }
+    
+    // Load user info
+    async function loadUser() {
+      const user = await checkAuth();
+      if (user) {
+        document.getElementById('userName').textContent = user.name || user.email;
+        document.getElementById('userEmail').textContent = user.email;
+      }
+    }
+    
+    // Load modules
+    async function loadModules() {
+      const user = await checkAuth();
+      if (!user) return;
+      
+      try {
+        const summaryResponse = await fetch(`${API_URL}/progress/summary`, {
+          credentials: 'include'
+        });
+        
+        const summary = await summaryResponse.ok ? await summaryResponse.json() : { modules: [], checklists: [] };
+        
+        const modules = [
+          {
+            id: 'moduuli1-tietosuoja',
+            title: 'Moduuli 1: Tietosuoja ja vastuullinen tekoälyn käyttö',
+            description: 'Opi mitä tietoja voit jakaa tekoälylle ja mitä ei koskaan.',
+            icon: '🛡️',
+            order: 1
+          },
+          {
+            id: 'moduuli2-tekoaly-uhka-vai-mahdollisuus',
+            title: 'Moduuli 2: Tekoäly – Uhka vai mahdollisuus?',
+            description: 'Ymmärrä tekoäly, sen toiminta ja vaikutus työn tulevaisuuteen.',
+            icon: '🤖',
+            order: 2
+          },
+          {
+            id: 'moduuli3-master-prompt',
+            title: 'Moduuli 3: Master Prompt – Oppaasi tekoälyn maailmassa',
+            description: 'Opi luomaan tehokkaita promteja ja saamaan parhaat tulokset.',
+            icon: '✨',
+            order: 3
+          },
+          {
+            id: 'moduuli4-prompt-tyonhakijalle',
+            title: 'Moduuli 4: PROMPT Työnhakijalle',
+            description: 'Käytä tekoälyä työnhaun apuna ja erotu hakijoiden joukosta.',
+            icon: '💼',
+            order: 4
+          }
+        ];
+        
+        // Check which modules are completed
+        const completedModules = new Set();
+        summary.modules.forEach(m => {
+          if (m.completed_sections > 0 && m.completed_sections === m.total_sections) {
+            completedModules.add(m.module_id);
+          }
+        });
+        
+        const container = document.getElementById('modulesContainer');
+        container.className = 'modules-grid';
+        container.innerHTML = modules.map((module, index) => {
+          const moduleProgress = summary.modules.find(m => m.module_id === module.id);
+          const checklistProgress = summary.checklists.find(c => c.module_id === module.id);
+          
+          const totalSections = moduleProgress?.total_sections || 0;
+          const completedSections = moduleProgress?.completed_sections || 0;
+          const totalItems = checklistProgress?.total_items || 0;
+          const completedItems = checklistProgress?.completed_items || 0;
+          
+          const progress = totalSections > 0 ? (completedSections / totalSections) * 100 : 0;
+          const isCompleted = completedModules.has(module.id);
+          const isLocked = index > 0 && !completedModules.has(modules[index - 1].id);
+          
+          return `
+            <div class="module-card ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="window.location.href='/module/${module.id}'"` : ''}>
+              <div class="module-icon">${module.icon}</div>
+              <h2>${module.title}</h2>
+              <p>${module.description}</p>
+              ${isLocked ? `
+                <div class="locked-badge">🔒 Lukittu - Suorita ensin edellinen moduuli</div>
+              ` : progress > 0 ? `
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: ${progress}%"></div>
+                </div>
+                <div class="progress-text">${completedSections}/${totalSections} osiota suoritettu${isCompleted ? ' ✅' : ''}</div>
+              ` : '<div class="progress-text">Ei vielä aloitettu</div>'}
+            </div>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Error loading modules:', error);
+        document.getElementById('modulesContainer').innerHTML = '<p style="color: #fc8181;">Virhe moduulien lataamisessa</p>';
+      }
+    }
+    
+    // Logout
+    async function logout() {
+      try {
+        await fetch(`${API_URL}/auth/logout`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+      window.location.href = '/login';
+    }
+    
+    // Initialize
+    loadUser();
+    loadModules();
+  </script>
+</body>
+</html>
