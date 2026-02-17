@@ -474,11 +474,12 @@
       <div class="stat-card">
         <div class="stat-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
           </svg>
         </div>
-        <div class="stat-value" id="learningStreak">1</div>
-        <div class="stat-label">Oppimisputki (päivää)</div>
+        <div class="stat-value" id="checklistItems">0</div>
+        <div class="stat-label">Tarkistuslistan kohtia</div>
       </div>
     </div>
 
@@ -534,6 +535,7 @@
         });
         
         const summary = await summaryResponse.ok ? await summaryResponse.json() : { modules: [], checklists: [] };
+        window.currentSummary = summary; // Store for statistics
         
         const modules = [
           {
@@ -588,22 +590,52 @@
           medal: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>'
         };
         
-        // Check which modules are completed
+        // Check which modules are completed (only count the 4 main modules, not homework)
+        const mainModules = modules.filter(m => !m.isHomework);
         const completedModules = new Set();
-        let totalCompletedSections = 0;
-        let totalSections = 0;
+        let totalProgress = 0;
+        let maxProgress = mainModules.length * 100; // Each module is worth 100%
         
-        summary.modules.forEach(m => {
-          totalSections += parseInt(m.total_sections || 0);
-          totalCompletedSections += parseInt(m.completed_sections || 0);
-          if (m.completed_sections > 0 && m.completed_sections === m.total_sections) {
-            completedModules.add(m.module_id);
+        mainModules.forEach(module => {
+          const moduleProgress = summary.modules.find(m => m.module_id === module.id);
+          const checklistProgress = summary.checklists.find(c => c.module_id === module.id);
+          
+          const totalSections = parseInt(moduleProgress?.total_sections || 0);
+          const completedSections = parseInt(moduleProgress?.completed_sections || 0);
+          const totalItems = parseInt(checklistProgress?.total_items || 0);
+          const completedItems = parseInt(checklistProgress?.completed_items || 0);
+          
+          // Calculate module progress: sections progress (50%) + checklist progress (50%)
+          let sectionProgress = totalSections > 0 ? (completedSections / totalSections) * 50 : 0;
+          let checklistProgress = totalItems > 0 ? (completedItems / totalItems) * 50 : 0;
+          
+          // If no checklist exists, sections count for 100%
+          if (totalItems === 0 && totalSections > 0) {
+            sectionProgress = (completedSections / totalSections) * 100;
+          }
+          
+          const moduleProgressPercent = Math.round(sectionProgress + checklistProgress);
+          totalProgress += moduleProgressPercent;
+          
+          // Module is completed if: all sections done OR all checklist items done OR progress >= 90%
+          const isCompleted = (totalSections > 0 && completedSections === totalSections) ||
+                             (totalItems > 0 && completedItems === totalItems) ||
+                             moduleProgressPercent >= 90;
+          
+          if (isCompleted) {
+            completedModules.add(module.id);
           }
         });
         
-        // Calculate overall progress
-        const overallProgress = totalSections > 0 ? Math.round((totalCompletedSections / totalSections) * 100) : 0;
+        // Calculate overall progress as percentage of modules completed
+        const overallProgress = maxProgress > 0 ? Math.round((totalProgress / maxProgress) * 100) : 0;
         const completedModulesCount = completedModules.size;
+        
+        // Count total sections completed across all modules
+        let totalCompletedSections = 0;
+        summary.modules.forEach(m => {
+          totalCompletedSections += parseInt(m.completed_sections || 0);
+        });
         
         // Update statistics
         updateStatistics(overallProgress, completedModulesCount, totalCompletedSections);
@@ -612,9 +644,9 @@
         updateAchievements(completedModulesCount, overallProgress);
         
         // Check if module 4 is completed - if so, unlock all modules
-        const module4Completed = completedModules.has('moduuli4-prompt-tyonhakijalle') || 
-          (summary.checklists.find(c => c.module_id === 'moduuli4-prompt-tyonhakijalle')?.completed_items || 0) >= 
-          (summary.checklists.find(c => c.module_id === 'moduuli4-prompt-tyonhakijalle')?.total_items || 1);
+        const module4Progress = summary.modules.find(m => m.module_id === 'moduuli4-prompt-tyonhakijalle');
+        const module4Checklist = summary.checklists.find(c => c.module_id === 'moduuli4-prompt-tyonhakijalle');
+        const module4Completed = completedModules.has('moduuli4-prompt-tyonhakijalle');
         
         const container = document.getElementById('modulesContainer');
         container.className = 'modules-grid';
@@ -634,12 +666,19 @@
           const moduleProgress = summary.modules.find(m => m.module_id === module.id);
           const checklistProgress = summary.checklists.find(c => c.module_id === module.id);
           
-          const totalSections = moduleProgress?.total_sections || 0;
-          const completedSections = moduleProgress?.completed_sections || 0;
-          const totalItems = checklistProgress?.total_items || 0;
-          const completedItems = checklistProgress?.completed_items || 0;
+          const totalSections = parseInt(moduleProgress?.total_sections || 0);
+          const completedSections = parseInt(moduleProgress?.completed_sections || 0);
+          const totalItems = parseInt(checklistProgress?.total_items || 0);
+          const completedItems = parseInt(checklistProgress?.completed_items || 0);
           
-          const progress = totalSections > 0 ? (completedSections / totalSections) * 100 : 0;
+          // Calculate progress: sections (50%) + checklist (50%), or sections (100%) if no checklist
+          let sectionProgress = totalSections > 0 ? (completedSections / totalSections) * 50 : 0;
+          let checklistProgressPercent = totalItems > 0 ? (completedItems / totalItems) * 50 : 0;
+          if (totalItems === 0 && totalSections > 0) {
+            sectionProgress = (completedSections / totalSections) * 100;
+          }
+          const progress = Math.round(sectionProgress + checklistProgressPercent);
+          
           const isCompleted = completedModules.has(module.id);
           
           // Check if all previous modules are completed (more flexible check)
@@ -704,12 +743,16 @@
       circle.style.strokeDashoffset = offset;
       
       document.getElementById('overallProgressText').textContent = overallProgress + '%';
-      document.getElementById('completedModules').textContent = completedModules;
+      document.getElementById('completedModules').textContent = completedModules + '/4';
       document.getElementById('totalSections').textContent = totalSections;
       
-      // Learning streak (simplified - based on last login)
-      const streak = localStorage.getItem('learningStreak') || 1;
-      document.getElementById('learningStreak').textContent = streak;
+      // Count completed checklist items
+      const summary = window.currentSummary || { checklists: [] };
+      let completedChecklistItems = 0;
+      summary.checklists.forEach(c => {
+        completedChecklistItems += parseInt(c.completed_items || 0);
+      });
+      document.getElementById('checklistItems').textContent = completedChecklistItems;
     }
     
     // Update achievements
