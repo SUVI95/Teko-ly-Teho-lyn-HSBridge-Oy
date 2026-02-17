@@ -446,7 +446,72 @@ const personaCards=document.querySelectorAll('.persona-card');const pcObs=new In
 personaCards.forEach(c=>pcObs.observe(c));
 const goalCards=document.querySelectorAll('.goal-card');const gcObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const delay=parseInt(e.target.dataset.delay)||0;setTimeout(()=>e.target.classList.add('visible'),delay);gcObs.unobserve(e.target);}});},{threshold:0.2});
 goalCards.forEach(c=>gcObs.observe(c));
-function toggleCheck(el){el.classList.toggle('checked');const allItems=document.querySelectorAll('.check-item');const checkedItems=document.querySelectorAll('.check-item.checked');if(checkedItems.length===allItems.length){document.getElementById('completion-msg').style.display='block';document.getElementById('completion-msg').scrollIntoView({behavior:'smooth',block:'nearest'});}else{document.getElementById('completion-msg').style.display='none';}}
+// ── PROGRESS TRACKING ──────────────────────────
+const API_URL = 'http://localhost:3000/api';
+const MODULE_ID = 'moduuli4-prompt-tyonhakijalle';
+
+async function saveSectionProgress(sectionId, completed = false) {
+  try {
+    await fetch(`${API_URL}/progress/module/${MODULE_ID}/section/${sectionId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ completed, progressData: { lastViewed: new Date().toISOString() } })
+    });
+  } catch (error) {
+    console.error('Error saving progress:', error);
+  }
+}
+
+async function checkModuleCompletion() {
+  try {
+    const response = await fetch(`${API_URL}/progress/module/${MODULE_ID}`, {
+      credentials: 'include'
+    });
+    if (response.ok) {
+      const data = await response.json();
+      const allItems = document.querySelectorAll('.check-item');
+      const checkedItems = data.checklist?.filter(item => item.completed) || [];
+      if (checkedItems.length === allItems.length && allItems.length > 0) {
+        document.getElementById('completeBtn').style.display = 'inline-flex';
+      }
+    }
+  } catch (error) {
+    console.error('Error checking completion:', error);
+  }
+}
+
+function toggleCheck(el){
+  el.classList.toggle('checked');
+  const allItems=document.querySelectorAll('.check-item');
+  const checkedItems=document.querySelectorAll('.check-item.checked');
+  if(checkedItems.length===allItems.length){
+    document.getElementById('completion-msg').style.display='block';
+    document.getElementById('completion-msg').scrollIntoView({behavior:'smooth',block:'nearest'});
+    saveSectionProgress('summary', true);
+    setTimeout(checkModuleCompletion, 500);
+  }else{
+    document.getElementById('completion-msg').style.display='none';
+  }
+}
+
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const section = entry.target;
+      const sectionIndex = section.getAttribute('data-index');
+      if (sectionIndex) {
+        saveSectionProgress(sectionIndex, false);
+      }
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.section[data-index]').forEach(section => {
+  sectionObserver.observe(section);
+});
+
+checkModuleCompletion();
 </script>
 </body>
 </html>
