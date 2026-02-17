@@ -34,10 +34,15 @@ app.get('/api/health', (req, res) => {
 // Static files
 app.use(express.static('public'));
 
-// Homework PDFs - serve PDFs with authentication, but check file extension first
-app.get('/homework/*.pdf', authenticateToken, (req, res, next) => {
-  const fileName = req.params[0];
-  const filePath = path.join(__dirname, 'public', 'homework', fileName);
+// Homework PDFs - serve PDFs with authentication
+// This route must come BEFORE the /homework HTML route
+app.get('/homework/:filename', authenticateToken, (req, res) => {
+  const filename = decodeURIComponent(req.params.filename);
+  // Only serve PDF files
+  if (!filename.endsWith('.pdf')) {
+    return res.status(404).send('File not found');
+  }
+  const filePath = path.join(__dirname, 'public', 'homework', filename);
   res.sendFile(filePath, (err) => {
     if (err) {
       console.error('Error serving PDF:', err);
@@ -47,6 +52,7 @@ app.get('/homework/*.pdf', authenticateToken, (req, res, next) => {
 });
 
 // Homework page (always accessible, no prerequisites)
+// This route must come AFTER the PDF route
 app.get('/homework', authenticateToken, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'homework.html'));
 });
