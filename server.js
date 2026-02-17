@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -63,33 +64,50 @@ app.get('/module/:moduleId', authenticateToken, async (req, res) => {
     if (previousModuleId) {
       try {
         const pool = require('./database/db');
-        const result = await pool.query(
-          `SELECT COUNT(*) as completed, COUNT(DISTINCT section_id) as total
-           FROM student_progress
+        // Check if previous module has completed checklist items
+        const checklistResult = await pool.query(
+          `SELECT COUNT(*) as total, SUM(CASE WHEN completed THEN 1 ELSE 0 END) as completed
+           FROM checklist_items
            WHERE user_id = $1 AND module_id = $2`,
           [userId, previousModuleId]
         );
         
-        const { completed, total } = result.rows[0];
-        // Allow access if previous module has progress or if it's the first module
-        if (total == 0 || completed < total) {
+        const { total, completed } = checklistResult.rows[0];
+        // If there are checklist items, require all to be completed
+        // Otherwise, allow access if there's any progress
+        if (total > 0 && parseInt(completed) < parseInt(total)) {
           return res.status(403).send(`
             <html>
               <body style="font-family: Arial; text-align: center; padding: 50px; background: #050810; color: #e2e8f0;">
                 <h1>🔒 Moduuli on lukittu</h1>
-                <p>Sinun täytyy suorittaa ${previousModuleId} ensin.</p>
-                <a href="/" style="color: #63b3ed;">← Takaisin etusivulle</a>
+                <p>Sinun täytyy suorittaa edellinen moduuli ensin.</p>
+                <a href="/" style="color: #63b3ed; text-decoration: none; padding: 10px 20px; border: 1px solid #63b3ed; border-radius: 8px; display: inline-block; margin-top: 20px;">← Takaisin etusivulle</a>
               </body>
             </html>
           `);
         }
       } catch (error) {
         console.error('Error checking prerequisites:', error);
+        // On error, allow access (fail open) to prevent blocking users
       }
     }
   }
   
   const modulePath = path.join(__dirname, `${moduleId}.html`);
+  
+  // Check if file exists
+  if (!fs.existsSync(modulePath)) {
+    return res.status(404).send(`
+      <html>
+        <body style="font-family: Arial; text-align: center; padding: 50px; background: #050810; color: #e2e8f0;">
+          <h1>404 - Moduulia ei löydy</h1>
+          <p>Moduulia "${moduleId}" ei ole olemassa.</p>
+          <a href="/" style="color: #63b3ed; text-decoration: none; padding: 10px 20px; border: 1px solid #63b3ed; border-radius: 8px; display: inline-block; margin-top: 20px;">← Takaisin etusivulle</a>
+        </body>
+      </html>
+    `);
+  }
+  
   res.sendFile(modulePath);
 });
 
