@@ -767,7 +767,7 @@
       }
     }
     
-    // Render module card
+    // Render module card (all modules are accessible)
     function renderModuleCard(module, index, allModules, summary, completedModules, module4Completed, allPart1Completed = true) {
       // Homework module is always accessible
       if (module.isHomework) {
@@ -799,53 +799,21 @@
       
       const isCompleted = completedModules.has(module.id);
       
-      // Check if module is locked
-      let isLocked = false;
-      const isPart2 = module.part === 2;
-      
-      if (isPart2 && module.requiresPart1) {
-        // Part 2 modules require all Part 1 modules to be completed
-        isLocked = !allPart1Completed;
-      } else if (!isPart2) {
-        // Part 1 modules: unlock if module 4 is completed OR previous module has progress
-        if (module4Completed) {
-          isLocked = false;
-        } else {
-          const moduleIndex = allModules.findIndex(m => m.id === module.id);
-          if (moduleIndex > 0) {
-            const previousModule = allModules[moduleIndex - 1];
-            if (!previousModule.isHomework && previousModule.part === 1) {
-              const prevProgress = summary.modules.find(m => m.module_id === previousModule.id);
-              const prevChecklist = summary.checklists.find(c => c.module_id === previousModule.id);
-              const prevSectionsViewed = parseInt(prevProgress?.total_sections || 0);
-              const prevChecklistCompleted = parseInt(prevChecklist?.completed_items || 0);
-              const prevChecklistTotal = parseInt(prevChecklist?.total_items || 0);
-              
-              const prevHasProgress = prevSectionsViewed > 0;
-              const prevAllChecklistDone = prevChecklistTotal > 0 && prevChecklistCompleted >= prevChecklistTotal;
-              isLocked = !prevHasProgress && !prevAllChecklistDone;
-            }
-          }
-        }
-      }
+      // All modules are accessible - no locking
+      const isLocked = false;
       
       return `
-        <div class="module-card ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="window.location.href='/module/${module.id}'"` : ''}>
+        <div class="module-card ${isCompleted ? 'completed' : ''}" onclick="window.location.href='/module/${module.id}'">
           ${isCompleted ? '<div class="completion-badge">✓</div>' : ''}
           <div class="module-icon">${iconSVGs[module.icon]}</div>
           <h2>${module.title}</h2>
           <p>${module.description}</p>
-          ${isLocked ? `
-            <div class="locked-badge">
-              ${iconSVGs.lock}
-              ${isPart2 ? 'Lukittu - Suorita ensin kaikki Osa 1 moduulit' : 'Lukittu - Suorita ensin edellinen moduuli'}
-            </div>
-          ` : progress > 0 ? `
+          ${progress > 0 ? `
             <div class="progress-bar">
               <div class="progress-fill" style="width: ${progress}%"></div>
             </div>
             <div class="progress-text">${completedSections}/${totalSections} osiota suoritettu${isCompleted ? ' ✓' : ''}</div>
-          ` : '<div class="progress-text">Ei vielä aloitettu</div>'}
+          ` : '<div class="progress-text">Valmis käyttöön</div>'}
         </div>
       `;
     }
