@@ -481,46 +481,6 @@ h1.hero-title em{font-style:italic;color:#d4c4f0;}
   </div>
 </section>
 
-let lastTaskAnalysis = '';
-async function analyzeTimeConsumingTask() {
-  const task = document.getElementById('timeConsumingTask').value.trim();
-  const role = document.getElementById('userRole').value.trim();
-  if(!task) { alert('Kerro mikä tehtävä vie aikaasi.'); return; }
-  const btn = document.getElementById('analyzeTaskBtn');
-  const respBox = document.getElementById('taskAnalysisResponse');
-  const respText = document.getElementById('taskAnalysisText');
-  btn.disabled = true;
-  respText.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
-  respBox.style.display = 'block';
-  respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
-  try {
-    const res = await fetch('/api/ai/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        model:'gpt-4o-mini',
-        max_tokens:1000,
-        system:'Olet myynti- ja markkinointiasiantuntija. Auta löytämään AI-ratkaisut aikaa vieville tehtäville. Vastaa suomeksi, käytännönläheisesti. Sisällytä: 1) Mitkä AI-työkalut sopivat tähän tehtävään 2) Konkreettiset käyttötapaukset 3) Linkit suosituimpiin työkaluihin.',
-        messages:[{role:'user', content:`Tehtävä joka vie aikaa: "${task}"\n\nRooli/alue: ${role || 'ei määritelty'}\n\nAnalysoi tämä tehtävä ja ehdota AI-ratkaisuja. Kerro mitkä työkalut sopivat ja miten niitä käytetään.`}]
-      })
-    });
-    const data = await res.json();
-    lastTaskAnalysis = data.text || data.reply || '';
-    respText.textContent = lastTaskAnalysis;
-  } catch(e) {
-    respText.textContent = 'Yhteysvirhe. Yritä uudelleen hetken kuluttua.';
-  }
-  btn.disabled = false;
-}
-function copyTaskAnalysis() {
-  if(!lastTaskAnalysis) return;
-  navigator.clipboard.writeText(lastTaskAnalysis).then(()=>{
-    const b=document.getElementById('copyTaskBtn');
-    b.textContent='✓ Kopioitu!'; b.classList.add('ok');
-    setTimeout(()=>{b.textContent='📋 Kopioi ehdotukset';b.classList.remove('ok');},2200);
-  });
-}
-
 <!-- REFLEKTIO -->
 <section class="section section-alt" id="reflektio" data-index="7">
   <div class="section-inner fade-up">
