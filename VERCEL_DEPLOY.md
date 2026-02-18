@@ -17,6 +17,7 @@
 4. Add Environment Variables:
    - `DATABASE_URL`: Your PostgreSQL connection string
    - `SESSION_SECRET`: A random secret string (generate with: `openssl rand -hex 32`)
+   - `OPENAI_API_KEY`: Your OpenAI API key (get from https://platform.openai.com/api-keys)
    - `NODE_ENV`: `production`
 5. Click "Deploy"
 
@@ -34,6 +35,7 @@ vercel
 # Set environment variables
 vercel env add DATABASE_URL
 vercel env add SESSION_SECRET
+vercel env add OPENAI_API_KEY
 vercel env add NODE_ENV
 
 # Deploy to production
@@ -46,6 +48,7 @@ Add these in Vercel Dashboard → Project Settings → Environment Variables:
 
 - `DATABASE_URL`: `postgresql://neondb_owner:npg_SGLOZcV8g9IW@ep-icy-river-ag1c7fpx-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require`
 - `SESSION_SECRET`: Generate a random string (e.g., `openssl rand -hex 32`)
+- `OPENAI_API_KEY`: Your OpenAI API key (get from https://platform.openai.com/api-keys)
 - `NODE_ENV`: `production`
 
 ## Post-Deployment
