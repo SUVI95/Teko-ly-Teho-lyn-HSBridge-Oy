@@ -400,6 +400,11 @@ function updateProgress() {
   pips.forEach((p,i)=>{p.classList.remove('active','done');if(i===ai)p.classList.add('active');else if(i<ai)p.classList.add('done');});
 }
 window.addEventListener('scroll',updateProgress,{passive:true});
+// Immediately show elements already in viewport
+document.querySelectorAll('.fade-up').forEach(el=>{
+  const rect=el.getBoundingClientRect();
+  if(rect.top<window.innerHeight&&rect.bottom>0)el.classList.add('in');
+});
 const fadeObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');fadeObs.unobserve(e.target);}});},{threshold:0.12});
 document.querySelectorAll('.fade-up').forEach(el=>fadeObs.observe(el));
 
