@@ -540,7 +540,7 @@
       medal: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>'
     };
     
-    // Check authentication
+    // Check authentication (optional - no redirect)
     async function checkAuth() {
       try {
         const response = await fetch(`${API_URL}/auth/me`, {
@@ -548,47 +548,51 @@
         });
         
         if (!response.ok) {
-          window.location.href = '/login';
-          return null;
+          return null; // Not logged in, but continue anyway
         }
         
         const data = await response.json();
         return data.user;
       } catch (error) {
-        window.location.href = '/login';
-        return null;
+        return null; // Not logged in, but continue anyway
       }
     }
     
-    // Load user info
+    // Load user info (optional)
     async function loadUser() {
       const user = await checkAuth();
       if (user) {
         document.getElementById('userName').textContent = user.name || user.email;
         document.getElementById('userEmail').textContent = user.email;
+      } else {
+        // Hide user section if not logged in
+        const userSection = document.querySelector('.user-section');
+        if (userSection) userSection.style.display = 'none';
       }
     }
     
-    // Load modules
+    // Load modules (no authentication required)
     async function loadModules() {
-      const user = await checkAuth();
-      if (!user) return;
+      // No authentication check - load modules for everyone
       
       try {
-        const summaryResponse = await fetch(`${API_URL}/progress/summary`, {
-          credentials: 'include'
-        });
-        
+        // Try to load progress, but continue even if it fails
         let summary = { modules: [], checklists: [] };
-        if (summaryResponse.ok) {
-          try {
-            summary = await summaryResponse.json();
-          } catch (parseError) {
-            console.error('Error parsing summary response:', parseError);
-            summary = { modules: [], checklists: [] };
+        try {
+          const summaryResponse = await fetch(`${API_URL}/progress/summary`, {
+            credentials: 'include'
+          });
+          
+          if (summaryResponse.ok) {
+            try {
+              summary = await summaryResponse.json();
+            } catch (parseError) {
+              console.error('Error parsing summary response:', parseError);
+            }
           }
-        } else {
-          console.warn('Summary response not ok:', summaryResponse.status);
+        } catch (error) {
+          // Progress loading failed, but continue anyway
+          console.log('Progress not available (not logged in), continuing without progress tracking');
         }
         window.currentSummary = summary; // Store for statistics
         
@@ -935,7 +939,7 @@
       } catch (error) {
         console.error('Logout error:', error);
       }
-      window.location.href = '/login';
+      window.location.reload(); // Reload page instead of redirecting to login
     }
     
     // Initialize

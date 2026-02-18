@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
 
-// OpenAI API endpoint for chat
-router.post('/chat', authenticateToken, async (req, res) => {
+// OpenAI API endpoint for chat (no authentication required)
+router.post('/chat', async (req, res) => {
   try {
     const { messages, system, model = 'gpt-4o-mini', max_tokens = 1000 } = req.body;
     
