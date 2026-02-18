@@ -3,11 +3,16 @@ const pool = require('../database/db');
 
 const router = express.Router();
 
-// Get progress for a module
+// Get progress for a module (optional - works without auth)
 router.get('/module/:moduleId', async (req, res) => {
   try {
     const { moduleId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user?.id;
+    
+    // If no user, return empty progress
+    if (!userId) {
+      return res.json({ progress: [], checklist: [] });
+    }
     
     const result = await pool.query(
       'SELECT * FROM student_progress WHERE user_id = $1 AND module_id = $2 ORDER BY last_accessed DESC',
@@ -34,12 +39,17 @@ router.get('/module/:moduleId', async (req, res) => {
   }
 });
 
-// Update progress for a section
+// Update progress for a section (optional - works without auth)
 router.post('/module/:moduleId/section/:sectionId', async (req, res) => {
   try {
     const { moduleId, sectionId } = req.params;
     const { completed, progressData, timeSpent } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id;
+    
+    // If no user, just return success (progress won't be saved)
+    if (!userId) {
+      return res.json({ success: true, progress: null });
+    }
     
     const result = await pool.query(
       `INSERT INTO student_progress (user_id, module_id, section_id, completed, progress_data, time_spent, last_accessed)
@@ -62,12 +72,17 @@ router.post('/module/:moduleId/section/:sectionId', async (req, res) => {
   }
 });
 
-// Mark checklist item as complete
+// Mark checklist item as complete (optional - works without auth)
 router.post('/module/:moduleId/checklist/:itemId', async (req, res) => {
   try {
     const { moduleId, itemId } = req.params;
     const { completed } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id;
+    
+    // If no user, just return success (checklist won't be saved)
+    if (!userId) {
+      return res.json({ success: true, item: null });
+    }
     
     const result = await pool.query(
       `INSERT INTO checklist_items (user_id, module_id, item_id, completed, completed_at)
@@ -88,10 +103,15 @@ router.post('/module/:moduleId/checklist/:itemId', async (req, res) => {
   }
 });
 
-// Get all user progress summary
+// Get all user progress summary (optional - works without auth)
 router.get('/summary', async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id;
+    
+    // If no user, return empty summary
+    if (!userId) {
+      return res.json({ modules: [], checklists: [] });
+    }
     
     const progressResult = await pool.query(
       `SELECT module_id, 
