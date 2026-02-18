@@ -818,7 +818,7 @@
       `;
     }
     
-    // Update statistics
+    // Update statistics (only show if there's actual progress)
     function updateStatistics(overallProgress, completedModules, totalSections) {
       try {
         const statsContainer = document.getElementById('statsContainer');
@@ -826,6 +826,22 @@
           console.warn('Stats container not found');
           return;
         }
+        
+        // Count completed checklist items
+        const summary = window.currentSummary || { checklists: [] };
+        let completedChecklistItems = 0;
+        if (summary.checklists && Array.isArray(summary.checklists)) {
+          summary.checklists.forEach(c => {
+            completedChecklistItems += parseInt(c.completed_items || 0);
+          });
+        }
+        
+        // Only show statistics if there's actual progress
+        if (overallProgress === 0 && completedModules === 0 && totalSections === 0 && completedChecklistItems === 0) {
+          statsContainer.style.display = 'none';
+          return;
+        }
+        
         statsContainer.style.display = 'grid';
         
         // Update progress ring
@@ -839,26 +855,21 @@
         }
         
         const overallProgressText = document.getElementById('overallProgressText');
-        if (overallProgressText) overallProgressText.textContent = overallProgress + '%';
+        if (overallProgressText) overallProgressText.textContent = Math.round(overallProgress) + '%';
         
         const completedModulesEl = document.getElementById('completedModules');
-        if (completedModulesEl) completedModulesEl.textContent = completedModules + '/4';
+        if (completedModulesEl) completedModulesEl.textContent = completedModules;
         
         const totalSectionsEl = document.getElementById('totalSections');
         if (totalSectionsEl) totalSectionsEl.textContent = totalSections;
         
-        // Count completed checklist items
-        const summary = window.currentSummary || { checklists: [] };
-        let completedChecklistItems = 0;
-        if (summary.checklists && Array.isArray(summary.checklists)) {
-          summary.checklists.forEach(c => {
-            completedChecklistItems += parseInt(c.completed_items || 0);
-          });
-        }
         const checklistItemsEl = document.getElementById('checklistItems');
         if (checklistItemsEl) checklistItemsEl.textContent = completedChecklistItems;
       } catch (error) {
         console.error('Error updating statistics:', error);
+        // Hide stats on error
+        const statsContainer = document.getElementById('statsContainer');
+        if (statsContainer) statsContainer.style.display = 'none';
       }
     }
     
