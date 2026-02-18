@@ -346,25 +346,9 @@ function updateProgress() {
   pips.forEach((p,i)=>{p.classList.remove('active','done');if(i===ai)p.classList.add('active');else if(i<ai)p.classList.add('done');});
 }
 window.addEventListener('scroll',updateProgress,{passive:true});
-// Immediately show elements already in viewport on page load
-function initFadeUp(){
-  const fadeUps=document.querySelectorAll('.fade-up');
-  fadeUps.forEach(el=>{
-    const rect=el.getBoundingClientRect();
-    const viewportHeight=window.innerHeight||document.documentElement.clientHeight;
-    if(rect.top<viewportHeight+100&&rect.bottom>-100){
-      el.classList.add('in');
-    }else{
-      fadeObs.observe(el);
-    }
-  });
-  // Fallback: show all after 1 second if still hidden
-  setTimeout(()=>{
-    fadeUps.forEach(el=>{if(!el.classList.contains('in'))el.classList.add('in');});
-  },1000);
-}
+// IntersectionObserver for fade-in animation on scroll (elements already visible from immediate show above)
 const fadeObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');fadeObs.unobserve(e.target);}});},{threshold:0.1,rootMargin:'100px'});
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initFadeUp);}else{setTimeout(initFadeUp,50);}
+document.querySelectorAll('.fade-up').forEach(el=>fadeObs.observe(el));
 
 let lastLearningPlan = '';
 async function generateLearningPlan() {
