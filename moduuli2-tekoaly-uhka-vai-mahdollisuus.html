@@ -474,14 +474,16 @@ async function exploreField() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({
-        model: 'gpt-4o-mini', max_tokens: 1000,
+        model: 'gpt-4o-mini',
+        max_tokens: 1000,
         system: 'Olet innostava suomalainen uravalmentaja. Vastaa lyhyesti suomeksi (n. 120 sanaa). Ole käytännönläheinen ja positiivinen.',
         messages: [{ role: 'user', content: `Ala: "${input}". Kerro lyhyesti: 1) Mitä tekoäly automatisoi tällä alalla (1-2 esimerkkiä) 2) Mitä uusia mahdollisuuksia avautuu (1-2 esimerkkiä) 3) Yksi konkreettinen tapa käyttää tekoälyä HETI työnhaussa tältä alalta. Ole kannustava — tämä henkilö on työnhaussa.` }]
       })
     });
     const data = await res.json();
-    lastField = `Tekoäly alalla "${input}":\n\n${data.text || ''}`;
-    body.innerHTML = (data.text || '').replace(/\n/g, '<br>');
+    const responseText = data.text || data.reply || 'Yhteysvirhe. Yritä uudelleen.';
+    lastField = `Tekoäly alalla "${input}":\n\n${responseText}`;
+    body.innerHTML = responseText.replace(/\n/g, '<br>');
     document.getElementById('fieldShare').style.display = 'flex';
   } catch(e) {
     body.textContent = 'Yhteysvirhe. Pohdi itse: mitä toistuvia tehtäviä alallasi voisi automatisoida?';
