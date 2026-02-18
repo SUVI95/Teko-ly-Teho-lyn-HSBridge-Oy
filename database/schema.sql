@@ -48,6 +48,19 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Password reset tokens table
+CREATE TABLE IF NOT EXISTS password_resets (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    reset_token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for password resets
+CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(reset_token);
+CREATE INDEX IF NOT EXISTS idx_password_resets_user_id ON password_resets(user_id);
+
 -- Indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON student_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_progress_module ON student_progress(module_id);

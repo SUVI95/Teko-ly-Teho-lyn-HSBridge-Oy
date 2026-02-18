@@ -189,29 +189,39 @@ router.post('/forgot-password', async (req, res) => {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour expiry
     
-    // Store reset token (create table if needed)
+    // Delete old tokens for this user
     try {
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS password_resets (
-          id SERIAL PRIMARY KEY,
-          user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-          reset_token VARCHAR(255) UNIQUE NOT NULL,
-          expires_at TIMESTAMP NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
+      await pool.query('DELETE FROM password_resets WHERE user_id = $1', [user.id]);
     } catch (e) {
-      // Table might already exist
+      // Table might not exist yet, will be created by schema
     }
     
-    // Delete old tokens for this user
-    await pool.query('DELETE FROM password_resets WHERE user_id = $1', [user.id]);
-    
     // Insert new token
-    await pool.query(
-      'INSERT INTO password_resets (user_id, reset_token, expires_at) VALUES ($1, $2, $3)',
-      [user.id, resetToken, expiresAt]
-    );
+    try {
+      await pool.query(
+        'INSERT INTO password_resets (user_id, reset_token, expires_at) VALUES ($1, $2, $3)',
+        [user.id, resetToken, expiresAt]
+      );
+    } catch (e) {
+      // If table doesn't exist, create it
+      if (e.code === '42P01') {
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS password_resets (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            reset_token VARCHAR(255) UNIQUE NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+        await pool.query(
+          'INSERT INTO password_resets (user_id, reset_token, expires_at) VALUES ($1, $2, $3)',
+          [user.id, resetToken, expiresAt]
+        );
+      } else {
+        throw e;
+      }
+    }
     
     // In production, send email here
     // For now, we'll return the reset link (remove in production!)
