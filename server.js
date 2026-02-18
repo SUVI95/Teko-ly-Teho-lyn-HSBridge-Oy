@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
 const progressRoutes = require('./routes/progress');
+const aiRoutes = require('./routes/ai');
 const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
@@ -25,6 +26,7 @@ app.use(cookieParser());
 // API Routes (before static files)
 app.use('/api/auth', authRoutes);
 app.use('/api/progress', authenticateToken, progressRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

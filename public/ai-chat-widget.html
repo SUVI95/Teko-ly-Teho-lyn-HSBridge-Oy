@@ -1,0 +1,264 @@
+<!-- AI Chat Widget -->
+<div id="aiChatWidget" style="display: none;">
+  <div id="aiChatToggle" onclick="toggleAIChat()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+  </div>
+  <div id="aiChatWindow">
+    <div id="aiChatHeader">
+      <span>💬 Kysy AI:lta</span>
+      <button onclick="toggleAIChat()" style="background: none; border: none; color: inherit; cursor: pointer; font-size: 1.2rem;">×</button>
+    </div>
+    <div id="aiChatMessages"></div>
+    <div id="aiChatInputArea">
+      <textarea id="aiChatInput" placeholder="Kirjoita kysymyksesi tähän..." rows="2"></textarea>
+      <button id="aiChatSend" onclick="sendAIChatMessage()">Lähetä</button>
+    </div>
+  </div>
+</div>
+
+<style>
+#aiChatWidget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  font-family: 'DM Sans', sans-serif;
+}
+
+#aiChatToggle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent, #2563a8);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: all 0.3s;
+}
+
+#aiChatToggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+#aiChatWindow {
+  position: absolute;
+  bottom: 70px;
+  right: 0;
+  width: 380px;
+  max-width: calc(100vw - 40px);
+  height: 500px;
+  max-height: calc(100vh - 100px);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#aiChatHeader {
+  background: var(--ink, #1a1a2e);
+  color: #fff;
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+#aiChatMessages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: var(--paper, #f5f3ef);
+}
+
+.aiChatMessage {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  max-width: 85%;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.aiChatMessage.user {
+  background: var(--accent, #2563a8);
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.aiChatMessage.ai {
+  background: #fff;
+  color: var(--text, #1a1a2e);
+  align-self: flex-start;
+  border: 1px solid var(--border, rgba(26,26,46,0.12));
+  border-bottom-left-radius: 4px;
+}
+
+.aiChatMessage.loading {
+  background: var(--paper2, #eeeae3);
+  color: var(--muted, #6b6880);
+  font-style: italic;
+}
+
+#aiChatInputArea {
+  padding: 1rem;
+  border-top: 1px solid var(--border, rgba(26,26,46,0.12));
+  background: #fff;
+  display: flex;
+  gap: 0.5rem;
+}
+
+#aiChatInput {
+  flex: 1;
+  border: 1px solid var(--border, rgba(26,26,46,0.12));
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  resize: none;
+  outline: none;
+}
+
+#aiChatInput:focus {
+  border-color: var(--accent, #2563a8);
+}
+
+#aiChatSend {
+  padding: 0.75rem 1.5rem;
+  background: var(--accent, #2563a8);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#aiChatSend:hover:not(:disabled) {
+  background: var(--accent2, #1a4f8a);
+}
+
+#aiChatSend:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  #aiChatWindow {
+    width: calc(100vw - 20px);
+    right: -10px;
+  }
+}
+</style>
+
+<script>
+let aiChatOpen = false;
+let aiChatHistory = [];
+
+function toggleAIChat() {
+  const widget = document.getElementById('aiChatWidget');
+  const window = document.getElementById('aiChatWindow');
+  aiChatOpen = !aiChatOpen;
+  
+  if (aiChatOpen) {
+    widget.style.display = 'block';
+    window.style.display = 'flex';
+    document.getElementById('aiChatInput').focus();
+  } else {
+    window.style.display = 'none';
+  }
+}
+
+function addAIChatMessage(role, content) {
+  const messagesDiv = document.getElementById('aiChatMessages');
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `aiChatMessage ${role}`;
+  messageDiv.textContent = content;
+  messagesDiv.appendChild(messageDiv);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  return messageDiv;
+}
+
+async function sendAIChatMessage() {
+  const input = document.getElementById('aiChatInput');
+  const sendBtn = document.getElementById('aiChatSend');
+  const message = input.value.trim();
+  
+  if (!message) return;
+  
+  // Add user message
+  addAIChatMessage('user', message);
+  input.value = '';
+  sendBtn.disabled = true;
+  
+  // Add loading message
+  const loadingMsg = addAIChatMessage('ai', 'Ajatellaan...');
+  
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 500,
+        system: 'Olet auttava tekoälyassistentti, joka auttaa käyttäjiä oppimaan tekoälystä ja sen käytöstä työnhaussa. Vastaa suomeksi, ystävällisesti ja käytännönläheisesti. Pidä vastaukset tiiviinä mutta informatiivisina.',
+        messages: [
+          ...aiChatHistory,
+          { role: 'user', content: message }
+        ]
+      })
+    });
+    
+    const data = await res.json();
+    const responseText = data.text || 'Anteeksi, en pystynyt vastaamaan. Yritä uudelleen.';
+    
+    // Remove loading message
+    loadingMsg.remove();
+    
+    // Add AI response
+    addAIChatMessage('ai', responseText);
+    
+    // Update history
+    aiChatHistory.push(
+      { role: 'user', content: message },
+      { role: 'assistant', content: responseText }
+    );
+    
+    // Keep only last 10 messages in history
+    if (aiChatHistory.length > 20) {
+      aiChatHistory = aiChatHistory.slice(-20);
+    }
+  } catch (error) {
+    loadingMsg.remove();
+    addAIChatMessage('ai', 'Yhteysvirhe. Yritä uudelleen hetken kuluttua.');
+  }
+  
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+// Enter key to send
+document.addEventListener('DOMContentLoaded', function() {
+  const input = document.getElementById('aiChatInput');
+  if (input) {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendAIChatMessage();
+      }
+    });
+  }
+});
+</script>

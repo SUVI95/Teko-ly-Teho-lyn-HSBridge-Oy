@@ -3,586 +3,469 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Moduuli 3 – Master Prompt: Oppaasi tekoälyn maailmassa</title>
+<title>Moduuli 3 – Master Prompt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Space+Grotesk:wght@400;500;700&display=swap');
+:root {
+  --ink:#1a1a2e; --ink2:#2d2d44;
+  --paper:#f5f3ef; --paper2:#eeeae3; --warm:#e8e0d4;
+  --accent:#2a7a4b; --accent2:#c75b3a; --accent3:#2563a8; --gold:#b8860b;
+  --text:#1a1a2e; --muted:#6b6880; --border:rgba(26,26,46,0.12);
+  --shadow:0 2px 20px rgba(26,26,46,0.08); --shadow-md:0 8px 40px rgba(26,26,46,0.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;overflow-x:hidden;line-height:1.7;}
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent3));z-index:200;transition:width 0.4s ease;width:0%;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;background:rgba(245,243,239,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2.5rem;justify-content:space-between;}
+.nav-left{display:flex;align-items:center;gap:1rem;}
+.nav-module{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;background:rgba(42,122,75,0.08);border:1px solid rgba(42,122,75,0.2);padding:4px 12px;border-radius:4px;}
+.nav-title{font-size:0.85rem;font-weight:500;color:var(--muted);}
+.nav-steps{display:flex;gap:5px;align-items:center;}
+.step-pip{width:28px;height:4px;border-radius:2px;background:var(--warm);transition:background 0.4s;cursor:pointer;}
+.step-pip.active{background:var(--accent);}
+.step-pip.done{background:var(--accent3);}
+.section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:96px 2rem 5rem;position:relative;}
+.section-inner{max-width:820px;width:100%;}
+.section-alt{background:var(--paper2);}
+.section-warm{background:var(--warm);}
+.section-label{font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:500;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:10px;}
+.section-label::after{content:'';flex:0 0 32px;height:1px;background:currentColor;opacity:0.4;}
+h2.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4.5vw,3.5rem);font-weight:400;line-height:1.1;color:var(--ink);margin-bottom:1.5rem;letter-spacing:-0.01em;}
+h2.section-h2 em{font-style:italic;color:var(--accent);}
+.lead{font-size:1.1rem;color:var(--muted);max-width:600px;line-height:1.8;margin-bottom:3rem;font-weight:300;}
+.divider{width:48px;height:2px;background:var(--accent);margin-bottom:2rem;border-radius:1px;}
+.prose{font-size:1.05rem;line-height:1.85;color:var(--text);}
+.prose p{margin-bottom:1.25rem;}
+.prose p:last-child{margin-bottom:0;}
+.prose strong{font-weight:600;}
+.prose .pull{font-family:'DM Serif Display',serif;font-size:1.35rem;color:var(--accent);font-style:italic;border-left:3px solid var(--accent);padding-left:1.25rem;margin:2rem 0;line-height:1.5;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:start;}
+@media(max-width:680px){.two-col{grid-template-columns:1fr;gap:2rem;}}
+.fade-up{opacity:0;transform:translateY(28px);transition:opacity 0.65s ease,transform 0.65s ease;}
+.fade-up.in{opacity:1;transform:translateY(0);}
 
-  :root {
-    --bg: #050810; --surface: #0d1117; --surface2: #111827;
-    --border: rgba(99,179,237,0.15); --accent: #63b3ed; --accent2: #9f7aea;
-    --accent3: #68d391; --accent4: #f6ad55; --text: #e2e8f0; --muted: #718096; --glow: rgba(99,179,237,0.4);
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
-  #stars-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(5,8,16,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
-  .nav-logo { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; }
-  .nav-progress { display: flex; gap: 6px; align-items: center; }
-  .nav-back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.3s;
-    margin-right: 1rem;
-  }
-  .nav-back-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: rgba(99,179,237,0.05);
-  }
-  .nav-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); cursor: pointer; transition: all 0.3s; }
-  .nav-dot.active { background: var(--accent); box-shadow: 0 0 8px var(--glow); }
-  .nav-dot.done { background: var(--accent3); }
-  .section { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 2rem 4rem; position: relative; z-index: 1; }
-  .section-inner { max-width: 900px; width: 100%; }
-  .module-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(99,179,237,0.1); border: 1px solid rgba(99,179,237,0.3); border-radius: 100px; padding: 6px 16px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 2rem; }
-  .module-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
-  h1.hero-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 700; line-height: 1.1; margin-bottom: 1.5rem; background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .hero-sub { font-size: 1.2rem; color: var(--muted); max-width: 600px; margin: 0 auto 3rem; line-height: 1.7; }
-  .hero-cta { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; padding: 14px 32px; border-radius: 100px; font-weight: 600; font-size: 1rem; cursor: pointer; border: none; transition: all 0.3s; text-decoration: none; box-shadow: 0 0 30px rgba(99,179,237,0.3); }
-  .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(99,179,237,0.5); }
-  .section-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
-  h2.section-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; line-height: 1.2; margin-bottom: 1rem; color: #fff; }
-  h2.section-title span { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .section-lead { font-size: 1.05rem; color: var(--muted); line-height: 1.8; margin-bottom: 3rem; max-width: 680px; }
-  .glow-line { width: 80px; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; margin-bottom: 2rem; box-shadow: 0 0 12px var(--glow); }
+/* HERO */
+#hero{background:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:96px 2rem 5rem;position:relative;overflow:hidden;}
+#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 15% 50%,rgba(42,122,75,0.15) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 85% 30%,rgba(37,99,168,0.10) 0%,transparent 60%);}
+.hero-inner{max-width:820px;width:100%;position:relative;z-index:1;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;margin-bottom:2.5rem;}
+.eyebrow-num{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;}
+.eyebrow-line{width:40px;height:1px;background:rgba(42,122,75,0.5);}
+.eyebrow-label{font-family:'DM Mono',monospace;font-size:0.72rem;color:rgba(255,255,255,0.35);letter-spacing:0.1em;text-transform:uppercase;}
+h1.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(3rem,7vw,6rem);font-weight:400;line-height:1.05;color:#fff;margin-bottom:1.75rem;letter-spacing:-0.01em;}
+h1.hero-title em{font-style:italic;color:#a8d4b8;}
+.hero-sub{font-size:1.15rem;color:rgba(255,255,255,0.55);max-width:520px;line-height:1.75;margin-bottom:3rem;font-weight:300;}
+.hero-cta{display:inline-flex;align-items:center;gap:12px;background:var(--accent);color:#fff;padding:16px 36px;border-radius:6px;font-weight:600;font-size:0.95rem;cursor:pointer;text-decoration:none;transition:all 0.25s;}
+.hero-cta:hover{background:#1f5c38;transform:translateY(-2px);box-shadow:0 8px 24px rgba(42,122,75,0.35);}
+.hero-cta svg{transition:transform 0.25s;}
+.hero-cta:hover svg{transform:translateX(4px);}
+.hero-time{display:flex;align-items:center;gap:8px;margin-top:2rem;font-size:0.82rem;color:rgba(255,255,255,0.3);}
+.hero-time::before{content:'⏱';font-size:0.9rem;}
 
-  /* DEFINITION CARD */
-  .definition-card { background: linear-gradient(135deg, rgba(99,179,237,0.08), rgba(159,122,234,0.08)); border: 1px solid rgba(99,179,237,0.2); border-radius: 20px; padding: 2.5rem; margin-bottom: 2rem; position: relative; overflow: hidden; }
-  .definition-card::before { content: ''; position: absolute; top: -1px; left: 20px; width: 120px; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
-  .definition-card p { font-size: 1.1rem; line-height: 1.8; color: var(--text); margin-bottom: 0.75rem; }
-  .definition-card p:last-child { margin-bottom: 0; }
-  .definition-card .highlight { color: var(--accent); font-weight: 600; }
+/* COMPARE */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:2rem;}
+@media(max-width:600px){.compare-grid{grid-template-columns:1fr;}}
+.compare-card{background:#fff;border-radius:12px;padding:2rem;border:1px solid var(--border);box-shadow:var(--shadow);}
+.compare-card.bad{border-top:3px solid var(--accent2);}
+.compare-card.good{border-top:3px solid var(--accent);}
+.compare-label{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:1.25rem;}
+.compare-card.bad .compare-label{color:var(--accent2);}
+.compare-card.good .compare-label{color:var(--accent);}
+.compare-prompt{font-family:'DM Mono',monospace;font-size:0.85rem;background:var(--paper);border-radius:6px;padding:0.85rem 1rem;margin-bottom:0.85rem;color:var(--ink);line-height:1.55;}
+.compare-result{font-size:0.82rem;color:var(--muted);line-height:1.55;}
 
-  /* COMPARISON */
-  .compare-split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; }
-  @media (max-width: 640px) { .compare-split { grid-template-columns: 1fr; } }
-  .compare-col { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.75rem; }
-  .compare-col.without { border-color: rgba(246,173,85,0.2); }
-  .compare-col.with { border-color: rgba(104,211,145,0.25); }
-  .compare-col .col-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
-  .compare-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
-  .without .compare-label { color: var(--accent4); }
-  .with .compare-label { color: var(--accent3); }
-  .compare-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
-  .compare-col ul li { display: flex; align-items: flex-start; gap: 8px; font-size: 0.88rem; color: var(--text); line-height: 1.5; }
-  .compare-col ul li::before { content: '→'; flex-shrink: 0; font-weight: 700; margin-top: 1px; }
-  .without ul li::before { color: var(--accent4); }
-  .with ul li::before { color: var(--accent3); }
+/* COMPONENTS */
+.components-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);}
+@media(max-width:680px){.components-grid{grid-template-columns:1fr 1fr;}}
+.comp-cell{background:#fff;padding:1.75rem 1.5rem;transition:background 0.2s;}
+.comp-cell:hover{background:rgba(42,122,75,0.03);}
+.comp-icon{font-size:1.75rem;margin-bottom:0.85rem;display:block;}
+.comp-cell h4{font-size:0.95rem;font-weight:600;color:var(--ink);margin-bottom:0.35rem;}
+.comp-cell p{font-size:0.82rem;color:var(--muted);line-height:1.55;}
 
-  /* WHAT GOES IN */
-  .components-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 2rem; }
-  @media (max-width: 700px) { .components-grid { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 480px) { .components-grid { grid-template-columns: 1fr; } }
-  .component-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; text-align: center; transition: all 0.3s; opacity: 0; transform: translateY(20px); }
-  .component-card.visible { opacity: 1; transform: translateY(0); }
-  .component-card:hover { border-color: rgba(99,179,237,0.3); transform: translateY(-3px); }
-  .component-card .comp-icon { font-size: 2rem; margin-bottom: 0.75rem; display: block; }
-  .component-card h4 { font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem; }
-  .component-card p { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+/* STEPS */
+.steps-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff;box-shadow:var(--shadow);}
+.step-item{display:flex;gap:1.75rem;padding:2rem;border-bottom:1px solid var(--border);align-items:flex-start;opacity:0;transform:translateX(-16px);transition:all 0.5s;}
+.step-item:last-child{border-bottom:none;}
+.step-item.in{opacity:1;transform:translateX(0);}
+.step-num{width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff;font-family:'DM Serif Display',serif;font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-body h4{font-size:0.97rem;font-weight:600;color:var(--ink);margin-bottom:0.4rem;}
+.step-body p{font-size:0.88rem;color:var(--muted);line-height:1.65;margin-bottom:0.75rem;}
+.code-block{font-family:'DM Mono',monospace;font-size:0.82rem;background:var(--paper);border:1px solid var(--border);border-radius:6px;padding:0.85rem 1rem;color:var(--ink);line-height:1.6;}
 
-  /* STEPS */
-  .steps-list { display: flex; flex-direction: column; gap: 1.5rem; margin-top: 2rem; }
-  .step-row { display: flex; gap: 1.5rem; align-items: flex-start; opacity: 0; transform: translateX(-20px); transition: all 0.5s; }
-  .step-row.visible { opacity: 1; transform: translateX(0); }
-  .step-badge { width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, rgba(99,179,237,0.15), rgba(159,122,234,0.15)); border: 1px solid rgba(99,179,237,0.25); display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--accent); flex-shrink: 0; }
-  .step-content { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; flex: 1; transition: all 0.3s; }
-  .step-content:hover { border-color: var(--accent); transform: translateX(4px); }
-  .step-content h4 { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
-  .step-content p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
-  .step-content .prompt-box { background: rgba(99,179,237,0.06); border: 1px solid rgba(99,179,237,0.15); border-radius: 10px; padding: 1rem 1.25rem; margin-top: 0.75rem; font-family: monospace; font-size: 0.85rem; color: var(--accent); line-height: 1.6; }
+/* LIVE BUILDER — the crown jewel of module 3 */
+.builder-wrap{background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-md);border:1px solid var(--border);}
+.builder-header{background:var(--ink);padding:1.75rem 2rem;display:flex;align-items:center;gap:14px;}
+.builder-header-icon{width:40px;height:40px;border-radius:10px;background:rgba(42,122,75,0.2);border:1px solid rgba(42,122,75,0.3);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+.builder-header-text h3{font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;color:#fff;margin-bottom:0.2rem;}
+.builder-header-text p{font-size:0.82rem;color:rgba(255,255,255,0.45);font-weight:300;}
+.builder-body{padding:2rem;}
+.builder-step{margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border);}
+.builder-step:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.builder-step-label{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.65rem;display:flex;align-items:center;gap:8px;}
+.builder-step-label .snum{width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:0.6rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.builder-step h4{font-size:0.95rem;font-weight:600;color:var(--ink);margin-bottom:0.4rem;}
+.builder-step p{font-size:0.85rem;color:var(--muted);line-height:1.65;margin-bottom:1rem;}
+.builder-textarea{width:100%;background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:0.9rem 1.1rem;font-size:0.92rem;font-family:'DM Sans',sans-serif;color:var(--text);resize:vertical;min-height:90px;outline:none;transition:border-color 0.2s;line-height:1.6;}
+.builder-textarea:focus{border-color:rgba(42,122,75,0.4);}
+.builder-textarea::placeholder{color:var(--muted);opacity:0.6;}
+.builder-textarea:disabled{opacity:0.5;cursor:default;}
+.builder-generate-btn{width:100%;padding:14px;border-radius:8px;font-size:0.95rem;font-weight:600;cursor:pointer;border:none;background:var(--accent);color:#fff;transition:all 0.25s;font-family:'DM Sans',sans-serif;margin-top:0.5rem;}
+.builder-generate-btn:hover{background:#1f5c38;transform:translateY(-1px);}
+.builder-generate-btn:disabled{opacity:0.45;cursor:default;transform:none;}
+.result-box{display:none;margin-top:1.5rem;background:var(--paper);border:1px solid var(--border);border-radius:10px;padding:1.5rem;}
+.result-box-label{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.75rem;}
+.result-text{font-family:'DM Mono',monospace;font-size:0.83rem;line-height:1.7;color:var(--ink);white-space:pre-wrap;word-break:break-word;}
+.result-actions{display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap;}
+.result-copy-btn{padding:8px 20px;border-radius:6px;font-size:0.82rem;font-weight:600;cursor:pointer;background:var(--ink);color:#fff;border:none;transition:all 0.25s;font-family:'DM Sans',sans-serif;}
+.result-copy-btn:hover{background:var(--ink2);}
+.result-copy-btn.ok{background:var(--accent);}
+.result-teams-btn{padding:8px 20px;border-radius:6px;font-size:0.82rem;font-weight:600;cursor:pointer;background:rgba(37,99,168,0.08);color:var(--accent3);border:1px solid rgba(37,99,168,0.2);transition:all 0.25s;font-family:'DM Sans',sans-serif;}
+.result-teams-btn:hover{background:rgba(37,99,168,0.15);}
+.result-teams-btn.ok{background:rgba(42,122,75,0.1);border-color:rgba(42,122,75,0.25);color:var(--accent);}
+.loading-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--muted);margin:0 2px;animation:ldot 1.2s infinite;}
+.loading-dots span:nth-child(2){animation-delay:0.2s;}
+.loading-dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes ldot{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
 
-  /* EXAMPLE */
-  .example-split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; }
-  @media (max-width: 640px) { .example-split { grid-template-columns: 1fr; } }
-  .example-card { border-radius: 14px; padding: 1.5rem; border: 1px solid; }
-  .example-card.bad { background: rgba(246,173,85,0.04); border-color: rgba(246,173,85,0.2); }
-  .example-card.good { background: rgba(104,211,145,0.04); border-color: rgba(104,211,145,0.2); }
-  .example-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; }
-  .bad .example-label { color: var(--accent4); }
-  .good .example-label { color: var(--accent3); }
-  .example-card .prompt-text { font-size: 0.9rem; color: var(--text); font-style: italic; line-height: 1.6; margin-bottom: 0.75rem; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 0.75rem 1rem; }
-  .example-card .result-text { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
-
-  /* USES */
-  .uses-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-top: 2rem; }
-  @media (max-width: 600px) { .uses-grid { grid-template-columns: 1fr; } }
-  .use-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; display: flex; gap: 1rem; align-items: flex-start; transition: all 0.3s; opacity: 0; transform: scale(0.95); }
-  .use-card.visible { opacity: 1; transform: scale(1); }
-  .use-card:hover { border-color: rgba(99,179,237,0.3); transform: translateY(-2px); }
-  .use-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(99,179,237,0.1); border: 1px solid rgba(99,179,237,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
-  .use-card h4 { font-size: 0.95rem; font-weight: 600; color: #fff; margin-bottom: 0.3rem; }
-  .use-card p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
-
-  /* QUOTE CALLOUT */
-  .quote-callout { background: linear-gradient(135deg, rgba(99,179,237,0.06), rgba(159,122,234,0.06)); border-left: 4px solid var(--accent); border-radius: 0 16px 16px 0; padding: 2rem 2.5rem; margin: 2.5rem 0; }
-  .quote-callout blockquote { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.1rem, 2.5vw, 1.4rem); font-weight: 500; color: #fff; line-height: 1.5; font-style: italic; }
-
-  /* CHECKLIST */
-  .checklist-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem; }
-  .checklist-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; }
-  .check-item { display: flex; align-items: flex-start; gap: 14px; padding: 1rem 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.2s; border-radius: 8px; }
-  .check-item:last-child { border-bottom: none; }
-  .check-item:hover { background: rgba(99,179,237,0.04); padding-left: 8px; }
-  .check-box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid rgba(99,179,237,0.4); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.3s; margin-top: 1px; }
-  .check-item.checked .check-box { background: var(--accent3); border-color: var(--accent3); }
-  .check-box svg { width: 12px; height: 12px; stroke: #fff; opacity: 0; transition: opacity 0.2s; }
-  .check-item.checked .check-box svg { opacity: 1; }
-  .check-text h4 { font-size: 0.95rem; font-weight: 600; color: var(--text); margin-bottom: 0.2rem; transition: color 0.2s; }
-  .check-item.checked .check-text h4 { color: var(--accent3); text-decoration: line-through; text-decoration-color: rgba(104,211,145,0.4); }
-  .check-text p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
-
-  /* OUTRO */
-  #outro { text-align: center; }
-  .outro-box { background: linear-gradient(135deg, rgba(99,179,237,0.08), rgba(159,122,234,0.08)); border: 1px solid rgba(99,179,237,0.2); border-radius: 24px; padding: 4rem 3rem; position: relative; overflow: hidden; }
-  .outro-box::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at center, rgba(99,179,237,0.06) 0%, transparent 60%); animation: rotate 20s linear infinite; pointer-events: none; }
-  @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .outro-box h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 700; color: #fff; margin-bottom: 1rem; position: relative; }
-  .outro-box p { font-size: 1rem; color: var(--muted); margin-bottom: 2.5rem; line-height: 1.7; max-width: 520px; margin-left: auto; margin-right: auto; position: relative; }
-  .outro-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; }
-  .btn-primary { display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; padding: 14px 28px; border-radius: 100px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; transition: all 0.3s; box-shadow: 0 0 25px rgba(99,179,237,0.3); text-decoration: none; }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(99,179,237,0.5); }
-  .btn-secondary { display: inline-flex; align-items: center; gap: 10px; background: transparent; color: var(--text); padding: 14px 28px; border-radius: 100px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: 1px solid var(--border); transition: all 0.3s; text-decoration: none; }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: rgba(99,179,237,0.05); }
-
-  #progress-bar { position: fixed; top: 60px; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); z-index: 101; transition: width 0.3s; box-shadow: 0 0 10px var(--glow); }
-  .scroll-hint { position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: 0.4; animation: bounceScroll 2.5s infinite; }
-  .scroll-hint span { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-  @keyframes bounceScroll { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(8px); } }
-  .fade-in { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease, transform 0.7s ease; }
-  .fade-in.visible { opacity: 1; transform: translateY(0); }
-  @media (max-width: 768px) { .section { padding: 70px 1.25rem 3rem; } .outro-box { padding: 3rem 1.5rem; } }
+/* REFLECTION */
+.reflection-card{background:var(--ink);border-radius:16px;padding:3rem;color:#fff;position:relative;overflow:hidden;}
+.reflection-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 80% 20%,rgba(42,122,75,0.15) 0%,transparent 60%);pointer-events:none;}
+.reflection-label{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:1.25rem;}
+.reflection-card h3{font-family:'DM Serif Display',serif;font-size:clamp(1.4rem,3vw,2rem);font-weight:400;color:#fff;margin-bottom:0.75rem;position:relative;z-index:1;}
+.reflection-card p{font-size:0.95rem;color:rgba(255,255,255,0.5);margin-bottom:1.75rem;line-height:1.75;font-weight:300;position:relative;z-index:1;}
+.reflection-textarea{width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:1rem 1.25rem;color:#fff;font-size:0.95rem;font-family:'DM Sans',sans-serif;resize:none;outline:none;transition:border-color 0.2s;line-height:1.65;min-height:100px;position:relative;z-index:1;}
+.reflection-textarea:focus{border-color:rgba(255,255,255,0.3);}
+.reflection-textarea::placeholder{color:rgba(255,255,255,0.25);}
+.reflection-actions{display:flex;gap:10px;margin-top:1rem;flex-wrap:wrap;align-items:center;position:relative;z-index:1;}
+.reflection-save{padding:10px 24px;border-radius:6px;font-size:0.88rem;font-weight:600;cursor:pointer;border:none;background:var(--accent);color:#fff;transition:all 0.25s;font-family:'DM Sans',sans-serif;}
+.reflection-save:hover{background:#1f5c38;}
+.reflection-share{padding:10px 24px;border-radius:6px;font-size:0.88rem;font-weight:600;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);transition:all 0.25s;font-family:'DM Sans',sans-serif;}
+.reflection-share:hover{border-color:rgba(255,255,255,0.4);color:#fff;}
+.reflection-share.ok{border-color:rgba(42,122,75,0.5);color:#68d391;}
+.reflection-confirm{display:none;font-size:0.85rem;color:rgba(255,255,255,0.4);margin-top:0.75rem;position:relative;z-index:1;}
+.btn-next{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:#fff;padding:15px 32px;border-radius:6px;font-weight:600;font-size:0.95rem;text-decoration:none;transition:all 0.25s;}
+.btn-next:hover{background:var(--ink2);transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.btn-next svg{transition:transform 0.25s;}
+.btn-next:hover svg{transform:translateX(4px);}
+.btn-back{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--muted);padding:15px 24px;border-radius:6px;font-weight:500;font-size:0.95rem;border:1px solid var(--border);text-decoration:none;transition:all 0.25s;}
+.btn-back:hover{color:var(--ink);border-color:rgba(26,26,46,0.3);}
+.highlight-box{background:#fff;border-radius:12px;padding:2.5rem;box-shadow:var(--shadow-md);border:1px solid var(--border);position:relative;}
+.highlight-box::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent);border-radius:12px 0 0 12px;}
+@media(max-width:768px){nav{padding:0 1.25rem;}.nav-title{display:none;}.section{padding:80px 1.25rem 4rem;}.reflection-card{padding:2rem;}.builder-body{padding:1.5rem;}}
 </style>
 </head>
 <body>
-
-<canvas id="stars-canvas"></canvas>
 <div id="progress-bar"></div>
-
 <nav>
-  <div style="display: flex; align-items: center;">
-    <a href="/" class="nav-back-btn">
-      ← Etusivu
-    </a>
-    <div class="nav-logo">🧠 AI Kurssi · Moduuli 3</div>
+  <div class="nav-left">
+    <span class="nav-module">Moduuli 03</span>
+    <span class="nav-title">Master Prompt — tekoälysi muisti</span>
   </div>
-  <div class="nav-progress" id="navDots"></div>
+  <div class="nav-steps" id="navSteps"></div>
 </nav>
 
 <!-- HERO -->
-<section class="section" id="hero" data-index="0" style="text-align:center;">
-  <div class="section-inner">
-    <div class="module-badge"><span class="dot"></span> Moduuli 3 · Master Prompt</div>
-    <h1 class="hero-title">Master Prompt –<br>Oppaasi tekoälyn<br>maailmassa</h1>
-    <p class="hero-sub">Opi luomaan tekoälysiä ymmärtävä Master Prompt, joka muuttaa yleiset vastaukset henkilökohtaisiksi neuvoiksi.</p>
-    <a href="#what-is" class="hero-cta">
-      Aloita oppiminen
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+<section class="section" id="hero" data-index="0">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">
+      <span class="eyebrow-num">03 / 05</span>
+      <span class="eyebrow-line"></span>
+      <span class="eyebrow-label">Master Prompt</span>
+    </div>
+    <h1 class="hero-title">Tekoäly oppii<br><em>tuntemaan sinut</em></h1>
+    <p class="hero-sub">Master Prompt on yksi teksti — mutta se muuttaa kaiken. Kun tekoäly tietää kuka olet, se antaa täysin erilaisia vastauksia.</p>
+    <a href="#mita" class="hero-cta">
+      Aloita <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
     </a>
-  </div>
-  <div class="scroll-hint">
-    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-    <span>Vieritä alas</span>
+    <div class="hero-time">Noin 30 minuuttia — rakennat oman Master Promptisi tässä</div>
   </div>
 </section>
 
-<!-- WHAT IS MASTER PROMPT -->
-<section class="section" id="what-is" data-index="1">
-  <div class="section-inner fade-in">
-    <div class="section-tag">Peruskäsite</div>
-    <h2 class="section-title">Mikä on <span>Master Prompt?</span></h2>
-    <div class="glow-line"></div>
-    <div class="definition-card">
-      <p>Master Prompt on <span class="highlight">kattava kuvaus sinusta ja taustastasi</span>. Se toimii kuin tekoälyn muisti – mitä enemmän se tietää ammatillisesta taustastasi, tavoitteistasi ja vahvuuksistasi, sitä paremmin se voi auttaa sinua.</p>
-      <p style="font-size:0.92rem;color:var(--muted);">Ilman tätä tietoa tekoäly antaa yleisiä vastauksia. Master Promptin ansiosta saat henkilökohtaisia neuvoja.</p>
-    </div>
-
-    <div class="components-grid">
-      <div class="component-card" data-delay="0">
-        <span class="comp-icon">👤</span>
-        <h4>Kuka olet?</h4>
-        <p>Ammatillinen taustasi, roolisi, kokemuksesi</p>
+<!-- MITÄ ON -->
+<section class="section" id="mita" data-index="1">
+  <div class="section-inner fade-up">
+    <div class="section-label">Ymmärrys</div>
+    <h2 class="section-h2">Mitä Master Prompt <em>tarkoittaa?</em></h2>
+    <div class="divider"></div>
+    <div class="two-col">
+      <div class="prose">
+        <p>Tekoäly ei muista sinua. Joka kerta kun aloitat uuden keskustelun, se ei tiedä kuka olet, mitä teet tai mitä haluat.</p>
+        <p>Master Prompt on kattava kuvaus sinusta — ammattisi, osaamisesi, tavoitteesi, arvosi. Liität sen jokaisen tärkeän keskustelun alkuun, ja tekoäly tietää heti kenen kanssa se puhuu.</p>
+        <div class="pull">"Sama tekoäly, mutta täysin eri tulos — ero on siinä, kuinka paljon se tietää sinusta."</div>
       </div>
-      <div class="component-card" data-delay="75">
-        <span class="comp-icon">⚙️</span>
-        <h4>Mitä teet?</h4>
-        <p>Käytännön toimintasi ja päivittäinen työsisältösi</p>
-      </div>
-      <div class="component-card" data-delay="150">
-        <span class="comp-icon">💎</span>
-        <h4>Mitä osaat?</h4>
-        <p>Ammattitaitosi ja henkilökohtaiset vahvuutesi</p>
-      </div>
-      <div class="component-card" data-delay="225">
-        <span class="comp-icon">🎯</span>
-        <h4>Tavoitteesi</h4>
-        <p>Mitä haluat saavuttaa lyhyellä ja pitkällä tähtäimellä</p>
-      </div>
-      <div class="component-card" data-delay="300">
-        <span class="comp-icon">🌟</span>
-        <h4>Arvosi</h4>
-        <p>Mikä on sinulle tärkeää työssä ja uralla</p>
-      </div>
-      <div class="component-card" data-delay="375">
-        <span class="comp-icon">⚠️</span>
-        <h4>Rajoitteesi</h4>
-        <p>Aika, resurssit ja henkilökohtaiset tekijät</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- WHY YOU NEED IT -->
-<section class="section" id="why" data-index="2">
-  <div class="section-inner fade-in">
-    <div class="section-tag">Merkitys</div>
-    <h2 class="section-title">Miksi tarvitset <span>Master Promptin?</span></h2>
-    <div class="glow-line"></div>
-    <p class="section-lead">Sama tekoäly, täysin eri tulos. Ero on siinä, kuinka paljon se tietää sinusta.</p>
-
-    <div class="compare-split">
-      <div class="compare-col without">
-        <div class="col-header">
-          <div style="width:36px;height:36px;border-radius:10px;background:rgba(246,173,85,0.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">⚠️</div>
-          <div><div class="compare-label">Ilman Master Promptia</div><div style="font-size:0.82rem;color:var(--text);font-weight:600;">Yleiset vastaukset</div></div>
+      <div>
+        <div class="highlight-box">
+          <p style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1.25rem;">Master Prompt sisältää</p>
+          <div class="components-grid" style="border-radius:8px;margin-top:0;">
+            <div class="comp-cell"><span class="comp-icon">👤</span><h4>Taustasi</h4><p>Ammatti, kokemus, koulutus</p></div>
+            <div class="comp-cell"><span class="comp-icon">💪</span><h4>Vahvuutesi</h4><p>Taidot ja osaaminen</p></div>
+            <div class="comp-cell"><span class="comp-icon">🎯</span><h4>Tavoitteesi</h4><p>Mitä haluat saavuttaa</p></div>
+            <div class="comp-cell"><span class="comp-icon">🌟</span><h4>Arvosi</h4><p>Mikä on sinulle tärkeää</p></div>
+            <div class="comp-cell"><span class="comp-icon">⚠️</span><h4>Rajoitteesi</h4><p>Aika, resurssit, tilanne</p></div>
+            <div class="comp-cell"><span class="comp-icon">💬</span><h4>Tyylisi</h4><p>Miten haluat vastauksia</p></div>
+          </div>
         </div>
-        <ul>
-          <li>Yleiset, ei-kohdistetut vastaukset</li>
-          <li>Perusneuvot joidenkin olosuhteiden perusteella</li>
-          <li>Ratkaisut, jotka eivät ota huomioon taustaasi</li>
-          <li>Toistuvien kysymysten selittely jokaisessa chatissä</li>
-        </ul>
-      </div>
-      <div class="compare-col with">
-        <div class="col-header">
-          <div style="width:36px;height:36px;border-radius:10px;background:rgba(104,211,145,0.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">🚀</div>
-          <div><div class="compare-label">Master Promptin kanssa</div><div style="font-size:0.82rem;color:var(--text);font-weight:600;">Henkilökohtaiset neuvot</div></div>
-        </div>
-        <ul>
-          <li>Henkilökohtaiset ja tarkat suositukset</li>
-          <li>Neuvot aina sinun tilanteeseesi sopivaksi</li>
-          <li>Ratkaisut, jotka käyttävät vahvuuksiasi</li>
-          <li>Tehokkuutta – ei tarvitse aloittaa tyhjästä</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="quote-callout" style="margin-top:2.5rem;">
-      <blockquote>„Lyhyt syöte → Yleinen vastaus. Tarkka syöte → Parempi vastaus."</blockquote>
-    </div>
-
-    <div class="example-split">
-      <div class="example-card bad">
-        <div class="example-label">❌ Ilman taustatietoa</div>
-        <div class="prompt-text">"Miten saan työpaikan?"</div>
-        <div class="result-text">Vastaus: Yleisiä vinkkejä hakemuksesta ja haastatteluista. Ei lisäarvoa.</div>
-      </div>
-      <div class="example-card good">
-        <div class="example-label">✅ Master Promptin kanssa</div>
-        <div class="prompt-text">"Olen varastotyöntekijä, 5v kokemus, erikoistuminen logistiikkaan. Haluan kehittyä varastopäälliköksi. Mitä taitoja kehittää?"</div>
-        <div class="result-text">Vastaus: Konkreettinen kehityssuunnitelma, johtamistaidot, järjestelmät, kustannusseuranta – yksilöllinen urasuunnitelma.</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- HOW TO CREATE -->
-<section class="section" id="how-to" data-index="3">
-  <div class="section-inner fade-in">
-    <div class="section-tag">Vaiheittainen opas</div>
-    <h2 class="section-title">Miten luot <span>Master Promptin?</span></h2>
-    <div class="glow-line"></div>
-    <p class="section-lead">Kolme vaihetta – ja sinulla on tehokas henkilökohtainen tekoälyavustajasi valmiina.</p>
+<!-- MIKSI -->
+<section class="section section-alt" id="miksi" data-index="2">
+  <div class="section-inner fade-up">
+    <div class="section-label">Ero on selvä</div>
+    <h2 class="section-h2">Ilman vai <em>kanssa?</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Katso konkreettinen ero. Sama kysymys — täysin eri vastaukset.</p>
+
+    <div class="compare-grid">
+      <div class="compare-card bad">
+        <div class="compare-label">❌ Ilman Master Promptia</div>
+        <div class="compare-prompt">"Miten saan työpaikan?"</div>
+        <div class="compare-result">Vastaus: Yleisiä vinkkejä CV:stä ja haastattelusta. Ei lisäarvoa. Sopii kenelle tahansa — eli ei oikeastaan kenellekään.</div>
+      </div>
+      <div class="compare-card good">
+        <div class="compare-label">✓ Master Promptin kanssa</div>
+        <div class="compare-prompt">"[Master Prompt] Miten saan töitä logistiikka-alalta Kuopiosta?"</div>
+        <div class="compare-result">Vastaus: Konkreettinen suunnitelma juuri sinulle — mitkä yritykset Kuopiossa, mitä taitoja kehittää, miten CV räätälöidään, mitä LinkedIn-yhteyksiä lähestyä.</div>
+      </div>
+    </div>
+
+    <div style="background:var(--ink);border-radius:12px;padding:2rem 2.5rem;margin-top:2rem;">
+      <p style="font-family:'DM Serif Display',serif;font-size:clamp(1.1rem,2.5vw,1.5rem);font-style:italic;color:#f0e8d8;line-height:1.45;">"Lyhyt syöte → Yleinen vastaus. Tarkka syöte, joka kertoo kuka olet → Vastaus joka on tehty sinulle."</p>
+    </div>
+  </div>
+</section>
+
+<!-- MITEN LUODAAN -->
+<section class="section section-warm" id="miten" data-index="3">
+  <div class="section-inner fade-up">
+    <div class="section-label">Kolme vaihetta</div>
+    <h2 class="section-h2">Miten Master Prompt <em>rakennetaan?</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Kolme vaihetta — ja sinulla on tehokas henkilökohtainen tekoälyavustajasi valmiina.</p>
 
     <div class="steps-list">
-      <div class="step-row" data-delay="0">
-        <div class="step-badge">1</div>
-        <div class="step-content">
-          <h4>Aloita oikealla avaausviestillä</h4>
-          <p>Avaa tekoäly ja anna sille rooli ensin. Sen jälkeen pyydä sitä esittämään sinulle kysymyksiä taustaasi ymmärtääkseen.</p>
-          <div class="prompt-box">
-            "Olet urastrategi."<br><br>
-            "Kysy minulta kaikki tärkeät kysymykset, jotta ymmärrät taustani ja tavoitteeni."
-          </div>
+      <div class="step-item" data-delay="0">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Anna tekoälylle rooli ja pyydä kysymyksiä</h4>
+          <p>Aloita kertomalla tekoälylle mikä se on — sitten pyydä sitä esittämään sinulle kysymyksiä, jotta se ymmärtää taustasi.</p>
+          <div class="code-block">"Olet urastrategi ja työnhaun asiantuntija.<br>Kysy minulta kaikki tärkeät kysymykset,<br>jotta ymmärrät taustani ja tavoitteeni."</div>
         </div>
       </div>
-      <div class="step-row" data-delay="150">
-        <div class="step-badge">2</div>
-        <div class="step-content">
-          <h4>Vastaa huolella – mutta tiiviisti</h4>
-          <p>Vastaa jokaiseen kysymykseen ajatuksella. Älä kerro koko elämäntarinaasi – keskity vain asioihin, jotka liittyvät tavoitteeseesi. Kerro koulutuksesta, kokemuksesta, taidoista, tavoitteistasi ja rajoitteistasi.</p>
+      <div class="step-item" data-delay="150">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Vastaa kysymyksiin huolella</h4>
+          <p>Tekoäly kysyy koulutuksesta, kokemuksesta, taidoista, tavoitteistasi ja tilanteestasi. Vastaa rehellisesti ja tiiviisti — et tarvitse kertoa koko elämäntarinaasi.</p>
         </div>
       </div>
-      <div class="step-row" data-delay="300">
-        <div class="step-badge">3</div>
-        <div class="step-content">
+      <div class="step-item" data-delay="300">
+        <div class="step-num">3</div>
+        <div class="step-body">
           <h4>Pyydä luomaan Master Prompt</h4>
-          <p>Kun olet vastannut kysymyksiin, pyydä tekoälyä kokoamaan kaikki tiedot Master Promptiksi. Tarkista, muokkaa ja tallenna turvalliseen paikkaan.</p>
-          <div class="prompt-box">
-            "Laadi minulle Master Prompt kaiken antamani tiedon perusteella."
+          <p>Kun olet vastannut, pyydä tekoälyä kokoamaan kaikki tiedot yhdeksi Master Promptiksi. Tarkista, muokkaa ja tallenna se.</p>
+          <div class="code-block">"Laadi minulle Master Prompt kaiken<br>antamani tiedon perusteella."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RAKENNA OMA -->
+<section class="section" id="rakenna" data-index="4">
+  <div class="section-inner fade-up">
+    <div class="section-label">Tee se nyt</div>
+    <h2 class="section-h2">Rakenna oma<br><em>Master Promptisi</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Täytä alla olevat tiedot — ja tekoäly luo sinulle valmiin Master Promptin suoraan tähän. Tallenna se, käytä sitä joka päivä.</p>
+
+    <div class="builder-wrap">
+      <div class="builder-header">
+        <div class="builder-header-icon">🤖</div>
+        <div class="builder-header-text">
+          <h3>Master Prompt -rakentaja</h3>
+          <p>Täytä tiedot alla — AI luo promptin automaattisesti</p>
+        </div>
+      </div>
+      <div class="builder-body">
+
+        <div class="builder-step">
+          <div class="builder-step-label"><span class="snum">1</span>Taustasi</div>
+          <h4>Kuka olet ammatillisesti?</h4>
+          <p>Ammattisi, viimeisimmät työtehtävät, koulutuksesi ja kuinka monen vuoden kokemus sinulla on.</p>
+          <textarea class="builder-textarea" id="b1" placeholder="Esim: Olen 15 vuotta asiakaspalvelussa työskennellyt henkilö. Viimeisin tehtäväni oli asiakaspalvelupäällikkö kaupan alalla Kuopiossa. Minulla on merkonomi-koulutus..."></textarea>
+        </div>
+
+        <div class="builder-step">
+          <div class="builder-step-label"><span class="snum">2</span>Vahvuutesi</div>
+          <h4>Missä olet hyvä?</h4>
+          <p>Taidot, osaaminen, henkilökohtaiset vahvuudet — mitä työnantajat ovat sinussa arvostaneet?</p>
+          <textarea class="builder-textarea" id="b2" placeholder="Esim: Olen erittäin hyvä ihmisten kanssa, ratkaisukeskeinen, organisointikyky on vahva. Osaan Excel-perusteet ja sähköiset järjestelmät. Olen luotettava ja täsmällinen..."></textarea>
+        </div>
+
+        <div class="builder-step">
+          <div class="builder-step-label"><span class="snum">3</span>Tavoitteesi</div>
+          <h4>Mitä haluat saavuttaa?</h4>
+          <p>Millaista työtä haet, mihin suuntaan haluat kehittyä, mikä on tärkein tavoitteesi nyt?</p>
+          <textarea class="builder-textarea" id="b3" placeholder="Esim: Etsin töitä asiakaspalvelusta, hallinnosta tai koordinoinnista Kuopion alueelta. Haluaisin työn, jossa voin käyttää ihmissuhdetaitojani. Tavoitteeni on työllistyä 3 kuukauden sisällä..."></textarea>
+        </div>
+
+        <div class="builder-step">
+          <div class="builder-step-label"><span class="snum">4</span>Tilanteesi</div>
+          <h4>Mitä sinun pitää ottaa huomioon?</h4>
+          <p>Maantieteelliset rajoitteet, aikataulu, erityistilanteet tai muut tekijät jotka vaikuttavat työnhakuun.</p>
+          <textarea class="builder-textarea" id="b4" placeholder="Esim: Asun Kuopiossa, en pysty muuttamaan. Tarvitsen kokopäivätyön. Minulla on ajokortti. Olen valmis kouluttautumaan lisää jos se auttaa työllistymään..."></textarea>
+        </div>
+
+        <button class="builder-generate-btn" id="generateBtn" onclick="generateMasterPrompt()">
+          ✨ Luo oma Master Prompt
+        </button>
+
+        <div class="result-box" id="resultBox">
+          <div class="result-box-label">Sinun Master Promptisi</div>
+          <div class="result-text" id="resultText"></div>
+          <div class="result-actions">
+            <button class="result-copy-btn" id="resultCopyBtn" onclick="copyMasterPrompt()">📋 Kopioi Master Prompt</button>
+            <button class="result-teams-btn" id="resultTeamsBtn" onclick="shareToTeams()">💬 Jaa Teams-chattiin</button>
           </div>
+          <p style="font-size:0.78rem;color:var(--muted);margin-top:1rem;line-height:1.5;">💡 Tallenna tämä teksti puhelimeesi tai muistioon. Liitä se tekoälykeskustelujen alkuun aina kun tarvitset henkilökohtaisia neuvoja.</p>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
 
-<!-- HOW TO USE IT -->
-<section class="section" id="uses" data-index="4">
-  <div class="section-inner fade-in">
-    <div class="section-tag">Käyttökohteet</div>
-    <h2 class="section-title">Miten käytät <span>Master Promptia?</span></h2>
-    <div class="glow-line"></div>
-    <p class="section-lead">Master Prompt on universaali työkalu. Käytä sitä kaikkialla, missä tarvitset henkilökohtaisia neuvoja.</p>
-
-    <div class="uses-grid">
-      <div class="use-card" data-delay="0">
-        <div class="use-icon">📄</div>
-        <div>
-          <h4>Työnhaussa</h4>
-          <p>Saat täsmävinkkejä hakemukseen, CV:hen ja haastatteluun juuri sinun tilanteesi perusteella.</p>
-        </div>
-      </div>
-      <div class="use-card" data-delay="100">
-        <div class="use-icon">🗺️</div>
-        <div>
-          <h4>Urasuunnittelussa</h4>
-          <p>Luot henkilökohtaisen urasuunnitelmasi, jossa otetaan huomioon vahvuutesi ja tavoitteesi.</p>
-        </div>
-      </div>
-      <div class="use-card" data-delay="200">
-        <div class="use-icon">📚</div>
-        <div>
-          <h4>Osaamisen kehittämisessä</h4>
-          <p>Tunnistat tärkeimmät taidot, joita sinun tulisi kehittää seuraavaksi tavoitteesi saavuttamiseksi.</p>
-        </div>
-      </div>
-      <div class="use-card" data-delay="300">
-        <div class="use-icon">💼</div>
-        <div>
-          <h4>Työelämässä</h4>
-          <p>Saat neuvoja haastaviin tilanteisiin, esimiessuhteisiin ja uran kehittämiseen työsuhteen aikana.</p>
-        </div>
       </div>
     </div>
 
-    <div class="quote-callout">
-      <blockquote>„Mitä paremmin tekoäly tuntee sinut, sitä paremmin se voi auttaa sinua. Ei jokaisella keskustelulla tarvitse aloittaa tyhjästä!"</blockquote>
-    </div>
-  </div>
-</section>
-
-<!-- CHECKLIST -->
-<section class="section" id="summary" data-index="5">
-  <div class="section-inner fade-in">
-    <div class="section-tag">Yhteenveto</div>
-    <h2 class="section-title">Moduuli 3 <span>hallussa</span></h2>
-    <div class="glow-line"></div>
-    <p class="section-lead">Klikkaa jokainen kohta, kun olet varma, että ymmärrät sen.</p>
-
-    <div class="checklist-card">
-      <h3>✅ Tarkistuslista – Moduuli 3</h3>
-      <div class="check-item" onclick="toggleCheck(this)" data-item-id="know-what-master-prompt-is">
-        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
-        <div class="check-text"><h4>Tiedän mitä Master Prompt on</h4><p>Kattava kuvaus minusta, joka toimii tekoälyn muistina.</p></div>
+    <!-- REFLECTION -->
+    <div class="reflection-card" style="margin-top:3rem;">
+      <div class="reflection-label">Hetki ajatuksille</div>
+      <h3>Miten aiot käyttää Master Promptia?</h3>
+      <p>Missä tilanteessa käytät sitä ensin? Hakemuksessa, haastatteluvalmistelussa, urasuunnittelussa?</p>
+      <textarea class="reflection-textarea" id="reflectionText" placeholder="Kirjoita ajatuksesi tähän..."></textarea>
+      <div class="reflection-actions">
+        <button class="reflection-save" onclick="saveReflection()">Tallenna ajatus</button>
+        <button class="reflection-share" id="reflShareBtn" onclick="shareReflection()">📋 Jaa Teams-chattiin</button>
       </div>
-      <div class="check-item" onclick="toggleCheck(this)" data-item-id="understand-difference">
-        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
-        <div class="check-text"><h4>Ymmärrän eron yleisen ja kohdennetun vastauksen välillä</h4><p>Tarkka syöte → parempi, henkilökohtainen vastaus.</p></div>
-      </div>
-      <div class="check-item" onclick="toggleCheck(this)" data-item-id="can-create-master-prompt">
-        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
-        <div class="check-text"><h4>Osaan luoda Master Promptin kolmessa vaiheessa</h4><p>Aloita rooli → vastaa kysymyksiin → pyydä luomaan prompt.</p></div>
-      </div>
-      <div class="check-item" onclick="toggleCheck(this)" data-item-id="know-uses">
-        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
-        <div class="check-text"><h4>Tiedän mihin Master Promptia voi käyttää</h4><p>Työnhaku, urasuunnittelu, osaamisen kehitys, työelämä.</p></div>
-      </div>
-      <div class="check-item" onclick="toggleCheck(this)" data-item-id="ready-to-create">
-        <div class="check-box"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
-        <div class="check-text"><h4>Olen valmis luomaan oman Master Promptini</h4><p>Avaan tekoälyn ja aloitan oikealla avaausviestillä.</p></div>
-      </div>
-    </div>
-
-    <div id="completion-msg" style="display:none; text-align:center; margin-top:2rem; padding:1.5rem; background: rgba(104,211,145,0.08); border: 1px solid rgba(104,211,145,0.25); border-radius:16px;">
-      <div style="font-size:2.5rem; margin-bottom:0.75rem;">🎉</div>
-      <h3 style="font-family:'Space Grotesk',sans-serif; font-size:1.2rem; color:var(--accent3); margin-bottom:0.5rem;">Moduuli 3 suoritettu!</h3>
-      <p style="color:var(--muted); font-size:0.9rem;">Nyt olet valmis – luo oma Master Promptisi ja aloita hyödyntämään tekoälyä täysillä!</p>
+      <div class="reflection-confirm" id="reflConfirm">✓ Tallennettu.</div>
     </div>
   </div>
 </section>
 
 <!-- OUTRO -->
-<section class="section" id="outro" data-index="6">
-  <div class="section-inner">
-    <div class="outro-box">
-      <h2>Tekoäly tuntee sinut.<br>Nyt se voi <span style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">oikeasti auttaa.</span></h2>
-      <p>Master Prompt on sinun henkilökohtainen avaimesi – käytä sitä jokaisessa tekoälykeskustelussa ja saat tuloksia, joita muut eivät saa.</p>
-      <div class="outro-actions">
-        <a href="#hero" class="btn-secondary">↑ Kertaa moduuli</a>
-        <a href="/module/moduuli4-prompt-tyonhakijalle" class="btn-primary" id="nextModuleBtn" style="display:none;">
-          Seuraava moduuli
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-        </a>
-      </div>
+<section id="outro">
+  <div style="max-width:820px;margin:0 auto;padding:5rem 2rem 6rem;">
+    <div style="width:100%;height:1px;background:var(--border);margin-bottom:3rem;"></div>
+    <div style="font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:400;line-height:1.2;color:var(--ink);margin-bottom:1rem;">Tekoäly tuntee sinut.<br><em style="font-style:italic;color:var(--accent);">Nyt se voi oikeasti auttaa.</em></div>
+    <p style="font-size:1rem;color:var(--muted);max-width:520px;line-height:1.75;margin-bottom:2.5rem;font-weight:300;">Seuraavaksi opit, miten pyydät tekoälyltä juuri oikean vastauksen — promptin rakenne ja persoonat työnhaussa.</p>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+      <a href="/module/moduuli4-prompt-tyonhakijalle" class="btn-next">Seuraava moduuli — Prompt-tekniikka <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></a>
+      <a href="#hero" class="btn-back">↑ Palaa alkuun</a>
     </div>
   </div>
 </section>
 
 <script>
-const canvas=document.getElementById('stars-canvas');const ctx=canvas.getContext('2d');let stars=[];
-function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
-function initStars(){stars=[];for(let i=0;i<160;i++){stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.2+0.2,alpha:Math.random()*0.6+0.1,speed:Math.random()*0.3+0.05,twinkle:Math.random()*Math.PI*2});}}
-function drawStars(){ctx.clearRect(0,0,canvas.width,canvas.height);stars.forEach(s=>{s.twinkle+=0.015;const a=s.alpha*(0.6+0.4*Math.sin(s.twinkle));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(180,210,255,${a})`;ctx.fill();s.y-=s.speed;if(s.y<-2){s.y=canvas.height+2;s.x=Math.random()*canvas.width;}});requestAnimationFrame(drawStars);}
-resize();initStars();drawStars();window.addEventListener('resize',()=>{resize();initStars();});
-const sections=document.querySelectorAll('.section[data-index]');const navDots=document.getElementById('navDots');
-sections.forEach((s,i)=>{const dot=document.createElement('div');dot.className='nav-dot'+(i===0?' active':'');dot.title=`Sivu ${i+1}`;dot.addEventListener('click',()=>s.scrollIntoView({behavior:'smooth'}));navDots.appendChild(dot);});
-const progressBar=document.getElementById('progress-bar');
-function updateProgress(){const scrollTop=window.scrollY;const docHeight=document.documentElement.scrollHeight-window.innerHeight;const pct=docHeight>0?(scrollTop/docHeight)*100:0;progressBar.style.width=pct+'%';const dots=navDots.querySelectorAll('.nav-dot');let activeIdx=0;sections.forEach((s,i)=>{const rect=s.getBoundingClientRect();if(rect.top<=window.innerHeight*0.5)activeIdx=i;});dots.forEach((d,i)=>{d.classList.remove('active','done');if(i===activeIdx)d.classList.add('active');else if(i<activeIdx)d.classList.add('done');});}
-window.addEventListener('scroll',updateProgress,{passive:true});
-const fadeEls=document.querySelectorAll('.fade-in');const fadeObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');fadeObserver.unobserve(e.target);}});},{threshold:0.15});
-fadeEls.forEach(el=>fadeObserver.observe(el));
-const compCards=document.querySelectorAll('.component-card');const ccObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const delay=parseInt(e.target.dataset.delay)||0;setTimeout(()=>e.target.classList.add('visible'),delay);ccObserver.unobserve(e.target);}});},{threshold:0.2});
-compCards.forEach(c=>ccObserver.observe(c));
-const stepRows=document.querySelectorAll('.step-row');const srObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const delay=parseInt(e.target.dataset.delay)||0;setTimeout(()=>e.target.classList.add('visible'),delay);srObserver.unobserve(e.target);}});},{threshold:0.3});
-stepRows.forEach(r=>srObserver.observe(r));
-const useCards=document.querySelectorAll('.use-card');const ucObserver=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const delay=parseInt(e.target.dataset.delay)||0;setTimeout(()=>e.target.classList.add('visible'),delay);ucObserver.unobserve(e.target);}});},{threshold:0.2});
-useCards.forEach(c=>ucObserver.observe(c));
-// ── PROGRESS TRACKING ──────────────────────────
-const API_URL = window.location.origin + '/api';
-const MODULE_ID = 'moduuli3-master-prompt';
+const sections = document.querySelectorAll('.section[data-index]');
+const navSteps = document.getElementById('navSteps');
+const progressBar = document.getElementById('progress-bar');
+sections.forEach((s,i) => {
+  const pip = document.createElement('div');
+  pip.className = 'step-pip' + (i===0?' active':'');
+  pip.addEventListener('click', () => s.scrollIntoView({behavior:'smooth'}));
+  navSteps.appendChild(pip);
+});
+function updateProgress() {
+  const st=window.scrollY, dh=document.documentElement.scrollHeight-window.innerHeight;
+  progressBar.style.width = (dh>0?(st/dh)*100:0)+'%';
+  const pips=navSteps.querySelectorAll('.step-pip'); let ai=0;
+  sections.forEach((s,i) => { if(s.getBoundingClientRect().top<=window.innerHeight*0.5) ai=i; });
+  pips.forEach((p,i) => { p.classList.remove('active','done'); if(i===ai) p.classList.add('active'); else if(i<ai) p.classList.add('done'); });
+}
+window.addEventListener('scroll', updateProgress, {passive:true});
+const fadeObs = new IntersectionObserver(entries => { entries.forEach(e => { if(e.isIntersecting){e.target.classList.add('in');fadeObs.unobserve(e.target);} }); }, {threshold:0.12});
+document.querySelectorAll('.fade-up').forEach(el => fadeObs.observe(el));
+const stepObs = new IntersectionObserver(entries => { entries.forEach(e => { if(e.isIntersecting){const d=parseInt(e.target.dataset.delay)||0;setTimeout(()=>e.target.classList.add('in'),d);stepObs.unobserve(e.target);} }); }, {threshold:0.3});
+document.querySelectorAll('.step-item').forEach(i => stepObs.observe(i));
 
-async function saveSectionProgress(sectionId, completed = false) {
+let masterPromptText = '';
+async function generateMasterPrompt() {
+  const b1=document.getElementById('b1').value.trim();
+  const b2=document.getElementById('b2').value.trim();
+  const b3=document.getElementById('b3').value.trim();
+  const b4=document.getElementById('b4').value.trim();
+  if(!b1&&!b2&&!b3) { alert('Täytä ainakin ensimmäiset kolme kenttää.'); return; }
+  const btn=document.getElementById('generateBtn');
+  const resultBox=document.getElementById('resultBox');
+  const resultText=document.getElementById('resultText');
+  btn.disabled=true;
+  btn.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span> Luodaan...';
+  resultBox.style.display='block';
+  resultText.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';
+  resultBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   try {
-    await fetch(`${API_URL}/progress/module/${MODULE_ID}/section/${sectionId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch('/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
       credentials: 'include',
-      body: JSON.stringify({ completed, progressData: { lastViewed: new Date().toISOString() } })
+      body: JSON.stringify({
+        model:'gpt-4o-mini', max_tokens:1000,
+        system:'Olet urastrategi. Luo käyttäjälle selkeä, käytännöllinen Master Prompt suomeksi. Master Promptin tulee olla n. 150-200 sanaa, alkaa sanalla "Olen" ja kertoa tiiviisti käyttäjän taustan, vahvuudet, tavoitteet ja tilanteen. Formaatti: suora teksti ilman otsikoita tai luettelomerkkejä. Se on tarkoitettu liitettäväksi tekoälykeskustelujen alkuun.',
+        messages:[{role:'user', content:`Luo minulle Master Prompt näiden tietojen perusteella:\n\nTaustani: ${b1||'ei kerrottu'}\n\nVahvuuteni: ${b2||'ei kerrottu'}\n\nTavoitteeni: ${b3||'ei kerrottu'}\n\nTilanteeni: ${b4||'ei kerrottu'}`}]
+      })
     });
-  } catch (error) {
-    console.error('Error saving progress:', error);
+    const data=await res.json();
+    masterPromptText=data.text||'';
+    resultText.textContent=masterPromptText;
+  } catch(e) {
+    resultText.textContent='Yhteysvirhe. Kopioi tietosi ja luo Master Prompt suoraan ChatGPT:ssä tai Claudessa ohjeen mukaan.';
   }
+  btn.disabled=false;
+  btn.innerHTML='✨ Luo uudelleen';
 }
-
-// Save checklist item
-async function saveChecklistItem(itemId, completed) {
-  try {
-    await fetch(`${API_URL}/progress/module/${MODULE_ID}/checklist/${itemId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ completed })
-    });
-  } catch (error) {
-    console.error('Error saving checklist item:', error);
-  }
-}
-
-async function checkModuleCompletion() {
-  try {
-    // Check visual state first (in case items are checked but not saved yet)
-    const allItems = document.querySelectorAll('.check-item');
-    const visuallyChecked = document.querySelectorAll('.check-item.checked');
-    
-    // If all items are visually checked, show button immediately
-    if (visuallyChecked.length === allItems.length && allItems.length > 0) {
-      document.getElementById('nextModuleBtn').style.display = 'inline-flex';
-      return;
-    }
-    
-    // Also check database state
-    const response = await fetch(`${API_URL}/progress/module/${MODULE_ID}`, {
-      credentials: 'include'
-    });
-    if (response.ok) {
-      const data = await response.json();
-      const checkedItems = data.checklist?.filter(item => item.completed) || [];
-      if (checkedItems.length === allItems.length && allItems.length > 0) {
-        document.getElementById('nextModuleBtn').style.display = 'inline-flex';
-      }
-    }
-  } catch (error) {
-    console.error('Error checking completion:', error);
-    // Fallback: check visual state
-    const allItems = document.querySelectorAll('.check-item');
-    const visuallyChecked = document.querySelectorAll('.check-item.checked');
-    if (visuallyChecked.length === allItems.length && allItems.length > 0) {
-      document.getElementById('nextModuleBtn').style.display = 'inline-flex';
-    }
-  }
-}
-
-function toggleCheck(el){
-  el.classList.toggle('checked');
-  const allItems=document.querySelectorAll('.check-item');
-  const checkedItems=document.querySelectorAll('.check-item.checked');
-  
-  const itemId = el.getAttribute('data-item-id');
-  if (itemId) {
-    saveChecklistItem(itemId, el.classList.contains('checked'));
-  }
-  
-  if(checkedItems.length===allItems.length){
-    document.getElementById('completion-msg').style.display='block';
-    document.getElementById('completion-msg').scrollIntoView({behavior:'smooth',block:'nearest'});
-    saveSectionProgress('summary', true);
-    setTimeout(checkModuleCompletion, 500);
-  }else{
-    document.getElementById('completion-msg').style.display='none';
-  }
-}
-
-const sectionObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      const section = entry.target;
-      const sectionIndex = section.getAttribute('data-index');
-      if (sectionIndex) {
-        saveSectionProgress(sectionIndex, false);
-      }
-    }
+function copyMasterPrompt() {
+  if(!masterPromptText) return;
+  navigator.clipboard.writeText(masterPromptText).then(() => {
+    const b=document.getElementById('resultCopyBtn');
+    b.textContent='✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(()=>{b.textContent='📋 Kopioi Master Prompt';b.classList.remove('ok');},2200);
   });
-}, { threshold: 0.5 });
-
-document.querySelectorAll('.section[data-index]').forEach(section => {
-  sectionObserver.observe(section);
-});
-
-// Load saved progress
-async function loadProgress() {
-  try {
-    const response = await fetch(`${API_URL}/progress/module/${MODULE_ID}`, {
-      credentials: 'include'
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      data.checklist.forEach(item => {
-        const checkItem = document.querySelector(`[data-item-id="${item.item_id}"]`);
-        if (checkItem && item.completed) {
-          checkItem.classList.add('checked');
-        }
-      });
-    }
-  } catch (error) {
-    console.error('Error loading progress:', error);
-  }
 }
+function shareToTeams() {
+  if(!masterPromptText) return;
+  navigator.clipboard.writeText('Tässä on oma Master Promptini:\n\n'+masterPromptText).then(() => {
+    const b=document.getElementById('resultTeamsBtn');
+    b.textContent='✓ Kopioitu Teams-chattiin'; b.classList.add('ok');
+    setTimeout(()=>{b.textContent='💬 Jaa Teams-chattiin';b.classList.remove('ok');},2500);
+  });
+}
+function saveReflection() {
+  const txt=document.getElementById('reflectionText').value.trim();
+  if(!txt) return;
+  try{localStorage.setItem('m3_reflection',txt);}catch(e){}
+  document.getElementById('reflConfirm').style.display='block';
+}
+function shareReflection() {
+  const txt=document.getElementById('reflectionText').value.trim();
+  if(!txt) return;
+  navigator.clipboard.writeText(`Moduuli 3 — aion käyttää Master Promptia: "${txt}"`).then(()=>{
+    const b=document.getElementById('reflShareBtn');
+    b.textContent='✓ Kopioitu'; b.classList.add('ok');
+    setTimeout(()=>{b.textContent='📋 Jaa Teams-chattiin';b.classList.remove('ok');},2500);
+  });
+}
+try{const s=localStorage.getItem('m3_reflection');if(s)document.getElementById('reflectionText').value=s;}catch(e){}
+</script>
 
-loadProgress().then(() => {
-  checkModuleCompletion();
-});
+<!-- AI Chat Widget -->
+<script>
+fetch('/ai-chat-widget.html')
+  .then(r => r.text())
+  .then(html => {
+    document.body.insertAdjacentHTML('beforeend', html);
+  })
+  .catch(e => console.error('Failed to load AI chat widget:', e));
 </script>
 </body>
 </html>
