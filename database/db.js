@@ -1,12 +1,22 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
+// Configure SSL based on DATABASE_URL
+const dbConfig = {
+  connectionString: process.env.DATABASE_URL
+};
+
+// Only use SSL if DATABASE_URL contains sslmode=require
+if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('sslmode=require')) {
+  dbConfig.ssl = {
     rejectUnauthorized: false
-  }
-});
+  };
+} else if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('sslmode=disable')) {
+  // Try SSL for most cloud databases, but don't fail if not supported
+  dbConfig.ssl = process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false;
+}
+
+const pool = new Pool(dbConfig);
 
 // Test connection
 pool.on('connect', () => {

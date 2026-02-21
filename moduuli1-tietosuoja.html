@@ -1263,9 +1263,30 @@ h2.section-h2 strong {
       <textarea class="reflection-textarea" id="reflectionText" placeholder="Esim: En tiennyt, että terveystietoja ei saa jakaa. Tai: LinkedIn-sääntö on hyvä, muistan sen..."></textarea>
       <div class="reflection-actions">
         <button class="reflection-save" onclick="saveReflection()">Tallenna ajatus</button>
-        <button class="reflection-share" id="reflShareBtn" onclick="shareReflection()">📋 Jaa Teams-chattiin</button>
+        
       </div>
-      <div class="reflection-confirm" id="reflConfirm">✓ Tallennettu. Olet valmis siirtymään eteenpäin.</div>
+      
+    <div class="reflection-box" style="margin-top:3rem;background:rgba(37,99,168,0.05);border-left:3px solid var(--accent2);padding:2rem;border-radius:12px;">
+      <h3 style="font-size:1.2rem;margin-bottom:1rem;color:var(--ink);">Mitä opit tässä moduulissa?</h3>
+      <p style="color:var(--muted);margin-bottom:1.5rem;font-size:0.95rem;">Kerro lyhyesti mitä opit tämän moduulin aikana.</p>
+      <textarea class="reflection-textarea" id="whatLearned_m1_reflection" placeholder="Esim: Opetin AI:lle Master Promptin ja käytän sitä nyt kaikissa hakemuksissani..."></textarea>
+      <div class="reflection-actions">
+        <button class="reflection-save" onclick="window.saveWhatLearned('m1_reflection')">Tallenna</button>
+      </div>
+      <div class="reflection-confirm" id="whatLearnedConfirm_m1_reflection" style="display:none;">✓ Tallennettu.</div>
+    </div>
+    
+    <div class="reflection-box" style="margin-top:2rem;background:rgba(42,122,75,0.05);border-left:3px solid var(--accent3);padding:2rem;border-radius:12px;">
+      <h3 style="font-size:1.2rem;margin-bottom:1rem;color:var(--ink);">Opitko jotain uutta?</h3>
+      <p style="color:var(--muted);margin-bottom:1.5rem;font-size:0.95rem;">Kerro oliko tässä moduulissa jotain uutta sinulle vai oliko kaikki jo tuttu.</p>
+      <textarea class="reflection-textarea" id="learnedNew_m1_reflection" placeholder="Esim: En tiennyt että AI:ta voi käyttää näin monipuolisesti työnhaussa..."></textarea>
+      <div class="reflection-actions">
+        <button class="reflection-save" onclick="window.saveLearnedNew('m1_reflection')">Tallenna</button>
+      </div>
+      <div class="reflection-confirm" id="learnedNewConfirm_m1_reflection" style="display:none;">✓ Tallennettu.</div>
+    </div>
+
+<div class="reflection-confirm" id="reflConfirm">✓ Tallennettu. Olet valmis siirtymään eteenpäin.</div>
     </div>
 
   </div>
@@ -1289,6 +1310,8 @@ h2.section-h2 strong {
   </div>
 </section>
 
+<script src="/js/reflections.js"></script>
+<script src="/js/feedback.js"></script>
 <script>
 // ── PROGRESS & NAV PIPS ──────────────────────
 const sections = document.querySelectorAll('.section[data-index]');
@@ -1511,9 +1534,8 @@ function copyGDPR() {
 
 // ── REFLECTION ───────────────────────────────
 function saveReflection() {
-  const txt = document.getElementById('reflectionText').value.trim();
-  if (!txt) return;
-  try { localStorage.setItem('m1_reflection', txt); } catch(e) {}
+  window.saveReflectionToAPI('m1_reflection');
+} catch(e) {}
   document.getElementById('reflConfirm').style.display = 'block';
   document.getElementById('reflConfirm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -1538,6 +1560,8 @@ try {
 </script>
 
 <!-- AI Chat Widget -->
+<script src="/js/reflections.js"></script>
+<script src="/js/feedback.js"></script>
 <script>
 fetch('/ai-chat-widget.html')
   .then(r => r.text())

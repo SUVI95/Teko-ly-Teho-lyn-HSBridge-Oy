@@ -97,6 +97,25 @@
     background: rgba(199,91,58,0.05);
   }
   
+  .btn-admin {
+    background: var(--accent) !important;
+    color: #fff !important;
+    padding: 0.5rem 1.5rem !important;
+    border-radius: 8px !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    transition: all 0.3s !important;
+    display: inline-block !important;
+    border: none !important;
+  }
+  
+  .btn-admin:hover {
+    background: #b34e2f !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(199,91,58,0.3);
+  }
+  
   .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -452,6 +471,9 @@
         <div class="user-name" id="userName">Ladataan...</div>
         <div class="user-email" id="userEmail"></div>
       </div>
+      <div id="adminButtonContainer" style="display: none; margin-right: 1rem;">
+        <a href="/admin" class="btn-admin" style="background: var(--accent); color: #fff; padding: 0.5rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s; display: inline-block;">📊 Hallintapaneeli</a>
+      </div>
       <button class="btn-logout" onclick="logout()">Kirjaudu ulos</button>
     </div>
   </nav>
@@ -543,7 +565,7 @@
       search: '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>'
     };
     
-    // Check authentication (optional - no redirect)
+    // Check authentication (required - redirects to login)
     async function checkAuth() {
       try {
         const response = await fetch(`${API_URL}/auth/me`, {
@@ -551,27 +573,36 @@
         });
         
         if (!response.ok) {
-          return null; // Not logged in, but continue anyway
+          // Redirect to login if not authenticated
+          window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+          return null;
         }
         
         const data = await response.json();
         return data.user;
       } catch (error) {
-        return null; // Not logged in, but continue anyway
+        // Redirect to login on error
+        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        return null;
       }
     }
     
-    // Load user info (optional)
+    // Load user info (required)
     async function loadUser() {
       const user = await checkAuth();
       if (user) {
         document.getElementById('userName').textContent = user.name || user.email;
         document.getElementById('userEmail').textContent = user.email;
-      } else {
-        // Hide user section if not logged in
-        const userSection = document.querySelector('.user-section');
-        if (userSection) userSection.style.display = 'none';
+        
+        // Show admin button if user is admin
+        if (user.is_admin) {
+          const adminButtonContainer = document.getElementById('adminButtonContainer');
+          if (adminButtonContainer) {
+            adminButtonContainer.style.display = 'block';
+          }
+        }
       }
+      // If user is null, checkAuth already redirected to login
     }
     
     // Load modules (no authentication required)

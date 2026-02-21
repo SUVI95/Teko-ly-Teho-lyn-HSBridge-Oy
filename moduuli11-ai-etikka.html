@@ -601,9 +601,30 @@ Hyvä hakemuskirje on räätälöity työpaikkaan ja yritykseen. Se kertoo miksi
       <textarea class="reflection-textarea" id="reflectionText" placeholder="Esim: Tarkistan aina faktat, tarkistan puolueellisuuden ja henkilöidän AI:n tuotokset..."></textarea>
       <div class="reflection-actions">
         <button class="reflection-save" onclick="saveReflection()">Tallenna ajatus</button>
-        <button class="reflection-share" id="reflShareBtn" onclick="shareReflection()">📋 Jaa Teams-chattiin</button>
+        
       </div>
-      <div class="reflection-confirm" id="reflConfirm">✓ Tallennettu.</div>
+      
+    <div class="reflection-box" style="margin-top:3rem;background:rgba(37,99,168,0.05);border-left:3px solid var(--accent2);padding:2rem;border-radius:12px;">
+      <h3 style="font-size:1.2rem;margin-bottom:1rem;color:var(--ink);">Mitä opit tässä moduulissa?</h3>
+      <p style="color:var(--muted);margin-bottom:1.5rem;font-size:0.95rem;">Kerro lyhyesti mitä opit tämän moduulin aikana.</p>
+      <textarea class="reflection-textarea" id="whatLearned_m11_reflection" placeholder="Esim: Opetin AI:lle Master Promptin ja käytän sitä nyt kaikissa hakemuksissani..."></textarea>
+      <div class="reflection-actions">
+        <button class="reflection-save" onclick="window.saveWhatLearned('m11_reflection')">Tallenna</button>
+      </div>
+      <div class="reflection-confirm" id="whatLearnedConfirm_m11_reflection" style="display:none;">✓ Tallennettu.</div>
+    </div>
+    
+    <div class="reflection-box" style="margin-top:2rem;background:rgba(42,122,75,0.05);border-left:3px solid var(--accent3);padding:2rem;border-radius:12px;">
+      <h3 style="font-size:1.2rem;margin-bottom:1rem;color:var(--ink);">Opitko jotain uutta?</h3>
+      <p style="color:var(--muted);margin-bottom:1.5rem;font-size:0.95rem;">Kerro oliko tässä moduulissa jotain uutta sinulle vai oliko kaikki jo tuttu.</p>
+      <textarea class="reflection-textarea" id="learnedNew_m11_reflection" placeholder="Esim: En tiennyt että AI:ta voi käyttää näin monipuolisesti työnhaussa..."></textarea>
+      <div class="reflection-actions">
+        <button class="reflection-save" onclick="window.saveLearnedNew('m11_reflection')">Tallenna</button>
+      </div>
+      <div class="reflection-confirm" id="learnedNewConfirm_m11_reflection" style="display:none;">✓ Tallennettu.</div>
+    </div>
+
+<div class="reflection-confirm" id="reflConfirm">✓ Tallennettu.</div>
     </div>
   </div>
 </section>
@@ -621,6 +642,8 @@ Hyvä hakemuskirje on räätälöity työpaikkaan ja yritykseen. Se kertoo miksi
   </div>
 </section>
 
+<script src="/js/reflections.js"></script>
+<script src="/js/feedback.js"></script>
 <script>
 const sections = document.querySelectorAll('.section[data-index]');
 const navSteps = document.getElementById('navSteps');
@@ -916,21 +939,25 @@ function copyFinance() {
 }
 
 function saveReflection() {
-  const txt=document.getElementById('reflectionText').value.trim();
-  if(!txt) return;
-  try{localStorage.setItem('m11_reflection',txt);}catch(e){}
+  window.saveReflectionToAPI('m11_reflection');
+}catch(e){}
   document.getElementById('reflConfirm').style.display='block';
 }
-function shareReflection() {
-  const txt=document.getElementById('reflectionText').value.trim();
-  if(!txt) return;
-  navigator.clipboard.writeText(`Moduuli 11 — varmistan vastuullisen AI-käytön: "${txt}"`).then(()=>{
+"`).then(()=>{
     const b=document.getElementById('reflShareBtn');
     b.textContent='✓ Kopioitu'; b.classList.add('ok');
     setTimeout(()=>{b.textContent='📋 Jaa Teams-chattiin';b.classList.remove('ok');},2500);
   });
 }
-try{const s=localStorage.getItem('m11_reflection');if(s)document.getElementById('reflectionText').value=s;}catch(e){}
+// Load reflection on page load
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.loadReflection) {
+    window.loadReflection('m11_reflection');
+  } else {
+    // Fallback to localStorage
+    try{const s=localStorage.getItem('m11_reflection');if(s)document.getElementById('reflectionText').value=s;}catch(e){}
+  }
+});
 
 fetch('/ai-chat-widget.html')
   .then(r => r.text())

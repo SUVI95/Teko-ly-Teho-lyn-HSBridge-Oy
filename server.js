@@ -8,6 +8,9 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const progressRoutes = require('./routes/progress');
 const aiRoutes = require('./routes/ai');
+const reflectionsRoutes = require('./routes/reflections');
+const adminRoutes = require('./routes/admin');
+const feedbackRoutes = require('./routes/feedback');
 const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
@@ -27,6 +30,9 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/progress', progressRoutes); // No authentication required
 app.use('/api/ai', aiRoutes); // No authentication required
+app.use('/api/reflections', reflectionsRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -74,6 +80,26 @@ app.get('/register', (req, res) => {
 
 app.get('/reset-password', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
+});
+
+app.get('/course-feedback', authenticateToken, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'course-feedback.html'));
+});
+
+app.get('/admin', authenticateToken, (req, res, next) => {
+  // Check if user is admin
+  if (!req.user || !req.user.is_admin) {
+    return res.status(403).send(`
+      <html>
+        <body style="font-family: Arial; text-align: center; padding: 50px; background: #f5f3ef; color: #1a1a2e;">
+          <h1>403 - Pääsy kielletty</h1>
+          <p>Sinulla ei ole oikeuksia tähän sivulle.</p>
+          <a href="/" style="color: #c75b3a; text-decoration: none; padding: 10px 20px; border: 1px solid #c75b3a; border-radius: 8px; display: inline-block; margin-top: 20px;">← Takaisin etusivulle</a>
+        </body>
+      </html>
+    `);
+  }
+  res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
 
 app.get('/module/:moduleId', (req, res) => {

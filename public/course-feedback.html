@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kurssipalautte - HSBridge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1a2e;
+  --ink2: #2d2d44;
+  --paper: #f5f3ef;
+  --paper2: #eeeae3;
+  --warm: #e8e0d4;
+  --accent: #c75b3a;
+  --accent2: #2563a8;
+  --accent3: #2a7a4b;
+  --gold: #b8860b;
+  --text: #1a1a2e;
+  --muted: #6b6880;
+  --border: rgba(26,26,46,0.12);
+  --shadow: 0 2px 20px rgba(26,26,46,0.08);
+  --shadow-md: 0 8px 40px rgba(26,26,46,0.12);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--paper);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: var(--shadow-md);
+}
+
+h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--ink);
+}
+
+.subtitle {
+  color: var(--muted);
+  margin-bottom: 3rem;
+  font-size: 1.1rem;
+}
+
+.feedback-section {
+  margin-bottom: 3rem;
+}
+
+.feedback-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--ink);
+}
+
+.feedback-section p {
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.7;
+}
+
+.rating-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.rating-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 1rem;
+  background: var(--paper);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.rating-btn:hover {
+  border-color: var(--accent);
+  background: rgba(199,91,58,0.05);
+}
+
+.rating-btn.selected {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.rating-btn .number {
+  display: block;
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.rating-btn .label {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  resize: vertical;
+  background: var(--paper);
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(199,91,58,0.1);
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 1rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 2rem;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: #b34e2f;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(199,91,58,0.35);
+}
+
+.btn-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.success-message {
+  background: rgba(42,122,75,0.1);
+  border: 1px solid rgba(42,122,75,0.3);
+  color: var(--accent3);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  display: none;
+}
+
+.success-message.show {
+  display: block;
+}
+
+.error-message {
+  background: rgba(199,91,58,0.1);
+  border: 1px solid rgba(199,91,58,0.3);
+  color: var(--accent);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  display: none;
+}
+
+.error-message.show {
+  display: block;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 2rem;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">← Takaisin etusivulle</a>
+    
+    <h1>Kurssipalautte</h1>
+    <p class="subtitle">Kiitos kun suoritit kurssin! Auta meitä kehittämään kurssia antamalla palautetta.</p>
+    
+    <div class="error-message" id="errorMessage"></div>
+    <div class="success-message" id="successMessage"></div>
+    
+    <form id="feedbackForm">
+      <div class="feedback-section">
+        <h2>1. Arvioi kurssia</h2>
+        <p>Miten hyödyllinen kurssi oli sinulle? (1 = ei hyödyllinen, 5 = erittäin hyödyllinen)</p>
+        <div class="rating-container">
+          <button type="button" class="rating-btn" data-rating="1">
+            <span class="number">1</span>
+            <span class="label">Ei hyödyllinen</span>
+          </button>
+          <button type="button" class="rating-btn" data-rating="2">
+            <span class="number">2</span>
+            <span class="label">Vähän hyödyllinen</span>
+          </button>
+          <button type="button" class="rating-btn" data-rating="3">
+            <span class="number">3</span>
+            <span class="label">Hyödyllinen</span>
+          </button>
+          <button type="button" class="rating-btn" data-rating="4">
+            <span class="number">4</span>
+            <span class="label">Erittäin hyödyllinen</span>
+          </button>
+          <button type="button" class="rating-btn" data-rating="5">
+            <span class="number">5</span>
+            <span class="label">Poikkeuksellisen hyödyllinen</span>
+          </button>
+        </div>
+        <input type="hidden" id="rating" name="rating" value="">
+      </div>
+      
+      <div class="feedback-section">
+        <h2>2. Kirjoita palautetta</h2>
+        <p>Kerro meille mitä mieltä olet kurssista. Mitä toimi hyvin? Mitä voisi parantaa?</p>
+        <textarea id="feedbackText" name="feedbackText" placeholder="Kirjoita palautteesi tähän..."></textarea>
+      </div>
+      
+      <button type="submit" class="btn-submit" id="submitBtn">Lähetä palaute</button>
+    </form>
+  </div>
+  
+  <script src="/js/feedback.js"></script>
+  <script>
+    const API_URL = window.location.origin + '/api';
+    let selectedRating = 0;
+    
+    // Rating buttons
+    document.querySelectorAll('.rating-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        selectedRating = parseInt(this.dataset.rating);
+        document.getElementById('rating').value = selectedRating;
+        document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+    });
+    
+    // Form submission
+    document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitBtn');
+      const errorMsg = document.getElementById('errorMessage');
+      const successMsg = document.getElementById('successMessage');
+      const feedbackText = document.getElementById('feedbackText').value.trim();
+      
+      if (selectedRating === 0) {
+        errorMsg.textContent = 'Valitse arvio kurssille!';
+        errorMsg.classList.add('show');
+        successMsg.classList.remove('show');
+        return;
+      }
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Lähetetään...';
+      errorMsg.classList.remove('show');
+      successMsg.classList.remove('show');
+      
+      try {
+        const result = await window.saveFeedback(null, 'course_feedback', feedbackText, selectedRating);
+        
+        if (result.success) {
+          successMsg.textContent = 'Kiitos palautteesta! Palaute on tallennettu.';
+          successMsg.classList.add('show');
+          document.getElementById('feedbackForm').reset();
+          selectedRating = 0;
+          document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+          
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
+        } else {
+          errorMsg.textContent = result.error || 'Palautteen lähetys epäonnistui. Yritä uudelleen.';
+          errorMsg.classList.add('show');
+        }
+      } catch (error) {
+        errorMsg.textContent = 'Yhteysvirhe. Yritä uudelleen.';
+        errorMsg.classList.add('show');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Lähetä palaute';
+      }
+    });
+    
+    // Check authentication
+    async function checkAuth() {
+      try {
+        const response = await fetch(`${API_URL}/auth/me`, {
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        }
+      } catch (error) {
+        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+      }
+    }
+    
+    checkAuth();
+  </script>
+</body>
+</html>

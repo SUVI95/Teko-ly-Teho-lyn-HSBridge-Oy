@@ -895,9 +895,30 @@ Pituus: 3-4 kappaletta        </div>
       <textarea class="reflection-textarea" id="reflectionText" placeholder="Esim: Teen tänään LinkedIn-viestin viidelle potentiaaliselle asiakkaalle käyttäen RASK-mallia. Tai: Rakennan sähköpostisekvenssiin ensimmäiset kolme viestiä..."></textarea>
       <div class="reflection-actions">
         <button class="reflection-save" onclick="saveReflection()">Tallenna ajatus</button>
-        <button class="reflection-share" id="reflShareBtn" onclick="shareReflection()">📋 Jaa Teams-chattiin</button>
+        
       </div>
-      <div class="reflection-confirm" id="reflConfirm">✓ Tallennettu.</div>
+      
+    <div class="reflection-box" style="margin-top:3rem;background:rgba(37,99,168,0.05);border-left:3px solid var(--accent2);padding:2rem;border-radius:12px;">
+      <h3 style="font-size:1.2rem;margin-bottom:1rem;color:var(--ink);">Mitä opit tässä moduulissa?</h3>
+      <p style="color:var(--muted);margin-bottom:1.5rem;font-size:0.95rem;">Kerro lyhyesti mitä opit tämän moduulin aikana.</p>
+      <textarea class="reflection-textarea" id="whatLearned_m5_reflection" placeholder="Esim: Opetin AI:lle Master Promptin ja käytän sitä nyt kaikissa hakemuksissani..."></textarea>
+      <div class="reflection-actions">
+        <button class="reflection-save" onclick="window.saveWhatLearned('m5_reflection')">Tallenna</button>
+      </div>
+      <div class="reflection-confirm" id="whatLearnedConfirm_m5_reflection" style="display:none;">✓ Tallennettu.</div>
+    </div>
+    
+    <div class="reflection-box" style="margin-top:2rem;background:rgba(42,122,75,0.05);border-left:3px solid var(--accent3);padding:2rem;border-radius:12px;">
+      <h3 style="font-size:1.2rem;margin-bottom:1rem;color:var(--ink);">Opitko jotain uutta?</h3>
+      <p style="color:var(--muted);margin-bottom:1.5rem;font-size:0.95rem;">Kerro oliko tässä moduulissa jotain uutta sinulle vai oliko kaikki jo tuttu.</p>
+      <textarea class="reflection-textarea" id="learnedNew_m5_reflection" placeholder="Esim: En tiennyt että AI:ta voi käyttää näin monipuolisesti työnhaussa..."></textarea>
+      <div class="reflection-actions">
+        <button class="reflection-save" onclick="window.saveLearnedNew('m5_reflection')">Tallenna</button>
+      </div>
+      <div class="reflection-confirm" id="learnedNewConfirm_m5_reflection" style="display:none;">✓ Tallennettu.</div>
+    </div>
+
+<div class="reflection-confirm" id="reflConfirm">✓ Tallennettu.</div>
       <div class="achievement-box" id="achievementBox" style="display:none;margin-top:2rem;">
         <div class="achievement-box-icon">🎯</div>
         <h4>Olet suorittanut myynnin ja markkinoinnin AI-moduulin.</h4>
@@ -918,7 +939,9 @@ Pituus: 3-4 kappaletta        </div>
     </div>
   </section>
 
-  <script>
+  <script src="/js/reflections.js"></script>
+<script src="/js/feedback.js"></script>
+<script>
 // Add task analysis function before sections initialization
 let lastTaskAnalysis = '';
 async function analyzeTimeConsumingTask() {
@@ -1592,22 +1615,26 @@ function copyPitch() {
 }
 
 function saveReflection() {
-  const txt=document.getElementById('reflectionText').value.trim();
-  if(!txt) return;
-  try{localStorage.setItem('m5_reflection',txt);}catch(e){}
+  window.saveReflectionToAPI('m5_reflection');
+}catch(e){}
   document.getElementById('reflConfirm').style.display='block';
   document.getElementById('achievementBox').style.display='block';
 }
-function shareReflection() {
-  const txt=document.getElementById('reflectionText').value.trim();
-  if(!txt) return;
-  navigator.clipboard.writeText(`Moduuli 5 — aion käyttää tekoälyä myynnissä: "${txt}"`).then(()=>{
+"`).then(()=>{
     const b=document.getElementById('reflShareBtn');
     b.textContent='✓ Kopioitu'; b.classList.add('ok');
     setTimeout(()=>{b.textContent='📋 Jaa Teams-chattiin';b.classList.remove('ok');},2500);
   });
 }
-try{const s=localStorage.getItem('m5_reflection');if(s)document.getElementById('reflectionText').value=s;}catch(e){}
+// Load reflection on page load
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.loadReflection) {
+    window.loadReflection('m5_reflection');
+  } else {
+    // Fallback to localStorage
+    try{const s=localStorage.getItem('m5_reflection');if(s)document.getElementById('reflectionText').value=s;}catch(e){}
+  }
+});
 
 // AI Chat Widget
 fetch('/ai-chat-widget.html')

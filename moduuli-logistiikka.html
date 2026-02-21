@@ -735,7 +735,7 @@ h1.hero-title em{font-style:italic;color:#67e8f9;}
       <textarea class="reflection-textarea" id="reflectionText" placeholder="Esim: Käytän AI:ta toimitusviestien luomiseen..."></textarea>
       <div class="reflection-actions">
         <button class="reflection-save" onclick="saveReflection()">Tallenna ajatus</button>
-        <button class="reflection-share" id="reflShareBtn" onclick="shareReflection()">📋 Jaa Teams-chattiin</button>
+        
       </div>
       <div class="reflection-confirm" id="reflConfirm">✓ Tallennettu.</div>
     </div>
@@ -758,6 +758,7 @@ h1.hero-title em{font-style:italic;color:#67e8f9;}
   </div>
 </section>
 
+<script src="/js/reflections.js"></script>
 <script>
 const sections = document.querySelectorAll('.section[data-index]');
 const navSteps = document.getElementById('navSteps');
@@ -1054,22 +1055,26 @@ async function exercise10c() {
 }
 
 function saveReflection() {
-  const txt = document.getElementById('reflectionText').value.trim();
-  if(!txt) return;
-  try{ localStorage.setItem('m_logistiikka_reflection', txt); }catch(e){}
+  window.saveReflectionToAPI('m_logistiikka_reflection');
+}catch(e){}
   document.getElementById('reflConfirm').style.display = 'block';
   document.getElementById('achievementBox').classList.add('show');
 }
-function shareReflection() {
-  const txt = document.getElementById('reflectionText').value.trim();
-  if(!txt) return;
-  navigator.clipboard.writeText(`Moduuli Logistiikka — aion käyttää AI:ta: "${txt}"`).then(()=>{
+"`).then(()=>{
     const b = document.getElementById('reflShareBtn');
     b.textContent = '✓ Kopioitu'; b.classList.add('ok');
     setTimeout(()=>{ b.textContent = '📋 Jaa Teams-chattiin'; b.classList.remove('ok'); }, 2500);
   });
 }
-try{ const s = localStorage.getItem('m_logistiikka_reflection'); if(s) document.getElementById('reflectionText').value = s; }catch(e){}
+// Load reflection on page load
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.loadReflection) {
+    window.loadReflection('m_logistiikka_reflection');
+  } else {
+    // Fallback to localStorage
+    try{const s=localStorage.getItem('m_logistiikka_reflection');if(s)document.getElementById('reflectionText').value=s;}catch(e){}
+  }
+});
 
 fetch('/ai-chat-widget.html').then(r=>r.text()).then(html=>{document.body.insertAdjacentHTML('beforeend',html);}).catch(e=>console.error('AI chat widget:',e));
 </script>

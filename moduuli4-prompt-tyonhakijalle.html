@@ -579,7 +579,7 @@ h1.hero-title em{font-style:italic;color:#f0d090;}
       <textarea class="reflection-textarea" id="reflectionText" placeholder="Tänään teen..."></textarea>
       <div class="reflection-actions">
         <button class="reflection-save" onclick="saveReflection()">Tallenna lupaus</button>
-        <button class="reflection-share" id="reflShareBtn" onclick="shareReflection()">📋 Jaa Teams-chattiin</button>
+        
       </div>
       <div class="reflection-confirm" id="reflConfirm">✓ Tallennettu. Pidä lupauksesi.</div>
     </div>
@@ -599,6 +599,7 @@ h1.hero-title em{font-style:italic;color:#f0d090;}
   </div>
 </section>
 
+<script src="/js/reflections.js"></script>
 <script>
 const sections = document.querySelectorAll('.section[data-index]');
 const navSteps = document.getElementById('navSteps');
@@ -833,15 +834,11 @@ function copyAudience() {
 }
 
 function saveReflection() {
-  const txt=document.getElementById('reflectionText').value.trim();
-  if(!txt) return;
-  try{localStorage.setItem('m4_reflection',txt);}catch(e){}
+  window.saveReflectionToAPI('m4_reflection');
+}catch(e){}
   document.getElementById('reflConfirm').style.display='block';
 }
-function shareReflection() {
-  const txt=document.getElementById('reflectionText').value.trim();
-  if(!txt) return;
-  navigator.clipboard.writeText(`Moduuli 4 — lupaan tehdä tänään: "${txt}"`).then(()=>{
+"`).then(()=>{
     const b=document.getElementById('reflShareBtn');
     b.textContent='✓ Kopioitu'; b.classList.add('ok');
     setTimeout(()=>{b.textContent='📋 Jaa Teams-chattiin';b.classList.remove('ok');},2500);
@@ -851,10 +848,19 @@ function celebrate() {
   document.getElementById('doneMsg').style.display='block';
   try{localStorage.setItem('course_complete','true');}catch(e){}
 }
-try{const s=localStorage.getItem('m4_reflection');if(s)document.getElementById('reflectionText').value=s;}catch(e){}
+// Load reflection on page load
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.loadReflection) {
+    window.loadReflection('m4_reflection');
+  } else {
+    // Fallback to localStorage
+    try{const s=localStorage.getItem('m4_reflection');if(s)document.getElementById('reflectionText').value=s;}catch(e){}
+  }
+});
 </script>
 
 <!-- AI Chat Widget -->
+<script src="/js/reflections.js"></script>
 <script>
 fetch('/ai-chat-widget.html')
   .then(r => r.text())

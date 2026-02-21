@@ -3,20 +3,44 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
+// Configure SSL based on DATABASE_URL
+const dbConfig = {
+  connectionString: process.env.DATABASE_URL
+};
+
+// Only use SSL if DATABASE_URL contains sslmode=require
+if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('sslmode=require')) {
+  dbConfig.ssl = {
     rejectUnauthorized: false
-  }
-});
+  };
+} else if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('sslmode=disable')) {
+  // Try SSL for most cloud databases, but don't fail if not supported
+  dbConfig.ssl = process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false;
+}
+
+const pool = new Pool(dbConfig);
 
 async function initDatabase() {
   try {
     console.log('Connecting to database...');
+    console.log('DATABASE_URL:', process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:[^:@]+@/, ':****@') : 'Not set');
     
     // Test connection first
-    const testResult = await pool.query('SELECT NOW()');
-    console.log('✅ Database connection successful!', testResult.rows[0]);
+    let testResult;
+    try {
+      testResult = await pool.query('SELECT NOW()');
+      console.log('✅ Database connection successful!', testResult.rows[0]);
+    } catch (connError) {
+      console.error('❌ Connection error:', connError.message);
+      console.error('Full error:', connError);
+      
+      // If database doesn't exist, try connecting to postgres database to create it
+      if (connError.message.includes('does not exist')) {
+        console.log('⚠️  Database does not exist. Please create it first or check your DATABASE_URL.');
+        console.log('💡 For Neon/cloud databases, the database should already exist in your connection string.');
+      }
+      throw connError;
+    }
     
     // Read schema
     const schemaPath = path.join(__dirname, 'schema.sql');

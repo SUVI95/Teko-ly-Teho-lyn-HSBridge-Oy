@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - HSBridge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1a2e;
+  --ink2: #2d2d44;
+  --paper: #f5f3ef;
+  --paper2: #eeeae3;
+  --warm: #e8e0d4;
+  --accent: #c75b3a;
+  --accent2: #2563a8;
+  --accent3: #2a7a4b;
+  --gold: #b8860b;
+  --text: #1a1a2e;
+  --muted: #6b6880;
+  --border: rgba(26,26,46,0.12);
+  --shadow: 0 2px 20px rgba(26,26,46,0.08);
+  --shadow-md: 0 8px 40px rgba(26,26,46,0.12);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--paper);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  line-height: 1.7;
+}
+
+nav {
+  background: rgba(245,243,239,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
+  font-size: 1.3rem;
+  color: var(--ink);
+}
+
+.nav-logo img {
+  height: 40px;
+  width: auto;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-logout {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.btn-logout:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(199,91,58,0.05);
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2.5rem;
+}
+
+.page-header {
+  margin-bottom: 2.5rem;
+}
+
+.page-header h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.5rem;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--ink);
+  font-family: 'DM Serif Display', serif;
+}
+
+.stat-subtext {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
+
+.section {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2.5rem;
+  box-shadow: var(--shadow);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.section-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'DM Sans', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #b34e2f;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(199,91,58,0.35);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(199,91,58,0.05);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.search-filter-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 16px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(199,91,58,0.1);
+}
+
+.filter-select {
+  padding: 10px 16px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(199,91,58,0.1);
+}
+
+.table-container {
+  overflow-x: auto;
+  border-radius: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+thead {
+  background: var(--paper2);
+}
+
+th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink);
+  border-bottom: 2px solid var(--border);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+tbody tr:hover {
+  background: var(--paper);
+}
+
+.reflection-text {
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reflection-text.expanded {
+  white-space: normal;
+  max-width: none;
+}
+
+.date-cell {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.module-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--warm);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.module-group {
+  margin-bottom: 2rem;
+}
+
+.module-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--paper2);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.module-group-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.3rem;
+  color: var(--ink);
+}
+
+.module-group-count {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: var(--muted);
+}
+
+.error-message {
+  background: rgba(199,91,58,0.1);
+  border: 1px solid rgba(199,91,58,0.3);
+  color: var(--accent);
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  display: none;
+}
+
+.error-message.show {
+  display: block;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--muted);
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.toggle-text-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+  text-decoration: underline;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.toggle-text-btn:hover {
+  color: #b34e2f;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem;
+  }
+  
+  .page-header h1 {
+    font-size: 2rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .search-filter-bar {
+    flex-direction: column;
+  }
+  
+  table {
+    font-size: 0.8rem;
+  }
+  
+  th, td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  nav {
+    padding: 1rem;
+  }
+}
+</style>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo">
+      <img src="/assets/images/logo.png" alt="HSBridge Logo" onerror="this.style.display='none';" />
+      <span>HSBridge Admin</span>
+    </div>
+    <div class="nav-user">
+      <button class="btn-logout" id="logoutBtn">Kirjaudu ulos</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h1>Admin Dashboard</h1>
+      <p>Hallinnoi käyttäjiä, reflektioita ja sulkemistoimenpiteitä</p>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+
+    <!-- Stats Section -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-label">Käyttäjät</div>
+        <div class="stat-value" id="totalUsers">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Reflektiot</div>
+        <div class="stat-value" id="totalReflections">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Sulkemistoimenpiteet</div>
+        <div class="stat-value" id="totalClosingActions">-</div>
+      </div>
+    </div>
+
+    <!-- Reflections Section -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Reflektiot</h2>
+        <div class="section-actions">
+          <button class="btn btn-primary" id="downloadReflectionsBtn">
+            <span>Lataa CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="search-filter-bar">
+        <input type="text" class="search-input" id="reflectionSearch" placeholder="Etsi reflektioista...">
+        <select class="filter-select" id="moduleFilter">
+          <option value="">Kaikki moduulit</option>
+        </select>
+        <select class="filter-select" id="viewMode">
+          <option value="table">Taulukkonäkymä</option>
+          <option value="grouped">Ryhmitelty moduuleittain</option>
+        </select>
+      </div>
+
+      <div id="reflectionsContainer">
+        <div class="loading">Ladataan reflektioita...</div>
+      </div>
+    </div>
+
+    <!-- Closing Actions Section -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Sulkemistoimenpiteet</h2>
+        <div class="section-actions">
+          <button class="btn btn-primary" id="downloadClosingActionsBtn">
+            <span>Lataa CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="search-filter-bar">
+        <input type="text" class="search-input" id="closingActionSearch" placeholder="Etsi sulkemistoimenpiteistä...">
+      </div>
+
+      <div id="closingActionsContainer">
+        <div class="loading">Ladataan sulkemistoimenpiteitä...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin + '/api';
+
+    // State
+    let reflections = [];
+    let closingActions = [];
+    let stats = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadStats();
+      await loadReflections();
+      await loadClosingActions();
+      setupEventListeners();
+    });
+
+    // Event Listeners
+    function setupEventListeners() {
+      document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+      document.getElementById('downloadReflectionsBtn').addEventListener('click', downloadReflections);
+      document.getElementById('downloadClosingActionsBtn').addEventListener('click', downloadClosingActions);
+      document.getElementById('reflectionSearch').addEventListener('input', filterReflections);
+      document.getElementById('closingActionSearch').addEventListener('input', filterClosingActions);
+      document.getElementById('moduleFilter').addEventListener('change', filterReflections);
+      document.getElementById('viewMode').addEventListener('change', renderReflections);
+    }
+
+    // API Calls
+    async function apiCall(endpoint, options = {}) {
+      try {
+        const response = await fetch(`${API_URL}${endpoint}`, {
+          ...options,
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+          }
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          window.location.href = '/login';
+          return null;
+        }
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'API request failed');
+        }
+
+        return await response.json();
+      } catch (error) {
+        showError(error.message);
+        return null;
+      }
+    }
+
+    async function loadStats() {
+      const data = await apiCall('/admin/stats');
+      if (data) {
+        stats = data;
+        document.getElementById('totalUsers').textContent = data.totalUsers || 0;
+        document.getElementById('totalReflections').textContent = data.totalReflections || 0;
+        document.getElementById('totalClosingActions').textContent = data.totalClosingActions || 0;
+        
+        // Populate module filter
+        const moduleFilter = document.getElementById('moduleFilter');
+        const existingOptions = moduleFilter.querySelectorAll('option').length;
+        if (data.reflectionsByModule && existingOptions === 1) {
+          data.reflectionsByModule.forEach(module => {
+            const option = document.createElement('option');
+            option.value = module.module_id;
+            option.textContent = `Moduuli ${module.module_id} (${module.count})`;
+            moduleFilter.appendChild(option);
+          });
+        }
+      }
+    }
+
+    async function loadReflections() {
+      const data = await apiCall('/admin/reflections');
+      if (data && data.reflections) {
+        reflections = data.reflections;
+        renderReflections();
+      }
+    }
+
+    async function loadClosingActions() {
+      const data = await apiCall('/admin/closing-actions');
+      if (data && data.closingActions) {
+        closingActions = data.closingActions;
+        renderClosingActions();
+      }
+    }
+
+    // Rendering
+    function renderReflections() {
+      const container = document.getElementById('reflectionsContainer');
+      const viewMode = document.getElementById('viewMode').value;
+      const searchTerm = document.getElementById('reflectionSearch').value.toLowerCase();
+      const moduleFilter = document.getElementById('moduleFilter').value;
+
+      let filtered = reflections.filter(r => {
+        const matchesSearch = !searchTerm || 
+          (r.reflection_text && r.reflection_text.toLowerCase().includes(searchTerm)) ||
+          (r.email && r.email.toLowerCase().includes(searchTerm)) ||
+          (r.name && r.name.toLowerCase().includes(searchTerm));
+        const matchesModule = !moduleFilter || r.module_id == moduleFilter;
+        return matchesSearch && matchesModule;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <p>Ei reflektioita löytynyt</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (viewMode === 'grouped') {
+        renderReflectionsGrouped(filtered, container);
+      } else {
+        renderReflectionsTable(filtered, container);
+      }
+    }
+
+    function renderReflectionsTable(filtered, container) {
+      container.innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Moduuli</th>
+                <th>Sähköposti</th>
+                <th>Nimi</th>
+                <th>Reflektio</th>
+                <th>Luotu</th>
+                <th>Päivitetty</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(r => `
+                <tr>
+                  <td><span class="module-badge">${r.module_id || '-'}</span></td>
+                  <td>${escapeHtml(r.email || '-')}</td>
+                  <td>${escapeHtml(r.name || '-')}</td>
+                  <td>
+                    <div class="reflection-text" id="reflection-${r.id}">
+                      ${escapeHtml(r.reflection_text || '-')}
+                    </div>
+                    ${r.reflection_text && r.reflection_text.length > 100 ? `
+                      <button class="toggle-text-btn" onclick="toggleReflectionText(${r.id})">Näytä enemmän</button>
+                    ` : ''}
+                  </td>
+                  <td class="date-cell">${formatDate(r.created_at)}</td>
+                  <td class="date-cell">${formatDate(r.updated_at)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderReflectionsGrouped(filtered, container) {
+      const grouped = {};
+      filtered.forEach(r => {
+        const moduleId = r.module_id || 'Ei moduulia';
+        if (!grouped[moduleId]) {
+          grouped[moduleId] = [];
+        }
+        grouped[moduleId].push(r);
+      });
+
+      container.innerHTML = Object.keys(grouped).sort().map(moduleId => `
+        <div class="module-group">
+          <div class="module-group-header">
+            <div class="module-group-title">Moduuli ${moduleId}</div>
+            <div class="module-group-count">${grouped[moduleId].length} reflektiota</div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Sähköposti</th>
+                  <th>Nimi</th>
+                  <th>Reflektio</th>
+                  <th>Luotu</th>
+                  <th>Päivitetty</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${grouped[moduleId].map(r => `
+                  <tr>
+                    <td>${escapeHtml(r.email || '-')}</td>
+                    <td>${escapeHtml(r.name || '-')}</td>
+                    <td>
+                      <div class="reflection-text" id="reflection-${r.id}">
+                        ${escapeHtml(r.reflection_text || '-')}
+                      </div>
+                      ${r.reflection_text && r.reflection_text.length > 100 ? `
+                        <button class="toggle-text-btn" onclick="toggleReflectionText(${r.id})">Näytä enemmän</button>
+                      ` : ''}
+                    </td>
+                    <td class="date-cell">${formatDate(r.created_at)}</td>
+                    <td class="date-cell">${formatDate(r.updated_at)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderClosingActions() {
+      const container = document.getElementById('closingActionsContainer');
+      const searchTerm = document.getElementById('closingActionSearch').value.toLowerCase();
+
+      const filtered = closingActions.filter(ca => {
+        return !searchTerm || 
+          (ca.action_text && ca.action_text.toLowerCase().includes(searchTerm)) ||
+          (ca.email && ca.email.toLowerCase().includes(searchTerm)) ||
+          (ca.name && ca.name.toLowerCase().includes(searchTerm));
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">✅</div>
+            <p>Ei sulkemistoimenpiteitä löytynyt</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Sähköposti</th>
+                <th>Nimi</th>
+                <th>Toimenpide</th>
+                <th>Luotu</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(ca => `
+                <tr>
+                  <td>${escapeHtml(ca.email || '-')}</td>
+                  <td>${escapeHtml(ca.name || '-')}</td>
+                  <td>
+                    <div class="reflection-text" id="action-${ca.id}">
+                      ${escapeHtml(ca.action_text || '-')}
+                    </div>
+                    ${ca.action_text && ca.action_text.length > 100 ? `
+                      <button class="toggle-text-btn" onclick="toggleActionText(${ca.id})">Näytä enemmän</button>
+                    ` : ''}
+                  </td>
+                  <td class="date-cell">${formatDate(ca.created_at)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // Filters
+    function filterReflections() {
+      renderReflections();
+    }
+
+    function filterClosingActions() {
+      renderClosingActions();
+    }
+
+    // Downloads
+    async function downloadReflections() {
+      const btn = document.getElementById('downloadReflectionsBtn');
+      btn.disabled = true;
+      btn.textContent = 'Ladataan...';
+      
+      try {
+        const response = await fetch(`${API_URL}/admin/download/reflections`, {
+          credentials: 'include'
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          window.location.href = '/login';
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Download failed');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reflections-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        showError('CSV:n lataaminen epäonnistui');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Lataa CSV</span>';
+      }
+    }
+
+    async function downloadClosingActions() {
+      const btn = document.getElementById('downloadClosingActionsBtn');
+      btn.disabled = true;
+      btn.textContent = 'Ladataan...';
+      
+      try {
+        const response = await fetch(`${API_URL}/admin/download/closing-actions`, {
+          credentials: 'include'
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          window.location.href = '/login';
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Download failed');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `closing-actions-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        showError('CSV:n lataaminen epäonnistui');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Lataa CSV</span>';
+      }
+    }
+
+    // Logout
+    async function handleLogout() {
+      try {
+        await fetch(`${API_URL}/auth/logout`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+        window.location.href = '/login';
+      } catch (error) {
+        window.location.href = '/login';
+      }
+    }
+
+    // Utilities
+    function formatDate(dateString) {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      return date.toLocaleString('fi-FI', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '-';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showError(message) {
+      const errorEl = document.getElementById('errorMessage');
+      errorEl.textContent = message;
+      errorEl.classList.add('show');
+      setTimeout(() => {
+        errorEl.classList.remove('show');
+      }, 5000);
+    }
+
+    // Global functions for inline handlers
+    window.toggleReflectionText = function(id) {
+      const el = document.getElementById(`reflection-${id}`);
+      if (el) {
+        el.classList.toggle('expanded');
+        const btn = el.nextElementSibling;
+        if (btn) {
+          btn.textContent = el.classList.contains('expanded') ? 'Näytä vähemmän' : 'Näytä enemmän';
+        }
+      }
+    };
+
+    window.toggleActionText = function(id) {
+      const el = document.getElementById(`action-${id}`);
+      if (el) {
+        el.classList.toggle('expanded');
+        const btn = el.nextElementSibling;
+        if (btn) {
+          btn.textContent = el.classList.contains('expanded') ? 'Näytä vähemmän' : 'Näytä enemmän';
+        }
+      }
+    };
+  </script>
+</body>
+</html>

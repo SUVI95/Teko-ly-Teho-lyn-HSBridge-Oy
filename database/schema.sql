@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP,
-    is_active BOOLEAN DEFAULT TRUE
+    is_active BOOLEAN DEFAULT TRUE,
+    is_admin BOOLEAN DEFAULT FALSE
 );
 
 -- Student progress table
@@ -83,3 +84,43 @@ CREATE TRIGGER update_student_progress_updated_at
     BEFORE UPDATE ON student_progress
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- Reflections table for storing user reflections/feedback
+CREATE TABLE IF NOT EXISTS reflections (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    module_id VARCHAR(100) NOT NULL,
+    reflection_text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Closing actions table for Module 10
+CREATE TABLE IF NOT EXISTS closing_actions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    action_text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for reflections
+CREATE INDEX IF NOT EXISTS idx_reflections_user_id ON reflections(user_id);
+CREATE INDEX IF NOT EXISTS idx_reflections_module ON reflections(module_id);
+CREATE INDEX IF NOT EXISTS idx_closing_actions_user_id ON closing_actions(user_id);
+CREATE INDEX IF NOT EXISTS idx_users_admin ON users(is_admin);
+
+-- Feedback table for course feedback
+CREATE TABLE IF NOT EXISTS feedback (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    module_id VARCHAR(100),
+    question_type VARCHAR(50) NOT NULL, -- 'what_learned', 'learned_new', 'course_feedback'
+    feedback_text TEXT,
+    rating INTEGER, -- 1-5 for course feedback
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for feedback
+CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_module ON feedback(module_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_type ON feedback(question_type);
