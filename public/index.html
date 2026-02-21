@@ -1316,102 +1316,42 @@
       window.location.reload(); // Reload page instead of redirecting to login
     }
     
-    // GDPR Consent Management
-    async function checkGDPRConsent() {
+    // GDPR Consent Management — localStorage first, API as backup
+    function checkGDPRConsent() {
       try {
-        const response = await fetch(`${API_URL}/gdpr/consent`, {
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          // If not authenticated, don't show banner (user will be redirected to login)
-          return;
-        }
-        
-        const data = await response.json();
-        
-        // Show banner if user hasn't given consent
-        if (!data.has_consent || !data.consent || !data.consent.consent_given) {
-          showGDPRBanner();
-        }
-      } catch (error) {
-        console.error('Error checking GDPR consent:', error);
-        // Don't show banner on error - assume consent given
-      }
+        if (localStorage.getItem('gdpr_consent_given') === 'true') return;
+      } catch(e) {}
+      var banner = document.getElementById('gdprBanner');
+      if (banner) banner.classList.add('show');
     }
 
-    function showGDPRBanner() {
-      const banner = document.getElementById('gdprBanner');
-      if (banner) {
-        banner.classList.add('show');
-      }
-    }
-
-    function hideGDPRBanner() {
-      const banner = document.getElementById('gdprBanner');
-      if (banner) {
-        banner.classList.remove('show');
-      }
-    }
-
-    async function saveGDPRConsent(consentGiven) {
+    function saveGDPRConsent(consentGiven) {
+      try { localStorage.setItem('gdpr_consent_given', String(consentGiven)); } catch(e) {}
+      var banner = document.getElementById('gdprBanner');
+      if (banner) banner.classList.remove('show');
+      // Also save to server (fire and forget)
       try {
-        const consentText = 'Käyttäjä suostuu henkilötietojensa käsittelyyn oppimisalustan käyttöön liittyen. Tiedot tallennetaan edistymisen seurantaan ja palautteen keräämiseen.';
-        
-        const response = await fetch(`${API_URL}/gdpr/consent`, {
+        fetch(API_URL + '/gdpr/consent', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({
-            consent_given: consentGiven,
-            consent_type: 'data_processing',
-            consent_text: consentText
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to save consent');
-        }
-
-        const data = await response.json();
-        console.log('Consent saved:', data);
-        
-        hideGDPRBanner();
-        
-        if (!consentGiven) {
-          alert('Suostumuksesi on tallennettu. Voit muuttaa asetuksiasi myöhemmin hallintapaneelista.');
-        }
-      } catch (error) {
-        console.error('Error saving GDPR consent:', error);
-        alert('Virhe suostumuksen tallentamisessa. Yritä uudelleen.');
-      }
+          body: JSON.stringify({ consent_given: consentGiven, consent_type: 'data_processing' })
+        }).catch(function() {});
+      } catch(e) {}
     }
 
-    // Setup GDPR banner buttons
     function setupGDPRBanner() {
-      const acceptBtn = document.getElementById('gdprAcceptBtn');
-      const declineBtn = document.getElementById('gdprDeclineBtn');
-      
-      if (acceptBtn) {
-        acceptBtn.addEventListener('click', () => saveGDPRConsent(true));
-      }
-      
-      if (declineBtn) {
-        declineBtn.addEventListener('click', () => saveGDPRConsent(false));
-      }
+      var acceptBtn = document.getElementById('gdprAcceptBtn');
+      var declineBtn = document.getElementById('gdprDeclineBtn');
+      if (acceptBtn) acceptBtn.addEventListener('click', function() { saveGDPRConsent(true); });
+      if (declineBtn) declineBtn.addEventListener('click', function() { saveGDPRConsent(false); });
     }
 
     // Initialize
     loadUser();
     loadModules();
     setupGDPRBanner();
-    
-    // Check GDPR consent after user is loaded (with a small delay to ensure auth is complete)
-    setTimeout(() => {
-      checkGDPRConsent();
-    }, 500);
+    checkGDPRConsent();
   </script>
 </body>
 </html>

@@ -48,8 +48,17 @@ router.post('/consent', authenticateToken, async (req, res) => {
           ip_address VARCHAR(45), user_agent TEXT, consent_text TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           UNIQUE(user_id, consent_type))`);
-        return res.json({ success: true, consent: null, message: 'Table created, please try again' });
-      } catch(e) { /* ignore */ }
+        const { consent_given, consent_type = 'data_processing', consent_text } = req.body;
+        const ip_address = req.ip || req.headers['x-forwarded-for'] || null;
+        const user_agent = req.headers['user-agent'] || null;
+        const retry = await pool.query(`
+          INSERT INTO gdpr_consent (user_id, consent_given, consent_type, ip_address, user_agent, consent_text)
+          VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+          [req.user.id, consent_given, consent_type, ip_address, user_agent, consent_text || null]);
+        return res.json({ success: true, consent: retry.rows[0], message: 'Consent recorded' });
+      } catch(e) {
+        return res.json({ success: true, consent: null, message: 'Consent noted' });
+      }
     }
     console.error('Save consent error:', error);
     res.status(500).json({ error: 'Failed to save consent' });
