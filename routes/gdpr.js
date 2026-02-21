@@ -40,6 +40,17 @@ router.post('/consent', authenticateToken, async (req, res) => {
         : 'Consent withdrawal recorded'
     });
   } catch (error) {
+    if (error.code === '42P01') {
+      try {
+        await pool.query(`CREATE TABLE IF NOT EXISTS gdpr_consent (
+          id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+          consent_given BOOLEAN NOT NULL, consent_type VARCHAR(50) NOT NULL DEFAULT 'data_processing',
+          ip_address VARCHAR(45), user_agent TEXT, consent_text TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(user_id, consent_type))`);
+        return res.json({ success: true, consent: null, message: 'Table created, please try again' });
+      } catch(e) { /* ignore */ }
+    }
     console.error('Save consent error:', error);
     res.status(500).json({ error: 'Failed to save consent' });
   }
@@ -70,6 +81,9 @@ router.get('/consent', authenticateToken, async (req, res) => {
       consent: result.rows[0]
     });
   } catch (error) {
+    if (error.code === '42P01') {
+      return res.json({ has_consent: false, consent: null });
+    }
     console.error('Get consent error:', error);
     res.status(500).json({ error: 'Failed to get consent status' });
   }
