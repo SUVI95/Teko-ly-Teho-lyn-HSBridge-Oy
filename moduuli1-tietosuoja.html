@@ -1533,24 +1533,23 @@ function copyGDPR() {
 }
 
 // ── REFLECTION ───────────────────────────────
-function saveReflection() {
-  window.saveReflectionToAPI('m1_reflection');
+async function saveReflection() {
+  try {
+    await window.saveReflectionToAPI('unknown');
+    const confirmEl = document.getElementById('reflConfirm');
+    if (confirmEl) {
+      confirmEl.style.display = 'block';
+      setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    }
+  } catch(e) {
+    console.error('Error saving reflection:', e);
+    alert('Virhe tallennuksessa. Yritä uudelleen.');
+  }
 } catch(e) {}
   document.getElementById('reflConfirm').style.display = 'block';
   document.getElementById('reflConfirm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function shareReflection() {
-  const txt = document.getElementById('reflectionText').value.trim();
-  if (!txt) return;
-  const share = `Moduuli 1 — oppimani asia: "${txt}"`;
-  navigator.clipboard.writeText(share).then(() => {
-    const b = document.getElementById('reflShareBtn');
-    b.textContent = '✓ Kopioitu Teams-chattiin';
-    b.classList.add('ok');
-    setTimeout(() => { b.textContent = '📋 Jaa Teams-chattiin'; b.classList.remove('ok'); }, 2500);
-  });
-}
 
 // load saved reflection
 try {

@@ -1,5 +1,6 @@
 // Shared reflection saving functionality
-const API_URL = window.location.origin + '/api';
+if (typeof window._HSBRIDGE_API_URL === 'undefined') { window._HSBRIDGE_API_URL = window.location.origin + '/api'; }
+const _REFL_API = window._HSBRIDGE_API_URL;
 
 // Save reflection to database
 window.saveReflectionToAPI = async function(moduleId) {
@@ -16,7 +17,7 @@ window.saveReflectionToAPI = async function(moduleId) {
   }
   
   try {
-    const response = await fetch(`${API_URL}/reflections/save`, {
+    const response = await fetch(`${_REFL_API}/reflections/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -79,7 +80,7 @@ window.loadReflection = async function(moduleId) {
   if (!reflectionTextarea) return;
   
   try {
-    const response = await fetch(`${API_URL}/reflections/module/${moduleId}`, {
+    const response = await fetch(`${_REFL_API}/reflections/module/${moduleId}`, {
       credentials: 'include'
     });
     
@@ -120,7 +121,7 @@ window.saveClosingAction = async function() {
   }
   
   try {
-    const response = await fetch(`${API_URL}/reflections/closing-action`, {
+    const response = await fetch(`${_REFL_API}/reflections/closing-action`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

@@ -1,10 +1,11 @@
 // Shared feedback functionality
-const API_URL = window.location.origin + '/api';
+if (typeof window._HSBRIDGE_API_URL === 'undefined') { window._HSBRIDGE_API_URL = window.location.origin + '/api'; }
+const _FB_API = window._HSBRIDGE_API_URL;
 
 // Save feedback
 window.saveFeedback = async function(moduleId, questionType, feedbackText, rating) {
   try {
-    const response = await fetch(`${API_URL}/feedback/save`, {
+    const response = await fetch(`${_FB_API}/feedback/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

@@ -54,6 +54,7 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
     const result = await pool.query(`
       SELECT id, email, name, created_at, last_login, is_active, is_admin
       FROM users
+      WHERE is_admin = FALSE
       ORDER BY created_at DESC
     `);
     
@@ -61,6 +62,104 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({ error: 'Failed to get users' });
+  }
+});
+
+// Get student progress summary
+router.get('/students/progress', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        u.id,
+        u.email,
+        u.name,
+        u.created_at,
+        u.last_login,
+        COUNT(DISTINCT sp.module_id) as modules_accessed,
+        COUNT(DISTINCT CASE WHEN sp.completed THEN sp.module_id END) as modules_completed,
+        COUNT(DISTINCT sp.section_id) as sections_accessed,
+        COUNT(DISTINCT CASE WHEN sp.completed THEN sp.section_id END) as sections_completed,
+        COUNT(DISTINCT ci.item_id) as checklist_items_completed,
+        SUM(sp.time_spent) as total_time_spent
+      FROM users u
+      LEFT JOIN student_progress sp ON u.id = sp.user_id
+      LEFT JOIN checklist_items ci ON u.id = ci.user_id AND ci.completed = TRUE
+      WHERE u.is_admin = FALSE
+      GROUP BY u.id, u.email, u.name, u.created_at, u.last_login
+      ORDER BY u.created_at DESC
+    `);
+    
+    res.json({ students: result.rows });
+  } catch (error) {
+    console.error('Get student progress error:', error);
+    res.status(500).json({ error: 'Failed to get student progress' });
+  }
+});
+
+// Get all data for a specific student
+router.get('/students/:userId', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Get user info
+    const userResult = await pool.query('SELECT id, email, name, created_at, last_login FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    
+    const user = userResult.rows[0];
+    
+    // Get reflections
+    const reflectionsResult = await pool.query(`
+      SELECT module_id, reflection_text, created_at, updated_at
+      FROM reflections
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `, [userId]);
+    
+    // Get feedback
+    const feedbackResult = await pool.query(`
+      SELECT module_id, question_type, feedback_text, rating, created_at
+      FROM feedback
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `, [userId]);
+    
+    // Get closing actions
+    const closingActionsResult = await pool.query(`
+      SELECT action_text, created_at
+      FROM closing_actions
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `, [userId]);
+    
+    // Get progress
+    const progressResult = await pool.query(`
+      SELECT module_id, section_id, completed, time_spent, last_accessed
+      FROM student_progress
+      WHERE user_id = $1
+      ORDER BY last_accessed DESC
+    `, [userId]);
+    
+    // Get checklist items
+    const checklistResult = await pool.query(`
+      SELECT module_id, item_id, completed, completed_at
+      FROM checklist_items
+      WHERE user_id = $1
+      ORDER BY completed_at DESC
+    `, [userId]);
+    
+    res.json({
+      user,
+      reflections: reflectionsResult.rows,
+      feedback: feedbackResult.rows,
+      closingActions: closingActionsResult.rows,
+      progress: progressResult.rows,
+      checklist: checklistResult.rows
+    });
+  } catch (error) {
+    console.error('Get student data error:', error);
+    res.status(500).json({ error: 'Failed to get student data' });
   }
 });
 

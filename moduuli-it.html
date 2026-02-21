@@ -1138,17 +1138,22 @@ Yksi kerrallaan. Anna palautetta vastauksistani — mitä työnantaja kuulee ja 
   await callAI('Olet senior-kehittäjä joka haastattelee IT-alan työnhakijoita. Haastattelet ammattimaisesti ja annat rakentavaa palautetta.', prompt, 'text10c', 'resp10c');
 }
 
-function saveReflection() {
-  window.saveReflectionToAPI('m_it_reflection');
+async function saveReflection() {
+  try {
+    await window.saveReflectionToAPI('m_it_reflection');
+    const confirmEl = document.getElementById('reflConfirm');
+    if (confirmEl) {
+      confirmEl.style.display = 'block';
+      setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    }
+  } catch(e) {
+    console.error('Error saving reflection:', e);
+    alert('Virhe tallennuksessa. Yritä uudelleen.');
+  }
 }catch(e){}
   document.getElementById('reflConfirm').style.display = 'block';
   document.getElementById('achievementBox').classList.add('show');
 }
-"`).then(()=>{
-    const b = document.getElementById('reflShareBtn');
-    b.textContent = '✓ Kopioitu'; b.classList.add('ok');
-    setTimeout(()=>{ b.textContent = '📋 Jaa Teams-chattiin'; b.classList.remove('ok'); }, 2500);
-  });
 }
 // Load reflection on page load
 document.addEventListener('DOMContentLoaded', () => {

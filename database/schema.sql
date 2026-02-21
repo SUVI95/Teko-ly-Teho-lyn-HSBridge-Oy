@@ -124,3 +124,22 @@ CREATE TABLE IF NOT EXISTS feedback (
 CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_module ON feedback(module_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_type ON feedback(question_type);
+
+-- GDPR Consent table
+CREATE TABLE IF NOT EXISTS gdpr_consent (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    consent_given BOOLEAN NOT NULL,
+    consent_type VARCHAR(50) NOT NULL DEFAULT 'data_processing', -- 'data_processing', 'cookies', etc.
+    ip_address VARCHAR(45), -- IPv6 can be up to 45 chars
+    user_agent TEXT,
+    consent_text TEXT, -- Store the exact text user consented to
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, consent_type)
+);
+
+-- Indexes for GDPR consent
+CREATE INDEX IF NOT EXISTS idx_gdpr_consent_user_id ON gdpr_consent(user_id);
+CREATE INDEX IF NOT EXISTS idx_gdpr_consent_type ON gdpr_consent(consent_type);
+CREATE INDEX IF NOT EXISTS idx_gdpr_consent_created ON gdpr_consent(created_at);
