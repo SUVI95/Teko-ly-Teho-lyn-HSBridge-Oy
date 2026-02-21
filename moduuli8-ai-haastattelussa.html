@@ -686,16 +686,20 @@ async function getFeedback() {
   btn.disabled = false;
 }
 
-function saveReflection() {
-  window.saveReflectionToAPI('m8_reflection');
-}catch(e){}
-  document.getElementById('reflConfirm').style.display='block';
-}
-"`).then(()=>{
-    const b=document.getElementById('reflShareBtn');
-    b.textContent='✓ Kopioitu'; b.classList.add('ok');
-    setTimeout(()=>{b.textContent='📋 Jaa Teams-chattiin';b.classList.remove('ok');},2500);
-  });
+async function saveReflection() {
+  try {
+    await window.saveReflectionToAPI('m8_reflection');
+    const confirmEl = document.getElementById('reflConfirm');
+    if (confirmEl) {
+      confirmEl.style.display = 'block';
+      setTimeout(() => {
+        confirmEl.style.display = 'none';
+      }, 3000);
+    }
+  } catch(e) {
+    console.error('Error saving reflection:', e);
+    alert('Virhe tallennuksessa. Yritä uudelleen.');
+  }
 }
 // Load reflection on page load
 document.addEventListener('DOMContentLoaded', () => {

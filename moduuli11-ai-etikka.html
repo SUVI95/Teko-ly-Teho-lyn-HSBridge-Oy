@@ -45,6 +45,16 @@ h2.section-h2 em{font-style:italic;color:var(--accent);}
 @media(max-width:680px){.two-col{grid-template-columns:1fr;gap:2rem;}}
 .fade-up{opacity:0;transform:translateY(28px);transition:opacity 0.65s ease,transform 0.65s ease;}
 .fade-up.in{opacity:1;transform:translateY(0);}
+/* Fallback: show content if JavaScript fails */
+noscript .fade-up,.fade-up.no-js{opacity:1;transform:translateY(0);}
+/* Emergency fallback: show content after 1 second if JS hasn't loaded */
+@keyframes fadeInFallback {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.fade-up {
+  animation: fadeInFallback 0.1s ease 1s forwards;
+}
 .highlight-box{background:#fff;border-radius:12px;padding:2.5rem;box-shadow:var(--shadow-md);border:1px solid var(--border);position:relative;}
 .highlight-box::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent);border-radius:12px 0 0 12px;}
 
@@ -645,6 +655,12 @@ Hyvä hakemuskirje on räätälöity työpaikkaan ja yritykseen. Se kertoo miksi
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
 <script>
+// Immediately show all fade-up elements to ensure content is visible
+(function(){
+  const fadeUps=document.querySelectorAll('.fade-up');
+  fadeUps.forEach(el=>el.classList.add('in'));
+})();
+
 const sections = document.querySelectorAll('.section[data-index]');
 const navSteps = document.getElementById('navSteps');
 const progressBar = document.getElementById('progress-bar');
@@ -938,16 +954,20 @@ function copyFinance() {
   });
 }
 
-function saveReflection() {
-  window.saveReflectionToAPI('m11_reflection');
-}catch(e){}
-  document.getElementById('reflConfirm').style.display='block';
-}
-"`).then(()=>{
-    const b=document.getElementById('reflShareBtn');
-    b.textContent='✓ Kopioitu'; b.classList.add('ok');
-    setTimeout(()=>{b.textContent='📋 Jaa Teams-chattiin';b.classList.remove('ok');},2500);
-  });
+async function saveReflection() {
+  try {
+    await window.saveReflectionToAPI('m11_reflection');
+    const confirmEl = document.getElementById('reflConfirm');
+    if (confirmEl) {
+      confirmEl.style.display = 'block';
+      setTimeout(() => {
+        confirmEl.style.display = 'none';
+      }, 3000);
+    }
+  } catch(e) {
+    console.error('Error saving reflection:', e);
+    alert('Virhe tallennuksessa. Yritä uudelleen.');
+  }
 }
 // Load reflection on page load
 document.addEventListener('DOMContentLoaded', () => {
