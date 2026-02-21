@@ -150,7 +150,7 @@ router.get('/me', async (req, res) => {
     }
     
     const result = await pool.query(
-      'SELECT u.id, u.email, u.name, u.created_at, u.last_login FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE',
+      'SELECT u.id, u.email, u.name, u.created_at, u.last_login, u.is_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE',
       [token]
     );
     
