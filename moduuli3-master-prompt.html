@@ -351,6 +351,101 @@ h1.hero-title em{font-style:italic;color:#a8d4b8;}
       </div>
     </div>
 
+    <!-- PROMPT IMPROVEMENT EXERCISE -->
+    <div class="builder-wrap" style="margin-top:3rem;">
+      <div class="builder-header">
+        <div class="builder-header-icon">📝</div>
+        <div class="builder-header-text">
+          <h3>Paranna promptiasi</h3>
+          <p>Kirjoita heikko prompt — AI parantaa sen sinulle</p>
+        </div>
+      </div>
+      <div class="builder-body">
+        <div class="builder-step">
+          <div class="builder-step-label"><span class="snum">1</span>Heikko prompt</div>
+          <h4>Kirjoita prompt joka on liian epämääräinen</h4>
+          <p>Esim: "Autatko minua hakemuksessa?" tai "Kirjoita CV"</p>
+          <textarea class="builder-textarea" id="weakPromptInput" placeholder="Kirjoita heikko, epämääräinen prompt tähän..."></textarea>
+        </div>
+        <button class="builder-generate-btn" id="improvePromptBtn" onclick="improvePrompt()">✨ Paranna promptia</button>
+        <div class="result-box" id="improvedPromptBox" style="display:none;">
+          <div class="result-box-label">Parannettu prompt</div>
+          <div class="result-text" id="improvedPromptText"></div>
+          <div class="result-actions">
+            <button class="result-copy-btn" id="copyImprovedBtn" onclick="copyImprovedPrompt()">📋 Kopioi parannettu prompt</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMPT COMPARISON TOOL -->
+    <div class="builder-wrap" style="margin-top:2rem;">
+      <div class="builder-header">
+        <div class="builder-header-icon">⚖️</div>
+        <div class="builder-header-text">
+          <h3>Vertaa kahta promptia</h3>
+          <p>Testaa kumpi prompt antaa paremman vastauksen</p>
+        </div>
+      </div>
+      <div class="builder-body">
+        <div class="builder-step">
+          <div class="builder-step-label"><span class="snum">1</span>Prompt A</div>
+          <textarea class="builder-textarea" id="promptAInput" placeholder="Ensimmäinen prompt..."></textarea>
+        </div>
+        <div class="builder-step">
+          <div class="builder-step-label"><span class="snum">2</span>Prompt B</div>
+          <textarea class="builder-textarea" id="promptBInput" placeholder="Toinen prompt (parannettu versio)..."></textarea>
+        </div>
+        <button class="builder-generate-btn" id="comparePromptsBtn" onclick="comparePrompts()">⚖️ Vertaa prompteja</button>
+        <div class="result-box" id="compareResultBox" style="display:none;">
+          <div class="result-box-label">Vertailu</div>
+          <div class="result-text" id="compareResultText"></div>
+          <div class="result-actions">
+            <button class="result-copy-btn" id="copyCompareBtn" onclick="copyComparison()">📋 Kopioi vertailu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REAL-WORLD PROMPT PRACTICE -->
+    <div class="builder-wrap" style="margin-top:2rem;">
+      <div class="builder-header">
+        <div class="builder-header-icon">🎯</div>
+        <div class="builder-header-text">
+          <h3>Harjoittele oikeilla tilanteilla</h3>
+          <p>Valitse tilanne — AI auttaa luomaan täydellisen promptin</p>
+        </div>
+      </div>
+      <div class="builder-body">
+        <div class="builder-step">
+          <div class="builder-step-label"><span class="snum">1</span>Valitse tilanne</div>
+          <h4>Mihin tilanteeseen tarvitset promptin?</h4>
+          <select class="builder-textarea" id="scenarioSelect" style="min-height:auto;height:auto;padding:0.9rem 1.1rem;">
+            <option value="">Valitse tilanne...</option>
+            <option value="cv">CV:n optimointi</option>
+            <option value="cover">Hakemuskirjeen kirjoittaminen</option>
+            <option value="interview">Haastatteluvalmistelu</option>
+            <option value="networking">Verkostoitumisviesti LinkedInissä</option>
+            <option value="skills">Taitojen tunnistaminen</option>
+            <option value="career">Urasuunnittelu</option>
+          </select>
+        </div>
+        <div class="builder-step">
+          <div class="builder-step-label"><span class="snum">2</span>Lisää konteksti</div>
+          <h4>Kerro lyhyesti tilanteestasi</h4>
+          <textarea class="builder-textarea" id="scenarioContextInput" placeholder="Esim: Haen myyntipäällikön tehtävää, minulla on 5 vuotta kokemusta asiakaspalvelusta..."></textarea>
+        </div>
+        <button class="builder-generate-btn" id="generateScenarioPromptBtn" onclick="generateScenarioPrompt()">✨ Luo prompt tälle tilanteelle</button>
+        <div class="result-box" id="scenarioPromptBox" style="display:none;">
+          <div class="result-box-label">Valmis prompt</div>
+          <div class="result-text" id="scenarioPromptText"></div>
+          <div class="result-actions">
+            <button class="result-copy-btn" id="copyScenarioBtn" onclick="copyScenarioPrompt()">📋 Kopioi prompt</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- REFLECTION -->
     <div class="reflection-card" style="margin-top:3rem;">
       <div class="reflection-label">Hetki ajatuksille</div>
@@ -452,6 +547,139 @@ function shareToTeams() {
     setTimeout(()=>{b.textContent='💬 Jaa Teams-chattiin';b.classList.remove('ok');},2500);
   });
 }
+// ── PROMPT IMPROVEMENT ─────────────────────────
+let improvedPromptText = '';
+async function improvePrompt() {
+  const weak = document.getElementById('weakPromptInput').value.trim();
+  if (!weak) { alert('Kirjoita ensin heikko prompt.'); return; }
+  const btn = document.getElementById('improvePromptBtn');
+  const box = document.getElementById('improvedPromptBox');
+  const textEl = document.getElementById('improvedPromptText');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> Parannetaan...';
+  box.style.display = 'block';
+  textEl.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', max_tokens: 600,
+        system: 'Olet prompt-asiantuntija. Paranna käyttäjän antamaa heikkoa promptia. Selitä lyhyesti mitä muutit ja miksi. Anna parannettu prompt suomeksi, strukturoidusti.',
+        messages: [{ role: 'user', content: `Paranna tätä heikkoa promptia: "${weak}". Selitä mitä muutit ja miksi.` }]
+      })
+    });
+    const data = await res.json();
+    improvedPromptText = data.text || '';
+    textEl.textContent = improvedPromptText;
+  } catch(e) {
+    textEl.textContent = 'Yhteysvirhe. Muista: hyvä prompt sisältää kontekstin, selkeän tehtävän, ja halutun tuloksen.';
+  }
+  btn.disabled = false;
+  btn.textContent = '✨ Paranna promptia';
+}
+function copyImprovedPrompt() {
+  if (!improvedPromptText) return;
+  navigator.clipboard.writeText(improvedPromptText).then(() => {
+    const b = document.getElementById('copyImprovedBtn');
+    b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = '📋 Kopioi parannettu prompt'; b.classList.remove('ok'); }, 2200);
+  });
+}
+
+// ── PROMPT COMPARISON ─────────────────────────
+let compareText = '';
+async function comparePrompts() {
+  const a = document.getElementById('promptAInput').value.trim();
+  const b = document.getElementById('promptBInput').value.trim();
+  if (!a || !b) { alert('Täytä molemmat promptit.'); return; }
+  const btn = document.getElementById('comparePromptsBtn');
+  const box = document.getElementById('compareResultBox');
+  const textEl = document.getElementById('compareResultText');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> Vertaillaan...';
+  box.style.display = 'block';
+  textEl.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', max_tokens: 800,
+        system: 'Olet prompt-asiantuntija. Vertaile kahta promptia. Kerro mikä on parempi ja miksi. Anna konkreettiset parannusehdotukset. Vastaa suomeksi, strukturoidusti.',
+        messages: [{ role: 'user', content: `Vertaa näitä kahta promptia:\n\nPROMPT A: "${a}"\n\nPROMPT B: "${b}"\n\nMikä on parempi ja miksi?` }]
+      })
+    });
+    const data = await res.json();
+    compareText = data.text || '';
+    textEl.textContent = compareText;
+  } catch(e) {
+    textEl.textContent = 'Yhteysvirhe. Vertaa itse: kumpi prompt on selkeämpi ja antaa paremman vastauksen?';
+  }
+  btn.disabled = false;
+  btn.textContent = '⚖️ Vertaa prompteja';
+}
+function copyComparison() {
+  if (!compareText) return;
+  navigator.clipboard.writeText(compareText).then(() => {
+    const b = document.getElementById('copyCompareBtn');
+    b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = '📋 Kopioi vertailu'; b.classList.remove('ok'); }, 2200);
+  });
+}
+
+// ── SCENARIO PROMPT GENERATOR ──────────────────
+let scenarioPromptText = '';
+async function generateScenarioPrompt() {
+  const scenario = document.getElementById('scenarioSelect').value;
+  const context = document.getElementById('scenarioContextInput').value.trim();
+  if (!scenario) { alert('Valitse ensin tilanne.'); return; }
+  const scenarios = {
+    cv: 'CV:n optimointi',
+    cover: 'Hakemuskirjeen kirjoittaminen',
+    interview: 'Haastatteluvalmistelu',
+    networking: 'Verkostoitumisviesti LinkedInissä',
+    skills: 'Taitojen tunnistaminen',
+    career: 'Urasuunnittelu'
+  };
+  const btn = document.getElementById('generateScenarioPromptBtn');
+  const box = document.getElementById('scenarioPromptBox');
+  const textEl = document.getElementById('scenarioPromptText');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> Luodaan...';
+  box.style.display = 'block';
+  textEl.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', max_tokens: 600,
+        system: 'Olet prompt-asiantuntija. Luo täydellinen prompt käyttäjälle tiettyyn työnhaku-tilanteeseen. Promptin tulee olla selkeä, konkreettinen, ja sisältää kaikki tarvittavat elementit (rooli, konteksti, tehtävä, haluttu tulos). Vastaa suomeksi.',
+        messages: [{ role: 'user', content: `Luo täydellinen prompt tälle tilanteelle: ${scenarios[scenario]}. ${context ? 'Konteksti: ' + context : ''}` }]
+      })
+    });
+    const data = await res.json();
+    scenarioPromptText = data.text || '';
+    textEl.textContent = scenarioPromptText;
+  } catch(e) {
+    textEl.textContent = 'Yhteysvirhe. Muista: hyvä prompt sisältää roolin, kontekstin, tehtävän ja halutun tuloksen.';
+  }
+  btn.disabled = false;
+  btn.textContent = '✨ Luo prompt tälle tilanteelle';
+}
+function copyScenarioPrompt() {
+  if (!scenarioPromptText) return;
+  navigator.clipboard.writeText(scenarioPromptText).then(() => {
+    const b = document.getElementById('copyScenarioBtn');
+    b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = '📋 Kopioi prompt'; b.classList.remove('ok'); }, 2200);
+  });
+}
+
 function saveReflection() {
   const txt=document.getElementById('reflectionText').value.trim();
   if(!txt) return;

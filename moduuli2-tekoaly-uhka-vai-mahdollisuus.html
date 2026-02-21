@@ -321,6 +321,78 @@ h1.hero-title em { font-style: italic; color: #a8c4e8; }
         <button class="copy-btn" id="fieldCopyBtn" onclick="copyField()">Kopioi Teams-chattiin</button>
       </div>
     </div>
+
+    <!-- SKILLS GAP IDENTIFIER -->
+    <div class="field-explorer" style="margin-top:2.5rem;">
+      <div class="field-explorer-label">Taitojen tunnistus</div>
+      <h3>Mitä taitoja sinulta puuttuu?</h3>
+      <p>Kerro nykyinen ammattisi ja tavoiteammattisi — AI tunnistaa 5 tärkeintä taitoa joita sinulta puuttuu.</p>
+      <div class="field-row">
+        <input class="field-input" id="currentJobInput" type="text" placeholder="Nykyinen ammattisi (esim: asiakaspalvelija)" />
+        <input class="field-input" id="targetJobInput" type="text" placeholder="Tavoiteammattisi (esim: myyntipäällikkö)" />
+      </div>
+      <div style="margin-top:10px;">
+        <button class="field-btn" id="skillsGapBtn" onclick="identifySkillsGap()">🔍 Tunnista puuttuvat taidot</button>
+      </div>
+      <div class="field-result" id="skillsGapResult">
+        <div class="field-result-head">
+          <div class="field-badge">Puuttuvat taidot</div>
+          <h4 id="skillsGapTitle">Analyysi</h4>
+        </div>
+        <div class="field-result-body" id="skillsGapBody">Analysoidaan...</div>
+      </div>
+      <div class="teams-share" id="skillsGapShare" style="display:none;">
+        <p>💬 <strong>Teams-tehtävä:</strong> Mitä taitoja ryhmäläisiltäsi puuttuu? Vertaile tuloksia.</p>
+        <button class="copy-btn" id="copySkillsGapBtn" onclick="copySkillsGap()">Kopioi Teams-chattiin</button>
+      </div>
+    </div>
+
+    <!-- FUTURE JOB ROLES EXPLORER -->
+    <div class="field-explorer" style="margin-top:2.5rem;">
+      <div class="field-explorer-label">Uudet mahdollisuudet</div>
+      <h3>Mitä uusia työrooleja syntyy alallasi?</h3>
+      <p>AI ennustaa mitä uusia työrooleja syntyy sinun alallasi seuraavien 5 vuoden aikana.</p>
+      <div class="field-row">
+        <input class="field-input" id="futureRolesInput" type="text" placeholder="Alasi tai ammattisi (esim: markkinointi, IT, hoitoala...)" />
+        <button class="field-btn" id="futureRolesBtn" onclick="exploreFutureRoles()">🔮 Näytä tulevaisuuden roolit</button>
+      </div>
+      <div class="field-result" id="futureRolesResult">
+        <div class="field-result-head">
+          <div class="field-badge">Tulevaisuus</div>
+          <h4 id="futureRolesTitle">Uudet roolit</h4>
+        </div>
+        <div class="field-result-body" id="futureRolesBody">Analysoidaan...</div>
+      </div>
+      <div class="teams-share" id="futureRolesShare" style="display:none;">
+        <p>💬 <strong>Teams-tehtävä:</strong> Mitä roolia kiinnostaa sinua eniten? Miksi?</p>
+        <button class="copy-btn" id="copyFutureRolesBtn" onclick="copyFutureRoles()">Kopioi Teams-chattiin</button>
+      </div>
+    </div>
+
+    <!-- CAREER TRANSITION PLANNER -->
+    <div class="field-explorer" style="margin-top:2.5rem;">
+      <div class="field-explorer-label">Urasuunnittelu</div>
+      <h3>Miten siirryt uuteen alaan?</h3>
+      <p>Haluatko siirtyä uudelle alalle? AI luo sinulle 90 päivän siirtymäsuunnitelman.</p>
+      <div class="field-row">
+        <input class="field-input" id="transitionFromInput" type="text" placeholder="Nykyinen alasi" />
+        <input class="field-input" id="transitionToInput" type="text" placeholder="Uusi ala johon haluat siirtyä" />
+      </div>
+      <div style="margin-top:10px;">
+        <button class="field-btn" id="transitionBtn" onclick="planTransition()">📅 Luo siirtymäsuunnitelma</button>
+      </div>
+      <div class="field-result" id="transitionResult">
+        <div class="field-result-head">
+          <div class="field-badge">90 päivää</div>
+          <h4 id="transitionTitle">Siirtymäsuunnitelma</h4>
+        </div>
+        <div class="field-result-body" id="transitionBody">Luodaan suunnitelma...</div>
+      </div>
+      <div class="teams-share" id="transitionShare" style="display:none;">
+        <p>💬 <strong>Teams-tehtävä:</strong> Mitä askelta otat ensin? Kerro ryhmälle.</p>
+        <button class="copy-btn" id="copyTransitionBtn" onclick="copyTransition()">Kopioi Teams-chattiin</button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -514,6 +586,137 @@ function shareReflection() {
   });
 }
 try { const s = localStorage.getItem('m2_reflection'); if (s) document.getElementById('reflectionText').value = s; } catch(e) {}
+
+// ── SKILLS GAP IDENTIFIER ─────────────────────
+let skillsGapText = '';
+async function identifySkillsGap() {
+  const current = document.getElementById('currentJobInput').value.trim();
+  const target = document.getElementById('targetJobInput').value.trim();
+  if (!current || !target) { alert('Täytä molemmat kentät.'); return; }
+  const btn = document.getElementById('skillsGapBtn');
+  const result = document.getElementById('skillsGapResult');
+  const body = document.getElementById('skillsGapBody');
+  btn.disabled = true;
+  document.getElementById('skillsGapTitle').textContent = 'Puuttuvat taidot';
+  body.textContent = 'Analysoidaan...';
+  result.style.display = 'block';
+  document.getElementById('skillsGapShare').style.display = 'none';
+  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 800,
+        system: 'Olet uravalmentaja. Tunnista 5 konkreettista taitoa joita puuttuu siirtymään nykyisestä ammatista tavoiteammattiin. Listaa ne numeroiden, selitä miksi ne ovat tärkeitä, ja anna yksi konkreettinen tapa oppia jokainen. Vastaa suomeksi, strukturoidusti.',
+        messages: [{ role: 'user', content: `Nykyinen ammattini: "${current}". Tavoiteammattini: "${target}". Mitkä 5 taitoa minulta puuttuu?` }]
+      })
+    });
+    const data = await res.json();
+    const responseText = data.text || '';
+    skillsGapText = `Puuttuvat taidot siirtymään "${current}" → "${target}":\n\n${responseText}`;
+    body.innerHTML = responseText.replace(/\n/g, '<br>');
+    document.getElementById('skillsGapShare').style.display = 'flex';
+  } catch(e) {
+    body.textContent = 'Yhteysvirhe. Pohdi itse: mitä taitoja tarvitset uuteen ammattiin?';
+  }
+  btn.disabled = false;
+}
+function copySkillsGap() {
+  navigator.clipboard.writeText(skillsGapText).then(() => {
+    const b = document.getElementById('copySkillsGapBtn');
+    b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = 'Kopioi Teams-chattiin'; b.classList.remove('ok'); }, 2200);
+  });
+}
+
+// ── FUTURE JOB ROLES EXPLORER ─────────────────
+let futureRolesText = '';
+async function exploreFutureRoles() {
+  const input = document.getElementById('futureRolesInput').value.trim();
+  if (!input) { alert('Kirjoita alasi tai ammattisi.'); return; }
+  const btn = document.getElementById('futureRolesBtn');
+  const result = document.getElementById('futureRolesResult');
+  const body = document.getElementById('futureRolesBody');
+  btn.disabled = true;
+  document.getElementById('futureRolesTitle').textContent = 'Uudet roolit';
+  body.textContent = 'Analysoidaan...';
+  result.style.display = 'block';
+  document.getElementById('futureRolesShare').style.display = 'none';
+  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 800,
+        system: 'Olet työmarkkina-asiantuntija. Ennusta 3-5 uutta työroolia jotka syntyvät tällä alalla seuraavien 5 vuoden aikana tekoälyn myötä. Kerro jokaiselle: nimi, mitä tehtäviä, miksi syntyy, ja mitä taitoja vaatii. Vastaa suomeksi, strukturoidusti.',
+        messages: [{ role: 'user', content: `Ala: "${input}". Mitä uusia työrooleja syntyy tällä alalla seuraavien 5 vuoden aikana tekoälyn myötä?` }]
+      })
+    });
+    const data = await res.json();
+    const responseText = data.text || '';
+    futureRolesText = `Uudet työroolit alalla "${input}":\n\n${responseText}`;
+    body.innerHTML = responseText.replace(/\n/g, '<br>');
+    document.getElementById('futureRolesShare').style.display = 'flex';
+  } catch(e) {
+    body.textContent = 'Yhteysvirhe. Pohdi itse: mitä uusia rooleja alallasi syntyy?';
+  }
+  btn.disabled = false;
+}
+function copyFutureRoles() {
+  navigator.clipboard.writeText(futureRolesText).then(() => {
+    const b = document.getElementById('copyFutureRolesBtn');
+    b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = 'Kopioi Teams-chattiin'; b.classList.remove('ok'); }, 2200);
+  });
+}
+
+// ── CAREER TRANSITION PLANNER ───────────────────
+let transitionText = '';
+async function planTransition() {
+  const from = document.getElementById('transitionFromInput').value.trim();
+  const to = document.getElementById('transitionToInput').value.trim();
+  if (!from || !to) { alert('Täytä molemmat kentät.'); return; }
+  const btn = document.getElementById('transitionBtn');
+  const result = document.getElementById('transitionResult');
+  const body = document.getElementById('transitionBody');
+  btn.disabled = true;
+  document.getElementById('transitionTitle').textContent = 'Siirtymäsuunnitelma';
+  body.textContent = 'Luodaan suunnitelma...';
+  result.style.display = 'block';
+  document.getElementById('transitionShare').style.display = 'none';
+  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 1000,
+        system: 'Olet uravalmentaja. Luo 90 päivän siirtymäsuunnitelma uudelle alalle. Jaa se kolmeen vaiheeseen (30 päivää kukin). Jokaiselle vaiheelle: konkreettiset tehtävät, oppimistavoitteet, verkostoitumisen askel, ja yksi konkreettinen tulos. Vastaa suomeksi, strukturoidusti.',
+        messages: [{ role: 'user', content: `Siirryn alalta "${from}" alalle "${to}". Luo minulle 90 päivän siirtymäsuunnitelma.` }]
+      })
+    });
+    const data = await res.json();
+    const responseText = data.text || '';
+    transitionText = `90 päivän siirtymäsuunnitelma "${from}" → "${to}":\n\n${responseText}`;
+    body.innerHTML = responseText.replace(/\n/g, '<br>');
+    document.getElementById('transitionShare').style.display = 'flex';
+  } catch(e) {
+    body.textContent = 'Yhteysvirhe. Aloita itse: mitä ensimmäistä askelta otat?';
+  }
+  btn.disabled = false;
+}
+function copyTransition() {
+  navigator.clipboard.writeText(transitionText).then(() => {
+    const b = document.getElementById('copyTransitionBtn');
+    b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = 'Kopioi Teams-chattiin'; b.classList.remove('ok'); }, 2200);
+  });
+}
 </script>
 
 <!-- AI Chat Widget -->

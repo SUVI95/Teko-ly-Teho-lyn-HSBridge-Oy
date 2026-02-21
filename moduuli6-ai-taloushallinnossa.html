@@ -376,8 +376,78 @@ h1.hero-title em{font-style:italic;color:#a8c4e0;}
   </div>
 </section>
 
+<!-- HARJOITUS 4: BUDJETTI SUUNNITELMA -->
+<section class="section" id="harjoitus4" data-index="4">
+  <div class="section-inner fade-up">
+    <div class="exercise-header">
+      <div class="exercise-num">4</div>
+      <div class="exercise-header-text">
+        <h3>Harjoitus: Luo budjettisuunnitelma</h3>
+        <p>Luo kuukausittainen budjettisuunnitelma AI:n avulla</p>
+      </div>
+    </div>
+    <div class="practice-wrap">
+      <div class="practice-header">
+        <div class="practice-header-icon">💰</div>
+        <div class="practice-header-text">
+          <h3>Budjettisuunnitelman rakentaja</h3>
+          <p>Luo kuukausittainen budjetti tulojen ja menojen perusteella</p>
+        </div>
+      </div>
+      <div class="practice-body">
+        <div class="practice-label">Tulot (kuukausittain)</div>
+        <textarea class="practice-textarea" id="budgetIncomeInput" placeholder="Esim: Palkka: 3000€, Sivutulot: 500€..."></textarea>
+        <div class="practice-label" style="margin-top:1.5rem;">Menot (kuukausittain)</div>
+        <textarea class="practice-textarea" id="budgetExpensesInput" placeholder="Esim: Vuokra: 800€, Ruoka: 400€, Liikenne: 200€..."></textarea>
+        <button class="practice-btn" id="budgetBtn" onclick="generateBudget()">💰 Luo budjettisuunnitelma</button>
+        <div class="practice-response" id="budgetResponse">
+          <div class="practice-response-label">Budjettisuunnitelma</div>
+          <div class="practice-response-text" id="budgetText"></div>
+          <div class="practice-response-actions">
+            <button class="copy-resp-btn" id="copyBudgetBtn" onclick="copyBudget()">📋 Kopioi budjetti</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HARJOITUS 5: TALOUSRAPORTTI -->
+<section class="section section-warm" id="harjoitus5" data-index="5">
+  <div class="section-inner fade-up">
+    <div class="exercise-header">
+      <div class="exercise-num">5</div>
+      <div class="exercise-header-text">
+        <h3>Harjoitus: Luo talousraportti</h3>
+        <p>Luo selkeä talousraportti tietojen perusteella</p>
+      </div>
+    </div>
+    <div class="practice-wrap">
+      <div class="practice-header">
+        <div class="practice-header-icon">📊</div>
+        <div class="practice-header-text">
+          <h3>Talousraportin luoja</h3>
+          <p>Luo selkeä raportti taloustiedoista</p>
+        </div>
+      </div>
+      <div class="practice-body">
+        <div class="practice-label">Taloustiedot</div>
+        <textarea class="practice-textarea" id="financialDataInput" placeholder="Liitä tai kirjoita taloustietosi (tulot, menot, sijoitukset, velat...). Voit käyttää esimerkkejä tai oikeita tietoja."></textarea>
+        <button class="practice-btn" id="reportBtn" onclick="generateFinancialReport()">📊 Luo talousraportti</button>
+        <div class="practice-response" id="reportResponse">
+          <div class="practice-response-label">Talousraportti</div>
+          <div class="practice-response-text" id="reportText"></div>
+          <div class="practice-response-actions">
+            <button class="copy-resp-btn" id="copyReportBtn" onclick="copyReport()">📋 Kopioi raportti</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- REFLEKTIO -->
-<section class="section section-alt" id="reflektio" data-index="5">
+<section class="section section-alt" id="reflektio" data-index="6">
   <div class="section-inner fade-up">
     <div class="reflection-card">
       <div class="reflection-label">Hetki ajatuksille</div>
@@ -543,6 +613,85 @@ function copyExplain() {
     const b=document.getElementById('copyExplainBtn');
     b.textContent='✓ Kopioitu!'; b.classList.add('ok');
     setTimeout(()=>{b.textContent='📋 Kopioi selitys';b.classList.remove('ok');},2200);
+  });
+}
+
+// ── BUDGET GENERATOR ───────────────────────────
+let budgetText = '';
+async function generateBudget() {
+  const income = document.getElementById('budgetIncomeInput').value.trim();
+  const expenses = document.getElementById('budgetExpensesInput').value.trim();
+  if (!income || !expenses) { alert('Täytä molemmat kentät.'); return; }
+  const btn = document.getElementById('budgetBtn');
+  const respBox = document.getElementById('budgetResponse');
+  const respText = document.getElementById('budgetText');
+  btn.disabled = true;
+  respText.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  respBox.style.display = 'block';
+  respBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', max_tokens: 1000,
+        system: 'Olet taloushallintoasiantuntija. Luo kuukausittainen budjettisuunnitelma tulojen ja menojen perusteella. Laske säästöpotentiaali ja anna konkreettisia vinkkejä budjetin optimointiin. Vastaa suomeksi, strukturoidusti.',
+        messages: [{ role: 'user', content: `Tulot: ${income}\n\nMenot: ${expenses}\n\nLuo budjettisuunnitelma ja anna vinkkejä säästämiseen.` }]
+      })
+    });
+    const data = await res.json();
+    budgetText = data.text || '';
+    respText.textContent = budgetText;
+  } catch(e) {
+    respText.textContent = 'Yhteysvirhe. Yritä uudelleen.';
+  }
+  btn.disabled = false;
+}
+function copyBudget() {
+  if (!budgetText) return;
+  navigator.clipboard.writeText(budgetText).then(() => {
+    const b = document.getElementById('copyBudgetBtn');
+    b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = '📋 Kopioi budjetti'; b.classList.remove('ok'); }, 2200);
+  });
+}
+
+// ── FINANCIAL REPORT GENERATOR ──────────────────
+let reportText = '';
+async function generateFinancialReport() {
+  const data = document.getElementById('financialDataInput').value.trim();
+  if (!data) { alert('Syötä taloustiedot.'); return; }
+  const btn = document.getElementById('reportBtn');
+  const respBox = document.getElementById('reportResponse');
+  const respText = document.getElementById('reportText');
+  btn.disabled = true;
+  respText.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  respBox.style.display = 'block';
+  respBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', max_tokens: 1200,
+        system: 'Olet taloushallintoasiantuntija. Analysoi taloustiedot ja luo selkeä raportti joka sisältää: yhteenvedon, trendit, riskit, ja suositukset. Vastaa suomeksi, strukturoidusti.',
+        messages: [{ role: 'user', content: `Analysoi seuraavat taloustiedot ja luo raportti:\n\n${data}` }]
+      })
+    });
+    const dataRes = await res.json();
+    reportText = dataRes.text || '';
+    respText.textContent = reportText;
+  } catch(e) {
+    respText.textContent = 'Yhteysvirhe. Yritä uudelleen.';
+  }
+  btn.disabled = false;
+}
+function copyReport() {
+  if (!reportText) return;
+  navigator.clipboard.writeText(reportText).then(() => {
+    const b = document.getElementById('copyReportBtn');
+    b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = '📋 Kopioi raportti'; b.classList.remove('ok'); }, 2200);
   });
 }
 

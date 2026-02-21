@@ -405,8 +405,80 @@ h1.hero-title em{font-style:italic;color:#f0d090;}
   </div>
 </section>
 
+<!-- MULTIPLE PERSONA COMPARISON -->
+<section class="section section-alt" id="persona-comparison" data-index="3">
+  <div class="section-inner fade-up">
+    <div class="section-label">Harjoitus</div>
+    <h2 class="section-h2">Vertaa <em>eri näkökulmia</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Kysy samaa kysymystä usealta persoonalta — saat erilaisia näkökulmia ja voit valita parhaan.</p>
+
+    <div class="practice-wrap">
+      <div class="practice-header">
+        <div class="practice-header-icon">🔄</div>
+        <div class="practice-header-text">
+          <h3>Kysy usealta persoonalta</h3>
+          <p>Kirjoita kysymyksesi — saat vastaukset rekrytoijalta, coachilta ja toimitusjohtajalta</p>
+        </div>
+      </div>
+      <div class="practice-body">
+        <div class="practice-label">Kysymyksesi</div>
+        <textarea class="practice-textarea" id="multiPersonaQuestion" placeholder="Esim: Miten voin parantaa CV:ni? Tai: Miksi en saa haastattelukutsuja?"></textarea>
+        <button class="practice-btn" id="multiPersonaBtn" onclick="askMultiplePersonas()">🔄 Kysy kaikilta</button>
+        <div class="practice-response" id="multiPersonaResponse" style="display:none;">
+          <div class="practice-response-label">Vastaukset eri näkökulmista</div>
+          <div class="practice-response-text" id="multiPersonaText"></div>
+          <div class="practice-response-actions">
+            <button class="copy-resp-btn" id="copyMultiPersonaBtn" onclick="copyMultiPersona()">📋 Kopioi kaikki vastaukset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIENCE TARGETING EXERCISE -->
+<section class="section" id="audience-targeting" data-index="4">
+  <div class="section-inner fade-up">
+    <div class="section-label">Harjoitus</div>
+    <h2 class="section-h2">Kohdista <em>oikeaan yleisöön</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Sama viesti, eri yleisö — AI auttaa muotoilemaan sen juuri oikein.</p>
+
+    <div class="practice-wrap">
+      <div class="practice-header">
+        <div class="practice-header-icon">🎯</div>
+        <div class="practice-header-text">
+          <h3>Muotoile viesti eri yleisöille</h3>
+          <p>Kirjoita viestisi — AI muotoilee sen eri yleisöille</p>
+        </div>
+      </div>
+      <div class="practice-body">
+        <div class="practice-label">Alkuperäinen viestisi</div>
+        <textarea class="practice-textarea" id="originalMessage" placeholder="Esim: Haluan työpaikan markkinoinnista. Minulla on kokemusta asiakaspalvelusta..."></textarea>
+        <div class="practice-label" style="margin-top:1.5rem;">Valitse yleisö</div>
+        <select class="practice-textarea" id="audienceSelect" style="min-height:auto;height:auto;padding:0.9rem 1.1rem;">
+          <option value="">Valitse yleisö...</option>
+          <option value="recruiter">Kiireinen rekrytoija (max 3 lausetta)</option>
+          <option value="ceo">Toimitusjohtaja (keskittyy tuloksiin)</option>
+          <option value="manager">Tiiminvetäjä (arvostaa yhteistyötä)</option>
+          <option value="hr">HR-henkilö (etsii kulttuurista sopivuutta)</option>
+        </select>
+        <button class="practice-btn" id="targetAudienceBtn" onclick="targetAudience()">🎯 Muotoile tälle yleisölle</button>
+        <div class="practice-response" id="audienceResponse" style="display:none;">
+          <div class="practice-response-label">Muotoiltu viesti</div>
+          <div class="practice-response-text" id="audienceText"></div>
+          <div class="practice-response-actions">
+            <button class="copy-resp-btn" id="copyAudienceBtn" onclick="copyAudience()">📋 Kopioi viesti</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- REFLECTION + OUTRO -->
-<section class="section" id="lopetus" data-index="4">
+<section class="section" id="lopetus" data-index="5">
   <div class="section-inner fade-up">
     <div class="section-label">Ennen kuin lopetat</div>
     <h2 class="section-h2">Mitä aiot tehdä <em>tänään?</em></h2>
@@ -531,6 +603,92 @@ function shareResponse() {
     const b=document.getElementById('teamsRespBtn');
     b.textContent='✓ Kopioitu!'; b.classList.add('ok');
     setTimeout(()=>{b.textContent='💬 Jaa Teams-chattiin';b.classList.remove('ok');},2500);
+  });
+}
+
+// ── MULTIPLE PERSONA COMPARISON ────────────────
+let multiPersonaText = '';
+async function askMultiplePersonas() {
+  const question = document.getElementById('multiPersonaQuestion').value.trim();
+  if (!question) { alert('Kirjoita ensin kysymyksesi.'); return; }
+  const btn = document.getElementById('multiPersonaBtn');
+  const respBox = document.getElementById('multiPersonaResponse');
+  const respText = document.getElementById('multiPersonaText');
+  btn.disabled = true;
+  respText.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  respBox.style.display = 'block';
+  respBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', max_tokens: 1200,
+        system: 'Vastaa suomeksi. Anna vastaukset kolmelta eri persoonalta: 1) Kokenut rekrytoija (suora, käytännöllinen), 2) Tiukka mutta kannustava coach (motivaatio), 3) Yrityksen toimitusjohtaja (liiketoiminnan näkökulma). Jaa vastaukset selkeästi otsikoilla. Ole konkreettinen.',
+        messages: [{ role: 'user', content: `Kysymykseni: "${question}". Vastaa tähän kolmelta eri persoonalta (rekrytoija, coach, toimitusjohtaja).` }]
+      })
+    });
+    const data = await res.json();
+    multiPersonaText = data.text || '';
+    respText.innerHTML = multiPersonaText.replace(/\n/g, '<br>');
+  } catch(e) {
+    respText.textContent = 'Yhteysvirhe. Kokeile kysyä samaa kysymystä eri persoonalta ChatGPT:ssä.';
+  }
+  btn.disabled = false;
+}
+function copyMultiPersona() {
+  if (!multiPersonaText) return;
+  navigator.clipboard.writeText(multiPersonaText).then(() => {
+    const b = document.getElementById('copyMultiPersonaBtn');
+    b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = '📋 Kopioi kaikki vastaukset'; b.classList.remove('ok'); }, 2200);
+  });
+}
+
+// ── AUDIENCE TARGETING ─────────────────────────
+let audienceText = '';
+async function targetAudience() {
+  const message = document.getElementById('originalMessage').value.trim();
+  const audience = document.getElementById('audienceSelect').value;
+  if (!message) { alert('Kirjoita ensin alkuperäinen viestisi.'); return; }
+  if (!audience) { alert('Valitse yleisö.'); return; }
+  const audiences = {
+    recruiter: 'kiireinen rekrytoija joka lukee 100 hakemusta päivässä — max 3 lausetta, keskittyy avainsanoihin',
+    ceo: 'yrityksen toimitusjohtaja joka keskittyy tuloksiin ja liiketoimintaan',
+    manager: 'tuleva tiiminvetäjä joka arvostaa yhteistyötä ja luotettavuutta',
+    hr: 'HR-henkilö joka etsii kulttuurista sopivuutta enemmän kuin teknistä osaamista'
+  };
+  const btn = document.getElementById('targetAudienceBtn');
+  const respBox = document.getElementById('audienceResponse');
+  const respText = document.getElementById('audienceText');
+  btn.disabled = true;
+  respText.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  respBox.style.display = 'block';
+  respBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', max_tokens: 600,
+        system: 'Olet viestinnän asiantuntija. Muotoile viesti tiettyyn yleisöön. Vastaa suomeksi.',
+        messages: [{ role: 'user', content: `Muotoile tämä viesti ${audiences[audience]}:\n\n"${message}"` }]
+      })
+    });
+    const data = await res.json();
+    audienceText = data.text || '';
+    respText.textContent = audienceText;
+  } catch(e) {
+    respText.textContent = 'Yhteysvirhe. Muista: eri yleisöt vaativat eri painotuksia.';
+  }
+  btn.disabled = false;
+}
+function copyAudience() {
+  if (!audienceText) return;
+  navigator.clipboard.writeText(audienceText).then(() => {
+    const b = document.getElementById('copyAudienceBtn');
+    b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(() => { b.textContent = '📋 Kopioi viesti'; b.classList.remove('ok'); }, 2200);
   });
 }
 

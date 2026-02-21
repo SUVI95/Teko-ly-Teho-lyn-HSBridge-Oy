@@ -158,7 +158,7 @@ h1.hero-title em{font-style:italic;color:#a8d4b8;}
         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
       </svg>
     </a>
-    <div class="hero-time">Noin 2 tuntia — paljon harjoittelua</div>
+    <div class="hero-time">Noin 1,5–2 tuntia — käytännön harjoittelua ja työkalujen kokeilua</div>
   </div>
 </section>
 
@@ -211,69 +211,183 @@ h1.hero-title em{font-style:italic;color:#a8d4b8;}
       </div>
     </div>
 
+    <!-- LIVE PRACTICE SCRIPT FOR CLASS -->
     <div class="practice-wrap" style="margin-top:2.5rem;">
       <div class="practice-header">
         <div class="practice-header-icon">🎤</div>
         <div class="practice-header-text">
-          <h3>Haastatteluharjoittelu</h3>
-          <p>Harjoittele vastauksia AI-rekrytoijan kanssa</p>
+          <h3>Live haastatteluharjoittelu oppitunnilla</h3>
+          <p>Harjoittele suoraan tällä sivulla — turvallisesti opettajan kanssa</p>
         </div>
       </div>
       <div class="practice-body">
-        <div class="practice-label">Työnimike johon haastattelut</div>
-        <textarea class="practice-textarea" id="jobTitleInput" placeholder="Esim: Myyntiedustaja, Asiakaspalvelija, Markkinointipäällikkö..."></textarea>
+        <div style="background:rgba(42,122,75,0.05);padding:1rem;border-radius:8px;margin-bottom:1.5rem;border-left:3px solid var(--accent);">
+          <strong style="display:block;margin-bottom:0.75rem;color:var(--ink);">📋 Seuraa näitä ohjeita oppitunnilla:</strong>
+          <ol style="padding-left:1.5rem;line-height:2;color:var(--text);margin-bottom:1rem;">
+            <li style="margin-bottom:0.75rem;">Täytä alla olevat kentät (toimiala ja työnimike)</li>
+            <li style="margin-bottom:0.75rem;">Klikkaa "Aloita haastattelu" — AI esittää ensimmäisen kysymyksen</li>
+            <li style="margin-bottom:0.75rem;">Vastaa ääneen tai kirjoita vastauksesi alla olevaan kentään</li>
+            <li style="margin-bottom:0.75rem;">Klikkaa "Hae palautetta" — saat rakentavaa palautetta</li>
+            <li>Harjoittele 2-3 kysymystä oppitunnilla</li>
+          </ol>
+          <p style="font-size:0.85rem;color:var(--muted);font-style:italic;">💡 Vinkki: Voit käyttää ChatGPT/Claude-tilejäsi myöhemmin itsenäisesti harjoittelussa!</p>
+        </div>
         
-        <div class="practice-label" style="margin-top:1.5rem;">Oma taustasi (lyhyt yhteenveto)</div>
-        <textarea class="practice-textarea" id="backgroundInput" placeholder="Esim: 5 vuotta myyntikokemusta, vahva asiakaspalvelu, tiimityötaitoja..."></textarea>
+        <div class="practice-label">Toimiala</div>
+        <input type="text" id="industryInput" class="practice-textarea" style="min-height:auto;height:auto;padding:0.9rem 1.1rem;" placeholder="Esim: Myynti, Markkinointi, IT, Asiakaspalvelu...">
         
-        <div class="practice-label" style="margin-top:1.5rem;">Kysymystyyppi</div>
-        <select id="questionType" style="width:100%;padding:12px;background:var(--paper);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.92rem;margin-bottom:1.5rem;">
-          <option value="behavioral">Käyttäytymiskysymys (STAR)</option>
-          <option value="strength">Vahvuuksien kysymys</option>
-          <option value="weakness">Heikkouksien kysymys</option>
-          <option value="situation">Tilannekysymys</option>
-        </select>
+        <div class="practice-label" style="margin-top:1.5rem;">Työnimike</div>
+        <input type="text" id="liveJobTitleInput" class="practice-textarea" style="min-height:auto;height:auto;padding:0.9rem 1.1rem;" placeholder="Esim: Myyntiedustaja, Markkinointipäällikkö, Asiakaspalvelija...">
         
-        <button class="practice-btn" id="interviewBtn" onclick="practiceInterview()">🎯 Harjoittele haastattelua</button>
+        <button class="practice-btn" id="startLiveInterviewBtn" onclick="startLiveInterview()" style="margin-top:1rem;">🎯 Aloita haastattelu</button>
+        
+        <div class="practice-response" id="liveInterviewResponse" style="display:none;">
+          <div class="practice-response-label">Haastattelukysymys</div>
+          <div class="practice-response-text" id="liveInterviewQuestion"></div>
+          
+          <div style="margin-top:1.5rem;">
+            <div class="practice-label">Sinun vastauksesi</div>
+            <textarea class="practice-textarea" id="liveAnswerInput" placeholder="Kirjoita vastauksesi tähän tai vastaa ääneen..."></textarea>
+            <button class="practice-btn" id="liveFeedbackBtn" onclick="getLiveFeedback()" style="margin-top:0.75rem;">💡 Hae palautetta</button>
+          </div>
+          
+          <div id="liveFeedbackResponse" style="display:none;margin-top:1.5rem;background:var(--paper2);border:1px solid var(--border);border-radius:10px;padding:1.5rem;">
+            <div class="practice-response-label">Palautteesi</div>
+            <div class="practice-response-text" id="liveFeedbackText"></div>
+            <button class="practice-btn" id="nextQuestionBtn" onclick="getNextQuestion()" style="margin-top:1rem;">➡️ Seuraava kysymys</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAR TEMPLATE EXERCISE -->
+    <div class="practice-wrap" style="margin-top:2rem;">
+      <div class="practice-header">
+        <div class="practice-header-icon">⭐</div>
+        <div class="practice-header-text">
+          <h3>STAR-mallin harjoitus — Täytä malli</h3>
+          <p>Täytä STAR-malli yhdestä tilanteesta työhistoriastasi — AI muotoilee sen vastaukseksi</p>
+        </div>
+      </div>
+      <div class="practice-body">
+        <div style="background:var(--paper2);padding:1rem;border-radius:8px;margin-bottom:1.5rem;border-left:3px solid var(--accent);">
+          <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">S — Situation (Tilanne)</strong>
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">Kerro tilanne ja konteksti.</p>
+          <textarea class="practice-textarea" id="starSituation" placeholder="Esim: Työskentelin myyntitiimissä kun asiakas oli tyytymätön tuotteeseen..."></textarea>
+        </div>
+        
+        <div style="background:var(--paper2);padding:1rem;border-radius:8px;margin-bottom:1.5rem;border-left:3px solid var(--accent);">
+          <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">T — Task (Tehtävä)</strong>
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">Mikä oli tehtäväsi?</p>
+          <textarea class="practice-textarea" id="starTask" placeholder="Esim: Minun piti ratkaista asiakkaan ongelma ja varmistaa että hän oli tyytyväinen..."></textarea>
+        </div>
+        
+        <div style="background:var(--paper2);padding:1rem;border-radius:8px;margin-bottom:1.5rem;border-left:3px solid var(--accent);">
+          <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">A — Action (Toimenpide)</strong>
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">Mitä teit konkreettisesti?</p>
+          <textarea class="practice-textarea" id="starAction" placeholder="Esim: Kuuntelin asiakasta, selvitin ongelman, tarjosin vaihtoehtoisen ratkaisun..."></textarea>
+        </div>
+        
+        <div style="background:var(--paper2);padding:1rem;border-radius:8px;margin-bottom:1.5rem;border-left:3px solid var(--accent);">
+          <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">R — Result (Tulos)</strong>
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">Mikä oli tulos? Käytä numeroita jos mahdollista.</p>
+          <textarea class="practice-textarea" id="starResult" placeholder="Esim: Asiakas oli tyytyväinen, hän teki uuden tilauksen (5000€), ja hän suositteli meitä kolmelle muulle asiakkaalle..."></textarea>
+        </div>
+        
+        <button class="practice-btn" id="formatStarBtn" onclick="formatStarAnswer()">✨ Muotoile STAR-vastaus</button>
+        
+        <div class="practice-response" id="starResponse">
+          <div class="practice-response-label">Sinun STAR-vastauksesi</div>
+          <div class="practice-response-text" id="starText"></div>
+          <div class="practice-response-actions">
+            <button class="copy-resp-btn" id="copyStarBtn" onclick="copyStarAnswer()">📋 Kopioi vastaus</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="practice-wrap" style="margin-top:2rem;">
+      <div class="practice-header">
+        <div class="practice-header-icon">🎤</div>
+        <div class="practice-header-text">
+          <h3>Haastatteluharjoittelu — Vaihe vaiheelta</h3>
+          <p>Harjoittele vastauksia AI-rekrytoijan kanssa ja saa strukturoitua palautetta</p>
+        </div>
+      </div>
+      <div class="practice-body">
+        <div style="background:var(--paper2);padding:1rem;border-radius:8px;margin-bottom:1.5rem;border-left:3px solid var(--accent);">
+          <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">Vaihe 1: Valmistele taustasi</strong>
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">Kerro työnimike ja oma taustasi.</p>
+          <div class="practice-label">Työnimike johon haastattelut</div>
+          <textarea class="practice-textarea" id="jobTitleInput" placeholder="Esim: Myyntiedustaja, Asiakaspalvelija, Markkinointipäällikkö..."></textarea>
+          
+          <div class="practice-label" style="margin-top:1.5rem;">Oma taustasi (lyhyt yhteenveto)</div>
+          <textarea class="practice-textarea" id="backgroundInput" placeholder="Esim: 5 vuotta myyntikokemusta, vahva asiakaspalvelu, tiimityötaitoja..."></textarea>
+        </div>
+        
+        <div style="background:var(--paper2);padding:1rem;border-radius:8px;margin-bottom:1.5rem;border-left:3px solid var(--accent);">
+          <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">Vaihe 2: Valitse kysymystyyppi</strong>
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">Valitse minkä tyyppistä kysymystä haluat harjoitella.</p>
+          <div class="practice-label">Kysymystyyppi</div>
+          <select id="questionType" style="width:100%;padding:12px;background:var(--paper);border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.92rem;margin-bottom:1.5rem;">
+            <option value="behavioral">Käyttäytymiskysymys (STAR-menetelmä)</option>
+            <option value="strength">Vahvuuksien kysymys</option>
+            <option value="weakness">Heikkouksien kysymys</option>
+            <option value="situation">Tilannekysymys</option>
+          </select>
+        </div>
+        
+        <button class="practice-btn" id="interviewBtn" onclick="practiceInterview()">🎯 Hae haastattelukysymys</button>
         
         <div class="practice-response" id="interviewResponse">
           <div class="practice-response-label">Haastattelukysymys</div>
           <div class="practice-response-text" id="interviewQuestion"></div>
+          
+          <div style="background:rgba(42,122,75,0.1);padding:1rem;border-radius:8px;margin-top:1.5rem;border-left:3px solid var(--accent3);">
+            <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">💡 Vinkki STAR-menetelmään</strong>
+            <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;"><strong>S</strong>ituation (tilanne), <strong>T</strong>ask (tehtävä), <strong>A</strong>ction (toimenpide), <strong>R</strong>esult (tulos)</p>
+          </div>
+          
           <div style="margin-top:1.5rem;">
-            <div class="practice-label">Sinun vastauksesi</div>
-            <textarea class="practice-textarea" id="answerInput" placeholder="Kirjoita vastauksesi tähän..."></textarea>
-            <button class="practice-btn" id="feedbackBtn" onclick="getFeedback()" style="margin-top:0.75rem;">💡 Hae palautetta</button>
+            <div class="practice-label">Vaihe 3: Kirjoita vastauksesi</div>
+            <textarea class="practice-textarea" id="answerInput" placeholder="Kirjoita vastauksesi tähän. Käytä STAR-menetelmää jos kyseessä on käyttäytymiskysymys..."></textarea>
+            <button class="practice-btn" id="feedbackBtn" onclick="getFeedback()" style="margin-top:0.75rem;">💡 Hae strukturoitua palautetta</button>
           </div>
           <div id="feedbackResponse" style="display:none;margin-top:1.5rem;background:var(--paper2);border:1px solid var(--border);border-radius:10px;padding:1.5rem;">
             <div class="practice-response-label">Palautteesi</div>
             <div class="practice-response-text" id="feedbackText"></div>
+            <div style="background:rgba(42,122,75,0.1);padding:1rem;border-radius:8px;margin-top:1rem;border-left:3px solid var(--accent3);">
+              <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">💡 Harjoittele uudelleen!</strong>
+              <p style="font-size:0.85rem;color:var(--muted);">Klikkaa "Hae haastattelukysymys" uudelleen harjoitellaksesi toista kysymystä.</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <div class="highlight-box" style="margin-top:2rem;">
-      <p style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1.25rem;">Suosituimmat AI-työkalut haastatteluharjoitteluun</p>
+      <p style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1.25rem;">AI-työkalut itsenäiseen harjoitteluun — Luo tili myöhemmin</p>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:1.5rem;font-style:italic;">Näitä työkaluja voit käyttää itsenäisesti oppituntien jälkeen:</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
         <div style="padding:1rem;background:var(--paper);border-radius:8px;border:1px solid var(--border);">
-          <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">ChatGPT</strong>
-          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">Haastatteluharjoittelu ja palaute</p>
-          <a href="https://chat.openai.com" target="_blank" style="font-size:0.8rem;color:var(--accent);text-decoration:none;">Avaa →</a>
-        </div>
-        <div style="padding:1rem;background:var(--paper);border-radius:8px;border:1px solid var(--border);">
-          <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">Big Interview</strong>
-          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">Video-haastatteluharjoittelu</p>
-          <a href="https://www.biginterview.com" target="_blank" style="font-size:0.8rem;color:var(--accent);text-decoration:none;">Avaa →</a>
-        </div>
-        <div style="padding:1rem;background:var(--paper);border-radius:8px;border:1px solid var(--border);">
           <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">Google Interview Warmup</strong>
-          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">Ilmainen harjoittelu</p>
-          <a href="https://grow.google/certificates/interview-warmup" target="_blank" style="font-size:0.8rem;color:var(--accent);text-decoration:none;">Avaa →</a>
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">Ilmainen harjoittelu, ei tiliä tarvita</p>
+          <a href="https://grow.google/certificates/interview-warmup" target="_blank" style="display:inline-block;padding:8px 16px;background:var(--paper2);color:var(--muted);border:1px solid var(--border);border-radius:6px;font-size:0.8rem;font-weight:600;text-decoration:none;transition:all 0.2s;">Tutustu →</a>
+        </div>
+        <div style="padding:1rem;background:var(--paper);border-radius:8px;border:1px solid var(--border);">
+          <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">ChatGPT</strong>
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">Haastatteluharjoittelu ja palaute</p>
+          <a href="https://chat.openai.com" target="_blank" style="display:inline-block;padding:8px 16px;background:var(--paper2);color:var(--muted);border:1px solid var(--border);border-radius:6px;font-size:0.8rem;font-weight:600;text-decoration:none;transition:all 0.2s;">Luo tili →</a>
+        </div>
+        <div style="padding:1rem;background:var(--paper);border-radius:8px;border:1px solid var(--border);">
+          <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">Claude AI</strong>
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">Haastatteluharjoittelu ja palaute</p>
+          <a href="https://claude.ai" target="_blank" style="display:inline-block;padding:8px 16px;background:var(--paper2);color:var(--muted);border:1px solid var(--border);border-radius:6px;font-size:0.8rem;font-weight:600;text-decoration:none;transition:all 0.2s;">Luo tili →</a>
         </div>
         <div style="padding:1rem;background:var(--paper);border-radius:8px;border:1px solid var(--border);">
           <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">Yoodli</strong>
-          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">Puheen analyysi ja palaute</p>
-          <a href="https://www.yoodli.ai" target="_blank" style="font-size:0.8rem;color:var(--accent);text-decoration:none;">Avaa →</a>
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">Puheen analyysi ja palaute</p>
+          <a href="https://www.yoodli.ai" target="_blank" style="display:inline-block;padding:8px 16px;background:var(--paper2);color:var(--muted);border:1px solid var(--border);border-radius:6px;font-size:0.8rem;font-weight:600;text-decoration:none;transition:all 0.2s;">Tutustu →</a>
         </div>
       </div>
     </div>
@@ -331,6 +445,158 @@ window.addEventListener('scroll',updateProgress,{passive:true});
 const fadeObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');fadeObs.unobserve(e.target);}});},{threshold:0.12});
 document.querySelectorAll('.fade-up').forEach(el=>fadeObs.observe(el));
 
+let lastStarAnswer = '';
+async function formatStarAnswer() {
+  const situation = document.getElementById('starSituation').value.trim();
+  const task = document.getElementById('starTask').value.trim();
+  const action = document.getElementById('starAction').value.trim();
+  const result = document.getElementById('starResult').value.trim();
+  if(!situation || !task || !action || !result) { alert('Täytä kaikki STAR-kentät.'); return; }
+  const btn = document.getElementById('formatStarBtn');
+  const respBox = document.getElementById('starResponse');
+  const respText = document.getElementById('starText');
+  btn.disabled = true;
+  respText.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  respBox.style.display = 'block';
+  respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({
+        model:'gpt-4o-mini',
+        max_tokens:600,
+        system:'Olet haastatteluvalmentaja. Muotoile STAR-vastaus ammattimaisesti ja vakuuttavasti. Vastaus tulee olla selkeä, rakenteellinen ja korostaa positiivista lopputulosta. Vastaa suomeksi.',
+        messages:[{role:'user', content:`Muotoile STAR-vastaus seuraavista tiedoista:\n\nSituation (Tilanne): ${situation}\nTask (Tehtävä): ${task}\nAction (Toimenpide): ${action}\nResult (Tulos): ${result}\n\nMuotoile tämä ammattimaisena, vakuuttavana vastauksena haastattelukysymykseen.`}]
+      })
+    });
+    const data = await res.json();
+    lastStarAnswer = data.text || data.reply || '';
+    respText.textContent = lastStarAnswer;
+  } catch(e) {
+    respText.textContent = 'Yhteysvirhe. Yritä uudelleen hetken kuluttua.';
+  }
+  btn.disabled = false;
+}
+function copyStarAnswer() {
+  if(!lastStarAnswer) return;
+  navigator.clipboard.writeText(lastStarAnswer).then(()=>{
+    const b=document.getElementById('copyStarBtn');
+    b.textContent='✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(()=>{b.textContent='📋 Kopioi vastaus';b.classList.remove('ok');},2200);
+  });
+}
+
+let liveInterviewContext = { industry: '', jobTitle: '', questionCount: 0 };
+let lastLiveQuestion = '';
+let lastLiveAnswer = '';
+
+async function startLiveInterview() {
+  const industry = document.getElementById('industryInput').value.trim();
+  const jobTitle = document.getElementById('liveJobTitleInput').value.trim();
+  if(!industry || !jobTitle) { alert('Täytä sekä toimiala että työnimike.'); return; }
+  
+  liveInterviewContext.industry = industry;
+  liveInterviewContext.jobTitle = jobTitle;
+  liveInterviewContext.questionCount = 0;
+  
+  const btn = document.getElementById('startLiveInterviewBtn');
+  const respBox = document.getElementById('liveInterviewResponse');
+  const questionText = document.getElementById('liveInterviewQuestion');
+  btn.disabled = true;
+  questionText.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  respBox.style.display = 'block';
+  respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
+  
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({
+        model:'gpt-4o-mini',
+        max_tokens:400,
+        system:`Olet kokenut rekrytoija ${industry}-alalla. Haastattele hakijaa ${jobTitle}-tehtävään. Ole ammattimainen mutta kannustava. Esitä yksi kysymys kerrallaan.`,
+        messages:[{role:'user', content:`Aloita haastattelu. Esitä ensimmäinen kysymys ${jobTitle}-tehtävään liittyen.`}]
+      })
+    });
+    const data = await res.json();
+    lastLiveQuestion = data.text || data.reply || '';
+    questionText.textContent = lastLiveQuestion;
+    liveInterviewContext.questionCount = 1;
+  } catch(e) {
+    questionText.textContent = 'Yhteysvirhe. Yritä uudelleen hetken kuluttua.';
+  }
+  btn.disabled = false;
+}
+
+async function getLiveFeedback() {
+  const answer = document.getElementById('liveAnswerInput').value.trim();
+  if(!answer) { alert('Kirjoita vastauksesi ensin.'); return; }
+  
+  const btn = document.getElementById('liveFeedbackBtn');
+  const respBox = document.getElementById('liveFeedbackResponse');
+  const feedbackText = document.getElementById('liveFeedbackText');
+  btn.disabled = true;
+  feedbackText.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  respBox.style.display = 'block';
+  respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
+  
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({
+        model:'gpt-4o-mini',
+        max_tokens:600,
+        system:'Olet haastatteluvalmentaja. Anna strukturoitua palautetta vastauksesta seuraavassa muodossa:\n\n1. VAHVUUDET: Mitä vastauksessa on hyvää?\n2. PARANNUSKOHTEET: Mitä voisi olla paremmin?\n3. STAR-MENETELMÄN KÄYTTÖ: Onko STAR-menetelmä käytetty oikein (jos kyseessä käyttäytymiskysymys)?\n4. KONKREETTISET VINKIT: Mitä kannattaa muuttaa?\n\nOle kannustava mutta rehellinen. Vastaa suomeksi.',
+        messages:[{role:'user', content:`Kysymys: ${lastLiveQuestion}\n\nVastaus: ${answer}\n\nAnna palautetta vastauksestani.`}]
+      })
+    });
+    const data = await res.json();
+    lastLiveAnswer = data.text || data.reply || '';
+    feedbackText.textContent = lastLiveAnswer;
+  } catch(e) {
+    feedbackText.textContent = 'Yhteysvirhe. Yritä uudelleen.';
+  }
+  btn.disabled = false;
+}
+
+async function getNextQuestion() {
+  if(liveInterviewContext.questionCount >= 3) {
+    alert('Olet harjoitellut 3 kysymystä! Hienoa työtä. Voit aloittaa uuden haastattelun tai jatkaa itsenäisesti ChatGPT/Claude-tileilläsi.');
+    return;
+  }
+  
+  const questionText = document.getElementById('liveInterviewQuestion');
+  const answerInput = document.getElementById('liveAnswerInput');
+  const feedbackResponse = document.getElementById('liveFeedbackResponse');
+  
+  // Clear previous answer and feedback
+  answerInput.value = '';
+  feedbackResponse.style.display = 'none';
+  
+  questionText.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({
+        model:'gpt-4o-mini',
+        max_tokens:400,
+        system:`Olet kokenut rekrytoija ${liveInterviewContext.industry}-alalla. Haastattele hakijaa ${liveInterviewContext.jobTitle}-tehtävään. Ole ammattimainen mutta kannustava. Esitä erilainen kysymys kuin edellinen.`,
+        messages:[{role:'user', content:`Esitä seuraava haastattelukysymys ${liveInterviewContext.jobTitle}-tehtävään liittyen.`}]
+      })
+    });
+    const data = await res.json();
+    lastLiveQuestion = data.text || data.reply || '';
+    questionText.textContent = lastLiveQuestion;
+    liveInterviewContext.questionCount++;
+  } catch(e) {
+    questionText.textContent = 'Yhteysvirhe. Yritä uudelleen hetken kuluttua.';
+  }
+}
+
 let lastQuestion = '';
 async function practiceInterview() {
   const jobTitle = document.getElementById('jobTitleInput').value.trim();
@@ -384,7 +650,7 @@ async function getFeedback() {
       body: JSON.stringify({
         model:'gpt-4o-mini',
         max_tokens:800,
-        system:'Olet haastatteluvalmentaja. Anna rakentavaa palautetta vastauksesta. Arvioi: selkeys, rakenne (STAR), sävy ja vakuuttavuus. Ole kannustava mutta rehellinen. Vastaa suomeksi.',
+        system:'Olet haastatteluvalmentaja. Anna strukturoitua palautetta vastauksesta seuraavassa muodossa:\n\n1. VAHVUUDET: Mitä vastauksessa on hyvää?\n2. PARANNUSKOHTEET: Mitä voisi olla paremmin?\n3. STAR-MENETELMÄN KÄYTTÖ: Onko STAR-menetelmä käytetty oikein (jos kyseessä käyttäytymiskysymys)?\n4. KONKREETTISET VINKIT: Mitä kannattaa muuttaa?\n\nOle kannustava mutta rehellinen. Vastaa suomeksi.',
         messages:[{role:'user', content:`Kysymys: ${question}\n\nVastaus: ${answer}\n\nAnna palautetta vastauksesta.`}]
       })
     });
