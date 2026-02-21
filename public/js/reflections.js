@@ -1,150 +1,84 @@
-// Shared reflection saving functionality
+// Shared reflection saving functionality — wrapped in IIFE to avoid global conflicts
 (function() {
-var _REFL_API = window.location.origin + '/api';
+var _API = window.location.origin + '/api';
 
-// Save reflection to database
 window.saveReflectionToAPI = async function(moduleId) {
-  const reflectionTextarea = document.getElementById('reflectionText');
-  if (!reflectionTextarea) {
-    console.error('Reflection textarea not found');
-    return;
-  }
-  
-  const txt = reflectionTextarea.value.trim();
-  if (!txt) {
-    alert('Kirjoita ensin ajatuksesi!');
-    return;
-  }
-  
+  var reflectionTextarea = document.getElementById('reflectionText');
+  if (!reflectionTextarea) { return; }
+  var txt = reflectionTextarea.value.trim();
+  if (!txt) { alert('Kirjoita ensin ajatuksesi!'); return; }
   try {
-    const response = await fetch(`${_REFL_API}/reflections/save`, {
+    var response = await fetch(_API + '/reflections/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({
-        moduleId: moduleId,
-        reflectionText: txt
-      })
+      body: JSON.stringify({ moduleId: moduleId, reflectionText: txt })
     });
-    
     if (response.ok) {
-      // Show confirmation
-      const confirmEl = document.getElementById('reflConfirm');
+      var confirmEl = document.getElementById('reflConfirm');
       if (confirmEl) {
         confirmEl.style.display = 'block';
-        setTimeout(() => {
-          confirmEl.style.display = 'none';
-        }, 3000);
+        setTimeout(function() { confirmEl.style.display = 'none'; }, 3000);
       } else {
-        // Fallback: show alert
-        alert('✅ Ajatus tallennettu!');
+        alert('Ajatus tallennettu!');
       }
-      
-      // Also save to localStorage as backup
-      try {
-        localStorage.setItem(`${moduleId}_reflection`, txt);
-      } catch (e) {
-        // Ignore localStorage errors
-      }
+      try { localStorage.setItem(moduleId + '_reflection', txt); } catch(e) {}
     } else {
-      const data = await response.json();
       if (response.status === 401) {
         alert('Kirjaudu sisään tallentaaksesi ajatuksesi.');
         window.location.href = '/login';
       } else {
-        console.error('Failed to save reflection:', data.error);
-        // Fallback to localStorage
-        try {
-          localStorage.setItem(`${moduleId}_reflection`, txt);
-          alert('✅ Ajatus tallennettu paikallisesti (kirjaudu sisään tallentaaksesi palvelimelle).');
-        } catch (e) {
-          alert('Tallennus epäonnistui. Yritä uudelleen.');
-        }
+        try { localStorage.setItem(moduleId + '_reflection', txt); } catch(e) {}
+        alert('Ajatus tallennettu paikallisesti.');
       }
     }
-  } catch (error) {
-    console.error('Error saving reflection:', error);
-    // Fallback to localStorage
-    try {
-      localStorage.setItem(`${moduleId}_reflection`, txt);
-      alert('✅ Ajatus tallennettu paikallisesti (yhteysvirhe).');
-    } catch (e) {
-      alert('Tallennus epäonnistui. Yritä uudelleen.');
-    }
+  } catch(error) {
+    try { localStorage.setItem(moduleId + '_reflection', txt); } catch(e) {}
+    alert('Ajatus tallennettu paikallisesti (yhteysvirhe).');
   }
-}
+};
 
-// Load reflection from database
 window.loadReflection = async function(moduleId) {
-  const reflectionTextarea = document.getElementById('reflectionText');
+  var reflectionTextarea = document.getElementById('reflectionText');
   if (!reflectionTextarea) return;
-  
   try {
-    const response = await fetch(`${_REFL_API}/reflections/module/${moduleId}`, {
-      credentials: 'include'
-    });
-    
+    var response = await fetch(_API + '/reflections/module/' + moduleId, { credentials: 'include' });
     if (response.ok) {
-      const data = await response.json();
+      var data = await response.json();
       if (data.reflection && data.reflection.reflection_text) {
         reflectionTextarea.value = data.reflection.reflection_text;
         return;
       }
     }
-  } catch (error) {
-    console.error('Error loading reflection:', error);
-  }
-  
-  // Fallback to localStorage
+  } catch(error) {}
   try {
-    const saved = localStorage.getItem(`${moduleId}_reflection`);
-    if (saved) {
-      reflectionTextarea.value = saved;
-    }
-  } catch (e) {
-    // Ignore localStorage errors
-  }
-}
+    var saved = localStorage.getItem(moduleId + '_reflection');
+    if (saved) { reflectionTextarea.value = saved; }
+  } catch(e) {}
+};
 
-// Save closing action (Module 10)
 window.saveClosingAction = async function() {
-  const actionTextarea = document.getElementById('closingActionInput');
-  if (!actionTextarea) {
-    console.error('Closing action textarea not found');
-    return;
-  }
-  
-  const txt = actionTextarea.value.trim();
-  if (!txt) {
-    alert('Kirjoita ensin päätös!');
-    return;
-  }
-  
+  var actionTextarea = document.getElementById('closingActionInput');
+  if (!actionTextarea) { return; }
+  var txt = actionTextarea.value.trim();
+  if (!txt) { alert('Kirjoita ensin päätös!'); return; }
   try {
-    const response = await fetch(`${_REFL_API}/reflections/closing-action`, {
+    var response = await fetch(_API + '/reflections/closing-action', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({
-        actionText: txt
-      })
+      body: JSON.stringify({ actionText: txt })
     });
-    
     if (response.ok) {
-      alert('✅ Päätös tallennettu!');
+      alert('Päätös tallennettu!');
+    } else if (response.status === 401) {
+      alert('Kirjaudu sisään tallentaaksesi päätöksesi.');
+      window.location.href = '/login';
     } else {
-      const data = await response.json();
-      if (response.status === 401) {
-        alert('Kirjaudu sisään tallentaaksesi päätöksesi.');
-        window.location.href = '/login';
-      } else {
-        console.error('Failed to save closing action:', data.error);
-        alert('Tallennus epäonnistui. Yritä uudelleen.');
-      }
+      alert('Tallennus epäonnistui. Yritä uudelleen.');
     }
-  } catch (error) {
-    console.error('Error saving closing action:', error);
+  } catch(error) {
     alert('Tallennus epäonnistui. Yritä uudelleen.');
   }
-}
+};
 })();
