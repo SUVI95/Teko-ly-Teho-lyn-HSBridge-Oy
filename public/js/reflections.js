@@ -1,6 +1,6 @@
 // Shared reflection saving functionality
-if (typeof window._HSBRIDGE_API_URL === 'undefined') { window._HSBRIDGE_API_URL = window.location.origin + '/api'; }
-const _REFL_API = window._HSBRIDGE_API_URL;
+(function() {
+var _REFL_API = window.location.origin + '/api';
 
 // Save reflection to database
 window.saveReflectionToAPI = async function(moduleId) {
@@ -147,3 +147,4 @@ window.saveClosingAction = async function() {
     alert('Tallennus epäonnistui. Yritä uudelleen.');
   }
 }
+})();

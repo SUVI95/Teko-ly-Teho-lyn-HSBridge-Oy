@@ -1,6 +1,6 @@
 // Shared feedback functionality
-if (typeof window._HSBRIDGE_API_URL === 'undefined') { window._HSBRIDGE_API_URL = window.location.origin + '/api'; }
-const _FB_API = window._HSBRIDGE_API_URL;
+(function() {
+var _FB_API = window.location.origin + '/api';
 
 // Save feedback
 window.saveFeedback = async function(moduleId, questionType, feedbackText, rating) {
@@ -77,3 +77,4 @@ window.saveLearnedNew = async function(moduleId) {
   }
   return result;
 };
+})();
