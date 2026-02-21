@@ -694,19 +694,81 @@
           // Osa 3: Toimialakohtainen sisältö (Days 6-7 - valitse oma alasi)
           {
             id: 'moduuli5-ai-myynnissa-ja-markkinoinnissa',
-            title: 'Moduuli 5: AI myynnissä ja markkinoinnissa',
-            description: 'Opi käyttämään tekoälyä myynnin ja markkinoinnin vahvistamiseen.',
+            title: 'Myynti & asiakaspalvelu',
+            description: 'Opi käyttämään AI:ta myynnin ja asiakaspalvelun vahvistamiseen. Luo vakuuttavia viestejä, analysoi asiakkaita ja kasvata myyntiä.',
             icon: 'briefcase',
             order: 12,
-            part: 3
+            part: 3,
+            industry: 'myynti'
           },
           {
             id: 'moduuli6-ai-taloushallinnossa',
-            title: 'Moduuli 6: AI taloushallinnossa',
-            description: 'Automatisoi taloushallintoa, luo ennusteita ja raportteja AI:n avulla.',
+            title: 'Taloushallinto & kirjanpito',
+            description: 'Automatisoi taloushallintoa, luo ennusteita ja raportteja AI:n avulla. Kategorisoi kulut, luo laskuja ja löydä verovähennyksiä.',
             icon: 'chart',
             order: 13,
-            part: 3
+            part: 3,
+            industry: 'talous'
+          },
+          {
+            id: 'moduuli-hoitoala',
+            title: 'Hoitoala & sosiaaliala',
+            description: 'Opi käyttämään AI:ta hoito- ja sosiaalialalla. Dokumentoi potilastietoja, luo hoitosuunnitelmia ja paranna asiakaspalvelua.',
+            icon: 'shield',
+            order: 14,
+            part: 3,
+            industry: 'hoito',
+            comingSoon: true
+          },
+          {
+            id: 'moduuli-rakennusala',
+            title: 'Rakennusala & tekninen työ',
+            description: 'Sovella AI:ta rakennus- ja tekniseen työhön. Arvioi projekteja, luo tarjouksia ja automatisoi dokumentointia.',
+            icon: 'briefcase',
+            order: 15,
+            part: 3,
+            industry: 'rakennus',
+            comingSoon: true
+          },
+          {
+            id: 'moduuli-markkinointi',
+            title: 'Markkinointi & viestintä',
+            description: 'Käytä AI:ta markkinoinnin ja viestinnän vahvistamiseen. Luo sisältöä, suunnittele kampanjoita ja analysoi tuloksia.',
+            icon: 'sparkles',
+            order: 16,
+            part: 3,
+            industry: 'markkinointi',
+            comingSoon: true
+          },
+          {
+            id: 'moduuli-ravintola',
+            title: 'Ravintola & palveluala',
+            description: 'Opi käyttämään AI:ta ravintola- ja palvelualalla. Suunnittele ruokalistoja, optimoi varastoa ja paranna asiakaspalvelua.',
+            icon: 'briefcase',
+            order: 17,
+            part: 3,
+            industry: 'ravintola',
+            comingSoon: true
+          },
+          {
+            id: 'moduuli-logistiikka',
+            title: 'Logistiikka & varastotyö',
+            description: 'Automatisoi logistiikkaa ja varastotyötä AI:n avulla. Optimoi reittejä, ennusta kysyntää ja paranna tehokkuutta.',
+            icon: 'briefcase',
+            order: 18,
+            part: 3,
+            industry: 'logistiikka',
+            comingSoon: true
+          },
+          {
+            id: 'moduuli-it',
+            title: 'IT & teknologia',
+            description: 'Sovella AI:ta IT- ja teknologia-alalla. Automaattista koodia, dokumentoi projekteja ja paranna kehitysprosesseja.',
+            icon: 'sparkles',
+            order: 19,
+            part: 3,
+            industry: 'it',
+            comingSoon: true
           }
         ];
         
@@ -786,6 +848,7 @@
         // Group modules by part
         const part1ModulesList = modules.filter(m => m.part === 1);
         const part2Modules = modules.filter(m => m.part === 2);
+        const part3Modules = modules.filter(m => m.part === 3);
         
         let html = '';
         
@@ -800,8 +863,19 @@
         
         // Render Part 2
         if (part2Modules.length > 0) {
-          html += '<div class="part-section"><h2 class="part-title">Osa 2: Edistynyt sisältö</h2><div class="modules-grid">';
+          html += '<div class="part-section"><h2 class="part-title">Osa 2: Yleinen työnhaku</h2><div class="modules-grid">';
           part2Modules.forEach((module, index) => {
+            html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
+          });
+          html += '</div></div>';
+        }
+        
+        // Render Part 3: Industry-specific modules
+        if (part3Modules.length > 0) {
+          html += '<div class="part-section"><h2 class="part-title">Osa 3: Toimialakohtainen sisältö</h2>';
+          html += '<p style="max-width: 800px; margin: 0 auto 2rem; color: var(--muted); line-height: 1.6; text-align: center;">Valitse oman alasi moduuli. Näillä moduuleilla opit soveltamaan AI:ta omaan työelämääsi.</p>';
+          html += '<div class="modules-grid">';
+          part3Modules.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
           });
           html += '</div></div>';
@@ -857,17 +931,19 @@
       const progress = Math.round(sectionProgress + checklistProgressPercent);
       
       const isCompleted = completedModules.has(module.id);
+      const isComingSoon = module.comingSoon === true;
       
-      // All modules are accessible - no locking
-      const isLocked = false;
+      // All modules are accessible - no locking (except coming soon)
+      const isLocked = isComingSoon;
       
       return `
-        <div class="module-card ${isCompleted ? 'completed' : ''}" onclick="window.location.href='/module/${module.id}'">
+        <div class="module-card ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="window.location.href='/module/${module.id}'"` : ''}>
           ${isCompleted ? '<div class="completion-badge">✓</div>' : ''}
+          ${isComingSoon ? '<div class="locked-badge">🚧 Tulossa pian</div>' : ''}
           <div class="module-icon">${iconSVGs[module.icon]}</div>
           <h2>${module.title}</h2>
           <p>${module.description}</p>
-          ${progress > 0 ? `
+          ${isComingSoon ? '<div class="progress-text">Moduuli on kehityksessä</div>' : progress > 0 ? `
             <div class="progress-bar">
               <div class="progress-fill" style="width: ${progress}%"></div>
             </div>
