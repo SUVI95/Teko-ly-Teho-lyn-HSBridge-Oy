@@ -466,6 +466,9 @@
       <img src="/assets/images/logo.png" alt="HSBridge Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
       <span>HSBridge</span>
     </div>
+    <div id="adminNavLink" style="display: none; margin-right: auto; margin-left: 2rem;">
+      <a href="/admin" class="btn-admin" style="background: var(--accent); color: #fff; padding: 0.5rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.3s; display: inline-block;">📊 Hallintapaneeli</a>
+    </div>
     <div class="nav-user">
       <div class="user-info">
         <div class="user-name" id="userName">Ladataan...</div>
@@ -594,20 +597,21 @@
         document.getElementById('userName').textContent = user.name || user.email;
         document.getElementById('userEmail').textContent = user.email;
         
-        // Show admin button if user is admin
-        console.log('User object:', user);
-        console.log('is_admin value:', user.is_admin, 'Type:', typeof user.is_admin);
+        // Show admin button if user is admin (check both locations)
+        const isAdmin = user.is_admin === true || user.is_admin === 'true' || user.is_admin === 1 || user.is_admin === '1';
         
-        if (user.is_admin === true || user.is_admin === 'true' || user.is_admin === 1) {
+        if (isAdmin) {
+          // Show button in nav (next to logo)
+          const adminNavLink = document.getElementById('adminNavLink');
+          if (adminNavLink) {
+            adminNavLink.style.display = 'block';
+          }
+          
+          // Show button in user section
           const adminButtonContainer = document.getElementById('adminButtonContainer');
           if (adminButtonContainer) {
             adminButtonContainer.style.display = 'block';
-            console.log('✅ Admin button shown');
-          } else {
-            console.error('❌ Admin button container not found');
           }
-        } else {
-          console.log('User is not admin. is_admin value:', user.is_admin);
         }
       }
       // If user is null, checkAuth already redirected to login
