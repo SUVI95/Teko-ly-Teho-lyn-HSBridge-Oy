@@ -88,6 +88,10 @@ app.get('/course-feedback', authenticateToken, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'course-feedback.html'));
 });
 
+app.get('/setup-production', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'setup-production.html'));
+});
+
 app.get('/admin', authenticateToken, (req, res, next) => {
   // Check if user is admin
   if (!req.user || !req.user.is_admin) {
