@@ -12,6 +12,7 @@ const reflectionsRoutes = require('./routes/reflections');
 const adminRoutes = require('./routes/admin');
 const feedbackRoutes = require('./routes/feedback');
 const setupRoutes = require('./routes/setup');
+const gdprRoutes = require('./routes/gdpr');
 const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
@@ -35,10 +36,35 @@ app.use('/api/reflections', reflectionsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/setup', setupRoutes);
+app.use('/api/gdpr', gdprRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Explicitly serve shared frontend JS helpers.
+// (Avoids 404 + MIME mismatch if a deployment ever misses static assets.)
+app.get('/js/reflections.js', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'js', 'reflections.js');
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      res.status(404).send('/* reflections.js not found */');
+    }
+  });
+});
+
+app.get('/js/feedback.js', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'js', 'feedback.js');
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      res.status(404).send('/* feedback.js not found */');
+    }
+  });
 });
 
 // Static files
