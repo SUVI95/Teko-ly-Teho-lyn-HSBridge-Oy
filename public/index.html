@@ -642,46 +642,58 @@
             isHomework: true,
             part: 1
           },
-          // Osa 2: Yleinen työnhaku (Days 4-5)
+          // DAY 2 — "Rakenna hakemuksesi"
           {
             id: 'moduuli7-ai-tyonhaussa',
             title: 'Moduuli 7: AI työnhaussa',
             description: 'Optimoi CV:si, hakemuskirjeesi ja LinkedIn-profiilisi AI:n avulla.',
             icon: 'briefcase',
             order: 6,
-            part: 2
-          },
-          {
-            id: 'moduuli8-ai-haastattelussa',
-            title: 'Moduuli 8: AI haastattelussa',
-            description: 'Harjoittele haastatteluja AI:n kanssa ja saa palautetta vastauksistasi.',
-            icon: 'microphone',
-            order: 7,
-            part: 2
-          },
-          {
-            id: 'moduuli9-ai-oppimisessa',
-            title: 'Moduuli 9: AI oppimisessa',
-            description: 'Käytä AI:ta henkilökohtaisena opettajana taitojen kehittämiseen.',
-            icon: 'book',
-            order: 8,
-            part: 2
+            part: 2,
+            day: 2,
+            time: '90 min'
           },
           {
             id: 'moduuli10-ai-tyonhakutyokalut',
             title: 'Moduuli 10: AI työnhakutyökalut',
             description: 'Löydä työpaikkoja ja verkostoitu AI-vahvistettujen työkalujen avulla.',
             icon: 'search',
-            order: 9,
-            part: 2
+            order: 7,
+            part: 2,
+            day: 2,
+            time: '60 min'
           },
           {
             id: 'moduuli11-ai-etikka',
             title: 'Moduuli 11: AI etiikka',
             description: 'Opi tunnistamaan puolueellisuus ja käyttämään AI:ta vastuullisesti.',
             icon: 'shield',
+            order: 8,
+            part: 2,
+            day: 2,
+            time: '30 min'
+          },
+          // DAY 3 — "Harjoittele haastattelua"
+          {
+            id: 'moduuli8-ai-haastattelussa',
+            title: 'Moduuli 8: AI haastattelussa',
+            description: 'Harjoittele haastatteluja AI:n kanssa ja saa palautetta vastauksistasi.',
+            icon: 'microphone',
+            order: 9,
+            part: 2,
+            day: 3,
+            time: '3h'
+          },
+          // DAY 4 — "Kasva ja valmistu"
+          {
+            id: 'moduuli9-ai-oppimisessa',
+            title: 'Moduuli 9: AI oppimisessa',
+            description: 'Käytä AI:ta henkilökohtaisena opettajana taitojen kehittämiseen.',
+            icon: 'book',
             order: 10,
-            part: 2
+            part: 2,
+            day: 4,
+            time: '60 min'
           },
           {
             id: 'moduuli12-capstone',
@@ -689,7 +701,9 @@
             description: 'Sovella kaikki oppimasi kattavassa loppuprojektissa.',
             icon: 'star',
             order: 11,
-            part: 2
+            part: 2,
+            day: 4,
+            time: '120 min'
           },
           // Osa 3: Toimialakohtainen sisältö (Days 6-7 - valitse oma alasi)
           {
@@ -844,6 +858,11 @@
         const part2Modules = modules.filter(m => m.part === 2);
         const part3Modules = modules.filter(m => m.part === 3);
         
+        // Group Part 2 modules by day
+        const day2Modules = part2Modules.filter(m => m.day === 2).sort((a, b) => a.order - b.order);
+        const day3Modules = part2Modules.filter(m => m.day === 3).sort((a, b) => a.order - b.order);
+        const day4Modules = part2Modules.filter(m => m.day === 4).sort((a, b) => a.order - b.order);
+        
         let html = '';
         
         // Render Part 1
@@ -855,10 +874,28 @@
           html += '</div></div>';
         }
         
-        // Render Part 2
-        if (part2Modules.length > 0) {
-          html += '<div class="part-section"><h2 class="part-title">Osa 2: Yleinen työnhaku</h2><div class="modules-grid">';
-          part2Modules.forEach((module, index) => {
+        // Render DAY 2 — "Rakenna hakemuksesi"
+        if (day2Modules.length > 0) {
+          html += '<div class="part-section"><h2 class="part-title">DAY 2 — "Rakenna hakemuksesi"</h2><div class="modules-grid">';
+          day2Modules.forEach((module, index) => {
+            html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
+          });
+          html += '</div></div>';
+        }
+        
+        // Render DAY 3 — "Harjoittele haastattelua"
+        if (day3Modules.length > 0) {
+          html += '<div class="part-section"><h2 class="part-title">DAY 3 — "Harjoittele haastattelua"</h2><div class="modules-grid">';
+          day3Modules.forEach((module, index) => {
+            html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
+          });
+          html += '</div></div>';
+        }
+        
+        // Render DAY 4 — "Kasva ja valmistu"
+        if (day4Modules.length > 0) {
+          html += '<div class="part-section"><h2 class="part-title">DAY 4 — "Kasva ja valmistu"</h2><div class="modules-grid">';
+          day4Modules.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
           });
           html += '</div></div>';
@@ -930,6 +967,8 @@
       // All modules are accessible - no locking (except coming soon)
       const isLocked = isComingSoon;
       
+      const timeInfo = module.time ? `<div class="progress-text" style="margin-top: 0.5rem; font-weight: 500; color: var(--accent);">${module.time}</div>` : '';
+      
       return `
         <div class="module-card ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="window.location.href='/module/${module.id}'"` : ''}>
           ${isCompleted ? '<div class="completion-badge">✓</div>' : ''}
@@ -937,6 +976,7 @@
           <div class="module-icon">${iconSVGs[module.icon]}</div>
           <h2>${module.title}</h2>
           <p>${module.description}</p>
+          ${timeInfo}
           ${isComingSoon ? '<div class="progress-text">Moduuli on kehityksessä</div>' : progress > 0 ? `
             <div class="progress-bar">
               <div class="progress-fill" style="width: ${progress}%"></div>
