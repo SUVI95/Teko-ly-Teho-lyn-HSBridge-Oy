@@ -51,8 +51,9 @@ router.get('/closing-actions', authenticateToken, requireAdmin, async (req, res)
 // Get all users
 router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
   try {
+    try { await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE'); } catch(e) {}
     const result = await pool.query(`
-      SELECT id, email, name, created_at, last_login, is_active, is_admin
+      SELECT id, email, name, created_at, last_login, is_active, is_admin, COALESCE(is_approved, FALSE) as is_approved
       FROM users
       WHERE is_admin = FALSE
       ORDER BY created_at DESC
@@ -62,6 +63,41 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({ error: 'Failed to get users' });
+  }
+});
+
+// Approve a student
+router.post('/users/:userId/approve', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await pool.query('UPDATE users SET is_approved = TRUE WHERE id = $1 AND is_admin = FALSE', [userId]);
+    res.json({ success: true, message: 'Student approved' });
+  } catch (error) {
+    console.error('Approve user error:', error);
+    res.status(500).json({ error: 'Failed to approve user' });
+  }
+});
+
+// Revoke access for a student
+router.post('/users/:userId/revoke', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await pool.query('UPDATE users SET is_approved = FALSE WHERE id = $1 AND is_admin = FALSE', [userId]);
+    res.json({ success: true, message: 'Student access revoked' });
+  } catch (error) {
+    console.error('Revoke user error:', error);
+    res.status(500).json({ error: 'Failed to revoke user' });
+  }
+});
+
+// Approve all existing students (one-time bulk approve)
+router.post('/users/approve-all', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query('UPDATE users SET is_approved = TRUE WHERE is_admin = FALSE RETURNING id');
+    res.json({ success: true, message: `Approved ${result.rowCount} students` });
+  } catch (error) {
+    console.error('Approve all error:', error);
+    res.status(500).json({ error: 'Failed to approve all' });
   }
 });
 
@@ -75,6 +111,7 @@ router.get('/students/progress', authenticateToken, requireAdmin, async (req, re
         u.name,
         u.created_at,
         u.last_login,
+        COALESCE(u.is_approved, FALSE) as is_approved,
         COUNT(DISTINCT sp.module_id) as modules_accessed,
         COUNT(DISTINCT CASE WHEN sp.completed THEN sp.module_id END) as modules_completed,
         COUNT(DISTINCT sp.section_id) as sections_accessed,
@@ -85,7 +122,7 @@ router.get('/students/progress', authenticateToken, requireAdmin, async (req, re
       LEFT JOIN student_progress sp ON u.id = sp.user_id
       LEFT JOIN checklist_items ci ON u.id = ci.user_id AND ci.completed = TRUE
       WHERE u.is_admin = FALSE
-      GROUP BY u.id, u.email, u.name, u.created_at, u.last_login
+      GROUP BY u.id, u.email, u.name, u.created_at, u.last_login, u.is_approved
       ORDER BY u.created_at DESC
     `);
     

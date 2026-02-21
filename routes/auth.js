@@ -24,9 +24,12 @@ router.post('/register', async (req, res) => {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
     
-    // Create user
+    // Ensure is_approved column exists
+    try { await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE'); } catch(e) {}
+
+    // Create user (not approved until admin approves)
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING id, email, name',
+      'INSERT INTO users (email, password_hash, name, is_approved) VALUES ($1, $2, $3, FALSE) RETURNING id, email, name',
       [email, passwordHash, name || null]
     );
     
@@ -150,7 +153,7 @@ router.get('/me', async (req, res) => {
     }
     
     const result = await pool.query(
-      'SELECT u.id, u.email, u.name, u.created_at, u.last_login, u.is_admin FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE',
+      'SELECT u.id, u.email, u.name, u.created_at, u.last_login, u.is_admin, COALESCE(u.is_approved, TRUE) as is_approved FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE',
       [token]
     );
     

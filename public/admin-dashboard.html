@@ -627,7 +627,10 @@ nav {
           <h1>Opiskelijat</h1>
           <p>Valitse opiskelija nähdäksesi kaikki hänen tiedot</p>
         </div>
-        <div class="section-actions">
+        <div class="section-actions" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="approveAllBtn" onclick="approveAllStudents()" style="padding:8px 16px;background:var(--accent3);color:#fff;border:none;border-radius:8px;font-size:0.85rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;">
+            Hyväksy kaikki
+          </button>
           <button class="btn btn-secondary" id="downloadAllBtn">
             <span>Lataa kaikki CSV</span>
           </button>
@@ -788,13 +791,22 @@ nav {
             const timeSpent = formatTime(s.total_time_spent || 0);
 
             return `
-              <div class="student-card" onclick="loadStudentDetail(${s.id})">
-                <div class="student-header">
-                  <div class="student-name">${escapeHtml(s.name || 'Nimetön')}</div>
+              <div class="student-card">
+                <div class="student-header" onclick="loadStudentDetail(${s.id})" style="cursor:pointer;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div class="student-name">${escapeHtml(s.name || 'Nimetön')}</div>
+                    <span style="padding:3px 10px;border-radius:4px;font-size:0.75rem;font-weight:600;${s.is_approved ? 'background:rgba(42,122,75,0.12);color:#2a7a4b;' : 'background:rgba(199,91,58,0.12);color:#c75b3a;'}">${s.is_approved ? 'Hyväksytty' : 'Odottaa'}</span>
+                  </div>
                   <div class="student-email">${escapeHtml(s.email)}</div>
                   <div class="student-meta">
                     <span>Viimeksi kirjautunut: ${formatDate(s.last_login) || 'Ei koskaan'}</span>
                   </div>
+                </div>
+                <div style="padding:0.75rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:0.5rem;">
+                  ${s.is_approved 
+                    ? `<button onclick="event.stopPropagation();revokeStudent(${s.id})" style="padding:6px 14px;border-radius:6px;border:1px solid rgba(199,91,58,0.3);background:transparent;color:var(--accent2);font-size:0.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Poista pääsy</button>`
+                    : `<button onclick="event.stopPropagation();approveStudent(${s.id})" style="padding:6px 14px;border-radius:6px;border:none;background:var(--accent3);color:#fff;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Hyväksy</button>`
+                  }
                 </div>
                 <div class="progress-summary">
                   <div class="progress-item">
@@ -1100,6 +1112,24 @@ nav {
     // Filters
     function filterStudents() {
       renderStudents();
+    }
+
+    async function approveStudent(userId) {
+      if (!confirm('Haluatko hyväksyä tämän opiskelijan?')) return;
+      const data = await apiCall('/admin/users/' + userId + '/approve', { method: 'POST' });
+      if (data && data.success) { await loadStudents(); }
+    }
+
+    async function revokeStudent(userId) {
+      if (!confirm('Haluatko poistaa tämän opiskelijan pääsyn?')) return;
+      const data = await apiCall('/admin/users/' + userId + '/revoke', { method: 'POST' });
+      if (data && data.success) { await loadStudents(); }
+    }
+
+    async function approveAllStudents() {
+      if (!confirm('Haluatko hyväksyä KAIKKI opiskelijat?')) return;
+      const data = await apiCall('/admin/users/approve-all', { method: 'POST' });
+      if (data && data.success) { alert(data.message); await loadStudents(); }
     }
 
     // Downloads
