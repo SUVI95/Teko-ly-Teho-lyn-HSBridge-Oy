@@ -11,6 +11,7 @@ const aiRoutes = require('./routes/ai');
 const reflectionsRoutes = require('./routes/reflections');
 const adminRoutes = require('./routes/admin');
 const feedbackRoutes = require('./routes/feedback');
+const setupRoutes = require('./routes/setup');
 const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
@@ -33,6 +34,7 @@ app.use('/api/ai', aiRoutes); // No authentication required
 app.use('/api/reflections', reflectionsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/setup', setupRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
