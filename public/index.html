@@ -495,6 +495,9 @@
     background: rgba(199,91,58,0.05);
   }
 
+  .feedback-star { color: var(--warm); transition: color 0.2s; }
+  .feedback-star:hover, .feedback-star.filled { color: var(--gold); }
+
   @media (max-width: 768px) {
     .gdpr-banner {
       padding: 1rem;
@@ -658,6 +661,41 @@
     </div>
     
     <div id="modulesContainer" class="loading">Ladataan moduuleja...</div>
+
+    <!-- Feedback Section (end of course) -->
+    <div id="feedbackSection" class="feedback-section" style="margin-top:4rem;padding-top:3rem;border-top:1px solid var(--border);display:none;">
+      <div style="text-align:center;margin-bottom:2rem;">
+        <h2 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin-bottom:0.5rem;">Anna palautetta kurssista</h2>
+        <p style="color:var(--muted);font-size:1rem;">Autamme parantamaan sisältöä. Vastaa vapaasti — kaikki kentät eivät ole pakollisia.</p>
+      </div>
+      <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:16px;padding:2.5rem;border:1px solid var(--border);box-shadow:var(--shadow);">
+        <div style="margin-bottom:1.25rem;">
+          <label style="display:block;font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;">Opitko jotain uutta?</label>
+          <textarea id="feedbackLearned_home" class="feedback-textarea" placeholder="Esim: Kyllä, erityisesti..." style="width:100%;min-height:80px;padding:1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.95rem;resize:vertical;"></textarea>
+        </div>
+        <div style="margin-bottom:1.25rem;">
+          <label style="display:block;font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;">Oliko kurssi hyödyllinen?</label>
+          <textarea id="feedbackUseful_home" class="feedback-textarea" placeholder="Esim: Kyllä, hyvin käytännönläheistä..." style="width:100%;min-height:80px;padding:1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.95rem;resize:vertical;"></textarea>
+        </div>
+        <div style="margin-bottom:1.25rem;">
+          <label style="display:block;font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;">Mitään parannettavaa?</label>
+          <textarea id="feedbackImprove_home" class="feedback-textarea" placeholder="Esim: Lisää esimerkkejä..." style="width:100%;min-height:80px;padding:1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.95rem;resize:vertical;"></textarea>
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <label style="display:block;font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;">Tähtiarvostelu (1–5 tähteä)</label>
+          <input type="hidden" id="feedbackRating_home" value="0">
+          <div class="feedback-stars-wrap" data-module="home" style="display:flex;gap:6px;font-size:2rem;cursor:pointer;justify-content:center;">
+            <span class="feedback-star" data-rating="1">★</span>
+            <span class="feedback-star" data-rating="2">★</span>
+            <span class="feedback-star" data-rating="3">★</span>
+            <span class="feedback-star" data-rating="4">★</span>
+            <span class="feedback-star" data-rating="5">★</span>
+          </div>
+        </div>
+        <button onclick="saveModuleFeedback('home')" style="width:100%;padding:14px 28px;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;border:none;background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;">Lähetä palaute</button>
+        <div id="moduleFeedbackConfirm_home" style="display:none;font-size:0.9rem;color:var(--accent3);margin-top:0.75rem;text-align:center;">✓ Kiitos! Palaute tallennettu.</div>
+      </div>
+    </div>
   </div>
 
   <!-- GDPR Consent Banner -->
@@ -1196,6 +1234,13 @@
         }
         
         container.innerHTML = html;
+
+        // Show feedback section when all main modules are completed
+        const feedbackSection = document.getElementById('feedbackSection');
+        if (feedbackSection && mainModules.length > 0 && completedModules.size >= mainModules.length) {
+          feedbackSection.style.display = 'block';
+          initFeedbackStars('home');
+        }
       } catch (error) {
         console.error('Error loading modules:', error);
         console.error('Error details:', error.message, error.stack);
@@ -1370,10 +1415,11 @@
       window.location.reload(); // Reload page instead of redirecting to login
     }
     
-    // GDPR Consent Management — localStorage first, API as backup
+    // GDPR Consent Management — show banner only once (Accept or Decline)
     function checkGDPRConsent() {
       try {
-        if (localStorage.getItem('gdpr_consent_given') === 'true') return;
+        var stored = localStorage.getItem('gdpr_consent_given');
+        if (stored === 'true' || stored === 'false') return; // User already responded
       } catch(e) {}
       var banner = document.getElementById('gdprBanner');
       if (banner) banner.classList.add('show');
@@ -1405,11 +1451,28 @@
       if (declineBtn) declineBtn.addEventListener('click', function() { saveGDPRConsent(false); });
     }
 
+    function initFeedbackStars(moduleId) {
+      var wrap = document.querySelector('.feedback-stars-wrap[data-module="' + moduleId + '"]');
+      if (!wrap) return;
+      var input = document.getElementById('feedbackRating_' + moduleId);
+      if (!input) return;
+      wrap.querySelectorAll('.feedback-star').forEach(function(star, i) {
+        star.onclick = function() {
+          var r = parseInt(star.getAttribute('data-rating'), 10);
+          input.value = r;
+          wrap.querySelectorAll('.feedback-star').forEach(function(s, idx) {
+            s.classList.toggle('filled', idx < r);
+          });
+        };
+      });
+    }
+
     // Initialize
     loadUser();
     loadModules();
     setupGDPRBanner();
     checkGDPRConsent();
   </script>
+  <script src="/js/feedback.js"></script>
 </body>
 </html>

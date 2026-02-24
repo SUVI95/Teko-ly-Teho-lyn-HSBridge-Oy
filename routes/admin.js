@@ -279,11 +279,12 @@ router.get('/download/feedback', authenticateToken, requireAdmin, async (req, re
     const csvHeader = 'Module ID,Question Type,Email,Name,Feedback Text,Rating,Created At\n';
     const csvRows = result.rows.map(row => {
       const text = (row.feedback_text || '').replace(/"/g, '""').replace(/\n/g, ' ');
-      const questionType = row.question_type === 'what_learned' ? 'What Learned' :
+      const moduleLabel = row.module_id === 'home' ? 'Koko kurssi' : (row.module_id || '');
+    const questionType = row.question_type === 'what_learned' ? 'What Learned' :
                           row.question_type === 'learned_new' ? 'Learned New' :
                           row.question_type === 'course_feedback' ? 'Course Feedback' :
                           row.question_type === 'module_feedback' ? 'Module Feedback' : row.question_type;
-      return `"${row.module_id || ''}","${questionType}","${row.email}","${row.name || ''}","${text}","${row.rating || ''}","${row.created_at}"`;
+      return `"${moduleLabel}","${questionType}","${row.email}","${row.name || ''}","${text}","${row.rating || ''}","${row.created_at}"`;
     }).join('\n');
     
     const csv = csvHeader + csvRows;
