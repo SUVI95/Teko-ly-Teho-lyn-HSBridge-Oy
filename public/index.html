@@ -1383,13 +1383,17 @@
       try { localStorage.setItem('gdpr_consent_given', String(consentGiven)); } catch(e) {}
       var banner = document.getElementById('gdprBanner');
       if (banner) banner.classList.remove('show');
-      // Also save to server (fire and forget)
+      var consentText = 'Tietosuoja ja evästeet: Käytämme evästeitä ja tallennamme henkilötietojasi parantaaksemme käyttökokemustasi ja seurataaksemme oppimisesi edistymistä. Tietojesi käsittely perustuu suostumukseesi. Voit peruuttaa suostumuksesi milloin tahansa.';
+      if (banner) {
+        var desc = banner.querySelector('.gdpr-banner-description');
+        if (desc) consentText = desc.textContent.replace(/\s+/g, ' ').trim();
+      }
       try {
         fetch(API_URL + '/gdpr/consent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ consent_given: consentGiven, consent_type: 'data_processing' })
+          body: JSON.stringify({ consent_given: consentGiven, consent_type: 'data_processing', consent_text: consentText })
         }).catch(function() {});
       } catch(e) {}
     }

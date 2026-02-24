@@ -15,7 +15,7 @@ router.post('/save', authenticateToken, async (req, res) => {
     }
     
     // Validate question types
-    const validTypes = ['what_learned', 'learned_new', 'course_feedback'];
+    const validTypes = ['what_learned', 'learned_new', 'course_feedback', 'module_feedback'];
     if (!validTypes.includes(questionType)) {
       return res.status(400).json({ error: 'Invalid question type' });
     }

@@ -77,4 +77,35 @@ window.saveLearnedNew = async function(moduleId) {
   }
   return result;
 };
+
+// Save module feedback (learned new, useful, improve, 5-star rating)
+window.saveModuleFeedback = async function(moduleId) {
+  const learnedEl = document.getElementById('feedbackLearned_' + moduleId);
+  const usefulEl = document.getElementById('feedbackUseful_' + moduleId);
+  const improveEl = document.getElementById('feedbackImprove_' + moduleId);
+  const ratingInput = document.getElementById('feedbackRating_' + moduleId);
+  if (!learnedEl || !usefulEl || !improveEl) return { success: false, error: 'Feedback fields not found' };
+  const learned = learnedEl.value.trim();
+  const useful = usefulEl.value.trim();
+  const improve = improveEl.value.trim();
+  const rating = ratingInput ? parseInt(ratingInput.value || '0', 10) : null;
+  const feedbackText = [
+    'Opitko jotain uutta: ' + (learned || '-'),
+    'Oliko hyödyllistä: ' + (useful || '-'),
+    'Parannettavaa: ' + (improve || '-')
+  ].join('\n');
+  if (!learned && !useful && !improve && (!rating || rating === 0)) {
+    alert('Vastaa ainakin yhteen kysymykseen tai anna tähtiarvostelu.');
+    return { success: false, error: 'Empty feedback' };
+  }
+  const result = await window.saveFeedback(moduleId, 'module_feedback', feedbackText, rating || null);
+  if (result.success) {
+    const confirmEl = document.getElementById('moduleFeedbackConfirm_' + moduleId);
+    if (confirmEl) {
+      confirmEl.style.display = 'block';
+      setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    }
+  }
+  return result;
+};
 })();

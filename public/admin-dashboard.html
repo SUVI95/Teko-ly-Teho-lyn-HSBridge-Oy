@@ -840,7 +840,7 @@ nav {
 
     function renderStudentDetail(data) {
       const container = document.getElementById('studentDetailContainer');
-      const { user, reflections, feedback, closingActions, progress, checklist } = data;
+      const { user, reflections, feedback, closingActions, progress, checklist, consent } = data;
 
       // Calculate progress metrics
       const modules = [...new Set(progress.map(p => p.module_id))];
@@ -853,6 +853,7 @@ nav {
       const whatLearned = feedback.filter(f => f.question_type === 'what_learned');
       const learnedNew = feedback.filter(f => f.question_type === 'learned_new');
       const courseFeedback = feedback.filter(f => f.question_type === 'course_feedback');
+      const moduleFeedback = feedback.filter(f => f.question_type === 'module_feedback');
 
       container.innerHTML = `
         <div class="student-detail">
@@ -902,10 +903,11 @@ nav {
         <!-- Tabs for different content types -->
         <div class="section">
           <div class="tabs">
-            <button class="tab active" onclick="switchTab('reflections')">Reflektiot (${reflections.length})</button>
-            <button class="tab" onclick="switchTab('feedback')">Palautteet (${feedback.length})</button>
-            <button class="tab" onclick="switchTab('closingActions')">Sulkemistoimenpiteet (${closingActions.length})</button>
-            <button class="tab" onclick="switchTab('progress')">Edistyminen</button>
+            <button class="tab active" onclick="switchTab('reflections', event)">Reflektiot (${reflections.length})</button>
+            <button class="tab" onclick="switchTab('feedback', event)">Palautteet (${feedback.length})</button>
+            <button class="tab" onclick="switchTab('closingActions', event)">Sulkemistoimenpiteet (${closingActions.length})</button>
+            <button class="tab" onclick="switchTab('consent', event)">Suostumus (${consent ? '1' : '0'})</button>
+            <button class="tab" onclick="switchTab('progress', event)">Edistyminen</button>
           </div>
 
           <!-- Reflections Tab -->
@@ -991,6 +993,53 @@ nav {
                   </div>
                 `).join('')}
               ` : ''}
+              
+              ${moduleFeedback.length > 0 ? `
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-family: 'DM Serif Display', serif; color: var(--ink);">Moduulipalautteet</h3>
+                ${moduleFeedback.map(f => `
+                  <div class="content-item">
+                    <div class="content-item-header">
+                      <div>
+                        <span class="module-badge">Moduuli ${f.module_id || '-'}</span>
+                        <span class="content-item-title">Moduulipalautteet</span>
+                        ${f.rating ? `
+                          <span class="feedback-rating">
+                            ${Array.from({ length: 5 }, (_, i) => 
+                              `<span class="star ${i < f.rating ? '' : 'empty'}">★</span>`
+                            ).join('')}
+                          </span>
+                        ` : ''}
+                      </div>
+                      <div class="content-item-date">${formatDate(f.created_at)}</div>
+                    </div>
+                    <div class="content-item-text">${escapeHtml(f.feedback_text || '-')}</div>
+                  </div>
+                `).join('')}
+              ` : ''}
+            `}
+          </div>
+
+          <!-- Consent Tab -->
+          <div id="tab-consent" class="tab-content">
+            ${!consent ? `
+              <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <p>Ei suostumustietoja</p>
+              </div>
+            ` : `
+              <div class="content-item">
+                <div class="content-item-header">
+                  <div>
+                    <span class="content-item-title">GDPR-suostumus</span>
+                    <span style="margin-left:0.5rem;font-size:0.85rem;color:${consent.consent_given ? 'var(--accent3)' : 'var(--accent2)'};font-weight:600;">
+                      ${consent.consent_given ? '✓ Hyväksytty' : '✗ Hylätty'}
+                    </span>
+                  </div>
+                  <div class="content-item-date">${formatDate(consent.created_at)}</div>
+                </div>
+                <div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(consent.consent_text || '(Ei tallennettua tekstiä)')}</div>
+                ${consent.ip_address ? `<div style="margin-top:0.5rem;font-size:0.8rem;color:var(--muted);">IP: ${escapeHtml(consent.ip_address)}</div>` : ''}
+              </div>
             `}
           </div>
 
@@ -1099,14 +1148,15 @@ nav {
     }
 
     // Tab switching
-    window.switchTab = function(tabName) {
+    window.switchTab = function(tabName, ev) {
       // Update tab buttons
       document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      event.target.classList.add('active');
+      if (ev && ev.target) ev.target.classList.add('active');
 
       // Update tab content
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-      document.getElementById(`tab-${tabName}`).classList.add('active');
+      const tabEl = document.getElementById(`tab-${tabName}`);
+      if (tabEl) tabEl.classList.add('active');
     };
 
     // Filters
@@ -1140,10 +1190,11 @@ nav {
       
       try {
         // Download all data types
-        const [reflectionsRes, closingActionsRes, feedbackRes] = await Promise.all([
+        const [reflectionsRes, closingActionsRes, feedbackRes, consentRes] = await Promise.all([
           fetch(`${API_URL}/admin/download/reflections`, { credentials: 'include' }),
           fetch(`${API_URL}/admin/download/closing-actions`, { credentials: 'include' }),
-          fetch(`${API_URL}/admin/download/feedback`, { credentials: 'include' })
+          fetch(`${API_URL}/admin/download/feedback`, { credentials: 'include' }),
+          fetch(`${API_URL}/admin/download/consent`, { credentials: 'include' })
         ]);
 
         if (reflectionsRes.status === 401 || reflectionsRes.status === 403) {
@@ -1189,6 +1240,19 @@ nav {
           document.body.removeChild(a);
           window.URL.revokeObjectURL(url);
         }
+
+        // Download consent
+        if (consentRes.ok) {
+          const blob = await consentRes.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `consent-${new Date().toISOString().split('T')[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        }
       } catch (error) {
         showError('CSV:n lataaminen epäonnistui', 'errorMessage');
       } finally {
@@ -1206,7 +1270,7 @@ nav {
       
       try {
         // Create CSV from current student data
-        const { user, reflections, feedback, closingActions } = currentStudentData;
+        const { user, reflections, feedback, closingActions, consent } = currentStudentData;
         
         // Reflections CSV
         const reflectionsCSV = [
@@ -1224,10 +1288,17 @@ nav {
             const text = (f.feedback_text || '').replace(/"/g, '""').replace(/\n/g, ' ');
             const questionType = f.question_type === 'what_learned' ? 'What Learned' :
                                 f.question_type === 'learned_new' ? 'Learned New' :
-                                f.question_type === 'course_feedback' ? 'Course Feedback' : f.question_type;
+                                f.question_type === 'course_feedback' ? 'Course Feedback' :
+                                f.question_type === 'module_feedback' ? 'Module Feedback' : f.question_type;
             return `"${f.module_id || ''}","${questionType}","${text}","${f.rating || ''}","${f.created_at}"`;
           })
         ].join('\n');
+
+        // Consent CSV
+        const consentCSV = consent ? [
+          'Consent Given,Consent Type,Consent Text,IP Address,Created At',
+          `"${consent.consent_given}","${consent.consent_type || ''}","${(consent.consent_text || '').replace(/"/g, '""').replace(/\n/g, ' ')}","${consent.ip_address || ''}","${consent.created_at}"`
+        ].join('\n') : '';
 
         // Closing Actions CSV
         const closingActionsCSV = [
@@ -1258,6 +1329,11 @@ nav {
         setTimeout(() => {
           downloadCSV(closingActionsCSV, `${user.email}-closing-actions-${new Date().toISOString().split('T')[0]}.csv`);
         }, 1000);
+        if (consentCSV) {
+          setTimeout(() => {
+            downloadCSV(consentCSV, `${user.email}-consent-${new Date().toISOString().split('T')[0]}.csv`);
+          }, 1500);
+        }
       } catch (error) {
         showError('CSV:n lataaminen epäonnistui', 'detailErrorMessage');
       } finally {

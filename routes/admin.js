@@ -186,13 +186,30 @@ router.get('/students/:userId', authenticateToken, requireAdmin, async (req, res
       ORDER BY completed_at DESC
     `, [userId]);
     
+    // Get GDPR consent
+    let consent = null;
+    try {
+      const consentResult = await pool.query(`
+        SELECT consent_given, consent_type, consent_text, ip_address, created_at
+        FROM gdpr_consent
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+      `, [userId]);
+      if (consentResult.rows.length > 0) {
+        consent = consentResult.rows[0];
+      }
+    } catch (e) {
+      // gdpr_consent table might not exist
+    }
+    
     res.json({
       user,
       reflections: reflectionsResult.rows,
       feedback: feedbackResult.rows,
       closingActions: closingActionsResult.rows,
       progress: progressResult.rows,
-      checklist: checklistResult.rows
+      checklist: checklistResult.rows,
+      consent
     });
   } catch (error) {
     console.error('Get student data error:', error);
@@ -264,7 +281,8 @@ router.get('/download/feedback', authenticateToken, requireAdmin, async (req, re
       const text = (row.feedback_text || '').replace(/"/g, '""').replace(/\n/g, ' ');
       const questionType = row.question_type === 'what_learned' ? 'What Learned' :
                           row.question_type === 'learned_new' ? 'Learned New' :
-                          row.question_type === 'course_feedback' ? 'Course Feedback' : row.question_type;
+                          row.question_type === 'course_feedback' ? 'Course Feedback' :
+                          row.question_type === 'module_feedback' ? 'Module Feedback' : row.question_type;
       return `"${row.module_id || ''}","${questionType}","${row.email}","${row.name || ''}","${text}","${row.rating || ''}","${row.created_at}"`;
     }).join('\n');
     
@@ -334,6 +352,34 @@ router.get('/download/closing-actions', authenticateToken, requireAdmin, async (
   } catch (error) {
     console.error('Download closing actions error:', error);
     res.status(500).json({ error: 'Failed to download closing actions' });
+  }
+});
+
+// Download consent as CSV
+router.get('/download/consent', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT gc.consent_given, gc.consent_type, gc.consent_text, gc.ip_address, gc.created_at,
+             u.email, u.name
+      FROM gdpr_consent gc
+      JOIN users u ON gc.user_id = u.id
+      ORDER BY gc.created_at DESC
+    `);
+    
+    const csvHeader = 'Email,Name,Consent Given,Consent Type,Consent Text,IP Address,Created At\n';
+    const csvRows = result.rows.map(row => {
+      const text = (row.consent_text || '').replace(/"/g, '""').replace(/\n/g, ' ');
+      return `"${row.email}","${row.name || ''}","${row.consent_given}","${row.consent_type || ''}","${text}","${row.ip_address || ''}","${row.created_at}"`;
+    }).join('\n');
+    
+    const csv = csvHeader + csvRows;
+    
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="consent-${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send('\ufeff' + csv);
+  } catch (error) {
+    console.error('Download consent error:', error);
+    res.status(500).json({ error: 'Failed to download consent' });
   }
 });
 

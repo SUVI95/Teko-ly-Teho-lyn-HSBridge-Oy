@@ -117,6 +117,9 @@ h1.hero-title em{font-style:italic;color:#a78bfa;}
 .btn-back{display:inline-flex;align-items:center;gap:8px;background:transparent;color:rgba(255,255,255,0.45);padding:15px 24px;border-radius:6px;font-weight:500;font-size:0.95rem;border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.25s;}
 .btn-back:hover{color:#fff;border-color:rgba(255,255,255,0.3);}
 .finale-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
+.feedback-stars-wrap{display:flex;gap:4px;font-size:1.8rem;cursor:pointer;}
+.feedback-star{color:var(--warm);transition:color 0.2s;}
+.feedback-star:hover,.feedback-star.filled{color:var(--gold);}
 @media(max-width:768px){nav{padding:0 1.25rem;}.section{padding:80px 1.25rem 4rem;}}
 </style>
 </head>
@@ -457,6 +460,37 @@ h1.hero-title em{font-style:italic;color:#a78bfa;}
       <div class="reflection-confirm" id="reflConfirm" style="display:none;font-size:0.85rem;color:rgba(255,255,255,0.4);margin-top:0.75rem;">✓ Tallennettu</div>
     </div>
 
+    <div class="feedback-section" style="background:var(--paper2);border-radius:16px;padding:2.5rem;border:1px solid var(--border);margin-bottom:3rem;">
+      <div class="section-label" style="color:var(--muted);">Palautteesi</div>
+      <h3 style="font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--ink);margin-bottom:1.25rem;">Anna palautetta moduulista</h3>
+      <p style="font-size:0.95rem;color:var(--muted);margin-bottom:1.5rem;">Autamme parantamaan sisältöä. Vastaa vapaasti — kaikki kentät eivät ole pakollisia.</p>
+      <div style="margin-bottom:1.25rem;">
+        <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;">Opitko jotain uutta?</label>
+        <textarea id="feedbackLearned_moduuli-visibility-growth-automation" class="practice-textarea" placeholder="Esim: Kyllä, erityisesti automaatiotyökalut..." style="min-height:70px;background:#fff;"></textarea>
+      </div>
+      <div style="margin-bottom:1.25rem;">
+        <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;">Oliko tämä hyödyllistä?</label>
+        <textarea id="feedbackUseful_moduuli-visibility-growth-automation" class="practice-textarea" placeholder="Esim: Kyllä, hyvin käytännönläheistä..." style="min-height:70px;background:#fff;"></textarea>
+      </div>
+      <div style="margin-bottom:1.25rem;">
+        <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;">Mitään parannettavaa?</label>
+        <textarea id="feedbackImprove_moduuli-visibility-growth-automation" class="practice-textarea" placeholder="Esim: Lisää esimerkkejä..." style="min-height:70px;background:#fff;"></textarea>
+      </div>
+      <div style="margin-bottom:1.5rem;">
+        <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;">Tähtiarvostelu (1–5 tähteä)</label>
+        <input type="hidden" id="feedbackRating_moduuli-visibility-growth-automation" value="0">
+        <div class="feedback-stars-wrap" data-module="moduuli-visibility-growth-automation">
+          <span class="feedback-star" data-rating="1">★</span>
+          <span class="feedback-star" data-rating="2">★</span>
+          <span class="feedback-star" data-rating="3">★</span>
+          <span class="feedback-star" data-rating="4">★</span>
+          <span class="feedback-star" data-rating="5">★</span>
+        </div>
+      </div>
+      <button class="practice-btn" onclick="saveModuleFeedback('moduuli-visibility-growth-automation')">Lähetä palaute</button>
+      <div id="moduleFeedbackConfirm_moduuli-visibility-growth-automation" style="display:none;font-size:0.9rem;color:var(--accent3);margin-top:0.75rem;">✓ Kiitos! Palaute tallennettu.</div>
+    </div>
+
     <div class="finale-card">
       <span class="finale-icon">✅</span>
       <h2>Moduuli suoritettu.<br><em>Jatketaan eteenpäin.</em></h2>
@@ -531,6 +565,17 @@ function saveReflection() {
 document.addEventListener('DOMContentLoaded', () => {
   if (window.loadReflection) window.loadReflection('moduuli-visibility-growth-automation');
   else try { const s = localStorage.getItem('moduuli-visibility-growth-automation_reflection'); if (s) document.getElementById('reflectionText').value = s; } catch(e) {}
+  const wrap = document.querySelector('.feedback-stars-wrap[data-module="moduuli-visibility-growth-automation"]');
+  if (wrap) {
+    const input = document.getElementById('feedbackRating_moduuli-visibility-growth-automation');
+    wrap.querySelectorAll('.feedback-star').forEach(star => {
+      star.addEventListener('click', () => {
+        const r = parseInt(star.dataset.rating, 10);
+        input.value = r;
+        wrap.querySelectorAll('.feedback-star').forEach((s, i) => s.classList.toggle('filled', i < r));
+      });
+    });
+  }
 });
 fetch('/ai-chat-widget.html').then(r=>r.text()).then(html=>{document.body.insertAdjacentHTML('beforeend',html);}).catch(e=>console.error(e));
 </script>
