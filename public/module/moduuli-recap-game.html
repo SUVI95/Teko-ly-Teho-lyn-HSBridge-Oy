@@ -119,6 +119,28 @@ h1.hero-title em{font-style:italic;color:#c4b5fd;}
 .game-tab.done.active{background:var(--accent);color:#fff;border-color:var(--accent);}
 .game-panel{display:none;}
 .game-panel.active{display:block;animation:fadeIn 0.3s ease;}
+/* Scenario cards for Gamma/Canva and Lovable/Base44 */
+.scenario-card{background:#fff;border-radius:16px;padding:2rem;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:2rem;}
+.scenario-card h3{font-size:1rem;color:var(--muted);margin-bottom:0.5rem;font-family:'DM Mono',monospace;}
+.scenario-card .situation{font-size:1.1rem;font-weight:600;color:var(--ink);margin-bottom:1rem;line-height:1.5;}
+.scenario-card .hint{font-size:0.85rem;color:var(--accent);font-style:italic;margin-bottom:1.25rem;}
+.tool-btns{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;}
+.tool-btn{padding:14px 28px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;border:2px solid var(--border);background:#fff;transition:all 0.25s;font-family:'DM Sans',sans-serif;}
+.tool-btn:hover{border-color:var(--accent);background:rgba(124,58,237,0.05);}
+.tool-btn.selected{border-color:var(--accent);background:rgba(124,58,237,0.1);}
+.tool-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.reason-input,.explain-textarea{width:100%;min-height:100px;padding:1rem;border:2px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.95rem;resize:vertical;outline:none;margin-bottom:1rem;}
+.reason-input:focus,.explain-textarea:focus{border-color:var(--accent);}
+.reason-input:disabled,.explain-textarea:disabled{background:var(--paper2);}
+.ai-result{display:none;margin-top:1.5rem;padding:1.5rem;background:var(--paper2);border-radius:12px;border-left:4px solid var(--accent);}
+.ai-result.show{display:block;animation:fadeIn 0.4s ease;}
+.ai-result .stars-row{font-size:1.5rem;color:#fbbf24;margin-bottom:0.5rem;}
+.ai-result .comment{font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;}
+.ai-result .explanation{font-size:0.95rem;color:var(--muted);line-height:1.7;}
+.loading-dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin:0 3px;animation:ldot 1.2s infinite;}
+.loading-dots span:nth-child(2){animation-delay:0.2s;}
+.loading-dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes ldot{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
 @media(max-width:768px){nav{padding:0 1.25rem;}.section{padding:80px 1.25rem 4rem;}.game-tabs{top:64px;padding:0.5rem 1rem;}.game-tab{padding:8px 12px;font-size:0.8rem;}}
 </style>
 </head>
@@ -139,6 +161,8 @@ h1.hero-title em{font-style:italic;color:#c4b5fd;}
     <span class="score-display" id="navScore3" style="display:none;">P3: <span class="score-num" id="navScoreNum3">0</span>/8</span>
     <span class="score-display" id="navScore4" style="display:none;">P4: <span class="score-num" id="navScoreNum4">0</span>/8</span>
     <span class="score-display" id="navScore5" style="display:none;">P5: <span class="score-num" id="navScoreNum5">0</span>/8</span>
+    <span class="score-display" id="navScore6" style="display:none;">P6: ⭐<span class="score-num" id="navScoreNum6">0</span>/18</span>
+    <span class="score-display" id="navScore7" style="display:none;">P7: ⭐<span class="score-num" id="navScoreNum7">0</span>/18</span>
   </div>
 </nav>
 
@@ -154,6 +178,8 @@ h1.hero-title em{font-style:italic;color:#c4b5fd;}
       <div class="hero-cta" onclick="switchToGame(3)">Peli 3: AI Prompting</div>
       <div class="hero-cta" onclick="switchToGame(4)">Peli 4: AI-työkalut</div>
       <div class="hero-cta" onclick="switchToGame(5)">Peli 5: Prompting työnhaussa</div>
+      <div class="hero-cta" onclick="switchToGame(6)">Peli 6: Gamma vs Canva</div>
+      <div class="hero-cta" onclick="switchToGame(7)">Peli 7: Lovable vs Base44</div>
     </div>
   </div>
 </section>
@@ -165,6 +191,8 @@ h1.hero-title em{font-style:italic;color:#c4b5fd;}
   <button type="button" class="game-tab" data-game="3" onclick="switchToGame(3)">3. AI Prompting</button>
   <button type="button" class="game-tab" data-game="4" onclick="switchToGame(4)">4. AI-työkalut</button>
   <button type="button" class="game-tab" data-game="5" onclick="switchToGame(5)">5. Prompting työnhaussa</button>
+  <button type="button" class="game-tab" data-game="6" onclick="switchToGame(6)">6. Gamma vs Canva</button>
+  <button type="button" class="game-tab" data-game="7" onclick="switchToGame(7)">7. Lovable vs Base44</button>
   <button type="button" class="game-tab" data-game="finale" onclick="switchToGame('finale')">🏆 Yhteenveto</button>
 </div>
 
@@ -755,6 +783,202 @@ Kirjoita minulle:
     <div id="g5quizFinale" class="quiz-card" style="display:none;text-align:center;">
       <h2 class="section-h2" style="margin-bottom:1rem;">Prompting työnhaussa <em>— valmis!</em></h2>
       <p class="prose" id="g5finaleMsg"></p>
+      <button class="quiz-submit" onclick="switchToGame(6)">Seuraava: Peli 6 — Gamma vs Canva →</button>
+    </div>
+  </div>
+</section>
+
+<!-- GAME 6: GAMMA VS CANVA -->
+<section class="section game-panel" id="game6" data-index="6">
+  <div class="section-inner">
+    <div class="section-label">Peli 6</div>
+    <h2 class="section-h2">Gamma vs Canva <em>— Työkalu-peli</em></h2>
+    <div class="divider"></div>
+    <p class="lead">6 skenaariota — valitse Gamma.app tai Canva, kirjoita miksi. AI arvostelee tähdillä (1–3) ja antaa palautetta.</p>
+    <div class="score-display" style="margin-bottom:1.5rem;">Tähdet: <span class="score-num" id="scoreNum6">0</span>/18</div>
+
+    <div class="scenario-card" id="g6s1">
+      <h3><span>📊</span> Tilanne 1</h3>
+      <div class="situation">Sinun pitää tehdä esitys johtoryhmälle ensi tunnin sisällä. Aiheena on tiimin kvartaalitulokset. Sinulla on data valmiina ja tarvitset nopean, ammattimaisen esityksen.</div>
+      <div class="hint">Vihje: Nopeus vai design?</div>
+      <div class="tool-btns">
+        <button type="button" class="tool-btn" data-tool="gamma" onclick="selectG6Tool(1,'gamma')">Gamma.app</button>
+        <button type="button" class="tool-btn" data-tool="canva" onclick="selectG6Tool(1,'canva')">Canva</button>
+      </div>
+      <textarea class="reason-input" id="g6reason1" placeholder="Kirjoita miksi valitsit tämän työkalun..."></textarea>
+      <button class="quiz-submit" onclick="submitG6Scenario(1)">Lähetä vastaus</button>
+      <div class="ai-result" id="g6result1"></div>
+    </div>
+
+    <div class="scenario-card" id="g6s2">
+      <h3><span>📱</span> Tilanne 2</h3>
+      <div class="situation">Yrityksesi lanseeraa uuden tuotteen ensi viikolla. Tarvitset koordinoidun somepaketin: Instagram-postaukset, LinkedIn-banneri, Facebook-mainos ja sähköpostiuutiskirjeen header — kaikki samalla brändillä.</div>
+      <div class="hint">Vihje: Yksi työkalu vai monta?</div>
+      <div class="tool-btns">
+        <button type="button" class="tool-btn" data-tool="gamma" onclick="selectG6Tool(2,'gamma')">Gamma.app</button>
+        <button type="button" class="tool-btn" data-tool="canva" onclick="selectG6Tool(2,'canva')">Canva</button>
+      </div>
+      <textarea class="reason-input" id="g6reason2" placeholder="Kirjoita miksi valitsit tämän työkalun..."></textarea>
+      <button class="quiz-submit" onclick="submitG6Scenario(2)">Lähetä vastaus</button>
+      <div class="ai-result" id="g6result2"></div>
+    </div>
+
+    <div class="scenario-card" id="g6s3">
+      <h3><span>🎤</span> Tilanne 3</h3>
+      <div class="situation">Olet pitämässä TED-tyylisen puheen ensi kuussa startup-tapahtumassa. Haluat vaikuttavan esityksen jossa on vahva visuaalinen tarina, liikkuvia elementtejä ja joka tukee puhettasi täydellisesti.</div>
+      <div class="hint">Vihje: Nopeus vai täydellinen kontrolli?</div>
+      <div class="tool-btns">
+        <button type="button" class="tool-btn" data-tool="gamma" onclick="selectG6Tool(3,'gamma')">Gamma.app</button>
+        <button type="button" class="tool-btn" data-tool="canva" onclick="selectG6Tool(3,'canva')">Canva</button>
+      </div>
+      <textarea class="reason-input" id="g6reason3" placeholder="Kirjoita miksi valitsit tämän työkalun..."></textarea>
+      <button class="quiz-submit" onclick="submitG6Scenario(3)">Lähetä vastaus</button>
+      <div class="ai-result" id="g6result3"></div>
+    </div>
+
+    <div class="scenario-card" id="g6s4">
+      <h3><span>☕</span> Tilanne 4</h3>
+      <div class="situation">Olet freelancer ja teet pienen kahvilan logosuunnittelun. Asiakas haluaa myös käyntikortit, A4-flyer kahvilistasta ja lahjakorttipohjan. Budjetti on pieni.</div>
+      <div class="hint">Vihje: Esitys vai graafinen design?</div>
+      <div class="tool-btns">
+        <button type="button" class="tool-btn" data-tool="gamma" onclick="selectG6Tool(4,'gamma')">Gamma.app</button>
+        <button type="button" class="tool-btn" data-tool="canva" onclick="selectG6Tool(4,'canva')">Canva</button>
+      </div>
+      <textarea class="reason-input" id="g6reason4" placeholder="Kirjoita miksi valitsit tämän työkalun..."></textarea>
+      <button class="quiz-submit" onclick="submitG6Scenario(4)">Lähetä vastaus</button>
+      <div class="ai-result" id="g6result4"></div>
+    </div>
+
+    <div class="scenario-card" id="g6s5">
+      <h3><span>🏫</span> Tilanne 5</h3>
+      <div class="situation">Olet opettaja ja valmistat huomiseksi 45 minuutin oppitunnin tekoälystä. Tarvitset selkeän, opiskelija-ystävällisen esityksen jossa on rakenne, esimerkit ja yhteenveto.</div>
+      <div class="hint">Vihje: Kuka käyttää tätä?</div>
+      <div class="tool-btns">
+        <button type="button" class="tool-btn" data-tool="gamma" onclick="selectG6Tool(5,'gamma')">Gamma.app</button>
+        <button type="button" class="tool-btn" data-tool="canva" onclick="selectG6Tool(5,'canva')">Canva</button>
+      </div>
+      <textarea class="reason-input" id="g6reason5" placeholder="Kirjoita miksi valitsit tämän työkalun..."></textarea>
+      <button class="quiz-submit" onclick="submitG6Scenario(5)">Lähetä vastaus</button>
+      <div class="ai-result" id="g6result5"></div>
+    </div>
+
+    <div class="scenario-card" id="g6s6">
+      <h3><span>🛍️</span> Tilanne 6</h3>
+      <div class="situation">Sinulla on verkkokauppa ja haluat tehdä itse kesäkampanjan: mainokset Instagramiin, tuotekuvien päivitys, alennusbannerit sivustolle ja sähköpostipohjat. Olet yksin ja budjetti on nolla.</div>
+      <div class="hint">Vihje: Markkinointi vai esitys?</div>
+      <div class="tool-btns">
+        <button type="button" class="tool-btn" data-tool="gamma" onclick="selectG6Tool(6,'gamma')">Gamma.app</button>
+        <button type="button" class="tool-btn" data-tool="canva" onclick="selectG6Tool(6,'canva')">Canva</button>
+      </div>
+      <textarea class="reason-input" id="g6reason6" placeholder="Kirjoita miksi valitsit tämän työkalun..."></textarea>
+      <button class="quiz-submit" onclick="submitG6Scenario(6)">Lähetä vastaus</button>
+      <div class="ai-result" id="g6result6"></div>
+    </div>
+
+    <div id="g6quizFinale" class="quiz-card" style="display:none;text-align:center;">
+      <h2 class="section-h2" style="margin-bottom:1rem;">Gamma vs Canva <em>— valmis!</em></h2>
+      <p class="prose" id="g6finaleMsg"></p>
+      <button class="quiz-submit" onclick="switchToGame(7)">Seuraava: Peli 7 — Lovable vs Base44 →</button>
+    </div>
+  </div>
+</section>
+
+<!-- GAME 7: LOVABLE VS BASE44 -->
+<section class="section section-alt game-panel" id="game7" data-index="7">
+  <div class="section-inner">
+    <div class="section-label">Peli 7</div>
+    <h2 class="section-h2">Lovable vs Base44 <em>— Rakentaja-peli</em></h2>
+    <div class="divider"></div>
+    <p class="lead">6 skenaariota — valitse Lovable tai Base44, kirjoita miksi. AI arvostelee tähdillä (1–3) ja antaa palautetta.</p>
+    <div class="score-display" style="margin-bottom:1.5rem;">Tähdet: <span class="score-num" id="scoreNum7">0</span>/18</div>
+
+    <div class="scenario-card" id="g7s1" data-correct="Base44">
+      <h3><span>⚡</span> Tilanne 1</h3>
+      <div class="situation">Haluat rakentaa nopeasti yksinkertaisen web-sovelluksen joka ottaa käyttäjältä tietoa, tallentaa sen ja näyttää tuloksia. Sinulla on idea mutta ei yhtään koodauskokemusta. Haluat nähdä toimivan version tänään.</div>
+      <div class="hint">Vihje: Nopeus vai rakenne?</div>
+      <div class="tool-btns">
+        <button type="button" class="tool-btn" data-tool="Lovable">Lovable</button>
+        <button type="button" class="tool-btn" data-tool="Base44">Base44</button>
+      </div>
+      <div style="font-size:0.9rem;font-weight:600;margin-bottom:0.5rem;">Miksi valitsit tämän?</div>
+      <textarea class="explain-textarea" id="g7exp1" placeholder="Esim: Base44 on nopea ja sisältää tietokannan valmiina..."></textarea>
+      <button class="quiz-submit" onclick="submitG7Scenario(1)">Lähetä arvosteltavaksi</button>
+      <div class="ai-result" id="g7result1"></div>
+    </div>
+
+    <div class="scenario-card" id="g7s2" data-correct="Lovable">
+      <h3><span>🏗️</span> Tilanne 2</h3>
+      <div class="situation">Olet opiskelija ja haluat rakentaa portfolioprojektin joka näyttää työnantajille että osaat modernin web-kehityksen. Haluat sovelluksen jossa on React-frontend, oikea tietokanta ja autentikointi. Sinulla on hieman teknistä taustaa.</div>
+      <div class="hint">Vihje: Portfolio vai prototyyppi?</div>
+      <div class="tool-btns">
+        <button type="button" class="tool-btn" data-tool="Lovable">Lovable</button>
+        <button type="button" class="tool-btn" data-tool="Base44">Base44</button>
+      </div>
+      <div style="font-size:0.9rem;font-weight:600;margin-bottom:0.5rem;">Miksi valitsit tämän?</div>
+      <textarea class="explain-textarea" id="g7exp2" placeholder="Esim: Lovable tuottaa React-koodia jota voin näyttää työnantajille..."></textarea>
+      <button class="quiz-submit" onclick="submitG7Scenario(2)">Lähetä arvosteltavaksi</button>
+      <div class="ai-result" id="g7result2"></div>
+    </div>
+
+    <div class="scenario-card" id="g7s3" data-correct="Base44">
+      <h3><span>🛒</span> Tilanne 3</h3>
+      <div class="situation">Sinulla on pieni leipomo ja haluat rakentaa yksinkertaisen tilausjärjestelmän. Asiakkaat voivat valita tuotteet, jättää tilauksen ja sinä näet tilaukset hallintapaneelissa. Budjetti on nolla ja tarvitset sen ensi viikolla.</div>
+      <div class="hint">Vihje: Yksinkertainen vai monimutkainen?</div>
+      <div class="tool-btns">
+        <button type="button" class="tool-btn" data-tool="Lovable">Lovable</button>
+        <button type="button" class="tool-btn" data-tool="Base44">Base44</button>
+      </div>
+      <div style="font-size:0.9rem;font-weight:600;margin-bottom:0.5rem;">Miksi valitsit tämän?</div>
+      <textarea class="explain-textarea" id="g7exp3" placeholder="Esim: Base44 sisältää tietokannan valmiina..."></textarea>
+      <button class="quiz-submit" onclick="submitG7Scenario(3)">Lähetä arvosteltavaksi</button>
+      <div class="ai-result" id="g7result3"></div>
+    </div>
+
+    <div class="scenario-card" id="g7s4" data-correct="Lovable">
+      <h3><span>💼</span> Tilanne 4</h3>
+      <div class="situation">Startup-tiimisi haluaa rakentaa SaaS-tuotteen jossa on käyttäjärekisteröinti, maksut, dashboard ja useita käyttäjätasoja. Teillä on kehittäjä tiimissä joka haluaa hallita koodin rakennetta tarkasti.</div>
+      <div class="hint">Vihje: Kontrolli vai nopeus?</div>
+      <div class="tool-btns">
+        <button type="button" class="tool-btn" data-tool="Lovable">Lovable</button>
+        <button type="button" class="tool-btn" data-tool="Base44">Base44</button>
+      </div>
+      <div style="font-size:0.9rem;font-weight:600;margin-bottom:0.5rem;">Miksi valitsit tämän?</div>
+      <textarea class="explain-textarea" id="g7exp4" placeholder="Esim: Lovable antaa kehittäjälle täyden kontrollin..."></textarea>
+      <button class="quiz-submit" onclick="submitG7Scenario(4)">Lähetä arvosteltavaksi</button>
+      <div class="ai-result" id="g7result4"></div>
+    </div>
+
+    <div class="scenario-card" id="g7s5" data-correct="Base44">
+      <h3><span>🎓</span> Tilanne 5</h3>
+      <div class="situation">Olet opettaja ja haluat rakentaa oppilaillesi yksinkertaisen harjoitustyökalun — opiskelija syöttää vastauksia, työkalu tarkistaa ne ja näyttää pisteet. Sinulla on iltapäivä aikaa ja nolla koodauskokemusta.</div>
+      <div class="hint">Vihje: Opettaja vai kehittäjä?</div>
+      <div class="tool-btns">
+        <button type="button" class="tool-btn" data-tool="Lovable">Lovable</button>
+        <button type="button" class="tool-btn" data-tool="Base44">Base44</button>
+      </div>
+      <div style="font-size:0.9rem;font-weight:600;margin-bottom:0.5rem;">Miksi valitsit tämän?</div>
+      <textarea class="explain-textarea" id="g7exp5" placeholder="Esim: Base44 on helppo ilman teknistä taustaa..."></textarea>
+      <button class="quiz-submit" onclick="submitG7Scenario(5)">Lähetä arvosteltavaksi</button>
+      <div class="ai-result" id="g7result5"></div>
+    </div>
+
+    <div class="scenario-card" id="g7s6" data-correct="Lovable">
+      <h3><span>🌍</span> Tilanne 6</h3>
+      <div class="situation">Haluat rakentaa maahanmuuttajille suunnatun työnhakutyökalun joka analysoi CV:n tekoälyllä ja antaa parannusehdotuksia. Sovelluksessa on käyttäjätilit, historia ja AI-integraatio. Haet rahoitusta ja tarvitset vakuuttavan demon sijoittajille.</div>
+      <div class="hint">Vihje: Demo vai tuote?</div>
+      <div class="tool-btns">
+        <button type="button" class="tool-btn" data-tool="Lovable">Lovable</button>
+        <button type="button" class="tool-btn" data-tool="Base44">Base44</button>
+      </div>
+      <div style="font-size:0.9rem;font-weight:600;margin-bottom:0.5rem;">Miksi valitsit tämän?</div>
+      <textarea class="explain-textarea" id="g7exp6" placeholder="Esim: Sijoittajademo tarvitsee vakuuttavan teknisen pohjan..."></textarea>
+      <button class="quiz-submit" onclick="submitG7Scenario(6)">Lähetä arvosteltavaksi</button>
+      <div class="ai-result" id="g7result6"></div>
+    </div>
+
+    <div id="g7quizFinale" class="quiz-card" style="display:none;text-align:center;">
+      <h2 class="section-h2" style="margin-bottom:1rem;">Lovable vs Base44 <em>— valmis!</em></h2>
+      <p class="prose" id="g7finaleMsg"></p>
       <button class="quiz-submit" onclick="switchToGame('finale')">🏆 Näytä loppuyhteenveto</button>
     </div>
   </div>
@@ -766,7 +990,7 @@ Kirjoita minulle:
     <div class="finale-card">
       <span class="finale-icon">🎮</span>
       <h2>AI-Polku Loppuputki<br><em>— viikon kertauspeli</em></h2>
-      <p id="finaleText">Pelaa kaikki viisi peliä! Tietosuoja · Uhka vai mahdollisuus · AI Prompting · AI-työkalut · Prompting työnhaussa.</p>
+      <p id="finaleText">Pelaa kaikki seitsemän peliä! Tietosuoja · Uhka vai mahdollisuus · AI Prompting · AI-työkalut · Prompting työnhaussa · Gamma vs Canva · Lovable vs Base44.</p>
       <div class="finale-actions">
         <a href="/" class="btn-next">Etusivu</a>
         <a href="/module/moduuli1-tietosuoja" class="btn-back">Moduuli 1: Tietosuoja</a>
@@ -790,6 +1014,11 @@ let totalScore4 = 0;
 const answered4 = new Set();
 let totalScore5 = 0;
 const answered5 = new Set();
+let totalStars6 = 0;
+const answered6 = new Set();
+const selectedG6Tool = {};
+let totalStars7 = 0;
+const answered7 = new Set();
 
 function switchToGame(n) {
   document.querySelectorAll('.game-panel').forEach(p => p.classList.remove('active'));
@@ -806,6 +1035,8 @@ function switchToGame(n) {
       if (t) t.classList.add('done');
     }
   });
+  if (answered6.size === 6) document.querySelector('.game-tab[data-game="6"]')?.classList.add('done');
+  if (answered7.size === 6) document.querySelector('.game-tab[data-game="7"]')?.classList.add('done');
   if (n === 'finale') document.querySelector('.game-tab[data-game="finale"]')?.classList.add('done');
   document.querySelector('.game-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -987,7 +1218,7 @@ function updateScore() {
   document.getElementById('scoreNum').textContent = totalScore;
   document.getElementById('navScoreNum').textContent = totalScore;
   document.getElementById('navScore').style.display = 'flex';
-  if (answered2.size > 0 || answered3.size > 0 || answered4.size > 0 || answered5.size > 0) updateFinaleText();
+  if (answered2.size > 0 || answered3.size > 0 || answered4.size > 0 || answered5.size > 0 || answered6.size > 0 || answered7.size > 0) updateFinaleText();
 }
 
 function showQuizFinale() {
@@ -1306,13 +1537,192 @@ function showG5QuizFinale() {
 }
 
 function updateFinaleText() {
-  const total = totalScore + totalScore2 + totalScore3 + totalScore4 + totalScore5;
+  const quizTotal = totalScore + totalScore2 + totalScore3 + totalScore4 + totalScore5;
   const txt = document.getElementById('finaleText');
-  if (total === 37) {
-    txt.textContent = '37/37 — Täydellinen! Kaikki viisi moduulia hallussa. Olet valmis viimeiseen kurssipäivään! 🏆';
+  const parts = ['Peli 1: ' + totalScore + '/8', 'Peli 2: ' + totalScore2 + '/8', 'Peli 3: ' + totalScore3 + '/5', 'Peli 4: ' + totalScore4 + '/8', 'Peli 5: ' + totalScore5 + '/8'];
+  if (answered6.size > 0) parts.push('Peli 6: ⭐' + totalStars6 + '/18');
+  if (answered7.size > 0) parts.push('Peli 7: ⭐' + totalStars7 + '/18');
+  if (quizTotal === 37 && answered6.size === 6 && answered7.size === 6 && totalStars6 >= 15 && totalStars7 >= 15) {
+    txt.textContent = 'Täydellinen! Kaikki seitsemän peliä suoritettu. Olet valmis viimeiseen kurssipäivään! 🏆';
   } else {
-    txt.textContent = 'Peli 1: ' + totalScore + '/8 · Peli 2: ' + totalScore2 + '/8 · Peli 3: ' + totalScore3 + '/5 · Peli 4: ' + totalScore4 + '/8 · Peli 5: ' + totalScore5 + '/8 — Yhteensä ' + total + '/37. Kertaa väärät vastaukset!';
+    txt.textContent = parts.join(' · ') + (parts.length > 0 ? ' — Kertaa väärät vastaukset!' : '');
   }
+}
+
+const G6_SCENARIOS = [
+  { correct:'gamma', why:'Gamma rakentaa koko esityksen tekstistä 30 sekunnissa — layout, rakenne ja kuvat automaattisesti. Kun aika on kortilla ja tarvitset nopeasti ammattimaisen tuloksen, Gamma voittaa.' },
+  { correct:'canva', why:'Canva on rakennettu juuri tähän — yksi työkalu kaikkiin markkinointimateriaaleihin. Voit tehdä kaikki formaatit samassa projektissa samalla brändillä. Gamma on esityksiin, ei some-paketteihin.' },
+  { correct:'gamma', why:'Gamma luo visuaalisesti vaikuttavia esityksiä tekoälyllä nopeasti. Voit iteroida rakennetta ja sisältöä helposti. Canva sopii paremmin staattisiin design-tarpeisiin kuin pitkiin esityksiin.' },
+  { correct:'canva', why:'Canva on täydellinen tähän — saat logon, käyntikortit, flyerin ja lahjakortin samasta työkalusta ilmaiseksi. Gamma on esityksiin, ei graafiseen suunnitteluun.' },
+  { correct:'gamma', why:'Gamma rakentaa oppituntistruktuurin sekunneissa — kerrot aiheen ja kohderyhmän, se luo selkeän rakenteen automaattisesti. Opettajien aikaparas.' },
+  { correct:'canva', why:'Canva on tehty juuri tähän. Ilmaiseksi saat kaikki markkinointimateriaalit, tuhansia valmiita templateseja eri formaateille. Gamma ei ole oikea työkalu markkinointikampanjoihin.' }
+];
+const G6_AI_SYSTEM = `Olet hauska ja kannustava AI-opettaja joka arvostelee oppilaan vastauksen tekoälykurssissa. Saat tilanteen kuvauksen, oikean vastauksen ja oppilaan vastauksen. Anna tähtiä 1-3: 3 tähteä = täydellinen, 2 tähteä = hyvä mutta parannettavaa, 1 tähti = väärä työkalu tai heikko perustelu. Ole hauska, lämmin ja kannustava — ei koskaan tyly. Korjaa ystävällisesti jos työkalu oli väärä. Kehaise jos perustelu oli hyvä vaikka työkalu olisi väärä. Vastaa aina suomeksi. Anna lyhyt hauska kommentti (1-2 lausetta, emoji sopii) ja tarkempi opettavainen selitys (2-3 lausetta). Vastaa TÄSMÄLLEEN tässä muodossa, ei muuta tekstiä:
+TÄHDET: [1, 2 tai 3]
+KOMMENTTI: [hauska kommentti]
+SELITYS: [opettavainen selitys]`;
+
+function selectG6Tool(n, tool) {
+  if (answered6.has(n)) return;
+  selectedG6Tool[n] = tool;
+  const card = document.getElementById('g6s' + n);
+  card.querySelectorAll('.tool-btn').forEach(b => { b.classList.remove('selected'); if (b.dataset.tool === tool) b.classList.add('selected'); });
+}
+
+async function submitG6Scenario(n) {
+  if (answered6.has(n)) return;
+  const tool = selectedG6Tool[n];
+  const reason = document.getElementById('g6reason' + n).value.trim();
+  if (!tool) { alert('Valitse Gamma.app tai Canva.'); return; }
+  if (reason.length < 10) { alert('Kirjoita pidempi perustelu (vähintään 10 merkkiä).'); return; }
+
+  const card = document.getElementById('g6s' + n);
+  const btn = card.querySelector('.quiz-submit');
+  const resultEl = document.getElementById('g6result' + n);
+  btn.disabled = true;
+  card.querySelectorAll('.tool-btn').forEach(b => b.disabled = true);
+  card.querySelector('.reason-input').disabled = true;
+  resultEl.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> AI arvostelee...';
+  resultEl.classList.add('show');
+
+  const scenario = G6_SCENARIOS[n - 1];
+  const situation = card.querySelector('.situation').textContent;
+  const userMsg = `TILANNE: ${situation}\nOIKEA TYÖKALU: ${scenario.correct === 'gamma' ? 'Gamma.app' : 'Canva'}\nMIKSI OIKEA: ${scenario.why}\n\nOPPILAAN VALINTA: ${tool === 'gamma' ? 'Gamma.app' : 'Canva'}\nOPPILAAN PERUSTELU: ${reason}`;
+
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 400, system: G6_AI_SYSTEM, messages: [{ role: 'user', content: userMsg }] })
+    });
+    const data = await res.json();
+    const text = data.text || data.reply || '';
+    let stars = 0;
+    const starMatch = text.match(/TÄHDET:\s*(\d)/i);
+    if (starMatch) stars = Math.min(3, Math.max(1, parseInt(starMatch[1], 10)));
+    else if (text.includes('⭐⭐⭐')) stars = 3;
+    else if (text.includes('⭐⭐')) stars = 2;
+    else if (text.includes('⭐')) stars = 1;
+    totalStars6 += stars;
+    answered6.add(n);
+
+    let comment = '', explanation = '';
+    const commentMatch = text.match(/KOMMENTTI:\s*(.+?)(?=SELITYS:|$)/is);
+    const explMatch = text.match(/SELITYS:\s*(.+?)$/is);
+    if (commentMatch) comment = commentMatch[1].trim();
+    if (explMatch) explanation = explMatch[1].trim();
+    if (!comment && !explanation) comment = text;
+
+    resultEl.innerHTML = '<div class="stars-row">' + '⭐'.repeat(stars) + '</div><div class="comment">' + comment + '</div><div class="explanation">' + explanation + '</div>';
+    document.getElementById('scoreNum6').textContent = totalStars6;
+    document.getElementById('navScoreNum6').textContent = totalStars6;
+    document.getElementById('navScore6').style.display = 'flex';
+    updateFinaleText();
+    if (answered6.size === 6) showG6Finale();
+  } catch (e) {
+    resultEl.innerHTML = '<div class="explanation">Yhteysvirhe. Tarkista internet-yhteys ja yritä uudelleen.</div>';
+  }
+}
+
+function showG6Finale() {
+  const msg = document.getElementById('g6finaleMsg');
+  if (totalStars6 >= 18) msg.textContent = '18/18 tähteä — MESTARI! Tiedät täsmälleen milloin käyttää Gammaa ja milloin Canvaa.';
+  else if (totalStars6 >= 13) msg.textContent = totalStars6 + '/18 tähteä — TAITAJA! Hienoa työtä! Perusteet ovat hallussa.';
+  else if (totalStars6 >= 9) msg.textContent = totalStars6 + '/18 tähteä — HARJOITTELIJA! Hyvä alku! Gamma = esitykset nopeasti. Canva = design ja markkinointi.';
+  else msg.textContent = totalStars6 + '/18 tähteä — YRITTÄJÄ! Gamma on esityksiin, Canva on kaikkeen muuhun design-tarpeeseen. Yritä uudelleen!';
+  document.getElementById('g6quizFinale').style.display = 'block';
+  document.getElementById('g6quizFinale').scrollIntoView({ behavior: 'smooth' });
+  updateFinaleText();
+}
+
+const G7_SCENARIOS = [
+  { situation:'Haluat rakentaa nopeasti yksinkertaisen web-sovelluksen joka ottaa käyttäjältä tietoa, tallentaa sen ja näyttää tuloksia. Sinulla on idea mutta ei yhtään koodauskokemusta. Haluat nähdä toimivan version tänään.', correct:'Base44' },
+  { situation:'Olet opiskelija ja haluat rakentaa portfolioprojektin joka näyttää työnantajille että osaat modernin web-kehityksen. Haluat sovelluksen jossa on React-frontend, oikea tietokanta ja autentikointi. Sinulla on hieman teknistä taustaa.', correct:'Lovable' },
+  { situation:'Sinulla on pieni leipomo ja haluat rakentaa yksinkertaisen tilausjärjestelmän. Asiakkaat voivat valita tuotteet, jättää tilauksen ja sinä näet tilaukset hallintapaneelissa. Budjetti on nolla ja tarvitset sen ensi viikolla.', correct:'Base44' },
+  { situation:'Startup-tiimisi haluaa rakentaa SaaS-tuotteen jossa on käyttäjärekisteröinti, maksut, dashboard ja useita käyttäjätasoja. Teillä on kehittäjä tiimissä joka haluaa hallita koodin rakennetta tarkasti.', correct:'Lovable' },
+  { situation:'Olet opettaja ja haluat rakentaa oppilaillesi yksinkertaisen harjoitustyökalun — opiskelija syöttää vastauksia, työkalu tarkistaa ne ja näyttää pisteet. Sinulla on iltapäivä aikaa ja nolla koodauskokemusta.', correct:'Base44' },
+  { situation:'Haluat rakentaa maahanmuuttajille suunnatun työnhakutyökalun joka analysoi CV:n tekoälyllä ja antaa parannusehdotuksia. Sovelluksessa on käyttäjätilit, historia ja AI-integraatio. Haet rahoitusta ja tarvitset vakuuttavan demon sijoittajille.', correct:'Lovable' }
+];
+const G7_AI_SYSTEM = `Olet hauska ja kannustava AI-opettaja joka arvostelee oppilaan vastauksen tekoälykurssissa. Saat tilanteen kuvauksen, oikean vastauksen ja oppilaan vastauksen. Anna tähtiä 1-3: 3 tähteä = täydellinen, 2 tähteä = hyvä mutta parannettavaa, 1 tähti = väärä työkalu tai heikko perustelu. Ole hauska, lämmin ja kannustava — ei koskaan tyly. Korjaa ystävällisesti jos työkalu oli väärä. Kehaise jos perustelu oli hyvä vaikka työkalu olisi väärä. Muista: Base44 = nopeus, sisäänrakennettu tietokanta, ei teknistä osaamista tarvita. Lovable = React ja Supabase, kontrolli, portfolioprojektit, skaalautuvat tuotteet. Vastaa aina suomeksi. Anna lyhyt hauska kommentti 1-2 lausetta emojeilla ja tarkempi opettavainen selitys 2-3 lausetta. Vastaa TÄSMÄLLEEN tässä JSON-muodossa ilman muita merkkejä: {"stars": 1-3, "comment": "hauska kommentti", "explanation": "opettavainen selitys"}`;
+
+document.querySelectorAll('#g7s1,#g7s2,#g7s3,#g7s4,#g7s5,#g7s6').forEach(card => {
+  card.querySelectorAll('.tool-btn').forEach(btn => {
+    btn.onclick = () => {
+      const n = parseInt(card.id.replace('g7s',''));
+      if (answered7.has(n)) return;
+      card.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+  });
+});
+
+async function submitG7Scenario(n) {
+  const card = document.getElementById('g7s' + n);
+  const selected = card.querySelector('.tool-btn.selected');
+  const explanation = document.getElementById('g7exp' + n).value.trim();
+  if (!selected) { alert('Valitse Lovable tai Base44.'); return; }
+  if (explanation.length < 10) { alert('Kirjoita pidempi perustelu (vähintään 10 merkkiä).'); return; }
+  if (answered7.has(n)) return;
+
+  const btn = card.querySelector('.quiz-submit');
+  const resultEl = document.getElementById('g7result' + n);
+  btn.disabled = true;
+  resultEl.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> Arvostellaan...';
+  resultEl.classList.add('show');
+
+  const s = G7_SCENARIOS[n - 1];
+  const userMsg = `TILANNE: ${s.situation}\n\nOIKEA VASTAUS: ${s.correct}\n\nOPPILAAN VALINTA: ${selected.dataset.tool}\n\nOPPILAAN PERUSTELU: ${explanation}`;
+
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 400, system: G7_AI_SYSTEM, messages: [{ role: 'user', content: userMsg }] })
+    });
+    const data = await res.json();
+    const text = data.text || data.reply || '';
+    let stars = 2, comment = '', expl = '';
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        stars = Math.min(3, Math.max(1, parseInt(parsed.stars) || 2));
+        comment = parsed.comment || '';
+        expl = parsed.explanation || '';
+      }
+    } catch (e) {
+      const starMatch = text.match(/[1-3]\s*tähteä|stars["\s:]*[1-3]/i);
+      if (starMatch) stars = parseInt(starMatch[0]) || 2;
+      comment = text.split('\n')[0] || text.slice(0, 100);
+      expl = text.slice(comment.length).trim() || text;
+    }
+
+    totalStars7 += stars;
+    answered7.add(n);
+    card.querySelectorAll('.tool-btn').forEach(b => b.disabled = true);
+    document.getElementById('g7exp' + n).disabled = true;
+
+    resultEl.innerHTML = '<div class="stars-row">' + '⭐'.repeat(stars) + '</div><div class="comment">' + comment + '</div><div class="explanation">' + expl + '</div>';
+    document.getElementById('scoreNum7').textContent = totalStars7;
+    document.getElementById('navScoreNum7').textContent = totalStars7;
+    document.getElementById('navScore7').style.display = 'flex';
+    updateFinaleText();
+    if (answered7.size === 6) showG7Finale();
+  } catch (e) {
+    resultEl.innerHTML = '<div class="explanation">Yhteysvirhe. Tarkista yhteys ja yritä uudelleen.</div>';
+    btn.disabled = false;
+  }
+}
+
+function showG7Finale() {
+  const msg = document.getElementById('g7finaleMsg');
+  if (totalStars7 >= 18) msg.textContent = 'MESTARIRAKENTAJA! Tiedät täsmälleen milloin käyttää Lovablea ja milloin Base44:ää. Olet valmis rakentamaan oikeita sovelluksia.';
+  else if (totalStars7 >= 13) msg.textContent = 'TAITAVA RAKENTAJA! Hienoa työtä! Perusteet ovat hallussa.';
+  else if (totalStars7 >= 9) msg.textContent = 'HARJOITTELIJA! Hyvä alku! Base44 = nopea prototyyppi. Lovable = React-pohja kun tarvitaan kontrollia.';
+  else msg.textContent = 'YRITTÄJÄ! Base44 on nopein tapa aloittaa, Lovable on parempi kun tarvitaan oikeaa koodirakennetta. Yritä uudelleen!';
+  document.getElementById('g7quizFinale').style.display = 'block';
+  document.getElementById('g7quizFinale').scrollIntoView({ behavior: 'smooth' });
+  updateFinaleText();
 }
 
 function updateProgress() {
