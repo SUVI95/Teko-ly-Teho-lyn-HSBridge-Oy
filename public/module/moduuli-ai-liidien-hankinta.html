@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-avusteinen liidien hankinta — Löydä uusia asiakkaita tekoälyn avulla | HSBridge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1a2e;--ink2:#2d2d44;--paper:#f5f3ef;--paper2:#eeeae3;--accent:#0e7490;--accent2:#06b6d4;--accent3:#2563a8;--text:#1a1a2e;--muted:#6b6880;--border:rgba(26,26,46,0.12);--shadow:0 2px 20px rgba(26,26,46,0.08);--shadow-md:0 8px 40px rgba(26,26,46,0.12);}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;overflow-x:hidden;line-height:1.7;}
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:200;transition:width 0.4s ease;width:0%;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;background:rgba(245,243,239,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2.5rem;justify-content:space-between;}
+.nav-left{display:flex;align-items:center;gap:1rem;}
+.nav-module{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;background:rgba(14,116,144,0.08);border:1px solid rgba(14,116,144,0.22);padding:4px 12px;border-radius:4px;}
+.nav-title{font-size:0.85rem;font-weight:500;color:var(--muted);}
+.section{min-height:auto;padding:96px 2rem 5rem;position:relative;}
+.section-inner{max-width:820px;width:100%;margin:0 auto;}
+.section-alt{background:var(--paper2);}
+.section-label{font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:500;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1rem;}
+h2.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4.5vw,3.5rem);font-weight:400;line-height:1.1;color:var(--ink);margin-bottom:1.5rem;}
+h2.section-h2 em{font-style:italic;color:var(--accent);}
+.lead{font-size:1.1rem;color:var(--muted);max-width:600px;line-height:1.8;margin-bottom:2rem;font-weight:300;}
+.divider{width:48px;height:2px;background:var(--accent);margin-bottom:2rem;border-radius:1px;}
+.prose{font-size:1.05rem;line-height:1.85;color:var(--text);}
+.prose p{margin-bottom:1.25rem;}
+.prose ul{margin:0.5rem 0 1rem 1.5rem;}
+.prose li{margin-bottom:0.5rem;}
+
+#hero{background:linear-gradient(135deg,#0c4a6e 0%,#0e7490 50%,#0c4a6e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:96px 2rem 5rem;position:relative;overflow:hidden;}
+#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 50%,rgba(14,116,144,0.25) 0%,transparent 60%);}
+.hero-inner{max-width:820px;width:100%;position:relative;z-index:1;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;margin-bottom:2rem;}
+.eyebrow-num{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:#7dd3fc;letter-spacing:0.15em;text-transform:uppercase;}
+h1.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.2rem,5vw,4rem);font-weight:400;line-height:1.05;color:#fff;margin-bottom:1rem;}
+h1.hero-title em{font-style:italic;color:#7dd3fc;}
+.hero-sub{font-size:1.15rem;color:rgba(255,255,255,0.7);max-width:520px;line-height:1.75;margin-bottom:2rem;font-weight:300;}
+.hero-cta{display:inline-flex;align-items:center;gap:12px;background:var(--accent2);color:#fff;padding:16px 36px;border-radius:6px;font-weight:600;font-size:0.95rem;text-decoration:none;transition:all 0.25s;}
+.hero-cta:hover{background:#22d3ee;transform:translateY(-2px);}
+.hero-time{display:flex;align-items:center;gap:8px;margin-top:1.5rem;font-size:0.82rem;color:rgba(255,255,255,0.5);}
+.hero-time::before{content:'⏱';font-size:0.9rem;}
+
+.homework-task{background:#fff;border-radius:16px;padding:2.5rem;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:2.5rem;}
+.homework-task h3{font-size:1.15rem;font-weight:600;color:var(--ink);margin-bottom:1rem;}
+.homework-task h4{font-size:0.9rem;font-weight:600;color:var(--accent);margin:1.5rem 0 0.5rem;font-family:'DM Mono',monospace;letter-spacing:0.05em;}
+.homework-task p,.homework-task li{font-size:0.95rem;line-height:1.7;color:var(--text);margin-bottom:0.75rem;}
+.homework-task ul{margin:0.5rem 0 1rem 1.25rem;}
+.prompt-box{background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:1.25rem;font-family:'DM Mono',monospace;font-size:0.8rem;line-height:1.6;color:var(--ink);white-space:pre-wrap;margin:1rem 0;}
+.copy-prompt-btn{padding:8px 16px;border-radius:6px;font-size:0.78rem;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;border:none;margin-top:0.75rem;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.copy-prompt-btn:hover{background:var(--accent2);}
+.copy-prompt-btn.ok{background:var(--accent3);}
+.rules-list{list-style:none;margin:1rem 0;padding:0;}
+.rules-list li{padding:0.75rem 1rem;background:rgba(14,116,144,0.06);border-left:4px solid var(--accent);margin-bottom:0.5rem;border-radius:0 8px 8px 0;}
+.checklist-box{background:#fff;border:1px solid var(--border);border-radius:12px;padding:2rem;margin:2rem 0;box-shadow:var(--shadow);}
+.checklist-box h4{font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:1rem;}
+.checklist-box li{font-size:0.95rem;line-height:1.8;margin-bottom:0.75rem;padding-left:1.5rem;position:relative;}
+.checklist-box li::before{content:'☐';position:absolute;left:0;color:var(--accent);}
+
+.finale-card{background:var(--ink);border-radius:16px;padding:4rem 3rem;text-align:center;position:relative;overflow:hidden;}
+.finale-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 70% at 50% 50%,rgba(14,116,144,0.15) 0%,transparent 65%);}
+.finale-icon{font-size:4rem;margin-bottom:1.5rem;display:block;position:relative;z-index:1;}
+.finale-card h2{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:400;color:#fff;margin-bottom:1rem;position:relative;z-index:1;}
+.finale-card h2 em{font-style:italic;color:#7dd3fc;}
+.finale-card p{font-size:1rem;color:rgba(255,255,255,0.6);max-width:480px;margin:0 auto 2rem;line-height:1.75;position:relative;z-index:1;}
+.btn-next{display:inline-flex;align-items:center;gap:10px;background:var(--accent2);color:#fff;padding:15px 36px;border-radius:6px;font-weight:600;font-size:0.95rem;text-decoration:none;transition:all 0.25s;font-family:'DM Sans',sans-serif;}
+.btn-next:hover{background:#22d3ee;transform:translateY(-2px);}
+.btn-back{display:inline-flex;align-items:center;gap:8px;background:transparent;color:rgba(255,255,255,0.5);padding:15px 24px;border-radius:6px;font-weight:500;font-size:0.95rem;border:1px solid rgba(255,255,255,0.2);text-decoration:none;transition:all 0.25s;}
+.btn-back:hover{color:#fff;border-color:rgba(255,255,255,0.4);}
+.finale-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
+@media(max-width:768px){nav{padding:0 1.25rem;}.section{padding:80px 1.25rem 4rem;}}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav>
+  <div class="nav-left">
+    <a href="/" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:var(--muted);" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--muted)'">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      <span style="font-size:0.85rem;font-weight:500;">Etusivu</span>
+    </a>
+    <span class="nav-module">Liidien hankinta</span>
+    <span class="nav-title">AI-avusteinen</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="section" id="hero" data-index="0">
+  <div class="hero-inner">
+    <div class="hero-eyebrow"><span class="eyebrow-num">TÄYTEMODUULI</span></div>
+    <h1 class="hero-title">AI-avusteinen <em>liidien hankinta</em></h1>
+    <p class="hero-sub">Löydä uusia asiakkaita tekoälyn avulla. Apollo.io, GDPR ja ammattimainen ensikontaktiviesti.</p>
+    <a href="#tavoite" class="hero-cta">Aloita moduuli <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></a>
+    <div class="hero-time">Noin 90 minuuttia · ChatGPT tai Claude, Apollo.io, Gmail</div>
+  </div>
+</section>
+
+<!-- MODUULIN TAVOITE -->
+<section class="section" id="tavoite" data-index="1">
+  <div class="section-inner">
+    <div class="section-label">Moduulin tavoite</div>
+    <h2 class="section-h2">Mitä opit <em>tässä moduulissa</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Tämän moduulin jälkeen tiedät kuka on sinun ihanteellinen asiakkaasi, osaat löytää heidät Apollo.io:n avulla, ymmärrät GDPR-säännöt B2B-viestinnässä Suomessa ja osaat kirjoittaa ammattimaisen ensikontaktiviestin tekoälyn avulla.</p>
+    <p class="prose"><strong>Aika:</strong> noin 90 minuuttia<br><strong>Tarvitset:</strong> ChatGPT tai Claude, Apollo.io ilmainen tili, Gmail tai sähköposti</p>
+  </div>
+</section>
+
+<!-- OSA 1 — TEORIA: MITÄ ON LIIDIEN HANKINTA? -->
+<section class="section section-alt" id="osa1" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">Osa 1 — Teoria</div>
+    <h2 class="section-h2">Mitä on <em>liidien hankinta?</em></h2>
+    <div class="divider"></div>
+    <p class="prose">Liidit ovat potentiaalisia asiakkaita — ihmisiä tai yrityksiä jotka saattaisivat ostaa palvelusi tai tuotteesi. Liidien hankinta on prosessi jossa löydät nämä ihmiset ennen kuin he löytävät sinut.</p>
+    <p class="prose">Perinteisesti tämä tarkoitti kylmäsoittoja, messuilla käymistä ja verkostoitumista. Se oli hidasta, kallista ja sattumanvaraista.</p>
+    <p class="prose">Tekoäly muuttaa kaiken tämän. Nyt voit löytää täsmälleen oikeat ihmiset oikeista yrityksistä muutamassa minuutissa — ja kirjoittaa heille henkilökohtaisen viestin automaattisesti.</p>
+    <p class="prose"><strong>Mutta ennen kuin avaat yhtään työkalua, sinun pitää tietää kuka olet etsimässä.</strong> Tämä on tärkein askel jonka useimmat ihmiset ohittavat.</p>
+  </div>
+</section>
+
+<!-- OSA 2 — GDPR JA B2B-VIESTINTÄ -->
+<section class="section" id="osa2" data-index="3">
+  <div class="section-inner">
+    <div class="section-label">Osa 2 — Teoria</div>
+    <h2 class="section-h2">GDPR ja <em>B2B-viestintä Suomessa</em></h2>
+    <div class="divider"></div>
+    <p class="prose">Ennen kuin lähetät yhtään viestiä, sinun pitää ymmärtää säännöt. Suomessa GDPR ei tarkoita että et voi ottaa yhteyttä uusiin asiakkaisiin — se tarkoittaa että sinun pitää tehdä se oikein.</p>
+    
+    <h3 style="font-size:1.1rem;font-weight:600;margin:2rem 0 0.75rem;">Mitä GDPR on?</h3>
+    <p class="prose">GDPR on Euroopan unionin tietosuoja-asetus joka tuli voimaan 2018. Se suojaa ihmisten henkilötietoja ja sääntelee miten yritykset voivat käyttää niitä markkinointiin.</p>
+    
+    <h3 style="font-size:1.1rem;font-weight:600;margin:2rem 0 0.75rem;">Suomi on opt-out-maa</h3>
+    <p class="prose">Tämä on tärkeä ero. Suomessa B2B-markkinoinnissa ei tarvita ennakkoon pyydettävää suostumusta — mutta vastaanottajalla on aina oikeus kieltäytyä.</p>
+    
+    <h3 style="font-size:1.1rem;font-weight:600;margin:2rem 0 0.75rem;">Neljä käytännön sääntöä Suomessa</h3>
+    <ul class="rules-list">
+      <li><strong>Sääntö 1 — Kenelle voit lähettää:</strong> Yrityksen yleiseen sähköpostiin kuten info@yritys.fi voit lähettää ilman ennakkosuostumusta. Henkilökohtaiseen työsähköpostiin kuten etunimi.sukunimi@yritys.fi voit lähettää jos palvelusi tai tuotteesi liittyy suoraan heidän työtehtäviinsä.</li>
+      <li><strong>Sääntö 2 — Kenelle et voi lähettää ilman lupaa:</strong> Yksityishenkilöille eli B2C-markkinointi vaatii aina suostumuksen. Toiminimellä toimivat yrittäjät lasketaan yksityishenkilöiksi — tarkista ytj.fi ennen lähettämistä.</li>
+      <li><strong>Sääntö 3 — Mitä jokaisessa viestissä pitää olla:</strong> Oma nimesi ja yrityksesi nimi, selkeä tapa kieltäytyä eli unsubscribe-mahdollisuus, rehellinen aihe eikä harhaanjohtavaa otsikkoa, ja oikea lähettäjän osoite.</li>
+      <li><strong>Sääntö 4 — Oikeus poistaa tiedot:</strong> Jos joku pyytää sinua poistamaan heidän tietonsa, sinun pitää tehdä se viipymättä. Tämä koskee kaikkia yhteystietoja joita olet tallentanut.</li>
+    </ul>
+    <p class="prose" style="margin-top:2rem;"><strong>Kultainen sääntö GDPR:lle:</strong> Jos viestisi on relevantti, rehellinen ja helppo torjua — se on todennäköisesti laillinen. Jos se tuntuu spämmiltä, se todennäköisesti rikkoo sääntöjä.</p>
+  </div>
+</section>
+
+<!-- OSA 3 — TEHTÄVÄ 1: BRAINSTORM -->
+<section class="section section-alt" id="osa3" data-index="4">
+  <div class="section-inner">
+    <div class="section-label">Osa 3 — Tehtävä 1</div>
+    <h2 class="section-h2">Brainstorm — <em>kuka on ihanteellinen asiakkaasi?</em></h2>
+    <div class="divider"></div>
+    <p class="prose">Tämä on moduulin tärkein tehtävä. Ennen kuin avaat Apollon tai lähetät yhtään viestiä, sinun pitää tietää tarkasti kenen kanssa haluat työskennellä.</p>
+    <p class="prose">Avaa ChatGPT tai Claude ja käytä tätä promptia:</p>
+    
+    <div class="homework-task">
+      <h4>PROMPT 1 — IHANTEELLISEN ASIAKKAAN BRAINSTORM</h4>
+      <div class="prompt-box" id="prompt1">"Olen [kirjoita ammattisi ja mitä tarjoat]. Auta minua selvittämään kuka on ihanteellinen asiakkaani.
+Kysy minulta 5 kysymystä jotka auttavat minua määrittelemään:
+
+Minkä kokoisia yrityksiä haluan palvella
+Millä toimialoilla asiakkaani työskentelevät
+Mikä on asiakkaani suurin ongelma jonka voin ratkaista
+Kuka yrityksessä tekee ostopäätöksen
+Missä tilanteessa yritys tarvitsee minua eniten
+
+Vastaa suomeksi."</div>
+      <button class="copy-prompt-btn" onclick="copyPrompt('prompt1', this)">📋 Kopioi prompt</button>
+      <p style="margin-top:1.5rem;">Kirjoita tekoälyn kysymyksiin omat vastauksesi. Tämä keskustelu on pohja kaikelle muulle.</p>
+    </div>
+
+    <div class="homework-task">
+      <h4>PROMPT 2 — IHANTEELLISEN ASIAKASPROFIILIN YHTEENVETO</h4>
+      <p>Kun olet vastannut kaikkiin kysymyksiin, pyydä tekoälyä tekemään yhteenveto:</p>
+      <div class="prompt-box" id="prompt2">"Kiitos vastauksistani. Luo nyt minulle selkeä yhden kappaleen kuvaus ihanteellisesta asiakkaastani. Sisällytä: yrityksen koko, toimiala, sijainti, päätöksentekijän titteli ja tilanne jossa he tarvitsevat minua eniten. Tätä käytän Apollo.io:ssa hakufilttereissä."</div>
+      <button class="copy-prompt-btn" onclick="copyPrompt('prompt2', this)">📋 Kopioi prompt</button>
+      <p style="margin-top:1.5rem;">Tallenna tämä kuvaus — tarvitset sitä seuraavassa vaiheessa.</p>
+    </div>
+  </div>
+</section>
+
+<!-- OSA 4 — TEHTÄVÄ 2: AVAINSANAT JA HAKUFILTTTERIT -->
+<section class="section" id="osa4" data-index="5">
+  <div class="section-inner">
+    <div class="section-label">Osa 4 — Tehtävä 2</div>
+    <h2 class="section-h2">Avainsanat ja <em>hakufiltterit tekoälyn avulla</em></h2>
+    <div class="divider"></div>
+    <p class="prose">Nyt sinulla on asiakasprofiili. Seuraavaksi muutat sen Apollo.io-hakutermeiksi.</p>
+    
+    <div class="homework-task">
+      <h4>PROMPT 3 — APOLLO-HAKUTERMIEN LÖYTÄMINEN</h4>
+      <div class="prompt-box" id="prompt3">"Tässä on kuvaus ihanteellisesta asiakkaastani: [liitä edellisen tehtävän yhteenveto tähän]
+Tarvitsen apua Apollo.io-hakua varten. Anna minulle:
+
+Lista englanninkielisistä työnimikkeistä joita päätöksentekijällä todennäköisesti on Apollo.io:ssa — anna vähintään 8 eri tittelivaihtoehtoa
+Lista toimialoista Apollo.io:n hakutermeillä
+Yrityksen kokohaarukka työntekijämäärässä
+5 ostosignaalia eli merkkiä siitä että yritys saattaa tarvita minua juuri nyt
+Avainsanat joita voin käyttää Apollo.io:n Company Keywords -hakukenttään
+
+Vastaa suomeksi mutta anna hakutermit englanniksi koska Apollo.io on englanninkielinen."</div>
+      <button class="copy-prompt-btn" onclick="copyPrompt('prompt3', this)">📋 Kopioi prompt</button>
+    </div>
+
+    <div class="homework-task">
+      <h4>PROMPT 4 — SYVÄLLINEN ASIAKASTUTKIMUS (vaihtoehtoinen)</h4>
+      <p>Jos sinulla ei ole Apollon tiliä tai haluat tutkia ensin, voit tehdä asiakastutkimuksen suoraan ChatGPT:llä tai Claudella:</p>
+      <div class="prompt-box" id="prompt4">"Toimi kuin kokenut B2B-myyntiasiantuntija. Tutki minulle potentiaalisia asiakkaita seuraavilla kriteereillä: [liitä asiakasprofiilisi]
+Anna minulle:
+
+10 esimerkkiä tyypillisistä suomalaisista yrityksistä jotka sopivat tähän profiiliin — toimiala, koko ja miksi he tarvitsevat minua
+Mitkä ovat näiden yritysten suurimmat kipupisteet juuri nyt vuonna 2025
+Millä LinkedIn-hakusanoilla löydän nämä ihmiset
+Mitä he todennäköisesti lukevat ja missä he verkostoituvat
+
+Vastaa suomeksi."</div>
+      <button class="copy-prompt-btn" onclick="copyPrompt('prompt4', this)">📋 Kopioi prompt</button>
+    </div>
+  </div>
+</section>
+
+<!-- OSA 5 — TEHTÄVÄ 3: APOLLO.IO -->
+<section class="section section-alt" id="osa5" data-index="6">
+  <div class="section-inner">
+    <div class="section-label">Osa 5 — Tehtävä 3</div>
+    <h2 class="section-h2">Apollo.io:n käyttö <em>käytännössä</em></h2>
+    <div class="divider"></div>
+    <p class="prose">Nyt sinulla on hakutermit. Mennään Apolloon.</p>
+    
+    <div class="homework-task">
+      <h4>Vaihe 1 — Luo ilmainen tili</h4>
+      <p>Mene apollo.io ja klikkaa Sign Up Free. Käytä Google-kirjautumista — se on nopein tapa. Ilmainen tili riittää täysin tähän harjoitukseen.</p>
+      
+      <h4>Vaihe 2 — Avaa People Search</h4>
+      <p>Klikkaa vasemmasta valikosta People. Tässä näkymässä voit hakea ihmisiä tittelillä, yrityksellä, sijainnilla ja toimialalla.</p>
+      
+      <h4>Vaihe 3 — Aseta filtterit järjestyksessä</h4>
+      <ul>
+        <li><strong>Filtteri 1 — Sijainti:</strong> Kirjoita Finland hakukenttään. Voit tarkentaa kaupunkiin: Helsinki, Espoo, Tampere, Turku, Oulu.</li>
+        <li><strong>Filtteri 2 — Työnimike:</strong> Kopioi tekoälyn antamat tittelit tähän kenttään yksi kerrallaan. Kokeile esim. CEO, Founder, Managing Director, Toimitusjohtaja, Owner.</li>
+        <li><strong>Filtteri 3 — Yrityksen koko:</strong> Valitse tekoälyn suosittelema kokohaarukka. Esim. 10 to 50 employees on hyvä lähtökohta useimmille freelancereille.</li>
+        <li><strong>Filtteri 4 — Toimiala:</strong> Valitse tekoälyn suosittelemat toimialat Industry-kentästä.</li>
+        <li><strong>Filtteri 5 — Company Keywords:</strong> Kirjoita avainsanoja jotka löytyvät yrityksen kuvauksesta. Esim. growth, scale-up, SaaS, Series A.</li>
+      </ul>
+      
+      <h4>Vaihe 4 — Käytä Apollo AI:ta tutkimukseen</h4>
+      <p>Kun olet löytänyt kiinnostavan kontaktin, klikkaa heidän nimeään. Apollo näyttää profiilin. Klikkaa AI Research ja anna tämä prompt:</p>
+      <div class="prompt-box" id="promptApollo">"Does this company show signs of needing [kirjoita palvelusi englanniksi]? What is their current growth stage and what challenges might they be facing?"</div>
+      <button class="copy-prompt-btn" onclick="copyPrompt('promptApollo', this)">📋 Kopioi prompt</button>
+      
+      <h4>Vaihe 5 — Tallenna lista</h4>
+      <p>Valitse parhaat kontaktit klikkaamalla ruksi heidän nimensä viereen ja klikkaa Save to List. Nimeä lista esim. Finland CEO Prospects viikko ja vuosi.</p>
+    </div>
+  </div>
+</section>
+
+<!-- OSA 6 — TEHTÄVÄ 4: ENSIKONTAKTIVIESTI -->
+<section class="section" id="osa6" data-index="7">
+  <div class="section-inner">
+    <div class="section-label">Osa 6 — Tehtävä 4</div>
+    <h2 class="section-h2">Kirjoita <em>ensikontaktiviesti</em> tekoälyn avulla</h2>
+    <div class="divider"></div>
+    <p class="prose">Sinulla on nyt lista potentiaalisista asiakkaista. Seuraavaksi kirjoitat heille viestin. Hyvä ensikontaktiviesti on lyhyt, henkilökohtainen, relevantti ja päättyy yhteen kysymykseen — ei kovaan myyntipuheeseen.</p>
+    
+    <div class="homework-task">
+      <h4>PROMPT 5 — ENSIKONTAKTIVIESTIN KIRJOITTAMINEN</h4>
+      <div class="prompt-box" id="prompt5">"Kirjoita minulle lyhyt ensikontaktiviesti suomeksi seuraaville tiedoilla:
+Minä olen: [ammattisi ja mitä tarjoat]
+Vastaanottaja on: [titteli ja yrityksen koko ja toimiala]
+Heidän todennäköinen kipupisteensä on: [ongelma jonka ratkaiset]
+Viestin tavoite: saada lyhyt puhelu tai tapaaminen
+Säännöt:
+
+Maksimissaan 4 lausetta
+Ei myyntipuhetta — yksi selkeä kysymys lopussa
+Ammattimainen mutta lämmin sävy
+Mainitse yksi konkreettinen hyöty heille
+Älä käytä kliseitä kuten toivottavasti tämä viesti löytää sinut hyvinvoivana
+
+Kirjoita myös kolme eri versioita joita voin testata."</div>
+      <button class="copy-prompt-btn" onclick="copyPrompt('prompt5', this)">📋 Kopioi prompt</button>
+    </div>
+
+    <div class="homework-task">
+      <h4>PROMPT 6 — SÄHKÖPOSTIN AIHERIVI</h4>
+      <div class="prompt-box" id="prompt6">"Kirjoita minulle 5 erilaista aiheriviä suomeksi tälle sähköpostille. Aiherivin pitää herättää uteliaisuus ilman että se kuulostaa myyntiviestiltä. Maksimissaan 7 sanaa per aiherivi."</div>
+      <button class="copy-prompt-btn" onclick="copyPrompt('prompt6', this)">📋 Kopioi prompt</button>
+    </div>
+
+    <div class="homework-task">
+      <h4>PROMPT 7 — SEURANTAVIESTI</h4>
+      <div class="prompt-box" id="prompt7">"Kirjoita minulle lyhyt seurantaviesti suomeksi lähetettäväksi 4 päivää ensimmäisen viestin jälkeen jos en ole saanut vastausta. Yhden tai kahden lauseen viesti. Ei paineistamista. Jätä ovi auki."</div>
+      <button class="copy-prompt-btn" onclick="copyPrompt('prompt7', this)">📋 Kopioi prompt</button>
+    </div>
+  </div>
+</section>
+
+<!-- OSA 7 — GDPR-TARKISTUSLISTA -->
+<section class="section section-alt" id="osa7" data-index="8">
+  <div class="section-inner">
+    <div class="section-label">Osa 7</div>
+    <h2 class="section-h2">GDPR-tarkistuslista <em>ennen lähettämistä</em></h2>
+    <div class="divider"></div>
+    <p class="prose">Ennen kuin lähetät yhtään viestiä, käy läpi tämä lista:</p>
+    <div class="checklist-box">
+      <ul>
+        <li>Onko vastaanottaja yrityksen edustaja eikä yksityishenkilö? Tarkista ytj.fi jos epäilet.</li>
+        <li>Onko palvelusi tai tuotteesi relevantti heidän työroolilleen? Jos kyllä, sinulla on oikeutettu intressi ottaa yhteyttä.</li>
+        <li>Sisältääkö viestisi oman nimesi ja yrityksesi nimen?</li>
+        <li>Onko viestissä mahdollisuus kieltäytyä jatkosta? Lisää loppuun: "Jos et halua jatkossa viestiä minulta, vastaa tähän sähköpostiin sanomalla ei kiitos niin poistan sinut listaltani."</li>
+        <li>Onko aiherivi rehellinen eikä harhaanjohtava?</li>
+      </ul>
+      <p style="margin-top:1.5rem;font-weight:600;color:var(--accent);">Jos vastasit kyllä kaikkiin — olet valmis lähettämään.</p>
+    </div>
+  </div>
+</section>
+
+<!-- OSA 8 — BONUSTEHTÄVÄ: LINKEDIN -->
+<section class="section" id="osa8" data-index="9">
+  <div class="section-inner">
+    <div class="section-label">Osa 8 — Bonustehtävä</div>
+    <h2 class="section-h2">LinkedIn-outreach</h2>
+    <div class="divider"></div>
+    <p class="prose">LinkedIn on GDPR-turvallisin kanava koska ihmiset ovat julkisesti suostuneet ammatilliseen verkostoitumiseen.</p>
+    
+    <div class="homework-task">
+      <h4>PROMPT 8 — LINKEDIN-YHTEYSPYYNTÖ</h4>
+      <div class="prompt-box" id="prompt8">"Kirjoita minulle lyhyt LinkedIn-yhteyspyyntö suomeksi. Maksimissaan 2 lausetta. Mainitse miksi haluan yhdistää mutta älä tee myyntipuhetta. Ammattimainen ja aito sävy."</div>
+      <button class="copy-prompt-btn" onclick="copyPrompt('prompt8', this)">📋 Kopioi prompt</button>
+    </div>
+
+    <div class="homework-task">
+      <h4>PROMPT 9 — LINKEDIN-VIESTI YHTEYDEN JÄLKEEN</h4>
+      <div class="prompt-box" id="prompt9">"Kirjoita minulle ensimmäinen viesti suomeksi LinkedIn-yhteyden hyväksymisen jälkeen. Maksimissaan 3 lausetta. Tarjoa ensin arvoa — jaa jokin hyödyllinen näkemys tai kysymys. Älä myy mitään ensimmäisessä viestissä."</div>
+      <button class="copy-prompt-btn" onclick="copyPrompt('prompt9', this)">📋 Kopioi prompt</button>
+    </div>
+  </div>
+</section>
+
+<!-- YHTEENVETO -->
+<section class="section section-alt" id="yhteenveto" data-index="10">
+  <div class="section-inner">
+    <div class="section-label">Moduulin yhteenveto</div>
+    <h2 class="section-h2">Mitä opit <em>tässä moduulissa</em></h2>
+    <div class="divider"></div>
+    <p class="prose">Tässä moduulissa opit neljä asiaa:</p>
+    <ul class="rules-list">
+      <li><strong>Ensimmäinen</strong> — Et etsi kaikkia vaan täsmälleen oikeita ihmisiä. Tekoäly auttaa sinua määrittelemään kuka se on.</li>
+      <li><strong>Toinen</strong> — GDPR ei estä B2B-viestintää Suomessa. Se vaatii relevanssia, rehellisyyttä ja helpon tavan kieltäytyä.</li>
+      <li><strong>Kolmas</strong> — Apollo.io löytää oikeat ihmiset oikeista yrityksistä muutamassa minuutissa kun tiedät mitä etsiä.</li>
+      <li><strong>Neljäs</strong> — ChatGPT tai Claude kirjoittaa ammattimaisen ensikontaktiviestin sekunneissa — mutta sinä muokkaat sen omaan ääneesi ennen lähettämistä.</li>
+    </ul>
+    <p class="prose" style="margin-top:2rem;font-size:1.15rem;font-weight:600;color:var(--accent);">Tärkein lause tästä moduulista:</p>
+    <p class="prose" style="font-size:1.1rem;font-style:italic;">Tekoäly ei myy puolestasi — mutta se löytää oikeat ihmiset, tutkii heidät ja kirjoittaa ensimmäisen viestin. Sinä rakennat suhteen.</p>
+  </div>
+</section>
+
+<!-- FINALE -->
+<section class="section" id="finale" data-index="11">
+  <div class="section-inner">
+    <div class="finale-card">
+      <span class="finale-icon">🎯</span>
+      <h2>AI-avusteinen liidien hankinta<br><em>— moduuli valmis!</em></h2>
+      <p>Olet nyt valmis löytämään uusia asiakkaita tekoälyn avulla. Muista: ihanteellinen asiakasprofiili ensin, sitten Apollo, sitten viesti. Ja aina GDPR mielessä.</p>
+      <div class="finale-actions">
+        <a href="/" class="btn-next">Etusivu</a>
+        <a href="/module/moduuli-visibility-growth-automation" class="btn-back">Visibility, Growth & Automation</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+function copyPrompt(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const text = el.textContent || el.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Kopioitu!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = '📋 Kopioi prompt'; btn.classList.remove('ok'); }, 2200);
+  });
+}
+window.addEventListener('scroll', () => {
+  const st = window.scrollY, dh = document.documentElement.scrollHeight - window.innerHeight;
+  document.getElementById('progress-bar').style.width = (dh > 0 ? (st / dh) * 100 : 0) + '%';
+}, { passive: true });
+</script>
+<script src="/js/feedback.js"></script>
+</body>
+</html>
