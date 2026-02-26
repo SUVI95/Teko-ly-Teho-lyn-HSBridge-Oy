@@ -134,19 +134,26 @@ app.get('/admin', authenticateToken, (req, res, next) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
 
-// Direct shortcut for AI Simulation Lab (works without login)
+// Direct shortcut for AI Simulation Lab (works without login) - serve file directly
 app.get('/ai-simulation-lab', (req, res) => {
-  res.redirect(302, '/module/moduuli-ai-simulation-lab');
+  const p = path.join(__dirname, 'public', 'ai-simulation-lab.html');
+  if (fs.existsSync(p)) {
+    return res.sendFile(p);
+  }
+  res.redirect(302, '/ai-simulation-lab.html');
 });
 
 app.get('/module/:moduleId', (req, res) => {
   const moduleId = req.params.moduleId;
   
-  // Try public/module first (guaranteed in Vercel deploy), then project root
-  const paths = [
+  // Try multiple paths (public first for Vercel deploy)
+  let paths = [
     path.join(__dirname, 'public', 'module', `${moduleId}.html`),
     path.join(__dirname, `${moduleId}.html`)
   ];
+  if (moduleId === 'moduuli-ai-simulation-lab') {
+    paths.unshift(path.join(__dirname, 'public', 'ai-simulation-lab.html'));
+  }
   const modulePath = paths.find(p => fs.existsSync(p));
   
   if (!modulePath) {
