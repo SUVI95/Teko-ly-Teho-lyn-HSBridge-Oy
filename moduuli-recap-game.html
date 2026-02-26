@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Polku Loppuputki — Kertauspeli | HSBridge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1a2e;--ink2:#2d2d44;--paper:#f5f3ef;--paper2:#eeeae3;--warm:#e8e0d4;--accent:#7c3aed;--accent2:#a78bfa;--accent3:#22c55e;--wrong:#ef4444;--text:#1a1a2e;--muted:#6b6880;--border:rgba(26,26,46,0.12);--shadow:0 2px 20px rgba(26,26,46,0.08);--shadow-md:0 8px 40px rgba(26,26,46,0.12);}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;overflow-x:hidden;line-height:1.7;}
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:200;transition:width 0.4s ease;width:0%;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;background:rgba(245,243,239,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2.5rem;justify-content:space-between;}
+.nav-left{display:flex;align-items:center;gap:1rem;}
+.nav-module{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);padding:4px 12px;border-radius:4px;}
+.nav-title{font-size:0.85rem;font-weight:500;color:var(--muted);}
+.section{min-height:auto;padding:96px 2rem 5rem;position:relative;}
+.section-inner{max-width:720px;width:100%;margin:0 auto;}
+.section-alt{background:var(--paper2);}
+.section-label{font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:500;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1rem;}
+h2.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:400;line-height:1.1;color:var(--ink);margin-bottom:1.5rem;}
+h2.section-h2 em{font-style:italic;color:var(--accent);}
+.lead{font-size:1.1rem;color:var(--muted);line-height:1.8;margin-bottom:2rem;font-weight:300;}
+.divider{width:48px;height:2px;background:var(--accent);margin-bottom:2rem;border-radius:1px;}
+.prose{font-size:1.05rem;line-height:1.85;color:var(--text);}
+
+#hero{background:linear-gradient(135deg,#1a1a2e 0%,#4c1d95 50%,#1a1a2e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:96px 2rem 5rem;position:relative;overflow:hidden;}
+#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 50%,rgba(124,58,237,0.25) 0%,transparent 60%);}
+.hero-inner{max-width:820px;width:100%;position:relative;z-index:1;text-align:center;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(167,139,250,0.2);color:#c4b5fd;padding:8px 16px;border-radius:999px;font-size:0.9rem;margin-bottom:1.5rem;}
+h1.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.2rem,5vw,4rem);font-weight:400;line-height:1.1;color:#fff;margin-bottom:1rem;}
+h1.hero-title em{font-style:italic;color:#c4b5fd;}
+.hero-sub{font-size:1.1rem;color:rgba(255,255,255,0.65);max-width:520px;margin:0 auto 2rem;line-height:1.7;}
+.hero-cta{display:inline-flex;align-items:center;gap:12px;background:var(--accent);color:#fff;padding:16px 36px;border-radius:6px;font-weight:600;font-size:0.95rem;text-decoration:none;transition:all 0.25s;}
+.hero-cta:hover{background:var(--accent2);transform:translateY(-2px);}
+
+/* Quiz card */
+.quiz-card{background:#fff;border-radius:16px;padding:2rem;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:2rem;position:relative;overflow:hidden;}
+.quiz-card h3{font-size:1rem;color:var(--muted);margin-bottom:0.5rem;font-family:'DM Mono',monospace;}
+.quiz-card .q-text{font-size:1.15rem;font-weight:600;color:var(--ink);margin-bottom:1.5rem;line-height:1.5;}
+.quiz-options{display:flex;flex-direction:column;gap:0.75rem;}
+.quiz-opt{display:flex;align-items:center;gap:12px;padding:1rem 1.25rem;background:var(--paper);border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.25s;font-size:0.95rem;}
+.quiz-opt:hover{border-color:var(--accent);background:rgba(124,58,237,0.05);}
+.quiz-opt.selected{border-color:var(--accent);background:rgba(124,58,237,0.08);}
+.quiz-opt.correct{border-color:var(--accent3);background:rgba(34,197,94,0.12);animation:correctPop 0.5s ease;}
+.quiz-opt.wrong{border-color:var(--wrong);background:rgba(239,68,68,0.08);animation:shake 0.4s ease;}
+.quiz-opt .opt-letter{width:28px;height:28px;border-radius:50%;background:var(--paper2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;}
+.quiz-opt.correct .opt-letter{background:var(--accent3);color:#fff;}
+.quiz-opt.wrong .opt-letter{background:var(--wrong);color:#fff;}
+@keyframes correctPop{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* Totta/Tarua buttons */
+.totta-tarua{display:flex;gap:1rem;flex-wrap:wrap;}
+.totta-tarua .quiz-opt{flex:1;min-width:140px;justify-content:center;}
+
+/* Sorting */
+.sort-row{display:flex;align-items:center;gap:1rem;padding:1rem;background:var(--paper);border-radius:10px;margin-bottom:0.75rem;border:1px solid var(--border);}
+.sort-row .sort-label{flex:1;font-weight:500;}
+.sort-row .sort-btns{display:flex;gap:0.5rem;}
+.sort-row .sort-btn{padding:8px 16px;border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;border:2px solid var(--border);background:#fff;transition:all 0.2s;}
+.sort-row .sort-btn:hover{border-color:var(--accent);}
+.sort-row .sort-btn.chosen{border-color:var(--accent);background:rgba(124,58,237,0.1);}
+.sort-row .sort-btn.chosen-ok{border-color:var(--accent3);background:rgba(34,197,94,0.1);color:var(--accent3);}
+.sort-row .sort-btn.chosen-wrong{border-color:var(--wrong);background:rgba(239,68,68,0.1);color:var(--wrong);}
+
+/* Explanation */
+.explanation{display:none;margin-top:1.5rem;padding:1.25rem;background:rgba(124,58,237,0.06);border-left:4px solid var(--accent);border-radius:0 8px 8px 0;font-size:0.95rem;line-height:1.7;}
+.explanation.show{display:block;animation:fadeIn 0.4s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Submit */
+.quiz-submit{padding:12px 28px;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;border:none;background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;transition:all 0.25s;margin-top:1rem;}
+.quiz-submit:hover{background:var(--accent2);transform:translateY(-2px);}
+.quiz-submit:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+
+/* Score & confetti */
+.score-display{display:flex;align-items:center;gap:1rem;margin-bottom:2rem;font-size:1.25rem;font-weight:700;color:var(--ink);}
+.score-display .score-num{color:var(--accent);font-size:1.5rem;}
+.confetti{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:999;overflow:hidden;}
+.confetti-piece{position:absolute;width:10px;height:10px;border-radius:2px;animation:confettiFall 1.5s ease-out forwards;}
+@keyframes confettiFall{0%{opacity:1;transform:translateY(-20px) rotate(0deg)}100%{opacity:0;transform:translateY(100vh) rotate(720deg)}}
+.correct-burst{position:absolute;inset:0;pointer-events:none;animation:burst 0.6s ease-out forwards;}
+@keyframes burst{0%{opacity:0;background:radial-gradient(circle,rgba(34,197,94,0.3) 0%,transparent 70%);transform:scale(0.5)}50%{opacity:1}100%{opacity:0;transform:scale(1.5)}}
+
+/* Finale */
+.finale-card{background:var(--ink);border-radius:16px;padding:4rem 3rem;text-align:center;position:relative;overflow:hidden;}
+.finale-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 70% at 50% 50%,rgba(124,58,237,0.15) 0%,transparent 65%);}
+.finale-icon{font-size:4rem;margin-bottom:1rem;display:block;position:relative;z-index:1;}
+.finale-card h2{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,2.5rem);font-weight:400;color:#fff;margin-bottom:1rem;position:relative;z-index:1;}
+.finale-card h2 em{font-style:italic;color:#c4b5fd;}
+.finale-card p{font-size:1rem;color:rgba(255,255,255,0.6);max-width:480px;margin:0 auto 2rem;line-height:1.75;position:relative;z-index:1;}
+.btn-next{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#fff;padding:15px 36px;border-radius:6px;font-weight:600;font-size:0.95rem;text-decoration:none;transition:all 0.25s;font-family:'DM Sans',sans-serif;}
+.btn-next:hover{background:var(--accent2);transform:translateY(-2px);}
+.btn-back{display:inline-flex;align-items:center;gap:8px;background:transparent;color:rgba(255,255,255,0.5);padding:15px 24px;border-radius:6px;font-weight:500;font-size:0.95rem;border:1px solid rgba(255,255,255,0.2);text-decoration:none;transition:all 0.25s;}
+.btn-back:hover{color:#fff;border-color:rgba(255,255,255,0.4);}
+.finale-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
+@media(max-width:768px){nav{padding:0 1.25rem;}.section{padding:80px 1.25rem 4rem;}}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav>
+  <div class="nav-left">
+    <a href="/" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:var(--muted);" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--muted)'">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      <span style="font-size:0.85rem;font-weight:500;">Etusivu</span>
+    </a>
+    <span class="nav-module">🎮 Loppuputki</span>
+    <span class="nav-title">Kertauspeli</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:1rem;">
+    <span class="score-display" id="navScore" style="display:none;">P1: <span class="score-num" id="navScoreNum">0</span>/8</span>
+    <span class="score-display" id="navScore2" style="display:none;">P2: <span class="score-num" id="navScoreNum2">0</span>/8</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="section" id="hero" data-index="0">
+  <div class="hero-inner">
+    <div class="hero-badge">Viimeinen kurssipäivä · Testaa oppimasi</div>
+    <h1 class="hero-title">AI-Polku <em>Loppuputki</em></h1>
+    <p class="hero-sub">Viikon suurta kertauspeli — testaa mitä olet oppinut. Pelaa, vastaa, voita!</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+      <div class="hero-cta" onclick="document.getElementById('game1').scrollIntoView({behavior:'smooth'})">Peli 1: Tietosuoja</div>
+      <div class="hero-cta" onclick="document.getElementById('game2').scrollIntoView({behavior:'smooth'})">Peli 2: Uhka vai mahdollisuus?</div>
+    </div>
+  </div>
+</section>
+
+<!-- GAME 1: TIETOSUOJA QUIZ -->
+<section class="section section-alt" id="game1" data-index="1">
+  <div class="section-inner">
+    <div class="section-label">Peli 1</div>
+    <h2 class="section-h2">Tietosuoja <em>Quiz</em></h2>
+    <div class="divider"></div>
+    <p class="lead">8 kysymystä — monivalinta, totta/tarua, lajittelu. Testaa tietosuojan perusteet!</p>
+    <div class="score-display" style="margin-bottom:1.5rem;">Pisteet: <span class="score-num" id="scoreNum">0</span>/8</div>
+    <div id="confettiContainer" class="confetti"></div>
+
+    <div id="q1" class="quiz-card">
+      <h3>Kysymys 1 — Monivalinta</h3>
+      <div class="q-text">Mitä tarkoittaa "LinkedIn-sääntö" tekoälyn käytössä?</div>
+      <div class="quiz-options">
+        <div class="quiz-opt" data-opt="A"><span class="opt-letter">A</span> Tekoälyä saa käyttää vain LinkedIn-viestien kirjoittamiseen</div>
+        <div class="quiz-opt" data-opt="B"><span class="opt-letter">B</span> Jos et julkaisisi tietoa LinkedInissä, älä jaa sitä tekoälylle</div>
+        <div class="quiz-opt" data-opt="C"><span class="opt-letter">C</span> LinkedIn on turvallisin paikka jakaa henkilötietoja</div>
+        <div class="quiz-opt" data-opt="D"><span class="opt-letter">D</span> Tekoäly hakee tietoja automaattisesti LinkedInistä</div>
+      </div>
+      <div class="explanation" id="exp1"><strong>Oikea vastaus: B</strong> — LinkedIn-sääntö on yksinkertainen muistisääntö: jos et julkaisisi tietoa ammattilaisverkostollesi, se ei kuulu tekoälylle.</div>
+      <button class="quiz-submit" onclick="checkQ(1,'B')">Tarkista</button>
+    </div>
+
+    <div id="q2" class="quiz-card">
+      <h3>Kysymys 2 — Totta vai tarua</h3>
+      <div class="q-text">Osaamisesi ja taitosi (esim. Excel-taidot) on turvallista jakaa tekoälylle.</div>
+      <div class="quiz-options totta-tarua">
+        <div class="quiz-opt" data-opt="TOTTA"><span class="opt-letter">✓</span> Totta</div>
+        <div class="quiz-opt" data-opt="TARUA"><span class="opt-letter">✗</span> Tarua</div>
+      </div>
+      <div class="explanation" id="exp2"><strong>Oikea vastaus: Totta</strong> — Osaamisesi on julkista tietoa joka kuuluu myös CV:hen. Sen voi jakaa tekoälylle huoletta.</div>
+      <button class="quiz-submit" onclick="checkQ(2,'TOTTA')">Tarkista</button>
+    </div>
+
+    <div id="q3" class="quiz-card">
+      <h3>Kysymys 3 — Monivalinta</h3>
+      <div class="q-text">Miksi terveystietoja ei saa koskaan jakaa tekoälylle?</div>
+      <div class="quiz-options">
+        <div class="quiz-opt" data-opt="A"><span class="opt-letter">A</span> Koska tekoäly ei osaa käsitellä lääketieteellistä tietoa</div>
+        <div class="quiz-opt" data-opt="B"><span class="opt-letter">B</span> Se on yksityistä ja lailla suojattua tietoa, jonka jakaminen voi rikkoa tietosuojalakia</div>
+        <div class="quiz-opt" data-opt="C"><span class="opt-letter">C</span> Koska se hidastaa tekoälyn toimintaa</div>
+        <div class="quiz-opt" data-opt="D"><span class="opt-letter">D</span> Terveystietoja saa jakaa, mutta vain lääkäreille tarkoitetuille tekoälyille</div>
+      </div>
+      <div class="explanation" id="exp3"><strong>Oikea vastaus: B</strong> — Terveystieto on yksityistä ja lailla suojattua. Jakaminen voi rikkoa tietosuojalakia (GDPR) ja altistaa tiedot väärinkäytölle.</div>
+      <button class="quiz-submit" onclick="checkQ(3,'B')">Tarkista</button>
+    </div>
+
+    <div id="q4" class="quiz-card">
+      <h3>Kysymys 4 — Totta vai tarua</h3>
+      <div class="q-text">Voit jakaa entisen työnantajan sopimusluvut tekoälylle, jos haluat vain analysoida tekstiä.</div>
+      <div class="quiz-options totta-tarua">
+        <div class="quiz-opt" data-opt="TOTTA"><span class="opt-letter">✓</span> Totta</div>
+        <div class="quiz-opt" data-opt="TARUA"><span class="opt-letter">✗</span> Tarua</div>
+      </div>
+      <div class="explanation" id="exp4"><strong>Oikea vastaus: Tarua</strong> — Työnantajan luottamukselliset tiedot — kuten sopimusluvut — eivät koskaan kuulu tekoälylle. Se voi rikkoa työsopimuksen ja johtaa oikeudellisiin seuraamuksiin.</div>
+      <button class="quiz-submit" onclick="checkQ(4,'TARUA')">Tarkista</button>
+    </div>
+
+    <div id="q5" class="quiz-card">
+      <h3>Kysymys 5 — Lajittelu</h3>
+      <div class="q-text">Lajittele tiedot oikeisiin ryhmiin: mitä voi jakaa tekoälylle ja mitä ei koskaan?</div>
+      <div id="sortItems">
+        <div class="sort-row" data-item="ammattinimike" data-correct="ok"><span class="sort-label">Ammattinimikkeesi</span><div class="sort-btns"><button class="sort-btn" data-val="ok">Voi jakaa</button><button class="sort-btn" data-val="no">Ei koskaan</button></div></div>
+        <div class="sort-row" data-item="ura" data-correct="ok"><span class="sort-label">Ura-tavoitteesi</span><div class="sort-btns"><button class="sort-btn" data-val="ok">Voi jakaa</button><button class="sort-btn" data-val="no">Ei koskaan</button></div></div>
+        <div class="sort-row" data-item="koulutus" data-correct="ok"><span class="sort-label">Koulutuksesi</span><div class="sort-btns"><button class="sort-btn" data-val="ok">Voi jakaa</button><button class="sort-btn" data-val="no">Ei koskaan</button></div></div>
+        <div class="sort-row" data-item="hetu" data-correct="no"><span class="sort-label">Henkilötunnuksesi</span><div class="sort-btns"><button class="sort-btn" data-val="ok">Voi jakaa</button><button class="sort-btn" data-val="no">Ei koskaan</button></div></div>
+        <div class="sort-row" data-item="tili" data-correct="no"><span class="sort-label">Tilisaldosi</span><div class="sort-btns"><button class="sort-btn" data-val="ok">Voi jakaa</button><button class="sort-btn" data-val="no">Ei koskaan</button></div></div>
+        <div class="sort-row" data-item="salasana" data-correct="no"><span class="sort-label">Salasanasi</span><div class="sort-btns"><button class="sort-btn" data-val="ok">Voi jakaa</button><button class="sort-btn" data-val="no">Ei koskaan</button></div></div>
+      </div>
+      <div class="explanation" id="exp5"><strong>Oikein!</strong> Ammattinimike, ura-tavoitteet ja koulutus ovat julkista tietoa. Henkilötunnus, tilisaldo ja salasanat ovat ehdottomia rajoja.</div>
+      <button class="quiz-submit" onclick="checkQ5()">Tarkista</button>
+    </div>
+
+    <div id="q6" class="quiz-card">
+      <h3>Kysymys 6 — Monivalinta</h3>
+      <div class="q-text">Miten tekoäly toimii teknisesti?</div>
+      <div class="quiz-options">
+        <div class="quiz-opt" data-opt="A"><span class="opt-letter">A</span> Se ajattelee kuten ihminen ja ymmärtää asiat syvällisesti</div>
+        <div class="quiz-opt" data-opt="B"><span class="opt-letter">B</span> Se hakee vastauksia suoraan Wikipediasta</div>
+        <div class="quiz-opt" data-opt="C"><span class="opt-letter">C</span> Se tunnistaa kaavoja valtavista tietomääristä ja ennustaa todennäköisimmän vastauksen</div>
+        <div class="quiz-opt" data-opt="D"><span class="opt-letter">D</span> Se tallentaa kaikki kysymyksesi ja oppii niistä pysyvästi</div>
+      </div>
+      <div class="explanation" id="exp6"><strong>Oikea vastaus: C</strong> — Tekoäly on nopea kaavojen tunnistuskone. Se ei ajattele — se optimoi todennäköisyyksiä miljardien esimerkkien perusteella.</div>
+      <button class="quiz-submit" onclick="checkQ(6,'C')">Tarkista</button>
+    </div>
+
+    <div id="q7" class="quiz-card">
+      <h3>Kysymys 7 — Totta vai tarua</h3>
+      <div class="q-text">Jos tekoäly antaa väärän tai typerän vastauksen, voit pyytää sitä yrittämään uudelleen kirjoittamalla "Tämä ei ollut hyvä. Yritä uudelleen."</div>
+      <div class="quiz-options totta-tarua">
+        <div class="quiz-opt" data-opt="TOTTA"><span class="opt-letter">✓</span> Totta</div>
+        <div class="quiz-opt" data-opt="TARUA"><span class="opt-letter">✗</span> Tarua</div>
+      </div>
+      <div class="explanation" id="exp7"><strong>Oikea vastaus: Totta</strong> — Tekoäly ei loukkaannu. Voit ja kannattaa pyytää parempaa vastausta — se parantaa tuloksia huomattavasti.</div>
+      <button class="quiz-submit" onclick="checkQ(7,'TOTTA')">Tarkista</button>
+    </div>
+
+    <div id="q8" class="quiz-card">
+      <h3>Kysymys 8 — Monivalinta</h3>
+      <div class="q-text">Mikä on tärkein syy muokata tekoälyn kirjoittama teksti ennen käyttöä?</div>
+      <div class="quiz-options">
+        <div class="quiz-opt" data-opt="A"><span class="opt-letter">A</span> Tekoäly kirjoittaa aina liian lyhyesti</div>
+        <div class="quiz-opt" data-opt="B"><span class="opt-letter">B</span> Tekoälyn teksti on lähtökohta — muokkaamalla saat sen kuulostamaan sinulta ja varmistat faktojen paikkansapitävyyden</div>
+        <div class="quiz-opt" data-opt="C"><span class="opt-letter">C</span> Tekoäly käyttää aina väärää kieltä</div>
+        <div class="quiz-opt" data-opt="D"><span class="opt-letter">D</span> Muokkaaminen on pakollista lain mukaan</div>
+      </div>
+      <div class="explanation" id="exp8"><strong>Oikea vastaus: B</strong> — AI:n teksti on aina lähtökohta, ei valmis tuote. Muokkaa aina omaan ääneesi — ja tarkista aina luvut ja faktat, koska AI voi keksiä tilastoja.</div>
+      <button class="quiz-submit" onclick="checkQ(8,'B')">Tarkista</button>
+    </div>
+
+    <div id="quizFinale" class="quiz-card" style="display:none;text-align:center;">
+      <h2 class="section-h2" style="margin-bottom:1rem;">Tietosuoja Quiz <em>— valmis!</em></h2>
+      <p class="prose" id="finaleMsg"></p>
+      <button class="quiz-submit" onclick="document.getElementById('game2').scrollIntoView({behavior:'smooth'})">Seuraava: Peli 2 →</button>
+    </div>
+  </div>
+</section>
+
+<!-- GAME 2: TEKOÄLY UHKA VAI MAHDOLLISUUS -->
+<section class="section" id="game2" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">Peli 2</div>
+    <h2 class="section-h2">Tekoäly: <em>Uhka vai mahdollisuus?</em></h2>
+    <div class="divider"></div>
+    <p class="lead">8 kysymystä — monivalinta, totta/tarua, lajittelu. Moduuli 2 kertaus!</p>
+    <div class="score-display" style="margin-bottom:1.5rem;">Pisteet: <span class="score-num" id="scoreNum2">0</span>/8</div>
+    <div id="confettiContainer2" class="confetti"></div>
+
+    <div id="g2q1" class="quiz-card">
+      <h3>Kysymys 1 — Monivalinta</h3>
+      <div class="q-text">Mikä parhaiten kuvaa sitä, miten tekoäly toimii?</div>
+      <div class="quiz-options">
+        <div class="quiz-opt" data-opt="A"><span class="opt-letter">A</span> Se ajattelee ja ymmärtää asiat kuten ihminen</div>
+        <div class="quiz-opt" data-opt="B"><span class="opt-letter">B</span> Se tunnistaa kaavoja valtavista tietomääristä ja ennustaa todennäköisimmän vastauksen</div>
+        <div class="quiz-opt" data-opt="C"><span class="opt-letter">C</span> Se hakee vastauksia suoraan internetistä reaaliajassa</div>
+        <div class="quiz-opt" data-opt="D"><span class="opt-letter">D</span> Se on ohjelmoitu tuntemaan oikeat vastaukset valmiiksi</div>
+      </div>
+      <div class="explanation" id="g2exp1"><strong>Oikea vastaus: B</strong> — Tekoäly ei ajattele — se optimoi todennäköisyyksiä. Se käsittelee valtavia tietomääriä, löytää kaavoja ja ennustaa todennäköisimmän vastauksen. Sinä olet se, joka ajattelee.</div>
+      <button class="quiz-submit" onclick="checkG2Q(1,'B')">Tarkista</button>
+    </div>
+
+    <div id="g2q2" class="quiz-card">
+      <h3>Kysymys 2 — Totta vai tarua</h3>
+      <div class="q-text">Tekoäly tulee korvaamaan kaikki työpaikat lähitulevaisuudessa.</div>
+      <div class="quiz-options totta-tarua">
+        <div class="quiz-opt" data-opt="TOTTA"><span class="opt-letter">✓</span> Totta</div>
+        <div class="quiz-opt" data-opt="TARUA"><span class="opt-letter">✗</span> Tarua</div>
+      </div>
+      <div class="explanation" id="g2exp2"><strong>Oikea vastaus: Tarua</strong> — Historia osoittaa että teknologiamurrokset luovat aina uusia ammatteja vanhojen tilalle. Tekoäly automatisoi rutiinitehtäviä, mutta luovuus, empatia ja ihmisten johtaminen kasvavat.</div>
+      <button class="quiz-submit" onclick="checkG2Q(2,'TARUA')">Tarkista</button>
+    </div>
+
+    <div id="g2q3" class="quiz-card">
+      <h3>Kysymys 3 — Monivalinta</h3>
+      <div class="q-text">Mitkä tehtävät tekoäly todennäköisimmin automatisoi ensimmäisenä?</div>
+      <div class="quiz-options">
+        <div class="quiz-opt" data-opt="A"><span class="opt-letter">A</span> Luova ongelmanratkaisu ja strateginen ajattelu</div>
+        <div class="quiz-opt" data-opt="B"><span class="opt-letter">B</span> Ihmisten johtaminen ja tiimityö</div>
+        <div class="quiz-opt" data-opt="C"><span class="opt-letter">C</span> Toistuvat rutiinitehtävät ja mekaaninen data-analyysi</div>
+        <div class="quiz-opt" data-opt="D"><span class="opt-letter">D</span> Asiakassuhteiden rakentaminen ja empatia</div>
+      </div>
+      <div class="explanation" id="g2exp3"><strong>Oikea vastaus: C</strong> — Tekoäly automatisoi toistuvat rutiinitehtävät, yksinkertaisen tiedon käsittelyn ja standardoidut prosessit. Luovuus, empatia ja ihmisten johtaminen ovat alueita joissa ihminen pysyy vahvana.</div>
+      <button class="quiz-submit" onclick="checkG2Q(3,'C')">Tarkista</button>
+    </div>
+
+    <div id="g2q4" class="quiz-card">
+      <h3>Kysymys 4 — Totta vai tarua</h3>
+      <div class="q-text">Internetin tulo 1990-luvulla tuhosi enemmän työpaikkoja kuin loi uusia.</div>
+      <div class="quiz-options totta-tarua">
+        <div class="quiz-opt" data-opt="TOTTA"><span class="opt-letter">✓</span> Totta</div>
+        <div class="quiz-opt" data-opt="TARUA"><span class="opt-letter">✗</span> Tarua</div>
+      </div>
+      <div class="explanation" id="g2exp4"><strong>Oikea vastaus: Tarua</strong> — Internet loi miljoonia uusia ammatteja ja koko digitaalisen talouden. Jokainen suuri teknologinen murros on lopulta luonut enemmän kuin tuhonnut.</div>
+      <button class="quiz-submit" onclick="checkG2Q(4,'TARUA')">Tarkista</button>
+    </div>
+
+    <div id="g2q5" class="quiz-card">
+      <h3>Kysymys 5 — Lajittelu</h3>
+      <div class="q-text">Lajittele nämä tehtävät oikeisiin ryhmiin: tekoäly automatisoi vai ihminen pysyy vahvana?</div>
+      <div id="g2sortItems">
+        <div class="sort-row" data-item="rutiini" data-correct="ai"><span class="sort-label">Toistuvat rutiinitehtävät</span><div class="sort-btns"><button class="sort-btn" data-val="ai">Tekoäly automatisoi</button><button class="sort-btn" data-val="human">Ihminen pysyy vahvana</button></div></div>
+        <div class="sort-row" data-item="data" data-correct="ai"><span class="sort-label">Mekaaninen data-analyysi</span><div class="sort-btns"><button class="sort-btn" data-val="ai">Tekoäly automatisoi</button><button class="sort-btn" data-val="human">Ihminen pysyy vahvana</button></div></div>
+        <div class="sort-row" data-item="prosessit" data-correct="ai"><span class="sort-label">Standardoidut prosessit</span><div class="sort-btns"><button class="sort-btn" data-val="ai">Tekoäly automatisoi</button><button class="sort-btn" data-val="human">Ihminen pysyy vahvana</button></div></div>
+        <div class="sort-row" data-item="luovuus" data-correct="human"><span class="sort-label">Luovuus ja ongelmanratkaisu</span><div class="sort-btns"><button class="sort-btn" data-val="ai">Tekoäly automatisoi</button><button class="sort-btn" data-val="human">Ihminen pysyy vahvana</button></div></div>
+        <div class="sort-row" data-item="johtaminen" data-correct="human"><span class="sort-label">Ihmisten johtaminen ja empatia</span><div class="sort-btns"><button class="sort-btn" data-val="ai">Tekoäly automatisoi</button><button class="sort-btn" data-val="human">Ihminen pysyy vahvana</button></div></div>
+        <div class="sort-row" data-item="hybridi" data-correct="human"><span class="sort-label">Uudet hybridiroolit</span><div class="sort-btns"><button class="sort-btn" data-val="ai">Tekoäly automatisoi</button><button class="sort-btn" data-val="human">Ihminen pysyy vahvana</button></div></div>
+      </div>
+      <div class="explanation" id="g2exp5"><strong>Oikein!</strong> Tekoäly on vahva toistossa ja nopeudessa. Ihminen on vahva luovuudessa, empatiassa ja monimutkaisessa päätöksenteossa. Paras tulos syntyy kun molemmat toimivat yhdessä.</div>
+      <button class="quiz-submit" onclick="checkG2Q5()">Tarkista</button>
+    </div>
+
+    <div id="g2q6" class="quiz-card">
+      <h3>Kysymys 6 — Monivalinta</h3>
+      <div class="q-text">Mihin vaiheeseen tekoälyn kehityksessä olemme nyt verrattuna internetin historiaan?</div>
+      <div class="quiz-options">
+        <div class="quiz-opt" data-opt="A"><span class="opt-letter">A</span> Tekoäly on jo saavuttanut huippunsa — myöhässä opettelemaan</div>
+        <div class="quiz-opt" data-opt="B"><span class="opt-letter">B</span> Tekoäly on samassa pisteessä kuin internet vuonna 1997 — opettelemassa olevat ovat viisi vuotta edellä</div>
+        <div class="quiz-opt" data-opt="C"><span class="opt-letter">C</span> Tekoäly on vielä niin alkuvaiheessa ettei sillä ole käytännön hyötyä</div>
+        <div class="quiz-opt" data-opt="D"><span class="opt-letter">D</span> Tekoäly on jo ohittanut internetin merkityksen täysin</div>
+      </div>
+      <div class="explanation" id="g2exp6"><strong>Oikea vastaus: B</strong> — Tekoäly on nyt samassa pisteessä kuin internet vuonna 1997. Ne jotka oppivat käyttämään sen nyt saavat merkittävän etulyöntiaseman.</div>
+      <button class="quiz-submit" onclick="checkG2Q(6,'B')">Tarkista</button>
+    </div>
+
+    <div id="g2q7" class="quiz-card">
+      <h3>Kysymys 7 — Totta vai tarua</h3>
+      <div class="q-text">Tekoäly on viisas ja ymmärtää kysymyksesi syvällisesti ennen kuin vastaa.</div>
+      <div class="quiz-options totta-tarua">
+        <div class="quiz-opt" data-opt="TOTTA"><span class="opt-letter">✓</span> Totta</div>
+        <div class="quiz-opt" data-opt="TARUA"><span class="opt-letter">✗</span> Tarua</div>
+      </div>
+      <div class="explanation" id="g2exp7"><strong>Oikea vastaus: Tarua</strong> — Tekoäly ei ole viisas — se on uskomattoman nopea ja laaja. Se ei ymmärrä, se laskee todennäköisyyksiä. Sinä olet se joka ajattelee ja arvioi onko vastaus hyvä.</div>
+      <button class="quiz-submit" onclick="checkG2Q(7,'TARUA')">Tarkista</button>
+    </div>
+
+    <div id="g2q8" class="quiz-card">
+      <h3>Kysymys 8 — Monivalinta</h3>
+      <div class="q-text">Mikä on tärkein henkilökohtainen johtopäätös tekoälyn vaikutuksesta työelämään?</div>
+      <div class="quiz-options">
+        <div class="quiz-opt" data-opt="A"><span class="opt-letter">A</span> Kannattaa odottaa ja katsoa miten tilanne kehittyy ennen kuin opettelee mitään</div>
+        <div class="quiz-opt" data-opt="B"><span class="opt-letter">B</span> Tekoäly on niin vaarallinen ettei sitä kannata käyttää lainkaan</div>
+        <div class="quiz-opt" data-opt="C"><span class="opt-letter">C</span> Ihminen joka osaa käyttää tekoälyä ei korvaudu — mutta ihminen joka ei osaa, voi korvautua</div>
+        <div class="quiz-opt" data-opt="D"><span class="opt-letter">D</span> Tekoäly hyödyttää vain IT-alan ammattilaisia</div>
+      </div>
+      <div class="explanation" id="g2exp8"><strong>Oikea vastaus: C</strong> — Tärkein lause koko kurssilla. Tekoäly ei korvaa ihmistä — mutta ihminen joka osaa käyttää tekoälyä korvaa ihmisen joka ei osaa. Siksi opettelu kannattaa nyt.</div>
+      <button class="quiz-submit" onclick="checkG2Q(8,'C')">Tarkista</button>
+    </div>
+
+    <div id="g2quizFinale" class="quiz-card" style="display:none;text-align:center;">
+      <h2 class="section-h2" style="margin-bottom:1rem;">Uhka vai mahdollisuus? <em>— valmis!</em></h2>
+      <p class="prose" id="g2finaleMsg"></p>
+      <button class="quiz-submit" onclick="document.getElementById('finale').scrollIntoView({behavior:'smooth'})">Näytä yhteenveto</button>
+    </div>
+  </div>
+</section>
+
+<!-- FINALE -->
+<section class="section" id="finale" data-index="3">
+  <div class="section-inner">
+    <div class="finale-card">
+      <span class="finale-icon">🎮</span>
+      <h2>AI-Polku Loppuputki<br><em>— viikon kertauspeli</em></h2>
+      <p id="finaleText">Pelaa molemmat pelit ja testaa oppimasi. Peli 1: Tietosuoja. Peli 2: Uhka vai mahdollisuus?</p>
+      <div class="finale-actions">
+        <a href="/" class="btn-next">Etusivu</a>
+        <a href="/module/moduuli1-tietosuoja" class="btn-back">Moduuli 1: Tietosuoja</a>
+        <a href="/module/moduuli2-tekoaly-uhka-vai-mahdollisuus" class="btn-back">Moduuli 2: Uhka vai mahdollisuus</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+let totalScore = 0;
+const answered = new Set();
+let totalScore2 = 0;
+const answered2 = new Set();
+
+function fireConfetti(containerId) {
+  const container = document.getElementById(containerId || 'confettiContainer');
+  const colors = ['#7c3aed','#a78bfa','#22c55e','#fbbf24','#f472b6'];
+  for (let i = 0; i < 50; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDelay = Math.random() * 0.5 + 's';
+    p.style.animationDuration = (1 + Math.random()) + 's';
+    container.appendChild(p);
+    setTimeout(() => p.remove(), 2500);
+  }
+}
+
+function selectOpt(qId, opt) {
+  const card = document.getElementById('q' + qId);
+  if (answered.has(qId)) return;
+  card.querySelectorAll('.quiz-opt').forEach(o => {
+    o.classList.remove('selected');
+    if (o.dataset.opt === opt) o.classList.add('selected');
+  });
+}
+
+document.querySelectorAll('#q1,#q2,#q3,#q4,#q6,#q7,#q8').forEach(card => {
+  card.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.onclick = () => selectOpt(card.id.replace('q',''), opt.dataset.opt);
+  });
+});
+
+document.querySelectorAll('#g2q1,#g2q2,#g2q3,#g2q4,#g2q6,#g2q7,#g2q8').forEach(card => {
+  card.querySelectorAll('.quiz-opt').forEach(opt => {
+    opt.onclick = () => selectG2Opt(card.id.replace('g2q',''), opt.dataset.opt);
+  });
+});
+
+document.querySelectorAll('#q5 .sort-btn').forEach(btn => {
+  btn.onclick = () => {
+    const row = btn.closest('.sort-row');
+    if (answered.has(5)) return;
+    row.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('chosen','chosen-ok','chosen-wrong'));
+    btn.classList.add('chosen');
+    row.dataset.userVal = btn.dataset.val;
+  };
+});
+
+document.querySelectorAll('#g2q5 .sort-btn').forEach(btn => {
+  btn.onclick = () => {
+    const row = btn.closest('.sort-row');
+    if (answered2.has(5)) return;
+    row.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('chosen','chosen-ok','chosen-wrong'));
+    btn.classList.add('chosen');
+    row.dataset.userVal = btn.dataset.val;
+  };
+});
+
+function selectG2Opt(qId, opt) {
+  const card = document.getElementById('g2q' + qId);
+  if (answered2.has(parseInt(qId))) return;
+  card.querySelectorAll('.quiz-opt').forEach(o => {
+    o.classList.remove('selected');
+    if (o.dataset.opt === opt) o.classList.add('selected');
+  });
+}
+
+function checkQ(qId, correct) {
+  const card = document.getElementById('q' + qId);
+  if (answered.has(qId)) return;
+  const selected = card.querySelector('.quiz-opt.selected');
+  if (!selected) { alert('Valitse vastaus!'); return; }
+  const user = selected.dataset.opt;
+  answered.add(qId);
+  card.querySelector('.quiz-submit').disabled = true;
+  card.querySelectorAll('.quiz-opt').forEach(o => o.style.pointerEvents = 'none');
+  if (user === correct) {
+    totalScore++;
+    selected.classList.add('correct');
+    fireConfetti();
+  } else {
+    selected.classList.add('wrong');
+    card.querySelector('.quiz-opt[data-opt="' + correct + '"]')?.classList.add('correct');
+  }
+  card.querySelector('.explanation').classList.add('show');
+  updateScore();
+  if (answered.size === 8) showQuizFinale();
+}
+
+function checkQ5() {
+  if (answered.has(5)) return;
+  const rows = document.querySelectorAll('#q5 .sort-row');
+  let allSelected = true;
+  let correct = 0;
+  rows.forEach(row => {
+    const uv = row.dataset.userVal;
+    const cv = row.dataset.correct;
+    if (!uv) allSelected = false;
+    else {
+      if (uv === cv) correct++;
+      row.querySelectorAll('.sort-btn').forEach(b => {
+        b.classList.remove('chosen-ok','chosen-wrong');
+        if (b.dataset.val === uv) b.classList.add(uv === cv ? 'chosen-ok' : 'chosen-wrong');
+      });
+    }
+  });
+  if (!allSelected) { alert('Valitse jokaiselle riville: Voi jakaa tai Ei koskaan'); return; }
+  answered.add(5);
+  document.getElementById('q5').querySelector('.quiz-submit').disabled = true;
+  rows.forEach(r => { r.querySelectorAll('.sort-btn').forEach(b => b.style.pointerEvents = 'none'); });
+  const ok = correct === 6;
+  if (ok) {
+    totalScore++;
+    fireConfetti();
+  }
+  document.getElementById('exp5').classList.add('show');
+  updateScore();
+  if (answered.size === 8) showQuizFinale();
+}
+
+function updateScore() {
+  document.getElementById('scoreNum').textContent = totalScore;
+  document.getElementById('navScoreNum').textContent = totalScore;
+  document.getElementById('navScore').style.display = 'flex';
+  if (answered2.size > 0) updateFinaleText();
+}
+
+function showQuizFinale() {
+  const msg = document.getElementById('finaleMsg');
+  if (totalScore === 8) {
+    msg.innerHTML = '🎉 <strong>Täydellinen tulos!</strong> Hallitset tietosuojan periaatteet täydellisesti.';
+  } else if (totalScore >= 6) {
+    msg.innerHTML = '👍 <strong>Hyvä tulos!</strong> Tietosuojan perusteet ovat hallussa. Kertaa väärät kohdat.';
+  } else if (totalScore >= 4) {
+    msg.innerHTML = '📚 <strong>Kohtuullinen tulos.</strong> Palaa moduulin materiaaliin ja LinkedIn-sääntöön.';
+  } else {
+    msg.innerHTML = '💪 <strong>Harjoitus tekee mestarin.</strong> Lue moduuli 1 uudelleen rauhassa.';
+  }
+  document.getElementById('quizFinale').style.display = 'block';
+  document.getElementById('quizFinale').scrollIntoView({ behavior: 'smooth' });
+}
+
+function checkG2Q(qId, correct) {
+  const card = document.getElementById('g2q' + qId);
+  if (answered2.has(qId)) return;
+  const selected = card.querySelector('.quiz-opt.selected');
+  if (!selected) { alert('Valitse vastaus!'); return; }
+  const user = selected.dataset.opt;
+  answered2.add(qId);
+  card.querySelector('.quiz-submit').disabled = true;
+  card.querySelectorAll('.quiz-opt').forEach(o => o.style.pointerEvents = 'none');
+  if (user === correct) {
+    totalScore2++;
+    selected.classList.add('correct');
+    fireConfetti('confettiContainer2');
+  } else {
+    selected.classList.add('wrong');
+    card.querySelector('.quiz-opt[data-opt="' + correct + '"]')?.classList.add('correct');
+  }
+  card.querySelector('.explanation').classList.add('show');
+  updateScore2();
+  if (answered2.size === 8) showG2QuizFinale();
+}
+
+function checkG2Q5() {
+  if (answered2.has(5)) return;
+  const rows = document.querySelectorAll('#g2q5 .sort-row');
+  let allSelected = true;
+  let correct = 0;
+  rows.forEach(row => {
+    const uv = row.dataset.userVal;
+    const cv = row.dataset.correct;
+    if (!uv) allSelected = false;
+    else {
+      if (uv === cv) correct++;
+      row.querySelectorAll('.sort-btn').forEach(b => {
+        b.classList.remove('chosen-ok','chosen-wrong');
+        if (b.dataset.val === uv) b.classList.add(uv === cv ? 'chosen-ok' : 'chosen-wrong');
+      });
+    }
+  });
+  if (!allSelected) { alert('Valitse jokaiselle riville: Tekoäly automatisoi tai Ihminen pysyy vahvana'); return; }
+  answered2.add(5);
+  document.getElementById('g2q5').querySelector('.quiz-submit').disabled = true;
+  rows.forEach(r => { r.querySelectorAll('.sort-btn').forEach(b => b.style.pointerEvents = 'none'); });
+  if (correct === 6) {
+    totalScore2++;
+    fireConfetti('confettiContainer2');
+  }
+  document.getElementById('g2exp5').classList.add('show');
+  updateScore2();
+  if (answered2.size === 8) showG2QuizFinale();
+}
+
+function updateScore2() {
+  document.getElementById('scoreNum2').textContent = totalScore2;
+  document.getElementById('navScoreNum2').textContent = totalScore2;
+  document.getElementById('navScore2').style.display = 'flex';
+}
+
+function showG2QuizFinale() {
+  const msg = document.getElementById('g2finaleMsg');
+  if (totalScore2 === 8) {
+    msg.innerHTML = '🎉 <strong>Täydellinen tulos!</strong> Ymmärrät tekoälyn roolin työelämässä erinomaisesti.';
+  } else if (totalScore2 >= 6) {
+    msg.innerHTML = '👍 <strong>Hyvä tulos!</strong> Perusteet ovat hallussa. Kertaa väärät kohdat.';
+  } else if (totalScore2 >= 4) {
+    msg.innerHTML = '📚 <strong>Kohtuullinen tulos.</strong> Palaa moduulin materiaaliin — erityisesti historian esimerkkeihin.';
+  } else {
+    msg.innerHTML = '💪 <strong>Harjoitus tekee mestarin.</strong> Lue moduuli 2 uudelleen rauhassa.';
+  }
+  document.getElementById('g2quizFinale').style.display = 'block';
+  document.getElementById('g2quizFinale').scrollIntoView({ behavior: 'smooth' });
+  updateFinaleText();
+}
+
+function updateFinaleText() {
+  const total = totalScore + totalScore2;
+  const txt = document.getElementById('finaleText');
+  if (total === 16) {
+    txt.textContent = '16/16 — Täydellinen! Molemmat moduulit hallussa. Olet valmis viimeiseen kurssipäivään!';
+  } else {
+    txt.textContent = 'Peli 1: ' + totalScore + '/8 · Peli 2: ' + totalScore2 + '/8 — Yhteensä ' + total + '/16. Kertaa väärät vastaukset!';
+  }
+}
+
+function updateProgress() {
+  const st = window.scrollY, dh = document.documentElement.scrollHeight - window.innerHeight;
+  document.getElementById('progress-bar').style.width = (dh > 0 ? (st / dh) * 100 : 0) + '%';
+}
+window.addEventListener('scroll', updateProgress, { passive: true });
+</script>
+<script src="/js/feedback.js"></script>
+</body>
+</html>
