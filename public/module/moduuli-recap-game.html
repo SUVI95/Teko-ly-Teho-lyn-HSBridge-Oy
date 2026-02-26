@@ -411,8 +411,8 @@ h1.hero-title em{font-style:italic;color:#c4b5fd;}
     <div class="section-label">Peli 3</div>
     <h2 class="section-h2">AI <em>Prompting Basics</em></h2>
     <div class="divider"></div>
-    <p class="lead">8 kysymystä — monivalinta, totta/tarua, avoin kirjoitustehtävä ja käytännön AI-tehtävä. Moduuli 3 kertaus!</p>
-    <div class="score-display" style="margin-bottom:1.5rem;">Pisteet: <span class="score-num" id="scoreNum3">0</span>/8</div>
+    <p class="lead">5 kysymystä — monivalinta, totta/tarua ja avoin kirjoitustehtävä. Moduuli 3 kertaus!</p>
+    <div class="score-display" style="margin-bottom:1.5rem;">Pisteet: <span class="score-num" id="scoreNum3">0</span>/5</div>
     <div id="confettiContainer3" class="confetti"></div>
 
     <div id="g3q1" class="quiz-card">
@@ -474,41 +474,6 @@ h1.hero-title em{font-style:italic;color:#c4b5fd;}
       </div>
       <div class="explanation" id="g3exp5"><strong>Oikea vastaus: C</strong> — Vaihtoehto C sisältää roolin, kontekstin, tehtävän, formaatin ja tyylin. Muut vaihtoehdot ovat liian epämääräisiä — tekoäly ei tiedä kuka olet, mitä haluat tai miten haluat sen.</div>
       <button class="quiz-submit" onclick="checkG3Q(5,'C')">Tarkista</button>
-    </div>
-
-    <div id="g3q6" class="quiz-card">
-      <h3>Kysymys 6 — Käytännön AI-tehtävä</h3>
-      <div class="q-text">Avaa ChatGPT tai Claude. Kopioi heikko prompt, lähetä se, katso vastaus. Kirjoita sitten parannettu versio ja lähetä sekin. Vertaa tuloksia!</div>
-      <div class="practical-task">
-        <p style="font-size:0.85rem;margin-bottom:0.5rem;"><strong>Heikko prompt:</strong></p>
-        <div class="copy-prompt">Miten saan töitä?</div>
-        <p style="font-size:0.85rem;margin:1rem 0 0.5rem;"><strong>Parannettu prompt:</strong></p>
-        <div class="copy-prompt">Olet kokenut urastrategi. Olen 32-vuotias asiakaspalvelija jolla on 6 vuotta kokemusta kaupan alalta Tampereelta. Haluan siirtyä markkinointiin. Anna minulle 3 konkreettista ensimmäistä askelta joilla pääsen lähemmäs tavoitettani tällä viikolla. Vastaa lyhyesti ja käytännönläheisesti.</div>
-        <p style="font-size:0.9rem;margin-top:1rem;color:var(--muted);">Parannettu prompt tuottaa spesifimmän, henkilökohtaisemman ja käytännöllisemmän vastauksen — tekoäly tietää kuka olet ja mitä haluat.</p>
-      </div>
-      <div class="explanation" id="g3exp6"><strong>Hyvä!</strong> Kun olet tehnyt tehtävän, paina alla olevaa nappia. Kirjaa havaintosi (kumpi vastaus oli hyödyllisempi?) ja tuo ne seuraavaan sessioon.</div>
-      <button class="quiz-submit" onclick="checkG3Practical(6)">Tehtävä valmis ✓</button>
-    </div>
-
-    <div id="g3q7" class="quiz-card">
-      <h3>Kysymys 7 — Totta vai tarua</h3>
-      <div class="q-text">Jos tekoäly antaa huonon vastauksen, se tarkoittaa että tekoäly on huono eikä kannata käyttää sitä enempää.</div>
-      <div class="quiz-options totta-tarua">
-        <div class="quiz-opt" data-opt="TOTTA"><span class="opt-letter">✓</span> Totta</div>
-        <div class="quiz-opt" data-opt="TARUA"><span class="opt-letter">✗</span> Tarua</div>
-      </div>
-      <div class="explanation" id="g3exp7"><strong>Oikea vastaus: Tarua</strong> — Huono vastaus tarkoittaa lähes aina huonoa promptia. Kirjoita prompt uudelleen — tarkenna, lisää kontekstia, muuta roolia. Epäselvä prompt tuottaa epäselvän vastauksen.</div>
-      <button class="quiz-submit" onclick="checkG3Q(7,'TARUA')">Tarkista</button>
-    </div>
-
-    <div id="g3q8" class="quiz-card">
-      <h3>Kysymys 8 — Avoin kirjoitustehtävä</h3>
-      <div class="q-text">Kirjoita oma Master Prompt! Sisällytä: taustasi (ammatti, kokemus, koulutus), vahvuutesi, tavoitteesi, tilanteesi (sijainti, rajoitteet), tyylisi (miten haluat tekoälyn vastaavan).</div>
-      <div class="open-task">
-        <textarea id="g3q8input" placeholder="Kirjoita Master Promptisi tähän..."></textarea>
-      </div>
-      <div class="explanation" id="g3exp8"><strong>Esimerkki:</strong> "Olen 28-vuotias tradenomi Kuopiosta jolla on 4 vuotta kokemusta taloushallinnosta. Olen hyvä luvuissa, Excel-osaamisessa ja asiakasviestinnässä. Etsin kokopäivätyötä taloushallinnosta Kuopion alueelta. Tavoitteeni on työllistyä 2 kuukauden sisällä. En pysty muuttamaan. Vastaa aina suomeksi, käytännönläheisesti ja lyhyesti." — <em>Hyvä Master Prompt on sinun käyntikorttisi tekoälylle. Liitä se tärkeiden keskustelujen alkuun!</em></div>
-      <button class="quiz-submit" onclick="checkG3Open(8)">Lähetä Master Prompt</button>
     </div>
 
     <div id="g3quizFinale" class="quiz-card" style="display:none;text-align:center;">
@@ -835,13 +800,14 @@ function switchToGame(n) {
   if (panel) panel.classList.add('active');
   if (tab) tab.classList.add('active');
   [answered, answered2, answered3, answered4, answered5].forEach((set, i) => {
-    if (set.size === 8) {
+    const target = i === 2 ? 5 : 8;
+    if (set.size === target) {
       const t = document.querySelector('.game-tab[data-game="' + (i + 1) + '"]');
       if (t) t.classList.add('done');
     }
   });
   if (n === 'finale') document.querySelector('.game-tab[data-game="finale"]')?.classList.add('done');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.querySelector('.game-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function fireConfetti(containerId) {
@@ -880,7 +846,7 @@ document.querySelectorAll('#g2q1,#g2q2,#g2q3,#g2q4,#g2q6,#g2q7,#g2q8').forEach(c
   });
 });
 
-document.querySelectorAll('#g3q1,#g3q2,#g3q3,#g3q5,#g3q7').forEach(card => {
+document.querySelectorAll('#g3q1,#g3q2,#g3q3,#g3q5').forEach(card => {
   card.querySelectorAll('.quiz-opt').forEach(opt => {
     opt.onclick = () => selectG3Opt(card.id.replace('g3q',''), opt.dataset.opt);
   });
@@ -1134,7 +1100,7 @@ function checkG3Q(qId, correct) {
   }
   card.querySelector('.explanation').classList.add('show');
   updateScore3();
-  if (answered3.size === 8) showG3QuizFinale();
+  if (answered3.size === 5) showG3QuizFinale();
 }
 
 function checkG3Open(qId) {
@@ -1152,19 +1118,7 @@ function checkG3Open(qId) {
   document.getElementById('g3exp' + qId).classList.add('show');
   fireConfetti('confettiContainer3');
   updateScore3();
-  if (answered3.size === 8) showG3QuizFinale();
-}
-
-function checkG3Practical(qId) {
-  if (answered3.has(qId)) return;
-  answered3.add(qId);
-  document.getElementById('g3q' + qId).querySelector('.quiz-submit').disabled = true;
-  document.getElementById('g3q' + qId).querySelector('.quiz-submit').textContent = 'Tehtävä tehty ✓';
-  totalScore3++;
-  document.getElementById('g3exp' + qId).classList.add('show');
-  fireConfetti('confettiContainer3');
-  updateScore3();
-  if (answered3.size === 8) showG3QuizFinale();
+  if (answered3.size === 5) showG3QuizFinale();
 }
 
 function updateScore3() {
@@ -1175,14 +1129,14 @@ function updateScore3() {
 
 function showG3QuizFinale() {
   const msg = document.getElementById('g3finaleMsg');
-  if (totalScore3 === 8) {
-    msg.innerHTML = '🎉 <strong>Täydellinen tulos!</strong> Olet prompting-mestari. Master Promptisi on valmis käyttöön!';
-  } else if (totalScore3 >= 6) {
-    msg.innerHTML = '👍 <strong>Hyvä tulos!</strong> Perusteet ovat hallussa. Harjoittele kirjoittamaan tarkempia prompteja.';
+  if (totalScore3 === 5) {
+    msg.innerHTML = '🎉 <strong>Täydellinen tulos!</strong> Olet prompting-mestari!';
   } else if (totalScore3 >= 4) {
-    msg.innerHTML = '📚 <strong>Kohtuullinen tulos.</strong> Palaa kuuden elementin listaan ja harjoittele käytännön tehtävät uudelleen.';
+    msg.innerHTML = '👍 <strong>Hyvä tulos!</strong> Perusteet ovat hallussa. Harjoittele kirjoittamaan tarkempia prompteja.';
+  } else if (totalScore3 >= 3) {
+    msg.innerHTML = '📚 <strong>Kohtuullinen tulos.</strong> Palaa kuuden elementin listaan.';
   } else {
-    msg.innerHTML = '💪 <strong>Harjoitus tekee mestarin.</strong> Avaa tekoäly ja kokeile prompteja käytännössä — oppiminen tapahtuu tekemällä!';
+    msg.innerHTML = '💪 <strong>Harjoitus tekee mestarin.</strong> Avaa tekoäly ja kokeile prompteja käytännössä!';
   }
   document.getElementById('g3quizFinale').style.display = 'block';
   document.getElementById('g3quizFinale').scrollIntoView({ behavior: 'smooth' });
@@ -1354,10 +1308,10 @@ function showG5QuizFinale() {
 function updateFinaleText() {
   const total = totalScore + totalScore2 + totalScore3 + totalScore4 + totalScore5;
   const txt = document.getElementById('finaleText');
-  if (total === 40) {
-    txt.textContent = '40/40 — Täydellinen! Kaikki viisi moduulia hallussa. Olet valmis viimeiseen kurssipäivään! 🏆';
+  if (total === 37) {
+    txt.textContent = '37/37 — Täydellinen! Kaikki viisi moduulia hallussa. Olet valmis viimeiseen kurssipäivään! 🏆';
   } else {
-    txt.textContent = 'Peli 1: ' + totalScore + '/8 · Peli 2: ' + totalScore2 + '/8 · Peli 3: ' + totalScore3 + '/8 · Peli 4: ' + totalScore4 + '/8 · Peli 5: ' + totalScore5 + '/8 — Yhteensä ' + total + '/40. Kertaa väärät vastaukset!';
+    txt.textContent = 'Peli 1: ' + totalScore + '/8 · Peli 2: ' + totalScore2 + '/8 · Peli 3: ' + totalScore3 + '/5 · Peli 4: ' + totalScore4 + '/8 · Peli 5: ' + totalScore5 + '/8 — Yhteensä ' + total + '/37. Kertaa väärät vastaukset!';
   }
 }
 
