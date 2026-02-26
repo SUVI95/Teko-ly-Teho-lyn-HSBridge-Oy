@@ -612,7 +612,12 @@ const fadeObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isInte
 document.querySelectorAll('.fade-up').forEach(el=>fadeObs.observe(el));
 
 function saveReflection() {
-  window.saveReflectionToAPI('moduuli-ai-simulation-lab');
+  if (typeof window.saveReflectionToAPI === 'function') {
+    window.saveReflectionToAPI('moduuli-ai-simulation-lab');
+  } else {
+    try { const t = document.getElementById('reflectionText'); if (t && t.value.trim()) localStorage.setItem('moduuli-ai-simulation-lab_reflection', t.value.trim()); } catch(e) {}
+    var c = document.getElementById('reflConfirm'); if (c) { c.style.display='block'; c.textContent='✓ Tallennettu paikallisesti'; setTimeout(function(){c.style.display='none';}, 3000); }
+  }
 }
 
 function copyPrompt(btn, id) {

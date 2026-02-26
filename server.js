@@ -134,6 +134,11 @@ app.get('/admin', authenticateToken, (req, res, next) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
 
+// Direct shortcut for AI Simulation Lab (works without login)
+app.get('/ai-simulation-lab', (req, res) => {
+  res.redirect(302, '/module/moduuli-ai-simulation-lab');
+});
+
 app.get('/module/:moduleId', (req, res) => {
   const moduleId = req.params.moduleId;
   
