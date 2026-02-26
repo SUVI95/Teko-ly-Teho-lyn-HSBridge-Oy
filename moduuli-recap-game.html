@@ -109,7 +109,17 @@ h1.hero-title em{font-style:italic;color:#c4b5fd;}
 .btn-back{display:inline-flex;align-items:center;gap:8px;background:transparent;color:rgba(255,255,255,0.5);padding:15px 24px;border-radius:6px;font-weight:500;font-size:0.95rem;border:1px solid rgba(255,255,255,0.2);text-decoration:none;transition:all 0.25s;}
 .btn-back:hover{color:#fff;border-color:rgba(255,255,255,0.4);}
 .finale-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
-@media(max-width:768px){nav{padding:0 1.25rem;}.section{padding:80px 1.25rem 4rem;}}
+
+/* Tabbed game switcher — one game visible at a time */
+.game-tabs{position:sticky;top:64px;z-index:90;background:rgba(245,243,239,0.98);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0.75rem 1.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;}
+.game-tab{padding:10px 18px;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;border:2px solid var(--border);background:#fff;color:var(--muted);transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.game-tab:hover{border-color:var(--accent);color:var(--accent);}
+.game-tab.active{border-color:var(--accent);background:var(--accent);color:#fff;}
+.game-tab.done{color:var(--accent3);border-color:rgba(34,197,94,0.4);}
+.game-tab.done.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.game-panel{display:none;}
+.game-panel.active{display:block;animation:fadeIn 0.3s ease;}
+@media(max-width:768px){nav{padding:0 1.25rem;}.section{padding:80px 1.25rem 4rem;}.game-tabs{top:64px;padding:0.5rem 1rem;}.game-tab{padding:8px 12px;font-size:0.8rem;}}
 </style>
 </head>
 <body>
@@ -139,17 +149,27 @@ h1.hero-title em{font-style:italic;color:#c4b5fd;}
     <h1 class="hero-title">AI-Polku <em>Loppuputki</em></h1>
     <p class="hero-sub">Viikon suurta kertauspeli — testaa mitä olet oppinut. Pelaa, vastaa, voita!</p>
     <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
-      <div class="hero-cta" onclick="document.getElementById('game1').scrollIntoView({behavior:'smooth'})">Peli 1: Tietosuoja</div>
-      <div class="hero-cta" onclick="document.getElementById('game2').scrollIntoView({behavior:'smooth'})">Peli 2: Uhka vai mahdollisuus?</div>
-      <div class="hero-cta" onclick="document.getElementById('game3').scrollIntoView({behavior:'smooth'})">Peli 3: AI Prompting</div>
-      <div class="hero-cta" onclick="document.getElementById('game4').scrollIntoView({behavior:'smooth'})">Peli 4: AI-työkalut</div>
-      <div class="hero-cta" onclick="document.getElementById('game5').scrollIntoView({behavior:'smooth'})">Peli 5: Prompting työnhaussa</div>
+      <div class="hero-cta" onclick="switchToGame(1)">Peli 1: Tietosuoja</div>
+      <div class="hero-cta" onclick="switchToGame(2)">Peli 2: Uhka vai mahdollisuus?</div>
+      <div class="hero-cta" onclick="switchToGame(3)">Peli 3: AI Prompting</div>
+      <div class="hero-cta" onclick="switchToGame(4)">Peli 4: AI-työkalut</div>
+      <div class="hero-cta" onclick="switchToGame(5)">Peli 5: Prompting työnhaussa</div>
     </div>
   </div>
 </section>
 
+<!-- GAME TABS — sticky switcher, one game visible at a time -->
+<div class="game-tabs">
+  <button type="button" class="game-tab active" data-game="1" onclick="switchToGame(1)">1. Tietosuoja</button>
+  <button type="button" class="game-tab" data-game="2" onclick="switchToGame(2)">2. Uhka vai mahdollisuus</button>
+  <button type="button" class="game-tab" data-game="3" onclick="switchToGame(3)">3. AI Prompting</button>
+  <button type="button" class="game-tab" data-game="4" onclick="switchToGame(4)">4. AI-työkalut</button>
+  <button type="button" class="game-tab" data-game="5" onclick="switchToGame(5)">5. Prompting työnhaussa</button>
+  <button type="button" class="game-tab" data-game="finale" onclick="switchToGame('finale')">🏆 Yhteenveto</button>
+</div>
+
 <!-- GAME 1: TIETOSUOJA QUIZ -->
-<section class="section section-alt" id="game1" data-index="1">
+<section class="section section-alt game-panel active" id="game1" data-index="1">
   <div class="section-inner">
     <div class="section-label">Peli 1</div>
     <h2 class="section-h2">Tietosuoja <em>Quiz</em></h2>
@@ -261,13 +281,13 @@ h1.hero-title em{font-style:italic;color:#c4b5fd;}
     <div id="quizFinale" class="quiz-card" style="display:none;text-align:center;">
       <h2 class="section-h2" style="margin-bottom:1rem;">Tietosuoja Quiz <em>— valmis!</em></h2>
       <p class="prose" id="finaleMsg"></p>
-      <button class="quiz-submit" onclick="document.getElementById('game2').scrollIntoView({behavior:'smooth'})">Seuraava: Peli 2 →</button>
+      <button class="quiz-submit" onclick="switchToGame(2)">Seuraava: Peli 2 →</button>
     </div>
   </div>
 </section>
 
 <!-- GAME 2: TEKOÄLY UHKA VAI MAHDOLLISUUS -->
-<section class="section" id="game2" data-index="2">
+<section class="section game-panel" id="game2" data-index="2">
   <div class="section-inner">
     <div class="section-label">Peli 2</div>
     <h2 class="section-h2">Tekoäly: <em>Uhka vai mahdollisuus?</em></h2>
@@ -379,13 +399,13 @@ h1.hero-title em{font-style:italic;color:#c4b5fd;}
     <div id="g2quizFinale" class="quiz-card" style="display:none;text-align:center;">
       <h2 class="section-h2" style="margin-bottom:1rem;">Uhka vai mahdollisuus? <em>— valmis!</em></h2>
       <p class="prose" id="g2finaleMsg"></p>
-      <button class="quiz-submit" onclick="document.getElementById('game3').scrollIntoView({behavior:'smooth'}); setTimeout(function(){ var b=document.getElementById('g3Banner'); if(b)b.style.display='block'; }, 400);">🎉 Seuraava: Peli 3 — AI Prompting →</button>
+      <button class="quiz-submit" onclick="switchToGame(3); var b=document.getElementById('g3Banner'); if(b)b.style.display='block'; ">🎉 Seuraava: Peli 3 — AI Prompting →</button>
     </div>
   </div>
 </section>
 
 <!-- GAME 3: AI PROMPTING BASICS -->
-<section class="section section-alt" id="game3" data-index="3">
+<section class="section section-alt game-panel" id="game3" data-index="3">
   <div class="section-inner">
     <div class="level-up-banner" id="g3Banner" style="display:none;">🚀 Taso 3 avattu! AI Prompting Basics — viimeinen haaste!</div>
     <div class="section-label">Peli 3</div>
@@ -494,13 +514,13 @@ h1.hero-title em{font-style:italic;color:#c4b5fd;}
     <div id="g3quizFinale" class="quiz-card" style="display:none;text-align:center;">
       <h2 class="section-h2" style="margin-bottom:1rem;">AI Prompting Basics <em>— valmis!</em></h2>
       <p class="prose" id="g3finaleMsg"></p>
-      <button class="quiz-submit" onclick="document.getElementById('game4').scrollIntoView({behavior:'smooth'}); setTimeout(function(){ var b=document.getElementById('g4Banner'); if(b)b.style.display='block'; }, 400);">🎉 Seuraava: Peli 4 — AI-työkalut →</button>
+      <button class="quiz-submit" onclick="switchToGame(4); var b=document.getElementById('g4Banner'); if(b)b.style.display='block'; ">🎉 Seuraava: Peli 4 — AI-työkalut →</button>
     </div>
   </div>
 </section>
 
 <!-- GAME 4: AI-TYÖKALUT TUTUKSI -->
-<section class="section" id="game4" data-index="4">
+<section class="section game-panel" id="game4" data-index="4">
   <div class="section-inner">
     <div class="level-up-banner" id="g4Banner" style="display:none;">🚀 Taso 4 avattu! AI-työkalut tutuksi — ChatGPT, Claude, Copilot ja Gemini!</div>
     <div class="section-label">Peli 4</div>
@@ -649,13 +669,13 @@ Kirjoita minulle:
     <div id="g4quizFinale" class="quiz-card" style="display:none;text-align:center;">
       <h2 class="section-h2" style="margin-bottom:1rem;">AI-työkalut tutuksi <em>— valmis!</em></h2>
       <p class="prose" id="g4finaleMsg"></p>
-      <button class="quiz-submit" onclick="document.getElementById('game5').scrollIntoView({behavior:'smooth'}); setTimeout(function(){ var b=document.getElementById('g5Banner'); if(b)b.style.display='block'; }, 400);">🎉 Seuraava: Peli 5 — Prompting työnhaussa →</button>
+      <button class="quiz-submit" onclick="switchToGame(5); var b=document.getElementById('g5Banner'); if(b)b.style.display='block'; ">🎉 Seuraava: Peli 5 — Prompting työnhaussa →</button>
     </div>
   </div>
 </section>
 
 <!-- GAME 5: PROMPTING TYÖNHAUSSA -->
-<section class="section section-alt" id="game5" data-index="5">
+<section class="section section-alt game-panel" id="game5" data-index="5">
   <div class="section-inner">
     <div class="level-up-banner" id="g5Banner" style="display:none;">🚀 Taso 5 avattu! Prompting työnhaussa — Master Prompt ja roolipersoonat!</div>
     <div class="section-label">Peli 5</div>
@@ -770,13 +790,13 @@ Kirjoita minulle:
     <div id="g5quizFinale" class="quiz-card" style="display:none;text-align:center;">
       <h2 class="section-h2" style="margin-bottom:1rem;">Prompting työnhaussa <em>— valmis!</em></h2>
       <p class="prose" id="g5finaleMsg"></p>
-      <button class="quiz-submit" onclick="document.getElementById('finale').scrollIntoView({behavior:'smooth'})">🏆 Näytä loppuyhteenveto</button>
+      <button class="quiz-submit" onclick="switchToGame('finale')">🏆 Näytä loppuyhteenveto</button>
     </div>
   </div>
 </section>
 
 <!-- FINALE -->
-<section class="section" id="finale" data-index="6">
+<section class="section game-panel" id="finale" data-index="6">
   <div class="section-inner">
     <div class="finale-card">
       <span class="finale-icon">🎮</span>
@@ -805,6 +825,24 @@ let totalScore4 = 0;
 const answered4 = new Set();
 let totalScore5 = 0;
 const answered5 = new Set();
+
+function switchToGame(n) {
+  document.querySelectorAll('.game-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.game-tab').forEach(t => { t.classList.remove('active'); t.classList.remove('done'); });
+  const panelId = n === 'finale' ? 'finale' : 'game' + n;
+  const tab = document.querySelector('.game-tab[data-game="' + (n === 'finale' ? 'finale' : n) + '"]');
+  const panel = document.getElementById(panelId);
+  if (panel) panel.classList.add('active');
+  if (tab) tab.classList.add('active');
+  [answered, answered2, answered3, answered4, answered5].forEach((set, i) => {
+    if (set.size === 8) {
+      const t = document.querySelector('.game-tab[data-game="' + (i + 1) + '"]');
+      if (t) t.classList.add('done');
+    }
+  });
+  if (n === 'finale') document.querySelector('.game-tab[data-game="finale"]')?.classList.add('done');
+  document.querySelector('.game-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 function fireConfetti(containerId) {
   const container = document.getElementById(containerId || 'confettiContainer');
