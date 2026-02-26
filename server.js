@@ -136,23 +136,29 @@ app.get('/admin', authenticateToken, (req, res, next) => {
 
 // Direct shortcut for AI Simulation Lab (works without login) - serve file directly
 app.get('/ai-simulation-lab', (req, res) => {
-  const p = path.join(__dirname, 'public', 'ai-simulation-lab.html');
-  if (fs.existsSync(p)) {
-    return res.sendFile(p);
-  }
+  const candidates = [
+    path.join(__dirname, 'public', 'ai-simulation-lab.html'),
+    path.join(process.cwd(), 'public', 'ai-simulation-lab.html'),
+    path.join(__dirname, 'ai-simulation-lab.html')
+  ];
+  const p = candidates.find(c => fs.existsSync(c));
+  if (p) return res.sendFile(p);
   res.redirect(302, '/ai-simulation-lab.html');
 });
 
 app.get('/module/:moduleId', (req, res) => {
   const moduleId = req.params.moduleId;
   
-  // Try multiple paths (public first for Vercel deploy)
+  // Try multiple paths (Vercel may use different cwd)
   let paths = [
+    path.join(__dirname, 'public', 'ai-simulation-lab.html'),
+    path.join(process.cwd(), 'public', 'ai-simulation-lab.html'),
     path.join(__dirname, 'public', 'module', `${moduleId}.html`),
+    path.join(process.cwd(), 'public', 'module', `${moduleId}.html`),
     path.join(__dirname, `${moduleId}.html`)
   ];
-  if (moduleId === 'moduuli-ai-simulation-lab') {
-    paths.unshift(path.join(__dirname, 'public', 'ai-simulation-lab.html'));
+  if (moduleId !== 'moduuli-ai-simulation-lab') {
+    paths = paths.filter(x => !x.includes('ai-simulation-lab'));
   }
   const modulePath = paths.find(p => fs.existsSync(p));
   
