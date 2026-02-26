@@ -137,10 +137,14 @@ app.get('/admin', authenticateToken, (req, res, next) => {
 app.get('/module/:moduleId', (req, res) => {
   const moduleId = req.params.moduleId;
   
-  const modulePath = path.join(__dirname, `${moduleId}.html`);
+  // Try public/module first (guaranteed in Vercel deploy), then project root
+  const paths = [
+    path.join(__dirname, 'public', 'module', `${moduleId}.html`),
+    path.join(__dirname, `${moduleId}.html`)
+  ];
+  const modulePath = paths.find(p => fs.existsSync(p));
   
-  // Check if file exists
-  if (!fs.existsSync(modulePath)) {
+  if (!modulePath) {
     return res.status(404).send(`
       <html>
         <body style="font-family: Arial; text-align: center; padding: 50px; background: #050810; color: #e2e8f0;">
