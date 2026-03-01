@@ -214,6 +214,60 @@ nav {
   margin-bottom: 2rem;
 }
 
+.profile-panel {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.profile-badge {
+  display: inline-block;
+  margin-left: 0.6rem;
+  font-size: 0.72rem;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  background: rgba(37,99,168,0.08);
+  border: 1px solid rgba(37,99,168,0.2);
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0.9rem;
+}
+
+.profile-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.9rem;
+  background: var(--paper);
+}
+
+.profile-card h4 {
+  margin: 0 0 0.3rem 0;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.profile-meta {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-bottom: 0.55rem;
+}
+
+.profile-row {
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+  line-height: 1.55;
+}
+
 .module-feedback-table-wrap {
   overflow-x: auto;
   border: 1px solid var(--border);
@@ -702,6 +756,15 @@ nav {
         </div>
       </div>
 
+      <div class="profile-panel">
+        <div class="section-header" style="margin-bottom:0.75rem;">
+          <h2 class="section-title" style="font-size:1.6rem;">Opiskelijan profiili <span class="profile-badge">Kurssin aloitusprofiili</span></h2>
+        </div>
+        <div id="courseStartProfileContainer">
+          <div class="loading">Ladataan aloitusprofiileja...</div>
+        </div>
+      </div>
+
       <div class="module-feedback-panel">
         <div class="section-header" style="margin-bottom:0.75rem;">
           <h2 class="section-title" style="font-size:1.6rem;">Moduulipalautteet</h2>
@@ -761,10 +824,12 @@ nav {
     let currentStudentId = null;
     let currentStudentData = null;
     let moduleReflections = [];
+    let courseStartProfiles = [];
 
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       await loadStudents();
+      await loadCourseStartProfiles();
       await loadModuleReflections();
       setupEventListeners();
     });
@@ -840,6 +905,14 @@ nav {
       }
     }
 
+    async function loadCourseStartProfiles() {
+      const data = await apiCall('/admin/course-start-profiles');
+      if (data && data.courseStartProfiles) {
+        courseStartProfiles = data.courseStartProfiles;
+        renderCourseStartProfiles();
+      }
+    }
+
     function renderModuleReflections() {
       const container = document.getElementById('moduleFeedbackContainer');
       if (!moduleReflections.length) {
@@ -886,6 +959,35 @@ nav {
               `).join('')}
             </tbody>
           </table>
+        </div>
+      `;
+    }
+
+    function renderCourseStartProfiles() {
+      const container = document.getElementById('courseStartProfileContainer');
+      if (!courseStartProfiles.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🧭</div>
+            <p>Ei aloitusprofiileja vielä</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="profile-grid">
+          ${courseStartProfiles.map((p) => `
+            <div class="profile-card">
+              <h4>${escapeHtml(p.name || 'Nimetön')}</h4>
+              <div class="profile-meta">${escapeHtml(p.email || '')} · ${formatDate(p.created_at) || '-'}</div>
+              <div class="profile-row"><strong>Kokemustaso:</strong> ${escapeHtml(p.ai_experience_level || '-')}</div>
+              <div class="profile-row"><strong>Tutut työkalut:</strong> ${formatArray(p.tools_known)}</div>
+              <div class="profile-row"><strong>Haluaa oppia:</strong> ${formatArray(p.wants_to_learn)}</div>
+              <div class="profile-row"><strong>Suurin huoli:</strong> ${escapeHtml(p.biggest_worry || '-')}</div>
+              <div class="profile-row"><strong>2 viikon tavoite:</strong> ${escapeHtml(p.personal_goal || '-')}</div>
+            </div>
+          `).join('')}
         </div>
       `;
     }
@@ -1547,6 +1649,10 @@ nav {
       const second = Array.isArray(row.apply_where) ? row.apply_where : [];
       const merged = [...first, ...second];
       return merged.length ? merged.map(v => escapeHtml(v)).join(', ') : '-';
+    }
+
+    function formatArray(arr) {
+      return Array.isArray(arr) && arr.length ? arr.map((v) => escapeHtml(v)).join(', ') : '-';
     }
 
     // Global function for loading student detail

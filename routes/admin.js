@@ -34,6 +34,22 @@ async function ensureModuleReflectionsTable() {
   await pool.query(`ALTER TABLE module_reflections ADD COLUMN IF NOT EXISTS quiz_score INTEGER`);
 }
 
+async function ensureCourseStartProfilesTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS course_start_profiles (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      module_name VARCHAR(120) NOT NULL,
+      ai_experience_level VARCHAR(120),
+      tools_known JSONB DEFAULT '[]'::jsonb,
+      wants_to_learn JSONB DEFAULT '[]'::jsonb,
+      biggest_worry TEXT,
+      personal_goal TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
 // Get all reflections
 router.get('/reflections', authenticateToken, requireAdmin, async (req, res) => {
   try {
@@ -294,6 +310,26 @@ router.get('/module-reflections', authenticateToken, requireAdmin, async (req, r
   } catch (error) {
     console.error('Get module reflections error:', error);
     res.status(500).json({ error: 'Failed to get module reflections' });
+  }
+});
+
+// Get course start profiles (module 2 "Kerro meille sinusta")
+router.get('/course-start-profiles', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    await ensureCourseStartProfilesTable();
+    const result = await pool.query(`
+      SELECT csp.id, csp.module_name, csp.ai_experience_level, csp.tools_known, csp.wants_to_learn,
+             csp.biggest_worry, csp.personal_goal, csp.created_at,
+             u.id AS user_id, u.name, u.email
+      FROM course_start_profiles csp
+      JOIN users u ON u.id = csp.user_id
+      ORDER BY csp.created_at DESC
+      LIMIT 500
+    `);
+    res.json({ courseStartProfiles: result.rows });
+  } catch (error) {
+    console.error('Get course start profiles error:', error);
+    res.status(500).json({ error: 'Failed to get course start profiles' });
   }
 });
 

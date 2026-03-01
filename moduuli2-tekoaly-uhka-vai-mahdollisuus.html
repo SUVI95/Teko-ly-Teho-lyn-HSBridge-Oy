@@ -137,6 +137,90 @@ h1.hero-title em { font-style: italic; color: #a8c4e8; }
 .tl-content h4 { font-size: 0.97rem; font-weight: 600; color: var(--ink); margin-bottom: 0.35rem; }
 .tl-content p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
 
+/* COURSE START PROFILE (interactive) */
+.profile-checkin {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  padding: 1.5rem;
+}
+.profile-step { display: none; opacity: 0; transform: translateY(10px); transition: all .25s ease; }
+.profile-step.active { display: block; opacity: 1; transform: translateY(0); }
+.profile-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+}
+.profile-sub { font-size: 0.9rem; color: var(--muted); margin-bottom: 1rem; }
+.exp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+.exp-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  padding: 0.8rem;
+  cursor: pointer;
+  font-size: 0.93rem;
+  color: var(--text);
+}
+.exp-card.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,168,0.12); color: var(--ink); }
+.tool-chips, .learn-chips { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+.profile-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.profile-chip.selected { border-color: var(--accent); color: var(--accent); background: rgba(37,99,168,0.08); }
+.worry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+.worry-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.worry-card.selected { border-color: var(--accent2); background: rgba(199,91,58,0.07); }
+.profile-actions { margin-top: 1rem; display: flex; gap: 0.55rem; flex-wrap: wrap; }
+.profile-btn {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.profile-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.profile-btn.primary:disabled { opacity: 0.55; cursor: not-allowed; }
+.profile-done {
+  border: 1px solid rgba(42,122,75,0.25);
+  background: rgba(42,122,75,0.08);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  color: #1f5f3a;
+  font-weight: 500;
+}
+@media (max-width: 680px) {
+  .exp-grid, .worry-grid { grid-template-columns: 1fr; }
+}
+
 /* REFLECTION */
 .reflection-card { background: var(--ink); border-radius: 16px; padding: 3rem; color: #fff; position: relative; overflow: hidden; }
 .reflection-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 80% 20%, rgba(37,99,168,0.18) 0%, transparent 60%); pointer-events: none; }
@@ -449,8 +533,85 @@ h1.hero-title em { font-style: italic; color: #a8c4e8; }
   </div>
 </section>
 
+<!-- KERRO MEILLE SINUSTA -->
+<section class="section section-alt" id="aloitusprofiili" data-index="4">
+  <div class="section-inner fade-up">
+    <div class="section-label">Kerro meille sinusta</div>
+    <h2 class="section-h2">Kerro meille<br><em>sinusta</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Pieni aloitusprofiili auttaa kouluttajaa räätälöimään seuraavat sessiot juuri sinulle sopiviksi.</p>
+
+    <div class="profile-checkin" id="profileCheckin">
+      <div id="profileStep1" class="profile-step active">
+        <div class="profile-title">Miten paljon olet käyttänyt tekoälyä ennen tätä kurssia?</div>
+        <div class="exp-grid">
+          <button class="exp-card" onclick="selectExperience(this, '🌱 En juuri ollenkaan — olen täysin uusi')">🌱 En juuri ollenkaan — olen täysin uusi</button>
+          <button class="exp-card" onclick="selectExperience(this, '🔍 Olen kokeillut muutaman kerran')">🔍 Olen kokeillut muutaman kerran</button>
+          <button class="exp-card" onclick="selectExperience(this, '⚙️ Käytän silloin tällöin')">⚙️ Käytän silloin tällöin</button>
+          <button class="exp-card" onclick="selectExperience(this, '🚀 Käytän jo säännöllisesti')">🚀 Käytän jo säännöllisesti</button>
+        </div>
+      </div>
+
+      <div id="profileStep2" class="profile-step">
+        <div class="profile-title">Mitä näistä olet käyttänyt?</div>
+        <div class="tool-chips">
+          <button class="profile-chip" onclick="toggleKnownTool(this, 'ChatGPT')">ChatGPT</button>
+          <button class="profile-chip" onclick="toggleKnownTool(this, 'Claude')">Claude</button>
+          <button class="profile-chip" onclick="toggleKnownTool(this, 'Copilot')">Copilot</button>
+          <button class="profile-chip" onclick="toggleKnownTool(this, 'Gemini')">Gemini</button>
+          <button class="profile-chip" onclick="toggleKnownTool(this, 'En mitään näistä')">En mitään näistä</button>
+        </div>
+        <div style="margin-top:0.8rem;">
+          <input class="field-input" id="knownOtherInput" type="text" placeholder="Joku muu (vapaa teksti)" />
+        </div>
+      </div>
+
+      <div id="profileStep3" class="profile-step">
+        <div class="profile-title">Mitä haluat oppia tällä kurssilla?</div>
+        <div class="learn-chips">
+          <button class="profile-chip" onclick="toggleWants(this, '💼 Käyttää AI:ta työnhaussa')">💼 Käyttää AI:ta työnhaussa</button>
+          <button class="profile-chip" onclick="toggleWants(this, '📄 Kirjoittaa parempia hakemuksia')">📄 Kirjoittaa parempia hakemuksia</button>
+          <button class="profile-chip" onclick="toggleWants(this, '🎤 Valmistautua haastatteluihin')">🎤 Valmistautua haastatteluihin</button>
+          <button class="profile-chip" onclick="toggleWants(this, '📈 Kehittää omaa alaani')">📈 Kehittää omaa alaani</button>
+          <button class="profile-chip" onclick="toggleWants(this, '🤖 Ymmärtää miten AI toimii')">🤖 Ymmärtää miten AI toimii</button>
+          <button class="profile-chip" onclick="toggleWants(this, '💡 Löytää uusia työmahdollisuuksia')">💡 Löytää uusia työmahdollisuuksia</button>
+          <button class="profile-chip" onclick="toggleWants(this, '🛡️ Käyttää AI:ta turvallisesti')">🛡️ Käyttää AI:ta turvallisesti</button>
+          <button class="profile-chip" onclick="toggleWants(this, '🚀 Ehkä aloittaa oman bisnesidean')">🚀 Ehkä aloittaa oman bisnesidean</button>
+        </div>
+      </div>
+
+      <div id="profileStep4" class="profile-step">
+        <div class="profile-title">Mikä mietityttää sinua eniten tekoälyssä?</div>
+        <div class="worry-grid">
+          <button class="worry-card" onclick="selectWorry(this, '😰 Onko se vaikea oppia?')">😰 Onko se vaikea oppia?</button>
+          <button class="worry-card" onclick="selectWorry(this, '🔒 Onko se turvallista käyttää?')">🔒 Onko se turvallista käyttää?</button>
+          <button class="worry-card" onclick="selectWorry(this, '💼 Viekö se minun työni?')">💼 Viekö se minun työni?</button>
+          <button class="worry-card" onclick="selectWorry(this, '🤷 En oikein tiedä mistä aloittaa')">🤷 En oikein tiedä mistä aloittaa</button>
+          <button class="worry-card" onclick="selectWorry(this, '😊 Ei mikään — olen innoissani!')">😊 Ei mikään — olen innoissani!</button>
+        </div>
+      </div>
+
+      <div id="profileStep5" class="profile-step">
+        <div class="profile-title">Mitä haluaisit osata tehdä AI:lla 2 viikon kuluttua?</div>
+        <div class="profile-sub">Vapaaehtoinen</div>
+        <textarea class="field-input" id="profileGoalInput" style="min-height:100px;resize:vertical;" placeholder="Esim: Kirjoittaa hyvän hakemuksen itse, tai käyttää Copilotia töissä joka päivä..."></textarea>
+      </div>
+
+      <div id="profileStep6" class="profile-step">
+        <div class="profile-done">Täydellinen. Nyt tiedämme miten auttaa sinua parhaiten. 🎯</div>
+      </div>
+
+      <div class="profile-actions">
+        <button class="profile-btn" id="profilePrevBtn" onclick="prevProfileStep()" style="display:none;">← Edellinen</button>
+        <button class="profile-btn" id="profileSkipBtn" onclick="skipProfileGoal()" style="display:none;">Ohita</button>
+        <button class="profile-btn primary" id="profileNextBtn" onclick="nextProfileStep()" disabled>Seuraava →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- REFLEKTIO -->
-<section class="section" id="reflektio" data-index="4">
+<section class="section" id="reflektio" data-index="5">
   <div class="section-inner fade-up">
     <div class="section-label">Ennen kuin jatkat</div>
     <h2 class="section-h2">Olet jo ottanut<br><em>askeleen</em></h2>
@@ -593,6 +754,138 @@ function copyField() {
     setTimeout(() => { b.textContent = 'Kopioi Teams-chattiin'; b.classList.remove('ok'); }, 2200);
   });
 }
+
+// ── COURSE START PROFILE (module 2) ─────────────────────
+let profileStep = 1;
+const startProfileData = {
+  ai_experience_level: '',
+  tools_known: [],
+  wants_to_learn: [],
+  biggest_worry: '',
+  personal_goal: ''
+};
+
+function setProfileStep(step) {
+  profileStep = step;
+  document.querySelectorAll('.profile-step').forEach((el, idx) => {
+    el.classList.toggle('active', idx === step - 1);
+  });
+
+  const prevBtn = document.getElementById('profilePrevBtn');
+  const nextBtn = document.getElementById('profileNextBtn');
+  const skipBtn = document.getElementById('profileSkipBtn');
+
+  if (prevBtn) prevBtn.style.display = (step > 1 && step < 6) ? 'inline-flex' : 'none';
+  if (skipBtn) skipBtn.style.display = step === 5 ? 'inline-flex' : 'none';
+
+  if (nextBtn) {
+    if (step >= 6) {
+      nextBtn.style.display = 'none';
+    } else {
+      nextBtn.style.display = 'inline-flex';
+      nextBtn.disabled = !validateProfileStep(step);
+      nextBtn.textContent = step === 5 ? 'Tallenna →' : 'Seuraava →';
+    }
+  }
+}
+
+function validateProfileStep(step) {
+  if (step === 1) return !!startProfileData.ai_experience_level;
+  if (step === 2) return true;
+  if (step === 3) return startProfileData.wants_to_learn.length > 0;
+  if (step === 4) return !!startProfileData.biggest_worry;
+  if (step === 5) return true;
+  return true;
+}
+
+function selectExperience(btn, value) {
+  startProfileData.ai_experience_level = value;
+  document.querySelectorAll('.exp-card').forEach((el) => el.classList.remove('selected'));
+  btn.classList.add('selected');
+  setProfileStep(1);
+}
+
+function toggleKnownTool(btn, value) {
+  const selected = startProfileData.tools_known.includes(value);
+  if (selected) {
+    startProfileData.tools_known = startProfileData.tools_known.filter((v) => v !== value);
+    btn.classList.remove('selected');
+  } else {
+    startProfileData.tools_known.push(value);
+    btn.classList.add('selected');
+  }
+  setProfileStep(2);
+}
+
+function toggleWants(btn, value) {
+  const selected = startProfileData.wants_to_learn.includes(value);
+  if (selected) {
+    startProfileData.wants_to_learn = startProfileData.wants_to_learn.filter((v) => v !== value);
+    btn.classList.remove('selected');
+  } else {
+    startProfileData.wants_to_learn.push(value);
+    btn.classList.add('selected');
+  }
+  setProfileStep(3);
+}
+
+function selectWorry(btn, value) {
+  startProfileData.biggest_worry = value;
+  document.querySelectorAll('.worry-card').forEach((el) => el.classList.remove('selected'));
+  btn.classList.add('selected');
+  setProfileStep(4);
+}
+
+function prevProfileStep() {
+  if (profileStep > 1) setProfileStep(profileStep - 1);
+}
+
+function skipProfileGoal() {
+  document.getElementById('profileGoalInput').value = '';
+  startProfileData.personal_goal = '';
+  nextProfileStep();
+}
+
+async function nextProfileStep() {
+  if (!validateProfileStep(profileStep)) return;
+
+  if (profileStep === 5) {
+    const knownOther = document.getElementById('knownOtherInput').value.trim();
+    const mergedTools = knownOther
+      ? [...startProfileData.tools_known, `Joku muu: ${knownOther}`]
+      : startProfileData.tools_known;
+    startProfileData.personal_goal = document.getElementById('profileGoalInput').value.trim();
+
+    try {
+      const res = await fetch('/api/feedback/course-start-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          module_name: 'moduuli2-tekoaly-uhka-vai-mahdollisuus',
+          ai_experience_level: startProfileData.ai_experience_level,
+          tools_known: mergedTools,
+          wants_to_learn: startProfileData.wants_to_learn,
+          biggest_worry: startProfileData.biggest_worry,
+          personal_goal: startProfileData.personal_goal || null
+        })
+      });
+
+      if (!res.ok) throw new Error('save_failed');
+      setProfileStep(6);
+      const wrap = document.getElementById('profileCheckin');
+      if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (e) {
+      alert('Tallennus epäonnistui. Yritä uudelleen.');
+    }
+    return;
+  }
+
+  setProfileStep(profileStep + 1);
+}
+
+setProfileStep(1);
+
 async function saveReflection() {
   try {
     await window.saveReflectionToAPI('m2_reflection');

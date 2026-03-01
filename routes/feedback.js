@@ -26,6 +26,22 @@ async function ensureModuleReflectionsTable() {
   await pool.query(`ALTER TABLE module_reflections ADD COLUMN IF NOT EXISTS quiz_score INTEGER`);
 }
 
+async function ensureCourseStartProfilesTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS course_start_profiles (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      module_name VARCHAR(120) NOT NULL,
+      ai_experience_level VARCHAR(120),
+      tools_known JSONB DEFAULT '[]'::jsonb,
+      wants_to_learn JSONB DEFAULT '[]'::jsonb,
+      biggest_worry TEXT,
+      personal_goal TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
 // Save feedback
 router.post('/save', authenticateToken, async (req, res) => {
   try {
@@ -103,6 +119,50 @@ router.post('/module-reflection', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Save module reflection error:', error);
     res.status(500).json({ error: 'Failed to save module reflection' });
+  }
+});
+
+// Save course start profile (module 2)
+router.post('/course-start-profile', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const {
+      module_name,
+      ai_experience_level,
+      tools_known,
+      wants_to_learn,
+      biggest_worry,
+      personal_goal
+    } = req.body || {};
+
+    if (!module_name) {
+      return res.status(400).json({ error: 'module_name is required' });
+    }
+
+    await ensureCourseStartProfilesTable();
+
+    const safeToolsKnown = Array.isArray(tools_known) ? tools_known : [];
+    const safeWantsToLearn = Array.isArray(wants_to_learn) ? wants_to_learn : [];
+
+    await pool.query(
+      `INSERT INTO course_start_profiles
+      (user_id, module_name, ai_experience_level, tools_known, wants_to_learn, biggest_worry, personal_goal)
+      VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7)`,
+      [
+        userId,
+        module_name,
+        ai_experience_level || null,
+        JSON.stringify(safeToolsKnown),
+        JSON.stringify(safeWantsToLearn),
+        biggest_worry || null,
+        personal_goal || null
+      ]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Save course start profile error:', error);
+    res.status(500).json({ error: 'Failed to save course start profile' });
   }
 });
 
