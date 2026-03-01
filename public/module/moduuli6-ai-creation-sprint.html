@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moduuli 6: AI Creation Sprint — Päivä 1 | HSBridge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1a2e;--ink2:#2d2d44;--paper:#f5f3ef;--paper2:#eeeae3;--accent:#2563a8;--accent2:#c75b3a;--accent3:#2a7a4b;--text:#1a1a2e;--muted:#6b6880;--border:rgba(26,26,46,0.12);--shadow:0 2px 20px rgba(26,26,46,0.08);--shadow-md:0 8px 40px rgba(26,26,46,0.12);}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;line-height:1.7;overflow-x:hidden;}
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:200;transition:width 0.3s ease;width:0;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;background:rgba(245,243,239,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2.5rem;justify-content:space-between;}
+.nav-left{display:flex;align-items:center;gap:1rem;}
+.nav-module{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;background:rgba(37,99,168,0.08);border:1px solid rgba(37,99,168,0.22);padding:4px 12px;border-radius:4px;}
+.nav-title{font-size:0.85rem;font-weight:500;color:var(--muted);}
+.nav-steps{display:flex;gap:5px;align-items:center;}
+.step-pip{width:24px;height:4px;border-radius:2px;background:#d8d3ca;transition:background 0.3s;cursor:pointer;}
+.step-pip.active{background:var(--accent);}
+.step-pip.done{background:var(--accent3);}
+.section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:96px 2rem 5rem;}
+.section-alt{background:var(--paper2);}
+.section-inner{max-width:860px;width:100%;}
+.section-label{font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:500;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1rem;}
+h2.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4.5vw,3.5rem);font-weight:400;line-height:1.1;color:var(--ink);margin-bottom:1.5rem;}
+h2.section-h2 em{font-style:italic;color:var(--accent);}
+.lead{font-size:1.08rem;color:var(--muted);line-height:1.8;margin-bottom:2rem;font-weight:300;max-width:680px;}
+.divider{width:48px;height:2px;background:var(--accent);margin-bottom:2rem;}
+.prose{font-size:1.02rem;line-height:1.85;color:var(--text);}
+.prose p{margin-bottom:1rem;}
+.prose ul{margin:0.5rem 0 1rem 1.25rem;}
+.prose li{margin-bottom:0.35rem;}
+#hero{background:var(--ink);position:relative;overflow:hidden;}
+#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 60%,rgba(37,99,168,0.18) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 80% 20%,rgba(199,91,58,0.10) 0%,transparent 60%);}
+.hero-inner{position:relative;z-index:1;max-width:860px;width:100%;}
+h1.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.4rem,6vw,5rem);font-weight:400;line-height:1.05;color:#fff;margin-bottom:1rem;}
+h1.hero-title em{font-style:italic;color:#a8c4e8;}
+.hero-sub{font-size:1.1rem;color:rgba(255,255,255,0.58);line-height:1.75;max-width:620px;margin-bottom:2.5rem;}
+.hero-cta{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#fff;padding:14px 28px;border-radius:6px;font-weight:600;font-size:0.95rem;text-decoration:none;transition:all 0.25s;}
+.hero-cta:hover{background:#1a4f8a;transform:translateY(-2px);}
+.hero-time{margin-top:1.25rem;font-size:0.82rem;color:rgba(255,255,255,0.35);}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.5rem;}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.2rem;box-shadow:var(--shadow);}
+.card h4{font-size:0.95rem;color:var(--ink);margin-bottom:0.45rem;}
+.card p{font-size:0.9rem;color:var(--muted);line-height:1.6;}
+.homework-task{background:#fff;border-radius:16px;padding:2rem;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:1.5rem;}
+.homework-task h3{font-size:1.1rem;color:var(--ink);margin-bottom:0.75rem;}
+.homework-task h4{font-size:0.86rem;color:var(--accent);font-family:'DM Mono',monospace;letter-spacing:0.06em;margin:1rem 0 0.45rem;}
+.prompt-box{background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:1rem;font-family:'DM Mono',monospace;font-size:0.8rem;line-height:1.6;white-space:pre-wrap;color:var(--ink);margin:0.75rem 0 0.5rem;}
+.copy-prompt-btn{padding:8px 14px;border-radius:6px;font-size:0.78rem;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;border:none;transition:all 0.2s;}
+.copy-prompt-btn:hover{background:#1a4f8a;}
+.copy-prompt-btn.ok{background:var(--accent3);}
+.practice-wrap{background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-md);border:1px solid var(--border);}
+.practice-header{background:var(--ink);padding:1.3rem 1.7rem;}
+.practice-header h3{font-family:'DM Serif Display',serif;font-weight:400;color:#fff;font-size:1.3rem;}
+.practice-header p{font-size:0.86rem;color:rgba(255,255,255,0.48);}
+.practice-body{padding:1.6rem;}
+.practice-label{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem;}
+.practice-textarea,.practice-select{width:100%;background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem;font-size:0.92rem;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;line-height:1.6;}
+.practice-textarea{min-height:88px;resize:vertical;}
+.practice-textarea:focus,.practice-select:focus{border-color:rgba(37,99,168,0.4);}
+.practice-btn{margin-top:0.8rem;padding:11px 22px;border-radius:6px;font-size:0.9rem;font-weight:600;cursor:pointer;border:none;background:var(--ink);color:#fff;transition:all 0.2s;}
+.practice-btn:hover{background:var(--ink2);}
+.practice-btn:disabled{opacity:0.45;cursor:default;}
+.practice-response{display:none;margin-top:1rem;background:var(--paper);border:1px solid var(--border);border-radius:10px;padding:1rem;}
+.practice-response-label{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.6rem;}
+.practice-response-text{font-size:0.9rem;line-height:1.75;white-space:pre-wrap;}
+.loading-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--muted);margin:0 2px;animation:ldot 1.2s infinite;}
+.loading-dots span:nth-child(2){animation-delay:0.2s;}
+.loading-dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes ldot{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
+.checklist{list-style:none;padding:0;margin-top:1rem;}
+.checklist li{padding:0.65rem 0.9rem;background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:0.55rem;font-size:0.9rem;}
+.finale-card{background:var(--ink);border-radius:16px;padding:3rem 2rem;text-align:center;position:relative;overflow:hidden;}
+.finale-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 70% at 50% 50%,rgba(37,99,168,0.13) 0%,transparent 65%);}
+.finale-card h2{font-family:'DM Serif Display',serif;font-weight:400;color:#fff;font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.2;position:relative;z-index:1;}
+.finale-card h2 em{font-style:italic;color:#a8c4e8;}
+.finale-card p{position:relative;z-index:1;color:rgba(255,255,255,0.55);max-width:620px;margin:1rem auto 1.8rem;}
+.finale-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
+.btn-next,.btn-back{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:8px;text-decoration:none;font-size:0.9rem;}
+.btn-next{background:var(--accent);color:#fff;font-weight:600;}
+.btn-back{background:transparent;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.65);}
+@media(max-width:800px){.grid-3{grid-template-columns:1fr;}nav{padding:0 1.25rem;}.nav-title{display:none;}.section{padding:80px 1.1rem 4rem;}}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav>
+  <div class="nav-left">
+    <a href="/" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:var(--muted);" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--muted)'">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      <span style="font-size:0.85rem;font-weight:500;">Etusivu</span>
+    </a>
+    <a href="/module/moduuli4-prompt-tyonhakijalle" style="display:flex;align-items:center;gap:0.5rem;text-decoration:none;color:var(--muted);font-size:0.85rem;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      <span>Edellinen</span>
+    </a>
+    <span class="nav-module">Moduuli 6</span>
+    <span class="nav-title">AI Creation Sprint</span>
+  </div>
+  <div class="nav-steps" id="navSteps"></div>
+</nav>
+
+<section class="section" id="hero" data-index="0">
+  <div class="hero-inner">
+    <div class="section-label" style="color:#8eaad1;">DAY 1 — Ymmärrä tekoäly</div>
+    <h1 class="hero-title">AI <em>Creation Sprint</em></h1>
+    <p class="hero-sub">Tässä moduulissa et vain kysy tekoälyltä — rakennat jotain valmista. Luot kuvan, 1-sivun PDF:n ja 30 sekunnin pitchin. Lopuksi sinulla on konkreettinen tuotos, jota voit käyttää heti.</p>
+    <a href="#miksi" class="hero-cta">Aloita sprintti</a>
+    <div class="hero-time">Noin 60 minuuttia · Sopii aloittelijoille</div>
+  </div>
+</section>
+
+<section class="section section-alt" id="miksi" data-index="1">
+  <div class="section-inner">
+    <div class="section-label">Osa 1</div>
+    <h2 class="section-h2">Miksi tämä on hyödyllistä <em>arjessa</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Sama runko toimii kolmeen tarpeeseen: päivittäinen työ, työnhaku ja business. Kun hallitset tämän kerran, voit toistaa mallin mihin tahansa aiheeseen.</p>
+    <div class="grid-3">
+      <div class="card"><h4>Daily Work</h4><p>Muistio, tehtävälista ja viestipohjat yhdessä paketissa ilman aloittamista tyhjästä.</p></div>
+      <div class="card"><h4>Työnhaku</h4><p>Hakemusrunko, LinkedIn-bio ja visuaali samaan teemaan muutamassa minuutissa.</p></div>
+      <div class="card"><h4>Business</h4><p>Mini one-pager + kuva + pitch asiakkaalle tai esitykseen.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="tyokalut" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">Osa 2</div>
+    <h2 class="section-h2">Työkalukartta — mikä tekee <em>mitäkin</em></h2>
+    <div class="divider"></div>
+    <div class="prose">
+      <p><strong>ChatGPT:</strong> yleiskäyttöinen ideointi, rakenne, nopeat luonnokset suomeksi.</p>
+      <p><strong>Claude:</strong> pitkien tekstien hiominen ja selkeä, luonnollinen kieli.</p>
+      <p><strong>Copilot:</strong> hyvä valinta, jos työskentelet Wordin, Outlookin tai Excelin kanssa.</p>
+      <p><strong>Gemini:</strong> vahva Google-ympäristössä sekä hyvä kuvatuotannon kokeiluihin.</p>
+      <p><strong>PDF-vienti:</strong> tee sisältö AI:lla ja vie PDF:ksi Docsista, Wordista, Canvasta tai Gammasta.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="kuva" data-index="3">
+  <div class="section-inner">
+    <div class="section-label">Osa 3 — Tehtävä A</div>
+    <h2 class="section-h2">Luo kuvaan valmis prompti <em>tekoälyllä</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Kirjoita tavoite ja kohderyhmä. AI luo sinulle valmiin kuvapromptin, jonka voit liittää ChatGPT:hen, Geminiin tai Copilotiin.</p>
+    <div class="practice-wrap">
+      <div class="practice-header">
+        <h3>Kuvapromptin parannus</h3>
+        <p>Interaktiivinen työkalu: saat 3 eri promptiversiota</p>
+      </div>
+      <div class="practice-body">
+        <div class="practice-label">Valitse käyttötapaus</div>
+        <select class="practice-select" id="imageCase">
+          <option value="daily">Daily work / sisäinen käyttö</option>
+          <option value="job">Työnhaku / LinkedIn / CV</option>
+          <option value="business">Business / asiakas / tarjous</option>
+        </select>
+        <div class="practice-label" style="margin-top:1rem;">Mitä kuvan pitää viestiä?</div>
+        <textarea class="practice-textarea" id="imageGoal" placeholder="Esim: Haluan modernin mutta luotettavan kuvan LinkedIn-banneriin, jossa näkyy data, yhteistyö ja selkeys."></textarea>
+        <button class="practice-btn" id="imageBtn" onclick="enhanceImagePrompt()">Luo kuvaprompti</button>
+        <div class="practice-response" id="imageResponse">
+          <div class="practice-response-label">Valmiit promptit</div>
+          <div class="practice-response-text" id="imageText"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="homework-task" style="margin-top:1.2rem;">
+      <h3>Kopioi vaihtoehtoinen perusprompti</h3>
+      <div class="prompt-box" id="promptImageBase">Create a professional, realistic image for [my audience/use case]. 
+Visual style: clean, modern, natural lighting, authentic details.
+Mood: trustworthy, competent, forward-looking.
+Composition: clear focal point, minimal clutter, suitable for presentation or LinkedIn.
+Color palette: soft neutrals with one accent color.
+No text in the image.</div>
+      <button class="copy-prompt-btn" onclick="copyPrompt('promptImageBase', this)">📋 Kopioi prompt</button>
+      <h4>Tee nämä 3 muutosta itse</h4>
+      <ul class="prose">
+        <li>Vaihda tunnelma (calm / energetic / premium).</li>
+        <li>Vaihda ympäristö (toimisto / etätyö / asiakastapaaminen).</li>
+        <li>Lisää yksi oma ammattiroolisi yksityiskohta.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="pdf" data-index="4">
+  <div class="section-inner">
+    <div class="section-label">Osa 4 — Tehtävä B</div>
+    <h2 class="section-h2">Luo 1-sivun PDF-runko <em>automaattisesti</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Kirjoita aihe, kohderyhmä ja tavoite. AI tuottaa yhden sivun rungon, jonka viet PDF:ksi valitsemassasi työkalussa.</p>
+    <div class="practice-wrap">
+      <div class="practice-header">
+        <h3>PDF-rungon generaattori</h3>
+        <p>Interaktiivinen työkalu: valmis rakenne + vientiohje</p>
+      </div>
+      <div class="practice-body">
+        <div class="practice-label">Mitä olet tekemässä?</div>
+        <textarea class="practice-textarea" id="pdfTopic" placeholder="Esim: 1-sivuinen opas uudelle työntekijälle: miten käytän AI:ta sähköposteissa ja kokousmuistioissa."></textarea>
+        <div class="practice-label" style="margin-top:1rem;">Kenelle PDF on tarkoitettu?</div>
+        <textarea class="practice-textarea" id="pdfAudience" placeholder="Esim: Tiimini, rekrytoija, potentiaalinen asiakas."></textarea>
+        <button class="practice-btn" id="pdfBtn" onclick="generatePdfOutline()">Luo PDF-runko</button>
+        <div class="practice-response" id="pdfResponse">
+          <div class="practice-response-label">Yhden sivun sisältörunko</div>
+          <div class="practice-response-text" id="pdfText"></div>
+        </div>
+      </div>
+    </div>
+    <ul class="checklist">
+      <li>1) Kopioi runko Google Docsiin tai Wordiin</li>
+      <li>2) Lisää kuva (tehtävä A)</li>
+      <li>3) Vie tiedosto PDF:ksi (File → Download/Save as PDF)</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section section-alt" id="pitch" data-index="5">
+  <div class="section-inner">
+    <div class="section-label">Osa 5 — Tehtävä C</div>
+    <h2 class="section-h2">Kirjoita 30 sekunnin <em>pitch</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Viimeistele kokonaisuus lyhyellä pitchillä, jossa kerrot mitä loit, kenelle ja mitä hyötyä siitä on.</p>
+    <div class="practice-wrap">
+      <div class="practice-header">
+        <h3>Pitch-generaattori</h3>
+        <p>Interaktiivinen työkalu: luonnollinen puhekielinen versio</p>
+      </div>
+      <div class="practice-body">
+        <div class="practice-label">Kerro tuotoksesi lyhyesti</div>
+        <textarea class="practice-textarea" id="pitchInput" placeholder="Esim: Tein 1-sivuisen AI-opas-PDF:n pienyrityksen tiimille sekä visuaalin LinkedIniin."></textarea>
+        <button class="practice-btn" id="pitchBtn" onclick="generatePitch()">Luo pitch</button>
+        <div class="practice-response" id="pitchResponse">
+          <div class="practice-response-label">30 sekunnin pitch</div>
+          <div class="practice-response-text" id="pitchText"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="reflektio" data-index="6">
+  <div class="section-inner">
+    <div class="section-label">Osa 6</div>
+    <h2 class="section-h2">Vertailu ja <em>reflektio</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Valitse yksi työkalu, jota käytät huomenna ensimmäisenä. Tavoite ei ole käyttää kaikkia, vaan käyttää yhtä työkalua hyvin.</p>
+    <div class="homework-task">
+      <h3>Viimeinen tehtävä</h3>
+      <ul class="prose">
+        <li>Minkä työkalun valitsit huomiselle ja miksi?</li>
+        <li>Mitä teet sillä ensimmäisen 15 minuutin aikana?</li>
+        <li>Minkä valmiin tuotoksen viet mukanasi tästä moduulista?</li>
+      </ul>
+      <h4>Pikacheck ennen seuraavaa moduulia</h4>
+      <ul class="checklist">
+        <li>Valmis kuvaprompti</li>
+        <li>Valmis PDF-runko tai valmis PDF</li>
+        <li>Valmis 30 sekunnin pitch</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="finale" data-index="7">
+  <div class="section-inner">
+    <div class="finale-card">
+      <h2>Sinulla on nyt <em>valmis AI-tuotos</em></h2>
+      <p>Tässä on moduulin ydin: AI auttaa luomaan nopeasti, mutta sinä ohjaat laatua. Tämä on taito, jota voit käyttää heti työssä, työnhaussa ja asiakastyössä.</p>
+      <div class="finale-actions">
+        <a href="/homework" class="btn-next">Seuraava: Kotitehtävät</a>
+        <a href="/module/moduuli4-prompt-tyonhakijalle" class="btn-back">Edellinen moduuli</a>
+        <a href="/" class="btn-back">Etusivu</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+const sections = document.querySelectorAll('.section[data-index]');
+const navSteps = document.getElementById('navSteps');
+const progressBar = document.getElementById('progress-bar');
+
+sections.forEach((section, i) => {
+  const pip = document.createElement('div');
+  pip.className = 'step-pip' + (i === 0 ? ' active' : '');
+  pip.addEventListener('click', () => section.scrollIntoView({ behavior: 'smooth' }));
+  navSteps.appendChild(pip);
+});
+
+function updateProgress() {
+  const st = window.scrollY;
+  const dh = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (dh > 0 ? (st / dh) * 100 : 0) + '%';
+
+  const pips = navSteps.querySelectorAll('.step-pip');
+  let activeIndex = 0;
+  sections.forEach((section, i) => {
+    if (section.getBoundingClientRect().top <= window.innerHeight * 0.5) activeIndex = i;
+  });
+  pips.forEach((p, i) => {
+    p.classList.remove('active', 'done');
+    if (i === activeIndex) p.classList.add('active');
+    else if (i < activeIndex) p.classList.add('done');
+  });
+}
+window.addEventListener('scroll', updateProgress, { passive: true });
+
+function copyPrompt(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const text = el.textContent || el.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const old = btn.textContent;
+    btn.textContent = '✓ Kopioitu!';
+    btn.classList.add('ok');
+    setTimeout(() => {
+      btn.textContent = old;
+      btn.classList.remove('ok');
+    }, 2200);
+  });
+}
+
+let imagePromptText = '';
+let pdfOutlineText = '';
+let pitchText = '';
+
+async function callAiChat(payload) {
+  const res = await fetch('/api/ai/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  return data.text || data.reply || 'Yhteysvirhe. Yritä uudelleen.';
+}
+
+async function enhanceImagePrompt() {
+  const useCase = document.getElementById('imageCase').value;
+  const goal = document.getElementById('imageGoal').value.trim();
+  if (!goal) { alert('Kirjoita ensin tavoite kuvalle.'); return; }
+
+  const btn = document.getElementById('imageBtn');
+  const box = document.getElementById('imageResponse');
+  const text = document.getElementById('imageText');
+  btn.disabled = true;
+  box.style.display = 'block';
+  text.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+
+  try {
+    imagePromptText = await callAiChat({
+      model: 'gpt-4o-mini',
+      max_tokens: 900,
+      system: 'Olet kuvapromptien asiantuntija. Luo suomeksi lyhyt analyysi ja anna 3 korkealaatuista ENGLANNINKIELISTÄ kuvapromptia, joita voi käyttää ChatGPT:ssä, Gemini:ssa tai Copilotissa. Promptit pitää olla selkeitä, realistisia ja eri tyylisiä. Lisää loppuun lyhyt kohta: "Mitä muuttaa, jos kuva ei onnistu".',
+      messages: [{ role: 'user', content: `Käyttötapaus: ${useCase}\nTavoite: ${goal}\nLuo valmiit promptit.` }]
+    });
+    text.textContent = imagePromptText;
+  } catch (e) {
+    text.textContent = 'Yhteysvirhe. Kokeile uudelleen hetken päästä.';
+  }
+  btn.disabled = false;
+}
+
+async function generatePdfOutline() {
+  const topic = document.getElementById('pdfTopic').value.trim();
+  const audience = document.getElementById('pdfAudience').value.trim();
+  if (!topic) { alert('Kirjoita ensin PDF:n aihe.'); return; }
+
+  const btn = document.getElementById('pdfBtn');
+  const box = document.getElementById('pdfResponse');
+  const text = document.getElementById('pdfText');
+  btn.disabled = true;
+  box.style.display = 'block';
+  text.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+
+  try {
+    pdfOutlineText = await callAiChat({
+      model: 'gpt-4o-mini',
+      max_tokens: 1000,
+      system: 'Olet asiantuntija luomaan 1-sivuisia selkeitä dokumentteja. Kirjoita suomeksi. Tee rakenne: otsikko, aloituskappale, 3-5 väliotsikkoa, jokaisen alle bulletit, lopuksi toimintaohje. Lisää loppuun lyhyet vientiohjeet PDF:ksi (Google Docs, Word, Canva).',
+      messages: [{ role: 'user', content: `Aihe: ${topic}\nKohderyhmä: ${audience || 'yleinen kohderyhmä'}\nTee yhden sivun PDF-runko.` }]
+    });
+    text.textContent = pdfOutlineText;
+  } catch (e) {
+    text.textContent = 'Yhteysvirhe. Kokeile uudelleen hetken päästä.';
+  }
+  btn.disabled = false;
+}
+
+async function generatePitch() {
+  const input = document.getElementById('pitchInput').value.trim();
+  if (!input) { alert('Kirjoita ensin mitä olet tehnyt.'); return; }
+
+  const btn = document.getElementById('pitchBtn');
+  const box = document.getElementById('pitchResponse');
+  const text = document.getElementById('pitchText');
+  btn.disabled = true;
+  box.style.display = 'block';
+  text.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+
+  try {
+    pitchText = await callAiChat({
+      model: 'gpt-4o-mini',
+      max_tokens: 500,
+      system: 'Olet viestintävalmentaja. Kirjoita suomeksi yksi 30 sekunnin pitch ja yksi vielä lyhyempi 15 sekunnin versio. Sävyn tulee olla lämmin, varma ja selkeä. Ei jargonia.',
+      messages: [{ role: 'user', content: `Kuvaus tuotoksesta: ${input}` }]
+    });
+    text.textContent = pitchText;
+  } catch (e) {
+    text.textContent = 'Yhteysvirhe. Kokeile uudelleen.';
+  }
+  btn.disabled = false;
+}
+</script>
+
+<script src="/js/feedback.js"></script>
+<script>
+fetch('/ai-chat-widget.html')
+  .then(r => r.text())
+  .then(html => { document.body.insertAdjacentHTML('beforeend', html); })
+  .catch(() => {});
+</script>
+</body>
+</html>
