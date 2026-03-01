@@ -205,6 +205,53 @@ nav {
   margin-bottom: 2rem;
 }
 
+.module-feedback-panel {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.module-feedback-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.module-feedback-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.module-feedback-table th,
+.module-feedback-table td {
+  text-align: left;
+  padding: 0.65rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  font-size: 0.86rem;
+}
+
+.module-feedback-table th {
+  background: var(--paper2);
+  color: var(--ink);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.mini-stars {
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.emoji-pill {
+  font-size: 1.05rem;
+}
+
 .student-card {
   background: #fff;
   border: 1px solid var(--border);
@@ -655,6 +702,25 @@ nav {
         </div>
       </div>
 
+      <div class="module-feedback-panel">
+        <div class="section-header" style="margin-bottom:0.75rem;">
+          <h2 class="section-title" style="font-size:1.6rem;">Moduulipalautteet</h2>
+        </div>
+        <div class="search-filter-bar" style="margin-bottom:0.85rem;">
+          <select class="search-input" id="moduleFeedbackModuleFilter" style="max-width:320px;">
+            <option value="">Kaikki moduulit</option>
+            <option value="moduuli6-ai-creation-sprint">moduuli6-ai-creation-sprint</option>
+          </select>
+          <input class="search-input" type="date" id="moduleFeedbackFromDate" style="max-width:200px;">
+          <input class="search-input" type="date" id="moduleFeedbackToDate" style="max-width:200px;">
+          <button class="btn btn-secondary" id="moduleFeedbackApplyBtn">Suodata</button>
+          <button class="btn btn-secondary" id="moduleFeedbackResetBtn">Tyhjennä</button>
+        </div>
+        <div id="moduleFeedbackContainer">
+          <div class="loading">Ladataan moduulipalautteita...</div>
+        </div>
+      </div>
+
       <!-- Search -->
       <div class="search-filter-bar">
         <input type="text" class="search-input" id="studentSearch" placeholder="Etsi nimen tai sähköpostin perusteella...">
@@ -694,10 +760,12 @@ nav {
     let students = [];
     let currentStudentId = null;
     let currentStudentData = null;
+    let moduleReflections = [];
 
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       await loadStudents();
+      await loadModuleReflections();
       setupEventListeners();
     });
 
@@ -708,6 +776,13 @@ nav {
       document.getElementById('studentSearch').addEventListener('input', filterStudents);
       document.getElementById('downloadAllBtn').addEventListener('click', downloadAllData);
       document.getElementById('downloadStudentBtn').addEventListener('click', downloadStudentData);
+      document.getElementById('moduleFeedbackApplyBtn').addEventListener('click', loadModuleReflections);
+      document.getElementById('moduleFeedbackResetBtn').addEventListener('click', () => {
+        document.getElementById('moduleFeedbackModuleFilter').value = '';
+        document.getElementById('moduleFeedbackFromDate').value = '';
+        document.getElementById('moduleFeedbackToDate').value = '';
+        loadModuleReflections();
+      });
     }
 
     // API Calls
@@ -746,6 +821,69 @@ nav {
         renderStudents();
         updateStats();
       }
+    }
+
+    async function loadModuleReflections() {
+      const moduleName = document.getElementById('moduleFeedbackModuleFilter').value;
+      const from = document.getElementById('moduleFeedbackFromDate').value;
+      const to = document.getElementById('moduleFeedbackToDate').value;
+      const params = new URLSearchParams();
+      if (moduleName) params.set('module', moduleName);
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+
+      const query = params.toString() ? `?${params.toString()}` : '';
+      const data = await apiCall(`/admin/module-reflections${query}`);
+      if (data && data.moduleReflections) {
+        moduleReflections = data.moduleReflections;
+        renderModuleReflections();
+      }
+    }
+
+    function renderModuleReflections() {
+      const container = document.getElementById('moduleFeedbackContainer');
+      if (!moduleReflections.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🗂️</div>
+            <p>Ei moduulipalautteita valituilla suodattimilla</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="module-feedback-table-wrap">
+          <table class="module-feedback-table">
+            <thead>
+              <tr>
+                <th>Opiskelija</th>
+                <th>Moduuli</th>
+                <th>Päivä</th>
+                <th>Fiilis</th>
+                <th>Tähdet</th>
+                <th>Työkalu</th>
+                <th>Use case</th>
+                <th>Avoin reflektio</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${moduleReflections.map(r => `
+                <tr>
+                  <td><strong>${escapeHtml(r.name || 'Nimetön')}</strong><br><span style="color:var(--muted);font-size:.78rem;">${escapeHtml(r.email || '')}</span></td>
+                  <td>${escapeHtml(r.module_name || '-')}</td>
+                  <td>${formatDate(r.created_at) || '-'}</td>
+                  <td class="emoji-pill">${escapeHtml(r.mood_emoji || '-')}</td>
+                  <td class="mini-stars">${renderStars(r.helpfulness_rating)}</td>
+                  <td>${escapeHtml(r.tool_choice || '-')}</td>
+                  <td>${Array.isArray(r.use_cases) ? r.use_cases.map(v => escapeHtml(v)).join(', ') : '-'}</td>
+                  <td>${escapeHtml(r.open_reflection || '-')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
     }
 
     async function loadStudentDetail(userId) {
@@ -1392,6 +1530,12 @@ nav {
       setTimeout(() => {
         errorEl.classList.remove('show');
       }, 5000);
+    }
+
+    function renderStars(rating) {
+      const val = Number(rating || 0);
+      if (!val) return '-';
+      return Array.from({ length: 5 }, (_, i) => i < val ? '★' : '☆').join('');
     }
 
     // Global function for loading student detail

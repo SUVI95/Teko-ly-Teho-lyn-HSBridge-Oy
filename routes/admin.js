@@ -12,6 +12,22 @@ async function requireAdmin(req, res, next) {
   next();
 }
 
+async function ensureModuleReflectionsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS module_reflections (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      module_name VARCHAR(120) NOT NULL,
+      mood_emoji VARCHAR(32),
+      use_cases JSONB DEFAULT '[]'::jsonb,
+      tool_choice VARCHAR(64),
+      open_reflection TEXT,
+      helpfulness_rating INTEGER CHECK (helpfulness_rating >= 1 AND helpfulness_rating <= 5),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
 // Get all reflections
 router.get('/reflections', authenticateToken, requireAdmin, async (req, res) => {
   try {
@@ -232,6 +248,46 @@ router.get('/feedback', authenticateToken, requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Get feedback error:', error);
     res.status(500).json({ error: 'Failed to get feedback' });
+  }
+});
+
+// Get structured module reflections with filters
+router.get('/module-reflections', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    await ensureModuleReflectionsTable();
+    const { module, from, to } = req.query;
+    const params = [];
+    const where = [];
+
+    if (module) {
+      params.push(module);
+      where.push(`mr.module_name = $${params.length}`);
+    }
+    if (from) {
+      params.push(from);
+      where.push(`mr.created_at::date >= $${params.length}::date`);
+    }
+    if (to) {
+      params.push(to);
+      where.push(`mr.created_at::date <= $${params.length}::date`);
+    }
+
+    const sql = `
+      SELECT mr.id, mr.module_name, mr.mood_emoji, mr.use_cases, mr.tool_choice,
+             mr.open_reflection, mr.helpfulness_rating, mr.created_at,
+             u.id AS user_id, u.name, u.email
+      FROM module_reflections mr
+      JOIN users u ON u.id = mr.user_id
+      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      ORDER BY mr.created_at DESC
+      LIMIT 500
+    `;
+
+    const result = await pool.query(sql, params);
+    res.json({ moduleReflections: result.rows });
+  } catch (error) {
+    console.error('Get module reflections error:', error);
+    res.status(500).json({ error: 'Failed to get module reflections' });
   }
 });
 
