@@ -237,6 +237,78 @@ h1.hero-title em { font-style: italic; color: #a8c4e8; }
 .reflection-share:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
 .reflection-share.ok { border-color: rgba(42,122,75,0.5); color: #68d391; }
 .reflection-confirm { display: none; font-size: 0.85rem; color: rgba(255,255,255,0.4); margin-top: 0.75rem; position: relative; z-index: 1; }
+
+/* Module 2 reflection check-in */
+.m2-checkin {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  padding: 1.5rem;
+}
+.m2-step { display: none; opacity: 0; transform: translateY(10px); transition: all .25s ease; }
+.m2-step.active { display: block; opacity: 1; transform: translateY(0); }
+.m2-step-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  color: var(--ink);
+  margin-bottom: 0.45rem;
+}
+.m2-step-sub {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 0.9rem;
+}
+.m2-textarea {
+  width: 100%;
+  min-height: 110px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 0.95rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text);
+  resize: vertical;
+  background: var(--paper);
+}
+.m2-textarea:focus {
+  outline: none;
+  border-color: rgba(37,99,168,0.4);
+}
+.m2-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+.m2-btn {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.m2-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.m2-btn.primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.m2-done {
+  border: 1px solid rgba(42,122,75,0.2);
+  background: rgba(42,122,75,0.08);
+  border-radius: 12px;
+  padding: 0.95rem 1rem;
+  color: #1f5f3a;
+  font-weight: 500;
+}
 .btn-next { display: inline-flex; align-items: center; gap: 10px; background: var(--ink); color: #fff; padding: 15px 32px; border-radius: 6px; font-weight: 600; font-size: 0.95rem; text-decoration: none; transition: all 0.25s; }
 .btn-next:hover { background: var(--ink2); transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .btn-next svg { transition: transform 0.25s; }
@@ -634,37 +706,30 @@ h1.hero-title em { font-style: italic; color: #a8c4e8; }
       </div>
     </div>
 
-    <div class="reflection-card">
-      <div class="reflection-label">Hetki ajatuksille</div>
-      <h3>Mitä ajattelet nyt tekoälystä?</h3>
-      <p>Onko se enemmän mahdollisuus vai uhka sinulle henkilökohtaisesti? Ei oikeita vastauksia.</p>
-      <textarea class="reflection-textarea" id="reflectionText" placeholder="Kirjoita ajatuksesi tähän..."></textarea>
-      <div class="reflection-actions">
-        <button class="reflection-save" onclick="saveReflection()">Tallenna ajatus</button>
-        
+    <div class="m2-checkin" id="m2Checkin">
+      <div id="m2Step1" class="m2-step active">
+        <div class="m2-step-title">Mitä ajattelet nyt tekoälystä?</div>
+        <div class="m2-step-sub">Onko se enemmän mahdollisuus vai uhka sinulle henkilökohtaisesti? Ei oikeita vastauksia.</div>
+        <textarea class="m2-textarea" id="reflectionText" placeholder="Kirjoita ajatuksesi tähän..."></textarea>
       </div>
-      
-    <div class="reflection-box" style="margin-top:3rem;background:rgba(37,99,168,0.05);border-left:3px solid var(--accent2);padding:2rem;border-radius:12px;">
-      <h3 style="font-size:1.2rem;margin-bottom:1rem;color:var(--ink);">Mitä opit tässä moduulissa?</h3>
-      <p style="color:var(--muted);margin-bottom:1.5rem;font-size:0.95rem;">Kerro lyhyesti mitä opit tämän moduulin aikana.</p>
-      <textarea class="reflection-textarea" id="whatLearned_m2_reflection" placeholder="Esim: Opetin AI:lle Master Promptin ja käytän sitä nyt kaikissa hakemuksissani..."></textarea>
-      <div class="reflection-actions">
-        <button class="reflection-save" onclick="window.saveWhatLearned('m2_reflection')">Tallenna</button>
+      <div id="m2Step2" class="m2-step">
+        <div class="m2-step-title">Mitä opit tässä moduulissa?</div>
+        <div class="m2-step-sub">Kerro lyhyesti mitä opit tämän moduulin aikana.</div>
+        <textarea class="m2-textarea" id="whatLearned_m2_reflection" placeholder="Esim: Opetin AI:lle Master Promptin ja käytän sitä nyt kaikissa hakemuksissani..."></textarea>
       </div>
-      <div class="reflection-confirm" id="whatLearnedConfirm_m2_reflection" style="display:none;">✓ Tallennettu.</div>
-    </div>
-    
-    <div class="reflection-box" style="margin-top:2rem;background:rgba(42,122,75,0.05);border-left:3px solid var(--accent3);padding:2rem;border-radius:12px;">
-      <h3 style="font-size:1.2rem;margin-bottom:1rem;color:var(--ink);">Opitko jotain uutta?</h3>
-      <p style="color:var(--muted);margin-bottom:1.5rem;font-size:0.95rem;">Kerro oliko tässä moduulissa jotain uutta sinulle vai oliko kaikki jo tuttu.</p>
-      <textarea class="reflection-textarea" id="learnedNew_m2_reflection" placeholder="Esim: En tiennyt että AI:ta voi käyttää näin monipuolisesti työnhaussa..."></textarea>
-      <div class="reflection-actions">
-        <button class="reflection-save" onclick="window.saveLearnedNew('m2_reflection')">Tallenna</button>
+      <div id="m2Step3" class="m2-step">
+        <div class="m2-step-title">Opitko jotain uutta?</div>
+        <div class="m2-step-sub">Kerro oliko tässä moduulissa jotain uutta sinulle vai oliko kaikki jo tuttua.</div>
+        <textarea class="m2-textarea" id="learnedNew_m2_reflection" placeholder="Esim: En tiennyt että AI:ta voi käyttää näin monipuolisesti työnhaussa..."></textarea>
       </div>
-      <div class="reflection-confirm" id="learnedNewConfirm_m2_reflection" style="display:none;">✓ Tallennettu.</div>
-    </div>
-
-<div class="reflection-confirm" id="reflConfirm">✓ Tallennettu.</div>
+      <div id="m2Step4" class="m2-step">
+        <div class="m2-done">Kiitos — ajatuksesi auttavat meitä kehittämään opetusta paremmin sinulle sopivaksi.</div>
+      </div>
+      <div class="m2-actions">
+        <button class="m2-btn" id="m2PrevBtn" onclick="prevM2CheckinStep()" style="display:none;">← Edellinen</button>
+        <button class="m2-btn primary" id="m2NextBtn" onclick="nextM2CheckinStep()">Seuraava →</button>
+      </div>
+      <div class="reflection-confirm" id="reflConfirm" style="color:var(--accent3);">✓ Tallennettu.</div>
     </div>
   </div>
 </section>
@@ -886,19 +951,83 @@ async function nextProfileStep() {
 
 setProfileStep(1);
 
-async function saveReflection() {
+let m2CheckinStep = 1;
+
+function setM2CheckinStep(step) {
+  m2CheckinStep = step;
+  document.querySelectorAll('.m2-step').forEach((el, idx) => {
+    el.classList.toggle('active', idx === step - 1);
+  });
+  const prevBtn = document.getElementById('m2PrevBtn');
+  const nextBtn = document.getElementById('m2NextBtn');
+  if (prevBtn) prevBtn.style.display = (step > 1 && step < 4) ? 'inline-flex' : 'none';
+  if (nextBtn) {
+    if (step === 4) {
+      nextBtn.style.display = 'none';
+    } else {
+      nextBtn.style.display = 'inline-flex';
+      nextBtn.textContent = step === 3 ? 'Tallenna vastaukset' : 'Seuraava →';
+    }
+  }
+}
+
+function prevM2CheckinStep() {
+  if (m2CheckinStep > 1) setM2CheckinStep(m2CheckinStep - 1);
+}
+
+async function saveM2ConversationAnswers() {
+  const reflectionText = document.getElementById('reflectionText').value.trim();
+  const whatLearnedText = document.getElementById('whatLearned_m2_reflection').value.trim();
+  const learnedNewText = document.getElementById('learnedNew_m2_reflection').value.trim();
+
+  if (!reflectionText && !whatLearnedText && !learnedNewText) {
+    alert('Kirjoita vähintään yksi vastaus ennen tallennusta.');
+    return false;
+  }
+
   try {
-    await window.saveReflectionToAPI('m2_reflection');
+    if (reflectionText) {
+      await fetch(window.location.origin + '/api/reflections/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ moduleId: 'm2_reflection', reflectionText })
+      });
+      try { localStorage.setItem('m2_reflection', reflectionText); } catch (e) {}
+    }
+
+    if (whatLearnedText && typeof window.saveFeedback === 'function') {
+      await window.saveFeedback('m2_reflection', 'what_learned', whatLearnedText);
+    }
+
+    if (learnedNewText && typeof window.saveFeedback === 'function') {
+      await window.saveFeedback('m2_reflection', 'learned_new', learnedNewText);
+    }
+
     const confirmEl = document.getElementById('reflConfirm');
     if (confirmEl) {
       confirmEl.style.display = 'block';
-      setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+      setTimeout(() => { confirmEl.style.display = 'none'; }, 2800);
     }
-  } catch(e) {
-    console.error('Error saving reflection:', e);
-    alert('Virhe tallennuksessa. Yritä uudelleen.');
+    return true;
+  } catch (e) {
+    alert('Tallennus epäonnistui. Yritä uudelleen.');
+    return false;
   }
 }
+
+async function nextM2CheckinStep() {
+  if (m2CheckinStep < 3) {
+    setM2CheckinStep(m2CheckinStep + 1);
+    return;
+  }
+  if (m2CheckinStep === 3) {
+    const ok = await saveM2ConversationAnswers();
+    if (ok) setM2CheckinStep(4);
+  }
+}
+
+setM2CheckinStep(1);
 try { const s = localStorage.getItem('m2_reflection'); if (s) document.getElementById('reflectionText').value = s; } catch(e) {}
 
 // ── SKILLS GAP IDENTIFIER ─────────────────────
