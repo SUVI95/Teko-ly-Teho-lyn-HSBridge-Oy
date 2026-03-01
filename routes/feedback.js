@@ -12,12 +12,18 @@ async function ensureModuleReflectionsTable() {
       module_name VARCHAR(120) NOT NULL,
       mood_emoji VARCHAR(32),
       use_cases JSONB DEFAULT '[]'::jsonb,
+      apply_where JSONB DEFAULT '[]'::jsonb,
       tool_choice VARCHAR(64),
+      misconception_had TEXT,
       open_reflection TEXT,
       helpfulness_rating INTEGER CHECK (helpfulness_rating >= 1 AND helpfulness_rating <= 5),
+      quiz_score INTEGER,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  await pool.query(`ALTER TABLE module_reflections ADD COLUMN IF NOT EXISTS apply_where JSONB DEFAULT '[]'::jsonb`);
+  await pool.query(`ALTER TABLE module_reflections ADD COLUMN IF NOT EXISTS misconception_had TEXT`);
+  await pool.query(`ALTER TABLE module_reflections ADD COLUMN IF NOT EXISTS quiz_score INTEGER`);
 }
 
 // Save feedback
@@ -56,9 +62,12 @@ router.post('/module-reflection', authenticateToken, async (req, res) => {
       module_name,
       mood_emoji,
       use_cases,
+      apply_where,
       tool_choice,
+      misconception_had,
       open_reflection,
-      helpfulness_rating
+      helpfulness_rating,
+      quiz_score
     } = req.body || {};
 
     if (!module_name) {
@@ -68,20 +77,25 @@ router.post('/module-reflection', authenticateToken, async (req, res) => {
     await ensureModuleReflectionsTable();
 
     const safeUseCases = Array.isArray(use_cases) ? use_cases : [];
+    const safeApplyWhere = Array.isArray(apply_where) ? apply_where : [];
     const safeRating = helpfulness_rating ? parseInt(helpfulness_rating, 10) : null;
+    const safeQuizScore = Number.isFinite(Number(quiz_score)) ? Number(quiz_score) : null;
 
     await pool.query(
       `INSERT INTO module_reflections
-      (user_id, module_name, mood_emoji, use_cases, tool_choice, open_reflection, helpfulness_rating)
-      VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7)`,
+      (user_id, module_name, mood_emoji, use_cases, apply_where, tool_choice, misconception_had, open_reflection, helpfulness_rating, quiz_score)
+      VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, $9, $10)`,
       [
         userId,
         module_name,
         mood_emoji || null,
         JSON.stringify(safeUseCases),
+        JSON.stringify(safeApplyWhere),
         tool_choice || null,
+        misconception_had || null,
         open_reflection || null,
-        safeRating
+        safeRating,
+        safeQuizScore
       ]
     );
 

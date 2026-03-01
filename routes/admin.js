@@ -20,12 +20,18 @@ async function ensureModuleReflectionsTable() {
       module_name VARCHAR(120) NOT NULL,
       mood_emoji VARCHAR(32),
       use_cases JSONB DEFAULT '[]'::jsonb,
+      apply_where JSONB DEFAULT '[]'::jsonb,
       tool_choice VARCHAR(64),
+      misconception_had TEXT,
       open_reflection TEXT,
       helpfulness_rating INTEGER CHECK (helpfulness_rating >= 1 AND helpfulness_rating <= 5),
+      quiz_score INTEGER,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  await pool.query(`ALTER TABLE module_reflections ADD COLUMN IF NOT EXISTS apply_where JSONB DEFAULT '[]'::jsonb`);
+  await pool.query(`ALTER TABLE module_reflections ADD COLUMN IF NOT EXISTS misconception_had TEXT`);
+  await pool.query(`ALTER TABLE module_reflections ADD COLUMN IF NOT EXISTS quiz_score INTEGER`);
 }
 
 // Get all reflections
@@ -273,8 +279,8 @@ router.get('/module-reflections', authenticateToken, requireAdmin, async (req, r
     }
 
     const sql = `
-      SELECT mr.id, mr.module_name, mr.mood_emoji, mr.use_cases, mr.tool_choice,
-             mr.open_reflection, mr.helpfulness_rating, mr.created_at,
+      SELECT mr.id, mr.module_name, mr.mood_emoji, mr.use_cases, mr.apply_where, mr.tool_choice,
+             mr.misconception_had, mr.open_reflection, mr.helpfulness_rating, mr.quiz_score, mr.created_at,
              u.id AS user_id, u.name, u.email
       FROM module_reflections mr
       JOIN users u ON u.id = mr.user_id

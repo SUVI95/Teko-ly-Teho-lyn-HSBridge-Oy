@@ -862,7 +862,9 @@ nav {
                 <th>Päivä</th>
                 <th>Fiilis</th>
                 <th>Tähdet</th>
+                <th>Quiz</th>
                 <th>Työkalu</th>
+                <th>Väärinkäsitys</th>
                 <th>Use case</th>
                 <th>Avoin reflektio</th>
               </tr>
@@ -875,8 +877,10 @@ nav {
                   <td>${formatDate(r.created_at) || '-'}</td>
                   <td class="emoji-pill">${escapeHtml(r.mood_emoji || '-')}</td>
                   <td class="mini-stars">${renderStars(r.helpfulness_rating)}</td>
+                  <td>${Number.isFinite(Number(r.quiz_score)) ? `${Number(r.quiz_score)}/8` : '-'}</td>
                   <td>${escapeHtml(r.tool_choice || '-')}</td>
-                  <td>${Array.isArray(r.use_cases) ? r.use_cases.map(v => escapeHtml(v)).join(', ') : '-'}</td>
+                  <td>${escapeHtml(r.misconception_had || '-')}</td>
+                  <td>${formatUseCases(r)}</td>
                   <td>${escapeHtml(r.open_reflection || '-')}</td>
                 </tr>
               `).join('')}
@@ -1536,6 +1540,13 @@ nav {
       const val = Number(rating || 0);
       if (!val) return '-';
       return Array.from({ length: 5 }, (_, i) => i < val ? '★' : '☆').join('');
+    }
+
+    function formatUseCases(row) {
+      const first = Array.isArray(row.use_cases) ? row.use_cases : [];
+      const second = Array.isArray(row.apply_where) ? row.apply_where : [];
+      const merged = [...first, ...second];
+      return merged.length ? merged.map(v => escapeHtml(v)).join(', ') : '-';
     }
 
     // Global function for loading student detail
