@@ -67,6 +67,22 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 .practice-response{display:none;margin-top:1rem;background:var(--paper);border:1px solid var(--border);border-radius:10px;padding:1rem;}
 .practice-response-label{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.6rem;}
 .practice-response-text{font-size:0.9rem;line-height:1.75;white-space:pre-wrap;}
+.practice-response-actions{display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin-top:0.8rem;}
+.rendered-output{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem;box-shadow:var(--shadow);}
+.rendered-output p{margin-bottom:0.8rem;line-height:1.7;}
+.rendered-output h1,.rendered-output h2,.rendered-output h3{font-family:'DM Serif Display',serif;line-height:1.25;color:var(--ink);margin:0.7rem 0;}
+.rendered-output h3{font-size:1.2rem;}
+.rendered-output ul{margin:0.5rem 0 0.8rem 1.2rem;}
+.rendered-output li{margin-bottom:0.35rem;}
+.image-options-wrap{display:grid;grid-template-columns:1fr;gap:0.7rem;margin-top:0.8rem;}
+.image-option-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:0.9rem;box-shadow:var(--shadow);}
+.image-option-title{font-size:0.8rem;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;letter-spacing:0.05em;margin-bottom:0.45rem;}
+.image-option-text{font-size:0.85rem;line-height:1.6;color:var(--text);white-space:pre-wrap;margin-bottom:0.6rem;}
+.ai-image-card{margin-top:1rem;background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem;box-shadow:var(--shadow);}
+.ai-image-card img{display:block;max-width:100%;width:100%;border-radius:10px;border:1px solid var(--border);margin-bottom:0.8rem;}
+.error-text{font-size:0.88rem;color:#9f1239;}
+.btn-download{background:var(--accent3);color:#fff;}
+.btn-download:hover{background:#1f6a40;}
 .loading-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--muted);margin:0 2px;animation:ldot 1.2s infinite;}
 .loading-dots span:nth-child(2){animation-delay:0.2s;}
 .loading-dots span:nth-child(3){animation-delay:0.4s;}
@@ -165,7 +181,9 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
         <button class="practice-btn" id="imageBtn" onclick="enhanceImagePrompt()">Luo kuvaprompti</button>
         <div class="practice-response" id="imageResponse">
           <div class="practice-response-label">Valmiit promptit</div>
-          <div class="practice-response-text" id="imageText"></div>
+          <div id="imageText" class="rendered-output"></div>
+          <div id="imagePromptOptions" class="image-options-wrap"></div>
+          <div id="imageResult"></div>
         </div>
       </div>
     </div>
@@ -208,7 +226,10 @@ No text in the image.</div>
         <button class="practice-btn" id="pdfBtn" onclick="generatePdfOutline()">Luo PDF-runko</button>
         <div class="practice-response" id="pdfResponse">
           <div class="practice-response-label">Yhden sivun sisältörunko</div>
-          <div class="practice-response-text" id="pdfText"></div>
+          <div id="pdfText" class="rendered-output"></div>
+          <div class="practice-response-actions">
+            <button class="copy-prompt-btn btn-download" id="downloadPdfBtn" onclick="downloadPdfOutline()" style="display:none;">⬇ Lataa PDF</button>
+          </div>
         </div>
       </div>
     </div>
@@ -237,7 +258,7 @@ No text in the image.</div>
         <button class="practice-btn" id="pitchBtn" onclick="generatePitch()">Luo pitch</button>
         <div class="practice-response" id="pitchResponse">
           <div class="practice-response-label">30 sekunnin pitch</div>
-          <div class="practice-response-text" id="pitchText"></div>
+          <div id="pitchText" class="rendered-output"></div>
         </div>
       </div>
     </div>
@@ -327,6 +348,7 @@ function copyPrompt(id, btn) {
 }
 
 let imagePromptText = '';
+let imagePromptOptions = [];
 let pdfOutlineText = '';
 let pitchText = '';
 
@@ -341,6 +363,29 @@ async function callAiChat(payload) {
   return data.text || data.reply || 'Yhteysvirhe. Yritä uudelleen.';
 }
 
+function renderMarkdown(container, markdownText) {
+  if (!container) return;
+  const parsed = window.marked ? window.marked.parse(markdownText || '') : (markdownText || '');
+  container.innerHTML = parsed;
+}
+
+function extractJsonObject(text) {
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch (_) {
+    const fenced = text.match(/```json\s*([\s\S]*?)\s*```/i);
+    if (fenced) {
+      try { return JSON.parse(fenced[1]); } catch (_) {}
+    }
+    const objMatch = text.match(/\{[\s\S]*\}/);
+    if (objMatch) {
+      try { return JSON.parse(objMatch[0]); } catch (_) {}
+    }
+  }
+  return null;
+}
+
 async function enhanceImagePrompt() {
   const useCase = document.getElementById('imageCase').value;
   const goal = document.getElementById('imageGoal').value.trim();
@@ -349,22 +394,119 @@ async function enhanceImagePrompt() {
   const btn = document.getElementById('imageBtn');
   const box = document.getElementById('imageResponse');
   const text = document.getElementById('imageText');
+  const optionsWrap = document.getElementById('imagePromptOptions');
+  const imageResult = document.getElementById('imageResult');
   btn.disabled = true;
   box.style.display = 'block';
   text.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  optionsWrap.innerHTML = '';
+  imageResult.innerHTML = '';
 
   try {
     imagePromptText = await callAiChat({
       model: 'gpt-4o-mini',
-      max_tokens: 900,
-      system: 'Olet kuvapromptien asiantuntija. Luo suomeksi lyhyt analyysi ja anna 3 korkealaatuista ENGLANNINKIELISTÄ kuvapromptia, joita voi käyttää ChatGPT:ssä, Gemini:ssa tai Copilotissa. Promptit pitää olla selkeitä, realistisia ja eri tyylisiä. Lisää loppuun lyhyt kohta: "Mitä muuttaa, jos kuva ei onnistu".',
+      max_tokens: 1000,
+      system: 'Olet kuvapromptien asiantuntija. Vastaa VAIN JSON-muodossa ilman muuta tekstiä. Muoto: {"analysis":"lyhyt suomenkielinen analyysi markdown-muodossa","prompts":["english prompt 1","english prompt 2","english prompt 3"],"tips":["tip1","tip2","tip3"]}. Promptien tulee olla laadukkaita DALL-E 3 -prompteja.',
       messages: [{ role: 'user', content: `Käyttötapaus: ${useCase}\nTavoite: ${goal}\nLuo valmiit promptit.` }]
     });
-    text.textContent = imagePromptText;
+    const parsed = extractJsonObject(imagePromptText);
+    if (!parsed || !Array.isArray(parsed.prompts) || parsed.prompts.length === 0) {
+      throw new Error('Virheellinen vastausmuoto');
+    }
+    imagePromptOptions = parsed.prompts;
+    const analysisMd = `${parsed.analysis || 'Alla kolme vaihtoehtoista kuvapromptia.'}\n\n### Vinkit\n${(parsed.tips || []).map(t => `- ${t}`).join('\n')}`;
+    renderMarkdown(text, analysisMd);
+    optionsWrap.innerHTML = imagePromptOptions.map((prompt, i) => `
+      <div class="image-option-card">
+        <div class="image-option-title">Prompti ${i + 1}</div>
+        <div class="image-option-text">${prompt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+        <div class="practice-response-actions">
+          <button class="copy-prompt-btn" onclick="copyPromptOption(${i}, this)">📋 Kopioi prompti</button>
+          <button class="copy-prompt-btn" id="genImageBtn${i}" onclick="generateImageFromPrompt(${i})">✨ Luo kuva tästä promptista</button>
+        </div>
+      </div>
+    `).join('');
   } catch (e) {
-    text.textContent = 'Yhteysvirhe. Kokeile uudelleen hetken päästä.';
+    text.innerHTML = '<p class="error-text">Yhteysvirhe tai virheellinen vastausmuoto. Kokeile uudelleen hetken päästä.</p>';
   }
   btn.disabled = false;
+}
+
+function copyPromptOption(index, btn) {
+  const prompt = imagePromptOptions[index];
+  if (!prompt) return;
+  navigator.clipboard.writeText(prompt).then(() => {
+    const old = btn.textContent;
+    btn.textContent = '✓ Kopioitu!';
+    btn.classList.add('ok');
+    setTimeout(() => {
+      btn.textContent = old;
+      btn.classList.remove('ok');
+    }, 1800);
+  });
+}
+
+async function generateImageFromPrompt(index) {
+  const prompt = imagePromptOptions[index];
+  if (!prompt) return;
+  const imageResult = document.getElementById('imageResult');
+  const btn = document.getElementById(`genImageBtn${index}`);
+  const oldText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Luodaan kuvaa...';
+  imageResult.innerHTML = '<div class="ai-image-card"><div class="practice-response-label">Luodaan kuvaa...</div><div class="loading-dots"><span></span><span></span><span></span></div></div>';
+
+  try {
+    const response = await fetch('/api/ai/image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        prompt,
+        size: '1024x1024',
+        quality: 'standard'
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.imageUrl) {
+      throw new Error(data.error || 'Image generation failed');
+    }
+
+    imageResult.innerHTML = `
+      <div class="ai-image-card">
+        <div class="practice-response-label">Generoitu kuva</div>
+        <img src="${data.imageUrl}" alt="AI-generoitu kuva">
+        <button class="copy-prompt-btn btn-download" onclick="downloadGeneratedImage(decodeURIComponent('${encodeURIComponent(data.imageUrl)}'))">⬇ Lataa kuva</button>
+      </div>
+    `;
+  } catch (e) {
+    imageResult.innerHTML = '<div class="ai-image-card"><p class="error-text">Kuvan luominen epäonnistui, yritä uudelleen.</p></div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+}
+
+async function downloadGeneratedImage(imageUrl) {
+  try {
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ai-kuva-${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (_) {
+    const a = document.createElement('a');
+    a.href = imageUrl;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.click();
+  }
 }
 
 async function generatePdfOutline() {
@@ -375,9 +517,11 @@ async function generatePdfOutline() {
   const btn = document.getElementById('pdfBtn');
   const box = document.getElementById('pdfResponse');
   const text = document.getElementById('pdfText');
+  const downloadBtn = document.getElementById('downloadPdfBtn');
   btn.disabled = true;
   box.style.display = 'block';
   text.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  downloadBtn.style.display = 'none';
 
   try {
     pdfOutlineText = await callAiChat({
@@ -386,9 +530,10 @@ async function generatePdfOutline() {
       system: 'Olet asiantuntija luomaan 1-sivuisia selkeitä dokumentteja. Kirjoita suomeksi. Tee rakenne: otsikko, aloituskappale, 3-5 väliotsikkoa, jokaisen alle bulletit, lopuksi toimintaohje. Lisää loppuun lyhyet vientiohjeet PDF:ksi (Google Docs, Word, Canva).',
       messages: [{ role: 'user', content: `Aihe: ${topic}\nKohderyhmä: ${audience || 'yleinen kohderyhmä'}\nTee yhden sivun PDF-runko.` }]
     });
-    text.textContent = pdfOutlineText;
+    renderMarkdown(text, pdfOutlineText);
+    downloadBtn.style.display = 'inline-flex';
   } catch (e) {
-    text.textContent = 'Yhteysvirhe. Kokeile uudelleen hetken päästä.';
+    text.innerHTML = '<p class="error-text">Yhteysvirhe. Kokeile uudelleen hetken päästä.</p>';
   }
   btn.disabled = false;
 }
@@ -411,14 +556,50 @@ async function generatePitch() {
       system: 'Olet viestintävalmentaja. Kirjoita suomeksi yksi 30 sekunnin pitch ja yksi vielä lyhyempi 15 sekunnin versio. Sävyn tulee olla lämmin, varma ja selkeä. Ei jargonia.',
       messages: [{ role: 'user', content: `Kuvaus tuotoksesta: ${input}` }]
     });
-    text.textContent = pitchText;
+    renderMarkdown(text, pitchText);
   } catch (e) {
-    text.textContent = 'Yhteysvirhe. Kokeile uudelleen.';
+    text.innerHTML = '<p class="error-text">Yhteysvirhe. Kokeile uudelleen.</p>';
   }
   btn.disabled = false;
 }
+
+function downloadPdfOutline() {
+  if (!pdfOutlineText || !window.html2pdf || !window.marked) return;
+  const temp = document.createElement('div');
+  temp.style.padding = '28px';
+  temp.style.fontFamily = 'Arial, sans-serif';
+  temp.style.color = '#111827';
+  temp.style.lineHeight = '1.6';
+  temp.style.background = '#ffffff';
+  const now = new Date();
+  const prettyDate = now.toLocaleDateString('fi-FI');
+  temp.innerHTML = `
+    <h1 style="margin:0 0 8px;font-size:24px;">AI Creation Sprint — PDF Runko</h1>
+    <p style="margin:0 0 18px;color:#4b5563;">Luotu ${prettyDate}</p>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 16px;">
+    ${window.marked.parse(pdfOutlineText)}
+  `;
+  temp.querySelectorAll('h1,h2,h3').forEach(el => { el.style.marginTop = '14px'; });
+  temp.querySelectorAll('p').forEach(el => { el.style.margin = '0 0 10px'; });
+  temp.querySelectorAll('ul').forEach(el => { el.style.margin = '0 0 10px 18px'; });
+  document.body.appendChild(temp);
+
+  window.html2pdf()
+    .set({
+      margin: 10,
+      filename: `ai-creation-sprint-${Date.now()}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    })
+    .from(temp)
+    .save()
+    .finally(() => temp.remove());
+}
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <script src="/js/feedback.js"></script>
 <script>
 fetch('/ai-chat-widget.html')

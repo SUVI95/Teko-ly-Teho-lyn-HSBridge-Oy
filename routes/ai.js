@@ -64,4 +64,59 @@ router.post('/chat', async (req, res) => {
   }
 });
 
+// OpenAI API endpoint for image generation (DALL-E 3)
+router.post('/image', async (req, res) => {
+  try {
+    const { prompt, size = '1024x1024', quality = 'standard' } = req.body;
+
+    if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    if (!openaiApiKey) {
+      console.error('OpenAI API key not configured');
+      return res.status(500).json({ error: 'AI service not configured' });
+    }
+
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`
+      },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt: prompt.trim(),
+        n: 1,
+        size,
+        quality
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('OpenAI image API error:', errorData);
+      return res.status(response.status).json({
+        error: 'AI image service error',
+        details: errorData
+      });
+    }
+
+    const data = await response.json();
+    const imageUrl = data?.data?.[0]?.url;
+    if (!imageUrl) {
+      return res.status(502).json({ error: 'No image URL returned from OpenAI' });
+    }
+
+    res.json({ imageUrl });
+  } catch (error) {
+    console.error('Error calling OpenAI image API:', error);
+    res.status(500).json({
+      error: 'Failed to generate image',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;
