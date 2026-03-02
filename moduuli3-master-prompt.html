@@ -43,7 +43,7 @@ h2.section-h2 em{font-style:italic;color:var(--accent);}
 .prose .pull{font-family:'DM Serif Display',serif;font-size:1.35rem;color:var(--accent);font-style:italic;border-left:3px solid var(--accent);padding-left:1.25rem;margin:2rem 0;line-height:1.5;}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:start;}
 @media(max-width:680px){.two-col{grid-template-columns:1fr;gap:2rem;}}
-.fade-up{opacity:0;transform:translateY(28px);transition:opacity 0.65s ease,transform 0.65s ease;}
+.fade-up{opacity:1;transform:translateY(0);transition:opacity 0.65s ease,transform 0.65s ease;}
 .fade-up.in{opacity:1;transform:translateY(0);}
 
 /* HERO */
@@ -532,11 +532,14 @@ async function comparePrompts() {
         messages: [{ role: 'user', content: `Vertaa näitä kahta promptia:\n\nPROMPT A: "${a}"\n\nPROMPT B: "${b}"\n\nMikä on parempi ja miksi?` }]
       })
     });
-    const data = await res.json();
-    compareText = data.text || '';
-    textEl.textContent = compareText;
+    const data = await res.json().catch(() => ({}));
+    compareText = (res.ok && data) ? (data.text || data.reply || '') : '';
+    if (!compareText && (data.error || data.message)) {
+      compareText = 'AI-palvelu ei vastannut. Yritä uudelleen tai vertaa prompteja itse ChatGPT:ssä.';
+    }
+    textEl.textContent = compareText || 'Yhteysvirhe. Yritä uudelleen tai vertaa prompteja itse ChatGPT:ssä.';
   } catch(e) {
-    textEl.textContent = 'Yhteysvirhe. Vertaa itse: kumpi prompt on selkeämpi ja antaa paremman vastauksen?';
+    textEl.textContent = 'Yhteysvirhe. Yritä uudelleen tai vertaa prompteja itse ChatGPT:ssä.';
   }
   btn.disabled = false;
   btn.textContent = '⚖️ Vertaa prompteja';
@@ -582,11 +585,14 @@ async function generateScenarioPrompt() {
         messages: [{ role: 'user', content: `Luo täydellinen prompt tälle tilanteelle: ${scenarios[scenario]}. ${context ? 'Konteksti: ' + context : ''}` }]
       })
     });
-    const data = await res.json();
-    scenarioPromptText = data.text || '';
-    textEl.textContent = scenarioPromptText;
+    const data = await res.json().catch(() => ({}));
+    scenarioPromptText = (res.ok && data) ? (data.text || data.reply || '') : '';
+    if (!scenarioPromptText && (data.error || data.message)) {
+      scenarioPromptText = 'AI-palvelu ei vastannut. Yritä uudelleen tai käytä ChatGPT:tä suoraan.';
+    }
+    textEl.textContent = scenarioPromptText || 'Yhteysvirhe. Yritä uudelleen tai käytä ChatGPT:tä suoraan.';
   } catch(e) {
-    textEl.textContent = 'Yhteysvirhe. Muista: hyvä prompt sisältää roolin, kontekstin, tehtävän ja halutun tuloksen.';
+    textEl.textContent = 'Yhteysvirhe. Yritä uudelleen tai käytä ChatGPT:tä suoraan. Hyvä prompt sisältää roolin, kontekstin, tehtävän ja halutun tuloksen.';
   }
   btn.disabled = false;
   btn.textContent = '✨ Luo prompt tälle tilanteelle';
