@@ -679,6 +679,14 @@ Etsin asiakaspalvelu- tai myyntiroteja.</div>
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
 <script>
+// Fallback AI call if ai-helper.js fails to load
+async function _aiCall(sys, msg, tok) {
+  if (typeof window.aiChat === 'function') return window.aiChat(sys, msg, tok);
+  const res = await fetch(window.location.origin + '/api/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: tok || 600, system: sys, messages: [{ role: 'user', content: msg }] }) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || data.message || 'AI-palvelu ei vastaa.');
+  return data.text || data.reply || '';
+}
 // Immediately show all fade-up elements to ensure content is visible
 (function(){
   const fadeUps=document.querySelectorAll('.fade-up');
@@ -743,7 +751,7 @@ async function optimizeCV() {
   try {
     const sys = 'Olet uravalmentaja ja CV-asiantuntija. Anna strukturoitu palaute seuraavassa muodossa:\n\n1. VAHVUUDET: Mitä on hyvää CV:ssä?\n2. PUUTTUVAT ASIAT: Mitä puuttuu tai voisi olla paremmin?\n3. REKRYTOIJAN NÄKÖKULMA: Mitä rekrytoija saattaa ohittaa tai missata?\n4. KONKREETTISET PARANNUSEHDOTUKSET: Mitä kannattaa muuttaa?\n\nOle kannustava mutta rehellinen. Vastaa suomeksi.';
     const msg = `Analysoi tämä CV${jobAd ? ' työpaikkailmoitukseen nähden' : ''}:\n\nCV:\n${cv}${jobAd ? `\n\nTyöpaikkailmoitus:\n${jobAd}` : ''}\n\nAnna strukturoitu palaute yllä olevassa muodossa.`;
-    lastCV = await window.aiChat(sys, msg, 1500);
+    lastCV = await _aiCall(sys, msg, 1500);
     respText.textContent = lastCV;
   } catch(e) {
     respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
@@ -806,7 +814,7 @@ async function generateHeadlines() {
   try {
     const sys = 'Olet LinkedIn-asiantuntija. Luo 3 erilaista LinkedIn-otsikkovaihtoehtoa. Otsikot voivat olla 120 merkkiä pitkiä. Vaihtoehdot voivat korostaa eri aspekteja: kokemusta, taitoja, tavoitteita. Vastaa suomeksi, jokainen vaihtoehto omalla rivillään numerolla.';
     const msg = `Luo 3 LinkedIn-otsikkovaihtoehtoa:\n\nNykyinen rooli: ${currentRole}\nTavoiterooli: ${targetRole}\n\nAnna 3 erilaista vaihtoehtoa, jokainen numerolla (1., 2., 3.).`;
-    lastHeadlines = await window.aiChat(sys, msg, 600);
+    lastHeadlines = await _aiCall(sys, msg, 600);
     respText.textContent = lastHeadlines;
   } catch(e) {
     respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
@@ -891,7 +899,7 @@ async function generateOutreach() {
   try {
     const sys = 'Olet uravalmentaja. Kirjoita lyhyt, luonnollinen ja rehellinen LinkedIn-viesti rekrytoijalle. Viestin tulee olla alle 5 lausetta, luonnollinen sävy, ei liioittelua. Vastaa suomeksi.';
     const msg = `Write a short LinkedIn message in Finnish to a recruiter at ${company}. I am interested in ${role}. One thing that attracted me to this company is ${interest}. Keep it under 5 sentences. Natural and honest tone, no flattery.`;
-    lastOutreach = await window.aiChat(sys, msg, 400);
+    lastOutreach = await _aiCall(sys, msg, 400);
     respText.textContent = lastOutreach;
   } catch(e) {
     respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
