@@ -773,6 +773,7 @@ nav {
           <select class="search-input" id="moduleFeedbackModuleFilter" style="max-width:320px;">
             <option value="">Kaikki moduulit</option>
             <option value="moduuli6-ai-creation-sprint">moduuli6-ai-creation-sprint</option>
+            <option value="moduuli-voice-deep-search">Ääni & Deep Search</option>
           </select>
           <input class="search-input" type="date" id="moduleFeedbackFromDate" style="max-width:200px;">
           <input class="search-input" type="date" id="moduleFeedbackToDate" style="max-width:200px;">
@@ -1098,6 +1099,7 @@ nav {
       const learnedNew = feedback.filter(f => f.question_type === 'learned_new');
       const courseFeedback = feedback.filter(f => f.question_type === 'course_feedback');
       const moduleFeedback = feedback.filter(f => f.question_type === 'module_feedback');
+      const voiceDeepSearchFeedback = feedback.filter(f => f.question_type === 'voice_deep_search_reflection');
 
       container.innerHTML = `
         <div class="student-detail">
@@ -1259,6 +1261,31 @@ nav {
                     <div class="content-item-text">${escapeHtml(f.feedback_text || '-')}</div>
                   </div>
                 `).join('')}
+              ` : ''}
+              
+              ${voiceDeepSearchFeedback.length > 0 ? `
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-family: 'DM Serif Display', serif; color: var(--ink);">Ääni & Deep Search — reflektio</h3>
+                ${voiceDeepSearchFeedback.map(f => {
+                  let parsed = {};
+                  try { parsed = JSON.parse(f.feedback_text || '{}'); } catch(e) {}
+                  const fmt = (c, t) => [c, t].filter(Boolean).join(' — ') || '-';
+                  const display = [
+                    'Kumpi hyödyllisempi (ääni/haku): ' + fmt(parsed.q1_choice, parsed.q1_text),
+                    'Miten auttaa haastatteluun: ' + fmt(parsed.q2_choice, parsed.q2_text),
+                    'Mitä kokeilla uudelleen: ' + fmt(parsed.q3_choice, parsed.q3_text)
+                  ].join('\n');
+                  return `
+                  <div class="content-item">
+                    <div class="content-item-header">
+                      <div>
+                        <span class="module-badge">Ääni & Deep Search</span>
+                        <span class="content-item-title">Reflektio</span>
+                      </div>
+                      <div class="content-item-date">${formatDate(f.created_at)}</div>
+                    </div>
+                    <div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(display || f.feedback_text || '-')}</div>
+                  </div>
+                `}).join('')}
               ` : ''}
             `}
           </div>
@@ -1533,7 +1560,8 @@ nav {
             const questionType = f.question_type === 'what_learned' ? 'What Learned' :
                                 f.question_type === 'learned_new' ? 'Learned New' :
                                 f.question_type === 'course_feedback' ? 'Course Feedback' :
-                                f.question_type === 'module_feedback' ? 'Module Feedback' : f.question_type;
+                                f.question_type === 'module_feedback' ? 'Module Feedback' :
+                                f.question_type === 'voice_deep_search_reflection' ? 'Voice & Deep Search Reflection' : f.question_type;
             return `"${f.module_id || ''}","${questionType}","${text}","${f.rating || ''}","${f.created_at}"`;
           })
         ].join('\n');

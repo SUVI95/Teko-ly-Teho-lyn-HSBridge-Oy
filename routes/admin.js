@@ -381,7 +381,8 @@ router.get('/download/feedback', authenticateToken, requireAdmin, async (req, re
     const questionType = row.question_type === 'what_learned' ? 'What Learned' :
                           row.question_type === 'learned_new' ? 'Learned New' :
                           row.question_type === 'course_feedback' ? 'Course Feedback' :
-                          row.question_type === 'module_feedback' ? 'Module Feedback' : row.question_type;
+                          row.question_type === 'module_feedback' ? 'Module Feedback' :
+                          row.question_type === 'voice_deep_search_reflection' ? 'Voice & Deep Search Reflection' : row.question_type;
       return `"${moduleLabel}","${questionType}","${row.email}","${row.name || ''}","${text}","${row.rating || ''}","${row.created_at}"`;
     }).join('\n');
     
