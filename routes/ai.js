@@ -13,7 +13,7 @@ router.post('/chat', async (req, res) => {
     const openaiApiKey = process.env.OPENAI_API_KEY;
     if (!openaiApiKey) {
       console.error('OpenAI API key not configured');
-      return res.status(500).json({ error: 'AI service not configured' });
+      return res.status(500).json({ error: 'AI-palvelu ei ole käytettävissä. Ota yhteyttä opettajaan.' });
     }
 
     // Prepare messages for OpenAI API

@@ -67,6 +67,17 @@ app.get('/js/feedback.js', (req, res) => {
   });
 });
 
+app.get('/js/ai-helper.js', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'js', 'ai-helper.js');
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      res.status(404).send('/* ai-helper.js not found */');
+    }
+  });
+});
+
 // Static files
 app.use(express.static('public'));
 

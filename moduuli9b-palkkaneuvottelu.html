@@ -328,6 +328,7 @@ h1.hero-title em{font-style:italic;color:#a8d4b8;}
   </div>
 </section>
 
+<script src="/js/ai-helper.js"></script>
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
 <script>
@@ -354,8 +355,10 @@ const fadeObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isInte
 document.querySelectorAll('.fade-up').forEach(el=>fadeObs.observe(el));
 
 async function _aiCall(systemPrompt, userMsg, maxTokens=600){
+  if (window.aiChat) return window.aiChat(systemPrompt, userMsg, maxTokens);
   const res=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({model:'gpt-4o-mini',max_tokens:maxTokens,system:systemPrompt,messages:[{role:'user',content:userMsg}]})});
-  const d=await res.json();
+  const d=await res.json().catch(()=>({}));
+  if (!res.ok) throw new Error(d.error||d.message||'AI-palvelu ei vastaa.');
   return d.text||d.reply||'';
 }
 async function _runTool(inputId,btnId,boxId,textId,system,msgFn,copyKey){
@@ -368,7 +371,7 @@ async function _runTool(inputId,btnId,boxId,textId,system,msgFn,copyKey){
   txt.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';
   box.style.display='block';
   box.scrollIntoView({behavior:'smooth',block:'nearest'});
-  try{const r=await _aiCall(system,msgFn(val.trim()));txt.textContent=r;window['_last_'+copyKey]=r;}catch(e){txt.textContent='Yhteysvirhe. Yritä uudelleen.';}
+  try{const r=await _aiCall(system,msgFn(val.trim()));txt.textContent=r;window['_last_'+copyKey]=r;}catch(e){txt.textContent=(e&&e.message)||'Yhteysvirhe. Yritä uudelleen.';}
   btn.disabled=false;
 }
 function _copy(copyKey,btnId){

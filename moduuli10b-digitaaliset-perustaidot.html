@@ -340,6 +340,7 @@ h1.hero-title em{font-style:italic;color:#f5d78e;}
   </div>
 </section>
 
+<script src="/js/ai-helper.js"></script>
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
 <script>
@@ -352,13 +353,19 @@ function _upd(){const st=window.scrollY,dh=document.documentElement.scrollHeight
 window.addEventListener('scroll',_upd,{passive:true});
 const _fo=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');_fo.unobserve(e.target);}});},{threshold:0.1,rootMargin:'100px'});
 document.querySelectorAll('.fade-up').forEach(el=>_fo.observe(el));
-async function _ai(sys,msg,tok=600){const r=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({model:'gpt-4o-mini',max_tokens:tok,system:sys,messages:[{role:'user',content:msg}]})});const d=await r.json();return d.text||d.reply||'';}
+async function _ai(sys,msg,tok=600){
+  if (window.aiChat) return window.aiChat(sys,msg,tok);
+  const r=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({model:'gpt-4o-mini',max_tokens:tok,system:sys,messages:[{role:'user',content:msg}]})});
+  const d=await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(d.error||d.message||'AI-palvelu ei vastaa.');
+  return d.text||d.reply||'';
+}
 async function _run(inId,btnId,boxId,txtId,sys,mf,ck){
   const v=(document.getElementById(inId)||{}).value||'';
   if(!v.trim()){alert('Täytä kenttä ensin.');return;}
   const btn=document.getElementById(btnId),box=document.getElementById(boxId),txt=document.getElementById(txtId);
   btn.disabled=true;txt.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';box.style.display='block';box.scrollIntoView({behavior:'smooth',block:'nearest'});
-  try{const res=await _ai(sys,mf(v.trim()));txt.textContent=res;window['_L_'+ck]=res;}catch(e){txt.textContent='Yhteysvirhe. Yritä uudelleen.';}
+  try{const res=await _ai(sys,mf(v.trim()));txt.textContent=res;window['_L_'+ck]=res;}catch(e){txt.textContent=(e&&e.message)||'Yhteysvirhe. Yritä uudelleen.';}
   btn.disabled=false;
 }
 function _cp(ck,bid){const t=window['_L_'+ck];if(!t)return;navigator.clipboard.writeText(t).then(()=>{const b=document.getElementById(bid);b.textContent='✓ Kopioitu!';b.classList.add('ok');setTimeout(()=>{b.textContent='📋 Kopioi';b.classList.remove('ok');},2200);});}
@@ -375,7 +382,7 @@ function copyVideo(){_cp('video','copyVideo');}
 function runDrive(){
   const btn=document.getElementById('driveBtn'),box=document.getElementById('driveResponse'),txt=document.getElementById('driveText');
   btn.disabled=true;txt.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';box.style.display='block';box.scrollIntoView({behavior:'smooth',block:'nearest'});
-  _ai('Olet digitaalinen opettaja. Selitä miten Google Drive otetaan käyttöön ja miten tiedostoja jaetaan. Vaihe vaiheelta, yksinkertaisella suomella. Sisällytä myös OneDrive ohjeet Windowsille.','Selitä Google Driven ja OneDriven peruskäyttö',500).then(r=>{txt.textContent=r;window._L_drive=r;btn.disabled=false;}).catch(()=>{txt.textContent='Yhteysvirhe.';btn.disabled=false;});
+  _ai('Olet digitaalinen opettaja. Selitä miten Google Drive otetaan käyttöön ja miten tiedostoja jaetaan. Vaihe vaiheelta, yksinkertaisella suomella. Sisällytä myös OneDrive ohjeet Windowsille.','Selitä Google Driven ja OneDriven peruskäyttö',500).then(r=>{txt.textContent=r;window._L_drive=r;btn.disabled=false;}).catch(e=>{txt.textContent=(e&&e.message)||'Yhteysvirhe. Yritä uudelleen.';btn.disabled=false;});
 }
 function copyDrive(){_cp('drive','copyDrive');}
 function runOffice(){_run('officeInput','officeBtn','officeResponse','officeText','Olet Excel ja Word opettaja. Selitä pyyntö vaihe vaiheelta aloittelijalle. Kerro myös miksi taito on hyödyllinen. Yksinkertainen suomi.',v=>`Selitä miten: ${v}`,'office');}

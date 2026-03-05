@@ -1218,31 +1218,12 @@ async function generateCopilotGuide() {
   resp.style.display = 'block';
   resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 900,
-        system: 'Laadi selkeä, rauhallinen ja ammattimainen Copilot-ohjepaketti Excel-analyysiin. Vältä hypekieltä. Vastaa suomeksi vaiheittain.',
-        messages: [{
-          role: 'user',
-          content: `Yrityscase: Nordic Paw Coaching. Analyysin painotus: ${focus}.
-
-Luo opiskelijalle selkeä ohjepaketti, jossa on:
-1) Lyhyt työnkulku (6 vaihetta)
-2) 5 Copilot-promptia (laskenta, kannattavuus, parannukset, skenaario, yhteenveto)
-3) Tarkistuslista siitä, mitä käyttäjän pitää varmistaa itse ennen johtopäätöksiä.`
-        }]
-      })
-    });
-    const data = await res.json();
-    copilotGuideText = data.text || data.reply || 'Yhteysvirhe. Yritä uudelleen.';
+    const msg = `Yrityscase: Nordic Paw Coaching. Analyysin painotus: ${focus}.\n\nLuo opiskelijalle selkeä ohjepaketti, jossa on:\n1) Lyhyt työnkulku (6 vaihetta)\n2) 5 Copilot-promptia (laskenta, kannattavuus, parannukset, skenaario, yhteenveto)\n3) Tarkistuslista siitä, mitä käyttäjän pitää varmistaa itse ennen johtopäätöksiä.`;
+    copilotGuideText = await window.aiChat('Laadi selkeä, rauhallinen ja ammattimainen Copilot-ohjepaketti Excel-analyysiin. Vältä hypekieltä. Vastaa suomeksi vaiheittain.', msg, 900);
     txt.textContent = copilotGuideText;
   } catch (e) {
     copilotGuideText = '';
-    txt.textContent = 'Yhteysvirhe. Kokeile uudelleen.';
+    txt.textContent = (e && e.message) || 'Yhteysvirhe. Kokeile uudelleen.';
   }
   btn.disabled = false;
 }
@@ -1268,21 +1249,12 @@ async function generatePresentation() {
   resp.style.display = 'block';
   resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', max_tokens: 1000,
-        system: 'Olet esityssuunnittelija ja liiketoimintapsykologian asiantuntija. Käyttäjä kuvaa tilanteen (yleisö, tavoite, konteksti). Sinun tehtäväsi: 1) Ehdottaa vahva esitysidea/kulma (miksi tämä kiinnostaa, mikä on ydinviesti) 2) Kolme keskeistä pointtia (ihmiset muistavat 3 asiaa) 3) 5-8 sliden rakenne suomeksi — jokaiselle slidelle otsikko ja 2-3 bullet-pistettä. Huomioi: ensimmäinen ja viimeinen slide ovat tärkeimmät. Data tarvitsee tulkintaa. Vastaa suomeksi, strukturoidusti.',
-        messages: [{ role: 'user', content: `Tilanne: "${topic}"\n\nEhdota esitysidea ja rakenne.` }]
-      })
-    });
-    const data = await res.json();
-    presentationText = data.text || data.reply || 'Yhteysvirhe. Yritä uudelleen.';
+    const sys = 'Olet esityssuunnittelija ja liiketoimintapsykologian asiantuntija. Käyttäjä kuvaa tilanteen (yleisö, tavoite, konteksti). Sinun tehtäväsi: 1) Ehdottaa vahva esitysidea/kulma (miksi tämä kiinnostaa, mikä on ydinviesti) 2) Kolme keskeistä pointtia (ihmiset muistavat 3 asiaa) 3) 5-8 sliden rakenne suomeksi — jokaiselle slidelle otsikko ja 2-3 bullet-pistettä. Huomioi: ensimmäinen ja viimeinen slide ovat tärkeimmät. Data tarvitsee tulkintaa. Vastaa suomeksi, strukturoidusti.';
+    presentationText = await window.aiChat(sys, `Tilanne: "${topic}"\n\nEhdota esitysidea ja rakenne.`, 1000);
     txt.innerHTML = presentationText.replace(/\n/g, '<br>');
   } catch(e) {
     presentationText = '';
-    txt.textContent = 'Yhteysvirhe. Kokeile ChatGPT:tä tai Gamma.appia suoraan.';
+    txt.textContent = (e && e.message) || 'Yhteysvirhe. Kokeile ChatGPT:tä tai Gamma.appia suoraan.';
   }
   btn.disabled = false;
 }
@@ -1319,21 +1291,13 @@ async function generateOffer() {
   resp.style.display = 'block';
   resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', max_tokens: 800,
-        system: 'Olet ammattimainen myyjä. Kirjoita selkeä tarjous suomeksi. Sisältää: esittely, palvelun/tuotteen kuvaus, hinnoittelu, ehdot ja voimassaolo. Ammattimainen ja luottamusta herättävä sävy.',
-        messages: [{ role: 'user', content: `Palvelu/tuote: ${desc}\n\nLisätiedot: ${details || 'ei lisätiedot'}\n\nLuo ammattimainen tarjous.` }]
-      })
-    });
-    const data = await res.json();
-    offerText = data.text || data.reply || 'Yhteysvirhe. Yritä uudelleen.';
+    const sys = 'Olet ammattimainen myyjä. Kirjoita selkeä tarjous suomeksi. Sisältää: esittely, palvelun/tuotteen kuvaus, hinnoittelu, ehdot ja voimassaolo. Ammattimainen ja luottamusta herättävä sävy.';
+    const msg = `Palvelu/tuote: ${desc}\n\nLisätiedot: ${details || 'ei lisätiedot'}\n\nLuo ammattimainen tarjous.`;
+    offerText = await window.aiChat(sys, msg, 800);
     txt.innerHTML = offerText.replace(/\n/g, '<br>');
   } catch(e) {
     offerText = '';
-    txt.textContent = 'Yhteysvirhe. Kokeile ChatGPT:tä suoraan.';
+    txt.textContent = (e && e.message) || 'Yhteysvirhe. Kokeile ChatGPT:tä suoraan.';
   }
   btn.disabled = false;
 }
@@ -1366,21 +1330,12 @@ async function formatMessage() {
   resp.style.display = 'block';
   resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', max_tokens: 500,
-        system: 'Olet viestinnän asiantuntija. Muotoile viesti tiettyyn tyyliin. Vastaa suomeksi, vain viestinä ilman selityksiä.',
-        messages: [{ role: 'user', content: `Muotoile tämä viesti ${styles[style]} tyyliin:\n\n"${msg}"` }]
-      })
-    });
-    const data = await res.json();
-    messageText = data.text || data.reply || 'Yhteysvirhe. Yritä uudelleen.';
+    const sys = 'Olet viestinnän asiantuntija. Muotoile viesti tiettyyn tyyliin. Vastaa suomeksi, vain viestinä ilman selityksiä.';
+    messageText = await window.aiChat(sys, `Muotoile tämä viesti ${styles[style]} tyyliin:\n\n"${msg}"`, 500);
     txt.textContent = messageText;
   } catch(e) {
     messageText = '';
-    txt.textContent = 'Yhteysvirhe. Kokeile ChatGPT:tä suoraan.';
+    txt.textContent = (e && e.message) || 'Yhteysvirhe. Kokeile ChatGPT:tä suoraan.';
   }
   btn.disabled = false;
 }
@@ -1408,6 +1363,7 @@ async function saveReflection() {
 }
 </script>
 
+<script src="/js/ai-helper.js"></script>
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
 <script>
