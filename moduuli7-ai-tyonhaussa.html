@@ -850,10 +850,12 @@ async function generateLinkedIn() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   const typeNames = {summary:'profiilin yhteenvedon',post:'julkaisun',message:'verkostoitumisviestin'};
-  const sysExtra = type==='summary'?'Yhteenvedon tulee olla ammattimainen mutta henkilökohtainen.':type==='post'?'Julkaisun tulee olla kannustava ja ammattimainen.':type==='message'?'Viestin tulee olla lyhyt, ystävällinen ja ammattimainen.';
+  var sysExtra = 'Yhteenvedon tulee olla ammattimainen mutta henkilökohtainen.';
+  if (type==='post') sysExtra = 'Julkaisun tulee olla kannustava ja ammattimainen.';
+  else if (type==='message') sysExtra = 'Viestin tulee olla lyhyt, ystävällinen ja ammattimainen.';
   try {
-    const sys = `Olet LinkedIn-asiantuntija. Luo ${typeNames[type]} suomeksi. ${sysExtra} Käytä sopivia emojeja.`;
-    lastLinkedIn = await window.aiChat(sys, `Luo ${typeNames[type]}:\n\n${input}`, 800);
+    const sys = 'Olet LinkedIn-asiantuntija. Luo ' + typeNames[type] + ' suomeksi. ' + sysExtra + ' Käytä sopivia emojeja.';
+    lastLinkedIn = await _aiCall(sys, 'Luo ' + typeNames[type] + ':\n\n' + input, 800);
     respText.textContent = lastLinkedIn;
   } catch(e) {
     respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
