@@ -3,10 +3,8 @@
  * Use window.aiChat(systemPrompt, userMessage, maxTokens) in modules.
  */
 (function() {
-  const API_BASE = window.location.origin;
-
   window.aiChat = async function(systemPrompt, userMessage, maxTokens) {
-    const url = API_BASE + '/api/ai/chat';
+    const url = window.location.origin + '/api/ai/chat';
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

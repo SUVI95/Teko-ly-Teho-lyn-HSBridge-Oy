@@ -653,6 +653,8 @@ Hyvä hakemuskirje on räätälöity työpaikkaan ja yritykseen. Se kertoo miksi
   </div>
 </section>
 
+<script src="/js/ai-helper.js"></script>
+<script src="/js/ai-helper.js"></script>
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
 <script>
@@ -694,21 +696,11 @@ async function analyzeBias() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   try {
-    const res = await fetch('/api/ai/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        model:'gpt-4o-mini',
-        max_tokens:1000,
-        system:'Olet AI-etikan asiantuntija. Analysoi tekstiä puolueellisuuden, tarkkuuden ja eettisyyden suhteen seuraavassa muodossa:\n\n1. PUOLUELLISUUS: Onko teksti puolueellinen? Sisältääkö stereotyyppejä?\n2. TARKKUUS: Onko faktat oikein? Pitääkö väitteet paikkansa?\n3. EETTISYYS: Onko teksti eettinen? Onko siinä ongelmia?\n4. PARANNUSEHDOTUKSET: Mitä kannattaa muuttaa?\n\nOle rakentava mutta rehellinen. Vastaa suomeksi.',
-        messages:[{role:'user', content:`Analysoi seuraava AI:n tuotos puolueellisuuden, tarkkuuden ja eettisyyden suhteen:\n\n${content}\n\nAnna analyysi ja suositukset.`}]
-      })
-    });
-    const data = await res.json();
-    lastBias = data.text || data.reply || '';
+    const sys = 'Olet AI-etikan asiantuntija. Analysoi tekstiä puolueellisuuden, tarkkuuden ja eettisyyden suhteen seuraavassa muodossa:\n\n1. PUOLUELLISUUS: Onko teksti puolueellinen? Sisältääkö stereotyyppejä?\n2. TARKKUUS: Onko faktat oikein? Pitääkö väitteet paikkansa?\n3. EETTISYYS: Onko teksti eettinen? Onko siinä ongelmia?\n4. PARANNUSEHDOTUKSET: Mitä kannattaa muuttaa?\n\nOle rakentava mutta rehellinen. Vastaa suomeksi.';
+    lastBias = await window.aiChat(sys, `Analysoi seuraava AI:n tuotos puolueellisuuden, tarkkuuden ja eettisyyden suhteen:\n\n${content}\n\nAnna analyysi ja suositukset.`, 1000);
     respText.textContent = lastBias;
   } catch(e) {
-    respText.textContent = 'Yhteysvirhe. Yritä uudelleen hetken kuluttua.';
+    respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
   }
   btn.disabled = false;
 }
@@ -744,21 +736,11 @@ async function analyzeSpotFake() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   try {
-    const res = await fetch('/api/ai/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        model:'gpt-4o-mini',
-        max_tokens:1200,
-        system:'Olet faktantarkistaja ja etiikan asiantuntija. Analysoi tekstiä seuraavasti:\n\n1. FAKTAVIRHEET: Onko tekstiä faktavirheitä? Tarkista numerot, päivämäärät, tilastot.\n2. PUOLUELLISUUS: Sisältääkö teksti stereotyyppejä, yleistyksiä tai ennakkoluuloja?\n3. ONKO TEKSTI KUNNOSSA: Onko teksti faktuaalisesti oikein ja eettisesti kunnossa?\n\nOle tarkka ja konkreettinen. Vastaa suomeksi.',
-        messages:[{role:'user', content:`Analysoi seuraava teksti faktavirheiden ja puolueellisuuden suhteen:\n\n${content}\n\nAnna strukturoitu analyysi.`}]
-      })
-    });
-    const data = await res.json();
-    lastSpotFake = data.text || data.reply || '';
+    const sys = 'Olet faktantarkistaja ja etiikan asiantuntija. Analysoi tekstiä seuraavasti:\n\n1. FAKTAVIRHEET: Onko tekstiä faktavirheitä? Tarkista numerot, päivämäärät, tilastot.\n2. PUOLUELLISUUS: Sisältääkö teksti stereotyyppejä, yleistyksiä tai ennakkoluuloja?\n3. ONKO TEKSTI KUNNOSSA: Onko teksti faktuaalisesti oikein ja eettisesti kunnossa?\n\nOle tarkka ja konkreettinen. Vastaa suomeksi.';
+    lastSpotFake = await window.aiChat(sys, `Analysoi seuraava teksti faktavirheiden ja puolueellisuuden suhteen:\n\n${content}\n\nAnna strukturoitu analyysi.`, 1200);
     respText.textContent = lastSpotFake;
   } catch(e) {
-    respText.textContent = 'Yhteysvirhe. Yritä uudelleen hetken kuluttua.';
+    respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
   }
   btn.disabled = false;
 }
@@ -795,21 +777,12 @@ async function generateLifeEmail() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   try {
-    const res = await fetch('/api/ai/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        model:'gpt-4o-mini',
-        max_tokens:600,
-        system:`Olet viestinnän asiantuntija. Kirjoita kohtelias, selkeä ja ammattimainen sähköposti ${typeNames[type]}. Sävy: ystävällinen mutta asiallinen. Vastaa suomeksi.`,
-        messages:[{role:'user', content:`Kirjoita sähköposti ${typeNames[type]}. Tilanne: ${situation}. Viestin tulee olla kohtelias, selkeä ja ammattimainen.`}]
-      })
-    });
-    const data = await res.json();
-    lastEmailLife = data.text || data.reply || '';
+    const sys = `Olet viestinnän asiantuntija. Kirjoita kohtelias, selkeä ja ammattimainen sähköposti ${typeNames[type]}. Sävy: ystävällinen mutta asiallinen. Vastaa suomeksi.`;
+    const msg = `Kirjoita sähköposti ${typeNames[type]}. Tilanne: ${situation}. Viestin tulee olla kohtelias, selkeä ja ammattimainen.`;
+    lastEmailLife = await window.aiChat(sys, msg, 600);
     respText.textContent = lastEmailLife;
   } catch(e) {
-    respText.textContent = 'Yhteysvirhe. Yritä uudelleen.';
+    respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
   }
   btn.disabled = false;
 }
@@ -835,21 +808,11 @@ async function explainWithAI() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   try {
-    const res = await fetch('/api/ai/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        model:'gpt-4o-mini',
-        max_tokens:1000,
-        system:'Olet selittäjä joka osaa kääntää monimutkaiset asiat yksinkertaiseksi suomeksi. Selitä asia niin että jokainen ymmärtää. Käytä arjen esimerkkejä. Vastaa suomeksi.',
-        messages:[{role:'user', content:`Selitä tämä yksinkertaisella suomella niin että jokainen ymmärtää:\n\n${question}\n\nKäytä arjen esimerkkejä jos mahdollista.`}]
-      })
-    });
-    const data = await res.json();
-    lastResearch = data.text || data.reply || '';
+    const sys = 'Olet selittäjä joka osaa kääntää monimutkaiset asiat yksinkertaiseksi suomeksi. Selitä asia niin että jokainen ymmärtää. Käytä arjen esimerkkejä. Vastaa suomeksi.';
+    lastResearch = await window.aiChat(sys, `Selitä tämä yksinkertaisella suomella niin että jokainen ymmärtää:\n\n${question}\n\nKäytä arjen esimerkkejä jos mahdollista.`, 1000);
     respText.textContent = lastResearch;
   } catch(e) {
-    respText.textContent = 'Yhteysvirhe. Yritä uudelleen.';
+    respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
   }
   btn.disabled = false;
 }
@@ -888,21 +851,11 @@ async function teachSkill() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   try {
-    const res = await fetch('/api/ai/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        model:'gpt-4o-mini',
-        max_tokens:1200,
-        system:'Olet kokenut opettaja. Opeta taito alusta alkaen aloittelijalle. Anna 5 ensimmäistä asiaa jotka pitää oppia ja yksi käytännön harjoitus jokaiselle. Ole selkeä ja kannustava. Vastaa suomeksi.',
-        messages:[{role:'user', content:`Opeta minulle ${skill} alusta alkaen. Olen täysin aloittelija. Anna minulle 5 ensimmäistä asiaa jotka minun pitää oppia ja yksi harjoitus jokaiselle.`}]
-      })
-    });
-    const data = await res.json();
-    lastSkill = data.text || data.reply || '';
+    const sys = 'Olet kokenut opettaja. Opeta taito alusta alkaen aloittelijalle. Anna 5 ensimmäistä asiaa jotka pitää oppia ja yksi käytännön harjoitus jokaiselle. Ole selkeä ja kannustava. Vastaa suomeksi.';
+    lastSkill = await window.aiChat(sys, `Opeta minulle ${skill} alusta alkaen. Olen täysin aloittelija. Anna minulle 5 ensimmäistä asiaa jotka minun pitää oppia ja yksi harjoitus jokaiselle.`, 1200);
     respText.textContent = lastSkill;
   } catch(e) {
-    respText.textContent = 'Yhteysvirhe. Yritä uudelleen.';
+    respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
   }
   btn.disabled = false;
 }
@@ -928,21 +881,11 @@ async function helpWithFinance() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   try {
-    const res = await fetch('/api/ai/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        model:'gpt-4o-mini',
-        max_tokens:1000,
-        system:'Olet talousneuvoja. Auta henkilöä suunnittelemaan budjettia, löytämään säästökeinoja ja vertailemaan vaihtoehtoja. Ole käytännöllinen ja kannustava. Vastaa suomeksi.',
-        messages:[{role:'user', content:`Autatko minua tässä taloustilanteessa:\n\n${situation}\n\nAnna käytännöllisiä neuvoja ja ehdotuksia.`}]
-      })
-    });
-    const data = await res.json();
-    lastFinance = data.text || data.reply || '';
+    const sys = 'Olet talousneuvoja. Auta henkilöä suunnittelemaan budjettia, löytämään säästökeinoja ja vertailemaan vaihtoehtoja. Ole käytännöllinen ja kannustava. Vastaa suomeksi.';
+    lastFinance = await window.aiChat(sys, `Autatko minua tässä taloustilanteessa:\n\n${situation}\n\nAnna käytännöllisiä neuvoja ja ehdotuksia.`, 1000);
     respText.textContent = lastFinance;
   } catch(e) {
-    respText.textContent = 'Yhteysvirhe. Yritä uudelleen.';
+    respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
   }
   btn.disabled = false;
 }

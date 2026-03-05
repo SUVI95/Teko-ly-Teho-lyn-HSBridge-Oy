@@ -675,6 +675,7 @@ Etsin asiakaspalvelu- tai myyntiroteja.</div>
   </div>
 </section>
 
+<script src="/js/ai-helper.js"></script>
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
 <script>
@@ -740,21 +741,12 @@ async function optimizeCV() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   try {
-    const res = await fetch('/api/ai/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        model:'gpt-4o-mini',
-        max_tokens:1500,
-        system:'Olet uravalmentaja ja CV-asiantuntija. Anna strukturoitu palaute seuraavassa muodossa:\n\n1. VAHVUUDET: Mitä on hyvää CV:ssä?\n2. PUUTTUVAT ASIAT: Mitä puuttuu tai voisi olla paremmin?\n3. REKRYTOIJAN NÄKÖKULMA: Mitä rekrytoija saattaa ohittaa tai missata?\n4. KONKREETTISET PARANNUSEHDOTUKSET: Mitä kannattaa muuttaa?\n\nOle kannustava mutta rehellinen. Vastaa suomeksi.',
-        messages:[{role:'user', content:`Analysoi tämä CV${jobAd ? ' työpaikkailmoitukseen nähden' : ''}:\n\nCV:\n${cv}${jobAd ? `\n\nTyöpaikkailmoitus:\n${jobAd}` : ''}\n\nAnna strukturoitu palaute yllä olevassa muodossa.`}]
-      })
-    });
-    const data = await res.json();
-    lastCV = data.text || data.reply || '';
+    const sys = 'Olet uravalmentaja ja CV-asiantuntija. Anna strukturoitu palaute seuraavassa muodossa:\n\n1. VAHVUUDET: Mitä on hyvää CV:ssä?\n2. PUUTTUVAT ASIAT: Mitä puuttuu tai voisi olla paremmin?\n3. REKRYTOIJAN NÄKÖKULMA: Mitä rekrytoija saattaa ohittaa tai missata?\n4. KONKREETTISET PARANNUSEHDOTUKSET: Mitä kannattaa muuttaa?\n\nOle kannustava mutta rehellinen. Vastaa suomeksi.';
+    const msg = `Analysoi tämä CV${jobAd ? ' työpaikkailmoitukseen nähden' : ''}:\n\nCV:\n${cv}${jobAd ? `\n\nTyöpaikkailmoitus:\n${jobAd}` : ''}\n\nAnna strukturoitu palaute yllä olevassa muodossa.`;
+    lastCV = await window.aiChat(sys, msg, 1500);
     respText.textContent = lastCV;
   } catch(e) {
-    respText.textContent = 'Yhteysvirhe. Yritä uudelleen hetken kuluttua.';
+    respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
   }
   btn.disabled = false;
 }
@@ -781,21 +773,12 @@ async function generateCoverLetter() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   try {
-    const res = await fetch('/api/ai/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        model:'gpt-4o-mini',
-        max_tokens:1000,
-        system:'Olet kokenut uravalmentaja. Luo ammattimainen hakemuskirje suomeksi. Kirjeen tulee olla räätälöity yritykseen ja työpaikkaan, kannustava mutta ammattimainen. Pituus: n. 200-250 sanaa.',
-        messages:[{role:'user', content:`Luo hakemuskirje:\n\nYritys ja missio:\n${company}\n\nTyöpaikka ja vaatimukset:\n${jobDesc}\n\nOmat vahvuudet:\n${strengths}\n\nLuo räätälöity hakemuskirje joka yhdistää nämä elementit.`}]
-      })
-    });
-    const data = await res.json();
-    lastCoverLetter = data.text || data.reply || '';
+    const sys = 'Olet kokenut uravalmentaja. Luo ammattimainen hakemuskirje suomeksi. Kirjeen tulee olla räätälöity yritykseen ja työpaikkaan, kannustava mutta ammattimainen. Pituus: n. 200-250 sanaa.';
+    const msg = `Luo hakemuskirje:\n\nYritys ja missio:\n${company}\n\nTyöpaikka ja vaatimukset:\n${jobDesc}\n\nOmat vahvuudet:\n${strengths}\n\nLuo räätälöity hakemuskirje joka yhdistää nämä elementit.`;
+    lastCoverLetter = await window.aiChat(sys, msg, 1000);
     respText.textContent = lastCoverLetter;
   } catch(e) {
-    respText.textContent = 'Yhteysvirhe. Yritä uudelleen.';
+    respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
   }
   btn.disabled = false;
 }
@@ -821,21 +804,12 @@ async function generateHeadlines() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   try {
-    const res = await fetch('/api/ai/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        model:'gpt-4o-mini',
-        max_tokens:600,
-        system:'Olet LinkedIn-asiantuntija. Luo 3 erilaista LinkedIn-otsikkovaihtoehtoa. Otsikot voivat olla 120 merkkiä pitkiä. Vaihtoehdot voivat korostaa eri aspekteja: kokemusta, taitoja, tavoitteita. Vastaa suomeksi, jokainen vaihtoehto omalla rivillään numerolla.',
-        messages:[{role:'user', content:`Luo 3 LinkedIn-otsikkovaihtoehtoa:\n\nNykyinen rooli: ${currentRole}\nTavoiterooli: ${targetRole}\n\nAnna 3 erilaista vaihtoehtoa, jokainen numerolla (1., 2., 3.).`}]
-      })
-    });
-    const data = await res.json();
-    lastHeadlines = data.text || data.reply || '';
+    const sys = 'Olet LinkedIn-asiantuntija. Luo 3 erilaista LinkedIn-otsikkovaihtoehtoa. Otsikot voivat olla 120 merkkiä pitkiä. Vaihtoehdot voivat korostaa eri aspekteja: kokemusta, taitoja, tavoitteita. Vastaa suomeksi, jokainen vaihtoehto omalla rivillään numerolla.';
+    const msg = `Luo 3 LinkedIn-otsikkovaihtoehtoa:\n\nNykyinen rooli: ${currentRole}\nTavoiterooli: ${targetRole}\n\nAnna 3 erilaista vaihtoehtoa, jokainen numerolla (1., 2., 3.).`;
+    lastHeadlines = await window.aiChat(sys, msg, 600);
     respText.textContent = lastHeadlines;
   } catch(e) {
-    respText.textContent = 'Yhteysvirhe. Yritä uudelleen.';
+    respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
   }
   btn.disabled = false;
 }
@@ -861,22 +835,13 @@ async function generateLinkedIn() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   const typeNames = {summary:'profiilin yhteenvedon',post:'julkaisun',message:'verkostoitumisviestin'};
+  const sysExtra = type==='summary'?'Yhteenvedon tulee olla ammattimainen mutta henkilökohtainen.':type==='post'?'Julkaisun tulee olla kannustava ja ammattimainen.':type==='message'?'Viestin tulee olla lyhyt, ystävällinen ja ammattimainen.';
   try {
-    const res = await fetch('/api/ai/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        model:'gpt-4o-mini',
-        max_tokens:800,
-        system:`Olet LinkedIn-asiantuntija. Luo ${typeNames[type]} suomeksi. ${type==='summary'?'Yhteenvedon tulee olla ammattimainen mutta henkilökohtainen.':type==='post'?'Julkaisun tulee olla kannustava ja ammattimainen.':type==='message'?'Viestin tulee olla lyhyt, ystävällinen ja ammattimainen.'} Käytä sopivia emojeja.`,
-        messages:[{role:'user', content:`Luo ${typeNames[type]}:\n\n${input}`}]
-      })
-    });
-    const data = await res.json();
-    lastLinkedIn = data.text || data.reply || '';
+    const sys = `Olet LinkedIn-asiantuntija. Luo ${typeNames[type]} suomeksi. ${sysExtra} Käytä sopivia emojeja.`;
+    lastLinkedIn = await window.aiChat(sys, `Luo ${typeNames[type]}:\n\n${input}`, 800);
     respText.textContent = lastLinkedIn;
   } catch(e) {
-    respText.textContent = 'Yhteysvirhe. Yritä uudelleen.';
+    respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
   }
   btn.disabled = false;
 }
@@ -924,21 +889,12 @@ async function generateOutreach() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   try {
-    const res = await fetch('/api/ai/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({
-        model:'gpt-4o-mini',
-        max_tokens:400,
-        system:'Olet uravalmentaja. Kirjoita lyhyt, luonnollinen ja rehellinen LinkedIn-viesti rekrytoijalle. Viestin tulee olla alle 5 lausetta, luonnollinen sävy, ei liioittelua. Vastaa suomeksi.',
-        messages:[{role:'user', content:`Write a short LinkedIn message in Finnish to a recruiter at ${company}. I am interested in ${role}. One thing that attracted me to this company is ${interest}. Keep it under 5 sentences. Natural and honest tone, no flattery.`}]
-      })
-    });
-    const data = await res.json();
-    lastOutreach = data.text || data.reply || '';
+    const sys = 'Olet uravalmentaja. Kirjoita lyhyt, luonnollinen ja rehellinen LinkedIn-viesti rekrytoijalle. Viestin tulee olla alle 5 lausetta, luonnollinen sävy, ei liioittelua. Vastaa suomeksi.';
+    const msg = `Write a short LinkedIn message in Finnish to a recruiter at ${company}. I am interested in ${role}. One thing that attracted me to this company is ${interest}. Keep it under 5 sentences. Natural and honest tone, no flattery.`;
+    lastOutreach = await window.aiChat(sys, msg, 400);
     respText.textContent = lastOutreach;
   } catch(e) {
-    respText.textContent = 'Yhteysvirhe. Yritä uudelleen hetken kuluttua.';
+    respText.textContent = (e && e.message) || 'Yhteysvirhe. Yritä uudelleen.';
   }
   btn.disabled = false;
 }
