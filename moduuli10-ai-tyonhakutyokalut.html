@@ -311,7 +311,52 @@ h1.hero-title em{font-style:italic;color:#a8c4e0;}
 <section class="section" id="harjoitus" data-index="3">
   <div class="section-inner fade-up">
     <div class="exercise-header">
-      <div class="exercise-num">💡</div>
+      <div class="exercise-num">1</div>
+      <div class="exercise-header-text">
+        <h3>Harjoitus: Työpaikkailmoituksen täsmäytys</h3>
+        <p>AI auttaa tunnistamaan mitä työnantaja oikeasti hakee — ja mitä CV:stäsi kannattaa korostaa</p>
+      </div>
+    </div>
+    <div class="prose" style="margin-bottom:2rem;">
+      <p>Kopioi oikea työpaikkailmoitus suomalaiselta sivustolta (Duunitori, LinkedIn, Oikotie) ja käytä AI:ta analysoimaan sitä. <strong>Tämä tekniikka auttaa räätälöimään hakemuksesi jokaiselle roolille.</strong></p>
+    </div>
+
+    <div class="highlight-box" style="margin-bottom:2rem;">
+      <p style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1rem;">PROMPT 1 — Analysoi ilmoitus</p>
+      <div style="background:var(--ink);color:#fff;padding:1.25rem;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.82rem;line-height:1.7;margin-bottom:1.5rem;">
+        Analysoi tämä työpaikkailmoitus ja kerro: 1) Viisi tärkeintä vaadittua taitoa. 2) Mitä työnantaja oikeasti etsii? 3) Mitä CV:n kannattaa korostaa tähän rooliin?
+      </div>
+      <p style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1rem;">PROMPT 2 — CV-pistekohdat</p>
+      <div style="background:var(--ink);color:#fff;padding:1.25rem;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.82rem;line-height:1.7;">
+        Kirjoita viisi CV-pistekohdetta, jotka täsmäävät tähän työpaikkailmoitukseen.
+      </div>
+      <p style="font-size:0.9rem;color:var(--muted);margin-top:1rem;">Tällä tavalla räätälöit hakemuksesi jokaiselle työpaikalle.</p>
+    </div>
+
+    <div class="practice-wrap">
+      <div class="practice-header">
+        <div class="practice-header-icon">📋</div>
+        <div class="practice-header-text">
+          <h3>Kokeile nyt</h3>
+          <p>Liitä työpaikkailmoitus ja pyydä AI:ta analysoimaan sen</p>
+        </div>
+      </div>
+      <div class="practice-body">
+        <div class="practice-label">Työpaikkailmoituksen teksti (kopioi Duunitorista, LinkedInistä tms.)</div>
+        <textarea class="practice-textarea" id="jobAdMatchInput" placeholder="Liitä työpaikkailmoituksen teksti tähän..."></textarea>
+        <button class="practice-btn" id="jobAdMatchBtn" onclick="analyzeJobAd()">✨ Analysoi ilmoitus ja luo CV-pistekohdat</button>
+        <div class="practice-response" id="jobAdMatchResponse">
+          <div class="practice-response-label">Analyysi ja ehdotukset</div>
+          <div class="practice-response-text" id="jobAdMatchText"></div>
+          <div class="practice-response-actions">
+            <button class="copy-resp-btn" id="copyJobAdMatchBtn" onclick="copyJobAdMatch()">📋 Kopioi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="exercise-header" style="margin-top:3rem;">
+      <div class="exercise-num">2</div>
       <div class="exercise-header-text">
         <h3>Harjoitus: Analysoi työpaikkailmoitus</h3>
         <p>Löydä yksi todellinen työpaikkailmoitus ja analysoi kuinka hyvin sopisit siihen</p>
@@ -896,7 +941,8 @@ tarkistaakseni mihin hakemuksiin ei ole vastattu.</div>
     <p style="font-size:1rem;color:var(--muted);max-width:520px;line-height:1.75;margin-bottom:2.5rem;font-weight:300;">Seuraavaksi opit eettisestä AI:sta, puolueettomuudesta ja tietosuojasta — miten käyttää AI:ta vastuullisesti.</p>
     <div style="display:flex;gap:1rem;flex-wrap:wrap;">
       <a href="/module/moduuli10b-digitaaliset-perustaidot" class="btn-next">Seuraava — Moduuli 10B: Digitaaliset perustaidot <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></a>
-      <a href="/" class="btn-back">← Etusivu</a>
+      <a href="/module/moduuli7-ai-tyonhaussa" class="btn-back">← Edellinen</a>
+      <a href="/" class="btn-back">Etusivu</a>
     </div>
   </div>
 </section>
@@ -1005,6 +1051,46 @@ function copyJobSearch() {
   if(!lastJobSearch) return;
   navigator.clipboard.writeText(lastJobSearch).then(()=>{
     const b=document.getElementById('copyJobSearchBtn');
+    b.textContent='✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(()=>{b.textContent='📋 Kopioi';b.classList.remove('ok');},2200);
+  });
+}
+
+// ── TYÖPAIKKAILMOITUKSEN TÄSMÄYTYS ──────────────────
+let lastJobAdMatch = '';
+async function analyzeJobAd() {
+  const jobAd = document.getElementById('jobAdMatchInput').value.trim();
+  if(!jobAd) { alert('Liitä työpaikkailmoituksen teksti.'); return; }
+  const btn = document.getElementById('jobAdMatchBtn');
+  const respBox = document.getElementById('jobAdMatchResponse');
+  const respText = document.getElementById('jobAdMatchText');
+  btn.disabled = true;
+  respText.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  respBox.style.display = 'block';
+  respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({
+        model:'gpt-4o-mini',
+        max_tokens:1200,
+        system:'Olet uravalmentaja Suomessa. Analysoi työpaikkailmoituksia ja luo käytännön ehdotuksia. Vastaa suomeksi.',
+        messages:[{role:'user', content:`Analysoi tämä työpaikkailmoitus:\n\n${jobAd}\n\nKerro: 1) Viisi tärkeintä vaadittua taitoa. 2) Mitä työnantaja oikeasti etsii? 3) Mitä CV:n kannattaa korostaa? 4) Kirjoita viisi CV-pistekohdetta jotka täsmäävät tähän ilmoitukseen.`}]
+      })
+    });
+    const data = await res.json();
+    lastJobAdMatch = data.text || data.reply || '';
+    respText.textContent = lastJobAdMatch;
+  } catch(e) {
+    respText.textContent = 'Yhteysvirhe. Yritä uudelleen.';
+  }
+  btn.disabled = false;
+}
+function copyJobAdMatch() {
+  if(!lastJobAdMatch) return;
+  navigator.clipboard.writeText(lastJobAdMatch).then(()=>{
+    const b=document.getElementById('copyJobAdMatchBtn');
     b.textContent='✓ Kopioitu!'; b.classList.add('ok');
     setTimeout(()=>{b.textContent='📋 Kopioi';b.classList.remove('ok');},2200);
   });
