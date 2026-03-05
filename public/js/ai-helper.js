@@ -1,11 +1,20 @@
 /**
- * Shared AI chat helper with proper error handling.
- * Use window.aiChat(systemPrompt, userMessage, maxTokens) in modules.
+ * AI chat helper - works with any deployment path.
+ * Detects base path from current URL (e.g. /teko-ly) for subpath deployments.
  */
 (function() {
+  function getApiUrl() {
+    var origin = window.location.origin || '';
+    var pathname = window.location.pathname || '';
+    var base = '';
+    var idx = pathname.indexOf('/module/');
+    if (idx > 0) base = pathname.substring(0, idx);
+    return origin + base + '/api/ai/chat';
+  }
+
   window.aiChat = async function(systemPrompt, userMessage, maxTokens) {
-    const url = window.location.origin + '/api/ai/chat';
-    const res = await fetch(url, {
+    var url = getApiUrl();
+    var res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -17,13 +26,11 @@
       })
     });
 
-    const data = await res.json().catch(() => ({}));
+    var data = {};
+    try { data = await res.json(); } catch (e) {}
 
     if (!res.ok) {
-      const msg = data.error || data.message || `Virhe ${res.status}`;
-      if (res.status === 500 && (msg.includes('not configured') || msg.includes('API key'))) {
-        throw new Error('AI-palvelu ei ole käytettävissä. Ota yhteyttä opettajaan.');
-      }
+      var msg = data.error || data.message || 'Virhe ' + res.status;
       throw new Error(msg);
     }
 
