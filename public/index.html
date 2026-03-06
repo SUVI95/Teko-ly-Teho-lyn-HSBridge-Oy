@@ -502,6 +502,26 @@
 
   .feedback-star { color: var(--warm); transition: color 0.2s; }
   .feedback-star:hover, .feedback-star.filled { color: var(--gold); }
+  .course-feedback-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(199,91,58,0.35); }
+
+  /* Course feedback box - own section outside modules */
+  .feedback-section {
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--border);
+  }
+  .feedback-box {
+    max-width: 640px;
+    margin: 0 auto;
+    background: #fff;
+    border: 2px solid var(--accent3);
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: var(--shadow-md);
+    text-align: center;
+  }
+  .feedback-box h2 { margin-bottom: 0.5rem; }
+  .feedback-box .subtitle { margin-bottom: 1.5rem; }
 
   @media (max-width: 768px) {
     .gdpr-banner {
@@ -667,38 +687,12 @@
     
     <div id="modulesContainer" class="loading">Ladataan moduuleja...</div>
 
-    <!-- Feedback Section (end of course) -->
-    <div id="feedbackSection" class="feedback-section" style="margin-top:4rem;padding-top:3rem;border-top:1px solid var(--border);display:none;">
-      <div style="text-align:center;margin-bottom:2rem;">
-        <h2 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin-bottom:0.5rem;">Anna palautetta kurssista</h2>
-        <p style="color:var(--muted);font-size:1rem;">Autamme parantamaan sisältöä. Vastaa vapaasti — kaikki kentät eivät ole pakollisia.</p>
-      </div>
-      <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:16px;padding:2.5rem;border:1px solid var(--border);box-shadow:var(--shadow);">
-        <div style="margin-bottom:1.25rem;">
-          <label style="display:block;font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;">Opitko jotain uutta?</label>
-          <textarea id="feedbackLearned_home" class="feedback-textarea" placeholder="Esim: Kyllä, erityisesti..." style="width:100%;min-height:80px;padding:1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.95rem;resize:vertical;"></textarea>
-        </div>
-        <div style="margin-bottom:1.25rem;">
-          <label style="display:block;font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;">Oliko kurssi hyödyllinen?</label>
-          <textarea id="feedbackUseful_home" class="feedback-textarea" placeholder="Esim: Kyllä, hyvin käytännönläheistä..." style="width:100%;min-height:80px;padding:1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.95rem;resize:vertical;"></textarea>
-        </div>
-        <div style="margin-bottom:1.25rem;">
-          <label style="display:block;font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;">Mitään parannettavaa?</label>
-          <textarea id="feedbackImprove_home" class="feedback-textarea" placeholder="Esim: Lisää esimerkkejä..." style="width:100%;min-height:80px;padding:1rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.95rem;resize:vertical;"></textarea>
-        </div>
-        <div style="margin-bottom:1.5rem;">
-          <label style="display:block;font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;">Tähtiarvostelu (1–5 tähteä)</label>
-          <input type="hidden" id="feedbackRating_home" value="0">
-          <div class="feedback-stars-wrap" data-module="home" style="display:flex;gap:6px;font-size:2rem;cursor:pointer;justify-content:center;">
-            <span class="feedback-star" data-rating="1">★</span>
-            <span class="feedback-star" data-rating="2">★</span>
-            <span class="feedback-star" data-rating="3">★</span>
-            <span class="feedback-star" data-rating="4">★</span>
-            <span class="feedback-star" data-rating="5">★</span>
-          </div>
-        </div>
-        <button onclick="saveModuleFeedback('home')" style="width:100%;padding:14px 28px;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;border:none;background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;">Lähetä palaute</button>
-        <div id="moduleFeedbackConfirm_home" style="display:none;font-size:0.9rem;color:var(--accent3);margin-top:0.75rem;text-align:center;">✓ Kiitos! Palaute tallennettu.</div>
+    <!-- Feedback Section (end of course) - own box outside modules -->
+    <div id="feedbackSection" class="feedback-section" style="display:none;">
+      <div class="feedback-box">
+        <h2 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);">🎉 Kurssi suoritettu!</h2>
+        <p class="subtitle" style="color:var(--muted);font-size:1rem;">Hienoa työtä! Kerro meille miten kurssi meni — miten voit nyt, opitko jotain uutta, käytätkö tätä elämässäsi, muuttiko mielipiteesi tekoälystä ja suosittelisitko meitä?</p>
+        <a href="/course-feedback" class="course-feedback-cta" style="display:inline-block;padding:1rem 2rem;background:var(--accent);color:#fff;border-radius:12px;font-weight:600;text-decoration:none;font-size:1.05rem;transition:all 0.3s;box-shadow:0 4px 14px rgba(199,91,58,0.25);">Anna palaute ja tähtiarvostelu →</a>
       </div>
     </div>
   </div>
@@ -1311,7 +1305,6 @@
         const feedbackSection = document.getElementById('feedbackSection');
         if (feedbackSection && mainModules.length > 0 && completedModules.size >= mainModules.length) {
           feedbackSection.style.display = 'block';
-          initFeedbackStars('home');
         }
       } catch (error) {
         console.error('Error loading modules:', error);
