@@ -523,6 +523,28 @@
   .feedback-box h2 { margin-bottom: 0.5rem; }
   .feedback-box .subtitle { margin-bottom: 1.5rem; }
 
+  /* Feedback module — own box outside modules grid */
+  .feedback-module-section { margin-top: 2rem; }
+  .feedback-module-grid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+  .feedback-module-card {
+    max-width: 400px;
+    border: 2px solid var(--accent3);
+    background: linear-gradient(135deg, rgba(42,122,75,0.05), rgba(99,179,237,0.05));
+  }
+  .feedback-module-card:hover {
+    border-color: var(--accent3);
+    border-width: 2px;
+  }
+  .feedback-module-card .module-icon {
+    font-size: 3rem;
+    background: none;
+  }
+
   @media (max-width: 768px) {
     .gdpr-banner {
       padding: 1rem;
@@ -686,15 +708,6 @@
     </div>
     
     <div id="modulesContainer" class="loading">Ladataan moduuleja...</div>
-
-    <!-- Feedback Section (end of course) - own box outside modules -->
-    <div id="feedbackSection" class="feedback-section" style="display:none;">
-      <div class="feedback-box">
-        <h2 style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);">🎉 Kurssi suoritettu!</h2>
-        <p class="subtitle" style="color:var(--muted);font-size:1rem;">Hienoa työtä! Kerro meille miten kurssi meni — miten voit nyt, opitko jotain uutta, käytätkö tätä elämässäsi, muuttiko mielipiteesi tekoälystä ja suosittelisitko meitä?</p>
-        <a href="/course-feedback" class="course-feedback-cta" style="display:inline-block;padding:1rem 2rem;background:var(--accent);color:#fff;border-radius:12px;font-weight:600;text-decoration:none;font-size:1.05rem;transition:all 0.3s;box-shadow:0 4px 14px rgba(199,91,58,0.25);">Anna palaute ja tähtiarvostelu →</a>
-      </div>
-    </div>
   </div>
 
   <!-- GDPR Consent Banner -->
@@ -1235,7 +1248,8 @@
           { id: 'section-day2', label: 'DAY 2' },
           { id: 'section-day3', label: 'DAY 3' },
           { id: 'section-day4', label: 'DAY 4' },
-          { id: 'section-day5', label: 'DAY 5' }
+          { id: 'section-day5', label: 'DAY 5' },
+          { id: 'section-feedback', label: 'Palautte' }
         ];
         html += '<div class="section-jump-nav" style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:2rem;padding:1rem;background:var(--paper2);border-radius:12px;">';
         sectionIds.forEach(s => {
@@ -1298,14 +1312,18 @@
           });
           html += '</div></div>';
         }
+
+        // Feedback module — own section, outside other modules
+        html += '<div class="part-section feedback-module-section" id="section-feedback"><h2 class="part-title">Kurssipalautte</h2>';
+        html += '<div class="feedback-module-grid">';
+        html += '<div class="module-card feedback-module-card" onclick="window.location.href=\'/course-feedback\'">';
+        html += '<div class="module-icon">⭐</div>';
+        html += '<h2>Anna palaute</h2>';
+        html += '<p>Kurssin jälkeen kerro miten meni — miten voit nyt, opitko jotain uutta, käytätkö tätä elämässäsi ja anna tähtiarvostelu.</p>';
+        html += '<div class="progress-text">Avaa palautelomake →</div>';
+        html += '</div></div></div>';
         
         container.innerHTML = html;
-
-        // Show feedback section when all main modules are completed
-        const feedbackSection = document.getElementById('feedbackSection');
-        if (feedbackSection && mainModules.length > 0 && completedModules.size >= mainModules.length) {
-          feedbackSection.style.display = 'block';
-        }
       } catch (error) {
         console.error('Error loading modules:', error);
         console.error('Error details:', error.message, error.stack);
