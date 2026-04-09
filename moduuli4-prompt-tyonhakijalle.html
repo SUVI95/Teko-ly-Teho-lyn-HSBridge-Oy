@@ -767,6 +767,19 @@ function safeJsonParse(text, fallback) {
   try { return JSON.parse(text); } catch (e) { return fallback; }
 }
 
+async function aiChat(payload) {
+  const res = await fetch('/api/ai/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || data.details || ('HTTP ' + res.status));
+  if (!data.text) throw new Error('Tyhjä vastaus AI:lta');
+  return data.text.trim();
+}
+
 async function saveModuleData(key, data, humanReadableText) {
   try {
     localStorage.setItem(key, JSON.stringify(data));
@@ -832,24 +845,18 @@ async function generateWorkContextPrompt() {
   resultBox.style.display = 'block';
   resultText.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
   try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 800,
-        system: 'Olet asiantuntija AI-promptien rakentamisessa. Luo käyttäjälle selkeä, käytännöllinen Työkontekstiprompti heidän vastaustensa perusteella. Promptin tulee olla suomeksi, noin 150-200 sanaa, ja sen pitää sisältää: rooli ja kokemus, toimiala ja yrityksen koko, kolme tärkeintä tehtäväaluetta, toivottu viestintätyyli. Muotoile se niin että käyttäjä voi liittää sen suoraan ChatGPT:hen tai Claudeen ennen mitä tahansa työtehtävää.',
-        messages: [{ role: 'user', content: `Roolisi ja työsi: ${state.role}\nSuurimmat aikasyöppösi: ${state.timeWasters}\nToistuvat tehtävät: ${state.recurringTasks}\nTyylisi ja kielesi: ${state.style}` }]
-      })
+    workContextPrompt = await aiChat({
+      model: 'gpt-4o-mini',
+      max_tokens: 800,
+      system: 'Olet asiantuntija AI-promptien rakentamisessa. Luo käyttäjälle selkeä, käytännöllinen Työkontekstiprompti heidän vastaustensa perusteella. Promptin tulee olla suomeksi, noin 150-200 sanaa, ja sen pitää sisältää: rooli ja kokemus, toimiala ja yrityksen koko, kolme tärkeintä tehtäväaluetta, toivottu viestintätyyli. Muotoile se niin että käyttäjä voi liittää sen suoraan ChatGPT:hen tai Claudeen ennen mitä tahansa työtehtävää.',
+      messages: [{ role: 'user', content: `Roolisi ja työsi: ${state.role}\nSuurimmat aikasyöppösi: ${state.timeWasters}\nToistuvat tehtävät: ${state.recurringTasks}\nTyylisi ja kielesi: ${state.style}` }]
     });
-    const data = await res.json();
-    workContextPrompt = (data.text || '').trim();
-    resultText.textContent = workContextPrompt || 'AI ei palauttanut vielä sisältöä.';
+    resultText.textContent = workContextPrompt;
     await saveModuleData(STORE_KEYS.builder, { ...state, prompt: workContextPrompt }, `Työkontekstiprompti\n\n${workContextPrompt}`);
     renderTimeWasterChoices();
   } catch (e) {
-    resultText.textContent = 'Yhteysvirhe. Kokeile hetken päästä uudelleen.';
+    console.error('AI builder error:', e);
+    resultText.textContent = 'Virhe: ' + (e.message || 'Yhteysvirhe');
   }
   btn.disabled = false;
   btn.textContent = 'Luo oma Työkontekstiprompti →';
@@ -962,24 +969,14 @@ async function runPersona() {
   text.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
   box.style.display = 'block';
   try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 900,
-        system: built.system,
-        messages: [{ role: 'user', content: built.user }]
-      })
-    });
-    const data = await res.json();
-    text.textContent = (data.text || '').trim() || 'Vastaus jäi tyhjäksi.';
-    personaState[activePersonaIndex] = { inputs: capturePersonaInputs(), response: text.textContent };
+    const answer = await aiChat({ model: 'gpt-4o-mini', max_tokens: 900, system: built.system, messages: [{ role: 'user', content: built.user }] });
+    text.textContent = answer;
+    personaState[activePersonaIndex] = { inputs: capturePersonaInputs(), response: answer };
     await saveModuleData(STORE_KEYS.persona, personaState, JSON.stringify(personaState));
     renderPersonaFollowups(activePersonaIndex);
   } catch (e) {
-    text.textContent = 'Yhteysvirhe. Kokeile hetken päästä uudelleen.';
+    console.error('Persona error:', e);
+    text.textContent = 'Virhe: ' + (e.message || 'Yhteysvirhe');
   }
   btn.disabled = false;
 }
@@ -998,22 +995,12 @@ async function personaFollowup(idx) {
   const text = document.getElementById('personaResponseText');
   text.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
   try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 800,
-        system: 'Muokkaa aiempaa vastausta pyydetyn ohjeen mukaan. Säilytä sama käyttötarkoitus ja sama työroolin näkökulma. Vastaa vain uudella versiolla suomeksi.',
-        messages: [{ role: 'user', content: `Nykyinen versio:\n${current}\n\nMuokkaa näin: ${instruction}` }]
-      })
-    });
-    const data = await res.json();
-    text.textContent = (data.text || '').trim() || current;
-    personaState[activePersonaIndex] = { inputs: capturePersonaInputs(), response: text.textContent };
+    const answer = await aiChat({ model: 'gpt-4o-mini', max_tokens: 800, system: 'Muokkaa aiempaa vastausta pyydetyn ohjeen mukaan. Säilytä sama käyttötarkoitus ja sama työroolin näkökulma. Vastaa vain uudella versiolla suomeksi.', messages: [{ role: 'user', content: `Nykyinen versio:\n${current}\n\nMuokkaa näin: ${instruction}` }] });
+    text.textContent = answer;
+    personaState[activePersonaIndex] = { inputs: capturePersonaInputs(), response: answer };
     await saveModuleData(STORE_KEYS.persona, personaState, JSON.stringify(personaState));
   } catch (e) {
+    console.error('Follow-up error:', e);
     text.textContent = current;
   }
 }
@@ -1057,19 +1044,12 @@ async function gradePromptChallenge() {
   stars.innerHTML = '';
   text.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
   try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 900,
-        system: 'Arvioi työtehtävää varten kirjoitettu prompti. Palauta VAIN JSON tässä muodossa: {"precision":0|1,"context":0|1,"format":0|1,"precision_fix":"...","context_fix":"...","format_fix":"...","better_prompt":"..."}. Precision kertoo onko pyyntö riittävän tarkka. Context kertoo tietääkö AI kuka käyttäjä on ja mikä tilanne on. Format kertoo onko tulosmuoto selvä. Jos tähti puuttuu, anna yksi erittäin konkreettinen lisäys muodossa "Lisää tähän: ...". better_prompt on promptin parannettu versio käyttäjän seuraavaa kierrosta varten.',
-        messages: [{ role: 'user', content: `${getContextForAI()}\n\nValittu tehtävä: ${selectedTask}\n\nKäyttäjän prompti:\n${prompt}` }]
-      })
+    const raw = await aiChat({
+      model: 'gpt-4o-mini',
+      max_tokens: 900,
+      system: 'Arvioi työtehtävää varten kirjoitettu prompti. Palauta VAIN JSON tässä muodossa: {"precision":0|1,"context":0|1,"format":0|1,"precision_fix":"...","context_fix":"...","format_fix":"...","better_prompt":"..."}. Precision kertoo onko pyyntö riittävän tarkka. Context kertoo tietääkö AI kuka käyttäjä on ja mikä tilanne on. Format kertoo onko tulosmuoto selvä. Jos tähti puuttuu, anna yksi erittäin konkreettinen lisäys muodossa "Lisää tähän: ...". better_prompt on promptin parannettu versio käyttäjän seuraavaa kierrosta varten.',
+      messages: [{ role: 'user', content: `${getContextForAI()}\n\nValittu tehtävä: ${selectedTask}\n\nKäyttäjän prompti:\n${prompt}` }]
     });
-    const data = await res.json();
-    const raw = (data.text || '').trim();
     const grade = safeJsonParse(raw, {
       precision: 0, context: 0, format: 0,
       precision_fix: 'Lisää tähän: mitä tehtävää prompti koskee täsmällisesti.',
@@ -1130,21 +1110,11 @@ async function runTimeComment() {
   box.style.display = 'block';
   text.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
   try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 300,
-        system: `Käyttäjä säästää ${weekly} minuuttia viikossa yhdessä tehtävässä AI:n avulla. Kirjoita 2-3 lausetta joka konkretisoi mitä tämä aika tarkoittaa käytännössä. Vertaa arkiseen asiaan. Ole inspiroiva mutta realistinen. Suomeksi.`,
-        messages: [{ role: 'user', content: `Viikoittainen säästö on ${weekly} minuuttia.` }]
-      })
-    });
-    const data = await res.json();
-    text.textContent = (data.text || '').trim();
+    const answer = await aiChat({ model: 'gpt-4o-mini', max_tokens: 300, system: `Käyttäjä säästää ${weekly} minuuttia viikossa yhdessä tehtävässä AI:n avulla. Kirjoita 2-3 lausetta joka konkretisoi mitä tämä aika tarkoittaa käytännössä. Vertaa arkiseen asiaan. Ole inspiroiva mutta realistinen. Suomeksi.`, messages: [{ role: 'user', content: `Viikoittainen säästö on ${weekly} minuuttia.` }] });
+    text.textContent = answer;
   } catch (e) {
-    text.textContent = 'Tämä voi olla useita tunteja kuukaudessa takaisin omaan työhösi. Se on usein enemmän kuin yhden kokonaisen työiltapäivän verran aikaa.';
+    console.error('Time comment error:', e);
+    text.textContent = 'Tämä voi olla useita tunteja kuukaudessa takaisin omaan työhösi.';
   }
 }
 
@@ -1242,20 +1212,10 @@ async function runReflectionAiComment(answers) {
   box.style.display = 'block';
   text.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
   try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 300,
-        system: 'Käyttäjä vastasi kolmeen kysymykseen AI-koulutusmoduulin lopussa. Kirjoita lyhyt (3 lausetta), aito, kannustava kommentti. Viittaa heidän omiin vastauksiin. Älä ole ylioptimistinen tai teennäinen. Puhu kuin arvostava kollega. Suomeksi.',
-        messages: [{ role: 'user', content: JSON.stringify(answers) }]
-      })
-    });
-    const data = await res.json();
-    text.textContent = (data.text || '').trim();
+    const answer = await aiChat({ model: 'gpt-4o-mini', max_tokens: 300, system: 'Käyttäjä vastasi kolmeen kysymykseen AI-koulutusmoduulin lopussa. Kirjoita lyhyt (3 lausetta), aito, kannustava kommentti. Viittaa heidän omiin vastauksiin. Älä ole ylioptimistinen tai teennäinen. Puhu kuin arvostava kollega. Suomeksi.', messages: [{ role: 'user', content: JSON.stringify(answers) }] });
+    text.textContent = answer;
   } catch (e) {
+    console.error('Reflection AI error:', e);
     text.textContent = 'Hyvä oivallus. Kun viet tämän yhteen oikeaan työtehtävään ensi viikolla, tästä tulee sinulle hyödyllinen rutiini eikä vain yksi kurssikokemus.';
   }
 }
