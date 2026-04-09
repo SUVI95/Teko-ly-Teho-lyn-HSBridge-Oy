@@ -131,6 +131,9 @@ app.get('/course-feedback', authenticateToken, (req, res) => {
 app.get('/onboarding', authenticatePage, async (req, res) => {
   try {
     if (req.user.is_admin) {
+      if (req.query.preview === '1') {
+        return res.sendFile(path.join(__dirname, 'public', 'onboarding.html'));
+      }
       return res.redirect(302, '/');
     }
     const approved = req.user.is_approved === true || req.user.is_approved === 'true' || req.user.is_approved === 1;
