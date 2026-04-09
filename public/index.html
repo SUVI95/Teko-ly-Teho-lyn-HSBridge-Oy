@@ -730,6 +730,9 @@
   
   <script>
     const API_URL = window.location.origin + '/api';
+    window.currentUser = null;
+    window.onboardingCompleted = false;
+    window.onboardingStatusKnown = false;
     
     // Icon SVG definitions (global scope)
     const iconSVGs = {
@@ -773,57 +776,62 @@
     // Load user info (required)
     async function loadUser() {
       const user = await checkAuth();
-      if (user) {
-        document.getElementById('userName').textContent = user.name || user.email;
-        document.getElementById('userEmail').textContent = user.email;
-        
-        // Check if user is approved (teacher approved)
-        const isAdmin = user.is_admin === true || user.is_admin === 'true' || user.is_admin === 1 || user.is_admin === '1';
-        const isApproved = isAdmin || user.is_approved === true || user.is_approved === 'true' || user.is_approved === 1;
-        
-        if (!isApproved) {
-          document.getElementById('modulesContainer').innerHTML = `
-            <div style="text-align:center;padding:4rem 2rem;max-width:600px;margin:0 auto;">
-              <div style="font-size:3rem;margin-bottom:1.5rem;">⏳</div>
-              <h2 style="font-family:'DM Serif Display',serif;font-size:2rem;margin-bottom:1rem;color:var(--ink);">Odottaa opettajan hyväksyntää</h2>
-              <p style="color:var(--muted);font-size:1.05rem;line-height:1.8;margin-bottom:1.5rem;">Kiitos rekisteröitymisestä! Tilisi odottaa opettajan hyväksyntää. Saat pääsyn kurssiin heti kun hyväksyntä on tehty.</p>
-              <p style="color:var(--muted);font-size:0.9rem;">Jos kysyttävää, ota yhteyttä: <a href="mailto:suvi@duunijobs.com" style="color:var(--accent);">suvi@duunijobs.com</a></p>
-            </div>`;
-          var statsContainer = document.getElementById('statsContainer');
-          if (statsContainer) statsContainer.style.display = 'none';
-          var achievementsContainer = document.getElementById('achievementsContainer');
-          if (achievementsContainer) achievementsContainer.style.display = 'none';
-          return;
-        }
+      if (!user) {
+        return false;
+      }
 
-        if (!isAdmin) {
-          try {
-            const obRes = await fetch(`${API_URL}/onboarding/status`, { credentials: 'include' });
-            if (obRes.ok) {
-              const obData = await obRes.json();
-              if (!obData.completed) {
-                window.location.href = '/onboarding';
-                return;
-              }
-            }
-          } catch (e) {}
+      window.currentUser = user;
+      document.getElementById('userName').textContent = user.name || user.email;
+      document.getElementById('userEmail').textContent = user.email;
+      
+      // Check if user is approved (teacher approved)
+      const isAdmin = user.is_admin === true || user.is_admin === 'true' || user.is_admin === 1 || user.is_admin === '1';
+      const isApproved = isAdmin || user.is_approved === true || user.is_approved === 'true' || user.is_approved === 1;
+      
+      if (!isApproved) {
+        document.getElementById('modulesContainer').innerHTML = `
+          <div style="text-align:center;padding:4rem 2rem;max-width:600px;margin:0 auto;">
+            <div style="font-size:3rem;margin-bottom:1.5rem;">⏳</div>
+            <h2 style="font-family:'DM Serif Display',serif;font-size:2rem;margin-bottom:1rem;color:var(--ink);">Odottaa opettajan hyväksyntää</h2>
+            <p style="color:var(--muted);font-size:1.05rem;line-height:1.8;margin-bottom:1.5rem;">Kiitos rekisteröitymisestä! Tilisi odottaa opettajan hyväksyntää. Saat pääsyn kurssiin heti kun hyväksyntä on tehty.</p>
+            <p style="color:var(--muted);font-size:0.9rem;">Jos kysyttävää, ota yhteyttä: <a href="mailto:suvi@duunijobs.com" style="color:var(--accent);">suvi@duunijobs.com</a></p>
+          </div>`;
+        var statsContainer = document.getElementById('statsContainer');
+        if (statsContainer) statsContainer.style.display = 'none';
+        var achievementsContainer = document.getElementById('achievementsContainer');
+        if (achievementsContainer) achievementsContainer.style.display = 'none';
+        return false;
+      }
+
+      if (!isAdmin) {
+        try {
+          const obRes = await fetch(`${API_URL}/onboarding/status`, { credentials: 'include' });
+          if (obRes.ok) {
+            const obData = await obRes.json();
+            window.onboardingCompleted = obData.completed === true;
+            window.onboardingStatusKnown = true;
+          }
+        } catch (e) {}
+      } else {
+        window.onboardingCompleted = true;
+        window.onboardingStatusKnown = true;
+      }
+      
+      if (isAdmin) {
+        // Show button in nav (next to logo)
+        const adminNavLink = document.getElementById('adminNavLink');
+        if (adminNavLink) {
+          adminNavLink.style.display = 'block';
         }
         
-        if (isAdmin) {
-          // Show button in nav (next to logo)
-          const adminNavLink = document.getElementById('adminNavLink');
-          if (adminNavLink) {
-            adminNavLink.style.display = 'block';
-          }
-          
-          // Show button in user section
-          const adminButtonContainer = document.getElementById('adminButtonContainer');
-          if (adminButtonContainer) {
-            adminButtonContainer.style.display = 'block';
-          }
+        // Show button in user section
+        const adminButtonContainer = document.getElementById('adminButtonContainer');
+        if (adminButtonContainer) {
+          adminButtonContainer.style.display = 'block';
         }
       }
-      // If user is null, checkAuth already redirected to login
+
+      return true;
     }
     
     // Load modules (no authentication required)
@@ -852,6 +860,15 @@
         window.currentSummary = summary; // Store for statistics
         
         const modules = [
+          {
+            id: 'onboarding',
+            title: 'Aloitusmoduuli: Tarvekartta ja tavoitteet',
+            description: 'Aloita tästä. Kerro tilanteestasi, tavoitteistasi ja siitä, miten haluat käyttää tekoälyä. Saat sinulle räätälöidyn aloituksen ennen moduuli 1:tä.',
+            icon: 'chart',
+            order: 0,
+            part: 1,
+            isOnboarding: true
+          },
           // Osa 1: Perusmoduulit
           {
             id: 'moduuli1-tietosuoja',
@@ -1169,7 +1186,7 @@
         ];
         
         // Check which modules are completed (only count main modules, not homework)
-        const mainModules = modules.filter(m => !m.isHomework);
+        const mainModules = modules.filter(m => !m.isHomework && !m.isOnboarding);
         const part1Modules = mainModules.filter(m => m.part === 1);
         const completedModules = new Set();
         let totalProgress = 0;
@@ -1369,6 +1386,19 @@
         `;
       }
       
+      if (module.isOnboarding) {
+        const onboardingDone = window.onboardingCompleted === true;
+        return `
+          <div class="module-card ${onboardingDone ? 'completed' : ''}" onclick="window.location.href='/onboarding'">
+            ${onboardingDone ? '<div class="completion-badge">✓</div>' : ''}
+            <div class="module-icon">${iconSVGs[module.icon]}</div>
+            <h2>${module.title}</h2>
+            <p>${module.description}</p>
+            <div class="progress-text">${onboardingDone ? 'Suoritettu ✓' : 'Aloita tästä ennen moduuli 1:tä'}</div>
+          </div>
+        `;
+      }
+
       const moduleProgress = summary.modules.find(m => m.module_id === module.id);
       const checklistProgress = summary.checklists.find(c => c.module_id === module.id);
       
@@ -1388,13 +1418,17 @@
       const isCompleted = completedModules.has(module.id);
       const isComingSoon = module.comingSoon === true;
       
-      // All modules are accessible - no locking (except coming soon)
-      const isLocked = isComingSoon;
+      // Before onboarding is complete, show it as the first module and lock the rest.
+      const shouldLockForOnboarding = window.currentUser &&
+        !window.currentUser.is_admin &&
+        window.onboardingStatusKnown &&
+        window.onboardingCompleted !== true;
+      const isLocked = isComingSoon || shouldLockForOnboarding;
       
       return `
         <div class="module-card ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="window.location.href='/module/${module.id}'"` : ''}>
           ${isCompleted ? '<div class="completion-badge">✓</div>' : ''}
-          ${isComingSoon ? '<div class="locked-badge">🚧 Tulossa pian</div>' : ''}
+          ${isComingSoon ? '<div class="locked-badge">🚧 Tulossa pian</div>' : shouldLockForOnboarding ? '<div class="locked-badge">🔒 Suorita ensin aloitusmoduuli</div>' : ''}
           <div class="module-icon">${iconSVGs[module.icon]}</div>
           <h2>${module.title}</h2>
           <p>${module.description}</p>
@@ -1564,10 +1598,14 @@
     }
 
     // Initialize
-    loadUser();
-    loadModules();
-    setupGDPRBanner();
-    checkGDPRConsent();
+    (async function initPage() {
+      const canLoadModules = await loadUser();
+      if (canLoadModules) {
+        await loadModules();
+      }
+      setupGDPRBanner();
+      checkGDPRConsent();
+    })();
   </script>
   <script src="/js/feedback.js"></script>
 </body>
