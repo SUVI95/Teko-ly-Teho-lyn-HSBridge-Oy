@@ -331,8 +331,9 @@ router.get('/onboarding-profiles', authenticateToken, requireAdmin, async (req, 
   try {
     await onboardingModule.ensureUserOnboardingTable();
     const result = await pool.query(`
-      SELECT o.id, o.user_id, o.employment_status, o.profession, o.biggest_challenge,
-             o.ai_experience, o.ai_goals, o.ai_feeling, o.ai_summary, o.created_at,
+      SELECT o.id, o.user_id, o.employment_status, o.profession, o.biggest_challenge, o.current_task,
+             o.ai_experience, o.known_ai_tools, o.ai_goals, o.ai_confidence, o.desired_outcome,
+             o.recommended_tool, o.ai_feeling, o.ai_summary, o.created_at,
              u.name, u.email
       FROM user_onboarding o
       JOIN users u ON u.id = o.user_id
@@ -515,23 +516,26 @@ router.get('/download/onboarding', authenticateToken, requireAdmin, async (req, 
   try {
     await onboardingModule.ensureUserOnboardingTable();
     const result = await pool.query(`
-      SELECT o.employment_status, o.profession, o.biggest_challenge, o.ai_experience,
-             o.ai_goals, o.ai_feeling, o.ai_summary, o.created_at, u.email, u.name
+      SELECT o.employment_status, o.profession, o.biggest_challenge, o.current_task, o.ai_experience,
+             o.known_ai_tools, o.ai_goals, o.ai_confidence, o.desired_outcome, o.recommended_tool,
+             o.ai_feeling, o.ai_summary, o.created_at, u.email, u.name
       FROM user_onboarding o
       JOIN users u ON u.id = o.user_id
       ORDER BY o.created_at DESC
     `);
     const csvHeader =
-      'Email,Name,Employment Status,Profession,Biggest Challenge,AI Experience,AI Goals,AI Feeling,AI Summary,Created At\n';
+      'Email,Name,Employment Status,Profession,Biggest Challenge,Current Task,AI Experience,Known AI Tools,AI Goals,AI Confidence,Desired Outcome,Recommended Tool,AI Feeling,AI Summary,Created At\n';
     const esc = (s) => String(s ?? '').replace(/"/g, '""').replace(/\n/g, ' ');
     const csvRows = result.rows
       .map(
         (row) =>
           `"${esc(row.email)}","${esc(row.name)}","${esc(row.employment_status)}","${esc(
             row.profession
-          )}","${esc(row.biggest_challenge)}","${esc(row.ai_experience)}","${esc(row.ai_goals)}","${esc(
-            row.ai_feeling
-          )}","${esc(row.ai_summary)}","${row.created_at}"`
+          )}","${esc(row.biggest_challenge)}","${esc(row.current_task)}","${esc(row.ai_experience)}","${esc(
+            row.known_ai_tools
+          )}","${esc(row.ai_goals)}","${esc(row.ai_confidence)}","${esc(row.desired_outcome)}","${esc(
+            row.recommended_tool
+          )}","${esc(row.ai_feeling)}","${esc(row.ai_summary)}","${row.created_at}"`
       )
       .join('\n');
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');

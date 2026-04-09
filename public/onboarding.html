@@ -26,8 +26,42 @@ body {
   color: var(--ink);
   min-height: 100vh;
   line-height: 1.65;
+  position: relative;
+  overflow-x: hidden;
 }
-.wrap { max-width: 640px; margin: 0 auto; padding: 1.25rem 1.25rem 3rem; }
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  border-radius: 999px;
+  filter: blur(20px);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+  animation: drift 10s ease-in-out infinite alternate;
+}
+body::before {
+  width: 220px;
+  height: 220px;
+  background: rgba(199,91,58,0.09);
+  top: 60px;
+  right: -40px;
+}
+body::after {
+  width: 260px;
+  height: 260px;
+  background: rgba(37,99,168,0.08);
+  bottom: 40px;
+  left: -60px;
+  animation-duration: 13s;
+}
+.wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 3rem;
+  position: relative;
+  z-index: 1;
+}
 .top-bar {
   position: sticky; top: 0; z-index: 20;
   background: rgba(245,243,239,0.95);
@@ -72,6 +106,27 @@ h1 {
   opacity: 1;
   transform: translateY(0);
 }
+.question-shell {
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(26,26,46,0.08);
+  border-radius: 24px;
+  padding: 1.4rem;
+  box-shadow: var(--shadow-md);
+}
+.micro-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.38rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(37,99,168,0.08);
+  color: var(--accent2);
+  font-size: 0.73rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 0.85rem;
+}
 .option-grid {
   display: flex;
   flex-direction: column;
@@ -88,10 +143,23 @@ h1 {
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
   box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
 }
 .option-card:hover {
   border-color: rgba(37,99,168,0.35);
   transform: translateY(-2px);
+}
+.option-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.65) 50%, transparent 100%);
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+.option-card:hover::after {
+  transform: translateX(120%);
 }
 .option-card.selected {
   border-color: var(--accent);
@@ -120,6 +188,18 @@ input:focus, textarea:focus {
 }
 textarea { min-height: 140px; resize: vertical; }
 .hint { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; }
+.helper-note {
+  margin-top: 0.9rem;
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(37,99,168,0.06), rgba(42,122,75,0.07));
+  color: var(--ink);
+  border: 1px solid rgba(37,99,168,0.09);
+  font-size: 0.92rem;
+}
+.helper-note strong {
+  color: var(--accent2);
+}
 .nav-row {
   display: flex;
   gap: 0.75rem;
@@ -168,6 +248,34 @@ textarea { min-height: 140px; resize: vertical; }
   font-weight: 400;
 }
 .summary-text { white-space: pre-wrap; font-size: 0.98rem; line-height: 1.75; }
+.tool-box {
+  display: none;
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(37,99,168,0.08), rgba(42,122,75,0.09));
+  border: 1px solid rgba(37,99,168,0.12);
+  box-shadow: var(--shadow);
+  animation: riseIn 0.45s ease;
+}
+.tool-box-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent2);
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.tool-box-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+.tool-box-text {
+  color: var(--muted);
+  font-size: 0.94rem;
+}
 .loading-ai {
   display: flex;
   align-items: center;
@@ -186,6 +294,14 @@ textarea { min-height: 140px; resize: vertical; }
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
   40% { transform: scale(1); opacity: 1; }
 }
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(0, 18px, 0) scale(1.06); }
+}
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .err { color: #b91c1c; font-size: 0.9rem; margin-top: 0.75rem; }
 .logo-row {
   display: flex; align-items: center; gap: 0.5rem;
@@ -199,8 +315,8 @@ textarea { min-height: 140px; resize: vertical; }
 <body>
   <div class="wrap">
     <div class="top-bar">
-      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:16.66%"></div></div>
-      <div class="step-label" id="stepLabel">Vaihe 1 / 6</div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:10%"></div></div>
+      <div class="step-label" id="stepLabel">Vaihe 1 / 10</div>
     </div>
     <div class="logo-row">
       <img src="/assets/images/logo.png" alt="" onerror="this.style.display='none'">
@@ -208,45 +324,103 @@ textarea { min-height: 140px; resize: vertical; }
     </div>
 
     <div id="step1" class="step-panel active" data-step="1">
+      <div class="question-shell">
+      <div class="micro-kicker">Aloitusmoduuli</div>
       <h1>Mikä kuvaa sinua parhaiten tällä hetkellä?</h1>
       <p class="sub">Valitse yksi vaihtoehto.</p>
       <div class="option-grid" id="opt1"></div>
+      </div>
     </div>
 
     <div id="step2" class="step-panel" data-step="2">
+      <div class="question-shell">
+      <div class="micro-kicker">Tausta</div>
       <h1>Mikä on ammattisi tai alasi?</h1>
       <p class="sub">Lyhyt vastaus riittää.</p>
       <input type="text" id="profession" maxlength="500" placeholder="Esim. sairaanhoitaja, myyjä, IT-tuki…" autocomplete="organization-title">
+      </div>
     </div>
 
     <div id="step3" class="step-panel" data-step="3">
-      <h1>Mikä on suurin haaste työssäsi tai arjessasi juuri nyt?</h1>
-      <p class="sub">Kirjoita vapaasti — tämä auttaa meitä kohdistamaan kurssin.</p>
+      <div class="question-shell">
+      <div class="micro-kicker">Työn pullonkaula</div>
+      <h1>Missä kohdassa työsi tai arkesi jumittaa eniten juuri nyt?</h1>
+      <p class="sub">Kuvaa mahdollisimman konkreettisesti se kohta, jossa aikaa palaa, työ tökkii tai ajatus ei kulje. Tämän perusteella voimme ehdottaa juuri oikeaa AI-työkalua.</p>
       <textarea id="challenge" maxlength="8000" placeholder="Kerro omin sanoin…"></textarea>
+      <div class="helper-note"><strong>Esimerkkejä:</strong> viestien kirjoittaminen, tiedon etsiminen, raportointi, tarjousten tekeminen, kokousmateriaalit, ideointi, työnhaku, toistuvat rutiinit.</div>
+      </div>
     </div>
 
     <div id="step4" class="step-panel" data-step="4">
-      <h1>Oletko käyttänyt tekoälyä ennen?</h1>
-      <p class="sub">Valitse yksi.</p>
-      <div class="option-grid" id="opt4"></div>
+      <div class="question-shell">
+      <div class="micro-kicker">Konkreettinen käyttökohde</div>
+      <h1>Mikä yksi työtehtävä tai arjen tilanne olisi tärkeintä saada helpommaksi heti?</h1>
+      <p class="sub">Kuvaa yksi todellinen tilanne, johon haluat apua jo tällä viikolla.</p>
+      <textarea id="currentTask" maxlength="4000" placeholder="Esim. haluan kirjoittaa asiakasviestit nopeammin, tehdä raporttipohjan, löytää tietoa nopeammin tai rakentaa paremman työhakemuksen…"></textarea>
+      </div>
     </div>
 
     <div id="step5" class="step-panel" data-step="5">
-      <h1>Mihin asiaan haluaisit eniten apua tekoälystä?</h1>
-      <p class="sub">Valitse enintään kaksi.</p>
+      <div class="question-shell">
+      <div class="micro-kicker">Kokemus</div>
+      <h1>Oletko käyttänyt tekoälyä ennen?</h1>
+      <p class="sub">Valitse yksi.</p>
       <div class="option-grid" id="opt5"></div>
-      <p class="hint" id="goalHint">Valittu: 0 / 2</p>
+      </div>
     </div>
 
     <div id="step6" class="step-panel" data-step="6">
-      <h1>Mikä tunne sinulla on tekoälystä tällä hetkellä?</h1>
-      <p class="sub">Valitse yksi.</p>
+      <div class="question-shell">
+      <div class="micro-kicker">Työkalut tänään</div>
+      <h1>Mitä AI-työkaluja olet jo kokeillut tai tunnet ennestään?</h1>
+      <p class="sub">Valitse enintään kolme.</p>
       <div class="option-grid" id="opt6"></div>
+      <p class="hint" id="toolsHint">Valittu: 0 / 3</p>
+      </div>
     </div>
 
     <div id="step7" class="step-panel" data-step="7">
+      <div class="question-shell">
+      <div class="micro-kicker">Tavoitteet</div>
+      <h1>Mihin asiaan haluaisit eniten apua tekoälystä?</h1>
+      <p class="sub">Valitse enintään kaksi.</p>
+      <div class="option-grid" id="opt7"></div>
+      <p class="hint" id="goalHint">Valittu: 0 / 2</p>
+      </div>
+    </div>
+
+    <div id="step8" class="step-panel" data-step="8">
+      <div class="question-shell">
+      <div class="micro-kicker">Taso tänään</div>
+      <h1>Kuinka varmaksi tunnet olosi tekoälyn käytössä juuri nyt?</h1>
+      <p class="sub">Valitse se taso, joka tuntuu rehellisimmältä juuri tänään.</p>
+      <div class="option-grid" id="opt8"></div>
+      </div>
+    </div>
+
+    <div id="step9" class="step-panel" data-step="9">
+      <div class="question-shell">
+      <div class="micro-kicker">Tulos</div>
+      <h1>Mikä tekisi tästä kurssista sinulle aidosti hyödyllisen seuraavan 30 päivän aikana?</h1>
+      <p class="sub">Kerro millainen lopputulos, muutos tai onnistuminen olisi sinulle tärkeä.</p>
+      <textarea id="desiredOutcome" maxlength="4000" placeholder="Esim. haluan säästää aikaa, uskaltaa käyttää AI:ta työssäni, saada hakemukset valmiiksi tai löytää minulle sopivan työkalun…"></textarea>
+      </div>
+    </div>
+
+    <div id="step10" class="step-panel" data-step="10">
+      <div class="question-shell">
+      <div class="micro-kicker">Tunne</div>
+      <h1>Mikä tunne sinulla on tekoälystä tällä hetkellä?</h1>
+      <p class="sub">Valitse yksi.</p>
+      <div class="option-grid" id="opt10"></div>
+      </div>
+    </div>
+
+    <div id="step11" class="step-panel" data-step="11">
+      <div class="question-shell">
+      <div class="micro-kicker">Sinulle rakennettu aloitus</div>
       <h1>Valmista!</h1>
-      <p class="sub">Tässä mitä kurssi tarjoaa juuri sinulle.</p>
+      <p class="sub">Kokosimme vastauksistasi henkilökohtaisen suunnan ensimmäisiä moduuleja varten.</p>
       <div id="aiLoading" class="loading-ai">
         <span class="dot"></span><span class="dot"></span><span class="dot"></span>
         <span>Luodaan henkilökohtaista yhteenvetoa…</span>
@@ -255,9 +429,15 @@ textarea { min-height: 140px; resize: vertical; }
         <h3>Tässä mitä kurssi tarjoaa juuri sinulle:</h3>
         <div class="summary-text" id="summaryText"></div>
       </div>
+      <div id="toolBox" class="tool-box">
+        <div class="tool-box-label">Sinulle sopiva aloitustyökalu</div>
+        <div class="tool-box-title" id="toolTitle"></div>
+        <div class="tool-box-text" id="toolText"></div>
+      </div>
       <p class="err" id="saveErr" style="display:none;"></p>
       <div class="nav-row" id="finishRow" style="display:none;">
         <button type="button" class="btn btn-primary" id="btnStart">Aloita kurssi</button>
+      </div>
       </div>
     </div>
 
@@ -269,15 +449,20 @@ textarea { min-height: 140px; resize: vertical; }
 
   <script>
   const API = window.location.origin + '/api';
-  const STEPS = 6;
+  const STEPS = 10;
   let current = 1;
   let isReviewMode = false;
   const answers = {
     employment_status: null,
     profession: '',
     biggest_challenge: '',
+    current_task: '',
     ai_experience: null,
+    known_ai_tools: [],
     ai_goals: [],
+    ai_confidence: null,
+    desired_outcome: '',
+    recommended_tool: '',
     ai_feeling: null
   };
 
@@ -289,13 +474,22 @@ textarea { min-height: 140px; resize: vertical; }
     'Olen opiskelija',
     'Jokin muu'
   ];
-  const OPT4 = [
+  const OPT5 = [
     'En koskaan',
     'Olen kokeillut kerran tai pari',
     'Käytän silloin tällöin',
     'Käytän lähes päivittäin'
   ];
-  const OPT5 = [
+  const OPT6 = [
+    'ChatGPT',
+    'Microsoft Copilot',
+    'Gemini',
+    'Claude',
+    'Canva',
+    'Perplexity',
+    'En ole käyttänyt vielä mitään'
+  ];
+  const OPT7 = [
     'Tekstien kirjoittaminen (raportit, viestit, hakemukset)',
     'Tiedonhaku ja analysointi',
     'Esitysten ja materiaalien tekeminen',
@@ -303,7 +497,13 @@ textarea { min-height: 140px; resize: vertical; }
     'Oppiminen ja uuden tiedon omaksuminen',
     'En osaa vielä sanoa'
   ];
-  const OPT6 = [
+  const OPT8 = [
+    'Tarvitsen aivan alkeista ja rauhallisen alun',
+    'Pääsen alkuun, kun saan hyvän esimerkin',
+    'Osaan jo perusteet, mutta haluan varmuutta',
+    'Haluan päästä seuraavalle tasolle nopeasti'
+  ];
+  const OPT10 = [
     'Innostunut — haluan oppia kaiken',
     'Utelias mutta epävarma',
     'Hieman huolissani, miten se vaikuttaa työhöni',
@@ -311,7 +511,7 @@ textarea { min-height: 140px; resize: vertical; }
     'Pelottaa hieman'
   ];
 
-  function renderOptions(containerId, items, key, multi) {
+  function renderOptions(containerId, items, key, multi, maxSelections = 2) {
     const el = document.getElementById(containerId);
     el.innerHTML = items.map((label, i) =>
       `<button type="button" class="option-card" data-value="${escapeAttr(label)}" data-key="${key}">${escapeHtml(label)}</button>`
@@ -320,17 +520,24 @@ textarea { min-height: 140px; resize: vertical; }
       btn.addEventListener('click', () => {
         const v = btn.getAttribute('data-value');
         if (multi) {
-          const arr = answers.ai_goals;
+          const arr = answers[key];
           const idx = arr.indexOf(v);
           if (idx >= 0) {
             arr.splice(idx, 1);
             btn.classList.remove('selected');
           } else {
-            if (arr.length >= 2) return;
+            if (arr.length >= maxSelections) return;
+            if (key === 'known_ai_tools' && v === 'En ole käyttänyt vielä mitään') {
+              arr.splice(0, arr.length);
+            } else if (key === 'known_ai_tools') {
+              const noneIdx = arr.indexOf('En ole käyttänyt vielä mitään');
+              if (noneIdx >= 0) arr.splice(noneIdx, 1);
+            }
             arr.push(v);
             btn.classList.add('selected');
           }
-          updateGoalUi();
+          if (key === 'ai_goals') updateGoalUi();
+          if (key === 'known_ai_tools') updateToolsUi();
         } else {
           el.querySelectorAll('.option-card').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
@@ -358,38 +565,110 @@ textarea { min-height: 140px; resize: vertical; }
     });
   }
 
+  function updateToolsUi() {
+    const hint = document.getElementById('toolsHint');
+    if (hint) hint.textContent = 'Valittu: ' + answers.known_ai_tools.length + ' / 3';
+    document.querySelectorAll('#opt6 .option-card').forEach(btn => {
+      const v = btn.getAttribute('data-value');
+      btn.classList.toggle('selected', answers.known_ai_tools.includes(v));
+    });
+  }
+
+  function cleanSummaryText(text) {
+    return String(text || '')
+      .replace(/^Tässä mitä kurssi tarjoaa juuri sinulle:\s*/i, '')
+      .replace(/^\s*Tässä mitä kurssi tarjoaa juuri sinulle:\s*/i, '')
+      .trim();
+  }
+
+  function recommendTool(payload) {
+    const goals = (payload.ai_goals || []).join(' ').toLowerCase();
+    const challenge = String(payload.biggest_challenge || '').toLowerCase();
+    const currentTask = String(payload.current_task || '').toLowerCase();
+    const profession = String(payload.profession || '').toLowerCase();
+
+    if (goals.includes('esitysten') || goals.includes('materiaalien')) {
+      return {
+        title: 'Canva',
+        reason: 'Sopii nopeasti esityksiin, visuaalisiin materiaaleihin ja valmiiden pohjien tekemiseen ilman tyhjää aloitusta.'
+      };
+    }
+    if (goals.includes('tiedonhaku') || goals.includes('analysointi') || challenge.includes('etsi') || challenge.includes('tieto') || currentTask.includes('etsi')) {
+      return {
+        title: 'Perplexity',
+        reason: 'Auttaa etsimään ajankohtaista tietoa, vertailemaan lähteitä ja kokoamaan vastauksia nopeammin kuin tavallinen haku.'
+      };
+    }
+    if (goals.includes('automatisointi') || challenge.includes('toistuv') || challenge.includes('rutiin') || currentTask.includes('sähköpost') || profession.includes('toimisto')) {
+      return {
+        title: 'Microsoft Copilot',
+        reason: 'Toimii hyvin dokumenteissa, sähköposteissa ja arjen toimistotyössä, kun tavoite on säästää aikaa toistuvissa tehtävissä.'
+      };
+    }
+    if (goals.includes('oppiminen') || challenge.includes('ymmärt') || challenge.includes('oppi')) {
+      return {
+        title: 'ChatGPT',
+        reason: 'Erinomainen ajattelukumppani, joka auttaa hahmottamaan vaikeita asioita, tekemään luonnoksia ja oppimaan pala kerrallaan.'
+      };
+    }
+    if (goals.includes('kirjoittaminen') || challenge.includes('kirjo') || challenge.includes('viesti') || challenge.includes('raport')) {
+      return {
+        title: 'ChatGPT',
+        reason: 'Auttaa viestien, raporttien, hakemusten ja luonnosten kirjoittamisessa silloin kun alkuun pääseminen vie eniten aikaa.'
+      };
+    }
+    return {
+      title: 'ChatGPT',
+      reason: 'Monipuolinen aloitustyökalu, joka auttaa nopeasti kirjoittamisessa, ideoinnissa, tiedon jäsentelyssä ja työn pullonkaulojen avaamisessa.'
+    };
+  }
+
   function loadCompletedOnboarding(onboarding) {
     isReviewMode = true;
     answers.employment_status = onboarding.employment_status || null;
     answers.profession = onboarding.profession || '';
     answers.biggest_challenge = onboarding.biggest_challenge || '';
+    answers.current_task = onboarding.current_task || '';
     answers.ai_experience = onboarding.ai_experience || null;
+    answers.known_ai_tools = String(onboarding.known_ai_tools || '')
+      .split(',')
+      .map(v => v.trim())
+      .filter(Boolean);
     answers.ai_goals = String(onboarding.ai_goals || '')
       .split(',')
       .map(v => v.trim())
       .filter(Boolean);
+    answers.ai_confidence = onboarding.ai_confidence || null;
+    answers.desired_outcome = onboarding.desired_outcome || '';
+    answers.recommended_tool = onboarding.recommended_tool || '';
     answers.ai_feeling = onboarding.ai_feeling || null;
 
     document.getElementById('profession').value = answers.profession;
     document.getElementById('challenge').value = answers.biggest_challenge;
+    document.getElementById('currentTask').value = answers.current_task;
+    document.getElementById('desiredOutcome').value = answers.desired_outcome;
 
     document.querySelectorAll('#opt1 .option-card').forEach(btn => {
       btn.classList.toggle('selected', btn.getAttribute('data-value') === answers.employment_status);
     });
-    document.querySelectorAll('#opt4 .option-card').forEach(btn => {
+    document.querySelectorAll('#opt5 .option-card').forEach(btn => {
       btn.classList.toggle('selected', btn.getAttribute('data-value') === answers.ai_experience);
     });
-    document.querySelectorAll('#opt6 .option-card').forEach(btn => {
+    document.querySelectorAll('#opt8 .option-card').forEach(btn => {
+      btn.classList.toggle('selected', btn.getAttribute('data-value') === answers.ai_confidence);
+    });
+    document.querySelectorAll('#opt10 .option-card').forEach(btn => {
       btn.classList.toggle('selected', btn.getAttribute('data-value') === answers.ai_feeling);
     });
     updateGoalUi();
+    updateToolsUi();
 
     document.getElementById('aiLoading').style.display = 'none';
-    document.getElementById('summaryText').textContent = onboarding.ai_summary || '';
+    document.getElementById('summaryText').textContent = cleanSummaryText(onboarding.ai_summary || '');
     document.getElementById('summaryBox').style.display = 'block';
     document.getElementById('finishRow').style.display = 'flex';
     document.getElementById('saveErr').style.display = 'none';
-    showStep(7);
+    showStep(STEPS + 1);
   }
 
   function showStep(n) {
@@ -400,7 +679,7 @@ textarea { min-height: 140px; resize: vertical; }
     const pct = n <= STEPS ? (n / STEPS) * 100 : 100;
     document.getElementById('progressFill').style.width = pct + '%';
     document.getElementById('stepLabel').textContent = n <= STEPS ? 'Vaihe ' + n + ' / ' + STEPS : 'Valmis';
-    document.getElementById('navNormal').style.display = n === 7 ? 'none' : 'flex';
+    document.getElementById('navNormal').style.display = n === STEPS + 1 ? 'none' : 'flex';
     current = n;
   }
 
@@ -408,31 +687,41 @@ textarea { min-height: 140px; resize: vertical; }
     if (n === 1) return !!answers.employment_status;
     if (n === 2) return document.getElementById('profession').value.trim().length > 0;
     if (n === 3) return document.getElementById('challenge').value.trim().length > 0;
-    if (n === 4) return !!answers.ai_experience;
-    if (n === 5) return answers.ai_goals.length >= 1;
-    if (n === 6) return !!answers.ai_feeling;
+    if (n === 4) return document.getElementById('currentTask').value.trim().length > 0;
+    if (n === 5) return !!answers.ai_experience;
+    if (n === 6) return answers.known_ai_tools.length >= 1;
+    if (n === 7) return answers.ai_goals.length >= 1;
+    if (n === 8) return !!answers.ai_confidence;
+    if (n === 9) return document.getElementById('desiredOutcome').value.trim().length > 0;
+    if (n === 10) return !!answers.ai_feeling;
     return true;
   }
 
   function syncFields() {
     answers.profession = document.getElementById('profession').value.trim();
     answers.biggest_challenge = document.getElementById('challenge').value.trim();
+    answers.current_task = document.getElementById('currentTask').value.trim();
+    answers.desired_outcome = document.getElementById('desiredOutcome').value.trim();
     if (current === 1) {
       const sel = document.querySelector('#opt1 .option-card.selected');
       answers.employment_status = sel ? sel.getAttribute('data-value') : null;
     }
-    if (current === 4) {
-      const sel = document.querySelector('#opt4 .option-card.selected');
+    if (current === 5) {
+      const sel = document.querySelector('#opt5 .option-card.selected');
       answers.ai_experience = sel ? sel.getAttribute('data-value') : null;
     }
-    if (current === 6) {
-      const sel = document.querySelector('#opt6 .option-card.selected');
+    if (current === 8) {
+      const sel = document.querySelector('#opt8 .option-card.selected');
+      answers.ai_confidence = sel ? sel.getAttribute('data-value') : null;
+    }
+    if (current === 10) {
+      const sel = document.querySelector('#opt10 .option-card.selected');
       answers.ai_feeling = sel ? sel.getAttribute('data-value') : null;
     }
   }
 
   async function runSummaryAndSave() {
-    showStep(7);
+    showStep(STEPS + 1);
     document.getElementById('aiLoading').style.display = 'flex';
     document.getElementById('summaryBox').style.display = 'none';
     document.getElementById('finishRow').style.display = 'none';
@@ -442,21 +731,32 @@ textarea { min-height: 140px; resize: vertical; }
       employment_status: answers.employment_status,
       profession: answers.profession,
       biggest_challenge: answers.biggest_challenge,
+      current_task: answers.current_task,
       ai_experience: answers.ai_experience,
+      known_ai_tools: answers.known_ai_tools,
       ai_goals: answers.ai_goals,
+      ai_confidence: answers.ai_confidence,
+      desired_outcome: answers.desired_outcome,
       ai_feeling: answers.ai_feeling
     };
+    const tool = recommendTool(payload);
+    payload.recommended_tool = tool.title;
 
     const userBlock = [
       'Työtilanne: ' + payload.employment_status,
       'Ammatti/ala: ' + payload.profession,
       'Suurin haaste nyt: ' + payload.biggest_challenge,
+      'Yksi tärkeä tehtävä juuri nyt: ' + payload.current_task,
       'AI-kokemus: ' + payload.ai_experience,
+      'Käytetyt tai tutut työkalut: ' + payload.known_ai_tools.join('; '),
       'Toivotut apualueet: ' + payload.ai_goals.join('; '),
-      'Tunne AI:sta: ' + payload.ai_feeling
+      'Varmuuden taso juuri nyt: ' + payload.ai_confidence,
+      'Toivottu tulos seuraavan 30 päivän aikana: ' + payload.desired_outcome,
+      'Tunne AI:sta: ' + payload.ai_feeling,
+      'Suositeltu aloitustyökalu: ' + tool.title + ' — ' + tool.reason
     ].join('\n');
 
-    const system = 'Olet ystävällinen suomenkielinen kurssisuunnittelija. Kirjoita tasan kolme lyhyttä lausetta (eri kappaleina). Aloita aina lauseella: "Tässä mitä kurssi tarjoaa juuri sinulle:" ja jatka kahdella konkreettisella lauseella, jotka viittaavat suoraan käyttäjän vastauksiin. Älä toista kysymyksiä. Älä käytä listoja. Sävy lämmin ja ammattimainen.';
+    const system = 'Olet lämmin, oivaltava suomenkielinen kurssiohjaaja. Kirjoita tasan kolme lyhyttä kappaletta käyttäjälle. Älä aloita otsikolla tai toista lausetta "Tässä mitä kurssi tarjoaa juuri sinulle", koska käyttöliittymä näyttää sen jo. Ensimmäisessä kappaleessa nimeä käyttäjän arjen tai työn todellinen pullonkaula hänen vastauksiensa pohjalta. Toisessa kappaleessa kerro konkreettisesti, miten kurssi auttaa juuri siinä kohdassa. Kolmannessa kappaleessa ehdota yhtä sopivaa AI-työkalua tai työskentelytapaa käyttäjän tavoitteeseen ja haasteeseen. Tee tekstistä henkilökohtainen, käytännöllinen ja hieman inspiroiva. Ei listoja, ei geneeristä markkinointikieltä.';
 
     let summaryText = '';
     try {
@@ -472,16 +772,19 @@ textarea { min-height: 140px; resize: vertical; }
         })
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.text) summaryText = data.text.trim();
+      if (res.ok && data.text) summaryText = cleanSummaryText(data.text);
     } catch (e) {}
 
     if (!summaryText) {
-      summaryText = 'Tässä mitä kurssi tarjoaa juuri sinulle:\n\nOpit käyttämään tekoälyä käytännössä omassa tilanteessasi — työkaluista promptaukseen ja oman työn tukemiseen.\n\nKurssi etenee vaiheittain: voit harjoitella turvallisesti ja rakentaa taitoja, jotka vastaavat juuri sinun tavoitteitasi.';
+      summaryText = `Sinun kohdallasi suurin mahdollisuus näyttää olevan siinä, että työssäsi jumittava kohta voidaan purkaa pieniksi, helpoiksi AI-avusteisiksi vaiheiksi sen sijaan että yrittäisit tehdä kaiken yksin alusta asti.\n\nKurssilla rakennat juuri omaan arkeesi sopivia tapoja kirjoittaa, hakea tietoa tai jäsentää tehtäviä niin, että tekoäly tukee työtäsi käytännössä eikä jää vain kiinnostavaksi ideaksi.\n\nAloittaisin sinun tilanteessasi työkalulla ${tool.title}, koska ${tool.reason.charAt(0).toLowerCase() + tool.reason.slice(1)}`;
     }
 
     document.getElementById('aiLoading').style.display = 'none';
-    document.getElementById('summaryText').textContent = summaryText;
+    document.getElementById('summaryText').textContent = cleanSummaryText(summaryText);
     document.getElementById('summaryBox').style.display = 'block';
+    document.getElementById('toolTitle').textContent = tool.title;
+    document.getElementById('toolText').textContent = tool.reason;
+    document.getElementById('toolBox').style.display = 'block';
 
     try {
       const res2 = await fetch(API + '/onboarding/complete', {
@@ -519,12 +822,12 @@ textarea { min-height: 140px; resize: vertical; }
     }
     if (current === STEPS) {
       syncFields();
-      if (!validateStep(6)) {
+      if (!validateStep(STEPS)) {
         alert('Valitse tunne ennen jatkamista.');
         return;
       }
       if (isReviewMode) {
-        showStep(7);
+        showStep(STEPS + 1);
         return;
       }
       runSummaryAndSave();
@@ -541,9 +844,11 @@ textarea { min-height: 140px; resize: vertical; }
   });
 
   renderOptions('opt1', OPT1, 'employment_status', false);
-  renderOptions('opt4', OPT4, 'ai_experience', false);
-  renderOptions('opt5', OPT5, 'ai_goals', true);
-  renderOptions('opt6', OPT6, 'ai_feeling', false);
+  renderOptions('opt5', OPT5, 'ai_experience', false);
+  renderOptions('opt6', OPT6, 'known_ai_tools', true, 3);
+  renderOptions('opt7', OPT7, 'ai_goals', true, 2);
+  renderOptions('opt8', OPT8, 'ai_confidence', false);
+  renderOptions('opt10', OPT10, 'ai_feeling', false);
 
   (async function init() {
     try {
@@ -552,6 +857,10 @@ textarea { min-height: 140px; resize: vertical; }
       const d = await r.json();
       if (d.completed && d.onboarding) {
         loadCompletedOnboarding(d.onboarding);
+        const tool = recommendTool(d.onboarding);
+        document.getElementById('toolTitle').textContent = tool.title;
+        document.getElementById('toolText').textContent = tool.reason;
+        document.getElementById('toolBox').style.display = 'block';
       }
     } catch (e) {
       window.location.href = '/login?redirect=/onboarding';
