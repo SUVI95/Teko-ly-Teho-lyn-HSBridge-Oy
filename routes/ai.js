@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { fetch } = require('undici');
 
 // OpenAI API endpoint for chat (no authentication required)
 router.post('/chat', async (req, res) => {
