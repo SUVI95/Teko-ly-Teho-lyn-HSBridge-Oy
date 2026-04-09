@@ -271,6 +271,7 @@ textarea { min-height: 140px; resize: vertical; }
   const API = window.location.origin + '/api';
   const STEPS = 6;
   let current = 1;
+  let isReviewMode = false;
   const answers = {
     employment_status: null,
     profession: '',
@@ -355,6 +356,40 @@ textarea { min-height: 140px; resize: vertical; }
       const v = btn.getAttribute('data-value');
       btn.classList.toggle('selected', answers.ai_goals.includes(v));
     });
+  }
+
+  function loadCompletedOnboarding(onboarding) {
+    isReviewMode = true;
+    answers.employment_status = onboarding.employment_status || null;
+    answers.profession = onboarding.profession || '';
+    answers.biggest_challenge = onboarding.biggest_challenge || '';
+    answers.ai_experience = onboarding.ai_experience || null;
+    answers.ai_goals = String(onboarding.ai_goals || '')
+      .split(',')
+      .map(v => v.trim())
+      .filter(Boolean);
+    answers.ai_feeling = onboarding.ai_feeling || null;
+
+    document.getElementById('profession').value = answers.profession;
+    document.getElementById('challenge').value = answers.biggest_challenge;
+
+    document.querySelectorAll('#opt1 .option-card').forEach(btn => {
+      btn.classList.toggle('selected', btn.getAttribute('data-value') === answers.employment_status);
+    });
+    document.querySelectorAll('#opt4 .option-card').forEach(btn => {
+      btn.classList.toggle('selected', btn.getAttribute('data-value') === answers.ai_experience);
+    });
+    document.querySelectorAll('#opt6 .option-card').forEach(btn => {
+      btn.classList.toggle('selected', btn.getAttribute('data-value') === answers.ai_feeling);
+    });
+    updateGoalUi();
+
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('summaryText').textContent = onboarding.ai_summary || '';
+    document.getElementById('summaryBox').style.display = 'block';
+    document.getElementById('finishRow').style.display = 'flex';
+    document.getElementById('saveErr').style.display = 'none';
+    showStep(7);
   }
 
   function showStep(n) {
@@ -488,6 +523,10 @@ textarea { min-height: 140px; resize: vertical; }
         alert('Valitse tunne ennen jatkamista.');
         return;
       }
+      if (isReviewMode) {
+        showStep(7);
+        return;
+      }
       runSummaryAndSave();
     }
   });
@@ -511,7 +550,9 @@ textarea { min-height: 140px; resize: vertical; }
       const r = await fetch(API + '/onboarding/status', { credentials: 'include' });
       if (r.status === 401) { window.location.href = '/login?redirect=/onboarding'; return; }
       const d = await r.json();
-      if (d.completed) window.location.href = '/';
+      if (d.completed && d.onboarding) {
+        loadCompletedOnboarding(d.onboarding);
+      }
     } catch (e) {
       window.location.href = '/login?redirect=/onboarding';
     }

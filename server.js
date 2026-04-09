@@ -138,10 +138,6 @@ app.get('/onboarding', authenticatePage, async (req, res) => {
       return res.redirect(302, '/');
     }
     await onboardingRoutes.ensureUserOnboardingTable();
-    const done = await pool.query('SELECT id FROM user_onboarding WHERE user_id = $1', [req.user.id]);
-    if (done.rows.length > 0) {
-      return res.redirect(302, '/');
-    }
     res.sendFile(path.join(__dirname, 'public', 'onboarding.html'));
   } catch (e) {
     console.error('/onboarding error:', e);
