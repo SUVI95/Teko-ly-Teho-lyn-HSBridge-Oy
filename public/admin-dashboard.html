@@ -673,6 +673,85 @@ nav {
   display: none;
 }
 
+.onboarding-admin-block {
+  margin-bottom: 2.5rem;
+}
+
+.pill-badge {
+  display: inline-block;
+  padding: 0.22rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-exp-beginner {
+  background: rgba(184, 134, 11, 0.2);
+  color: #6b5200;
+}
+
+.badge-exp-intermediate {
+  background: rgba(37, 99, 168, 0.15);
+  color: #1a4d8c;
+}
+
+.badge-exp-advanced {
+  background: rgba(42, 122, 75, 0.18);
+  color: #1f5a36;
+}
+
+.badge-employment {
+  display: inline-block;
+  padding: 0.28rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  background: var(--paper2);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  max-width: min(300px, 100%);
+  line-height: 1.35;
+}
+
+.challenge-expand {
+  max-width: 420px;
+}
+
+.challenge-expand summary {
+  cursor: pointer;
+  color: var(--accent2);
+  font-size: 0.88rem;
+}
+
+.challenge-full {
+  margin-top: 0.5rem;
+  white-space: pre-wrap;
+  font-size: 0.88rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.feeling-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  max-width: 320px;
+}
+
+.feeling-emoji {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.onboarding-ai-summary {
+  font-size: 0.82rem;
+  color: var(--muted);
+  max-width: 300px;
+  line-height: 1.45;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 1.5rem;
@@ -756,6 +835,35 @@ nav {
         </div>
       </div>
 
+      <div class="onboarding-admin-block profile-panel">
+        <div class="section-header" style="margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+          <h2 class="section-title" style="font-size:1.6rem;">Osallistujaprofiilit</h2>
+          <button type="button" class="btn btn-secondary" id="downloadOnboardingCsvBtn">Lataa CSV</button>
+        </div>
+        <p style="color:var(--muted);font-size:0.92rem;margin-bottom:1.25rem;">Ennen moduuleja kerätty tarvekartta: työtilanne, haasteet, tekoälykokemus ja tavoitteet.</p>
+        <div class="stats-grid" id="onboardingStatsMini" style="margin-bottom:1.25rem;">
+          <div class="stat-card">
+            <div class="stat-label">Kartoitus valmiina</div>
+            <div class="stat-value" id="onbStatTotal" style="font-size:2rem;">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Yleisin työtilanne</div>
+            <div id="onbStatEmployment" style="font-size:0.95rem;font-weight:600;color:var(--ink);line-height:1.4;margin-top:0.35rem;">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Yleisin tekoälytavoite</div>
+            <div id="onbStatGoal" style="font-size:0.95rem;font-weight:600;color:var(--ink);line-height:1.4;margin-top:0.35rem;">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Yleisin tunne tekoälystä</div>
+            <div id="onbStatFeeling" style="font-size:0.95rem;font-weight:600;color:var(--ink);line-height:1.4;margin-top:0.35rem;">—</div>
+          </div>
+        </div>
+        <div id="onboardingProfilesContainer">
+          <div class="loading">Ladataan osallistujaprofiileja...</div>
+        </div>
+      </div>
+
       <div class="profile-panel">
         <div class="section-header" style="margin-bottom:0.75rem;">
           <h2 class="section-title" style="font-size:1.6rem;">Opiskelijan profiili <span class="profile-badge">Kurssin aloitusprofiili</span></h2>
@@ -826,10 +934,12 @@ nav {
     let currentStudentData = null;
     let moduleReflections = [];
     let courseStartProfiles = [];
+    let onboardingDashboard = { profiles: [], stats: {} };
 
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       await loadStudents();
+      await loadOnboardingProfiles();
       await loadCourseStartProfiles();
       await loadModuleReflections();
       setupEventListeners();
@@ -849,6 +959,7 @@ nav {
         document.getElementById('moduleFeedbackToDate').value = '';
         loadModuleReflections();
       });
+      document.getElementById('downloadOnboardingCsvBtn').addEventListener('click', downloadOnboardingCsv);
     }
 
     // API Calls
@@ -911,6 +1022,149 @@ nav {
       if (data && data.courseStartProfiles) {
         courseStartProfiles = data.courseStartProfiles;
         renderCourseStartProfiles();
+      }
+    }
+
+    function aiExperienceTier(exp) {
+      const s = String(exp || '');
+      if (s.includes('En koskaan') || s.includes('kokeillut kerran')) return 'beginner';
+      if (s.includes('lähes päivittäin')) return 'advanced';
+      if (s.includes('silloin tällöin')) return 'intermediate';
+      return 'beginner';
+    }
+
+    function aiExperienceBadgeHtml(exp) {
+      const tier = aiExperienceTier(exp);
+      const labels = { beginner: 'Aloittelija', intermediate: 'Keskitaso', advanced: 'Edistynyt' };
+      const cls = { beginner: 'badge-exp-beginner', intermediate: 'badge-exp-intermediate', advanced: 'badge-exp-advanced' };
+      return `<span class="pill-badge ${cls[tier]}">${labels[tier]}</span>`;
+    }
+
+    function feelingEmoji(feeling) {
+      const s = String(feeling || '');
+      if (s.startsWith('Innostunut')) return '🌟';
+      if (s.startsWith('Utelias')) return '🤔';
+      if (s.startsWith('Hieman huolissani')) return '😟';
+      if (s.startsWith('Skeptinen')) return '🤨';
+      if (s.startsWith('Pelottaa')) return '😰';
+      return '💭';
+    }
+
+    function challengeCell(text) {
+      const t = text || '';
+      if (t.length <= 140) return `<div>${escapeHtml(t)}</div>`;
+      return `<details class="challenge-expand"><summary>${escapeHtml(t.slice(0, 140))}…</summary><div class="challenge-full">${escapeHtml(t)}</div></details>`;
+    }
+
+    function summaryCell(text) {
+      const t = (text || '').trim();
+      if (!t) return '—';
+      if (t.length <= 100) return `<div class="onboarding-ai-summary">${escapeHtml(t)}</div>`;
+      return `<details class="challenge-expand"><summary class="onboarding-ai-summary">${escapeHtml(t.slice(0, 100))}…</summary><div class="challenge-full onboarding-ai-summary" style="color:var(--text);">${escapeHtml(t)}</div></details>`;
+    }
+
+    async function loadOnboardingProfiles() {
+      const data = await apiCall('/admin/onboarding-profiles');
+      if (data && data.profiles) {
+        onboardingDashboard = data;
+        renderOnboardingProfiles(data);
+      } else {
+        const c = document.getElementById('onboardingProfilesContainer');
+        if (c) {
+          c.innerHTML = '<div class="empty-state"><p>Ei tietoja</p></div>';
+        }
+      }
+    }
+
+    function renderOnboardingProfiles(data) {
+      const st = data.stats || {};
+      const elTotal = document.getElementById('onbStatTotal');
+      const elEmp = document.getElementById('onbStatEmployment');
+      const elGoal = document.getElementById('onbStatGoal');
+      const elFeel = document.getElementById('onbStatFeeling');
+      if (elTotal) elTotal.textContent = st.total != null ? String(st.total) : '0';
+      if (elEmp) elEmp.textContent = st.mostCommonEmployment || '—';
+      if (elGoal) elGoal.textContent = st.mostCommonGoal || '—';
+      if (elFeel) elFeel.textContent = st.mostCommonFeeling || '—';
+
+      const container = document.getElementById('onboardingProfilesContainer');
+      const profiles = data.profiles || [];
+      if (!profiles.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🧭</div>
+            <p>Kukaan ei ole vielä suorittanut tarvekarttaa</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="module-feedback-table-wrap">
+          <table class="module-feedback-table">
+            <thead>
+              <tr>
+                <th>Opiskelija</th>
+                <th>Työtilanne</th>
+                <th>Ammatti / ala</th>
+                <th>AI-kokemus</th>
+                <th>Suurin haaste</th>
+                <th>Tavoitteet</th>
+                <th>Tunne</th>
+                <th>Yhteenveto</th>
+                <th>Valmis</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${profiles.map((p) => `
+                <tr>
+                  <td><strong>${escapeHtml(p.name || 'Nimetön')}</strong><br><span style="color:var(--muted);font-size:.78rem;">${escapeHtml(p.email || '')}</span></td>
+                  <td><span class="badge-employment">${escapeHtml(p.employment_status || '—')}</span></td>
+                  <td>${escapeHtml(p.profession || '—')}</td>
+                  <td>${aiExperienceBadgeHtml(p.ai_experience)}<br><span style="font-size:0.78rem;color:var(--muted);">${escapeHtml(p.ai_experience || '')}</span></td>
+                  <td>${challengeCell(p.biggest_challenge)}</td>
+                  <td style="font-size:0.88rem;max-width:260px;line-height:1.4;">${escapeHtml(p.ai_goals || '—')}</td>
+                  <td><div class="feeling-cell"><span class="feeling-emoji">${feelingEmoji(p.ai_feeling)}</span><span>${escapeHtml(p.ai_feeling || '—')}</span></div></td>
+                  <td>${summaryCell(p.ai_summary)}</td>
+                  <td>${formatDate(p.created_at) || '—'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    async function downloadOnboardingCsv() {
+      const btn = document.getElementById('downloadOnboardingCsvBtn');
+      if (btn) {
+        btn.disabled = true;
+        const prev = btn.textContent;
+        btn.textContent = 'Ladataan...';
+        try {
+          const res = await fetch(`${API_URL}/admin/download/onboarding`, { credentials: 'include' });
+          if (res.status === 401 || res.status === 403) {
+            window.location.href = '/login';
+            return;
+          }
+          if (!res.ok) throw new Error('CSV');
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `onboarding-profiles-${new Date().toISOString().split('T')[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        } catch (e) {
+          showError('CSV:n lataus epäonnistui', 'errorMessage');
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = prev;
+          }
+        }
       }
     }
 
@@ -1461,11 +1715,12 @@ nav {
       
       try {
         // Download all data types
-        const [reflectionsRes, closingActionsRes, feedbackRes, consentRes] = await Promise.all([
+        const [reflectionsRes, closingActionsRes, feedbackRes, consentRes, onboardingRes] = await Promise.all([
           fetch(`${API_URL}/admin/download/reflections`, { credentials: 'include' }),
           fetch(`${API_URL}/admin/download/closing-actions`, { credentials: 'include' }),
           fetch(`${API_URL}/admin/download/feedback`, { credentials: 'include' }),
-          fetch(`${API_URL}/admin/download/consent`, { credentials: 'include' })
+          fetch(`${API_URL}/admin/download/consent`, { credentials: 'include' }),
+          fetch(`${API_URL}/admin/download/onboarding`, { credentials: 'include' })
         ]);
 
         if (reflectionsRes.status === 401 || reflectionsRes.status === 403) {
@@ -1519,6 +1774,18 @@ nav {
           const a = document.createElement('a');
           a.href = url;
           a.download = `consent-${new Date().toISOString().split('T')[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        }
+
+        if (onboardingRes.ok) {
+          const blob = await onboardingRes.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `onboarding-profiles-${new Date().toISOString().split('T')[0]}.csv`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);

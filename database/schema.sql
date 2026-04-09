@@ -143,3 +143,21 @@ CREATE TABLE IF NOT EXISTS gdpr_consent (
 CREATE INDEX IF NOT EXISTS idx_gdpr_consent_user_id ON gdpr_consent(user_id);
 CREATE INDEX IF NOT EXISTS idx_gdpr_consent_type ON gdpr_consent(consent_type);
 CREATE INDEX IF NOT EXISTS idx_gdpr_consent_created ON gdpr_consent(created_at);
+
+-- Pre-course needs mapping (onboarding)
+CREATE TABLE IF NOT EXISTS user_onboarding (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    employment_status VARCHAR(120) NOT NULL,
+    profession VARCHAR(500) NOT NULL,
+    biggest_challenge TEXT NOT NULL,
+    ai_experience VARCHAR(120) NOT NULL,
+    ai_goals TEXT NOT NULL,
+    ai_feeling VARCHAR(200) NOT NULL,
+    ai_summary TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_onboarding_user_id ON user_onboarding(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_onboarding_created ON user_onboarding(created_at);

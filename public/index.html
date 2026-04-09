@@ -795,6 +795,19 @@
           if (achievementsContainer) achievementsContainer.style.display = 'none';
           return;
         }
+
+        if (!isAdmin) {
+          try {
+            const obRes = await fetch(`${API_URL}/onboarding/status`, { credentials: 'include' });
+            if (obRes.ok) {
+              const obData = await obRes.json();
+              if (!obData.completed) {
+                window.location.href = '/onboarding';
+                return;
+              }
+            }
+          } catch (e) {}
+        }
         
         if (isAdmin) {
           // Show button in nav (next to logo)

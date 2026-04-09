@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../database/db');
 const { authenticateToken } = require('../middleware/auth');
+const onboardingModule = require('./onboarding');
 
 const router = express.Router();
 
@@ -313,6 +314,60 @@ router.get('/module-reflections', authenticateToken, requireAdmin, async (req, r
   }
 });
 
+function topKeyFromCounts(map) {
+  let best = null;
+  let n = 0;
+  Object.keys(map).forEach((k) => {
+    if (map[k] > n) {
+      n = map[k];
+      best = k;
+    }
+  });
+  return best;
+}
+
+// Needs-mapping onboarding profiles (pre-module questionnaire)
+router.get('/onboarding-profiles', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    await onboardingModule.ensureUserOnboardingTable();
+    const result = await pool.query(`
+      SELECT o.id, o.user_id, o.employment_status, o.profession, o.biggest_challenge,
+             o.ai_experience, o.ai_goals, o.ai_feeling, o.ai_summary, o.created_at,
+             u.name, u.email
+      FROM user_onboarding o
+      JOIN users u ON u.id = o.user_id
+      ORDER BY o.created_at DESC
+    `);
+    const rows = result.rows;
+    const empMap = {};
+    const goalCounts = {};
+    const feelMap = {};
+    rows.forEach((r) => {
+      empMap[r.employment_status] = (empMap[r.employment_status] || 0) + 1;
+      feelMap[r.ai_feeling] = (feelMap[r.ai_feeling] || 0) + 1;
+      String(r.ai_goals || '')
+        .split(',')
+        .map((g) => g.trim())
+        .filter(Boolean)
+        .forEach((t) => {
+          goalCounts[t] = (goalCounts[t] || 0) + 1;
+        });
+    });
+    res.json({
+      profiles: rows,
+      stats: {
+        total: rows.length,
+        mostCommonEmployment: topKeyFromCounts(empMap) || '—',
+        mostCommonGoal: topKeyFromCounts(goalCounts) || '—',
+        mostCommonFeeling: topKeyFromCounts(feelMap) || '—',
+      },
+    });
+  } catch (error) {
+    console.error('Onboarding profiles error:', error);
+    res.status(500).json({ error: 'Failed to load onboarding profiles' });
+  }
+});
+
 // Get course start profiles (module 2 "Kerro meille sinusta")
 router.get('/course-start-profiles', authenticateToken, requireAdmin, async (req, res) => {
   try {
@@ -452,6 +507,42 @@ router.get('/download/closing-actions', authenticateToken, requireAdmin, async (
   } catch (error) {
     console.error('Download closing actions error:', error);
     res.status(500).json({ error: 'Failed to download closing actions' });
+  }
+});
+
+// Download onboarding profiles as CSV
+router.get('/download/onboarding', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    await onboardingModule.ensureUserOnboardingTable();
+    const result = await pool.query(`
+      SELECT o.employment_status, o.profession, o.biggest_challenge, o.ai_experience,
+             o.ai_goals, o.ai_feeling, o.ai_summary, o.created_at, u.email, u.name
+      FROM user_onboarding o
+      JOIN users u ON u.id = o.user_id
+      ORDER BY o.created_at DESC
+    `);
+    const csvHeader =
+      'Email,Name,Employment Status,Profession,Biggest Challenge,AI Experience,AI Goals,AI Feeling,AI Summary,Created At\n';
+    const esc = (s) => String(s ?? '').replace(/"/g, '""').replace(/\n/g, ' ');
+    const csvRows = result.rows
+      .map(
+        (row) =>
+          `"${esc(row.email)}","${esc(row.name)}","${esc(row.employment_status)}","${esc(
+            row.profession
+          )}","${esc(row.biggest_challenge)}","${esc(row.ai_experience)}","${esc(row.ai_goals)}","${esc(
+            row.ai_feeling
+          )}","${esc(row.ai_summary)}","${row.created_at}"`
+      )
+      .join('\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="onboarding-profiles-${new Date().toISOString().split('T')[0]}.csv"`
+    );
+    res.send('\ufeff' + csvHeader + csvRows);
+  } catch (error) {
+    console.error('Download onboarding error:', error);
+    res.status(500).json({ error: 'Failed to download onboarding data' });
   }
 });
 

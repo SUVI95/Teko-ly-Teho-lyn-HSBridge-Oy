@@ -93,7 +93,7 @@ async function initDatabase() {
       SELECT table_name 
       FROM information_schema.tables 
       WHERE table_schema = 'public' 
-      AND table_name IN ('users', 'student_progress', 'checklist_items', 'sessions')
+      AND table_name IN ('users', 'student_progress', 'checklist_items', 'sessions', 'user_onboarding')
     `);
     
     console.log(`✅ Verified ${tablesResult.rows.length} tables exist:`);

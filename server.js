@@ -5,15 +5,17 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
+const pool = require('./database/db');
 const authRoutes = require('./routes/auth');
 const progressRoutes = require('./routes/progress');
 const aiRoutes = require('./routes/ai');
+const onboardingRoutes = require('./routes/onboarding');
 const reflectionsRoutes = require('./routes/reflections');
 const adminRoutes = require('./routes/admin');
 const feedbackRoutes = require('./routes/feedback');
 const setupRoutes = require('./routes/setup');
 const gdprRoutes = require('./routes/gdpr');
-const { authenticateToken } = require('./middleware/auth');
+const { authenticateToken, authenticatePage } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +34,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/progress', progressRoutes); // No authentication required
 app.use('/api/ai', aiRoutes); // No authentication required
+app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/reflections', reflectionsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/feedback', feedbackRoutes);
@@ -125,6 +128,27 @@ app.get('/course-feedback', authenticateToken, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'course-feedback.html'));
 });
 
+app.get('/onboarding', authenticatePage, async (req, res) => {
+  try {
+    if (req.user.is_admin) {
+      return res.redirect(302, '/');
+    }
+    const approved = req.user.is_approved === true || req.user.is_approved === 'true' || req.user.is_approved === 1;
+    if (!approved) {
+      return res.redirect(302, '/');
+    }
+    await onboardingRoutes.ensureUserOnboardingTable();
+    const done = await pool.query('SELECT id FROM user_onboarding WHERE user_id = $1', [req.user.id]);
+    if (done.rows.length > 0) {
+      return res.redirect(302, '/');
+    }
+    res.sendFile(path.join(__dirname, 'public', 'onboarding.html'));
+  } catch (e) {
+    console.error('/onboarding error:', e);
+    res.redirect(302, '/');
+  }
+});
+
 app.get('/setup-production', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'setup-production.html'));
 });
@@ -157,9 +181,34 @@ app.get('/ai-simulation-lab', (req, res) => {
   res.redirect(302, '/ai-simulation-lab.html');
 });
 
-app.get('/module/:moduleId', (req, res) => {
+app.get('/module/:moduleId', async (req, res) => {
   const moduleId = req.params.moduleId;
-  
+  const token = req.cookies && req.cookies.session_token;
+  if (token) {
+    try {
+      const sessionResult = await pool.query(
+        `SELECT u.id, u.is_admin, COALESCE(u.is_approved, FALSE) AS is_approved
+         FROM sessions s JOIN users u ON s.user_id = u.id
+         WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE`,
+        [token]
+      );
+      if (sessionResult.rows.length > 0) {
+        const u = sessionResult.rows[0];
+        const isAdmin = u.is_admin === true;
+        const approved = u.is_approved === true;
+        if (!isAdmin && approved) {
+          await onboardingRoutes.ensureUserOnboardingTable();
+          const ob = await pool.query('SELECT id FROM user_onboarding WHERE user_id = $1', [u.id]);
+          if (ob.rows.length === 0) {
+            return res.redirect(302, '/onboarding');
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Module onboarding gate:', e);
+    }
+  }
+
   // Try multiple paths (Vercel may use different cwd)
   let paths = [
     path.join(__dirname, 'public', 'ai-simulation-lab.html'),
@@ -172,7 +221,7 @@ app.get('/module/:moduleId', (req, res) => {
     paths = paths.filter(x => !x.includes('ai-simulation-lab'));
   }
   const modulePath = paths.find(p => fs.existsSync(p));
-  
+
   if (!modulePath) {
     return res.status(404).send(`
       <html>
@@ -184,7 +233,7 @@ app.get('/module/:moduleId', (req, res) => {
       </html>
     `);
   }
-  
+
   res.sendFile(modulePath);
 });
 

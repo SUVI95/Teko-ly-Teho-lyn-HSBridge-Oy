@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tervetuloa — Kerro meille itsestäsi | HSBridge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1a2e;
+  --paper: #f5f3ef;
+  --paper2: #eeeae3;
+  --accent: #c75b3a;
+  --accent2: #2563a8;
+  --accent3: #2a7a4b;
+  --muted: #6b6880;
+  --border: rgba(26,26,46,0.12);
+  --shadow: 0 2px 20px rgba(26,26,46,0.08);
+  --shadow-md: 0 8px 40px rgba(26,26,46,0.12);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  line-height: 1.65;
+}
+.wrap { max-width: 640px; margin: 0 auto; padding: 1.25rem 1.25rem 3rem; }
+.top-bar {
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(245,243,239,0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1.25rem;
+  margin: 0 -1.25rem 1.5rem;
+}
+.progress-track {
+  height: 6px; background: var(--paper2); border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 3px;
+  transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.step-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
+h1 {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
+  font-size: clamp(1.65rem, 5vw, 2.1rem);
+  margin-bottom: 0.35rem;
+  line-height: 1.15;
+}
+.sub { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.5rem; font-weight: 300; }
+.step-panel {
+  display: none;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.step-panel.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+.option-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.option-card {
+  text-align: left;
+  padding: 1rem 1.15rem;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  font-size: 0.98rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: var(--shadow);
+}
+.option-card:hover {
+  border-color: rgba(37,99,168,0.35);
+  transform: translateY(-2px);
+}
+.option-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(199,91,58,0.12);
+  background: linear-gradient(135deg, rgba(199,91,58,0.04), rgba(37,99,168,0.04));
+}
+.option-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+input[type="text"], textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(199,91,58,0.1);
+}
+textarea { min-height: 140px; resize: vertical; }
+.hint { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; }
+.nav-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+  flex-wrap: wrap;
+}
+.btn {
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #b34e2f;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(199,91,58,0.35);
+}
+.btn-secondary {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.summary-box {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+  margin-top: 1rem;
+  border-left: 4px solid var(--accent3);
+}
+.summary-box h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.15rem;
+  margin-bottom: 0.75rem;
+  font-weight: 400;
+}
+.summary-text { white-space: pre-wrap; font-size: 0.98rem; line-height: 1.75; }
+.loading-ai {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  padding: 1rem 0;
+}
+.dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent);
+  animation: bounce 1.2s infinite ease-in-out;
+}
+.dot:nth-child(2) { animation-delay: 0.15s; }
+.dot:nth-child(3) { animation-delay: 0.3s; }
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+.err { color: #b91c1c; font-size: 0.9rem; margin-top: 0.75rem; }
+.logo-row {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-family: 'DM Serif Display', serif;
+  color: var(--ink);
+}
+.logo-row img { height: 36px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-bar">
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:16.66%"></div></div>
+      <div class="step-label" id="stepLabel">Vaihe 1 / 6</div>
+    </div>
+    <div class="logo-row">
+      <img src="/assets/images/logo.png" alt="" onerror="this.style.display='none'">
+      <span>AI Polku</span>
+    </div>
+
+    <div id="step1" class="step-panel active" data-step="1">
+      <h1>Mikä kuvaa sinua parhaiten tällä hetkellä?</h1>
+      <p class="sub">Valitse yksi vaihtoehto.</p>
+      <div class="option-grid" id="opt1"></div>
+    </div>
+
+    <div id="step2" class="step-panel" data-step="2">
+      <h1>Mikä on ammattisi tai alasi?</h1>
+      <p class="sub">Lyhyt vastaus riittää.</p>
+      <input type="text" id="profession" maxlength="500" placeholder="Esim. sairaanhoitaja, myyjä, IT-tuki…" autocomplete="organization-title">
+    </div>
+
+    <div id="step3" class="step-panel" data-step="3">
+      <h1>Mikä on suurin haaste työssäsi tai arjessasi juuri nyt?</h1>
+      <p class="sub">Kirjoita vapaasti — tämä auttaa meitä kohdistamaan kurssin.</p>
+      <textarea id="challenge" maxlength="8000" placeholder="Kerro omin sanoin…"></textarea>
+    </div>
+
+    <div id="step4" class="step-panel" data-step="4">
+      <h1>Oletko käyttänyt tekoälyä ennen?</h1>
+      <p class="sub">Valitse yksi.</p>
+      <div class="option-grid" id="opt4"></div>
+    </div>
+
+    <div id="step5" class="step-panel" data-step="5">
+      <h1>Mihin asiaan haluaisit eniten apua tekoälystä?</h1>
+      <p class="sub">Valitse enintään kaksi.</p>
+      <div class="option-grid" id="opt5"></div>
+      <p class="hint" id="goalHint">Valittu: 0 / 2</p>
+    </div>
+
+    <div id="step6" class="step-panel" data-step="6">
+      <h1>Mikä tunne sinulla on tekoälystä tällä hetkellä?</h1>
+      <p class="sub">Valitse yksi.</p>
+      <div class="option-grid" id="opt6"></div>
+    </div>
+
+    <div id="step7" class="step-panel" data-step="7">
+      <h1>Valmista!</h1>
+      <p class="sub">Tässä mitä kurssi tarjoaa juuri sinulle.</p>
+      <div id="aiLoading" class="loading-ai">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span>Luodaan henkilökohtaista yhteenvetoa…</span>
+      </div>
+      <div id="summaryBox" class="summary-box" style="display:none;">
+        <h3>Tässä mitä kurssi tarjoaa juuri sinulle:</h3>
+        <div class="summary-text" id="summaryText"></div>
+      </div>
+      <p class="err" id="saveErr" style="display:none;"></p>
+      <div class="nav-row" id="finishRow" style="display:none;">
+        <button type="button" class="btn btn-primary" id="btnStart">Aloita kurssi</button>
+      </div>
+    </div>
+
+    <div class="nav-row" id="navNormal">
+      <button type="button" class="btn btn-secondary" id="btnBack">Takaisin</button>
+      <button type="button" class="btn btn-primary" id="btnNext">Jatka</button>
+    </div>
+  </div>
+
+  <script>
+  const API = window.location.origin + '/api';
+  const STEPS = 6;
+  let current = 1;
+  const answers = {
+    employment_status: null,
+    profession: '',
+    biggest_challenge: '',
+    ai_experience: null,
+    ai_goals: [],
+    ai_feeling: null
+  };
+
+  const OPT1 = [
+    'Olen töissä kokopäiväisesti',
+    'Olen töissä osa-aikaisesti',
+    'Olen työnhakija',
+    'Olen yrittäjä',
+    'Olen opiskelija',
+    'Jokin muu'
+  ];
+  const OPT4 = [
+    'En koskaan',
+    'Olen kokeillut kerran tai pari',
+    'Käytän silloin tällöin',
+    'Käytän lähes päivittäin'
+  ];
+  const OPT5 = [
+    'Tekstien kirjoittaminen (raportit, viestit, hakemukset)',
+    'Tiedonhaku ja analysointi',
+    'Esitysten ja materiaalien tekeminen',
+    'Oman työn tehostaminen ja automatisointi',
+    'Oppiminen ja uuden tiedon omaksuminen',
+    'En osaa vielä sanoa'
+  ];
+  const OPT6 = [
+    'Innostunut — haluan oppia kaiken',
+    'Utelias mutta epävarma',
+    'Hieman huolissani, miten se vaikuttaa työhöni',
+    'Skeptinen, en usko sen auttavan minua',
+    'Pelottaa hieman'
+  ];
+
+  function renderOptions(containerId, items, key, multi) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = items.map((label, i) =>
+      `<button type="button" class="option-card" data-value="${escapeAttr(label)}" data-key="${key}">${escapeHtml(label)}</button>`
+    ).join('');
+    el.querySelectorAll('.option-card').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const v = btn.getAttribute('data-value');
+        if (multi) {
+          const arr = answers.ai_goals;
+          const idx = arr.indexOf(v);
+          if (idx >= 0) {
+            arr.splice(idx, 1);
+            btn.classList.remove('selected');
+          } else {
+            if (arr.length >= 2) return;
+            arr.push(v);
+            btn.classList.add('selected');
+          }
+          updateGoalUi();
+        } else {
+          el.querySelectorAll('.option-card').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          answers[key] = v;
+        }
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+  function escapeAttr(s) {
+    return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  }
+
+  function updateGoalUi() {
+    const hint = document.getElementById('goalHint');
+    if (hint) hint.textContent = 'Valittu: ' + answers.ai_goals.length + ' / 2';
+    document.querySelectorAll('#opt5 .option-card').forEach(btn => {
+      const v = btn.getAttribute('data-value');
+      btn.classList.toggle('selected', answers.ai_goals.includes(v));
+    });
+  }
+
+  function showStep(n) {
+    document.querySelectorAll('.step-panel').forEach(p => {
+      p.classList.remove('active');
+      if (parseInt(p.dataset.step, 10) === n) p.classList.add('active');
+    });
+    const pct = n <= STEPS ? (n / STEPS) * 100 : 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('stepLabel').textContent = n <= STEPS ? 'Vaihe ' + n + ' / ' + STEPS : 'Valmis';
+    document.getElementById('navNormal').style.display = n === 7 ? 'none' : 'flex';
+    current = n;
+  }
+
+  function validateStep(n) {
+    if (n === 1) return !!answers.employment_status;
+    if (n === 2) return document.getElementById('profession').value.trim().length > 0;
+    if (n === 3) return document.getElementById('challenge').value.trim().length > 0;
+    if (n === 4) return !!answers.ai_experience;
+    if (n === 5) return answers.ai_goals.length >= 1;
+    if (n === 6) return !!answers.ai_feeling;
+    return true;
+  }
+
+  function syncFields() {
+    answers.profession = document.getElementById('profession').value.trim();
+    answers.biggest_challenge = document.getElementById('challenge').value.trim();
+    if (current === 1) {
+      const sel = document.querySelector('#opt1 .option-card.selected');
+      answers.employment_status = sel ? sel.getAttribute('data-value') : null;
+    }
+    if (current === 4) {
+      const sel = document.querySelector('#opt4 .option-card.selected');
+      answers.ai_experience = sel ? sel.getAttribute('data-value') : null;
+    }
+    if (current === 6) {
+      const sel = document.querySelector('#opt6 .option-card.selected');
+      answers.ai_feeling = sel ? sel.getAttribute('data-value') : null;
+    }
+  }
+
+  async function runSummaryAndSave() {
+    showStep(7);
+    document.getElementById('aiLoading').style.display = 'flex';
+    document.getElementById('summaryBox').style.display = 'none';
+    document.getElementById('finishRow').style.display = 'none';
+    document.getElementById('saveErr').style.display = 'none';
+
+    const payload = {
+      employment_status: answers.employment_status,
+      profession: answers.profession,
+      biggest_challenge: answers.biggest_challenge,
+      ai_experience: answers.ai_experience,
+      ai_goals: answers.ai_goals,
+      ai_feeling: answers.ai_feeling
+    };
+
+    const userBlock = [
+      'Työtilanne: ' + payload.employment_status,
+      'Ammatti/ala: ' + payload.profession,
+      'Suurin haaste nyt: ' + payload.biggest_challenge,
+      'AI-kokemus: ' + payload.ai_experience,
+      'Toivotut apualueet: ' + payload.ai_goals.join('; '),
+      'Tunne AI:sta: ' + payload.ai_feeling
+    ].join('\n');
+
+    const system = 'Olet ystävällinen suomenkielinen kurssisuunnittelija. Kirjoita tasan kolme lyhyttä lausetta (eri kappaleina). Aloita aina lauseella: "Tässä mitä kurssi tarjoaa juuri sinulle:" ja jatka kahdella konkreettisella lauseella, jotka viittaavat suoraan käyttäjän vastauksiin. Älä toista kysymyksiä. Älä käytä listoja. Sävy lämmin ja ammattimainen.';
+
+    let summaryText = '';
+    try {
+      const res = await fetch(API + '/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          max_tokens: 350,
+          system: system,
+          messages: [{ role: 'user', content: userBlock }]
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.text) summaryText = data.text.trim();
+    } catch (e) {}
+
+    if (!summaryText) {
+      summaryText = 'Tässä mitä kurssi tarjoaa juuri sinulle:\n\nOpit käyttämään tekoälyä käytännössä omassa tilanteessasi — työkaluista promptaukseen ja oman työn tukemiseen.\n\nKurssi etenee vaiheittain: voit harjoitella turvallisesti ja rakentaa taitoja, jotka vastaavat juuri sinun tavoitteitasi.';
+    }
+
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('summaryText').textContent = summaryText;
+    document.getElementById('summaryBox').style.display = 'block';
+
+    try {
+      const res2 = await fetch(API + '/onboarding/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...payload,
+          ai_summary: summaryText
+        })
+      });
+      const d2 = await res2.json().catch(() => ({}));
+      if (!res2.ok) {
+        document.getElementById('saveErr').textContent = d2.error || 'Tallennus epäonnistui. Yritä uudelleen.';
+        document.getElementById('saveErr').style.display = 'block';
+        document.getElementById('finishRow').style.display = 'flex';
+        return;
+      }
+    } catch (e) {
+      document.getElementById('saveErr').textContent = 'Yhteysvirhe tallennuksessa.';
+      document.getElementById('saveErr').style.display = 'block';
+    }
+    document.getElementById('finishRow').style.display = 'flex';
+  }
+
+  document.getElementById('btnNext').addEventListener('click', () => {
+    syncFields();
+    if (!validateStep(current)) {
+      alert('Täytä tai valitse vastaus ennen jatkamista.');
+      return;
+    }
+    if (current < STEPS) {
+      showStep(current + 1);
+      return;
+    }
+    if (current === STEPS) {
+      syncFields();
+      if (!validateStep(6)) {
+        alert('Valitse tunne ennen jatkamista.');
+        return;
+      }
+      runSummaryAndSave();
+    }
+  });
+
+  document.getElementById('btnBack').addEventListener('click', () => {
+    if (current <= 1) return;
+    showStep(current - 1);
+  });
+
+  document.getElementById('btnStart').addEventListener('click', () => {
+    window.location.href = '/module/moduuli1-tietosuoja';
+  });
+
+  renderOptions('opt1', OPT1, 'employment_status', false);
+  renderOptions('opt4', OPT4, 'ai_experience', false);
+  renderOptions('opt5', OPT5, 'ai_goals', true);
+  renderOptions('opt6', OPT6, 'ai_feeling', false);
+
+  (async function init() {
+    try {
+      const r = await fetch(API + '/onboarding/status', { credentials: 'include' });
+      if (r.status === 401) { window.location.href = '/login?redirect=/onboarding'; return; }
+      const d = await r.json();
+      if (d.completed) window.location.href = '/';
+    } catch (e) {
+      window.location.href = '/login?redirect=/onboarding';
+    }
+  })();
+  </script>
+</body>
+</html>
