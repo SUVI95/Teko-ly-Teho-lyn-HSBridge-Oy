@@ -47,26 +47,30 @@
   }
 
   window.aiClaude = async function(systemPrompt, userMessage, maxTokens) {
-    var url = getClaudeUrl();
-    var res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        max_tokens: maxTokens || 2000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }]
-      })
-    });
+    try {
+      var url = getClaudeUrl();
+      var res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          max_tokens: maxTokens || 2000,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMessage }]
+        })
+      });
 
-    var data = {};
-    try { data = await res.json(); } catch (e) {}
+      var data = {};
+      try { data = await res.json(); } catch (e) {}
 
-    if (!res.ok) {
-      var msg = data.error || data.message || 'Virhe ' + res.status;
-      throw new Error(msg);
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'Virhe ' + res.status);
+      }
+
+      return data.text || data.reply || '';
+    } catch (err) {
+      console.warn('Claude failed, falling back to OpenAI:', err.message);
+      return window.aiChat(systemPrompt, userMessage, maxTokens || 2000);
     }
-
-    return data.text || data.reply || '';
   };
 })();

@@ -65,6 +65,45 @@ router.post('/chat', async (req, res) => {
   }
 });
 
+async function callOpenAIFallback(messages, system, max_tokens, res) {
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  if (!openaiApiKey) {
+    return res.status(503).json({
+      error: 'Tekoälypalvelu ei ole juuri nyt saatavilla. Yritä hetken kuluttua uudelleen.'
+    });
+  }
+
+  const openaiMessages = [];
+  if (system) openaiMessages.push({ role: 'system', content: system });
+  openaiMessages.push(...messages);
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${openaiApiKey}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: openaiMessages,
+      max_tokens: max_tokens,
+      temperature: 0.7
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.text();
+    console.error('OpenAI fallback error:', errorData);
+    return res.status(503).json({
+      error: 'Tekoälypalvelu ei ole juuri nyt saatavilla. Yritä hetken kuluttua uudelleen.'
+    });
+  }
+
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content || '';
+  return res.json({ text, usage: data.usage });
+}
+
 // Claude (Anthropic) API endpoint for deep analysis
 router.post('/claude', async (req, res) => {
   try {
@@ -136,16 +175,19 @@ router.post('/claude', async (req, res) => {
       });
     }
 
-    console.error('Anthropic API failed after retries:', lastError?.data);
-    return res.status(503).json({
-      error: 'Claude-palvelu on tilapäisesti ylikuormitettu. Yritä hetken kuluttua uudelleen.'
-    });
+    console.warn('Claude failed after retries, falling back to OpenAI');
+    return callOpenAIFallback(messages, system, max_tokens, res);
   } catch (error) {
-    console.error('Error calling Anthropic API:', error);
-    res.status(500).json({
-      error: 'Failed to get Claude response',
-      message: error.message
-    });
+    console.error('Error calling Anthropic API, falling back to OpenAI:', error.message);
+    try {
+      const { messages, system, max_tokens = 2000 } = req.body;
+      return callOpenAIFallback(messages, system, max_tokens, res);
+    } catch (fallbackErr) {
+      console.error('OpenAI fallback also failed:', fallbackErr.message);
+      res.status(500).json({
+        error: 'Tekoälypalvelu ei ole juuri nyt saatavilla. Yritä hetken kuluttua uudelleen.'
+      });
+    }
   }
 });
 
