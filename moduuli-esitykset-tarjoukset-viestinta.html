@@ -63,8 +63,8 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 .hero-cta:hover{background:#1a4f8a;transform:translateY(-2px);box-shadow:0 8px 24px rgba(37,99,168,0.35);}
 .hero-cta svg{transition:transform 0.25s;}
 .hero-cta:hover svg{transform:translateX(4px);}
-.hero-time{display:flex;align-items:center;gap:8px;margin-top:2rem;font-size:0.82rem;color:rgba(255,255,255,0.3);}
-.hero-time::before{content:'⏱';font-size:0.9rem;}
+.hero-meta{display:flex;align-items:center;gap:1.5rem;margin-top:2rem;flex-wrap:wrap;}
+.hero-meta-item{display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.75rem;color:rgba(255,255,255,0.3);letter-spacing:0.03em;}
 
 /* STATS BOX */
 .stats-box{background:linear-gradient(135deg,rgba(37,99,168,0.08),rgba(42,122,75,0.06));border:1px solid rgba(37,99,168,0.15);border-radius:12px;padding:2rem;margin:2rem 0;}
@@ -81,19 +81,31 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 .impl-card h4{font-size:0.95rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;display:flex;align-items:center;gap:8px;}
 .impl-card p{font-size:0.88rem;color:var(--muted);line-height:1.6;}
 
-/* TOOL COMPARISON */
-.tool-card{background:#fff;border-radius:12px;padding:1.75rem;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:1.25rem;}
+/* TOOL CARDS + ACCORDION */
+.tool-card{background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:1.25rem;overflow:hidden;}
 .tool-card-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;}
 .tool-card h4{font-size:0.95rem;font-weight:600;color:var(--ink);margin:0;}
 .tool-card .price{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);}
 .tool-card .badge{font-size:0.65rem;font-weight:600;color:var(--accent3);background:rgba(42,122,75,0.1);padding:3px 8px;border-radius:4px;}
 .tool-card p{font-size:0.85rem;color:var(--muted);line-height:1.6;margin-bottom:0.5rem;}
 .tool-card .tip{font-size:0.78rem;color:var(--accent);font-style:italic;margin-top:0.5rem;}
+.tool-card-summary{padding:1.75rem;cursor:pointer;transition:background 0.2s;}
+.tool-card-summary:hover{background:rgba(37,99,168,0.02);}
+.tool-card-summary .tool-card-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;}
+.tool-card-summary .tool-card-meta{display:flex;align-items:center;gap:0.65rem;flex-wrap:wrap;}
+.tool-card-detail{max-height:0;overflow:hidden;transition:max-height 0.45s ease;border-top:0 solid var(--border);}
+.tool-card-detail.open{max-height:2000px;border-top-width:1px;}
+.tool-card-detail-inner{padding:0 1.75rem 1.75rem;}
+.accordion-arrow{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--paper2);transition:all 0.3s;flex-shrink:0;}
+.accordion-arrow svg{transition:transform 0.3s;width:14px;height:14px;}
+.accordion-arrow.open svg{transform:rotate(180deg);}
 .tool-list,.price-list{margin:0.65rem 0 0.5rem 1rem;padding:0;}
 .tool-list li,.price-list li{font-size:0.85rem;color:var(--text);line-height:1.65;margin-bottom:0.35rem;}
 .tool-links{display:flex;gap:0.55rem;flex-wrap:wrap;margin-top:0.85rem;}
 .tool-link{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:7px;border:1px solid var(--border);background:var(--paper);color:var(--ink);text-decoration:none;font-size:0.8rem;font-weight:600;transition:all 0.2s;}
 .tool-link:hover{border-color:rgba(37,99,168,0.4);color:var(--accent);}
+
+/* PREP BUILDER */
 .prep-builder{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:1.25rem;margin:1.5rem 0 1.25rem;}
 .prep-builder h3{font-size:1rem;color:var(--ink);margin-bottom:0.4rem;}
 .prep-builder p{font-size:0.86rem;color:var(--muted);margin-bottom:0.85rem;}
@@ -101,8 +113,6 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 @media(max-width:680px){.prep-grid{grid-template-columns:1fr;}}
 .prep-output{display:none;margin-top:0.95rem;background:var(--paper);border:1px solid var(--border);border-radius:10px;padding:1rem;}
 .prep-output .practice-response-label{margin-bottom:0.55rem;}
-.tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:2rem;}
-@media(max-width:680px){.tools-grid{grid-template-columns:1fr;}}
 
 /* TOOL COMPARISON TABLE */
 .tool-table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border);}
@@ -181,7 +191,34 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 .btn-next:hover{background:#1a4f8a;transform:translateY(-2px);box-shadow:0 8px 24px rgba(37,99,168,0.35);}
 .btn-back{display:inline-flex;align-items:center;gap:8px;background:transparent;color:rgba(255,255,255,0.45);padding:15px 24px;border-radius:6px;font-weight:500;font-size:0.95rem;border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.25s;}
 .btn-back:hover{color:#fff;border-color:rgba(255,255,255,0.3);}
-@media(max-width:768px){nav{padding:0 1.25rem;}.nav-title{display:none;}.section{padding:80px 1.25rem 4rem;}.reflection-card,.finale-card{padding:2rem;}}
+
+/* ── PREMIUM ADDITIONS ─────────────────────────── */
+
+/* Time badge */
+.time-badge{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);letter-spacing:0.05em;background:var(--paper2);border:1px solid var(--border);padding:4px 14px;border-radius:20px;margin-bottom:1.75rem;}
+.time-badge::before{content:'⏱';font-size:0.75rem;}
+
+/* Key takeaway card */
+.takeaway{background:linear-gradient(135deg,rgba(37,99,168,0.06),rgba(42,122,75,0.04));border:1px solid rgba(37,99,168,0.18);border-radius:12px;padding:1.5rem 1.75rem;margin:2.5rem 0 0;display:flex;gap:1rem;align-items:flex-start;}
+.takeaway-icon{font-size:1.1rem;flex-shrink:0;margin-top:2px;}
+.takeaway p{font-size:0.95rem;font-weight:500;color:var(--ink);line-height:1.6;margin:0;}
+
+/* Tabs */
+.tab-nav{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:2rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.tab-nav::-webkit-scrollbar{display:none;}
+.tab-btn{padding:12px 20px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all 0.2s;}
+.tab-btn:hover{color:var(--ink);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* Mini story callout */
+.mini-story{background:#fff;border-radius:12px;padding:1.5rem 1.75rem;border:1px solid var(--border);box-shadow:var(--shadow);margin:2rem 0;position:relative;padding-left:3rem;}
+.mini-story::before{content:'"';position:absolute;left:1rem;top:0.75rem;font-family:'DM Serif Display',serif;font-size:2.5rem;color:var(--accent);opacity:0.3;line-height:1;}
+.mini-story p{font-size:0.9rem;color:var(--text);line-height:1.7;margin:0;font-style:italic;}
+.mini-story .attribution{font-style:normal;font-size:0.78rem;color:var(--muted);margin-top:0.5rem;}
+
+@media(max-width:768px){nav{padding:0 1.25rem;}.nav-title{display:none;}.section{padding:80px 1.25rem 4rem;}.reflection-card,.finale-card{padding:2rem;}.tab-btn{padding:10px 14px;font-size:0.8rem;}}
 </style>
 </head>
 <body>
@@ -206,218 +243,162 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
   <div class="nav-steps" id="navSteps"></div>
 </nav>
 
-<!-- HERO -->
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 0 · HERO                                       -->
+<!-- ═══════════════════════════════════════════════ -->
 <section class="section" id="hero" data-index="0">
   <div class="hero-inner">
     <div class="hero-eyebrow">
-      <span class="eyebrow-num">DAY 1 → DAY 2</span>
+      <span class="eyebrow-num">Moduuli</span>
       <span class="eyebrow-line"></span>
-      <span class="eyebrow-label">Täytemoduuli</span>
+      <span class="eyebrow-label">Käytännön taidot</span>
     </div>
     <h1 class="hero-title">Esitykset,<br><em>tarjoukset</em> ja viestintä</h1>
-    <p class="hero-sub">Tekoäly auttaa sinua päivittäisessä työssä: esitysten rakentaminen, tarjousten kirjoittaminen ja ammattimainen viestintä. Opit tässä työkalut jotka säästävät aikaa ja parantavat tuloksia.</p>
-    <a href="#teoria-kehys" class="hero-cta">
+    <p class="hero-sub">Opi käyttämään tekoälyä päivittäisessä työssä: esitysten rakentaminen, tarjousten kirjoittaminen ja ammattimainen viestintä. Tässä moduulissa teet — et vain lue.</p>
+    <a href="#ymmarra" class="hero-cta">
       Aloita <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
     </a>
-    <div class="hero-time">Noin 45 minuuttia</div>
+    <div class="hero-meta">
+      <span class="hero-meta-item">⏱ ~45 min</span>
+      <span class="hero-meta-item">◆ 3 harjoitusta</span>
+      <span class="hero-meta-item">◆ 5 kotitehtävää</span>
+    </div>
   </div>
 </section>
 
-<!-- 1. MIKSI TÄMÄ MODUULI ON TÄRKEÄ? -->
-<section class="section section-alt" id="teoria-kehys" data-index="1">
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 1 · YMMÄRRÄ — Tämän moduulin ydin              -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section section-alt" id="ymmarra" data-index="1">
   <div class="section-inner fade-up">
-    <div class="section-label">Aloita näin</div>
-    <h2 class="section-h2">Miksi tämä moduuli on <em>tärkeä?</em></h2>
+    <div class="section-label">Ymmärrä</div>
+    <h2 class="section-h2">Tämän moduulin <em>ydin</em></h2>
     <div class="divider"></div>
-    <p class="lead">Tässä moduulissa opit kolme asiaa: miten AI nopeuttaa työtä, miten rakennat parempaa viestintää, miten vältät amatöörivirheet.</p>
+    <span class="time-badge">~5 min lukemista</span>
 
-    <h3 class="section-h2" style="font-size:1.35rem;margin-top:2rem;">Miksi tämä muuttaa työtäsi</h3>
-    <p class="prose" style="margin-bottom:1.5rem;">Tämä moduuli ei opeta vain työkaluja. Se opettaa uuden työskentelylogiikan.</p>
+    <div class="mini-story">
+      <p>Matti sai tarjouspyynnön perjantaina klo 15. Maanantaina aamulla klo 8 tarjous oli asiakkaan sähköpostissa — loppuun asti hiottu, selkeästi hinnoiteltu, ammattimaisesti muotoiltu. Ei ylitöitä. Matti käytti ChatGPT:tä runkoon ja keskittyi itse asiakkaan tuntemiseen.</p>
+      <div class="attribution">— Esimerkki siitä, miten AI muuttaa arkityön</div>
+    </div>
 
-    <div class="two-col" style="gap:2rem;margin:2rem 0;">
+    <div class="two-col" style="gap:2rem;margin:2.5rem 0;">
       <div>
         <h4 style="font-size:0.9rem;color:var(--muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">Ennen</h4>
-        <ul>
-          <li>Aloitit tyhjästä</li>
-          <li>Kirjoitit kaiken itse</li>
-          <li>Käytit aikaa rakenteen miettimiseen</li>
+        <ul style="list-style:none;padding:0;">
+          <li style="padding:0.4rem 0;border-bottom:1px solid var(--border);">Aloitit tyhjästä</li>
+          <li style="padding:0.4rem 0;border-bottom:1px solid var(--border);">Kirjoitit kaiken itse</li>
+          <li style="padding:0.4rem 0;">Käytit aikaa rakenteen miettimiseen</li>
         </ul>
       </div>
       <div>
         <h4 style="font-size:0.9rem;color:var(--accent3);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">Nyt</h4>
-        <ul>
-          <li>AI tekee ensimmäisen version</li>
-          <li>Sinä parannat ja ohjaat</li>
-          <li>Keskityt laatuun, et aloittamiseen</li>
+        <ul style="list-style:none;padding:0;">
+          <li style="padding:0.4rem 0;border-bottom:1px solid var(--border);">AI tekee ensimmäisen version</li>
+          <li style="padding:0.4rem 0;border-bottom:1px solid var(--border);">Sinä parannat ja ohjaat</li>
+          <li style="padding:0.4rem 0;">Keskityt laatuun, et aloittamiseen</li>
         </ul>
       </div>
     </div>
+
     <div class="prose">
       <div class="pull">Tekoäly ei korvaa asiantuntijuutta. Se poistaa tyhjän sivun.</div>
     </div>
-  </div>
-</section>
-
-<!-- 2. MITÄ TUTKIMUS SANOO -->
-<section class="section" id="tutkimus" data-index="2">
-  <div class="section-inner fade-up">
-    <div class="section-label">Todisteet</div>
-    <h2 class="section-h2">Mitä tutkimus sanoo <em>(miksi tämä ei ole hypeä)</em></h2>
-    <div class="divider"></div>
 
     <div class="stats-box">
-      <h4>Mitä tutkimus sanoo (2025)</h4>
+      <h4>Tutkimustulokset (2025)</h4>
       <ul>
-        <li>50–70 % ajansäästö sisällöntuotannossa</li>
-        <li>55 % nopeampi tarjousten kirjoittaminen</li>
-        <li>71 % organisaatioista käyttää jo generatiivistä AI:ta</li>
+        <li><strong>50–70 %</strong> ajansäästö sisällöntuotannossa</li>
+        <li><strong>55 %</strong> nopeampi tarjousten kirjoittaminen</li>
+        <li><strong>71 %</strong> organisaatioista käyttää jo generatiivistä AI:ta</li>
       </ul>
-      <p style="margin-top:1rem;"><strong>Käytännössä:</strong> 2 tunnin työ → 30–40 minuuttia. Sama laatu. Vähemmän aikaa.</p>
+      <p style="margin-top:1rem;font-size:0.9rem;"><strong>Käytännössä:</strong> 2 tunnin työ → 30–40 minuuttia. Sama laatu, vähemmän aikaa.</p>
       <p class="source">Lähteet: Eesel AI, Storychief</p>
     </div>
-  </div>
-</section>
 
-<!-- 3. MISSÄ TÄMÄ NÄKYY ARJESSA? -->
-<section class="section section-alt" id="arjessa" data-index="3">
-  <div class="section-inner fade-up">
-    <div class="section-label">Konkretia</div>
-    <h2 class="section-h2">Missä tämä näkyy <em>arjessa?</em></h2>
-    <div class="divider"></div>
-    <p class="lead">Ja vasta nyt:</p>
+    <h3 style="font-family:'DM Serif Display',serif;font-size:1.3rem;margin:2.5rem 0 1rem;color:var(--ink);">Ammattilaisvinkki: pelkkä AI-teksti ei riitä</h3>
+    <p class="prose" style="margin-bottom:1.5rem;">AI voi kirjoittaa mitä tahansa. Mutta vaikuttava viestintä perustuu ihmismieleen — näin varmistat, että lopputulos toimii:</p>
 
     <div class="impl-grid">
       <div class="impl-card">
-        <h4>Esitykset</h4>
-        <p>AI tekee rungon. Sinä hiot.</p>
+        <h4>📊 Esitykset</h4>
+        <p>Korkeintaan 3 pääpointtia. Vahva, yllättävä alku. Muistettava lopetus. Ihmiset muistavat ensimmäisen ja viimeisen asian.</p>
       </div>
       <div class="impl-card">
-        <h4>Tarjoukset</h4>
-        <p>AI kirjoittaa draftin. Sinä myyt.</p>
+        <h4>💰 Tarjoukset</h4>
+        <p>Ankkuroi hinta kontekstiin. Näytä ROI selkeästi. Tee seuraava askel niin helpoksi, ettei asiakas voi kieltäytyä.</p>
       </div>
       <div class="impl-card">
-        <h4>Viestintä</h4>
-        <p>AI säätää sävyn. Sinä päätät viestin.</p>
+        <h4>✉️ Viestintä</h4>
+        <p>Lyhyt voittaa pitkän. Selkeys voittaa monimutkaisuuden. Sävy ratkaisee — väärä tyyli tappaa oikeankin viestin.</p>
       </div>
     </div>
-  </div>
-</section>
 
-<!-- 4. MUTTA: TEKNINEN OSAAMINEN EI RIITÄ -->
-<section class="section" id="persuasion" data-index="4">
-  <div class="section-inner fade-up">
-    <div class="section-label">Liiketoimintapsykologia</div>
-    <h2 class="section-h2">Miksi kaikki AI-teksti ei <em>toimi</em></h2>
-    <div class="divider"></div>
-    <p class="lead">AI voi kirjoittaa mitä tahansa. Mutta vaikuttava viestintä perustuu ihmismieleen.</p>
-
-    <div class="impl-grid">
-      <div class="impl-card">
-        <h4>Esitykset</h4>
-        <p>3 pääpointtia. Vahva alku. Vahva loppu.</p>
-      </div>
-      <div class="impl-card">
-        <h4>Tarjoukset</h4>
-        <p>Ankkuroi hinta. Näytä ROI. Tee seuraava askel selkeäksi.</p>
-      </div>
-      <div class="impl-card">
-        <h4>Viestintä</h4>
-        <p>Lyhyt voittaa pitkän. Selkeys voittaa monimutkaisuuden. Sävy ratkaisee.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 5. YLEISIMMÄT VIRHEET -->
-<section class="section section-alt" id="virheet" data-index="5">
-  <div class="section-inner fade-up">
-    <div class="section-label">Varoitukset</div>
-    <h2 class="section-h2">Yleisimmät <em>AI-virheet</em></h2>
-    <div class="divider"></div>
-    <p class="lead">Ensimmäinen versio on luonnos. Ammattilainen tekee siitä oman.</p>
-
-    <div class="stats-box" style="background:linear-gradient(135deg,rgba(199,91,58,0.06),rgba(199,91,58,0.03));border-color:rgba(199,91,58,0.2);">
-      <h4>Yleisimmät AI-virheet</h4>
+    <div class="stats-box" style="background:linear-gradient(135deg,rgba(199,91,58,0.06),rgba(199,91,58,0.03));border-color:rgba(199,91,58,0.2);margin-top:2rem;">
+      <h4>⚠ Yleisimmät AI-virheet</h4>
       <ul>
         <li><strong>Kopioi-liitä ilman muokkausta</strong> — AI:n teksti on lähtökohta, ei valmis tuote.</li>
-        <li><strong>Liian pitkä teksti</strong> — AI kirjoittaa paljon. Lyhennä.</li>
+        <li><strong>Liian pitkä teksti</strong> — AI kirjoittaa paljon. Lyhennä aina.</li>
         <li><strong>Numeroita tarkistamatta</strong> — AI voi keksiä tilastoja. Tarkista aina.</li>
         <li><strong>Robottimainen sävy</strong> — Lisää persoonaa, poista kliseet.</li>
         <li><strong>Yleisöä ei huomioida</strong> — Sama teksti ei toimi asiantuntijalle ja aloittelijalle.</li>
       </ul>
     </div>
+
+    <div class="takeaway">
+      <span class="takeaway-icon">💡</span>
+      <p>AI tuottaa ensimmäisen version nopeasti. Sinun tehtäväsi on ajatella, ohjata ja viimeistellä. Ensimmäinen versio on luonnos — ammattilainen tekee siitä oman.</p>
+    </div>
   </div>
 </section>
 
-<!-- TEHTÄVÄ 0 – Rakenna ensin idea ChatGPT:llä (teorian jälkeen) -->
-<section class="section" id="tehtava0" data-index="6">
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 2 · RAKENNA AJATTELU — Tehtävä 0               -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="brainstorming" data-index="2">
   <div class="section-inner fade-up">
-    <div class="section-label">Harjoitus</div>
-    <h2 class="section-h2">Ennen kuin käytät Gammaa, Canva AI:ta tai Copilotia</h2>
+    <div class="section-label">Vaihe 1</div>
+    <h2 class="section-h2">Rakenna <em>ajattelu</em> ensin</h2>
     <div class="divider"></div>
-    <p class="lead">Rakenna ensin ajattelu ChatGPT:llä.</p>
+    <span class="time-badge">~10 min</span>
 
-    <div class="stats-box" style="background:linear-gradient(135deg,rgba(199,91,58,0.06),rgba(199,91,58,0.03));border-color:rgba(199,91,58,0.2);">
-      <h4>Yleisin virhe AI-työkaluissa</h4>
-      <p>Mennään suoraan visuaaliseen työkaluun ilman selkeää ideaa. Tässä moduulissa toimitaan toisin.</p>
-    </div>
+    <p class="lead">Ennen kuin avaat Gamman, Canvan tai Copilotin — rakenna idea ChatGPT:llä. Työkalu ei ajattele puolestasi.</p>
 
-    <div class="homework-task">
-      <h3>Logiikka</h3>
-      <ol style="padding-left:1.5rem;margin:1rem 0;line-height:1.8;">
-        <li>Rakenna sisältö ja ajattelu ChatGPT:llä</li>
-        <li>Kirkasta rakenne ja ydinviesti</li>
-        <li>Siirrä valmis brief Gammaan / Canvasiin / Copilotiin</li>
-        <li>Viimeistele visuaalisesti</li>
-      </ol>
-      <p><strong>Tekoäly ei korvaa ajattelua — se nopeuttaa sitä.</strong></p>
-    </div>
-
-    <div class="homework-task">
-      <h3>Mikä on oikea AI-brainstorming?</h3>
-      <p>Useimmat käyttävät tekoälyä kuin Googlea: kysyvät yhden kysymyksen ja lukevat vastauksen. Se ei ole brainstorming.</p>
-      <p><strong>Brainstorming tarkoittaa ajattelun kehittämistä vuorovaikutuksessa.</strong> Et kysy vain tietoa — vaan rakennat ideaa vaiheittain. AI ei ole hakukone. Se on ajattelun sparraaja.</p>
-      <div class="two-col" style="margin-top:1.25rem;gap:1.5rem;">
-        <div>
-          <h4 style="font-size:0.9rem;color:var(--accent2);margin-bottom:0.5rem;">Pinnallinen haku</h4>
-          <p style="font-size:0.9rem;">"Anna 5 ideaa." Luet vastauksen. Siirryt eteenpäin. Ajattelu ei syvene.</p>
-        </div>
-        <div>
-          <h4 style="font-size:0.9rem;color:var(--accent3);margin-bottom:0.5rem;">AI-brainstorming</h4>
-          <p style="font-size:0.9rem;">Pyydät 5 ideaa. Valitset yhden. Pyydät parantamaan sitä. Pyydät vasta-argumentteja. Pyydät tekemään siitä konkreettisen suunnitelman. Tiivistät lopuksi ydinsanoman. Ajattelu kehittyy kierros kierroksella.</p>
-        </div>
+    <div class="two-col" style="margin:1.5rem 0 2rem;gap:1.5rem;">
+      <div class="impl-card" style="border-left:3px solid var(--accent2);">
+        <h4 style="color:var(--accent2);">Pinnallinen haku</h4>
+        <p>"Anna 5 ideaa." Luet vastauksen. Siirryt eteenpäin. Ajattelu ei syvene.</p>
       </div>
-      <p style="margin-top:1.25rem;"><strong>Älä pysähdy ensimmäiseen vastaukseen.</strong> Ensimmäinen vastaus on lähes aina pinnallinen. Paras työ syntyy kolmannella tai neljännellä kierroksella.</p>
+      <div class="impl-card" style="border-left:3px solid var(--accent3);">
+        <h4 style="color:var(--accent3);">Oikea AI-brainstorming</h4>
+        <p>Pyydät 5 ideaa. Valitset yhden. Pyydät parantamaan. Pyydät vasta-argumentteja. Pyydät konkreettisen suunnitelman. Tiivistät ydinsanoman. Ajattelu kehittyy kierros kierrokselta.</p>
+      </div>
     </div>
 
-    <div class="homework-task">
-      <h3>Tehtävä 0 — Rakenna ensin idea ChatGPT:llä</h3>
-      <p>Valitse aihe. Käydä vähintään 5 kierrosta keskustelua AI:n kanssa. Syvennä ideaa joka kierroksella. Lopuksi tiivistä selkeä lopputulos.</p>
-      <p>Ennen kuin avaat mitään muuta työkalua, tee tämä harjoitus.</p>
+    <p class="prose" style="margin-bottom:2rem;"><strong>Älä pysähdy ensimmäiseen vastaukseen.</strong> Paras työ syntyy kolmannella tai neljännellä kierroksella.</p>
 
-      <h4>Vaihe 1 – Kuvaa tilanne</h4>
-      <p>Kirjoita tähän:</p>
+    <div class="homework-task">
+      <h3>Tehtävä 0 — Rakenna idea ChatGPT:llä</h3>
+      <p>Valitse aihe. Käy vähintään 5 kierrosta keskustelua AI:n kanssa. Syvennä ideaa joka kierroksella.</p>
+
+      <h4>Vaihe 1 — Kuvaa tilanne</h4>
       <ul>
         <li>Mikä on aihe?</li>
         <li>Kuka on yleisö?</li>
         <li>Mikä on tavoite?</li>
       </ul>
 
-      <div class="stats-box" style="margin-top:1.5rem;">
+      <div class="stats-box" style="margin-top:1rem;">
         <h4>Etkö tiedä mistä aloittaa?</h4>
-        <p>Valitse yksi näistä:</p>
         <ul>
           <li>Rakenna fiktiivinen palvelu</li>
           <li>Kehitä oma henkilöbrändi</li>
-          <li>Ratkaise oma arjen ongelma</li>
           <li>Tee 8 dian esitys kiinnostavasta aiheesta</li>
           <li>Rakenna mini-liiketoimintasuunnitelma</li>
         </ul>
       </div>
 
-      <h4>Vaihe 2 – Käytä tätä promptia ChatGPT:ssä</h4>
+      <h4>Vaihe 2 — Käytä tätä promptia ChatGPT:ssä</h4>
       <p><a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer" class="tool-link" style="display:inline-flex;align-items:center;gap:8px;margin-bottom:1rem;">Avaa ChatGPT ↗</a></p>
-      <p>Kopioi tämä ja täytä hakasulkeet:</p>
       <div class="prompt-box" id="tehtava0Prompt">Toimi kokeneena liiketoimintakonsulttina.
 
 Tilanne:
@@ -436,42 +417,33 @@ Tee minulle:
 Kirjoita selkeästi, ei pitkiä kappaleita.</div>
       <button class="copy-prompt-btn" onclick="copyPrompt('tehtava0Prompt', this)">Kopioi prompt</button>
 
-      <h4>Vaihe 3 – Tiivistä vielä kerran</h4>
+      <h4>Vaihe 3 — Tiivistä</h4>
       <p>Kun saat vastauksen, kysy vielä:</p>
       <div class="prompt-box">Tiivistä tämä niin, että koko esityksen ydin mahtuu kolmeen lauseeseen.</div>
-      <p><strong>Jos et pysty sanomaan sitä kolmella lauseella — et ole vielä valmis siirtymään visuaaliseen työkaluun.</strong></p>
+      <p style="margin-top:1rem;"><strong>Jos et pysty sanomaan sitä kolmella lauseella — et ole vielä valmis siirtymään visuaaliseen työkaluun.</strong></p>
     </div>
 
-    <div class="stats-box">
-      <h4>Miksi tämä vaihe on kriittinen?</h4>
-      <p>Gamma tekee dioja. Canva tekee visuaaleja. Copilot täyttää rakenteen. Mutta mikään niistä ei ajattele puolestasi.</p>
-      <p><strong>Ajattelu tehdään ensin. Työkalut tulevat vasta sen jälkeen.</strong></p>
-    </div>
-
-    <div class="homework-task">
-      <h3>Vasta nyt siirry eteenpäin</h3>
-      <p>Kun sinulla on:</p>
-      <ul>
-        <li>Selkeä kulma</li>
-        <li>Kolme pääviestiä</li>
-        <li>Looginen rakenne</li>
-      </ul>
-      <p>→ Siirry seuraavaan osioon ja rakenna esitys Gamma.appissa.</p>
+    <div class="takeaway">
+      <span class="takeaway-icon">🔑</span>
+      <p>Gamma tekee dioja. Canva tekee visuaaleja. Copilot täyttää rakenteen. Mutta mikään niistä ei ajattele puolestasi. Ajattelu tehdään ensin.</p>
     </div>
   </div>
 </section>
 
-<!-- ESITYSTYÖKALUT 2025 -->
-<section class="section section-alt" id="esitystyokalut" data-index="7">
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 3 · TYÖKALUT — Valitse työkalu                  -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section section-alt" id="tyokalut" data-index="3">
   <div class="section-inner fade-up">
-    <div class="section-label">Työkalut</div>
-    <h2 class="section-h2">Esitystyökalut <em>2025</em></h2>
+    <div class="section-label">Vaihe 2</div>
+    <h2 class="section-h2">Valitse <em>työkalu</em></h2>
     <div class="divider"></div>
-    <p class="lead">Rehellinen kuva siitä mitä markkinalla on nyt — ja mikä kannattaa.</p>
+    <span class="time-badge">~5 min</span>
+    <p class="lead">Rehellinen kuva siitä mitä markkinalla on — ja mikä kannattaa. Klikkaa työkalua nähdäksesi ohjeet ja hinnat.</p>
 
     <div class="prep-builder">
-      <h3>⚡ Nopea valmistautuminen ennen ulkoisia appseja</h3>
-      <p>Tee tämä ensin tässä sivulla: kirjoita aihe, yleisö ja tavoite. Saat valmiin lähtöbriefin, jonka voit kopioida suoraan valitsemaasi työkaluun.</p>
+      <h3>⚡ Nopea valmistautuminen</h3>
+      <p>Kirjoita aihe, yleisö ja tavoite — saat valmiin lähtöbriefin, jonka voit kopioida suoraan valitsemaasi työkaluun.</p>
       <div class="prep-grid">
         <div>
           <div class="practice-label">Aihe</div>
@@ -504,443 +476,185 @@ Kirjoita selkeästi, ei pitkiä kappaleita.</div>
       </div>
     </div>
 
+    <!-- Gamma -->
     <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>Gamma.app</h4>
-        <span class="badge">Paras aloituspaikka</span>
-        <span class="price">Ilmainen / Plus ~$8 / Pro ~$15</span>
-      </div>
-      <p>Nopein tapa saada ammattimainen esitys tyhjästä. Kirjoitat aiheen, Gamma rakentaa deckin automaattisesti.</p>
-      <ul class="tool-list">
-        <li>Mene osoitteeseen gamma.app ja luo ilmainen tili.</li>
-        <li>Kirjoita aihe tai liitä teksti, josta haluat esityksen.</li>
-        <li>Muokkaa teemaa yhdellä klikkauksella (värit, fontit, tyyli).</li>
-        <li>Vie valmis esitys PDF- tai PowerPoint-muotoon tai jaa linkillä.</li>
-      </ul>
-      <p class="practice-response-label" style="margin-top:0.7rem;">💰 Hinnat</p>
-      <ul class="price-list">
-        <li>Ilmainen: noin 400 AI-krediittiä aloitukseen.</li>
-        <li>Plus: noin $8/kk (ei Gamma-logoa, laajempi käyttö).</li>
-        <li>Pro: noin $15/kk (lisäominaisuudet, analytiikka, domainit).</li>
-      </ul>
-      <p class="tip">💡 Rakenna Gammassa, exporttaa PowerPointiin, viimeistele Copilotilla ennen asiakkaalle lähettämistä.</p>
-      <div class="tool-links">
-        <a class="tool-link" href="https://gamma.app" target="_blank" rel="noopener noreferrer">Avaa Gamma.app ↗</a>
-      </div>
-    </div>
-
-    <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>Microsoft Copilot PowerPointissa</h4>
-        <span class="badge">Paras Office-ympäristöön</span>
-        <span class="price">Ilmainen chat / Pro ~22 € / Business ~28 €</span>
-      </div>
-      <p>Toimii suoraan PowerPointissa, joten et vaihda ympäristöä. Luonteva valinta, jos käytät jo Microsoft 365:tä.</p>
-      <ul class="tool-list">
-        <li>Avaa PowerPoint ja etsi Copilot-painike yläpalkista.</li>
-        <li>Pyydä esim. "Luo 5 dian esitys aiheesta Suomen vuodenajat".</li>
-        <li>Pyydä tarkennuksia: "Tee tyylistä modernimpi" tai "Lisää kuvia".</li>
-        <li>Tallenna valmis esitys .pptx-muodossa.</li>
-      </ul>
-      <p class="practice-response-label" style="margin-top:0.7rem;">💰 Hinnat</p>
-      <ul class="price-list">
-        <li>Ilmainen Copilot Chat: copilot.microsoft.com (chat + kuvat).</li>
-        <li>Copilot Pro: noin 22 €/kk (Copilot Office-sovelluksissa).</li>
-        <li>Business + Copilot-lisäosa: noin 28 €/kk/hlö (yrityksille).</li>
-      </ul>
-      <div class="tool-links">
-        <a class="tool-link" href="https://copilot.microsoft.com" target="_blank" rel="noopener noreferrer">Avaa Copilot ↗</a>
-      </div>
-    </div>
-
-
-    <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>Canva AI</h4>
-        <span class="badge">Paras esitys + markkinointi</span>
-        <span class="price">Ilmainen / Pro ~$15 / Teams ~$10 per user</span>
-      </div>
-      <p>Yksi työkalu esityksiin, julisteisiin, esitteisiin ja someen. Hyvä kun haluat nopeasti visuaalisen lopputuloksen.</p>
-      <ul class="tool-list">
-        <li>Mene osoitteeseen canva.com ja luo ilmainen tili.</li>
-        <li>Valitse "Luo uusi suunnitelma" (esitys, juliste, esite).</li>
-        <li>Käytä Magic Designia: kirjoita aihe, Canva ehdottaa valmiit pohjat.</li>
-        <li>Käytä Magic Writea teksteihin ja Magic Mediaa kuvien luontiin.</li>
-      </ul>
-      <p class="practice-response-label" style="margin-top:0.7rem;">💰 Hinnat</p>
-      <ul class="price-list">
-        <li>Ilmainen: paljon mallipohjia + perus-AI-ominaisuudet.</li>
-        <li>Pro: noin $15/kk tai noin $120/vuosi (premium-sisällöt ja enemmän AI-käyttöä).</li>
-        <li>Teams: noin $10/kk/hlö (tiimiyhteistyö).</li>
-      </ul>
-      <div class="tool-links">
-        <a class="tool-link" href="https://www.canva.com" target="_blank" rel="noopener noreferrer">Avaa Canva ↗</a>
-      </div>
-    </div>
-
-    <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>ChatGPT Deep Research</h4>
-        <span class="badge">Paras syvälliseen tutkimukseen</span>
-        <span class="price">Plus ~20 €/kk / Pro ~200 €/kk</span>
-      </div>
-      <p>Deep Research hakee tietoa internetistä ja rakentaa syvällisen analyysin. Ei pelkkä yhteenveto vaan lähteet, vasta-argumentit ja mahdolliset puolueellisuudet.</p>
-      <p class="practice-response-label" style="margin-top:0.7rem;">Deep Research -metodi (4 askelta)</p>
-      <ul class="tool-list">
-        <li>Pyydä yhteenveto aiheesta.</li>
-        <li>Pyydä lähteet.</li>
-        <li>Pyydä vaihtoehtoisia näkökulmia.</li>
-        <li>Pyydä puolueellisuusanalyysi.</li>
-      </ul>
-      <p class="practice-response-label" style="margin-top:0.7rem;">Esimerkki</p>
-      <div class="prompt-box" id="deepResearchPrompt">Tiivistä tekoälyn vaikutus työllisyyteen Suomessa.
-Listaa mahdolliset puolueellisuudet tässä analyysissa.
-Näytä vasta-argumentit.</div>
-      <button class="copy-prompt-btn" onclick="copyPrompt('deepResearchPrompt', this)">Kopioi esimerkki</button>
-      <p class="practice-response-label" style="margin-top:0.7rem;">Hinnat</p>
-      <ul class="price-list">
-        <li>ChatGPT Plus (~20 €/kk): noin 10 Deep Research -kyselyä/kk.</li>
-        <li>ChatGPT Pro (~200 €/kk): noin 120 kyselyä/kk.</li>
-      </ul>
-      <div class="tool-links">
-        <a class="tool-link" href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">Avaa ChatGPT ↗</a>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- KOTITEHTÄVÄT -->
-<section class="section section-alt" id="kotitehtavat" data-index="8">
-  <div class="section-inner fade-up">
-    <div class="section-label">Kotitehtävät</div>
-    <h2 class="section-h2">Harjoitustyö — <em>esitys ja visuaalinen toteutus</em></h2>
-    <div class="divider"></div>
-    <p class="lead">AI Polku — Tekoäly työelämään. Tämä tehtävä on laadittu selkeäksi, tulostettavaksi harjoitusdokumentiksi.</p>
-
-    <div class="homework-task">
-      <h3>1. Otsikko</h3>
-      <p><strong>AI Polku — Tekoäly työelämään: harjoitustyö esityksen ja kuvien toteutuksesta</strong></p>
-
-      <h3>2. Tavoite</h3>
-      <ul>
-        <li>Laadi 8–10 dian ammattimainen esitys Gamma.appissa.</li>
-        <li>Luo 3 realistista kuvaa Gemini AI:lla.</li>
-        <li>Lisää kuvat esitykseen tarkoituksenmukaisiin kohtiin.</li>
-        <li>Viimeistele diojen visuaalinen rakenne ja ammattimainen ilme.</li>
-      </ul>
-
-      <h3>3. Vaihe 1 – Esityksen rakentaminen Gamma.appissa</h3>
-      <p>Valitse esityksen aiheista yksi:</p>
-      <ul>
-        <li>A) Fiktiivinen koirankoulutuspalvelu Suomessa</li>
-        <li>B) Fiktiivinen musiikin oppimisalusta aikuisille</li>
-      </ul>
-      <p>Avaa Gamma.app ja luo uusi esitys valitsemastasi aiheesta. Tee ensin runko, sitten sisältö.</p>
-      <h4>Esimerkkiprompti Gammaan</h4>
-      <div class="prompt-box" id="gammaPrompt">Luo 8–10 dian ammattimainen esitys aiheesta: "[VALITSE A TAI B]".
-
-Rakenna esitys seuraavasti:
-1) Otsikkodia: palvelun nimi ja ydinlupaus
-2) Ongelma: mitä kohderyhmä tarvitsee
-3) Ratkaisu: miten palvelu vastaa tarpeeseen
-4) Kohderyhmä: kenelle palvelu on suunnattu
-5) Palvelun tai alustan keskeiset ominaisuudet
-6) Käytännön asiakashyöty (vähintään 3 selkeää hyötyä)
-7) Esimerkkitapaus tai käyttäjäpolku
-8) Hinnoittelun perusmalli
-9) Yhteenveto
-10) Toimintakehotus
-
-Kirjoita suomeksi. Käytä selkeitä otsikoita ja lyhyitä bullet-kohtia.
-Sävy: rauhallinen, asiallinen ja ammattimainen.</div>
-      <button class="copy-prompt-btn" onclick="copyPrompt('gammaPrompt', this)">Kopioi prompti</button>
-    </div>
-
-    <div class="homework-task">
-      <h3>4. Vaihe 2 – Visuaalinen suunnittelu (mitä kuvia tarvitaan ja miksi)</h3>
-      <p>Suunnittele ennen kuvien luontia kolme kuvaa, joilla on selkeä rooli esityksessä:</p>
-      <ul class="homework-steps">
-        <li>Kuva 1: avausdiaan tunnelman ja aiheen luomiseksi.</li>
-        <li>Kuva 2: ongelma–ratkaisu-diaan havainnollistamaan käytännön tilannetta.</li>
-        <li>Kuva 3: hyöty- tai yhteenvetodiaan vahvistamaan pääviestiä.</li>
-      </ul>
-      <p>Varmista, että jokainen kuva tukee sisältöä eikä ole pelkkä koriste.</p>
-
-      <h3>5. Vaihe 3 – Kuvien luominen Gemini AI:lla</h3>
-      <p>Luo Gemini AI:lla kolme kuvaa suunnitelmasi mukaan. Käytä realistista tyyliä.</p>
-      <h4>Esimerkkipohja Gemini-promptille</h4>
-      <div class="prompt-box" id="geminiPrompt">Luo realistinen kuva esitystä varten.
-
-Konteksti: [koirankoulutuspalvelu Suomessa / musiikin oppimisalusta aikuisille]
-Dian tarkoitus: [avaus / ongelma-ratkaisu / yhteenveto]
-Kuvan sisältö: [mitä kuvassa näkyy, ketkä ovat mukana, mitä tapahtuu]
-Ympäristö: [sisätila/ulkotila, paikka, vuodenaika]
-Valaistus: [luonnonvalo / pehmeä studiovalo / iltavalo]
-Värit: [hillitty, ammattimainen väripaletti]
-Kuvakulma: [laaja / keskikuva / lähikuva]
-Tyyli: fotorealistinen, ei piirrosmainen, ei sarjakuvamainen
-Muoto: vaakakuva (16:9), esitysdialle sopiva
-Laatuvaatimus: terävä, luonnollinen, ilman virheellisiä anatomisia yksityiskohtia</div>
-      <button class="copy-prompt-btn" onclick="copyPrompt('geminiPrompt', this)">Kopioi promptipohja</button>
-
-      <h4>Laatuvaatimukset kuville</h4>
-      <ul>
-        <li>Kuvien tulee olla realistisia, ei piirros- tai sarjakuvatyyliä.</li>
-        <li>Kuvien tulee tukea dian sisältöä ja viestiä.</li>
-        <li>Kaikkien kuvien tulee olla teknisesti selkeitä ja käyttökelpoisia esityksessä.</li>
-      </ul>
-    </div>
-
-    <div class="homework-task">
-      <h3>6. Vaihe 4 – Kuvien lisääminen ja esityksen viimeistely</h3>
-      <p>Lisää kolme valmista kuvaa Gamma-esitykseen suunnittelemiisi dioihin.</p>
-      <p>Viimeistele esitys huolellisesti:</p>
-      <ul>
-        <li>Muokkaa asettelua (layout) jokaisella kuvatulla dialla.</li>
-        <li>Säädä otsikoiden, tekstin ja kuvien välinen tasapaino.</li>
-        <li>Yhtenäistä värit, typografia ja tyhjän tilan käyttö.</li>
-        <li>Varmista, että kokonaisuus näyttää ammattimaiselta ja selkeältä.</li>
-      </ul>
-      <p><strong>Huomio:</strong> Pelkkä kuvien lataaminen dioihin ei riitä. Sinun tulee muokata diojen rakennetta ja visuaalista ilmettä.</p>
-
-      <h3>7. Lopuksi – Itsearviointi</h3>
-      <p>Vastaa lyhyesti seuraaviin kysymyksiin:</p>
-      <ul>
-        <li>Mikä osa esityksen rakentamisesta onnistui parhaiten?</li>
-        <li>Miten hyvin valitsemasi kuvat tukivat esityksen pääviestiä?</li>
-        <li>Mitä muutit diojen asettelussa, jotta kokonaisuus näytti ammattimaisemmalta?</li>
-        <li>Mikä vaihe oli haastavin, ja miten ratkaisit sen?</li>
-        <li>Mitä tekisit seuraavalla kerralla toisin?</li>
-      </ul>
-    </div>
-
-    <div class="homework-task">
-      <h3>ChatGPT Deep Research – harjoitustehtävä</h3>
-      <p><strong>Tavoite:</strong> Harjoittele Deep Research -metodia ChatGPT:ssä. Älä pyydä vain tietoa vaan opi pyytämään yhteenvetoa, lähteitä, vaihtoehtoisia näkökulmia ja puolueellisuusanalyysiä.</p>
-      <h4>Tehtävä</h4>
-      <p>Käytä ChatGPT Deep Researchia (chatgpt.com) ja tee seuraavat neljä pyyntöä samassa keskustelussa:</p>
-      <ol style="margin:0.5rem 0 1rem 1.25rem;">
-        <li><strong>Yhteenveto:</strong> "Tiivistä tekoälyn vaikutus työllisyyteen Suomessa."</li>
-        <li><strong>Lähteet:</strong> "Listaa käyttämäsi lähteet."</li>
-        <li><strong>Puolueellisuus:</strong> "Listaa mahdolliset puolueellisuudet tässä analyysissa."</li>
-        <li><strong>Vasta-argumentit:</strong> "Näytä vasta-argumentit."</li>
-      </ol>
-      <p>Tallenna tai kopioi vastaukset. Vertaa: miten vastaus muuttui kun pyysit lähteet ja vasta-argumentit?</p>
-      <h4>Vaihtoehtoinen aihe</h4>
-      <p>Voit käyttää samaa metodia muuhun aiheeseen, esim. "Tiivistä [aihe]. Listaa lähteet. Listaa puolueellisuudet. Näytä vasta-argumentit."</p>
-    </div>
-
-    <div class="homework-task">
-      <h3>Canva AI -harjoitus</h3>
-
-      <h4>1. Otsikko</h4>
-      <p><strong>AI Polku — Tekoäly työelämään: A4-palveluflyerin toteutus Canva AI:lla</strong></p>
-
-      <h4>2. Tavoite</h4>
-      <p>Laadi A4-kokoinen, ammattimainen palveluflyeri aiemmin luomasi fiktiivisen konseptin pohjalta. Valitse sama konsepti, jota käytit aiemmassa tehtävässä:</p>
-      <ul>
-        <li>A) Fiktiivinen koirankoulutuspalvelu Suomessa</li>
-        <li>B) Fiktiivinen musiikin oppimisalusta aikuisille</li>
-      </ul>
-
-      <h4>3. Vaihe 1 – Canva-projektin aloittaminen (A4 pysty)</h4>
-      <ul class="homework-steps">
-        <li>Avaa Canva ja kirjaudu sisään.</li>
-        <li>Valitse uusi suunnitelma: A4 (pysty).</li>
-        <li>Nimeä tiedosto selkeästi, esimerkiksi "Palveluflyeri_A4".</li>
-        <li>Valitse yksi rauhallinen peruspohja, jota voit muokata.</li>
-      </ul>
-
-      <h4>4. Vaihe 2 – Sisällön rakentaminen (mitä flyerissä pitää olla)</h4>
-      <p>Flyerin tulee sisältää kaikki seuraavat osat:</p>
-      <ul>
-        <li>Palvelun nimi</li>
-        <li>Lyhyt kuvaus (enintään 3–4 lausetta)</li>
-        <li>Kolme keskeistä hyötyä asiakkaalle</li>
-        <li>Yksi selkeä toimintakehotus</li>
-        <li>Yhteystiedot (fiktiiviset)</li>
-      </ul>
-      <p>Kirjoita tekstit selkeästi ja pidä kappaleet lyhyinä.</p>
-
-      <h4>5. Vaihe 3 – Gemini-kuvan lisääminen (vähintään yksi itse luotu kuva)</h4>
-      <p>Lataa flyeriin vähintään yksi kuva, jonka olet luonut aiemmin Gemini AI:lla.</p>
-      <ul>
-        <li>Kuvan tulee olla realistinen, ei piirros- tai sarjakuvatyyliä.</li>
-        <li>Kuvan tulee tukea flyerin viestiä ja palvelun sisältöä.</li>
-        <li>Sijoita kuva kohtaan, jossa se parantaa luettavuutta ja ymmärrettävyyttä.</li>
-      </ul>
-
-      <h4>6. Vaihe 4 – Visuaalinen viimeistely</h4>
-      <p>Viimeistele flyer seuraavien rajausten mukaan:</p>
-      <ul>
-        <li>Käytä enintään kahta pääväriä.</li>
-        <li>Käytä korkeintaan kahta fonttia.</li>
-        <li>Jätä riittävästi tyhjää tilaa.</li>
-        <li>Vältä liian pitkiä tekstikappaleita.</li>
-        <li>Varmista, että teksti on helposti luettavissa.</li>
-      </ul>
-      <p>Muokkaa asettelua aktiivisesti: pelkkä tekstin ja kuvan lisääminen ei riitä, vaan kokonaisuuden tulee näyttää viimeistellyltä.</p>
-
-      <h4>7. Lopuksi – Itsearviointi</h4>
-      <p>Vastaa lyhyesti seuraaviin kysymyksiin:</p>
-      <ul>
-        <li>Näyttääkö flyer ammattimaiselta?</li>
-        <li>Onko viesti selkeä yhdellä silmäyksellä?</li>
-        <li>Tukeeko kuva sisältöä?</li>
-        <li>Onko asettelu tasapainoinen?</li>
-        <li>Voisitko jakaa tämän oikealle asiakkaalle?</li>
-      </ul>
-    </div>
-
-    <div class="homework-task">
-      <h3>Copilot Excel -harjoitus</h3>
-
-      <h4>1. Otsikko</h4>
-      <p><strong>AI Polku — Tekoäly työelämään: Microsoft Copilot Excelissä, kannattavuusanalyysi</strong></p>
-
-      <h4>2. Tavoite</h4>
-      <p>Tavoitteena on käyttää Microsoft Copilotia Excelissä valmiin fiktiivisen yrityscasen analysointiin, peruslaskelmien tekemiseen ja johtopäätösten kirjoittamiseen.</p>
-
-      <h4>3. Lähtötilanne (business scenario explanation)</h4>
-      <p>Yritys on <strong>Nordic Paw Coaching</strong>, joka tarjoaa koirankoulutuspalveluja Suomessa. Tehtävänäsi on arvioida yrityksen kuukausittaista kannattavuutta ja muodostaa selkeä yhteenveto omistajalle Copilotin avulla.</p>
-
-      <h4>4. Excel-taulukon rakenne (show the full data tables clearly formatted)</h4>
-      <p><strong>Palveludata</strong></p>
-      <div class="tool-table-wrap" style="margin:0.75rem 0 1.25rem;">
-        <table class="tool-table">
-          <thead>
-            <tr>
-              <th>Service Type</th>
-              <th>Price (€)</th>
-              <th>Clients per Month</th>
-              <th>Variable Cost per Client (€)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Puppy Course</td><td>120</td><td>12</td><td>30</td></tr>
-            <tr><td>Behavior Training</td><td>250</td><td>5</td><td>60</td></tr>
-            <tr><td>Online Course</td><td>80</td><td>20</td><td>10</td></tr>
-            <tr><td>Private Session</td><td>150</td><td>8</td><td>25</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p><strong>Kiinteät kulut</strong></p>
-      <div class="tool-table-wrap" style="margin:0.75rem 0 1.25rem;">
-        <table class="tool-table">
-          <thead>
-            <tr>
-              <th>Cost Type</th>
-              <th>Amount (€)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Rent</td><td>800</td></tr>
-            <tr><td>Insurance</td><td>200</td></tr>
-            <tr><td>Marketing</td><td>350</td></tr>
-            <tr><td>Software Tools</td><td>150</td></tr>
-            <tr><td>Utilities</td><td>250</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p>Jätä seuraavat laskentarivit aluksi tyhjiksi ja täytä ne Copilotin avulla:</p>
-      <ul>
-        <li>Total Revenue</li>
-        <li>Total Variable Costs</li>
-        <li>Total Fixed Costs</li>
-        <li>Total Costs</li>
-        <li>Monthly Profit</li>
-      </ul>
-
-      <h4>5. Vaihe 1 – Tutustu aineistoon</h4>
-      <ul class="homework-steps">
-        <li>Syötä yllä olevat taulukot Exceliin.</li>
-        <li>Varmista, että otsikot ja numerot ovat oikein.</li>
-        <li>Muotoile luvut euroina.</li>
-      </ul>
-
-      <h4>6. Vaihe 2 – Taloudelliset peruslaskelmat Copilotin avulla</h4>
-      <p>Käytä Copilotia seuraavalla pyynnöllä:</p>
-      <div class="prompt-box" id="copilotPrompt1">Laske tämän taulukon perusteella seuraavat rivit:
-- Total Revenue
-- Total Variable Costs
-- Total Fixed Costs
-- Total Costs
-- Monthly Profit
-
-Näytä laskutapa selkeästi ja kerro, mihin soluihin kaavat kannattaa kirjoittaa.</div>
-      <button class="copy-prompt-btn" onclick="copyPrompt('copilotPrompt1', this)">Kopioi Copilot-prompti 1</button>
-
-      <h4>7. Vaihe 3 – Kannattavuusanalyysi</h4>
-      <p>Pyydä Copilotia tunnistamaan kannattavuuden erot palveluiden välillä:</p>
-      <div class="prompt-box" id="copilotPrompt2">Analysoi palvelukohtainen kannattavuus tämän taulukon perusteella.
-Kerro:
-1) Mikä palvelu on kannattavin
-2) Mikä palvelu on heikoin kannattavuudeltaan
-3) Perustele havainnot lyhyesti numeroiden avulla.</div>
-      <button class="copy-prompt-btn" onclick="copyPrompt('copilotPrompt2', this)">Kopioi Copilot-prompti 2</button>
-
-      <h4>8. Vaihe 4 – Parannusehdotukset</h4>
-      <p>Pyydä Copilotilta kaksi konkreettista kehitysehdotusta:</p>
-      <div class="prompt-box" id="copilotPrompt3">Ehdota kaksi käytännöllistä toimenpidettä, joilla Nordic Paw Coaching voisi parantaa kuukausittaista kannattavuutta.
-Perustele ehdotukset taulukon lukujen perusteella.</div>
-      <button class="copy-prompt-btn" onclick="copyPrompt('copilotPrompt3', this)">Kopioi Copilot-prompti 3</button>
-
-      <h4>9. Vaihe 5 – Skenaariotesti</h4>
-      <p>Tee skenaariotesti Copilotin avulla:</p>
-      <div class="prompt-box" id="copilotPrompt4">Tee skenaariotesti seuraavilla muutoksilla:
-- Nosta Online Course -palvelun hintaa 10 %
-- Laske Marketing-kulua 20 %
-
-Laske uusi Monthly Profit ja vertaa sitä alkuperäiseen tilanteeseen.</div>
-      <button class="copy-prompt-btn" onclick="copyPrompt('copilotPrompt4', this)">Kopioi Copilot-prompti 4</button>
-
-      <h4>10. Vaihe 6 – Yhteenveto omistajalle</h4>
-      <p>Laadi lyhyt loppuyhteenveto Copilotin avulla:</p>
-      <div class="prompt-box" id="copilotPrompt5">Kirjoita enintään 120 sanan talousyhteenveto yrityksen omistajalle.
-Sisällytä:
-- nykytilanteen tärkein havainto
-- yksi keskeinen riski
-- kaksi suositusta seuraavaksi toimenpiteeksi.</div>
-      <button class="copy-prompt-btn" onclick="copyPrompt('copilotPrompt5', this)">Kopioi Copilot-prompti 5</button>
-
-      <h4>Alustan AI-apu: personoitu Copilot-ohjepaketti</h4>
-      <p>Voit halutessasi luoda tämän sivun AI-toiminnolla oman ohjepaketin, joka mukautetaan valitsemaasi analyysipainotukseen.</p>
-      <div class="practice-label">Mitä haluat painottaa analyysissa?</div>
-      <textarea class="practice-textarea" id="copilotFocus" placeholder="Esim. Haluan painottaa hinnoittelua ja palvelukohtaista katetta."></textarea>
-      <button class="practice-btn" id="copilotGuideBtn" onclick="generateCopilotGuide()">Luo personoitu Copilot-ohjepaketti</button>
-      <div class="practice-response" id="copilotGuideResponse">
-        <div class="practice-response-label">Personoitu ohjepaketti</div>
-        <div class="practice-response-text" id="copilotGuideText"></div>
-        <div class="practice-response-actions">
-          <button class="copy-resp-btn" id="copyCopilotGuideBtn" onclick="copyCopilotGuide()">Kopioi ohjepaketti</button>
+      <div class="tool-card-summary" onclick="toggleToolCard(this)">
+        <div class="tool-card-top">
+          <div>
+            <h4 style="margin-bottom:0.35rem;">Gamma.app</h4>
+            <p style="margin:0;">Nopein tapa saada ammattimainen esitys tyhjästä.</p>
+          </div>
+          <div class="tool-card-meta">
+            <span class="badge">Paras aloituspaikka</span>
+            <span class="accordion-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></span>
+          </div>
         </div>
       </div>
+      <div class="tool-card-detail">
+        <div class="tool-card-detail-inner">
+          <ul class="tool-list">
+            <li>Mene osoitteeseen gamma.app ja luo ilmainen tili.</li>
+            <li>Kirjoita aihe tai liitä teksti, josta haluat esityksen.</li>
+            <li>Muokkaa teemaa yhdellä klikkauksella (värit, fontit, tyyli).</li>
+            <li>Vie valmis esitys PDF- tai PowerPoint-muotoon tai jaa linkillä.</li>
+          </ul>
+          <p class="practice-response-label" style="margin-top:0.7rem;">Hinnat</p>
+          <ul class="price-list">
+            <li><strong>Ilmainen:</strong> noin 400 AI-krediittiä aloitukseen.</li>
+            <li><strong>Plus:</strong> ~$8/kk (ei Gamma-logoa, laajempi käyttö).</li>
+            <li><strong>Pro:</strong> ~$15/kk (lisäominaisuudet, analytiikka).</li>
+          </ul>
+          <p class="tip">💡 Rakenna Gammassa, exporttaa PowerPointiin, viimeistele Copilotilla.</p>
+          <div class="tool-links">
+            <a class="tool-link" href="https://gamma.app" target="_blank" rel="noopener noreferrer">Avaa Gamma.app ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
 
-      <h4>11. Lopuksi – Itsearviointi</h4>
-      <p>Vastaa lyhyesti seuraaviin kysymyksiin:</p>
-      <ul>
-        <li>Mitä Copilot teki tässä tehtävässä hyvin?</li>
-        <li>Mitä kohtia jouduit tarkistamaan itse?</li>
-        <li>Missä tilanteissa tämä toimintatapa olisi hyödyllinen oikeassa työelämässä?</li>
-        <li>Luottaisitko Copilotin laskelmiin sellaisenaan ilman tarkistusta?</li>
-        <li>Mitä tekisit seuraavalla kerralla paremmin?</li>
-      </ul>
+    <!-- Microsoft Copilot -->
+    <div class="tool-card">
+      <div class="tool-card-summary" onclick="toggleToolCard(this)">
+        <div class="tool-card-top">
+          <div>
+            <h4 style="margin-bottom:0.35rem;">Microsoft Copilot PowerPointissa</h4>
+            <p style="margin:0;">Toimii suoraan PowerPointissa — luonteva valinta Microsoft 365 -käyttäjille.</p>
+          </div>
+          <div class="tool-card-meta">
+            <span class="badge">Paras Office-ympäristöön</span>
+            <span class="accordion-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></span>
+          </div>
+        </div>
+      </div>
+      <div class="tool-card-detail">
+        <div class="tool-card-detail-inner">
+          <ul class="tool-list">
+            <li>Avaa PowerPoint ja etsi Copilot-painike yläpalkista.</li>
+            <li>Pyydä esim. "Luo 5 dian esitys aiheesta Suomen vuodenajat".</li>
+            <li>Pyydä tarkennuksia: "Tee tyylistä modernimpi" tai "Lisää kuvia".</li>
+            <li>Tallenna valmis esitys .pptx-muodossa.</li>
+          </ul>
+          <p class="practice-response-label" style="margin-top:0.7rem;">Hinnat</p>
+          <ul class="price-list">
+            <li><strong>Ilmainen chat:</strong> copilot.microsoft.com (chat + kuvat).</li>
+            <li><strong>Copilot Pro:</strong> ~22 €/kk (Copilot Office-sovelluksissa).</li>
+            <li><strong>Business:</strong> ~28 €/kk/hlö (yrityksille).</li>
+          </ul>
+          <div class="tool-links">
+            <a class="tool-link" href="https://copilot.microsoft.com" target="_blank" rel="noopener noreferrer">Avaa Copilot ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Canva AI -->
+    <div class="tool-card">
+      <div class="tool-card-summary" onclick="toggleToolCard(this)">
+        <div class="tool-card-top">
+          <div>
+            <h4 style="margin-bottom:0.35rem;">Canva AI</h4>
+            <p style="margin:0;">Yksi työkalu esityksiin, julisteisiin, esitteisiin ja someen.</p>
+          </div>
+          <div class="tool-card-meta">
+            <span class="badge">Paras esitys + markkinointi</span>
+            <span class="accordion-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></span>
+          </div>
+        </div>
+      </div>
+      <div class="tool-card-detail">
+        <div class="tool-card-detail-inner">
+          <ul class="tool-list">
+            <li>Mene osoitteeseen canva.com ja luo ilmainen tili.</li>
+            <li>Valitse "Luo uusi suunnitelma" (esitys, juliste, esite).</li>
+            <li>Käytä Magic Designia: kirjoita aihe, Canva ehdottaa valmiit pohjat.</li>
+            <li>Käytä Magic Writea teksteihin ja Magic Mediaa kuvien luontiin.</li>
+          </ul>
+          <p class="practice-response-label" style="margin-top:0.7rem;">Hinnat</p>
+          <ul class="price-list">
+            <li><strong>Ilmainen:</strong> paljon mallipohjia + perus-AI-ominaisuudet.</li>
+            <li><strong>Pro:</strong> ~$15/kk tai ~$120/vuosi (premium-sisällöt).</li>
+            <li><strong>Teams:</strong> ~$10/kk/hlö (tiimiyhteistyö).</li>
+          </ul>
+          <div class="tool-links">
+            <a class="tool-link" href="https://www.canva.com" target="_blank" rel="noopener noreferrer">Avaa Canva ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ChatGPT Deep Research -->
+    <div class="tool-card">
+      <div class="tool-card-summary" onclick="toggleToolCard(this)">
+        <div class="tool-card-top">
+          <div>
+            <h4 style="margin-bottom:0.35rem;">ChatGPT Deep Research</h4>
+            <p style="margin:0;">Syvällinen tutkimus lähteineen, vasta-argumentteineen ja puolueellisuusanalyyseineen.</p>
+          </div>
+          <div class="tool-card-meta">
+            <span class="badge">Paras tutkimukseen</span>
+            <span class="accordion-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></span>
+          </div>
+        </div>
+      </div>
+      <div class="tool-card-detail">
+        <div class="tool-card-detail-inner">
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">Deep Research -metodi (4 askelta):</p>
+          <ul class="tool-list">
+            <li>Pyydä yhteenveto aiheesta.</li>
+            <li>Pyydä lähteet.</li>
+            <li>Pyydä vaihtoehtoisia näkökulmia.</li>
+            <li>Pyydä puolueellisuusanalyysi.</li>
+          </ul>
+          <p class="practice-response-label" style="margin-top:0.7rem;">Hinnat</p>
+          <ul class="price-list">
+            <li><strong>ChatGPT Plus:</strong> ~20 €/kk (~10 Deep Research -kyselyä/kk).</li>
+            <li><strong>ChatGPT Pro:</strong> ~200 €/kk (~120 kyselyä/kk).</li>
+          </ul>
+          <div class="tool-links">
+            <a class="tool-link" href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">Avaa ChatGPT ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tarjoustyökalut (brief) -->
+    <div class="tool-card">
+      <div class="tool-card-summary" onclick="toggleToolCard(this)">
+        <div class="tool-card-top">
+          <div>
+            <h4 style="margin-bottom:0.35rem;">Qwilr &amp; PandaDoc</h4>
+            <p style="margin:0;">Erikoistuneet tarjoustyökalut: analytiikka, sähköinen allekirjoitus, CRM-integraatio.</p>
+          </div>
+          <div class="tool-card-meta">
+            <span class="badge">Tarjousten hallinta</span>
+            <span class="accordion-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></span>
+          </div>
+        </div>
+      </div>
+      <div class="tool-card-detail">
+        <div class="tool-card-detail-inner">
+          <p style="font-size:0.85rem;color:var(--text);margin-bottom:0.75rem;"><strong>Qwilr</strong> (~35 €/kk): AI-pohjainen builder, joka generoi asiakaskohtaisia draft-tarjouksia. Näet miten asiakas vuorovaikuttaa tarjouksen kanssa.</p>
+          <p style="font-size:0.85rem;color:var(--text);margin-bottom:0.75rem;"><strong>PandaDoc</strong> (~19 €/kk): Samantyyppinen, lisäksi sähköinen allekirjoitus. Integroituu Salesforceen ja HubSpotiin.</p>
+          <p class="tip">💡 ChatGPT riittää tarjousten kirjoittamiseen täysin. Qwilr/PandaDoc kannattaa vasta, jos lähetät paljon tarjouksia ja haluat seurata, avaavatko asiakkaat ne.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ESITYKSET -->
-<section class="section" id="esitykset" data-index="9">
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 4 · KOKEILE — Esitysidea                        -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="esitykset" data-index="4">
   <div class="section-inner fade-up">
-    <div class="section-label">1. Esitykset — Harjoitus</div>
+    <div class="section-label">Kokeile · Esitykset</div>
     <h2 class="section-h2">Kysy AI:lta <em>esitysidea</em></h2>
     <div class="divider"></div>
-    <p class="lead">Kuvaa tilanteesi — yleisö, tavoite, konteksti. AI ehdottaa esitysidean ja rakenteen. Voit käyttää tulosta Gamma.appissa, Canvassa tai PowerPointissa.</p>
+    <p class="lead">Kuvaa tilanteesi — yleisö, tavoite, konteksti. AI ehdottaa esitysidean ja rakenteen. Käytä tulosta Gamma.appissa, Canvassa tai PowerPointissa.</p>
 
     <div class="practice-wrap">
       <div class="practice-header">
-        <div class="practice-header-icon">💡</div>
+        <div class="practice-header-icon">📊</div>
         <div class="practice-header-text">
           <h3>AI keksii esitysidean sinulle</h3>
           <p>Kuvaa tilanne — AI ehdottaa kulman, kolme keskeistä pointtia ja sliden rakenteen</p>
@@ -948,8 +662,8 @@ Sisällytä:
       </div>
       <div class="practice-body">
         <div class="practice-label">Kuvaa tilanne (yleisö, tavoite, konteksti)</div>
-        <textarea class="practice-textarea" id="presentationTopic" placeholder="Esim: Pitäisi esitellä vuosineljänneksen tulokset johtajille — he ovat kiireisiä, haluan korostaa myyntiä ja uusia mahdollisuuksia. Tai: Turvallisuuskoulutus uusille työntekijöille, pitää olla selkeä ja muistettava..."></textarea>
-        <button class="practice-btn" id="presentationBtn" onclick="generatePresentation()">💡 Kysy AI:lta idea + rakenne</button>
+        <textarea class="practice-textarea" id="presentationTopic" placeholder="Esim: Pitäisi esitellä vuosineljänneksen tulokset johtajille — he ovat kiireisiä, haluan korostaa myyntiä ja uusia mahdollisuuksia."></textarea>
+        <button class="practice-btn" id="presentationBtn" onclick="generatePresentation()">Kysy AI:lta idea + rakenne</button>
         <div class="practice-response" id="presentationResponse">
           <div class="practice-response-label">Tekoälyn idea ja rakenne</div>
           <div class="practice-response-text" id="presentationText"></div>
@@ -962,43 +676,15 @@ Sisällytä:
   </div>
 </section>
 
-<!-- TARJOUSTYÖKALUT -->
-<section class="section section-alt" id="tarjoustyokalut" data-index="10">
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 5 · KOKEILE — Tarjous                           -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section section-alt" id="tarjoukset" data-index="5">
   <div class="section-inner fade-up">
-    <div class="section-label">Työkalut</div>
-    <h2 class="section-h2">Tarjoustyökalut — <em>seuraava taso</em></h2>
-    <div class="divider"></div>
-    <p class="lead">Pelkän ChatGPT-tarjouksen lisäksi markkinalla on erikoistuneita tarjoustyökaluja.</p>
-
-    <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>Qwilr</h4>
-        <span class="price">~35€/kk</span>
-      </div>
-      <p>Virtaviivaistaa tarjousten luomisen AI-pohjaisella builderilla joka generoi asiakaskohtaisia draft-tarjouksia. Sisältää analytiikan: näet miten asiakas on vuorovaikuttanut tarjouksen kanssa — avaavatko he sen, kuinka kauan lukivat mitäkin osiota.</p>
-    </div>
-
-    <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>PandaDoc</h4>
-        <span class="price">~19€/kk</span>
-      </div>
-      <p>Samantyyppinen kuin Qwilr, lisäksi sähköinen allekirjoitus. Integroituu Salesforceen, HubSpotiin.</p>
-    </div>
-
-    <p class="prose" style="margin-top:1.5rem;">
-      <strong>Käytännön ohje:</strong> ChatGPT riittää tarjousten kirjoittamiseen täysin hyvin. Qwilr tai PandaDoc tulevat kysymykseen jos lähetät paljon tarjouksia ja haluat tietää avaavatko asiakkaat ne.
-    </p>
-  </div>
-</section>
-
-<!-- TARJOUKSET -->
-<section class="section" id="tarjoukset" data-index="11">
-  <div class="section-inner fade-up">
-    <div class="section-label">2. Tarjoukset — Harjoitus</div>
+    <div class="section-label">Kokeile · Tarjoukset</div>
     <h2 class="section-h2">Kirjoita <em>tarjous</em> ammattimaisesti</h2>
     <div class="divider"></div>
-    <p class="lead">Kuvaus palvelusta tai tuotteesta ja hintatiedot — AI muotoilee ne selkeäksi ja ammattimaisiksi tarjouksiksi.</p>
+    <p class="lead">Kuvaa palvelu tai tuote ja hintatiedot — AI muotoilee ne selkeäksi ja ammattimaiseksi tarjoukseksi.</p>
 
     <div class="practice-wrap">
       <div class="practice-header">
@@ -1013,7 +699,7 @@ Sisällytä:
         <textarea class="practice-textarea" id="offerDescription" placeholder="Esim: Palvelu 2 päivää, asennuspalvelu, koulutus 10 henkilölle..."></textarea>
         <div class="practice-label" style="margin-top:1.25rem;">Lisätiedot (hinta, ehdot, jne.)</div>
         <textarea class="practice-textarea" id="offerDetails" placeholder="Esim: Hinta 2500 € + alv, 14 päivän maksuehto, voimassaolo 30 päivää..."></textarea>
-        <button class="practice-btn" id="offerBtn" onclick="generateOffer()">📝 Luo tarjous</button>
+        <button class="practice-btn" id="offerBtn" onclick="generateOffer()">Luo tarjous</button>
         <div class="practice-response" id="offerResponse">
           <div class="practice-response-label">Tekoälyn tarjous</div>
           <div class="practice-response-text" id="offerText"></div>
@@ -1026,13 +712,15 @@ Sisällytä:
   </div>
 </section>
 
-<!-- VIESTINTÄ -->
-<section class="section section-alt" id="viestinta" data-index="12">
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 6 · KOKEILE — Viestintä                         -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="viestinta" data-index="6">
   <div class="section-inner fade-up">
-    <div class="section-label">3. Viestintä — Harjoitus</div>
+    <div class="section-label">Kokeile · Viestintä</div>
     <h2 class="section-h2">Muotoile <em>viesti</em> oikealle yleisölle</h2>
     <div class="divider"></div>
-    <p class="lead">Sama viesti voi olla liian pitkä, epäselvä tai väärän sävyinen. AI muotoilee sen sopivaksi — sähköpostiksi, Teams-viestiksi tai palautteeksi.</p>
+    <p class="lead">Sama viesti voi olla liian pitkä, epäselvä tai väärän sävyinen. AI muotoilee sen sopivaksi.</p>
 
     <div class="practice-wrap">
       <div class="practice-header">
@@ -1052,7 +740,7 @@ Sisällytä:
           <option value="brief">Lyhyt ja suoraviivainen</option>
           <option value="formal">Formaali</option>
         </select>
-        <button class="practice-btn" id="messageBtn" onclick="formatMessage()">✉️ Muotoile viesti</button>
+        <button class="practice-btn" id="messageBtn" onclick="formatMessage()">Muotoile viesti</button>
         <div class="practice-response" id="messageResponse">
           <div class="practice-response-label">Muotoiltu viesti</div>
           <div class="practice-response-text" id="messageText"></div>
@@ -1065,8 +753,270 @@ Sisällytä:
   </div>
 </section>
 
-<!-- TYÖKALUVERTAILU -->
-<section class="section" id="tyokalut" data-index="13">
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 7 · KOTITEHTÄVÄT — Tabbed interface              -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section section-alt" id="kotitehtavat" data-index="7" style="min-height:auto;padding-top:96px;padding-bottom:5rem;">
+  <div class="section-inner fade-up">
+    <div class="section-label">Kotitehtävät</div>
+    <h2 class="section-h2">Harjoitustyöt — <em>tee, älä vain lue</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Viisi käytännön harjoitusta. Valitse välilehti ja aloita.</p>
+
+    <div class="tab-nav" role="tablist">
+      <button class="tab-btn active" data-tab="tab-gamma" role="tab" onclick="switchTab('tab-gamma')">1 · Gamma</button>
+      <button class="tab-btn" data-tab="tab-kuvat" role="tab" onclick="switchTab('tab-kuvat')">2 · Kuvat</button>
+      <button class="tab-btn" data-tab="tab-canva" role="tab" onclick="switchTab('tab-canva')">3 · Canva</button>
+      <button class="tab-btn" data-tab="tab-excel" role="tab" onclick="switchTab('tab-excel')">4 · Excel</button>
+      <button class="tab-btn" data-tab="tab-research" role="tab" onclick="switchTab('tab-research')">5 · Deep Research</button>
+    </div>
+
+    <!-- TAB 1: Gamma -->
+    <div class="tab-panel active" id="tab-gamma" role="tabpanel">
+      <div class="homework-task">
+        <h3>Harjoitus 1 — Esityksen rakentaminen Gamma.appissa</h3>
+        <p>Laadi 8–10 dian ammattimainen esitys. Valitse aihe:</p>
+        <ul>
+          <li>A) Fiktiivinen koirankoulutuspalvelu Suomessa</li>
+          <li>B) Fiktiivinen musiikin oppimisalusta aikuisille</li>
+        </ul>
+        <p>Avaa Gamma.app ja luo uusi esitys valitsemastasi aiheesta.</p>
+
+        <h4>Prompti Gammaan</h4>
+        <div class="prompt-box" id="gammaPrompt">Luo 8–10 dian ammattimainen esitys aiheesta: "[VALITSE A TAI B]".
+
+Rakenna esitys seuraavasti:
+1) Otsikkodia: palvelun nimi ja ydinlupaus
+2) Ongelma: mitä kohderyhmä tarvitsee
+3) Ratkaisu: miten palvelu vastaa tarpeeseen
+4) Kohderyhmä: kenelle palvelu on suunnattu
+5) Palvelun tai alustan keskeiset ominaisuudet
+6) Käytännön asiakashyöty (vähintään 3 selkeää hyötyä)
+7) Esimerkkitapaus tai käyttäjäpolku
+8) Hinnoittelun perusmalli
+9) Yhteenveto
+10) Toimintakehotus
+
+Kirjoita suomeksi. Käytä selkeitä otsikoita ja lyhyitä bullet-kohtia.
+Sävy: rauhallinen, asiallinen ja ammattimainen.</div>
+        <button class="copy-prompt-btn" onclick="copyPrompt('gammaPrompt', this)">Kopioi prompti</button>
+
+        <h4>Itsearviointi</h4>
+        <ul>
+          <li>Mikä osa esityksen rakentamisesta onnistui parhaiten?</li>
+          <li>Mitä muutit diojen asettelussa, jotta kokonaisuus näytti ammattimaisemmalta?</li>
+          <li>Mitä tekisit seuraavalla kerralla toisin?</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- TAB 2: Kuvat -->
+    <div class="tab-panel" id="tab-kuvat" role="tabpanel">
+      <div class="homework-task">
+        <h3>Harjoitus 2 — Kuvien luominen Gemini AI:lla</h3>
+        <p>Suunnittele kolme kuvaa, joilla on selkeä rooli esityksessä:</p>
+        <ul class="homework-steps">
+          <li>Kuva 1: avausdiaan tunnelman ja aiheen luomiseksi.</li>
+          <li>Kuva 2: ongelma–ratkaisu-diaan havainnollistamaan käytännön tilannetta.</li>
+          <li>Kuva 3: hyöty- tai yhteenvetodiaan vahvistamaan pääviestiä.</li>
+        </ul>
+
+        <h4>Promptipohja Geminiin</h4>
+        <div class="prompt-box" id="geminiPrompt">Luo realistinen kuva esitystä varten.
+
+Konteksti: [koirankoulutuspalvelu Suomessa / musiikin oppimisalusta aikuisille]
+Dian tarkoitus: [avaus / ongelma-ratkaisu / yhteenveto]
+Kuvan sisältö: [mitä kuvassa näkyy, ketkä ovat mukana, mitä tapahtuu]
+Ympäristö: [sisätila/ulkotila, paikka, vuodenaika]
+Valaistus: [luonnonvalo / pehmeä studiovalo / iltavalo]
+Värit: [hillitty, ammattimainen väripaletti]
+Kuvakulma: [laaja / keskikuva / lähikuva]
+Tyyli: fotorealistinen, ei piirrosmainen, ei sarjakuvamainen
+Muoto: vaakakuva (16:9), esitysdialle sopiva
+Laatuvaatimus: terävä, luonnollinen, ilman virheellisiä anatomisia yksityiskohtia</div>
+        <button class="copy-prompt-btn" onclick="copyPrompt('geminiPrompt', this)">Kopioi promptipohja</button>
+
+        <h4>Kuvien lisääminen esitykseen</h4>
+        <p>Lisää kuvat Gamma-esitykseen ja viimeistele:</p>
+        <ul>
+          <li>Muokkaa asettelua jokaisella kuvatulla dialla.</li>
+          <li>Säädä otsikoiden, tekstin ja kuvien välinen tasapaino.</li>
+          <li>Yhtenäistä värit, typografia ja tyhjän tilan käyttö.</li>
+        </ul>
+        <p><strong>Pelkkä kuvien lataaminen ei riitä.</strong> Muokkaa diojen rakennetta ja visuaalista ilmettä.</p>
+      </div>
+    </div>
+
+    <!-- TAB 3: Canva -->
+    <div class="tab-panel" id="tab-canva" role="tabpanel">
+      <div class="homework-task">
+        <h3>Harjoitus 3 — A4-palveluflyeri Canva AI:lla</h3>
+        <p>Laadi A4-kokoinen, ammattimainen palveluflyeri samasta konseptista kuin Gamma-esityksesi.</p>
+
+        <h4>Aloitus</h4>
+        <ul class="homework-steps">
+          <li>Avaa Canva ja luo uusi suunnitelma: A4 (pysty).</li>
+          <li>Nimeä tiedosto selkeästi, esim. "Palveluflyeri_A4".</li>
+          <li>Valitse yksi rauhallinen peruspohja.</li>
+        </ul>
+
+        <h4>Sisältö</h4>
+        <p>Flyerin tulee sisältää:</p>
+        <ul>
+          <li>Palvelun nimi</li>
+          <li>Lyhyt kuvaus (enintään 3–4 lausetta)</li>
+          <li>Kolme keskeistä hyötyä asiakkaalle</li>
+          <li>Yksi selkeä toimintakehotus</li>
+          <li>Yhteystiedot (fiktiiviset)</li>
+        </ul>
+
+        <h4>Visuaalinen viimeistely</h4>
+        <ul>
+          <li>Enintään kaksi pääväriä ja kaksi fonttia.</li>
+          <li>Riittävästi tyhjää tilaa.</li>
+          <li>Lataa vähintään yksi Gemini AI:lla luomasi kuva.</li>
+        </ul>
+
+        <h4>Itsearviointi</h4>
+        <ul>
+          <li>Näyttääkö flyer ammattimaiselta?</li>
+          <li>Onko viesti selkeä yhdellä silmäyksellä?</li>
+          <li>Voisitko jakaa tämän oikealle asiakkaalle?</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- TAB 4: Excel -->
+    <div class="tab-panel" id="tab-excel" role="tabpanel">
+      <div class="homework-task">
+        <h3>Harjoitus 4 — Copilot Excel: kannattavuusanalyysi</h3>
+        <p>Käytä Microsoft Copilotia Excelissä fiktiivisen yrityksen kannattavuuden analysointiin.</p>
+        <p>Yritys: <strong>Nordic Paw Coaching</strong> — koirankoulutuspalveluja Suomessa.</p>
+
+        <h4>Syötä taulukot Exceliin</h4>
+        <p><strong>Palveludata</strong></p>
+        <div class="tool-table-wrap" style="margin:0.75rem 0 1.25rem;">
+          <table class="tool-table">
+            <thead>
+              <tr><th>Palvelutyyppi</th><th>Hinta (€)</th><th>Asiakkaita/kk</th><th>Muuttuva kulu/asiakas (€)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Pentukurssi</td><td>120</td><td>12</td><td>30</td></tr>
+              <tr><td>Käytöskoulutus</td><td>250</td><td>5</td><td>60</td></tr>
+              <tr><td>Verkkokurssi</td><td>80</td><td>20</td><td>10</td></tr>
+              <tr><td>Yksityistunti</td><td>150</td><td>8</td><td>25</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Kiinteät kulut</strong></p>
+        <div class="tool-table-wrap" style="margin:0.75rem 0 1.25rem;">
+          <table class="tool-table">
+            <thead>
+              <tr><th>Kulutyyppi</th><th>Summa (€)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Vuokra</td><td>800</td></tr>
+              <tr><td>Vakuutus</td><td>200</td></tr>
+              <tr><td>Markkinointi</td><td>350</td></tr>
+              <tr><td>Ohjelmistot</td><td>150</td></tr>
+              <tr><td>Yleiskulut</td><td>250</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>Vaihe 1 — Peruslaskelmat Copilotilla</h4>
+        <div class="prompt-box" id="copilotPrompt1">Laske tämän taulukon perusteella seuraavat rivit:
+- Kokonaistulot
+- Muuttuvat kulut yhteensä
+- Kiinteät kulut yhteensä
+- Kulut yhteensä
+- Kuukausitulos
+
+Näytä laskutapa selkeästi ja kerro, mihin soluihin kaavat kannattaa kirjoittaa.</div>
+        <button class="copy-prompt-btn" onclick="copyPrompt('copilotPrompt1', this)">Kopioi prompti</button>
+
+        <h4>Vaihe 2 — Kannattavuusanalyysi</h4>
+        <div class="prompt-box" id="copilotPrompt2">Analysoi palvelukohtainen kannattavuus tämän taulukon perusteella.
+Kerro:
+1) Mikä palvelu on kannattavin
+2) Mikä palvelu on heikoin kannattavuudeltaan
+3) Perustele havainnot lyhyesti numeroiden avulla.</div>
+        <button class="copy-prompt-btn" onclick="copyPrompt('copilotPrompt2', this)">Kopioi prompti</button>
+
+        <h4>Vaihe 3 — Parannusehdotukset</h4>
+        <div class="prompt-box" id="copilotPrompt3">Ehdota kaksi käytännöllistä toimenpidettä, joilla Nordic Paw Coaching voisi parantaa kuukausittaista kannattavuutta.
+Perustele ehdotukset taulukon lukujen perusteella.</div>
+        <button class="copy-prompt-btn" onclick="copyPrompt('copilotPrompt3', this)">Kopioi prompti</button>
+
+        <h4>Vaihe 4 — Skenaariotesti</h4>
+        <div class="prompt-box" id="copilotPrompt4">Tee skenaariotesti seuraavilla muutoksilla:
+- Nosta Verkkokurssi-palvelun hintaa 10 %
+- Laske Markkinointi-kulua 20 %
+
+Laske uusi kuukausitulos ja vertaa sitä alkuperäiseen tilanteeseen.</div>
+        <button class="copy-prompt-btn" onclick="copyPrompt('copilotPrompt4', this)">Kopioi prompti</button>
+
+        <h4>Vaihe 5 — Yhteenveto omistajalle</h4>
+        <div class="prompt-box" id="copilotPrompt5">Kirjoita enintään 120 sanan talousyhteenveto yrityksen omistajalle.
+Sisällytä:
+- nykytilanteen tärkein havainto
+- yksi keskeinen riski
+- kaksi suositusta seuraavaksi toimenpiteeksi.</div>
+        <button class="copy-prompt-btn" onclick="copyPrompt('copilotPrompt5', this)">Kopioi prompti</button>
+
+        <h4>Alustan AI-apu: personoitu ohjepaketti</h4>
+        <p>Luo tämän sivun AI-toiminnolla oma ohjepaketti, joka mukautetaan painotukseesi.</p>
+        <div class="practice-label">Mitä haluat painottaa analyysissa?</div>
+        <textarea class="practice-textarea" id="copilotFocus" placeholder="Esim. Haluan painottaa hinnoittelua ja palvelukohtaista katetta."></textarea>
+        <button class="practice-btn" id="copilotGuideBtn" onclick="generateCopilotGuide()">Luo personoitu ohjepaketti</button>
+        <div class="practice-response" id="copilotGuideResponse">
+          <div class="practice-response-label">Personoitu ohjepaketti</div>
+          <div class="practice-response-text" id="copilotGuideText"></div>
+          <div class="practice-response-actions">
+            <button class="copy-resp-btn" id="copyCopilotGuideBtn" onclick="copyCopilotGuide()">Kopioi ohjepaketti</button>
+          </div>
+        </div>
+
+        <h4>Itsearviointi</h4>
+        <ul>
+          <li>Mitä Copilot teki tässä tehtävässä hyvin?</li>
+          <li>Mitä kohtia jouduit tarkistamaan itse?</li>
+          <li>Luottaisitko Copilotin laskelmiin sellaisenaan ilman tarkistusta?</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- TAB 5: Deep Research -->
+    <div class="tab-panel" id="tab-research" role="tabpanel">
+      <div class="homework-task">
+        <h3>Harjoitus 5 — ChatGPT Deep Research</h3>
+        <p>Harjoittele Deep Research -metodia: älä pyydä vain tietoa, vaan pyydä lähteitä, vasta-argumentteja ja puolueellisuusanalyysiä.</p>
+
+        <h4>Tehtävä</h4>
+        <p>Käytä ChatGPT Deep Researchia ja tee nämä neljä pyyntöä samassa keskustelussa:</p>
+        <ol style="margin:0.5rem 0 1rem 1.25rem;">
+          <li><strong>Yhteenveto:</strong> "Tiivistä tekoälyn vaikutus työllisyyteen Suomessa."</li>
+          <li><strong>Lähteet:</strong> "Listaa käyttämäsi lähteet."</li>
+          <li><strong>Puolueellisuus:</strong> "Listaa mahdolliset puolueellisuudet tässä analyysissa."</li>
+          <li><strong>Vasta-argumentit:</strong> "Näytä vasta-argumentit."</li>
+        </ol>
+
+        <div class="prompt-box" id="deepResearchPrompt">Tiivistä tekoälyn vaikutus työllisyyteen Suomessa.
+Listaa mahdolliset puolueellisuudet tässä analyysissa.
+Näytä vasta-argumentit.</div>
+        <button class="copy-prompt-btn" onclick="copyPrompt('deepResearchPrompt', this)">Kopioi esimerkki</button>
+
+        <p style="margin-top:1.25rem;">Tallenna vastaukset. Vertaa: miten analyysi muuttui kun pyysit lähteet ja vasta-argumentit?</p>
+        <p>Voit käyttää samaa metodia muuhun aiheeseen: "Tiivistä [aihe]. Listaa lähteet. Listaa puolueellisuudet. Näytä vasta-argumentit."</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 8 · YHTEENVETO — Työkaluvertailu                -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="yhteenveto" data-index="8">
   <div class="section-inner fade-up">
     <div class="section-label">Yhteenveto</div>
     <h2 class="section-h2">Työkaluvertailu — <em>mikä mihinkin</em></h2>
@@ -1097,22 +1047,19 @@ Sisällytä:
   </div>
 </section>
 
-<!-- REFLECTION + OUTRO -->
-<section class="section" id="lopetus" data-index="14">
+<!-- ═══════════════════════════════════════════════ -->
+<!-- 9 · REFLEKTIO + LOPETUS                         -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section section-alt" id="lopetus" data-index="9">
   <div class="section-inner fade-up">
-    <div class="section-label">Ennen kuin jatkat</div>
+    <div class="section-label">Reflektio</div>
     <h2 class="section-h2">Missä tästä voisi olla <em>hyötyä?</em></h2>
     <div class="divider"></div>
-    <p class="lead">Missä tilanteessa voisit hyödyntää tekoälyä? Pohdi rauhassa:</p>
 
     <div class="reflection-card" style="margin-bottom:3rem;">
       <div class="reflection-label">Reflektio</div>
       <h3>Missä tilanteessa voisit hyödyntää tekoälyä?</h3>
-      <ul class="prose" style="margin-bottom:1.25rem;padding-left:1.5rem;">
-        <li>Missä työtehtävässä tai arjen tilanteessa AI voisi säästää aikaa?</li>
-        <li>Missä vaiheessa AI voisi auttaa jäsentämään ajatuksia?</li>
-        <li>Missä AI voisi auttaa vertailemaan vaihtoehtoja?</li>
-      </ul>
+      <p>Mieti omaa työtäsi tai arkeasi. Missä AI voisi säästää aikaa, jäsentää ajatuksia tai auttaa vertailemaan vaihtoehtoja?</p>
       <textarea class="reflection-textarea" id="reflectionText" placeholder="Kirjoita ajatuksesi tähän..."></textarea>
       <div class="reflection-actions">
         <button class="reflection-save" onclick="saveReflection()">Tallenna</button>
@@ -1122,10 +1069,10 @@ Sisällytä:
 
     <div class="finale-card">
       <span class="finale-icon">✅</span>
-      <h2>Moduuli suoritettu.<br><em>Jatketaan työnhakuun.</em></h2>
-      <p>Olet oppinut käyttämään AI:ta esityksiin, tarjouksiin ja viestintään. Seuraavaksi opit optimoimaan CV:n ja hakemuskirjeen.</p>
+      <h2>Moduuli suoritettu.<br><em>Hienoa työtä.</em></h2>
+      <p>Olet oppinut käyttämään AI:ta esityksiin, tarjouksiin ja viestintään. Seuraavaksi tutustutaan AI-verkkosivustotyökaluihin.</p>
       <div class="finale-actions">
-        <a href="/module/moduuli-ai-verkkosivustotyokalut" class="btn-next">Seuraava moduuli — AI verkkosivustotyökalut →</a>
+        <a href="/module/moduuli-ai-verkkosivustotyokalut" class="btn-next">Seuraava moduuli →</a>
         <a href="/module/moduuli4-prompt-tyonhakijalle" class="btn-back">← Edellinen</a>
         <a href="/" class="btn-back">Etusivu</a>
       </div>
@@ -1134,82 +1081,78 @@ Sisällytä:
 </section>
 
 <script>
+/* ── NAV + PROGRESS ──────────────────────────────── */
 const sections = document.querySelectorAll('.section[data-index]');
 const navSteps = document.getElementById('navSteps');
 const progressBar = document.getElementById('progress-bar');
-sections.forEach((s,i) => {
+sections.forEach((s, i) => {
   const pip = document.createElement('div');
-  pip.className = 'step-pip'+(i===0?' active':'');
-  pip.addEventListener('click', () => s.scrollIntoView({behavior:'smooth'}));
+  pip.className = 'step-pip' + (i === 0 ? ' active' : '');
+  pip.addEventListener('click', () => s.scrollIntoView({ behavior: 'smooth' }));
   navSteps.appendChild(pip);
 });
 function updateProgress() {
-  const st=window.scrollY,dh=document.documentElement.scrollHeight-window.innerHeight;
-  progressBar.style.width=(dh>0?(st/dh)*100:0)+'%';
-  const pips=navSteps.querySelectorAll('.step-pip');let ai=0;
-  sections.forEach((s,i)=>{if(s.getBoundingClientRect().top<=window.innerHeight*0.5)ai=i;});
-  pips.forEach((p,i)=>{p.classList.remove('active','done');if(i===ai)p.classList.add('active');else if(i<ai)p.classList.add('done');});
+  const st = window.scrollY, dh = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (dh > 0 ? (st / dh) * 100 : 0) + '%';
+  const pips = navSteps.querySelectorAll('.step-pip');
+  let ai = 0;
+  sections.forEach((s, i) => { if (s.getBoundingClientRect().top <= window.innerHeight * 0.5) ai = i; });
+  pips.forEach((p, i) => { p.classList.remove('active', 'done'); if (i === ai) p.classList.add('active'); else if (i < ai) p.classList.add('done'); });
 }
-window.addEventListener('scroll',updateProgress,{passive:true});
-const fadeObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');fadeObs.unobserve(e.target);}});},{threshold:0.12});
-document.querySelectorAll('.fade-up').forEach(el=>fadeObs.observe(el));
+window.addEventListener('scroll', updateProgress, { passive: true });
+const fadeObs = new IntersectionObserver(entries => { entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); fadeObs.unobserve(e.target); } }); }, { threshold: 0.12 });
+document.querySelectorAll('.fade-up').forEach(el => fadeObs.observe(el));
 
-// ── PRESENTATION ────────────────────────────────
-let presentationText = '';
+/* ── TABS ────────────────────────────────────────── */
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-tab="' + tabId + '"]').classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+/* ── ACCORDION TOOL CARDS ────────────────────────── */
+function toggleToolCard(summaryEl) {
+  const detail = summaryEl.nextElementSibling;
+  const arrow = summaryEl.querySelector('.accordion-arrow');
+  detail.classList.toggle('open');
+  if (arrow) arrow.classList.toggle('open');
+}
+
+/* ── PREP BUILDER ────────────────────────────────── */
 let prepOutputText = '';
-let copilotGuideText = '';
-
 function generateToolPrep() {
   const topic = document.getElementById('prepTopic').value.trim();
   const audience = document.getElementById('prepAudience').value.trim();
   const goal = document.getElementById('prepGoal').value.trim();
   const tool = document.getElementById('prepTool').value;
-  if (!topic || !audience || !goal) {
-    alert('Täytä aihe, yleisö ja tavoite.');
-    return;
-  }
-  const toolLabelMap = {
-    gamma: 'Gamma.app',
-    copilot: 'Microsoft Copilot PowerPointissa',
-    canva: 'Canva AI'
-  };
+  if (!topic || !audience || !goal) { alert('Täytä aihe, yleisö ja tavoite.'); return; }
+  const toolLabelMap = { gamma: 'Gamma.app', copilot: 'Microsoft Copilot PowerPointissa', canva: 'Canva AI' };
   const toolPromptMap = {
     gamma: 'Luo 6 dian esitys. Sisällytä avaus, 3 ydinkohtaa, yksi käytännön esimerkki, yhteenveto ja selkeä call to action.',
     copilot: 'Luo 5 dian esitys suomeksi. Käytä selkeitä otsikoita, tiiviitä bullet-kohtia ja ehdota kuvitus jokaiselle dialle.',
     canva: 'Luo visuaalinen esityspohja tai juliste. Käytä modernia, selkeää tyyliä ja vahvaa kontrastia otsikon ja taustan välillä.'
   };
-  prepOutputText =
-`Työkalu: ${toolLabelMap[tool]}
-Aihe: ${topic}
-Yleisö: ${audience}
-Tavoite: ${goal}
-
-Valmis lähtöpyyntö:
-"${toolPromptMap[tool]} Aihe on '${topic}'. Kohdeyleisö on '${audience}'. Tämän tuotoksen tavoite on '${goal}'. Käytä ammattimaista, selkeää suomen kieltä."`;
-
-  const outputEl = document.getElementById('prepOutputText');
-  const wrapperEl = document.getElementById('prepOutput');
-  outputEl.textContent = prepOutputText;
-  wrapperEl.style.display = 'block';
-  wrapperEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  prepOutputText = 'Työkalu: ' + toolLabelMap[tool] + '\nAihe: ' + topic + '\nYleisö: ' + audience + '\nTavoite: ' + goal + '\n\nValmis lähtöpyyntö:\n"' + toolPromptMap[tool] + ' Aihe on \'' + topic + '\'. Kohdeyleisö on \'' + audience + '\'. Tämän tuotoksen tavoite on \'' + goal + '\'. Käytä ammattimaista, selkeää suomen kieltä."';
+  document.getElementById('prepOutputText').textContent = prepOutputText;
+  var w = document.getElementById('prepOutput');
+  w.style.display = 'block';
+  w.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
-
 function copyToolPrep() {
   if (!prepOutputText) return;
-  navigator.clipboard.writeText(prepOutputText).then(() => {
-    const b = document.getElementById('copyPrepBtn');
-    b.textContent = '✓ Kopioitu!';
-    b.classList.add('ok');
-    setTimeout(() => { b.textContent = '📋 Kopioi brief'; b.classList.remove('ok'); }, 2200);
+  navigator.clipboard.writeText(prepOutputText).then(function() {
+    var b = document.getElementById('copyPrepBtn');
+    b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
+    setTimeout(function() { b.textContent = '📋 Kopioi brief'; b.classList.remove('ok'); }, 2200);
   });
 }
 
+/* ── COPILOT GUIDE ───────────────────────────────── */
+let copilotGuideText = '';
 async function generateCopilotGuide() {
   const focus = document.getElementById('copilotFocus').value.trim();
-  if (!focus) {
-    alert('Kirjoita ensin analyysin painotus.');
-    return;
-  }
+  if (!focus) { alert('Kirjoita ensin analyysin painotus.'); return; }
   const btn = document.getElementById('copilotGuideBtn');
   const resp = document.getElementById('copilotGuideResponse');
   const txt = document.getElementById('copilotGuideText');
@@ -1218,7 +1161,7 @@ async function generateCopilotGuide() {
   resp.style.display = 'block';
   resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   try {
-    const msg = `Yrityscase: Nordic Paw Coaching. Analyysin painotus: ${focus}.\n\nLuo opiskelijalle selkeä ohjepaketti, jossa on:\n1) Lyhyt työnkulku (6 vaihetta)\n2) 5 Copilot-promptia (laskenta, kannattavuus, parannukset, skenaario, yhteenveto)\n3) Tarkistuslista siitä, mitä käyttäjän pitää varmistaa itse ennen johtopäätöksiä.`;
+    const msg = 'Yrityscase: Nordic Paw Coaching. Analyysin painotus: ' + focus + '.\n\nLuo opiskelijalle selkeä ohjepaketti, jossa on:\n1) Lyhyt työnkulku (6 vaihetta)\n2) 5 Copilot-promptia (laskenta, kannattavuus, parannukset, skenaario, yhteenveto)\n3) Tarkistuslista siitä, mitä käyttäjän pitää varmistaa itse ennen johtopäätöksiä.';
     copilotGuideText = await window.aiChat('Laadi selkeä, rauhallinen ja ammattimainen Copilot-ohjepaketti Excel-analyysiin. Vältä hypekieltä. Vastaa suomeksi vaiheittain.', msg, 900);
     txt.textContent = copilotGuideText;
   } catch (e) {
@@ -1227,17 +1170,17 @@ async function generateCopilotGuide() {
   }
   btn.disabled = false;
 }
-
 function copyCopilotGuide() {
   if (!copilotGuideText) return;
-  navigator.clipboard.writeText(copilotGuideText).then(() => {
-    const b = document.getElementById('copyCopilotGuideBtn');
-    b.textContent = 'Kopioitu';
-    b.classList.add('ok');
-    setTimeout(() => { b.textContent = 'Kopioi ohjepaketti'; b.classList.remove('ok'); }, 2200);
+  navigator.clipboard.writeText(copilotGuideText).then(function() {
+    var b = document.getElementById('copyCopilotGuideBtn');
+    b.textContent = 'Kopioitu'; b.classList.add('ok');
+    setTimeout(function() { b.textContent = 'Kopioi ohjepaketti'; b.classList.remove('ok'); }, 2200);
   });
 }
 
+/* ── PRESENTATION ────────────────────────────────── */
+let presentationText = '';
 async function generatePresentation() {
   const topic = document.getElementById('presentationTopic').value.trim();
   if (!topic) { alert('Kirjoita esityksen aihe.'); return; }
@@ -1250,7 +1193,7 @@ async function generatePresentation() {
   resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   try {
     const sys = 'Olet esityssuunnittelija ja liiketoimintapsykologian asiantuntija. Käyttäjä kuvaa tilanteen (yleisö, tavoite, konteksti). Sinun tehtäväsi: 1) Ehdottaa vahva esitysidea/kulma (miksi tämä kiinnostaa, mikä on ydinviesti) 2) Kolme keskeistä pointtia (ihmiset muistavat 3 asiaa) 3) 5-8 sliden rakenne suomeksi — jokaiselle slidelle otsikko ja 2-3 bullet-pistettä. Huomioi: ensimmäinen ja viimeinen slide ovat tärkeimmät. Data tarvitsee tulkintaa. Vastaa suomeksi, strukturoidusti.';
-    presentationText = await window.aiChat(sys, `Tilanne: "${topic}"\n\nEhdota esitysidea ja rakenne.`, 1000);
+    presentationText = await window.aiChat(sys, 'Tilanne: "' + topic + '"\n\nEhdota esitysidea ja rakenne.', 1000);
     txt.innerHTML = presentationText.replace(/\n/g, '<br>');
   } catch(e) {
     presentationText = '';
@@ -1259,25 +1202,23 @@ async function generatePresentation() {
   btn.disabled = false;
 }
 function copyPrompt(id, btn) {
-  const el = document.getElementById(id);
+  var el = document.getElementById(id);
   if (!el) return;
-  const text = el.textContent || el.innerText;
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = '✓ Kopioitu!';
-    btn.classList.add('ok');
-    setTimeout(() => { btn.textContent = '📋 Kopioi prompt'; btn.classList.remove('ok'); }, 2200);
+  navigator.clipboard.writeText(el.textContent || el.innerText).then(function() {
+    btn.textContent = '✓ Kopioitu!'; btn.classList.add('ok');
+    setTimeout(function() { btn.textContent = '📋 Kopioi prompt'; btn.classList.remove('ok'); }, 2200);
   });
 }
 function copyPresentation() {
   if (!presentationText) return;
-  navigator.clipboard.writeText(presentationText).then(() => {
-    const b = document.getElementById('copyPresentationBtn');
+  navigator.clipboard.writeText(presentationText).then(function() {
+    var b = document.getElementById('copyPresentationBtn');
     b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
-    setTimeout(() => { b.textContent = '📋 Kopioi idea ja rakenne'; b.classList.remove('ok'); }, 2200);
+    setTimeout(function() { b.textContent = '📋 Kopioi rakenne'; b.classList.remove('ok'); }, 2200);
   });
 }
 
-// ── OFFER ───────────────────────────────────────
+/* ── OFFER ───────────────────────────────────────── */
 let offerText = '';
 async function generateOffer() {
   const desc = document.getElementById('offerDescription').value.trim();
@@ -1292,7 +1233,7 @@ async function generateOffer() {
   resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   try {
     const sys = 'Olet ammattimainen myyjä. Kirjoita selkeä tarjous suomeksi. Sisältää: esittely, palvelun/tuotteen kuvaus, hinnoittelu, ehdot ja voimassaolo. Ammattimainen ja luottamusta herättävä sävy.';
-    const msg = `Palvelu/tuote: ${desc}\n\nLisätiedot: ${details || 'ei lisätiedot'}\n\nLuo ammattimainen tarjous.`;
+    const msg = 'Palvelu/tuote: ' + desc + '\n\nLisätiedot: ' + (details || 'ei lisätiedot') + '\n\nLuo ammattimainen tarjous.';
     offerText = await window.aiChat(sys, msg, 800);
     txt.innerHTML = offerText.replace(/\n/g, '<br>');
   } catch(e) {
@@ -1303,14 +1244,14 @@ async function generateOffer() {
 }
 function copyOffer() {
   if (!offerText) return;
-  navigator.clipboard.writeText(offerText).then(() => {
-    const b = document.getElementById('copyOfferBtn');
+  navigator.clipboard.writeText(offerText).then(function() {
+    var b = document.getElementById('copyOfferBtn');
     b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
-    setTimeout(() => { b.textContent = '📋 Kopioi tarjous'; b.classList.remove('ok'); }, 2200);
+    setTimeout(function() { b.textContent = '📋 Kopioi tarjous'; b.classList.remove('ok'); }, 2200);
   });
 }
 
-// ── MESSAGE ─────────────────────────────────────
+/* ── MESSAGE ─────────────────────────────────────── */
 let messageText = '';
 async function formatMessage() {
   const msg = document.getElementById('messageInput').value.trim();
@@ -1331,7 +1272,7 @@ async function formatMessage() {
   resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   try {
     const sys = 'Olet viestinnän asiantuntija. Muotoile viesti tiettyyn tyyliin. Vastaa suomeksi, vain viestinä ilman selityksiä.';
-    messageText = await window.aiChat(sys, `Muotoile tämä viesti ${styles[style]} tyyliin:\n\n"${msg}"`, 500);
+    messageText = await window.aiChat(sys, 'Muotoile tämä viesti ' + styles[style] + ' tyyliin:\n\n"' + msg + '"', 500);
     txt.textContent = messageText;
   } catch(e) {
     messageText = '';
@@ -1341,20 +1282,21 @@ async function formatMessage() {
 }
 function copyMessage() {
   if (!messageText) return;
-  navigator.clipboard.writeText(messageText).then(() => {
-    const b = document.getElementById('copyMessageBtn');
+  navigator.clipboard.writeText(messageText).then(function() {
+    var b = document.getElementById('copyMessageBtn');
     b.textContent = '✓ Kopioitu!'; b.classList.add('ok');
-    setTimeout(() => { b.textContent = '📋 Kopioi viesti'; b.classList.remove('ok'); }, 2200);
+    setTimeout(function() { b.textContent = '📋 Kopioi viesti'; b.classList.remove('ok'); }, 2200);
   });
 }
 
+/* ── REFLECTION ──────────────────────────────────── */
 async function saveReflection() {
   try {
     await window.saveReflectionToAPI('m_esitykset_reflection');
-    const confirmEl = document.getElementById('reflConfirm');
+    var confirmEl = document.getElementById('reflConfirm');
     if (confirmEl) {
       confirmEl.style.display = 'block';
-      setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+      setTimeout(function() { confirmEl.style.display = 'none'; }, 3000);
     }
   } catch(e) {
     console.error('Error saving reflection:', e);
@@ -1367,17 +1309,17 @@ async function saveReflection() {
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
   if (window.loadReflection) {
     window.loadReflection('m_esitykset_reflection');
   } else {
-    try { const s = localStorage.getItem('m_esitykset_reflection'); if (s) document.getElementById('reflectionText').value = s; } catch(e) {}
+    try { var s = localStorage.getItem('m_esitykset_reflection'); if (s) document.getElementById('reflectionText').value = s; } catch(e) {}
   }
 });
 fetch('/ai-chat-widget.html')
-  .then(r => r.text())
-  .then(html => { document.body.insertAdjacentHTML('beforeend', html); })
-  .catch(e => console.error('Failed to load AI chat widget:', e));
+  .then(function(r) { return r.text(); })
+  .then(function(html) { document.body.insertAdjacentHTML('beforeend', html); })
+  .catch(function(e) { console.error('Failed to load AI chat widget:', e); });
 </script>
 </body>
 </html>
