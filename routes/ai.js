@@ -87,18 +87,48 @@ router.post('/claude', async (req, res) => {
     };
     if (system) body.system = system;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify(body)
-    });
+    const maxRetries = 3;
+    let lastError = null;
 
-    if (!response.ok) {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      if (attempt > 0) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
+        await new Promise(r => setTimeout(r, delay));
+      }
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.content?.[0]?.text || '';
+        return res.json({
+          text: text,
+          usage: data.usage
+        });
+      }
+
       const errorData = await response.text();
+
+      if (response.status === 529 || response.status === 503) {
+        console.warn(`Anthropic API overloaded (attempt ${attempt + 1}/${maxRetries}):`, errorData);
+        lastError = { status: response.status, data: errorData };
+        continue;
+      }
+
+      if (response.status === 429) {
+        console.warn(`Anthropic API rate limited (attempt ${attempt + 1}/${maxRetries}):`, errorData);
+        lastError = { status: response.status, data: errorData };
+        continue;
+      }
+
       console.error('Anthropic API error:', errorData);
       return res.status(response.status).json({
         error: 'Claude service error',
@@ -106,12 +136,9 @@ router.post('/claude', async (req, res) => {
       });
     }
 
-    const data = await response.json();
-    const text = data.content?.[0]?.text || '';
-
-    res.json({
-      text: text,
-      usage: data.usage
+    console.error('Anthropic API failed after retries:', lastError?.data);
+    return res.status(503).json({
+      error: 'Claude-palvelu on tilapäisesti ylikuormitettu. Yritä hetken kuluttua uudelleen.'
     });
   } catch (error) {
     console.error('Error calling Anthropic API:', error);
