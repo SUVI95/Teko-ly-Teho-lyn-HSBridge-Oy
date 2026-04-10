@@ -912,6 +912,8 @@ window.addEventListener('scroll', updateProgress, { passive: true });
 /* ── CAREER INTERVIEW ────────────────────────── */
 var chatHistory = [];
 var chatCount = 0;
+try { var _saved = JSON.parse(localStorage.getItem('cv_chat_history') || '[]'); if (_saved.length) { chatHistory = _saved; chatCount = _saved.filter(function(m){ return m.role === 'user'; }).length; } } catch(e) {}
+function saveChatState() { try { localStorage.setItem('cv_chat_history', JSON.stringify(chatHistory)); } catch(e) {} }
 function addMsg(text, isUser) {
   var c = document.getElementById('careerChat');
   var d = document.createElement('div');
@@ -920,10 +922,22 @@ function addMsg(text, isUser) {
   c.appendChild(d);
   c.scrollTop = c.scrollHeight;
 }
+function restoreChatUI() {
+  if (!chatHistory.length) return;
+  document.getElementById('startChatBtn').style.display = 'none';
+  chatHistory.forEach(function(m) { addMsg(m.content, m.role === 'user'); });
+  var depthEl = document.getElementById('chatDepth');
+  depthEl.style.display = 'inline-flex';
+  if (chatCount < 5) { depthEl.textContent = '🔴 Syvyys: ' + chatCount + '/5 — jatka haastattelua'; depthEl.style.borderColor = 'rgba(199,91,58,.3)'; }
+  else if (chatCount < 8) { depthEl.textContent = '🟡 Syvyys: ' + chatCount + ' — hyvä, voit jatkaa tai tiivistää'; depthEl.style.borderColor = 'rgba(184,134,11,.3)'; }
+  else { depthEl.textContent = '🟢 Syvyys: ' + chatCount + ' — erinomainen!'; depthEl.style.borderColor = 'rgba(42,122,75,.3)'; }
+  if (chatCount >= 5) document.getElementById('summarizeChatBtn').style.display = 'inline-flex';
+}
 async function startInterview() {
   document.getElementById('startChatBtn').style.display = 'none';
   addMsg('Hienoa, aloitetaan! Kerro minulle: missä olet viimeksi työskennellyt ja milloin? Aloita nykyisestä tai viimeisimmästä työpaikastasi.', false);
   chatHistory = [{ role: 'assistant', content: 'Kerro missä olet viimeksi työskennellyt ja milloin?' }];
+  saveChatState();
 }
 async function sendChat() {
   var input = document.getElementById('chatInput');
@@ -931,6 +945,7 @@ async function sendChat() {
   if (!text) return;
   addMsg(text, true);
   chatHistory.push({ role: 'user', content: text });
+  saveChatState();
   input.value = '';
   chatCount++;
   var depthEl = document.getElementById('chatDepth');
@@ -960,6 +975,7 @@ async function sendChat() {
     );
     addMsg(reply, false);
     chatHistory.push({ role: 'assistant', content: reply });
+    saveChatState();
   } catch(e) { addMsg('Yhteysvirhe — yritä uudelleen.', false); }
   btn.disabled = false;
 }
@@ -1291,6 +1307,7 @@ document.addEventListener('DOMContentLoaded', function() {
   restoreFields();
   restoreJobFields();
   restoreAppStatus();
+  restoreChatUI();
   if (window.loadReflection) window.loadReflection('m_ai_tyonhaussa_reflection');
 });
 </script>
