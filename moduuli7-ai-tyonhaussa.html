@@ -594,8 +594,8 @@ h1.hero-title em{font-style:italic;color:#e8c870;}
     <p class="lead">Kaikki on kasassa. AI kokoaa nyt kaiken yhdeksi master-promptiksi joka tuottaa ammattimaisen CV:n.</p>
 
     <div class="info-card">
-      <h3>Tarkista ennen kokoamista</h3>
-      <p>Varmista että olet täyttänyt edelliset vaiheet:</p>
+      <h3>Vaiheet — AI käyttää kaiken mitä sinulla on</h3>
+      <p>Vihreät kohdat ovat valmiita. Muut AI täydentää [TÄYDENNÄ]-merkinnöillä — voit lisätä ne myöhemmin.</p>
       <div id="readinessCheck" style="margin:1rem 0;"></div>
       <button class="btn-primary" onclick="buildMasterPrompt()">Kokoa master-prompti</button>
     </div>
@@ -985,7 +985,6 @@ async function summarizeCareer() {
 
 /* ── SKILLS MAPPING ──────────────────────────── */
 async function mapSkills() {
-  if (!cvData.careerSummary) { alert('Tee ensin aikajanahaastattelu (Askel 2).'); return; }
   var btn = document.getElementById('mapSkillsBtn');
   var result = document.getElementById('skillsResult');
   var txt = document.getElementById('skillsText');
@@ -1024,7 +1023,6 @@ async function discoverHiddenStrengths() {
 
 /* ── GAP ANALYSIS ────────────────────────────── */
 async function analyzeGaps() {
-  if (!cvData.skills && !cvData.careerSummary) { alert('Tee ensin aikajanahaastattelu ja taitokartoitus.'); return; }
   var result = document.getElementById('gapResult');
   var txt = document.getElementById('gapText');
   txt.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>'; result.style.display = 'block';
@@ -1180,14 +1178,10 @@ function buildMasterPrompt() {
   checks.push({ label: 'Markkinatiedustelu (vähintään Työ 1)', ok: !!(cvData.jobs && cvData.jobs[1] && cvData.jobs[1].posting) });
 
   var checkHtml = '';
-  var allOk = true;
   checks.forEach(function(c) {
-    checkHtml += '<div style="padding:.35rem 0;font-size:.88rem;">' + (c.ok ? '✅' : '⚠️') + ' ' + c.label + (c.ok ? '' : ' — <span style="color:var(--accent2);">täytä ensin</span>') + '</div>';
-    if (!c.ok) allOk = false;
+    checkHtml += '<div style="padding:.35rem 0;font-size:.88rem;">' + (c.ok ? '✅' : 'ℹ️') + ' ' + c.label + (c.ok ? '' : ' — <span style="color:var(--muted);">ei täytetty, AI täydentää</span>') + '</div>';
   });
   document.getElementById('readinessCheck').innerHTML = checkHtml;
-
-  if (!allOk) { alert('Täytä puuttuvat vaiheet ensin.'); return; }
 
   var j1 = (cvData.jobs && cvData.jobs[1]) || {};
   var prompt = 'Olet ammattimainen CV-kirjoittaja joka on erikoistunut suomalaiseen työmarkkinaan. Kirjoita valmis, ammattitasoinen CV seuraavien tietojen perusteella.\n\n';
