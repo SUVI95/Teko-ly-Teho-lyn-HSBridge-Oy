@@ -594,10 +594,10 @@ h1.hero-title em{font-style:italic;color:#e8c870;}
     <p class="lead">Kaikki on kasassa. AI kokoaa nyt kaiken yhdeksi master-promptiksi joka tuottaa ammattimaisen CV:n.</p>
 
     <div class="info-card">
-      <h3>Vaiheet — AI käyttää kaiken mitä sinulla on</h3>
-      <p>Vihreät kohdat ovat valmiita. Muut AI täydentää [TÄYDENNÄ]-merkinnöillä — voit lisätä ne myöhemmin.</p>
+      <h3>Yksi klikkaus — AI tekee kaiken</h3>
+      <p>AI tiivistää haastattelusi, kartoittaa taitosi ja rakentaa valmiin CV:n automaattisesti. Kaikki työ jonka olet tehnyt on mukana.</p>
       <div id="readinessCheck" style="margin:1rem 0;"></div>
-      <button class="btn-primary" onclick="buildMasterPrompt()">Kokoa master-prompti</button>
+      <button class="btn-primary" onclick="buildMasterPrompt()" style="font-size:1.05rem;padding:16px 32px;">✨ Rakenna CV:ni nyt</button>
     </div>
 
     <div class="master-card" id="masterPromptCard" style="display:none;">
@@ -1236,55 +1236,114 @@ function restoreAppStatus() {
 }
 
 /* ── MASTER PROMPT BUILDER ───────────────────── */
-function buildMasterPrompt() {
-  var checks = [];
-  checks.push({ label: 'Perustiedot', ok: !!(cvData.name && cvData.targetRole) });
-  checks.push({ label: 'Aikajanahaastattelu', ok: !!cvData.careerSummary });
-  checks.push({ label: 'Taitokartta', ok: !!cvData.skills });
-  checks.push({ label: 'Markkinatiedustelu (vähintään Työ 1)', ok: !!(cvData.jobs && cvData.jobs[1] && cvData.jobs[1].posting) });
+async function buildMasterPrompt() {
+  var btn = document.querySelector('[onclick="buildMasterPrompt()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Kootaan tietoja...'; }
 
-  var checkHtml = '';
-  checks.forEach(function(c) {
-    checkHtml += '<div style="padding:.35rem 0;font-size:.88rem;">' + (c.ok ? '✅' : 'ℹ️') + ' ' + c.label + (c.ok ? '' : ' — <span style="color:var(--muted);">ei täytetty, AI täydentää</span>') + '</div>';
-  });
-  document.getElementById('readinessCheck').innerHTML = checkHtml;
+  var statusEl = document.getElementById('readinessCheck');
 
-  var j1 = (cvData.jobs && cvData.jobs[1]) || {};
-  var prompt = 'Olet ammattimainen CV-kirjoittaja joka on erikoistunut suomalaiseen työmarkkinaan. Kirjoita valmis, ammattitasoinen CV seuraavien tietojen perusteella.\n\n';
-  prompt += '=== TARKAT OHJEET ===\n';
-  prompt += '- Kirjoita VIRHEETTÖMÄLLÄ suomen kielellä. Tarkista KAIKKI taivutusmuodot ja yhdyssanat.\n';
-  prompt += '- Jokainen työkuvaus alkaa TOIMINTAVERBILLÄ: johti, rakensi, kehitti, vastasi, koordinoi, suunnitteli, toteutti, optimoi.\n';
-  prompt += '- Käytä selkeää rakennetta: Yhteystiedot → Profiili (2-3 lausetta) → Työkokemus → Koulutus → Taidot → Kielet.\n';
-  prompt += '- Profiili-osio: 2-3 iskevää lausetta jotka tiivistävät kokemuksen, vahvuudet ja mitä hakija etsii. Tämä on CV:n tärkein osio.\n';
-  prompt += '- Työkokemus: jokaiselle työpaikalle 3-5 bullet pointia. Jokaisessa numerot tai konkreettiset saavutukset.\n';
-  prompt += '- Taidot: ryhmittele loogisesti (esim. Tekniset taidot, Johtamistaidot). Ei geneerisiä ("ahkera", "tiimipelaaja").\n';
-  prompt += '- Ei taulukoita, ei sarakkeita, ei kuvia, ei fonttikikkailua — puhdas ATS-yhteensopiva teksti.\n';
-  prompt += '- Pituus: max 2 sivua. Tiivis ja relevantti.\n';
-  prompt += '- Jos tieto puuttuu, merkitse [TÄYDENNÄ: mikä tieto tarvitaan].\n';
-  prompt += '- ÄLÄ keksi mitään — käytä VAIN annettua tietoa.\n';
-  prompt += '- Sisällytä avainsanat työpaikkailmoituksesta LUONNOLLISESTI tekstiin — ei listaa, vaan upotettuna kuvauksiin.\n';
-  prompt += '- Vältä kliseitä: "monipuolinen kokemus", "vastuullinen tehtävistä". Kirjoita konkreettisesti.\n\n';
-  prompt += '=== HENKILÖTIEDOT ===\n';
-  prompt += 'Nimi: ' + cvData.name + '\n';
-  prompt += 'Sähköposti: [TÄYDENNÄ — käyttäjä lisää itse]\n';
-  prompt += 'Puhelin: [TÄYDENNÄ — käyttäjä lisää itse]\n';
-  prompt += 'Paikkakunta: ' + (cvData.city || '[TÄYDENNÄ]') + '\n';
-  prompt += 'Tavoiterooli: ' + cvData.targetRole + '\n\n';
-  prompt += '=== URAHISTORIA (AI-haastattelu) ===\n' + cvData.careerSummary + '\n\n';
-  prompt += '=== KOULUTUS ===\n' + (cvData.education || '[TÄYDENNÄ]') + '\n';
-  if (cvData.courses) prompt += 'Kurssit/sertifikaatit: ' + cvData.courses + '\n';
-  prompt += '\n=== TAIDOT (AI-kartoitus) ===\n' + cvData.skills + '\n';
-  if (cvData.extraSkills) prompt += 'Lisätaidot: ' + cvData.extraSkills + '\n';
-  if (cvData.hiddenStrengths) prompt += '\n=== PIILOTETUT VAHVUUDET ===\n' + cvData.hiddenStrengths + '\n';
-  prompt += '\n=== KIELET ===\n' + (cvData.languages || '[TÄYDENNÄ]') + '\n';
-  if (j1.posting) prompt += '\n=== HAETTAVA TEHTÄVÄ ===\nYritys: ' + (j1.company || '[TÄYDENNÄ]') + '\nTehtävä: ' + (j1.title || '[TÄYDENNÄ]') + '\nIlmoitus:\n' + j1.posting + '\n';
-  if (j1.analysis) prompt += '\n=== ILMOITUKSEN ANALYYSI ===\n' + j1.analysis + '\n';
-  prompt += '\n=== TULOSTE ===\nKirjoita valmis CV yllä olevien tietojen ja ohjeiden perusteella. CV on räätälöity juuri tähän tehtävään. Muotoile se niin, että sen voi kopioida suoraan dokumenttiin. Varmista että ATS-avainsanat ilmoituksesta ovat luonnollisesti mukana.';
+  function setStatus(msg) { if (statusEl) statusEl.innerHTML = '<div style="padding:.5rem 0;font-size:.9rem;color:var(--accent);">' + msg + '</div>'; }
 
-  saveCvField('masterPrompt', prompt);
-  document.getElementById('masterPromptText').textContent = prompt;
-  document.getElementById('masterPromptCard').style.display = 'block';
-  document.getElementById('masterPromptCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  try {
+    // Step 1: auto-summarize interview chat if no summary yet
+    if (!cvData.careerSummary && chatHistory.length > 1) {
+      setStatus('⏳ Tiivistetään haastattelua (' + chatHistory.filter(function(m){return m.role==="user";}).length + ' vastausta)...');
+      var ctx = chatHistory.map(function(m) { return (m.role === 'user' ? 'Käyttäjä' : 'Valmentaja') + ': ' + m.content; }).join('\n\n');
+      var summary = await window.aiChat(
+        'Tiivistä tämä urahaastattelu strukturoiduksi CV-materiaaliksi. Jokaiselle työpaikalle: yrityksen nimi, rooli, ajankohta, ja 3-5 keskeistä saavutusta tai vastuualuetta TOIMINTAVERBEILLÄ (johti, rakensi, kehitti, vastasi...). Sisällytä numerot jos ne mainittiin. Älä keksi mitään — käytä vain haastattelussa mainittua tietoa. Jos tieto puuttuu, merkitse [TÄYDENNÄ]. Vastaa suomeksi.',
+        ctx, 1200
+      );
+      saveCvField('careerSummary', summary);
+      var summaryResult = document.getElementById('careerSummaryResult');
+      var summaryText = document.getElementById('careerSummaryText');
+      if (summaryResult && summaryText) { summaryText.textContent = summary; summaryResult.style.display = 'block'; }
+    }
+
+    // Step 2: auto-map skills if not done yet
+    if (!cvData.skills && (cvData.careerSummary || chatHistory.length > 1)) {
+      setStatus('⏳ Kartoitetaan taitoja...');
+      var skillsSource = cvData.careerSummary || chatHistory.map(function(m) { return m.content; }).join('\n');
+      var skills = await window.aiChat(
+        'Analysoi tämä urahistoria ja tunnista KAIKKI taidot. Jaa kolmeen kategoriaan:\n\n1) TEKNISET TAIDOT (ohjelmistot, järjestelmät, menetelmät, työkalut)\n2) JOHTAMIS- JA YHTEISTYÖTAIDOT (tiimin johtaminen, asiakaspalvelu, neuvottelu, perehdytys)\n3) TOIMIALATAIDOT (logistiikka, myynti, tuotanto, matkailu jne.)\n\nListaa taidot selkeästi. Älä keksi — päättele vain mainitusta kokemuksesta. Vastaa suomeksi.',
+        'Urahistoria:\n' + skillsSource + '\nKoulutus: ' + (cvData.education || 'ei tiedossa') + '\nKurssit: ' + (cvData.courses || 'ei tiedossa'),
+        800
+      );
+      saveCvField('skills', skills);
+      var skillsResult = document.getElementById('skillsResult');
+      var skillsText = document.getElementById('skillsText');
+      if (skillsResult && skillsText) { skillsText.textContent = skills; skillsResult.style.display = 'block'; }
+    }
+
+    setStatus('⏳ Rakennetaan master-prompti...');
+
+    // Show readiness check
+    var checks = [];
+    checks.push({ label: 'Perustiedot', ok: !!(cvData.name && cvData.targetRole) });
+    checks.push({ label: 'Aikajanahaastattelu', ok: !!cvData.careerSummary });
+    checks.push({ label: 'Taitokartta', ok: !!cvData.skills });
+    checks.push({ label: 'Markkinatiedustelu (vähintään Työ 1)', ok: !!(cvData.jobs && cvData.jobs[1] && cvData.jobs[1].posting) });
+
+    var checkHtml = '';
+    checks.forEach(function(c) {
+      checkHtml += '<div style="padding:.35rem 0;font-size:.88rem;">' + (c.ok ? '✅' : 'ℹ️') + ' ' + c.label + (c.ok ? '' : ' — <span style="color:var(--muted);">ei täytetty, AI täydentää</span>') + '</div>';
+    });
+    statusEl.innerHTML = checkHtml;
+
+    // Build the prompt with all available data
+    var j1 = (cvData.jobs && cvData.jobs[1]) || {};
+    var prompt = 'Olet ammattimainen CV-kirjoittaja joka on erikoistunut suomalaiseen työmarkkinaan. Kirjoita valmis, ammattitasoinen CV seuraavien tietojen perusteella.\n\n';
+    prompt += '=== TARKAT OHJEET ===\n';
+    prompt += '- Kirjoita VIRHEETTÖMÄLLÄ suomen kielellä. Tarkista KAIKKI taivutusmuodot ja yhdyssanat.\n';
+    prompt += '- Jokainen työkuvaus alkaa TOIMINTAVERBILLÄ: johti, rakensi, kehitti, vastasi, koordinoi, suunnitteli, toteutti, optimoi.\n';
+    prompt += '- Käytä selkeää rakennetta: Yhteystiedot → Profiili (2-3 lausetta) → Työkokemus → Koulutus → Taidot → Kielet.\n';
+    prompt += '- Profiili-osio: 2-3 iskevää lausetta jotka tiivistävät kokemuksen, vahvuudet ja mitä hakija etsii. Tämä on CV:n tärkein osio.\n';
+    prompt += '- Työkokemus: jokaiselle työpaikalle 3-5 bullet pointia. Jokaisessa numerot tai konkreettiset saavutukset.\n';
+    prompt += '- Taidot: ryhmittele loogisesti (esim. Tekniset taidot, Johtamistaidot). Ei geneerisiä ("ahkera", "tiimipelaaja").\n';
+    prompt += '- Ei taulukoita, ei sarakkeita, ei kuvia, ei fonttikikkailua — puhdas ATS-yhteensopiva teksti.\n';
+    prompt += '- Pituus: max 2 sivua. Tiivis ja relevantti.\n';
+    prompt += '- Jos tieto puuttuu, merkitse [TÄYDENNÄ: mikä tieto tarvitaan].\n';
+    prompt += '- ÄLÄ keksi mitään — käytä VAIN annettua tietoa.\n';
+    prompt += '- Sisällytä avainsanat työpaikkailmoituksesta LUONNOLLISESTI tekstiin — ei listaa, vaan upotettuna kuvauksiin.\n';
+    prompt += '- Vältä kliseitä: "monipuolinen kokemus", "vastuullinen tehtävistä". Kirjoita konkreettisesti.\n\n';
+    prompt += '=== HENKILÖTIEDOT ===\n';
+    prompt += 'Nimi: ' + (cvData.name || '[TÄYDENNÄ]') + '\n';
+    prompt += 'Sähköposti: [TÄYDENNÄ — käyttäjä lisää itse]\n';
+    prompt += 'Puhelin: [TÄYDENNÄ — käyttäjä lisää itse]\n';
+    prompt += 'Paikkakunta: ' + (cvData.city || '[TÄYDENNÄ]') + '\n';
+    prompt += 'Tavoiterooli: ' + (cvData.targetRole || '[TÄYDENNÄ]') + '\n\n';
+
+    if (cvData.careerSummary) {
+      prompt += '=== URAHISTORIA (AI-haastattelu) ===\n' + cvData.careerSummary + '\n\n';
+    } else if (chatHistory.length > 1) {
+      prompt += '=== URAHISTORIA (raaka haastatteludata) ===\n';
+      prompt += chatHistory.filter(function(m){return m.role==='user';}).map(function(m){return '- ' + m.content;}).join('\n') + '\n\n';
+    } else {
+      prompt += '=== URAHISTORIA ===\n[TÄYDENNÄ: työkokemus, roolit, ajankohdat, saavutukset]\n\n';
+    }
+
+    prompt += '=== KOULUTUS ===\n' + (cvData.education || '[TÄYDENNÄ]') + '\n';
+    if (cvData.courses) prompt += 'Kurssit/sertifikaatit: ' + cvData.courses + '\n';
+    prompt += '\n=== TAIDOT' + (cvData.skills ? ' (AI-kartoitus)' : '') + ' ===\n' + (cvData.skills || '[TÄYDENNÄ: tekniset taidot, johtamistaidot, toimialataidot]') + '\n';
+    if (cvData.extraSkills) prompt += 'Lisätaidot: ' + cvData.extraSkills + '\n';
+    if (cvData.hiddenStrengths) prompt += '\n=== PIILOTETUT VAHVUUDET ===\n' + cvData.hiddenStrengths + '\n';
+    prompt += '\n=== KIELET ===\n' + (cvData.languages || '[TÄYDENNÄ]') + '\n';
+    if (j1.posting) prompt += '\n=== HAETTAVA TEHTÄVÄ ===\nYritys: ' + (j1.company || '[TÄYDENNÄ]') + '\nTehtävä: ' + (j1.title || '[TÄYDENNÄ]') + '\nIlmoitus:\n' + j1.posting + '\n';
+    if (j1.analysis) prompt += '\n=== ILMOITUKSEN ANALYYSI ===\n' + j1.analysis + '\n';
+    prompt += '\n=== TULOSTE ===\nKirjoita valmis CV yllä olevien tietojen ja ohjeiden perusteella. CV on räätälöity juuri tähän tehtävään. Muotoile se niin, että sen voi kopioida suoraan dokumenttiin. Varmista että ATS-avainsanat ilmoituksesta ovat luonnollisesti mukana.';
+
+    saveCvField('masterPrompt', prompt);
+    document.getElementById('masterPromptText').textContent = prompt;
+    document.getElementById('masterPromptCard').style.display = 'block';
+    document.getElementById('masterPromptCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Auto-generate the CV immediately
+    setStatus('✅ Master-prompti valmis! Generoidaan CV...');
+    await generateWithPlatformAI();
+
+  } catch(e) {
+    if (statusEl) statusEl.innerHTML = '<div style="color:var(--accent2);">Virhe: ' + (e.message || 'Yritä uudelleen.') + '</div>';
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Kokoa master-prompti'; }
 }
 
 function copyMasterPrompt() {
