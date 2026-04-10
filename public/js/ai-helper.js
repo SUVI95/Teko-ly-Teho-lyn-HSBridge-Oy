@@ -36,4 +36,37 @@
 
     return data.text || data.reply || '';
   };
+
+  function getClaudeUrl() {
+    var origin = window.location.origin || '';
+    var pathname = window.location.pathname || '';
+    var base = '';
+    var idx = pathname.indexOf('/module/');
+    if (idx > 0) base = pathname.substring(0, idx);
+    return origin + base + '/api/ai/claude';
+  }
+
+  window.aiClaude = async function(systemPrompt, userMessage, maxTokens) {
+    var url = getClaudeUrl();
+    var res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        max_tokens: maxTokens || 2000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMessage }]
+      })
+    });
+
+    var data = {};
+    try { data = await res.json(); } catch (e) {}
+
+    if (!res.ok) {
+      var msg = data.error || data.message || 'Virhe ' + res.status;
+      throw new Error(msg);
+    }
+
+    return data.text || data.reply || '';
+  };
 })();

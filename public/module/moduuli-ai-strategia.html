@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI strategiana — Löydä markkinarakosi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1a2e;--ink2:#2d2d44;--paper:#f5f3ef;--paper2:#eeeae3;--warm:#e8e0d4;--accent:#6b46c1;--accent2:#c75b3a;--accent3:#2a7a4b;--blue:#2563a8;--text:#1a1a2e;--muted:#6b6880;--border:rgba(26,26,46,0.12);--shadow:0 2px 20px rgba(26,26,46,0.08);--shadow-md:0 8px 40px rgba(26,26,46,0.12);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;overflow-x:hidden;line-height:1.7;}
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:200;transition:width .4s;width:0%;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;background:rgba(245,243,239,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2.5rem;justify-content:space-between;}
+.nav-left{display:flex;align-items:center;gap:1rem;}
+.nav-module{font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;background:rgba(107,70,193,.08);border:1px solid rgba(107,70,193,.2);padding:4px 12px;border-radius:4px;}
+.nav-title{font-size:.85rem;font-weight:500;color:var(--muted);}
+.nav-steps{display:flex;gap:5px;align-items:center;}
+.step-pip{width:28px;height:4px;border-radius:2px;background:var(--warm);transition:background .4s;cursor:pointer;}
+.step-pip.active{background:var(--accent);}.step-pip.done{background:var(--accent3);}
+.section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:96px 2rem 5rem;position:relative;}
+.section-auto{min-height:auto;justify-content:flex-start;padding-top:96px;padding-bottom:5rem;}
+.section-inner{max-width:820px;width:100%;}
+.section-alt{background:var(--paper2);}
+.section-label{font-family:'DM Mono',monospace;font-size:.7rem;font-weight:500;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:10px;}
+.section-label::after{content:'';flex:0 0 32px;height:1px;background:currentColor;opacity:.4;}
+h2.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4.5vw,3.5rem);font-weight:400;line-height:1.1;color:var(--ink);margin-bottom:1.5rem;letter-spacing:-.01em;}
+h2.section-h2 em{font-style:italic;color:var(--accent);}
+.lead{font-size:1.1rem;color:var(--muted);max-width:600px;line-height:1.8;margin-bottom:3rem;font-weight:300;}
+.divider{width:48px;height:2px;background:var(--accent);margin-bottom:2rem;border-radius:1px;}
+.prose{font-size:1.05rem;line-height:1.85;color:var(--text);}
+.prose strong{font-weight:600;}
+.prose .pull{font-family:'DM Serif Display',serif;font-size:1.35rem;color:var(--accent);font-style:italic;border-left:3px solid var(--accent);padding-left:1.25rem;margin:2rem 0;line-height:1.5;}
+.fade-up{opacity:1;transform:translateY(0);}
+.time-badge{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);background:var(--paper2);border:1px solid var(--border);padding:4px 14px;border-radius:20px;margin-bottom:1.75rem;}
+.time-badge::before{content:'⏱';font-size:.75rem;}
+.takeaway{background:linear-gradient(135deg,rgba(107,70,193,.06),rgba(42,122,75,.04));border:1px solid rgba(107,70,193,.18);border-radius:12px;padding:1.5rem 1.75rem;margin:2.5rem 0 0;display:flex;gap:1rem;align-items:flex-start;}
+.takeaway-icon{font-size:1.1rem;flex-shrink:0;margin-top:2px;}
+.takeaway p{font-size:.95rem;font-weight:500;color:var(--ink);line-height:1.6;margin:0;}
+
+/* HERO */
+#hero{background:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:96px 2rem 5rem;position:relative;overflow:hidden;}
+#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 60%,rgba(107,70,193,.18) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 80% 20%,rgba(199,91,58,.08) 0%,transparent 60%);}
+.hero-inner{max-width:820px;width:100%;position:relative;z-index:1;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;margin-bottom:2.5rem;}
+.eyebrow-num{font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;}
+.eyebrow-line{width:40px;height:1px;background:rgba(107,70,193,.5);}
+.eyebrow-label{font-family:'DM Mono',monospace;font-size:.72rem;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;}
+h1.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(3rem,7vw,5.5rem);font-weight:400;line-height:1.05;color:#fff;margin-bottom:1.75rem;}
+h1.hero-title em{font-style:italic;color:#c4a7f5;}
+.hero-sub{font-size:1.15rem;color:rgba(255,255,255,.55);max-width:520px;line-height:1.75;margin-bottom:3rem;font-weight:300;}
+.hero-cta{display:inline-flex;align-items:center;gap:12px;background:var(--accent);color:#fff;padding:16px 36px;border-radius:6px;font-weight:600;font-size:.95rem;cursor:pointer;text-decoration:none;transition:all .25s;}
+.hero-cta:hover{background:#5a3aaa;transform:translateY(-2px);box-shadow:0 8px 24px rgba(107,70,193,.35);}
+.hero-meta{display:flex;align-items:center;gap:1.5rem;margin-top:2rem;flex-wrap:wrap;}
+.hero-meta-item{display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:.75rem;color:rgba(255,255,255,.3);}
+
+/* CARDS & FORMS */
+.info-card{background:#fff;border-radius:16px;padding:2.5rem;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:2rem;}
+.info-card h3{font-size:1.1rem;font-weight:600;color:var(--ink);margin-bottom:1rem;}
+.info-card p,.info-card li{font-size:.9rem;line-height:1.7;color:var(--text);margin-bottom:.75rem;}
+.info-card ul{margin:.5rem 0 1rem 1.25rem;}
+.form-group{margin-bottom:1.25rem;}
+.form-label{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.5rem;display:block;}
+.form-input,.form-textarea{width:100%;background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:.9rem 1.1rem;font-size:.92rem;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;transition:border-color .2s;line-height:1.6;}
+.form-input:focus,.form-textarea:focus{border-color:rgba(107,70,193,.4);}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--muted);opacity:.6;}
+.form-textarea{resize:vertical;min-height:100px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:680px){.form-row{grid-template-columns:1fr;}}
+.btn-primary{padding:12px 28px;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer;border:none;background:var(--accent);color:#fff;transition:all .25s;font-family:'DM Sans',sans-serif;}
+.btn-primary:hover{background:#5a3aaa;}
+.btn-primary:disabled{opacity:.45;cursor:default;}
+.btn-secondary{padding:12px 28px;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--ink);transition:all .25s;font-family:'DM Sans',sans-serif;}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.claude-badge{display:inline-flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:.65rem;color:var(--accent);background:rgba(107,70,193,.08);border:1px solid rgba(107,70,193,.2);padding:3px 10px;border-radius:4px;margin-left:8px;}
+
+/* AI RESULT */
+.ai-result{display:none;margin-top:1.5rem;background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:1.5rem;}
+.ai-result-label{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.75rem;}
+.ai-result-text{font-size:.9rem;line-height:1.8;color:var(--text);white-space:pre-wrap;}
+.ai-result-actions{display:flex;gap:10px;margin-top:1.25rem;flex-wrap:wrap;}
+.copy-btn{padding:8px 18px;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer;background:var(--paper2);border:1px solid var(--border);color:var(--muted);transition:all .2s;font-family:'DM Sans',sans-serif;}
+.copy-btn:hover{border-color:var(--ink);color:var(--ink);}
+.loading-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--muted);margin:0 2px;animation:ldot 1.2s infinite;}
+.loading-dots span:nth-child(2){animation-delay:.2s;}
+.loading-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes ldot{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+
+/* IMPL GRID */
+.impl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin:2rem 0;}
+@media(max-width:680px){.impl-grid{grid-template-columns:1fr;}}
+.impl-card{background:#fff;border-radius:12px;padding:1.75rem;border:1px solid var(--border);box-shadow:var(--shadow);}
+.impl-card h4{font-size:.95rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;}
+.impl-card p{font-size:.88rem;color:var(--muted);line-height:1.6;}
+
+/* PRODUCT CARD */
+.product-card{background:#fff;border-radius:16px;padding:2rem;border:1px solid var(--border);box-shadow:var(--shadow-md);position:relative;overflow:hidden;}
+.product-card.free{border-top:4px solid var(--accent3);}
+.product-card.mid{border-top:4px solid var(--accent);}
+.product-card.premium{border-top:4px solid var(--accent2);}
+.product-tier{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.5rem;}
+.product-card.free .product-tier{color:var(--accent3);}
+.product-card.mid .product-tier{color:var(--accent);}
+.product-card.premium .product-tier{color:var(--accent2);}
+.product-card h4{font-size:1.05rem;font-weight:600;margin-bottom:.5rem;}
+.product-card p{font-size:.88rem;color:var(--muted);line-height:1.6;margin-bottom:.5rem;}
+
+/* REFLECTION & FINALE */
+.reflection-card{background:var(--ink);border-radius:16px;padding:3rem;color:#fff;position:relative;overflow:hidden;}
+.reflection-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 80% 20%,rgba(107,70,193,.15) 0%,transparent 60%);pointer-events:none;}
+.reflection-card h3{font-family:'DM Serif Display',serif;font-size:clamp(1.4rem,3vw,2rem);font-weight:400;color:#fff;margin-bottom:.75rem;position:relative;z-index:1;}
+.reflection-card p{font-size:.95rem;color:rgba(255,255,255,.5);margin-bottom:1.75rem;line-height:1.75;font-weight:300;position:relative;z-index:1;}
+.reflection-textarea{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:1rem 1.25rem;color:#fff;font-size:.95rem;font-family:'DM Sans',sans-serif;resize:none;outline:none;line-height:1.65;min-height:100px;position:relative;z-index:1;}
+.reflection-textarea:focus{border-color:rgba(255,255,255,.3);}
+.reflection-textarea::placeholder{color:rgba(255,255,255,.25);}
+.reflection-save{padding:10px 24px;border-radius:6px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;background:var(--accent);color:#fff;transition:all .25s;font-family:'DM Sans',sans-serif;margin-top:1rem;position:relative;z-index:1;}
+.reflection-confirm{display:none;font-size:.85rem;color:rgba(255,255,255,.4);margin-top:.75rem;position:relative;z-index:1;}
+.finale-card{background:var(--ink);border-radius:16px;padding:4rem 3rem;text-align:center;position:relative;overflow:hidden;}
+.finale-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 70% at 50% 50%,rgba(107,70,193,.08) 0%,transparent 65%);}
+.finale-icon{font-size:4rem;margin-bottom:1.5rem;display:block;position:relative;z-index:1;}
+.finale-card h2{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:400;color:#fff;margin-bottom:1rem;line-height:1.2;position:relative;z-index:1;}
+.finale-card h2 em{font-style:italic;color:#c4a7f5;}
+.finale-card p{font-size:1rem;color:rgba(255,255,255,.5);max-width:480px;margin:0 auto 2.5rem;line-height:1.75;font-weight:300;position:relative;z-index:1;}
+.finale-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
+.btn-next{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#fff;padding:15px 36px;border-radius:6px;font-weight:600;font-size:.95rem;text-decoration:none;border:none;cursor:pointer;transition:all .25s;font-family:'DM Sans',sans-serif;}
+.btn-next:hover{background:#5a3aaa;transform:translateY(-2px);}
+.btn-back{display:inline-flex;align-items:center;gap:8px;background:transparent;color:rgba(255,255,255,.45);padding:15px 24px;border-radius:6px;font-weight:500;font-size:.95rem;border:1px solid rgba(255,255,255,.15);text-decoration:none;transition:all .25s;}
+.btn-back:hover{color:#fff;border-color:rgba(255,255,255,.3);}
+
+@media(max-width:768px){nav{padding:0 1.25rem;}.nav-title{display:none;}.section{padding:80px 1.25rem 4rem;}.form-row{grid-template-columns:1fr;}.impl-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav>
+  <div class="nav-left">
+    <a href="/" style="display:flex;align-items:center;gap:.75rem;text-decoration:none;color:var(--muted);margin-right:1.5rem;transition:color .2s;" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--muted)'">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      <span style="font-size:.85rem;font-weight:500;">Etusivu</span>
+    </a>
+    <span class="nav-module">Strategia</span>
+    <span class="nav-title">Löydä markkinarakosi</span>
+  </div>
+  <div class="nav-steps" id="navSteps"></div>
+</nav>
+
+<!-- ═══ 0 · HERO ═══════════════════════════════ -->
+<section class="section" id="hero" data-index="0">
+  <div class="hero-inner">
+    <div class="hero-eyebrow"><span class="eyebrow-num">Moduuli</span><span class="eyebrow-line"></span><span class="eyebrow-label">Strategia</span></div>
+    <h1 class="hero-title">Löydä <em>markkinarakosi</em></h1>
+    <p class="hero-sub">Sinulla on osaamista. AI auttaa löytämään kenelle se on arvokasta — ja miten tavoitat heidät. Tämä moduuli muuttaa kokemuksen strategiaksi.</p>
+    <a href="#teoria" class="hero-cta">Aloita <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></a>
+    <div class="hero-meta">
+      <span class="hero-meta-item">⏱ ~75 min</span>
+      <span class="hero-meta-item">◆ 6 askelta</span>
+      <span class="hero-meta-item">◆ Powered by Claude AI</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 1 · TEORIA ═════════════════════════════ -->
+<section class="section section-alt section-auto" id="teoria" data-index="1">
+  <div class="section-inner fade-up">
+    <div class="section-label">Ymmärrä</div>
+    <h2 class="section-h2">Miksi <em>osaaminen</em> ei riitä</h2>
+    <div class="divider"></div>
+    <span class="time-badge">~5 min</span>
+    <div class="prose"><div class="pull">Sinulla on 10, 20, 30 vuotta kokemusta. Mutta kokemus ilman strategiaa on näkymätöntä.</div></div>
+
+    <div class="info-card">
+      <h3>Tämä moduuli ratkaisee yhden ongelman</h3>
+      <p>"Tiedän mitä osaan, mutta en tiedä <strong>kenelle se on arvokasta</strong> ja <strong>miten tavoitan heidät.</strong>"</p>
+      <p>AI ei korvaa kokemustasi. Mutta se pystyy analysoimaan markkinaa, löytämään katvealueet ja rakentamaan strategian tavalla johon ihminen tarvitsisi viikkoja. <strong>Sinä teet sen tänään.</strong></p>
+    </div>
+
+    <div class="impl-grid">
+      <div class="impl-card"><h4>🔬 Syvä analyysi</h4><p>Tässä moduulissa käytetään Claude AI:ta — se tuottaa konsulttitason analyysiä, ei geneerisiä neuvoja.</p></div>
+      <div class="impl-card"><h4>🎯 Konkreettisia tuloksia</h4><p>Lähdet pois tuotemenu, kontaktiviestit ja strategia taskussa. Ei teoriaa — tekoja.</p></div>
+      <div class="impl-card"><h4>🌍 Kaikille aloille</h4><p>Toimii riippumatta alastasi: matkailu, terveys, tekniikka, taide, koulutus, mikä tahansa.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 2 · AINUTLAATUINEN YHDISTELMÄ ══════════ -->
+<section class="section section-auto" id="yhdistelma" data-index="2">
+  <div class="section-inner fade-up">
+    <div class="section-label">Askel 1</div>
+    <h2 class="section-h2">Ainutlaatuinen <em>yhdistelmäsi</em></h2>
+    <div class="divider"></div>
+    <span class="time-badge">~15 min</span>
+    <p class="lead">Ei "listaa taitosi". Se on tehty. Tässä AI löytää risteyskohdan joka tekee sinusta ainutlaatuisen — yhdistelmän jota kellään muulla ei ole.</p>
+
+    <div class="info-card">
+      <h3>Kerro osaamisestasi syvällisesti</h3>
+      <p>Vastaa näihin mahdollisimman yksityiskohtaisesti. Mitä enemmän kontekstia, sitä tarkemman analyysin saat.</p>
+      <div class="form-group"><label class="form-label">Toimialasi / osaamisalueesi</label><textarea class="form-textarea" id="stratField" placeholder="Esim. Kansainvälinen matkailu, erityisesti Pohjoismaiden markkinointi Lähi-idän markkinoille. 20 vuotta kokemusta kulttuurien välisestä matkailupalvelujen suunnittelusta..." onchange="saveStratField('field',this.value)"></textarea></div>
+      <div class="form-group"><label class="form-label">Mitä ongelmia ratkaiset — kenelle?</label><textarea class="form-textarea" id="stratProblems" placeholder="Esim. Autan hotelleja ja matkailuyrityksiä ymmärtämään arabikulttuuria ja mukauttamaan palveluitaan. Autan matkatoimistoja löytämään uusia kohteita pohjoismaisille markkinoille..." onchange="saveStratField('problems',this.value)"></textarea></div>
+      <div class="form-group"><label class="form-label">Mikä tekee sinusta erilaisen kuin muut alallasi?</label><textarea class="form-textarea" id="stratDiff" placeholder="Esim. Tunnen sekä suomalaisen että arabikulttuurin sisältäpäin. Puhun arabiaa, suomea ja englantia. Minulla on verkostot molemmissa maissa..." onchange="saveStratField('diff',this.value)"></textarea></div>
+      <div class="form-group"><label class="form-label">Tavoitteesi: työ, yrittäjyys, sivutulo, vai jotain muuta?</label><textarea class="form-textarea" id="stratGoal" placeholder="Esim. Haluan löytää tavan hyödyntää kokemustani eläkkeellä — konsultointi, koulutus, kumppanuudet..." onchange="saveStratField('goal',this.value)" style="min-height:70px;"></textarea></div>
+      <button class="btn-primary" onclick="analyzeUnicorn()">Analysoi ainutlaatuinen yhdistelmäni <span class="claude-badge">Claude AI</span></button>
+      <div class="ai-result" id="unicornResult">
+        <div class="ai-result-label">Ainutlaatuinen yhdistelmäsi — syvä analyysi</div>
+        <div class="ai-result-text" id="unicornText"></div>
+        <div class="ai-result-actions"><button class="copy-btn" onclick="copyResult('unicornText')">📋 Kopioi</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 3 · MARKKINAKARTTA ═════════════════════ -->
+<section class="section section-alt section-auto" id="markkinakartta" data-index="3">
+  <div class="section-inner fade-up">
+    <div class="section-label">Askel 2</div>
+    <h2 class="section-h2">Syvä <em>markkinakartta</em></h2>
+    <div class="divider"></div>
+    <span class="time-badge">~15 min</span>
+    <p class="lead">AI analysoi markkinasi kuin McKinsey-konsultti: segmentit, trendit, katvealueet ja mahdollisuudet.</p>
+
+    <div class="info-card">
+      <h3>Kuvaile markkinasi tarkemmin</h3>
+      <p>AI on jo lukenut osaamisprofiilisi. Nyt annetaan sille lisää kontekstia markkinasta.</p>
+      <div class="form-group"><label class="form-label">Ketkä ovat nykyisiä toimijoita markkinallasi? (kilpailijat, kumppanit)</label><textarea class="form-textarea" id="stratCompetitors" placeholder="Esim. Visit Finland, paikalliset matkailuyhtiöt, arabinkieliset matkatoimistot kuten..." onchange="saveStratField('competitors',this.value)"></textarea></div>
+      <div class="form-group"><label class="form-label">Mikä mielestäsi puuttuu markkinalta? Missä on aukko?</label><textarea class="form-textarea" id="stratGap" placeholder="Esim. Kukaan ei tarjoa halal-sertifioituja kokemuksia Järvi-Suomessa. Hotellien henkilökunta ei ymmärrä arabikulttuurin tarpeita..." onchange="saveStratField('gap',this.value)"></textarea></div>
+      <div class="form-group"><label class="form-label">Onko trendejä tai muutoksia joita olet huomannut?</label><textarea class="form-textarea" id="stratTrends" placeholder="Esim. Yhä useammat Gulf-maiden perheet etsivät luontokokemuksia Pohjoismaista. Halal-matkailu kasvaa globaalisti 20% vuodessa..." onchange="saveStratField('trends',this.value)" style="min-height:70px;"></textarea></div>
+      <button class="btn-primary" onclick="analyzeMarket()">Rakenna markkinakartta <span class="claude-badge">Claude AI</span></button>
+      <div class="ai-result" id="marketResult">
+        <div class="ai-result-label">Markkinakartta — segmentit, aukot ja mahdollisuudet</div>
+        <div class="ai-result-text" id="marketText"></div>
+        <div class="ai-result-actions"><button class="copy-btn" onclick="copyResult('marketText')">📋 Kopioi</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 4 · KOHDERYHMÄ ═════════════════════════ -->
+<section class="section section-auto" id="kohderyhma" data-index="4">
+  <div class="section-inner fade-up">
+    <div class="section-label">Askel 3</div>
+    <h2 class="section-h2">Kohderyhmä<em>syvätiedustelu</em></h2>
+    <div class="divider"></div>
+    <span class="time-badge">~10 min</span>
+    <p class="lead">Kuka tarkalleen tarvitsee sinua? AI rakentaa 3 syvää asiakasprofiilia — ei geneerisiä "25-35-vuotias nainen" vaan oikeita ihmisiä.</p>
+
+    <div class="info-card">
+      <h3>Kerro yhdestä oikeasta asiakkaasta tai kontaktista</h3>
+      <p>Tunnetko jonkun joka on käyttänyt tai tarvinnut palveluitasi? Tai unelma-asiakkaan jonka haluaisit tavoittaa? Kuvaile mahdollisimman tarkasti.</p>
+      <div class="form-group"><label class="form-label">Kuvaile oikea tai ihanneasiakas</label><textarea class="form-textarea" id="stratClient" placeholder="Esim. Arabiperhe Saudi-Arabiasta, vanhemmat 35-45v, 2-3 lasta, haluavat turvallisen luontoloman Euroopassa mutta tarvitsevat halal-ruokaa ja kulttuurisensitiivistä palvelua..." onchange="saveStratField('client',this.value)" style="min-height:120px;"></textarea></div>
+      <button class="btn-primary" onclick="analyzeAudience()">Rakenna 3 kohderyhmäprofiilia <span class="claude-badge">Claude AI</span></button>
+      <div class="ai-result" id="audienceResult">
+        <div class="ai-result-label">3 syvää asiakasprofiilia</div>
+        <div class="ai-result-text" id="audienceText"></div>
+        <div class="ai-result-actions"><button class="copy-btn" onclick="copyResult('audienceText')">📋 Kopioi</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 5 · KILPAILIJA-RÖNTGEN ═════════════════ -->
+<section class="section section-alt section-auto" id="kilpailija" data-index="5">
+  <div class="section-inner fade-up">
+    <div class="section-label">Askel 4</div>
+    <h2 class="section-h2">Kilpailija<em>röntgen</em></h2>
+    <div class="divider"></div>
+    <span class="time-badge">~10 min</span>
+    <p class="lead">AI analysoi kilpailijoitasi ja löytää tarkalleen missä sinun tilasi on.</p>
+
+    <div class="info-card">
+      <h3>Anna kilpailija-/markkinadataa</h3>
+      <p>Liitä kilpailijan verkkosivun teksti, LinkedIn-profiili, tai kuvaile mitä he tekevät. AI vertaa sinuun ja löytää aukot.</p>
+      <div class="form-group"><label class="form-label">Kilpailija 1 — kuvaile tai liitä tekstiä</label><textarea class="form-textarea" id="stratComp1" placeholder="Esim. Visit Finland tarjoaa yleistä markkinointia mutta ei kohdennettua arabinkielistä sisältöä..." onchange="saveStratField('comp1',this.value)"></textarea></div>
+      <div class="form-group"><label class="form-label">Kilpailija 2 (vapaaehtoinen)</label><textarea class="form-textarea" id="stratComp2" placeholder="Toinen toimija markkinallasi..." onchange="saveStratField('comp2',this.value)" style="min-height:70px;"></textarea></div>
+      <button class="btn-primary" onclick="analyzeCompetitors()">Kilpailija-röntgen <span class="claude-badge">Claude AI</span></button>
+      <div class="ai-result" id="competitorResult">
+        <div class="ai-result-label">Kilpailija-analyysi ja sinun tilasi</div>
+        <div class="ai-result-text" id="competitorText"></div>
+        <div class="ai-result-actions"><button class="copy-btn" onclick="copyResult('competitorText')">📋 Kopioi</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 6 · TUOTTEISTA ═════════════════════════ -->
+<section class="section section-auto" id="tuotteista" data-index="6">
+  <div class="section-inner fade-up">
+    <div class="section-label">Askel 5</div>
+    <h2 class="section-h2">Tuotteista <em>osaamisesi</em></h2>
+    <div class="divider"></div>
+    <span class="time-badge">~10 min</span>
+    <p class="lead">Osaaminen ei myy itseään. Se pitää paketoida joksikin konkreettiseksi. AI rakentaa sinulle 3 tarjoamaa eri hintapisteissä.</p>
+
+    <div class="info-card">
+      <h3>Anna AI:n rakentaa tuotemenu</h3>
+      <p>Kaiken aiemman datan perusteella AI luo sinulle kolme tarjoamaa: ilmainen koukku joka houkuttelee, peruspalvelu josta maksetaan, ja premium-tarjoama jolla ansaitset kunnolla.</p>
+      <button class="btn-primary" onclick="buildProducts()">Rakenna tuotemenu <span class="claude-badge">Claude AI</span></button>
+      <div class="ai-result" id="productResult">
+        <div class="ai-result-label">Tuotemenu — 3 tarjoamaa</div>
+        <div class="ai-result-text" id="productText"></div>
+        <div class="ai-result-actions"><button class="copy-btn" onclick="copyResult('productText')">📋 Kopioi</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 7 · KONTAKTIVIESTIT ════════════════════ -->
+<section class="section section-alt section-auto" id="kontaktiviestit" data-index="7">
+  <div class="section-inner fade-up">
+    <div class="section-label">Askel 6</div>
+    <h2 class="section-h2">Ensimmäinen <em>asiakas</em></h2>
+    <div class="divider"></div>
+    <span class="time-badge">~10 min</span>
+    <p class="lead">Ei suunnitelmia. Ei teoriaa. AI kirjoittaa sinulle <strong>5 valmista kontaktiviestiä</strong> jotka voit lähettää tänään.</p>
+
+    <div class="info-card">
+      <h3>Kenelle haluat lähettää viestin?</h3>
+      <p>Kuvaile 1-2 oikeaa henkilöä tai yritystä joihin haluat olla yhteydessä. AI räätälöi viestit juuri heille.</p>
+      <div class="form-group"><label class="form-label">Kontakti 1 — kuka, missä yrityksessä, miksi</label><textarea class="form-textarea" id="stratContact1" placeholder="Esim. Ahmed Al-Rashid, Dubain suurin pohjoismaisia matkoja myyvä matkatoimisto. Haluan ehdottaa yhteistyötä Järvi-Suomen matkoissa..." onchange="saveStratField('contact1',this.value)"></textarea></div>
+      <div class="form-group"><label class="form-label">Kontakti 2 (vapaaehtoinen)</label><textarea class="form-textarea" id="stratContact2" placeholder="Toinen henkilö tai yritys..." onchange="saveStratField('contact2',this.value)" style="min-height:70px;"></textarea></div>
+      <button class="btn-primary" onclick="buildOutreach()">Generoi 5 kontaktiviestiä <span class="claude-badge">Claude AI</span></button>
+      <div class="ai-result" id="outreachResult">
+        <div class="ai-result-label">5 valmista kontaktiviestiä</div>
+        <div class="ai-result-text" id="outreachText"></div>
+        <div class="ai-result-actions"><button class="copy-btn" onclick="copyResult('outreachText')">📋 Kopioi</button></div>
+      </div>
+    </div>
+
+    <div class="takeaway"><span class="takeaway-icon">🚀</span><p>Haaste: lähetä vähintään 3 näistä viesteistä tänään. Jokainen lähetetty viesti on askel kohti ensimmäistä asiakasta.</p></div>
+  </div>
+</section>
+
+<!-- ═══ 8 · REFLEKTIO + LOPETUS ════════════════ -->
+<section class="section" id="lopetus" data-index="8">
+  <div class="section-inner fade-up">
+    <div class="section-label">Reflektio</div>
+    <h2 class="section-h2">Mitä löysit <em>tänään?</em></h2>
+    <div class="divider"></div>
+    <div class="reflection-card" style="margin-bottom:3rem;">
+      <div style="font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:1.25rem;">Reflektio</div>
+      <h3>Löysitkö markkinarakosi?</h3>
+      <p>Mikä oli suurin oivallus? Yllättikö jokin AI:n analyyseissa? Mitä teet ensimmäiseksi?</p>
+      <textarea class="reflection-textarea" id="reflectionText" placeholder="Kirjoita ajatuksesi tähän..."></textarea>
+      <button class="reflection-save" onclick="saveReflection()">Tallenna</button>
+      <div class="reflection-confirm" id="reflConfirm">✓ Tallennettu.</div>
+    </div>
+    <div class="finale-card">
+      <span class="finale-icon">🎯</span>
+      <h2>Strategia on <em>valmis.</em></h2>
+      <p>Sinulla on nyt ainutlaatuinen yhdistelmäsi, markkinakartta, kohderyhmäprofiilit, tuotemenu ja kontaktiviestit. Seuraavaksi: rakenna verkkosivut.</p>
+      <div class="finale-actions">
+        <a href="/module/moduuli-ai-verkkosivut" class="btn-next">Seuraava moduuli →</a>
+        <a href="/" class="btn-back">Etusivu</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ── DATA MODEL ──────────────────────────────── */
+var stratData = {};
+try { stratData = JSON.parse(localStorage.getItem('strat_builder_data') || '{}'); } catch(e) { stratData = {}; }
+function saveStratField(key, val) { stratData[key] = val; try { localStorage.setItem('strat_builder_data', JSON.stringify(stratData)); } catch(e) {} }
+function restoreFields() {
+  var fields = {stratField:'field',stratProblems:'problems',stratDiff:'diff',stratGoal:'goal',stratCompetitors:'competitors',stratGap:'gap',stratTrends:'trends',stratClient:'client',stratComp1:'comp1',stratComp2:'comp2',stratContact1:'contact1',stratContact2:'contact2'};
+  for (var id in fields) { var el = document.getElementById(id); if (el && stratData[fields[id]]) el.value = stratData[fields[id]]; }
+}
+
+/* ── NAV + PROGRESS ──────────────────────────── */
+var sections = document.querySelectorAll('.section[data-index]');
+var navSteps = document.getElementById('navSteps');
+var progressBar = document.getElementById('progress-bar');
+sections.forEach(function(s, i) {
+  var pip = document.createElement('div');
+  pip.className = 'step-pip' + (i === 0 ? ' active' : '');
+  pip.addEventListener('click', function() { s.scrollIntoView({ behavior: 'smooth' }); });
+  navSteps.appendChild(pip);
+});
+function updateProgress() {
+  var st = window.scrollY, dh = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (dh > 0 ? (st / dh) * 100 : 0) + '%';
+  var pips = navSteps.querySelectorAll('.step-pip'); var ai = 0;
+  sections.forEach(function(s, i) { if (s.getBoundingClientRect().top <= window.innerHeight * 0.5) ai = i; });
+  pips.forEach(function(p, i) { p.classList.remove('active', 'done'); if (i === ai) p.classList.add('active'); else if (i < ai) p.classList.add('done'); });
+}
+window.addEventListener('scroll', updateProgress, { passive: true });
+
+/* ── HELPER ──────────────────────────────────── */
+function getProfileContext() {
+  return 'OSAAMISPROFIILI:\nToimiala: ' + (stratData.field || 'ei tiedossa') +
+    '\nOngelmat joita ratkaisee: ' + (stratData.problems || 'ei tiedossa') +
+    '\nErottava tekijä: ' + (stratData.diff || 'ei tiedossa') +
+    '\nTavoite: ' + (stratData.goal || 'ei tiedossa');
+}
+function showLoading(id) { var r = document.getElementById(id); var t = r.querySelector('.ai-result-text'); t.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>'; r.style.display = 'block'; return t; }
+function copyResult(id) { var t = document.getElementById(id).textContent; if (t) navigator.clipboard.writeText(t).then(function() { alert('Kopioitu!'); }); }
+
+/* ── 1. UNICORN ANALYSIS ────────────────────── */
+async function analyzeUnicorn() {
+  if (!stratData.field || !stratData.problems) { alert('Täytä vähintään toimiala ja ongelmat.'); return; }
+  var txt = showLoading('unicornResult');
+  try {
+    var r = await window.aiClaude(
+      'Olet maailmanluokan strategiakonsultti joka analysoi yksilöiden ainutlaatuista osaamisyhdistelmää. Tehtäväsi on löytää hakijan "unicorn intersection" — taitojen, kokemuksen ja tiedon yhdistelmä joka tekee hänestä korvaamattoman.\n\nAnalysoi SYVÄLLISESTI:\n\n1) AINUTLAATUINEN RISTEYSKOHTA\nMitkä 2-3 osaamisaluetta risteävät tavalla jota HARVOILLA on? Arvioi kuinka moni ihminen maailmassa/Suomessa omaa tämän yhdistelmän. Anna konkreettinen luku-arvio.\n\n2) PIILOTEHO\nMitä kyvykkyyksiä hakija EI itse tunnista mutta jotka ilmenevät hänen kuvauksestaan? Mitä hän vähättelee?\n\n3) MARKKINA-ARVO\nMissä tämä osaaminen on KAIKKEIN ARVOKKAINTA? Missä tilanteissa joku maksaisi tästä premium-hintaa?\n\n4) KILPAILUETU YHDELLÄ LAUSEELLA\nKirjoita yksi lause joka tiivistää miksi juuri tämä henkilö, juuri nyt.\n\n5) VAROITUS\nMikä uhkaa tätä kilpailuetua? Miten suojata se?\n\nÄLÄ anna geneerisiä neuvoja. Jokainen kohta PITÄÄ olla spesifinen TÄHÄN henkilöön ja TÄHÄN toimialaan. Vastaa suomeksi.',
+      getProfileContext(),
+      2500
+    );
+    txt.textContent = r;
+    saveStratField('unicornAnalysis', r);
+  } catch(e) { txt.textContent = 'Virhe: ' + (e.message || 'yhteysvirhe'); }
+}
+
+/* ── 2. MARKET MAP ──────────────────────────── */
+async function analyzeMarket() {
+  if (!stratData.unicornAnalysis) { alert('Tee ensin Askel 1 (ainutlaatuinen yhdistelmäsi).'); return; }
+  var txt = showLoading('marketResult');
+  try {
+    var r = await window.aiClaude(
+      'Olet McKinsey-tason strategiakonsultti. Analysoi tämä markkina SYVÄLLISESTI perustuen hakijan osaamisprofiiliin.\n\n1) MARKKINASEGMENTIT\nJaa markkina 4-5 konkreettiseen segmenttiin. Jokaiselle: arvioitu koko, kasvusuunta, kilpailun taso (alhainen/keski/korkea), ja saavutettavuus tälle hakijalle.\n\n2) KATVEALUEET JA AUKOT\nMitkä segmentit ovat ALIHYÖDYNNETTYJÄ? Missä kukaan ei palvele asiakasta kunnolla? Missä hakija voisi olla ensimmäinen?\n\n3) ARVOKETJU\nKuka tekee rahaa tässä markkinassa? Piirtele arvoketju: kuka myy kenelle, missä kate on suurin, missä kohdassa hakija voisi asemoitua?\n\n4) TRENDIT 2024-2026\nMitkä trendit muuttavat tätä markkinaa juuri nyt? Teknologia, kuluttajakäyttäytyminen, sääntely?\n\n5) TOP 3 MAHDOLLISUUTTA\nRankaa 3 parasta mahdollisuutta: miksi juuri nämä, miten niihin pääsee, ja mikä on realistinen aikataulu.\n\nÄLÄ anna geneerisiä neuvoja kuten "hyödynnä sosiaalista mediaa". Jokaisen kohdan PITÄÄ olla spesifinen TÄHÄN toimialaan ja TÄHÄN markkinaan. Vastaa suomeksi.',
+      getProfileContext() + '\n\nAINUTLAATUINEN YHDISTELMÄ (AI-analyysi):\n' + stratData.unicornAnalysis + '\n\nKILPAILIJAT:\n' + (stratData.competitors || 'ei kuvattu') + '\n\nAUKOT:\n' + (stratData.gap || 'ei kuvattu') + '\n\nTRENDIT:\n' + (stratData.trends || 'ei kuvattu'),
+      3000
+    );
+    txt.textContent = r;
+    saveStratField('marketAnalysis', r);
+  } catch(e) { txt.textContent = 'Virhe: ' + (e.message || 'yhteysvirhe'); }
+}
+
+/* ── 3. AUDIENCE ────────────────────────────── */
+async function analyzeAudience() {
+  if (!stratData.marketAnalysis) { alert('Tee ensin Askel 2 (markkinakartta).'); return; }
+  var txt = showLoading('audienceResult');
+  try {
+    var r = await window.aiClaude(
+      'Olet asiakasymmärryksen asiantuntija. Rakenna 3 SYVÄÄ asiakasprofiilia hakijan markkinalle.\n\nJokaiselle profiilille:\n\n• NIMI JA TARINA — anna kuvitteellinen nimi ja lyhyt elämäntarina\n• TILANNE — missä elämäntilanteessa he ovat juuri nyt?\n• ONGELMA — mikä konkreettinen ongelma heillä on jonka hakija voi ratkaista?\n• PELOT JA ESTEET — mikä estää heitä toimimasta? Mikä pelottaa?\n• OSTOKÄYTTÄYTYMINEN — miten he etsivät ratkaisua? Googlettavatko, kyselevätko tuttavilta, käyttävätkö somea?\n• MISSÄ HE OVAT — millä kanavilla heidät tavoittaa? LinkedIn, Instagram, toimialamediat, messut?\n• MITÄ HE MAKSAISIVAT — paljonko he olisivat valmiita maksamaan ja millaisesta palvelusta?\n• MITEN HAKIJA PUHUTTELEE HEITÄ — millä sanoilla, millä tyylillä\n\nProfiilit pitää olla KESKENÄÄN ERILAISIA — eri segmenteistä, eri tilanteista, eri budjeteista. Vastaa suomeksi.',
+      getProfileContext() + '\n\nMARKKINA-ANALYYSI:\n' + stratData.marketAnalysis + '\n\nASIAKASKUVAUS:\n' + (stratData.client || 'ei kuvattu'),
+      3000
+    );
+    txt.textContent = r;
+    saveStratField('audienceAnalysis', r);
+  } catch(e) { txt.textContent = 'Virhe: ' + (e.message || 'yhteysvirhe'); }
+}
+
+/* ── 4. COMPETITOR X-RAY ────────────────────── */
+async function analyzeCompetitors() {
+  var txt = showLoading('competitorResult');
+  try {
+    var r = await window.aiClaude(
+      'Olet kilpailija-analyytikko. Analysoi hakijan kilpailukenttä ja löydä tarkalleen missä hänen TILANSA on.\n\n1) KILPAILIJAKARTTA\nKuka tekee samaa tai samankaltaista? Listaa toimijat ja heidän vahvuutensa/heikkoutensa.\n\n2) AUKKO KARTALLA\nMissä KUKAAN ei ole? Mikä palvelu, markkina tai kohderyhmä on täysin katteeton?\n\n3) EROTTAUTUMISSTRATEGIA\nMiten hakija voi asemoitua niin ettei kilpaile suoraan kenenkään kanssa? Mikä "kategoria" hakijan kannattaa LUODA?\n\n4) NOPEAT VOITOT\n3 konkreettista askelta joilla hakija voi OHI kilpailijoiden — asioita jotka muut eivät tee tai eivät osaa.\n\n5) UHKAT\nMitä riskejä kilpailukentällä on? Voiko joku kopioida hakijan strategian? Miten suojautua?\n\nOle SPESIFINEN. Vastaa suomeksi.',
+      getProfileContext() + '\n\nAINUTLAATUINEN YHDISTELMÄ:\n' + (stratData.unicornAnalysis || '') + '\n\nMARKKINA-ANALYYSI:\n' + (stratData.marketAnalysis || '') + '\n\nKILPAILIJA 1:\n' + (stratData.comp1 || 'ei kuvattu') + '\n\nKILPAILIJA 2:\n' + (stratData.comp2 || 'ei kuvattu'),
+      2500
+    );
+    txt.textContent = r;
+    saveStratField('competitorAnalysis', r);
+  } catch(e) { txt.textContent = 'Virhe: ' + (e.message || 'yhteysvirhe'); }
+}
+
+/* ── 5. PRODUCTIZE ──────────────────────────── */
+async function buildProducts() {
+  if (!stratData.marketAnalysis && !stratData.audienceAnalysis) { alert('Tee ensin markkinakartta ja kohderyhmäanalyysi.'); return; }
+  var txt = showLoading('productResult');
+  try {
+    var r = await window.aiClaude(
+      'Olet tuotteistamisen asiantuntija. Rakenna hakijalle 3 KONKREETTISTA tarjoamaa eri hintapisteissä.\n\nJokaiselle tarjoamalle:\n\n🆓 ILMAINEN KOUKKU (Lead Magnet)\n• Nimi — iskevä, konkreettinen\n• Muoto — PDF, webinaari, mini-kurssi, työkalu?\n• Sisältö — mitä se sisältää, 3-5 bullet pointia\n• Kohderyhmä — kenelle tämä on suunnattu\n• Tavoite — miten tämä johtaa maksulliseen palveluun\n\n💰 PERUSPALVELU (Core Offering)\n• Nimi\n• Muoto — konsultointi, koulutus, paketti, tuote?\n• Hinta-arvio ja hinnoittelumalli\n• Mitä asiakas saa konkreettisesti\n• Kesto ja toimitus\n• Miksi joku maksaisi tästä\n\n💎 PREMIUM (High-End)\n• Nimi\n• Muoto — pitkä yhteistyö, räätälöity projekti, retainer?\n• Hinta-arvio\n• Mitä sisältää ja miten toimitetaan\n• Kenelle tämä on — millainen asiakas maksaa premium-hinnan\n• ROI asiakkaalle — mitä asiakas hyötyy rahallisesti\n\nOle KONKREETTINEN. Nimet, hinnat, sisällöt — ei "konsultointipalvelu" vaan "Kulttuurisilta — 3 tunnin workshop hotelleille arabikulttuurin ymmärtämiseen". Vastaa suomeksi.',
+      getProfileContext() + '\n\nAINUTLAATUINEN YHDISTELMÄ:\n' + (stratData.unicornAnalysis || '') + '\n\nMARKKINA:\n' + (stratData.marketAnalysis || '') + '\n\nKOHDERYHMÄT:\n' + (stratData.audienceAnalysis || '') + '\n\nKILPAILU:\n' + (stratData.competitorAnalysis || ''),
+      3000
+    );
+    txt.textContent = r;
+    saveStratField('products', r);
+  } catch(e) { txt.textContent = 'Virhe: ' + (e.message || 'yhteysvirhe'); }
+}
+
+/* ── 6. OUTREACH MESSAGES ───────────────────── */
+async function buildOutreach() {
+  if (!stratData.products) { alert('Tee ensin Askel 5 (tuotteista osaamisesi).'); return; }
+  if (!stratData.contact1) { alert('Kuvaile vähintään yksi kontakti.'); return; }
+  var txt = showLoading('outreachResult');
+  try {
+    var r = await window.aiClaude(
+      'Olet B2B-viestinnän asiantuntija. Kirjoita 5 VALMISTA kontaktiviestiä jotka hakija voi lähettää TÄNÄÄN.\n\nViestit:\n\n1) KYLMÄ SÄHKÖPOSTI — lyhyt, suora, arvoa tarjoava. Max 150 sanaa. Aiherivi mukana.\n2) LINKEDIN-VIESTI — lämmin, persoonallinen, ei myyntipuhe. Max 100 sanaa.\n3) KUMPPANUUSEHDOTUS — ehdota yhteistyötä josta molemmat hyötyvät. Max 200 sanaa.\n4) ESITTELY TUTUN KAUTTA — "Hei, [tuttu] ehdotti että ottaisin yhteyttä..." Max 120 sanaa.\n5) FOLLOW-UP — kun ensimmäiseen viestiin ei vastattu. Max 80 sanaa. Lisää arvoa, ei "halusin vain varmistaa."\n\nJokaisessa viestissä:\n- Konkreettinen arvo vastaanottajalle HETI ensimmäisessä lauseessa\n- Ei kliseitä, ei "olen kiinnostunut mahdollisuudesta"\n- Spesifinen CTA: tapaaminen, puhelu, tai konkreettinen ehdotus\n- RÄÄTÄLÖITY kuvatuille kontakteille\n\nVastaa suomeksi (tai englanniksi jos kontakti on ulkomaalainen).',
+      getProfileContext() + '\n\nTUOTTEET:\n' + stratData.products + '\n\nKONTAKTI 1:\n' + stratData.contact1 + '\n\nKONTAKTI 2:\n' + (stratData.contact2 || 'ei kuvattu'),
+      3000
+    );
+    txt.textContent = r;
+  } catch(e) { txt.textContent = 'Virhe: ' + (e.message || 'yhteysvirhe'); }
+}
+
+/* ── REFLECTION ──────────────────────────────── */
+async function saveReflection() {
+  try { await window.saveReflectionToAPI('m_ai_strategia_reflection'); var c = document.getElementById('reflConfirm'); if (c) { c.style.display = 'block'; setTimeout(function() { c.style.display = 'none'; }, 3000); } }
+  catch(e) { alert('Virhe tallennuksessa.'); }
+}
+
+/* ── INIT ────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function() {
+  restoreFields();
+  if (window.loadReflection) window.loadReflection('m_ai_strategia_reflection');
+});
+</script>
+<script src="/js/ai-helper.js"></script>
+<script src="/js/reflections.js"></script>
+<script src="/js/feedback.js"></script>
+<script>
+fetch('/ai-chat-widget.html').then(function(r){return r.text();}).then(function(h){document.body.insertAdjacentHTML('beforeend',h);}).catch(function(){});
+</script>
+</body>
+</html>

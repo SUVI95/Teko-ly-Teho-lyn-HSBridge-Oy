@@ -65,6 +65,63 @@ router.post('/chat', async (req, res) => {
   }
 });
 
+// Claude (Anthropic) API endpoint for deep analysis
+router.post('/claude', async (req, res) => {
+  try {
+    const { messages, system, max_tokens = 2000 } = req.body;
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: 'Messages array is required' });
+    }
+
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    if (!anthropicKey) {
+      console.error('Anthropic API key not configured');
+      return res.status(500).json({ error: 'Claude-palvelu ei ole käytettävissä.' });
+    }
+
+    const body = {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: max_tokens,
+      messages: messages
+    };
+    if (system) body.system = system;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Anthropic API error:', errorData);
+      return res.status(response.status).json({
+        error: 'Claude service error',
+        details: errorData
+      });
+    }
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+
+    res.json({
+      text: text,
+      usage: data.usage
+    });
+  } catch (error) {
+    console.error('Error calling Anthropic API:', error);
+    res.status(500).json({
+      error: 'Failed to get Claude response',
+      message: error.message
+    });
+  }
+});
+
 // OpenAI API endpoint for image generation (DALL-E 3)
 router.post('/image', async (req, res) => {
   try {
