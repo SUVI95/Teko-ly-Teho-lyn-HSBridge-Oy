@@ -280,10 +280,6 @@ h1.hero-title em{font-style:italic;color:#e8c870;}
     <div class="info-card">
       <div class="form-row">
         <div class="form-group"><label class="form-label">Koko nimi</label><input class="form-input" id="cvName" placeholder="Esim. Matti Virtanen" onchange="saveCvField('name',this.value)"></div>
-        <div class="form-group"><label class="form-label">Sähköposti</label><input class="form-input" id="cvEmail" placeholder="matti@email.com" onchange="saveCvField('email',this.value)"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Puhelinnumero</label><input class="form-input" id="cvPhone" placeholder="+358 40 123 4567" onchange="saveCvField('phone',this.value)"></div>
         <div class="form-group"><label class="form-label">Paikkakunta</label><input class="form-input" id="cvCity" placeholder="Helsinki" onchange="saveCvField('city',this.value)"></div>
       </div>
       <div class="form-group"><label class="form-label">Tavoiterooli / haettava tehtävä</label><input class="form-input" id="cvTarget" placeholder="Esim. Asiakaspalvelupäällikkö, markkinointi-assistentti, kokki..." onchange="saveCvField('targetRole',this.value)"></div>
@@ -322,6 +318,7 @@ h1.hero-title em{font-style:italic;color:#e8c870;}
       </div>
       <div class="chat-actions">
         <button class="btn-primary" id="startChatBtn" onclick="startInterview()">Aloita haastattelu</button>
+        <div id="chatDepth" style="display:none;font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);padding:6px 14px;background:var(--paper);border:1px solid var(--border);border-radius:20px;"></div>
         <button class="btn-secondary" id="summarizeChatBtn" onclick="summarizeCareer()" style="display:none;">Tiivistä urahistoria →</button>
       </div>
     </div>
@@ -339,24 +336,53 @@ h1.hero-title em{font-style:italic;color:#e8c870;}
     <div class="section-label">Askel 3</div>
     <h2 class="section-h2">Taito<em>kartta</em></h2>
     <div class="divider"></div>
-    <span class="time-badge">~5 min</span>
-    <p class="lead">AI analysoi haastattelusi ja tunnistaa taitosi. Sinun tehtäväsi on vahvistaa, lisätä ja karsia.</p>
+    <span class="time-badge">~10 min</span>
+    <p class="lead">AI analysoi haastattelusi ja tunnistaa taitosi. Mutta se on vasta alku — tässä opit myös tunnistamaan piilotetut vahvuutesi ja kehityskohteesi.</p>
 
+    <!-- 3A: AI Skills Mapping -->
     <div class="info-card">
       <h3>Tunnista taitosi</h3>
-      <p>Paina alla olevaa nappia — AI lukee urahistoriasi ja tunnistaa taidot kolmessa kategoriassa: tekniset, johtamis- ja yhteistyötaidot, sekä toimialataidot.</p>
+      <p>AI lukee urahistoriasi ja tunnistaa taidot kolmessa kategoriassa. Paina nappia aloittaaksesi.</p>
       <button class="btn-primary" id="mapSkillsBtn" onclick="mapSkills()">Kartoita taidot AI:lla</button>
       <div class="ai-result" id="skillsResult">
-        <div class="ai-result-label">AI:n tunnistamaat taidot</div>
+        <div class="ai-result-label">AI:n tunnistamat taidot</div>
         <div class="ai-result-text" id="skillsText"></div>
-      </div>
-      <div style="margin-top:1.5rem;">
-        <label class="form-label">Lisää taitoja joita AI ei huomannut</label>
-        <textarea class="form-textarea" id="extraSkills" placeholder="Esim. SAP-järjestelmä, ensiapukortti, B-ajokortti, projektijohtaminen..." onchange="saveCvField('extraSkills',this.value)" style="min-height:60px;"></textarea>
       </div>
     </div>
 
-    <div class="takeaway"><span class="takeaway-icon">💡</span><p>CV:ssä ei pidä listata kaikkia taitoja. Listaa ne jotka ovat relevantteja haettavaan tehtävään. Se selviää askeleessa 5.</p></div>
+    <!-- 3B: Hidden Strengths -->
+    <div class="info-card">
+      <h3>Piilotetut vahvuutesi</h3>
+      <p>Monilla on taitoja joita he eivät tunnista taidoiksi — koska ne tuntuvat "normaaleilta". Vastaa näihin kysymyksiin ja AI paljastaa mitä et ehkä huomannut.</p>
+      <div class="form-group"><label class="form-label">Mitä ihmiset pyytävät sinulta apua? (työssä tai vapaa-ajalla)</label><textarea class="form-textarea" id="hiddenQ1" placeholder="Esim. Excel-ongelmat, juhlien järjestäminen, riitojen sovittelu..." onchange="saveCvField('hiddenQ1',this.value)"></textarea></div>
+      <div class="form-group"><label class="form-label">Mikä sinulle on helppoa mutta muille vaikeaa?</label><textarea class="form-textarea" id="hiddenQ2" placeholder="Esim. uusien ihmisten kanssa jutteleminen, aikataulujen pitäminen..." onchange="saveCvField('hiddenQ2',this.value)"></textarea></div>
+      <div class="form-group"><label class="form-label">Mitä olet oppinut harrastuksista, vapaaehtoistyöstä tai perhe-elämästä?</label><textarea class="form-textarea" id="hiddenQ3" placeholder="Esim. jalkapalloseuran rahastonhoitaja, lasten urheiluvalmennus..." onchange="saveCvField('hiddenQ3',this.value)"></textarea></div>
+      <button class="btn-primary" onclick="discoverHiddenStrengths()">Paljasta piilotetut vahvuudet</button>
+      <div class="ai-result" id="hiddenResult">
+        <div class="ai-result-label">Piilotetut vahvuutesi — AI:n analyysi</div>
+        <div class="ai-result-text" id="hiddenText"></div>
+      </div>
+    </div>
+
+    <!-- 3C: Development Areas -->
+    <div class="info-card">
+      <h3>Kehityskohteet — rehellinen itsearviointi</h3>
+      <p>Hyvä CV ei piilota heikkouksia — se näyttää tietoisuuden ja kasvuhalun. AI analysoi taitosi ja tavoiteroolisi, ja näyttää mihin kannattaa panostaa.</p>
+      <button class="btn-secondary" onclick="analyzeGaps()">Analysoi kehityskohteet</button>
+      <div class="ai-result" id="gapResult">
+        <div class="ai-result-label">Kehityskohteet ja suositukset</div>
+        <div class="ai-result-text" id="gapText"></div>
+      </div>
+    </div>
+
+    <!-- 3D: Extra Skills -->
+    <div class="info-card">
+      <h3>Lisää puuttuvat taidot</h3>
+      <p>Onko taitoja joita AI ei huomannut? Lisää ne tähän — ne menevät mukaan master-promptiin.</p>
+      <textarea class="form-textarea" id="extraSkills" placeholder="Esim. SAP-järjestelmä, ensiapukortti, B-ajokortti, projektijohtaminen, Instagram-markkinointi..." onchange="saveCvField('extraSkills',this.value)" style="min-height:60px;"></textarea>
+    </div>
+
+    <div class="takeaway"><span class="takeaway-icon">💡</span><p>CV:ssä ei pidä listata kaikkia taitoja — vain ne jotka ovat relevantteja haettavaan tehtävään. Se selviää askeleessa 5. Mutta nyt sinulla on täydellinen kuva itsestäsi.</p></div>
   </div>
 </section>
 
@@ -518,7 +544,7 @@ var cvData = {};
 try { cvData = JSON.parse(localStorage.getItem('cv_builder_data') || '{}'); } catch(e) { cvData = {}; }
 function saveCvField(key, val) { cvData[key] = val; try { localStorage.setItem('cv_builder_data', JSON.stringify(cvData)); } catch(e) {} }
 function restoreFields() {
-  var fields = {cvName:'name',cvEmail:'email',cvPhone:'phone',cvCity:'city',cvTarget:'targetRole',cvEducation:'education',cvCourses:'courses',cvLanguages:'languages',extraSkills:'extraSkills',jobPosting:'jobPosting',cvDraftInput:'cvDraft'};
+  var fields = {cvName:'name',cvCity:'city',cvTarget:'targetRole',cvEducation:'education',cvCourses:'courses',cvLanguages:'languages',hiddenQ1:'hiddenQ1',hiddenQ2:'hiddenQ2',hiddenQ3:'hiddenQ3',extraSkills:'extraSkills',jobPosting:'jobPosting',cvDraftInput:'cvDraft'};
   for (var id in fields) { var el = document.getElementById(id); if (el && cvData[fields[id]]) el.value = cvData[fields[id]]; }
 }
 
@@ -565,14 +591,29 @@ async function sendChat() {
   chatHistory.push({ role: 'user', content: text });
   input.value = '';
   chatCount++;
-  if (chatCount >= 3) document.getElementById('summarizeChatBtn').style.display = 'inline-flex';
+  var depthEl = document.getElementById('chatDepth');
+  depthEl.style.display = 'inline-flex';
+  if (chatCount < 5) {
+    depthEl.textContent = '🔴 Syvyys: ' + chatCount + '/5 — jatka haastattelua';
+    depthEl.style.borderColor = 'rgba(199,91,58,.3)';
+  } else if (chatCount < 8) {
+    depthEl.textContent = '🟡 Syvyys: ' + chatCount + ' — hyvä, voit jatkaa tai tiivistää';
+    depthEl.style.borderColor = 'rgba(184,134,11,.3)';
+  } else {
+    depthEl.textContent = '🟢 Syvyys: ' + chatCount + ' — erinomainen!';
+    depthEl.style.borderColor = 'rgba(42,122,75,.3)';
+  }
+  if (chatCount >= 5) document.getElementById('summarizeChatBtn').style.display = 'inline-flex';
   var btn = document.getElementById('chatSendBtn');
   btn.disabled = true;
   try {
     var ctx = chatHistory.map(function(m) { return (m.role === 'user' ? 'Käyttäjä' : 'Valmentaja') + ': ' + m.content; }).join('\n\n');
+    var depthNote = chatCount < 5
+      ? '\n\nTämä on vasta vastaus ' + chatCount + '/5. Kaiva syvemmälle. Kysy TARKENTAVIA kysymyksiä: lukuja, vastuualueita, saavutuksia, haasteita.'
+      : '\n\nHaastattelua on jatkunut ' + chatCount + ' kierrosta. Voit siirtyä seuraavaan työpaikkaan tai elämänvaiheeseen, tai kysyä tarkennuksia.';
     var reply = await window.aiChat(
-      'Olet kokenut uravalmentaja. Haastattelet käyttäjää ja kaivat esiin osaamisen, saavutukset ja kokemuksen. Kysy YKSI selkeä tarkentava kysymys kerrallaan. Älä anna CV-vinkkejä vielä. Kun käyttäjä vastaa epämääräisesti, kysy konkreettisia tarkennuksia: montako asiakasta, opetitkö uusia, millaisia ongelmia ratkaisit, millaisia tuloksia saavutit? Vastaa suomeksi, lyhyesti.',
-      ctx + '\n\nJatka haastattelua. Kysy seuraava tarkentava kysymys.',
+      'Olet kokenut uravalmentaja. Haastattelet käyttäjää ja kaivat esiin osaamisen, saavutukset ja kokemuksen. Kysy YKSI selkeä tarkentava kysymys kerrallaan. Älä anna CV-vinkkejä vielä. Kun käyttäjä vastaa epämääräisesti, kysy konkreettisia tarkennuksia: montako asiakasta, opetitkö uusia, millaisia ongelmia ratkaisit, millaisia tuloksia saavutit, kehititkö jotain uutta, saitko palautetta, millaista vastuuta sinulle annettiin? Kysy myös: vapaaehtoistöistä, harrastuksista joissa opit taitoja, luottamustoimista, kursseista ja projekteista. Vastaa suomeksi, lyhyesti mutta kannustavasti.',
+      ctx + depthNote,
       400
     );
     addMsg(reply, false);
@@ -617,6 +658,43 @@ async function mapSkills() {
     saveCvField('skills', skills);
   } catch(e) { txt.textContent = 'Yhteysvirhe.'; }
   btn.disabled = false;
+}
+
+/* ── HIDDEN STRENGTHS ────────────────────────── */
+async function discoverHiddenStrengths() {
+  var q1 = document.getElementById('hiddenQ1').value.trim();
+  var q2 = document.getElementById('hiddenQ2').value.trim();
+  var q3 = document.getElementById('hiddenQ3').value.trim();
+  if (!q1 && !q2 && !q3) { alert('Vastaa vähintään yhteen kysymykseen.'); return; }
+  var result = document.getElementById('hiddenResult');
+  var txt = document.getElementById('hiddenText');
+  txt.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>'; result.style.display = 'block';
+  try {
+    var analysis = await window.aiChat(
+      'Käyttäjä on vastannut kysymyksiin jotka paljastavat piilotettuja taitoja. Analysoi vastaukset ja tunnista:\n\n1) PIILOTETUT VAHVUUDET — taidot joita käyttäjä ei ehkä itse tunnista taidoiksi (esim. "järjestän aina juhlat" = tapahtumien koordinointi, budjetointi, aikatauluttaminen)\n2) SIIRRETTÄVÄT TAIDOT — taidot jotka siirtyvät muista elämän osa-alueista työelämään (esim. urheiluvalmennus = johtaminen, motivointi, palautteen antaminen)\n3) EROTTAVAT TEKIJÄT — mikä tekee tästä henkilöstä ainutlaatuisen hakijan\n\nOle kannustava mutta konkreettinen. Käännä jokainen vastaus CV-kielelle: mitä taitoa tämä todistaa? Vastaa suomeksi.',
+      'Mitä ihmiset pyytävät apua: ' + (q1 || 'ei vastausta') + '\n\nMikä helppoa mutta muille vaikeaa: ' + (q2 || 'ei vastausta') + '\n\nOpit harrastuksista/vapaaehtoistyöstä: ' + (q3 || 'ei vastausta') + '\n\nTavoiterooli: ' + (cvData.targetRole || 'ei tiedossa'),
+      800
+    );
+    txt.textContent = analysis;
+    saveCvField('hiddenStrengths', analysis);
+  } catch(e) { txt.textContent = 'Yhteysvirhe.'; }
+}
+
+/* ── GAP ANALYSIS ────────────────────────────── */
+async function analyzeGaps() {
+  if (!cvData.skills && !cvData.careerSummary) { alert('Tee ensin aikajanahaastattelu ja taitokartoitus.'); return; }
+  var result = document.getElementById('gapResult');
+  var txt = document.getElementById('gapText');
+  txt.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>'; result.style.display = 'block';
+  try {
+    var gaps = await window.aiChat(
+      'Vertaa käyttäjän taitoja ja tavoiteroolia. Anna rehellinen analyysi:\n\n1) VAHVUUDET — missä käyttäjä on jo vahvoilla tavoiterooliin nähden\n2) KEHITYSKOHTEET — mitä taitoja puuttuu tai pitäisi vahvistaa\n3) NOPEAT VOITOT — mitä voisi oppia 1-2 viikossa (esim. ilmaiset kurssit, sertifikaatit)\n4) PITKÄN AIKAVÄLIN KEHITYS — mitä kannattaa opiskella pidemmällä aikavälillä\n5) MITEN SANOITTAA CV:SSÄ — miten kääntää kehityskohteet positiivisiksi ilmauksiksi (esim. "ei kokemusta johtamisesta" → "innokkaasti kehittämässä johtamistaitojaan")\n\nOle rehellinen mutta kannustava. Vastaa suomeksi.',
+      'Tavoiterooli: ' + (cvData.targetRole || 'ei tiedossa') + '\n\nTaidot:\n' + (cvData.skills || 'ei kartoitettu') + '\n\nUrahistoria:\n' + (cvData.careerSummary || 'ei tiedossa') + '\n\nPiilotetut vahvuudet:\n' + (cvData.hiddenStrengths || 'ei kartoitettu'),
+      1000
+    );
+    txt.textContent = gaps;
+    saveCvField('gapAnalysis', gaps);
+  } catch(e) { txt.textContent = 'Yhteysvirhe.'; }
 }
 
 /* ── RECRUITER PERSPECTIVE ───────────────────── */
@@ -685,8 +763,8 @@ function buildMasterPrompt() {
   prompt += '- Sisällytä avainsanat työpaikkailmoituksesta luonnollisesti tekstiin.\n\n';
   prompt += '=== HENKILÖTIEDOT ===\n';
   prompt += 'Nimi: ' + cvData.name + '\n';
-  prompt += 'Sähköposti: ' + (cvData.email || '[TÄYDENNÄ]') + '\n';
-  prompt += 'Puhelin: ' + (cvData.phone || '[TÄYDENNÄ]') + '\n';
+  prompt += 'Sähköposti: [TÄYDENNÄ — käyttäjä lisää itse]\n';
+  prompt += 'Puhelin: [TÄYDENNÄ — käyttäjä lisää itse]\n';
   prompt += 'Paikkakunta: ' + (cvData.city || '[TÄYDENNÄ]') + '\n';
   prompt += 'Tavoiterooli: ' + cvData.targetRole + '\n\n';
   prompt += '=== URAHISTORIA (AI-haastattelu) ===\n' + cvData.careerSummary + '\n\n';
@@ -694,6 +772,7 @@ function buildMasterPrompt() {
   if (cvData.courses) prompt += 'Kurssit/sertifikaatit: ' + cvData.courses + '\n';
   prompt += '\n=== TAIDOT (AI-kartoitus) ===\n' + cvData.skills + '\n';
   if (cvData.extraSkills) prompt += 'Lisätaidot: ' + cvData.extraSkills + '\n';
+  if (cvData.hiddenStrengths) prompt += '\n=== PIILOTETUT VAHVUUDET ===\n' + cvData.hiddenStrengths + '\n';
   prompt += '\n=== KIELET ===\n' + (cvData.languages || '[TÄYDENNÄ]') + '\n';
   if (cvData.keywordAnalysis) prompt += '\n=== TYÖPAIKKAILMOITUKSEN AVAINSANAT ===\n' + cvData.keywordAnalysis + '\n';
   prompt += '\n=== TULOSTE ===\nKirjoita valmis CV yllä olevien tietojen ja ohjeiden perusteella. Muotoile se niin, että sen voi kopioida suoraan dokumenttiin.';
