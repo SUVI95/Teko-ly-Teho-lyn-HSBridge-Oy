@@ -148,4 +148,63 @@ router.get('/summary', async (req, res) => {
   }
 });
 
+// Save module work data (CV builder, etc.) — resolves user from cookie
+router.post('/workdata/:moduleId', async (req, res) => {
+  try {
+    const token = req.cookies?.session_token;
+    if (!token) return res.json({ success: false, reason: 'no_auth' });
+
+    const session = await pool.query(
+      'SELECT u.id FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE',
+      [token]
+    );
+    if (!session.rows.length) return res.json({ success: false, reason: 'no_auth' });
+
+    const userId = session.rows[0].id;
+    const { moduleId } = req.params;
+    const { data } = req.body;
+    if (!data) return res.status(400).json({ success: false, reason: 'no_data' });
+
+    await pool.query(
+      `INSERT INTO student_progress (user_id, module_id, section_id, completed, progress_data, time_spent, last_accessed)
+       VALUES ($1, $2, '_workdata', FALSE, $3, 0, CURRENT_TIMESTAMP)
+       ON CONFLICT (user_id, module_id, section_id)
+       DO UPDATE SET progress_data = $3, last_accessed = CURRENT_TIMESTAMP`,
+      [userId, moduleId, JSON.stringify(data)]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Save workdata error:', error);
+    res.json({ success: false });
+  }
+});
+
+// Load module work data — resolves user from cookie
+router.get('/workdata/:moduleId', async (req, res) => {
+  try {
+    const token = req.cookies?.session_token;
+    if (!token) return res.json({ data: null });
+
+    const session = await pool.query(
+      'SELECT u.id FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE',
+      [token]
+    );
+    if (!session.rows.length) return res.json({ data: null });
+
+    const userId = session.rows[0].id;
+    const { moduleId } = req.params;
+
+    const result = await pool.query(
+      `SELECT progress_data FROM student_progress WHERE user_id = $1 AND module_id = $2 AND section_id = '_workdata'`,
+      [userId, moduleId]
+    );
+
+    res.json({ data: result.rows[0]?.progress_data || null });
+  } catch (error) {
+    console.error('Load workdata error:', error);
+    res.json({ data: null });
+  }
+});
+
 module.exports = router;

@@ -884,7 +884,53 @@ h1.hero-title em{font-style:italic;color:#e8c870;}
 /* ── DATA MODEL ──────────────────────────────── */
 var cvData = {};
 try { cvData = JSON.parse(localStorage.getItem('cv_builder_data') || '{}'); } catch(e) { cvData = {}; }
-function saveCvField(key, val) { cvData[key] = val; try { localStorage.setItem('cv_builder_data', JSON.stringify(cvData)); } catch(e) {} }
+var _serverSaveTimer = null;
+function saveCvField(key, val) {
+  cvData[key] = val;
+  cvData._lastSaved = Date.now();
+  try { localStorage.setItem('cv_builder_data', JSON.stringify(cvData)); } catch(e) {}
+  if (_serverSaveTimer) clearTimeout(_serverSaveTimer);
+  _serverSaveTimer = setTimeout(_syncToServer, 3000);
+}
+function _syncToServer() {
+  var chatData = [];
+  try { chatData = JSON.parse(localStorage.getItem('cv_chat_history') || '[]'); } catch(e) {}
+  var payload = Object.assign({}, cvData, { _chatHistory: chatData });
+  fetch('/api/progress/workdata/moduuli7-ai-tyonhaussa', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+    body: JSON.stringify({ data: payload })
+  }).catch(function() {});
+}
+window.addEventListener('beforeunload', function() { _syncToServer(); });
+window.addEventListener('visibilitychange', function() { if (document.visibilityState === 'hidden') _syncToServer(); });
+function _loadFromServer() {
+  fetch('/api/progress/workdata/moduuli7-ai-tyonhaussa', { credentials: 'include' })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (!res.data) return;
+      var serverData = res.data;
+      var serverTime = serverData._lastSaved || 0;
+      var localTime = cvData._lastSaved || 0;
+      if (serverTime > localTime || !Object.keys(cvData).length) {
+        var chatFromServer = serverData._chatHistory || [];
+        delete serverData._chatHistory;
+        cvData = serverData;
+        try { localStorage.setItem('cv_builder_data', JSON.stringify(cvData)); } catch(e) {}
+        if (chatFromServer.length) {
+          var localChat = [];
+          try { localChat = JSON.parse(localStorage.getItem('cv_chat_history') || '[]'); } catch(e) {}
+          if (chatFromServer.length > localChat.length) {
+            try { localStorage.setItem('cv_chat_history', JSON.stringify(chatFromServer)); } catch(e) {}
+            chatHistory = chatFromServer;
+            chatCount = chatFromServer.filter(function(m){ return m.role === 'user'; }).length;
+          }
+        }
+        restoreFields();
+        restoreJobFields();
+        restoreChatUI();
+      }
+    }).catch(function() {});
+}
 function restoreFields() {
   var fields = {cvName:'name',cvCity:'city',cvTarget:'targetRole',cvEducation:'education',cvCourses:'courses',cvLanguages:'languages',hiddenQ1:'hiddenQ1',hiddenQ2:'hiddenQ2',hiddenQ3:'hiddenQ3',extraSkills:'extraSkills',oldCvInput:'oldCv',cvDraftInput:'cvDraft',deepSearchResults:'deepSearchResults'};
   for (var id in fields) { var el = document.getElementById(id); if (el && cvData[fields[id]]) el.value = cvData[fields[id]]; }
@@ -913,7 +959,11 @@ window.addEventListener('scroll', updateProgress, { passive: true });
 var chatHistory = [];
 var chatCount = 0;
 try { var _saved = JSON.parse(localStorage.getItem('cv_chat_history') || '[]'); if (_saved.length) { chatHistory = _saved; chatCount = _saved.filter(function(m){ return m.role === 'user'; }).length; } } catch(e) {}
-function saveChatState() { try { localStorage.setItem('cv_chat_history', JSON.stringify(chatHistory)); } catch(e) {} }
+function saveChatState() {
+  try { localStorage.setItem('cv_chat_history', JSON.stringify(chatHistory)); } catch(e) {}
+  if (_serverSaveTimer) clearTimeout(_serverSaveTimer);
+  _serverSaveTimer = setTimeout(_syncToServer, 3000);
+}
 function addMsg(text, isUser) {
   var c = document.getElementById('careerChat');
   var d = document.createElement('div');
@@ -1308,6 +1358,7 @@ document.addEventListener('DOMContentLoaded', function() {
   restoreJobFields();
   restoreAppStatus();
   restoreChatUI();
+  _loadFromServer();
   if (window.loadReflection) window.loadReflection('m_ai_tyonhaussa_reflection');
 });
 </script>
