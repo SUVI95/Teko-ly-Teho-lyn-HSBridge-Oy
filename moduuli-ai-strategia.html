@@ -205,6 +205,18 @@ h1.hero-title em{font-style:italic;color:#c4a7f5;}
         <div class="ai-result-actions"><button class="copy-btn" onclick="copyResult('unicornText')">📋 Kopioi</button></div>
       </div>
     </div>
+
+    <!-- Weakness analysis -->
+    <div class="info-card">
+      <h3>Heikkousanalyysi — missä on aukkoja?</h3>
+      <p>Useimmat kurssit vain kehuvat. <strong>Tämä haastaa.</strong> AI kertoo rehellisesti mitä osaamisestasi puuttuu — ja miten paikat nopeimmin. Tämä tieto on arvokkaampaa kuin kehut.</p>
+      <button class="btn-secondary" onclick="analyzeWeaknesses()">Näytä heikkoudet <span class="claude-badge">Claude AI</span></button>
+      <div class="ai-result" id="weaknessResult">
+        <div class="ai-result-label">Heikkousanalyysi — mitä puuttuu</div>
+        <div class="ai-result-text" id="weaknessText"></div>
+        <div class="ai-result-actions"><button class="copy-btn" onclick="copyResult('weaknessText')">📋 Kopioi</button></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -290,9 +302,18 @@ h1.hero-title em{font-style:italic;color:#c4a7f5;}
     <p class="lead">Osaaminen ei myy itseään. Se pitää paketoida joksikin konkreettiseksi. AI rakentaa sinulle 3 tarjoamaa eri hintapisteissä.</p>
 
     <div class="info-card">
-      <h3>Anna AI:n rakentaa tuotemenu</h3>
-      <p>Kaiken aiemman datan perusteella AI luo sinulle kolme tarjoamaa: ilmainen koukku joka houkuttelee, peruspalvelu josta maksetaan, ja premium-tarjoama jolla ansaitset kunnolla.</p>
-      <button class="btn-primary" onclick="buildProducts()">Rakenna tuotemenu <span class="claude-badge">Claude AI</span></button>
+      <h3>Sinun elämäntilanteesi = sinun hinnoittelusi</h3>
+      <p>Hinnoittelu ei ole satunnaista. Se perustuu siihen <strong>kuinka paljon aikaa sinulla on</strong> ja <strong>kuinka paljon sinun pitää ansaita</strong>. Vastaa rehellisesti.</p>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Montako tuntia viikossa voit käyttää tähän?</label><input class="form-input" id="stratHours" placeholder="Esim. 10, 20, 40..." onchange="saveStratField('hours',this.value)"></div>
+        <div class="form-group"><label class="form-label">Mikä on minimiansiotavoitteesi kuukaudessa (€)?</label><input class="form-input" id="stratIncome" placeholder="Esim. 2000, 4000, 6000..." onchange="saveStratField('income',this.value)"></div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3>Tuotemenu + henkilökohtainen hinnoittelu</h3>
+      <p>AI rakentaa tuotemenun JA laskee hinnoittelun sinun elämäntilanteesi perusteella — ei geneerisiä hintoja.</p>
+      <button class="btn-primary" onclick="buildProducts()">Rakenna tuotemenu + hinnoittelu <span class="claude-badge">Claude AI</span></button>
       <div class="ai-result" id="productResult">
         <div class="ai-result-label">Tuotemenu — 3 tarjoamaa</div>
         <div class="ai-result-text" id="productText"></div>
@@ -328,8 +349,33 @@ h1.hero-title em{font-style:italic;color:#c4a7f5;}
   </div>
 </section>
 
-<!-- ═══ 8 · REFLEKTIO + LOPETUS ════════════════ -->
-<section class="section" id="lopetus" data-index="8">
+<!-- ═══ 8 · STRATEGIAKORTTI ═════════════════════ -->
+<section class="section section-auto" id="strategiakortti" data-index="8">
+  <div class="section-inner fade-up">
+    <div class="section-label">Yhteenveto</div>
+    <h2 class="section-h2">Strategia<em>kortti</em></h2>
+    <div class="divider"></div>
+    <span class="time-badge">~2 min</span>
+    <p class="lead">Kaikki yhdelle sivulle. AI tiivistää koko moduulin tulokset yhdeksi strategiakortiksi jonka voit tulostaa ja laittaa työpöydällesi.</p>
+
+    <div class="info-card">
+      <h3>Generoi strategiakortti</h3>
+      <p>Tämä kokoaa kaiken: ainutlaatuinen yhdistelmäsi, top 2 markkinasegmenttiä, tuotemenu, ja 3 parasta kontaktiviestiä. <strong>Yksi sivu — koko strategiasi.</strong></p>
+      <button class="btn-primary" onclick="buildStrategyCard()">Kokoa strategiakortti <span class="claude-badge">Claude AI</span></button>
+      <div class="ai-result" id="cardResult">
+        <div class="ai-result-label">Strategiakortti — tulosta tämä</div>
+        <div class="ai-result-text" id="cardText" style="font-size:.85rem;line-height:1.75;"></div>
+        <div class="ai-result-actions">
+          <button class="copy-btn" onclick="copyResult('cardText')">📋 Kopioi</button>
+          <button class="copy-btn" onclick="printCard()">🖨️ Tulosta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 9 · REFLEKTIO + LOPETUS ════════════════ -->
+<section class="section section-alt" id="lopetus" data-index="9">
   <div class="section-inner fade-up">
     <div class="section-label">Reflektio</div>
     <h2 class="section-h2">Mitä löysit <em>tänään?</em></h2>
@@ -360,7 +406,7 @@ var stratData = {};
 try { stratData = JSON.parse(localStorage.getItem('strat_builder_data') || '{}'); } catch(e) { stratData = {}; }
 function saveStratField(key, val) { stratData[key] = val; try { localStorage.setItem('strat_builder_data', JSON.stringify(stratData)); } catch(e) {} }
 function restoreFields() {
-  var fields = {stratField:'field',stratProblems:'problems',stratDiff:'diff',stratGoal:'goal',stratCompetitors:'competitors',stratGap:'gap',stratTrends:'trends',stratClient:'client',stratComp1:'comp1',stratComp2:'comp2',stratContact1:'contact1',stratContact2:'contact2'};
+  var fields = {stratField:'field',stratProblems:'problems',stratDiff:'diff',stratGoal:'goal',stratCompetitors:'competitors',stratGap:'gap',stratTrends:'trends',stratClient:'client',stratComp1:'comp1',stratComp2:'comp2',stratContact1:'contact1',stratContact2:'contact2',stratHours:'hours',stratIncome:'income'};
   for (var id in fields) { var el = document.getElementById(id); if (el && stratData[fields[id]]) el.value = stratData[fields[id]]; }
 }
 
@@ -405,6 +451,21 @@ async function analyzeUnicorn() {
     );
     txt.textContent = r;
     saveStratField('unicornAnalysis', r);
+  } catch(e) { txt.textContent = 'Virhe: ' + (e.message || 'yhteysvirhe'); }
+}
+
+/* ── 1B. WEAKNESS ANALYSIS ───────────────────── */
+async function analyzeWeaknesses() {
+  if (!stratData.unicornAnalysis) { alert('Tee ensin ainutlaatuinen yhdistelmä -analyysi.'); return; }
+  var txt = showLoading('weaknessResult');
+  try {
+    var r = await window.aiClaude(
+      'Olet strategiakonsultti joka on tunnettu BRUTAALISTA rehellisyydestä. Asiakas EI maksa sinulle kehuja — hän maksaa totuudesta.\n\nAnalysoi hakijan osaamisprofiili ja kerro:\n\n1) KRIITTISET AUKOT\nMitä taitoja tai kokemusta PUUTTUU jotka tekisivät hakijasta huomattavasti kilpailukykyisemmän? Listaa 3-5 spesifistä aukkoa.\n\n2) SOKEAT PISTEET\nMitä hakija ei ehkä itse näe? Millä tavalla hänen näkemyksensä omasta osaamisestaan voi olla vinoutunut?\n\n3) MARKKINARISKIT\nMitkä trendit tai muutokset voisivat tehdä hakijan osaamisen VÄHEMMÄN arvokkaaksi 2-3 vuoden sisällä?\n\n4) PAIKKAAMISSTRATEGIA — jokaiselle aukolle:\n- Nopea ratkaisu (1-2 viikkoa): kurssi, sertifikaatti, kirja\n- Keskipitkä (1-3 kk): projekti, kumppanuus, mentorointi\n- Voidaanko kiertää? Tarvitseeko tätä oikeasti paikata vai voiko asemoitua toisin?\n\n5) PRIORITEETTIJÄRJESTYS\nJos hakija voisi paikata YHDEN ainoan heikkouden, mikä tekisi suurimman eron? Miksi juuri se?\n\nOle rehellinen. Älä pehmentele. Vastaa suomeksi.',
+      getProfileContext() + '\n\nAINUTLAATUINEN YHDISTELMÄ (AI-analyysi):\n' + stratData.unicornAnalysis,
+      2500
+    );
+    txt.textContent = r;
+    saveStratField('weaknessAnalysis', r);
   } catch(e) { txt.textContent = 'Virhe: ' + (e.message || 'yhteysvirhe'); }
 }
 
@@ -456,11 +517,16 @@ async function analyzeCompetitors() {
 async function buildProducts() {
   if (!stratData.marketAnalysis && !stratData.audienceAnalysis) { alert('Tee ensin markkinakartta ja kohderyhmäanalyysi.'); return; }
   var txt = showLoading('productResult');
+  var pricingContext = '';
+  if (stratData.hours && stratData.income) {
+    var hourlyMin = Math.round(parseFloat(stratData.income) / (parseFloat(stratData.hours) * 4.33));
+    pricingContext = '\n\nHINNOITTELURAJOITTEET:\nKäytettävissä oleva aika: ' + stratData.hours + ' tuntia/viikko\nMinimitulotavoite: ' + stratData.income + ' €/kk\nLaskettu minimituntihinta: ~' + hourlyMin + ' €/h\nHuom: hinnoittelun PITÄÄ mahdollistaa tämä tulotaso annetulla tuntimäärällä. Laske realistisesti montako asiakasta/projektia tarvitaan kuukaudessa.';
+  }
   try {
     var r = await window.aiClaude(
-      'Olet tuotteistamisen asiantuntija. Rakenna hakijalle 3 KONKREETTISTA tarjoamaa eri hintapisteissä.\n\nJokaiselle tarjoamalle:\n\n🆓 ILMAINEN KOUKKU (Lead Magnet)\n• Nimi — iskevä, konkreettinen\n• Muoto — PDF, webinaari, mini-kurssi, työkalu?\n• Sisältö — mitä se sisältää, 3-5 bullet pointia\n• Kohderyhmä — kenelle tämä on suunnattu\n• Tavoite — miten tämä johtaa maksulliseen palveluun\n\n💰 PERUSPALVELU (Core Offering)\n• Nimi\n• Muoto — konsultointi, koulutus, paketti, tuote?\n• Hinta-arvio ja hinnoittelumalli\n• Mitä asiakas saa konkreettisesti\n• Kesto ja toimitus\n• Miksi joku maksaisi tästä\n\n💎 PREMIUM (High-End)\n• Nimi\n• Muoto — pitkä yhteistyö, räätälöity projekti, retainer?\n• Hinta-arvio\n• Mitä sisältää ja miten toimitetaan\n• Kenelle tämä on — millainen asiakas maksaa premium-hinnan\n• ROI asiakkaalle — mitä asiakas hyötyy rahallisesti\n\nOle KONKREETTINEN. Nimet, hinnat, sisällöt — ei "konsultointipalvelu" vaan "Kulttuurisilta — 3 tunnin workshop hotelleille arabikulttuurin ymmärtämiseen". Vastaa suomeksi.',
-      getProfileContext() + '\n\nAINUTLAATUINEN YHDISTELMÄ:\n' + (stratData.unicornAnalysis || '') + '\n\nMARKKINA:\n' + (stratData.marketAnalysis || '') + '\n\nKOHDERYHMÄT:\n' + (stratData.audienceAnalysis || '') + '\n\nKILPAILU:\n' + (stratData.competitorAnalysis || ''),
-      3000
+      'Olet tuotteistamisen ja hinnoittelun asiantuntija. Rakenna hakijalle 3 KONKREETTISTA tarjoamaa eri hintapisteissä — hinnoittelu perustuu hakijan TODELLISEEN elämäntilanteeseen.\n\nJokaiselle tarjoamalle:\n\n🆓 ILMAINEN KOUKKU (Lead Magnet)\n• Nimi — iskevä, konkreettinen\n• Muoto — PDF, webinaari, mini-kurssi, työkalu?\n• Sisältö — mitä se sisältää, 3-5 bullet pointia\n• Kohderyhmä — kenelle tämä on suunnattu\n• Tavoite — miten tämä johtaa maksulliseen palveluun\n\n💰 PERUSPALVELU (Core Offering)\n• Nimi\n• Muoto ja kesto\n• HINTA — perustuen hakijan aikaan ja tulotavoitteeseen. Laske: jos hakija tekee X tuntia viikossa ja tarvitsee Y €/kk, montako tätä palvelua pitää myydä? Onko realistista?\n• Mitä asiakas saa konkreettisesti\n• Miksi joku maksaisi tästä\n\n💎 PREMIUM (High-End)\n• Nimi\n• Muoto — pitkä yhteistyö, räätälöity projekti, retainer?\n• HINTA — premium-hinnoittelu joka mahdollistaa tulotavoitteen vähemmillä asiakkailla\n• ROI asiakkaalle — mitä asiakas hyötyy rahallisesti\n\n📊 TULOLASKELMA\nLaske lopuksi: "Jos myyt X peruspalvelua ja Y premiumia kuukaudessa, ansaitset Z €. Tämä vaatii W tuntia." Näytä 3 eri skenaariota: varovainen, realistinen, optimistinen.\n\nOle KONKREETTINEN. Nimet, hinnat, sisällöt — ei "konsultointipalvelu" vaan "Kulttuurisilta — 3 tunnin workshop hotelleille arabikulttuurin ymmärtämiseen, hinta 450€". Vastaa suomeksi.',
+      getProfileContext() + '\n\nAINUTLAATUINEN YHDISTELMÄ:\n' + (stratData.unicornAnalysis || '') + '\n\nMARKKINA:\n' + (stratData.marketAnalysis || '') + '\n\nKOHDERYHMÄT:\n' + (stratData.audienceAnalysis || '') + '\n\nKILPAILU:\n' + (stratData.competitorAnalysis || '') + pricingContext,
+      3500
     );
     txt.textContent = r;
     saveStratField('products', r);
@@ -480,6 +546,34 @@ async function buildOutreach() {
     );
     txt.textContent = r;
   } catch(e) { txt.textContent = 'Virhe: ' + (e.message || 'yhteysvirhe'); }
+}
+
+/* ── STRATEGY CARD ───────────────────────────── */
+async function buildStrategyCard() {
+  if (!stratData.unicornAnalysis) { alert('Tee ensin kaikki edelliset askeleet.'); return; }
+  var txt = showLoading('cardResult');
+  try {
+    var r = await window.aiClaude(
+      'Tiivistä kaikki hakijan strategia-analyysin tulokset YHDELLE SIVULLE. Tämä on "strategiakortti" jonka voi tulostaa.\n\nMUOTO (käytä selkeitä otsikoita ja lyhyitä bullet pointeja):\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSTRATEGIAKORTTI\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🎯 AINUTLAATUINEN YHDISTELMÄNI\n(1 lause joka tiivistää kilpailuedun)\n\n📊 TOP 2 MARKKINASEGMENTTIÄ\n1. [Segmentti] — miksi, arvioitu potentiaali\n2. [Segmentti] — miksi, arvioitu potentiaali\n\n👤 IHANNEASIAKAS\n(3 lausetta: kuka, mikä ongelma, miten löydän)\n\n💰 TUOTEMENU\n🆓 [Ilmainen] — [kuvaus]\n💰 [Perus] — [hinta] — [kuvaus]\n💎 [Premium] — [hinta] — [kuvaus]\n\n📧 3 ENSIMMÄISTÄ KONTAKTIA\n1. [Kuka] — [miksi] — [miten]\n2. [Kuka] — [miksi] — [miten]\n3. [Kuka] — [miksi] — [miten]\n\n⚡ TÄLLÄ VIIKOLLA TEEN:\n1. [Konkreettinen teko]\n2. [Konkreettinen teko]\n3. [Konkreettinen teko]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nOle TIIVIS. Jokainen rivi on max 1 lause. Tämä mahtuu yhdelle A4-sivulle. Vastaa suomeksi.',
+      'KAIKKI ANALYYSIT:\n\nOSAAMISPROFIILI:\n' + getProfileContext() +
+      '\n\nAINUTLAATUINEN YHDISTELMÄ:\n' + (stratData.unicornAnalysis || 'ei tehty') +
+      '\n\nMARKKINAKARTTA:\n' + (stratData.marketAnalysis || 'ei tehty') +
+      '\n\nKOHDERYHMÄT:\n' + (stratData.audienceAnalysis || 'ei tehty') +
+      '\n\nKILPAILU:\n' + (stratData.competitorAnalysis || 'ei tehty') +
+      '\n\nTUOTTEET:\n' + (stratData.products || 'ei tehty'),
+      2000
+    );
+    txt.textContent = r;
+  } catch(e) { txt.textContent = 'Virhe: ' + (e.message || 'yhteysvirhe'); }
+}
+
+function printCard() {
+  var text = document.getElementById('cardText').textContent;
+  if (!text) return;
+  var w = window.open('', '_blank');
+  w.document.write('<html><head><title>Strategiakortti</title><style>body{font-family:"Segoe UI",system-ui,sans-serif;max-width:700px;margin:2rem auto;padding:0 2rem;color:#1a1a2e;font-size:14px;line-height:1.8;}pre{white-space:pre-wrap;font-family:inherit;}@media print{body{margin:1rem;padding:0;}}</style></head><body><pre>' + text.replace(/</g,'&lt;') + '</pre></body></html>');
+  w.document.close();
+  w.print();
 }
 
 /* ── REFLECTION ──────────────────────────────── */
