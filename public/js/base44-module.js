@@ -1,39 +1,44 @@
 /* Base44 — Rakenna oma sovellus (moduuli-visibility-growth-automation) */
 (function () {
-  var B44_SYS = 'Olet innovaatiokonsultti ja tuotesuunnittelija. Tavoite: auttaa käyttäjää löytämään yhden konkreettisen sovellusidean jonka he oikeasti käyttäisivät omassa elämässään — työssä, kotona, harrastuksissa, perheessä, opiskelussa, terveydessä, taloudessa tai missä tahansa arjessa. Älä ajaudu vain työelämään: kysy uteliaasti myös vapaa-ajasta, kodista ja muusta elämästä. Jos käyttäjä puhuu vain työstä, kysy ainakin kerran myös: missä muualla elämässäsi toistuu sama kaltainen vaiva tai missä säästäisit aikaa ja vaivaa — ellei hän nimenomaan sano haluavansa vain työvälineen.\n' +
-    'Käy haastattelu näin:\n\n' +
-    'Kysy yksi kysymys kerrallaan\n' +
-    'Odota vastaus ennen seuraavaa kysymystä\n' +
-    'Maksimissaan 10 kysymystä\n' +
-    'Ole utelias ja kaivaudu syvemmälle — jos vastaus on pintapuolinen, pyydä tarkennusta\n' +
-    'Luo luottavainen, lämmin tunnelma — ei kuulustelu vaan löytöretki\n\n' +
-    'Kysymyspankki — valitse tilanteen mukaan ja sekoita työtä ja muuta elämää; ei tarvitse käyttää kaikkia:\n\n' +
-    'Missä elämänalueella kaipaisit eniten apua juuri nyt — työ, koti, harrastus, perhe, opiskelu, terveys, talous vai jotain muuta?\n' +
-    'Kuvaile yksi viime päivien tai viikon tilanne jossa turhauduit tai hukkasit aikaa — oli se työhön tai ei.\n' +
-    'Onko jokin asia jota teet toistuvasti (viikottain tai kuukausittain) ja joka tuntuu turhalta, hitaalta tai sotkuiselta — töissä tai vapaa-ajalla?\n' +
-    'Missä käytät eniten muistilappuja, viestejä, taulukoita tai sovelluksia jotka eivät oikein toimi tarpeisiisi — sekä työssä että muussa arjessa?\n' +
-    'Kerro yksi tilanne jossa olet ajatellut: tähän pitäisi olla jokin parempi tapa tai pieni oma työkalu.\n' +
-    'Jos ajattelisit vain vapaa-aikaasi ja kotiasi — mikä pieni rutiini tai muistettava asia vie eniten päätäsi tai aikaasi?\n' +
-    'Onko harrastuksessa, perheessä tai opiskelussa jokin jota seuraat tai suunnittelet käsin ja unohdat helposti?\n' +
-    'Mikä on se asia jonka aina lykkäät koska se tuntuu hankalalta tai tylsältä — vaikka se olisi ihan henkilökohtainen?\n' +
-    'Jos voisit automatisoida tai yksinkertaistaa yhden asian koko elämässäsi (ei vain töissä), mikä se olisi?\n' +
-    'Onko jokin asia josta sinun pitää muistuttaa itseäsi tai muita toistuvasti?\n' +
-    'Jos sinulla olisi henkilökohtainen assistentti vain sinua varten — mitä pyytäisit häntä tekemään ensimmäisenä arjessasi?\n\n' +
-    'Kun olet kysynyt riittävästi (vähintään 6 kysymystä, maksimissaan 10) ja sinulla on hyvä kuva käyttäjän tilanteesta, sano: ANALYYSI VALMIS ja tuota tämän jälkeen tarkalleen tässä rakenteessa:\n' +
-    '---ANALYYSI ALKAA---\n' +
-    'HAVAINTOSI:\n' +
-    '[2-3 lausetta siitä mitä opit käyttäjästä ja heidän suurimmista haasteistaan]\n' +
-    '7 SOVELLUS-IDEAA SINULLE:\n' +
-    'Idea 1: [Nimi] — [Yksi lause mitä sovellus tekee] — [Yksi lause miten se säästää aikaa]\n' +
-    'Idea 2: [Nimi] — [Yksi lause mitä sovellus tekee] — [Yksi lause miten se säästää aikaa]\n' +
-    'Idea 3: [Nimi] — [Yksi lause mitä sovellus tekee] — [Yksi lause miten se säästää aikaa]\n' +
-    'Idea 4: [Nimi] — [Yksi lause mitä sovellus tekee] — [Yksi lause miten se säästää aikaa]\n' +
-    'Idea 5: [Nimi] — [Yksi lause mitä sovellus tekee] — [Yksi lause miten se säästää aikaa]\n' +
-    'Idea 6: [Nimi] — [Yksi lause mitä sovellus tekee] — [Yksi lause miten se säästää aikaa]\n' +
-    'Idea 7: [Nimi] — [Yksi lause mitä sovellus tekee] — [Yksi lause miten se säästää aikaa]\n' +
-    '---ANALYYSI LOPPUU---\n' +
-    'Kirjoita suomeksi. Ole rehellinen ja konkreettinen. Ideoiden tulee olla erilaisia toisistaan — ei 7 variaatiota samasta ideasta. Vaihtele elämänalueita ja tyyppejä: työ, koti, harrastus, terveys, talous, opiskelu, perhe. Tyyppeinä esim. seurantatyökalut, generaattorit, laskurit, muistuttajat, analysoijat. Vähintään 2–3 ideaa saa olla selvästi työn ulkopuolelta jos käyttäjän vastaukset antavat siihen tilaa.\n\n' +
-    'Jos et ole vielä kysynyt 6 kysymystä, esitä vain seuraava kysymys — älä tuota analyysiä.';
+  var B44_SYS = [
+    'Olet innostunut ja lämmin innovaatiokonsultti. Haastattelet käyttäjää löytääksesi parhaan sovelluksen rakentamisen heidän elämänsä helpottamiseksi. Sinulla on tärkeä tehtävä: kaivaa esiin oikea ongelma joka kannattaa ratkaista.',
+    '',
+    'KRIITTISET OHJEET LYHYISIIN VASTAUKSIIN:',
+    'Jos käyttäjä vastaa yhdellä sanalla tai epäselvällä vastauksella — ÄLÄ jatka seuraavaan kysymykseen. Sen sijaan tee yksi näistä:',
+    '- Ehdota konkreettinen esimerkki: "Tarkoitatko esimerkiksi sitä, että..."',
+    '- Kuvaile tilanne: "Kuvittele tilanne: tulet kotiin töistä ja..."',
+    '- Käänny eri kulmasta: "Kerrotko tarkemmin — tarkoitatko X vai Y?"',
+    '- Käytä huumoria kevyesti jos tunnelma on jäinen: "Okei, koti — se on laaja käsite! Onko se enemmän kaaos vai pelkkä aika?"',
+    'Sinulla on lupa haastaa ja uudelleenkysyä. Et saa luovuttaa alle 6 hyvän vastauksen jälkeen.',
+    '',
+    'HAASTATTELU — maksimissaan 10 kysymystä, minimissään 6 HYVÄÄ vastausta:',
+    'Vaihe 1 — Elämänalue (1-2 kysymystä): Missä elämänalueessa on eniten toistuvaa työtä tai turhautumista? Työ, koti, harrastukset, talous, terveys?',
+    'Vaihe 2 — Konkreettinen tilanne (2-3 kysymystä): Kuvaile viime viikon konkreettinen hetki. Mitä tapahtui? Mitä teit? Mitä haluaisit olisi tapahtunut?',
+    'Vaihe 3 — Aika ja toistuvuus (1-2 kysymystä): Kuinka usein tämä tapahtuu? Paljonko aikaa menee? Mikä ärsyttää eniten?',
+    'Vaihe 4 — Unelmaratkaisu (1 kysymys): Jos olisi taikasauva — mitä se tekisi?',
+    '',
+    'MILLOIN GENEROIDA IDEAT:',
+    'Vasta kun sinulla on vähintään 6 konkreettista vastausta jotka kertovat jotain oikeaa tästä ihmisestä — ei ennen. Yleiset vastaukset kuten "koti" tai "ok" eivät laske vastauksiksi.',
+    '',
+    'Kun olet valmis, kirjoita TÄSMÄLLEEN tässä muodossa ilman poikkeamia:',
+    '',
+    '---ANALYYSI ALKAA---',
+    'HAVAINTOSI: [2-3 lausetta — henkilökohtainen, viittaa konkreettisiin asioihin joita he kertoivat. Jos et saanut tarpeeksi tietoa, kirjoita rehellisesti: Sain rajallisesti tietoa, mutta tässä on ideoita sen perusteella mitä kerroit]',
+    '',
+    'IDEA 1: [Nimi] | [Mitä tekee — konkreettinen lause] | [Miten säästää aikaa — numero tai tilanne]',
+    'IDEA 2: [Nimi] | [Mitä tekee — konkreettinen lause] | [Miten säästää aikaa — numero tai tilanne]',
+    'IDEA 3: [Nimi] | [Mitä tekee — konkreettinen lause] | [Miten säästää aikaa — numero tai tilanne]',
+    'IDEA 4: [Nimi] | [Mitä tekee — konkreettinen lause] | [Miten säästää aikaa — numero tai tilanne]',
+    'IDEA 5: [Nimi] | [Mitä tekee — konkreettinen lause] | [Miten säästää aikaa — numero tai tilanne]',
+    'IDEA 6: [Nimi] | [Mitä tekee — konkreettinen lause] | [Miten säästää aikaa — numero tai tilanne]',
+    'IDEA 7: [Nimi] | [Mitä tekee — konkreettinen lause] | [Miten säästää aikaa — numero tai tilanne]',
+    '---ANALYYSI LOPPUU---',
+    '',
+    'IDEOIDEN LAATU:',
+    'Ideat tulee perustua suoraan siihen mitä käyttäjä kertoi — ei geneerisiä ideoita. Eri tyypit: seurantatyökalu, muistuttaja, generaattori, laskuri, dashboard, lomaketyökalu, analysoija. Ei kahta samantyyppistä ideaa. Kirjoita suomeksi.',
+    '',
+    'Jos et ole vielä saanut 6 hyvää vastausta, esitä vain yksi seuraava kysymys tai tarkennus — älä tuota analyysiä.'
+  ].join('\n');
 
   var b44Thread = [];
   var b44AnalysisShown = false;
@@ -120,6 +125,24 @@
       });
   }
 
+  function parseIdeaLine(rest) {
+    var parts = rest.split(/\s*\|\s*/);
+    if (parts.length >= 3) {
+      return { name: parts[0].trim(), does: parts[1].trim(), saves: parts[2].trim() };
+    }
+    if (parts.length === 2) {
+      return { name: parts[0].trim(), does: parts[1].trim(), saves: '' };
+    }
+    parts = rest.split(/\s*—\s*/);
+    if (parts.length >= 3) {
+      return { name: parts[0].trim(), does: parts[1].trim(), saves: parts[2].trim() };
+    }
+    if (parts.length === 2) {
+      return { name: parts[0].trim(), does: parts[1].trim(), saves: '' };
+    }
+    return null;
+  }
+
   function parseIdeas(fullText) {
     var start = fullText.indexOf('---ANALYYSI ALKAA---');
     var end = fullText.indexOf('---ANALYYSI LOPPUU---');
@@ -127,25 +150,34 @@
     var block = fullText.slice(start + '---ANALYYSI ALKAA---'.length, end);
     var ideas = [];
     var lines = block.split('\n');
-    var re = /^Idea\s*(\d+)\s*:\s*(.+)$/i;
+    var re = /^IDEA\s*(\d+)\s*:\s*(.+)$/i;
     for (var i = 0; i < lines.length; i++) {
       var m = lines[i].trim().match(re);
       if (!m) continue;
-      var rest = m[2];
-      var parts = rest.split(/\s*—\s*/);
-      if (parts.length >= 3) {
-        ideas.push({ n: parseInt(m[1], 10), name: parts[0].trim(), does: parts[1].trim(), saves: parts[2].trim() });
-      } else if (parts.length === 2) {
-        ideas.push({ n: parseInt(m[1], 10), name: parts[0].trim(), does: parts[1].trim(), saves: '' });
-      }
+      var parsed = parseIdeaLine(m[2]);
+      if (!parsed) continue;
+      ideas.push({
+        n: parseInt(m[1], 10),
+        name: parsed.name,
+        does: parsed.does,
+        saves: parsed.saves
+      });
     }
     return ideas;
+  }
+
+  function clearB44S3Fields() {
+    ['b44InData', 'b44InActions', 'b44InWho', 'b44InMust'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
   }
 
   function displayChatReply(raw) {
     if (raw.indexOf('---ANALYYSI ALKAA---') >= 0 && !b44AnalysisShown) {
       b44AnalysisShown = true;
       var pre = raw.split('---ANALYYSI ALKAA---')[0].trim();
+      pre = pre.replace(/\bANALYYSI\s+VALMIS\b\.?/gi, '').trim();
       var shortMsg = pre ? pre + '\n\n✓ Analyysi valmis — valitse yksi idea alta.' : '✓ Analyysi valmis — valitse yksi idea alta.';
       addChat(shortMsg, false);
       var ideas = parseIdeas(raw);
@@ -175,6 +207,7 @@
         [].forEach.call(box.querySelectorAll('.b44-idea-card'), function (el) { el.classList.remove('selected'); });
         card.classList.add('selected');
         B44_STATE.selectedIdea = idea;
+        clearB44S3Fields();
         document.getElementById('b44ContinueBtn').disabled = false;
         syncSelectedIdeaBox();
       };
@@ -200,6 +233,7 @@
     var btn = document.getElementById('b44StartInterviewBtn');
     if (btn) btn.style.display = 'none';
     B44_STATE.selectedIdea = null;
+    clearB44S3Fields();
     syncSelectedIdeaBox();
     b44Thread = [];
     b44AnalysisShown = false;
@@ -342,6 +376,22 @@
     if (m) { m.style.display = 'block'; }
   };
 
+  function refreshMilestoneCelebration() {
+    var u = B44_STATE.appUrl || '';
+    var card = document.getElementById('b44MilestoneCard');
+    var link = document.getElementById('b44CelebrateLink');
+    if (!card) return;
+    if (u) {
+      card.style.display = 'block';
+      if (link) {
+        link.href = u.indexOf('http') === 0 ? u : 'https://' + u;
+        link.textContent = u;
+      }
+    } else {
+      card.style.display = 'none';
+    }
+  }
+
   window.b44SaveAppUrl = function () {
     var u = document.getElementById('b44AppUrl').value.trim();
     if (!u) { alert('Liitä sovelluksesi URL.'); return; }
@@ -349,11 +399,7 @@
     try { localStorage.setItem('b44_app_url', u); } catch (e) {}
     var m = document.getElementById('b44UrlOk');
     if (m) m.style.display = 'block';
-    var link = document.getElementById('b44CelebrateLink');
-    if (link) {
-      link.href = u.indexOf('http') === 0 ? u : 'https://' + u;
-      link.textContent = u;
-    }
+    refreshMilestoneCelebration();
   };
 
   window.b44CopyFix = function (el) {
@@ -363,9 +409,27 @@
     setTimeout(function () { el.style.borderColor = ''; }, 1200);
   };
 
-  window.b44ChallengeCheck = function () {
-    var c = document.getElementById('b44ChallengeCb');
-    var m = document.getElementById('b44ChallengeMsg');
+  window.b44CopyFixPre = function (btn, preId) {
+    var pre = document.getElementById(preId);
+    if (!pre) return;
+    var t = (pre.textContent || '').trim();
+    if (!t) return;
+    var label = btn.getAttribute('data-label') || '📋 Kopioi';
+    navigator.clipboard.writeText(t).then(function () {
+      btn.textContent = 'Kopioitu!';
+      setTimeout(function () { btn.textContent = label; }, 2000);
+    });
+  };
+
+  window.b44ShareDoneCheck = function () {
+    var c = document.getElementById('b44ShareDoneCb');
+    var m = document.getElementById('b44ShareDoneMsg');
+    if (m && c) m.style.display = c.checked ? 'block' : 'none';
+  };
+
+  window.b44WeekChallengeCheck = function () {
+    var c = document.getElementById('b44WeekChallengeCb');
+    var m = document.getElementById('b44WeekChallengeMsg');
     if (m && c) m.style.display = c.checked ? 'block' : 'none';
   };
 
@@ -378,6 +442,16 @@
       return;
     }
     var combined = '1) Mikä yllätti:\n' + r1 + '\n\n2) Ongelma ja aikasäästö:\n' + r2 + '\n\n3) Toinen sovellusidea:\n' + r3;
+    var shareToEl = document.getElementById('b44ShareTo');
+    var shareDone = document.getElementById('b44ShareDoneCb');
+    var weekCh = document.getElementById('b44WeekChallengeCb');
+    var shareTo = shareToEl ? shareToEl.value.trim() : '';
+    if (shareTo || (shareDone && shareDone.checked)) {
+      combined += '\n\n4) Jako ja palaute:\nKenelle: ' + (shareTo || '—') + '\nLähetin linkin: ' + (shareDone && shareDone.checked ? 'kyllä' : 'ei');
+    }
+    if (weekCh && weekCh.checked) {
+      combined += '\n\n5) Viikon haaste: otin vastaan';
+    }
     var hidden = document.getElementById('reflectionText');
     if (hidden) hidden.value = combined;
     window.saveReflectionToAPI('moduuli-visibility-growth-automation');
@@ -404,6 +478,7 @@
         }
       }
     } catch (e) {}
+    refreshMilestoneCelebration();
     if (window.loadReflection) {
       window.loadReflection('moduuli-visibility-growth-automation');
       setTimeout(function () {
@@ -413,7 +488,12 @@
         var p2 = p1[1] && p1[1].split(/\n\n3\) Toinen sovellusidea:/);
         if (p1[0]) document.getElementById('b44Refl1').value = p1[0].replace(/^1\) Mikä yllätti:\s*\n?/, '').trim();
         if (p2 && p2[0]) document.getElementById('b44Refl2').value = p2[0].trim();
-        if (p2 && p2[1]) document.getElementById('b44Refl3').value = p2[1].trim();
+        if (p2 && p2[1]) {
+          var r3rest = p2[1].trim();
+          var cut = r3rest.indexOf('\n\n4) Jako ja palaute:');
+          if (cut >= 0) r3rest = r3rest.substring(0, cut).trim();
+          document.getElementById('b44Refl3').value = r3rest;
+        }
       }, 500);
     }
   });
