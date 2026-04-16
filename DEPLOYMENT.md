@@ -16,16 +16,24 @@ Once deployed, your clients will access the platform at:
 
 ### Required Environment Variables:
 
+Use placeholders — paste your own secrets from Neon, OpenAI, and `openssl rand -hex 32`:
+
 ```
-DATABASE_URL=postgresql://neondb_owner:npg_SGLOZcV8g9IW@ep-icy-river-ag1c7fpx-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 ```
 
 ```
-SESSION_SECRET=fa9fd10339fba621a8354f947ad4531990eded7653c2fa059a345d07daeecb51
+SESSION_SECRET=your-long-random-string-from-openssl-rand-hex-32
 ```
 
 ```
-OPENAI_API_KEY=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
+OPENAI_API_KEY=sk-proj-...your-key-from-platform.openai.com-api-keys
+```
+
+Optional (Claude API + server-side fallback when Anthropic is overloaded):
+
+```
+ANTHROPIC_API_KEY=sk-ant-api03-...
 ```
 
 ```

@@ -2,6 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { fetch } = require('undici');
 
+/** Read env var and trim whitespace/newlines (common copy-paste issue). */
+function envTrim(name) {
+  const v = process.env[name];
+  if (v == null) return '';
+  return String(v).trim();
+}
+
 // OpenAI API endpoint for chat (no authentication required)
 router.post('/chat', async (req, res) => {
   try {
@@ -11,7 +18,7 @@ router.post('/chat', async (req, res) => {
       return res.status(400).json({ error: 'Messages array is required' });
     }
 
-    const openaiApiKey = process.env.OPENAI_API_KEY;
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
     if (!openaiApiKey) {
       console.error('OpenAI API key not configured');
       return res.status(500).json({ error: 'AI-palvelu ei ole käytettävissä. Ota yhteyttä opettajaan.' });
@@ -66,7 +73,7 @@ router.post('/chat', async (req, res) => {
 });
 
 async function callOpenAIFallback(messages, system, max_tokens, res) {
-  const openaiApiKey = process.env.OPENAI_API_KEY;
+  const openaiApiKey = envTrim('OPENAI_API_KEY');
   if (!openaiApiKey) {
     return res.status(503).json({
       error: 'Tekoälypalvelu ei ole juuri nyt saatavilla. Yritä hetken kuluttua uudelleen.'
@@ -113,7 +120,7 @@ router.post('/claude', async (req, res) => {
       return res.status(400).json({ error: 'Messages array is required' });
     }
 
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    const anthropicKey = envTrim('ANTHROPIC_API_KEY');
     if (!anthropicKey) {
       console.error('Anthropic API key not configured');
       return res.status(500).json({ error: 'Claude-palvelu ei ole käytettävissä.' });
@@ -200,7 +207,7 @@ router.post('/image', async (req, res) => {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    const openaiApiKey = process.env.OPENAI_API_KEY;
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
     if (!openaiApiKey) {
       console.error('OpenAI API key not configured');
       return res.status(500).json({ error: 'AI service not configured' });

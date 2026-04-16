@@ -5,6 +5,16 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
+// Help verify AI env locally (never log secret values)
+(function logAiEnvPresence() {
+  var o = (process.env.OPENAI_API_KEY || '').trim();
+  var a = (process.env.ANTHROPIC_API_KEY || '').trim();
+  if (process.env.NODE_ENV !== 'test') {
+    console.log('[env] OPENAI_API_KEY:', o ? 'configured' : 'MISSING');
+    console.log('[env] ANTHROPIC_API_KEY:', a ? 'configured' : 'optional, not set');
+  }
+})();
+
 const pool = require('./database/db');
 const authRoutes = require('./routes/auth');
 const progressRoutes = require('./routes/progress');

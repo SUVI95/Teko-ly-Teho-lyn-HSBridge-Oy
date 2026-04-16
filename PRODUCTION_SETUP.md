@@ -4,20 +4,22 @@
 
 Go to Vercel Dashboard → Your Project → Settings → Environment Variables
 
-Add these:
+Add these (replace with your real values — never commit secrets):
 
 ```
-DATABASE_URL=postgresql://neondb_owner:npg_SGLOZcV8g9IW@ep-icy-river-ag1c7fpx-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/db?sslmode=require
 
-SESSION_SECRET=fa9fd10339fba621a8354f947ad4531990eded7653c2fa059a345d07daeecb51
+SESSION_SECRET=generate-with-openssl-rand-hex-32
 
-OPENAI_API_KEY=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
+OPENAI_API_KEY=sk-proj-...from-OpenAI-dashboard
+
+ANTHROPIC_API_KEY=sk-ant-api03-...optional-for-Claude-endpoint
 
 NODE_ENV=production
 
 SETUP_TOKEN=your-secret-setup-token-here-change-this
 
-ADMIN_PASSWORD=admin123
+ADMIN_PASSWORD=use-a-strong-password
 ```
 
 **Important:** Generate a secure SETUP_TOKEN:
