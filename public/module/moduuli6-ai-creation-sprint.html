@@ -89,9 +89,14 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 .compare-input{width:100%;min-height:120px;padding:1rem 1.1rem;background:#fff;border:2px solid rgba(26,26,46,0.22);border-radius:10px;font-size:0.94rem;font-family:'DM Sans',sans-serif;color:var(--ink);line-height:1.65;resize:vertical;margin-top:0.35rem;box-shadow:0 2px 12px rgba(26,26,46,0.06);}
 .compare-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,168,0.12);}
 .compare-input-hint{font-size:0.82rem;color:var(--muted);margin-bottom:0.25rem;}
-.selected-prompt-wrap{margin-top:1.5rem;padding:1.35rem 1.5rem;background:var(--paper2);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);}
-.selected-prompt-wrap .prompt-label{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:600;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem;}
-.selected-prompt-wrap .prompt-title{font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:0.85rem;}
+.textarea-tall{min-height:130px;}
+.homework-task textarea.compare-input{display:block;width:100%;}
+.taskc-expand-panel{display:none;margin-top:1.25rem;padding:1.35rem 1.5rem;background:var(--paper2);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);}
+.taskc-expand-panel.is-open{display:block;animation:taskcPanelIn 0.28s ease;}
+@keyframes taskcPanelIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+.taskc-expand-panel .prompt-label{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:600;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem;}
+.taskc-expand-panel .prompt-title{font-size:1.05rem;font-weight:600;color:var(--ink);margin-bottom:0.65rem;}
+.taskc-prompt-readonly{font-family:'DM Mono',monospace;font-size:0.88rem;line-height:1.7;background:var(--paper);min-height:168px;cursor:text;}
 .highlight-instruction{background:rgba(37,99,168,0.07);border:1px solid rgba(37,99,168,0.18);border-radius:10px;padding:1rem 1.2rem;margin-top:1rem;font-size:0.92rem;line-height:1.75;color:var(--text);}
 .submit-section{background:#fff;border-radius:16px;padding:2.5rem;border:1px solid var(--border);box-shadow:var(--shadow-md);}
 .submit-section h3{font-family:'DM Serif Display',serif;font-size:1.35rem;font-weight:400;color:var(--ink);margin-bottom:1.5rem;}
@@ -361,11 +366,11 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
         <div class="select-card" data-title="Sisäinen tiedote" data-prompt="Kirjoita sisäinen tiedote tiimille. Viesti: otamme käyttöön uuden AI-työkalun ensi viikolla. Kerro miksi, mitä se tarkoittaa käytännössä ja mitä tehdä seuraavaksi. Max 5 lausetta. Suomeksi." onclick="selectPromptCard('taskCPrompts', this)">📢 Sisäinen tiedote</div>
         <div class="select-card" data-title="Myyntipuhe" data-prompt="Kirjoita 3 lauseen myyntipuhe suomeksi. Palvelu: [palvelu]. Asiakas: [kohderyhmä]. Hyöty: [mitä asiakas saa]. Aloita asiakkaan ongelmasta, ei omasta palvelusta." onclick="selectPromptCard('taskCPrompts', this)">🚀 Myyntipuhe</div>
       </div>
-      <div id="selectedPromptBox" class="selected-prompt-wrap" style="display:none;">
-        <div class="prompt-label">Valitsemasi prompti</div>
-        <div class="prompt-title" id="selectedPromptTitle"></div>
-        <div class="prompt-box" id="selectedPromptText"></div>
-        <button type="button" class="copy-prompt-btn" onclick="copyBox('selectedPromptText', this)">📋 Kopioi prompti</button>
+      <div id="taskCExpandPanel" class="taskc-expand-panel" role="region" aria-labelledby="taskCExpandTitle">
+        <div class="prompt-label">Kopioitava promptti — täysi teksti</div>
+        <div class="prompt-title" id="taskCExpandTitle"></div>
+        <textarea id="taskCPromptFull" class="compare-input taskc-prompt-readonly textarea-tall" rows="8" readonly spellcheck="false" aria-label="Valitun tilanteen koko promptti"></textarea>
+        <button type="button" class="copy-prompt-btn" onclick="copyTaskCPromptFull(this)">📋 Kopioi prompti</button>
       </div>
     </div>
 
@@ -396,17 +401,21 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 
     <div class="homework-task">
       <h4>Vaihe 3 — Vertaile</h4>
+      <p class="step-instruction" style="margin-bottom:1rem;">Vastaa jokaiseen kysymykseen omalla tekstilläsi.</p>
       <div class="question-group">
         <label for="compare1">Kumpi vastaus oli pitempi tai lyhyempi — ja kummasta pidät?</label>
-        <textarea id="compare1" class="compare-input" rows="4"></textarea>
+        <p class="compare-input-hint">Kirjoita vastauksesi alle.</p>
+        <textarea id="compare1" class="compare-input textarea-tall" rows="5" placeholder="Kirjoita tähän..."></textarea>
       </div>
       <div class="question-group">
         <label for="compare2">Kumpi kuulosti luonnollisemmalta suomelta?</label>
-        <textarea id="compare2" class="compare-input" rows="4"></textarea>
+        <p class="compare-input-hint">Kirjoita vastauksesi alle.</p>
+        <textarea id="compare2" class="compare-input textarea-tall" rows="5" placeholder="Kirjoita tähän..."></textarea>
       </div>
       <div class="question-group">
         <label for="compare3">Kumpaa käyttäisit suoraan ilman muokkauksia — ja miksi?</label>
-        <textarea id="compare3" class="compare-input" rows="4"></textarea>
+        <p class="compare-input-hint">Kirjoita vastauksesi alle.</p>
+        <textarea id="compare3" class="compare-input textarea-tall" rows="5" placeholder="Kirjoita tähän..."></textarea>
       </div>
     </div>
 
@@ -610,16 +619,30 @@ function selectTaskATopic(card) {
   taskATopic = card.getAttribute('data-topic') || '';
 }
 
+function copyTaskCPromptFull(btn) {
+  var ta = document.getElementById('taskCPromptFull');
+  if (!ta) return;
+  navigator.clipboard.writeText(ta.value || '').then(function() {
+    var old = btn.textContent;
+    btn.textContent = '✓ Kopioitu!';
+    btn.classList.add('ok');
+    setTimeout(function() { btn.textContent = old; btn.classList.remove('ok'); }, 2200);
+  });
+}
+
 function selectPromptCard(gridId, card) {
   document.querySelectorAll('#' + gridId + ' .select-card').forEach(function(c) { c.classList.remove('selected'); });
   card.classList.add('selected');
   var prompt = card.getAttribute('data-prompt') || '';
   var title = card.getAttribute('data-title') || '';
-  document.getElementById('selectedPromptTitle').textContent = title;
-  document.getElementById('selectedPromptText').textContent = prompt;
-  var box = document.getElementById('selectedPromptBox');
-  box.style.display = 'block';
-  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.getElementById('taskCExpandTitle').textContent = title;
+  var ta = document.getElementById('taskCPromptFull');
+  if (ta) ta.value = prompt;
+  var panel = document.getElementById('taskCExpandPanel');
+  if (panel) {
+    panel.classList.add('is-open');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 }
 
 function val(id) {
