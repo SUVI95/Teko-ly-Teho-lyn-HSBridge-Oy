@@ -37,7 +37,35 @@
 
   var b44Thread = [];
   var b44AnalysisShown = false;
-  var B44_STATE = { selectedIdea: null, basePrompt: '', refinedPrompt: '', appUrl: '', device: 'Molemmat' };
+  var B44_STATE = { selectedIdea: null, basePrompt: '', refinedPrompt: '', appUrl: '', device: 'Molemmat', promptReady: false };
+
+  function refreshS3IdeaPanel() {
+    var card = document.getElementById('b44S3IdeaCard');
+    var empty = document.getElementById('b44S3IdeaEmpty');
+    if (!card || !empty) return;
+    var i = B44_STATE.selectedIdea;
+    if (!i) {
+      empty.style.display = 'block';
+      card.style.display = 'none';
+      return;
+    }
+    empty.style.display = 'none';
+    card.style.display = 'block';
+    var nm = document.getElementById('b44S3IdeaName');
+    var dc = document.getElementById('b44S3IdeaDesc');
+    var sv = document.getElementById('b44S3IdeaSaves');
+    if (nm) nm.textContent = i.name || '';
+    if (dc) dc.textContent = i.does || '';
+    if (sv) {
+      if (i.saves) {
+        sv.textContent = i.saves;
+        sv.style.display = 'block';
+      } else {
+        sv.textContent = '';
+        sv.style.display = 'none';
+      }
+    }
+  }
 
   function getApiBase() {
     var pathname = window.location.pathname || '';
@@ -155,9 +183,15 @@
   }
 
   function syncSelectedIdeaBox() {
+    refreshS3IdeaPanel();
     var el = document.getElementById('b44SelectedIdeaBox');
-    if (!el || !B44_STATE.selectedIdea) return;
+    if (!el) return;
     var i = B44_STATE.selectedIdea;
+    if (!i) {
+      el.innerHTML = '';
+      el.style.display = 'none';
+      return;
+    }
     el.innerHTML = '<strong>' + escapeHtml(i.name) + '</strong><br>' + escapeHtml(i.does) + (i.saves ? '<br><em style="color:var(--accent3);">' + escapeHtml(i.saves) + '</em>' : '');
     el.style.display = 'block';
   }
@@ -165,6 +199,8 @@
   window.b44StartInterview = function () {
     var btn = document.getElementById('b44StartInterviewBtn');
     if (btn) btn.style.display = 'none';
+    B44_STATE.selectedIdea = null;
+    syncSelectedIdeaBox();
     b44Thread = [];
     b44AnalysisShown = false;
     document.getElementById('b44Chat').innerHTML = '';
@@ -253,22 +289,48 @@
       'Kirjoita prompt englanniksi koska Base44 toimii parhaiten englanniksi. Promptin tulee olla niin yksityiskohtainen että Base44 rakentaa täydellisen toimivan sovelluksen ensimmäisellä yrityksellä. Älä kirjoita ohjeita miten käyttää promptia — kirjoita vain prompt itse.';
 
     var out = document.getElementById('b44PromptOut');
+    var post = document.getElementById('b44PromptPostGen');
+    B44_STATE.promptReady = false;
+    if (post) post.style.display = 'none';
     out.textContent = '…';
     openAiSingle(sys, ctx, 3500).then(function (text) {
       out.textContent = text;
       B44_STATE.basePrompt = text;
+      B44_STATE.promptReady = true;
+      if (post) post.style.display = 'block';
     }).catch(function (e) {
       out.textContent = 'Virhe: ' + e.message;
+      B44_STATE.promptReady = false;
+      if (post) post.style.display = 'none';
     });
   };
 
   window.b44CopyPrompt = function (btn) {
     var t = document.getElementById('b44PromptOut').textContent;
-    if (!t || t === '…') return;
+    if (!t || t === '…' || !B44_STATE.promptReady) return;
     navigator.clipboard.writeText(t).then(function () {
       btn.textContent = '✓ Kopioitu!';
-      setTimeout(function () { btn.textContent = '📋 Kopioi Base44-pohja'; }, 2200);
+      setTimeout(function () { btn.textContent = '📋 Kopioi rakennusohje'; }, 2200);
     });
+  };
+
+  window.b44CopyChatgptTemplate = function (el) {
+    var prev = el.textContent;
+    var t = (prev || '').trim();
+    if (!t) return;
+    navigator.clipboard.writeText(t).then(function () {
+      el.textContent = '✓ Kopioitu leikepöydälle!';
+      el.style.borderColor = 'var(--accent)';
+      setTimeout(function () {
+        el.textContent = prev;
+        el.style.borderColor = '';
+      }, 2000);
+    });
+  };
+
+  window.b44GoToBuild = function () {
+    var sec = document.getElementById('b44-rakennus');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   window.b44SaveRefined = function () {
@@ -322,6 +384,7 @@
   };
 
   document.addEventListener('DOMContentLoaded', function () {
+    refreshS3IdeaPanel();
     try {
       var rp = localStorage.getItem('b44_refined_prompt');
       if (rp) {

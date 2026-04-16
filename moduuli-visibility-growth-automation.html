@@ -87,6 +87,35 @@ h1.hero-title em{font-style:italic;color:#a78bfa;}
 .challenge-box label{display:flex;align-items:flex-start;gap:0.6rem;font-size:0.88rem;cursor:pointer;color:rgba(255,255,255,0.75);}
 #b44ChallengeMsg{display:none;margin-top:0.75rem;font-size:0.88rem;color:#a78bfa;line-height:1.6;}
 
+.b44-s3-steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0;}
+@media(max-width:768px){.b44-s3-steps-grid{grid-template-columns:1fr;}}
+.b44-s3-step{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.1rem;box-shadow:var(--shadow);}
+.b44-s3-step-icon{font-size:1.75rem;line-height:1;margin-bottom:0.65rem;}
+.b44-s3-step-title{font-family:'DM Serif Display',serif;font-size:1.05rem;font-weight:400;color:var(--ink);margin:0 0 0.5rem;line-height:1.25;}
+.b44-s3-step-body{font-size:0.85rem;color:var(--muted);line-height:1.6;margin:0;}
+.b44-s3-idea-wrap{margin:1.75rem 0;}
+.b44-s3-empty{display:block;text-align:center;padding:2rem 1.25rem;border:2px dashed rgba(124,58,237,0.35);border-radius:12px;background:rgba(124,58,237,0.04);}
+.b44-s3-empty p{color:var(--muted);margin-bottom:1rem;line-height:1.65;}
+.b44-s3-idea-card{display:none;background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(37,99,168,0.06));border:1px solid rgba(124,58,237,0.28);border-radius:12px;padding:1.5rem 1.75rem;}
+.b44-s3-idea-label{display:block;font-size:0.72rem;font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;}
+.b44-s3-idea-name{font-family:'DM Serif Display',serif;font-size:clamp(1.35rem,3vw,1.75rem);font-weight:400;color:var(--ink);line-height:1.2;margin:0 0 0.65rem;}
+.b44-s3-idea-desc{font-size:0.95rem;color:var(--text);line-height:1.65;margin:0 0 0.75rem;}
+.b44-s3-idea-saves{font-size:0.92rem;color:#15803d;font-weight:500;line-height:1.55;margin:0;}
+.b44-field-helper{font-size:0.8rem;color:var(--muted);line-height:1.5;margin:-0.35rem 0 0.65rem;}
+.b44-btn-hint{font-size:0.8rem;color:var(--muted);margin-top:0.65rem;line-height:1.5;}
+.b44-prompt-postgen{display:none;font-size:0.88rem;color:var(--text);line-height:1.65;margin:0 0 0.75rem;padding:1rem 1.15rem;background:var(--paper2);border:1px solid var(--border);border-radius:10px;}
+.b44-chatgpt-details{margin-top:1.75rem;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden;box-shadow:var(--shadow);}
+.b44-chatgpt-details summary{cursor:pointer;list-style:none;padding:1rem 1.25rem;font-weight:600;font-size:0.92rem;color:var(--ink);background:var(--paper2);display:flex;align-items:center;justify-content:space-between;gap:0.75rem;}
+.b44-chatgpt-details summary::-webkit-details-marker{display:none;}
+.b44-chatgpt-details summary::after{content:'▸';font-size:0.85rem;color:var(--muted);transition:transform 0.2s;}
+.b44-chatgpt-details[open] summary::after{transform:rotate(90deg);}
+.b44-chatgpt-body{padding:1.25rem 1.25rem 1.5rem;}
+.b44-chatgpt-body .framing-box{margin-top:0;}
+.b44-template-box{font-size:0.82rem;line-height:1.6;color:var(--text);white-space:pre-wrap;word-break:break-word;}
+.b44-cta-build{margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);text-align:center;}
+.b44-cta-build .practice-btn{padding:14px 32px;font-size:0.95rem;}
+.b44-cta-sub{font-size:0.8rem;color:var(--muted);margin-top:0.75rem;line-height:1.5;}
+
 .framing-box{background:#fff;border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:1.25rem 1.5rem;margin:2rem 0;box-shadow:var(--shadow);font-size:0.92rem;line-height:1.7;color:var(--text);}
 .path-steps-flow{display:flex;gap:0.85rem;margin:2rem 0;overflow-x:auto;padding-bottom:0.35rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
 .path-steps-flow::-webkit-scrollbar{height:6px;}
@@ -266,58 +295,118 @@ h1.hero-title em{font-style:italic;color:#a78bfa;}
         <button type="button" class="practice-btn" id="b44SendBtn" onclick="b44SendChat()" disabled>Lähetä</button>
       </div>
     </div>
-    <p class="prose" id="b44IdeaInstr" style="display:none;margin-top:1.25rem;"><strong>Valitse yksi idea</strong> ja jatka prompttiosioon.</p>
+    <p class="prose" id="b44IdeaInstr" style="display:none;margin-top:1.25rem;"><strong>Valitse yksi idea</strong> ja jatka rakennusohjeeseen (Osa 3).</p>
     <div class="b44-idea-grid" id="b44IdeaCards"></div>
     <div id="b44SelectedIdeaBox" class="b44-selected-box"></div>
-    <button type="button" class="practice-btn" id="b44ContinueBtn" style="margin-top:1.25rem;" onclick="b44ContinueToPrompt()" disabled>Jatka prompttiin →</button>
+    <button type="button" class="practice-btn" id="b44ContinueBtn" style="margin-top:1.25rem;" onclick="b44ContinueToPrompt()" disabled>Jatka rakennusohjeeseen →</button>
   </div>
 </section>
 
 <section class="section" id="s3-prompt" data-index="3">
   <div class="section-inner fade-up">
-    <div class="section-label">Osa 3 — Promptti</div>
-    <h2 class="section-h2">ChatGPT <em>tarkentaa</em>, Base44 <em>rakentaa</em></h2>
+    <div class="section-label">Osa 3 — Rakennusohje</div>
+    <h2 class="section-h2">Muuta idea <em>rakennusohjeeksi</em></h2>
     <div class="divider"></div>
-    <div class="b44-flow">
-      <span class="b44-flow-node">Valittu idea</span>
-      <span class="b44-flow-arrow">→</span>
-      <span class="b44-flow-node">Kentät</span>
-      <span class="b44-flow-arrow">→</span>
-      <span class="b44-flow-node">OpenAI-promptti (EN)</span>
-      <span class="b44-flow-arrow">→</span>
-      <span class="b44-flow-node">ChatGPT</span>
-      <span class="b44-flow-arrow">→</span>
-      <span class="b44-flow-node">Base44</span>
+    <p class="lead">Base44 rakentaa sen mitä sille kerrotaan — ei enempää, ei vähempää. Tässä osiossa muutat valitsemasi idean tarkaksi tekniseksi ohjeeksi jota Base44 ymmärtää.</p>
+
+    <div class="b44-s3-steps-grid" aria-label="Mitä tässä osiossa tapahtuu">
+      <div class="b44-s3-step">
+        <div class="b44-s3-step-icon" aria-hidden="true">📝</div>
+        <h3 class="b44-s3-step-title">Täydennät 4 kenttää</h3>
+        <p class="b44-s3-step-body">Tarkennat ideaasi — mitä sovellus tekee, kenelle ja mikä on tärkein ominaisuus</p>
+      </div>
+      <div class="b44-s3-step">
+        <div class="b44-s3-step-icon" aria-hidden="true">⚡</div>
+        <h3 class="b44-s3-step-title">Sivusto luo ohjeen</h3>
+        <p class="b44-s3-step-body">OpenAI yhdistää haastattelusi ja kenttävastauksesi yhdeksi valmiiksi rakennusohjeeksi englanniksi</p>
+      </div>
+      <div class="b44-s3-step">
+        <div class="b44-s3-step-icon" aria-hidden="true">🏗️</div>
+        <h3 class="b44-s3-step-title">Viet Base44:ään</h3>
+        <p class="b44-s3-step-body">Kopioit ohjeen ja liität sen Base44:ään — sovellus rakentuu automaattisesti</p>
+      </div>
     </div>
-    <p class="lead">Täydennä neljä kenttää — ne täsmentävät valittua ideaa. Paina <strong>Luo Base44-promptti</strong>; järjestelmä kutsuu OpenAI:a ja tuottaa valmiin englanninkielisen promptin teknisine vaatimuksineen.</p>
-    <p class="practice-label">Päälaite</p>
-    <div class="b44-chip-row">
-      <button type="button" class="b44-chip active" data-dev="Molemmat" onclick="b44SetDevice('Molemmat')">Molemmat</button>
-      <button type="button" class="b44-chip" data-dev="Puhelin ensisijainen" onclick="b44SetDevice('Puhelin ensisijainen')">Puhelin ensisijainen</button>
-      <button type="button" class="b44-chip" data-dev="Tietokone ensisijainen" onclick="b44SetDevice('Tietokone ensisijainen')">Tietokone ensisijainen</button>
+
+    <div class="framing-box">Miksi englanniksi? Base44 ja muut rakennustyökalut toimivat parhaiten englanninkielisillä ohjeilla. Sinä täytät kentät suomeksi — sivusto kääntää automaattisesti.</div>
+
+    <div class="b44-s3-idea-wrap">
+      <div id="b44S3IdeaEmpty" class="b44-s3-empty">
+        <p>Palaa Osa 2:een ja valitse idea ensin.</p>
+        <a href="#b44-haastattelu" class="practice-btn" style="display:inline-flex;text-decoration:none;">← Takaisin haastatteluun</a>
+      </div>
+      <div id="b44S3IdeaCard" class="b44-s3-idea-card">
+        <span class="b44-s3-idea-label">Valitsemasi idea:</span>
+        <h3 id="b44S3IdeaName" class="b44-s3-idea-name"></h3>
+        <p id="b44S3IdeaDesc" class="b44-s3-idea-desc"></p>
+        <p id="b44S3IdeaSaves" class="b44-s3-idea-saves"></p>
+      </div>
     </div>
+
     <div class="tool-card">
-      <p class="practice-label">1) Mitä tietoa käsitellään?</p>
-      <textarea class="practice-textarea" id="b44InData" rows="3" placeholder="Esim. asiakaslista, tehtävät, mittarit…"></textarea>
-      <p class="practice-label">2) Mitä käyttäjä tekee sovelluksella?</p>
-      <textarea class="practice-textarea" id="b44InActions" rows="3" placeholder="Lisää, muokkaa, suodata, vienti…"></textarea>
-      <p class="practice-label">3) Kenelle sovellus on?</p>
-      <textarea class="practice-textarea" id="b44InWho" rows="2" placeholder="Sinä, tiimi, asiakas…"></textarea>
-      <p class="practice-label">4) Tärkein ominaisuus (yksi asia)</p>
-      <textarea class="practice-textarea" id="b44InMust" rows="2" placeholder="Esim. nopea haku, muistutus, yksi näkymä…"></textarea>
-      <button type="button" class="practice-btn" onclick="b44BuildPrompt()">Luo Base44-promptti (OpenAI)</button>
+      <p class="prose" style="margin-bottom:1.25rem;font-size:1rem;">Vastaa näihin neljään kysymykseen omasta ideastasi. Älä mieti liikaa — kirjoita ensimmäinen rehellinen vastaus.</p>
+
+      <p class="practice-label">Mitä tietoa sovellus tallentaa tai käsittelee?</p>
+      <p class="b44-field-helper">Esimerkiksi: asiakkaiden nimet, päivämäärät, tehtävät, summat, muistiinpanot</p>
+      <textarea class="practice-textarea" id="b44InData" rows="3" placeholder="Esim: Asiakkaiden nimet, puhelinnumerot, viimeisin yhteydenottopäivä ja seuraava muistutus"></textarea>
+
+      <p class="practice-label">Mitä käyttäjä tekee sovelluksella?</p>
+      <p class="b44-field-helper">Listaa konkreettiset toiminnot — lisää, poista, hae, merkitse tehtyä</p>
+      <textarea class="practice-textarea" id="b44InActions" rows="3" placeholder="Esim: Lisää uusi asiakas, merkitse tapaaminen tehdyksi, hae asiakkaan nimellä, näe kaikki myöhässä olevat seurannat"></textarea>
+
+      <p class="practice-label">Kenelle sovellus on?</p>
+      <p class="b44-field-helper">Vain sinulle, tiimillesi vai asiakkaillesi?</p>
+      <textarea class="practice-textarea" id="b44InWho" rows="2" placeholder="Esim: Vain minulle — henkilökohtainen työkalu päivittäiseen käyttöön"></textarea>
+
+      <p class="practice-label">Mikä on yksi asia jota ilman sovellus ei toimi?</p>
+      <p class="b44-field-helper">Jos voisit pitää vain yhden ominaisuuden — mikä se olisi?</p>
+      <textarea class="practice-textarea" id="b44InMust" rows="2" placeholder="Esim: Muistutukset — jos sovellus ei muistuta minua, käytän sitä kaksi kertaa ja unohdan"></textarea>
+
+      <p class="practice-label">Millä laitteella käytät sovellusta eniten?</p>
+      <div class="b44-chip-row">
+        <button type="button" class="b44-chip active" data-dev="Molemmat" onclick="b44SetDevice('Molemmat')">Molemmat</button>
+        <button type="button" class="b44-chip" data-dev="Puhelin ensisijainen" onclick="b44SetDevice('Puhelin ensisijainen')">Puhelin ensisijainen</button>
+        <button type="button" class="b44-chip" data-dev="Tietokone ensisijainen" onclick="b44SetDevice('Tietokone ensisijainen')">Tietokone ensisijainen</button>
+      </div>
+
+      <button type="button" class="practice-btn" onclick="b44BuildPrompt()">Luo rakennusohje</button>
+      <p class="b44-btn-hint">Tämä yhdistää haastatteluvastaukset ja kenttäsi yhdeksi valmiiksi ohjeeksi englanniksi — kestää noin 10 sekuntia</p>
     </div>
-    <p class="practice-label">Valmis promptti (kopioi)</p>
-    <pre class="b44-prompt-out" id="b44PromptOut">Painike luo promptin tähän.</pre>
+
+    <p class="practice-label" style="margin-top:1.75rem;">Valmis rakennusohje — lue läpi ennen kopioimista</p>
+    <p id="b44PromptPostGen" class="b44-prompt-postgen" role="status">Tämä on ohje jonka Base44 saa. Lue se läpi — tarkista että se kuvaa ideaasi oikein. Jos jokin puuttuu tai on väärin, voit muokata kenttiä ja luoda uudelleen.</p>
+    <pre class="b44-prompt-out" id="b44PromptOut">Ohje ilmestyy tähän kun painat «Luo rakennusohje».</pre>
     <div class="b44-copy-row">
-      <button type="button" class="practice-btn" onclick="b44CopyPrompt(this)">📋 Kopioi Base44-pohja</button>
+      <button type="button" class="practice-btn" id="b44CopyPromptBtn" onclick="b44CopyPrompt(this)">📋 Kopioi rakennusohje</button>
     </div>
-    <div class="b44-orange-card">
-      <h4>Vaihe ChatGPT:ssä (suositus)</h4>
-      <p class="prose" style="margin-bottom:0.75rem;font-size:0.9rem;">Liitä alla olevaan kenttään promptti, pyydä ChatGPT:tä tiukentamaan ja lyhentämään turhat kohdat, ja säilyttämään tekninen checklist. Kopioi parannettu versio Base44:ään.</p>
-      <textarea class="practice-textarea" id="b44RefinedPrompt" rows="8" placeholder="Liitä tähän ChatGPT:n parannettu englanninkielinen promptti…" style="background:#fff;color:var(--text);"></textarea>
-      <button type="button" class="practice-btn" style="margin-top:0.75rem;background:var(--accent2);" onclick="b44SaveRefined()">Tallenna viimeisin promptti (tallentuu selaimeen)</button>
-      <p class="ok-msg" id="b44RefinedOk">Tallennettu — voit palata tähän myöhemmin samalta laitteelta.</p>
+
+    <details class="b44-chatgpt-details">
+      <summary>⚡ Valinnainen: paranna ohjetta ChatGPT:ssä ennen rakentamista — suositeltu</summary>
+      <div class="b44-chatgpt-body">
+        <div class="framing-box" style="margin-bottom:1.25rem;">
+          <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">Miksi tämä kannattaa?</strong>
+          OpenAI:n luoma ohje on hyvä lähtökohta. ChatGPT voi tehdä siitä vielä paremman — tiukentaa epämääräisiä kohtia, lisätä puuttuvia yksityiskohtia ja varmistaa että kaikki toiminnallisuudet on kuvattu selkeästi. Tämä vie 3 minuuttia ja tekee sovelluksesta merkittävästi paremman.
+        </div>
+        <p class="practice-label">Kopioi tämä ChatGPT:hen ensin:</p>
+        <div class="copy-fix b44-template-box" tabindex="0" role="button" onclick="b44CopyChatgptTemplate(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();b44CopyChatgptTemplate(this);}">Parannat Base44-rakennusohjetta. Tehtäväsi: tiukenna epämääräiset kohdat, varmista että kaikki toiminnallisuudet on kuvattu konkreettisesti, säilytä tekninen checklist kokonaan, älä lyhennä teknisiä vaatimuksia. Paranna tämä ohje:
+[liitä rakennusohje tähän]</div>
+        <p class="b44-field-helper" style="margin-top:0.5rem;">Klikkaa laatikkoa kopioidaksesi mallin leikepöydälle — liitä sitten rakennusohje viestin loppuun ChatGPT:ssä.</p>
+        <ol class="prose" style="margin:1rem 0 1.25rem 1.1rem;font-size:0.9rem;line-height:1.7;">
+          <li>Kopioi yllä oleva viesti ChatGPT:hen</li>
+          <li>Liitä rakennusohjeesi sen perään</li>
+          <li>Lue ChatGPT:n parannettu versio läpi</li>
+          <li>Jos se on parempi — käytä sitä Base44:ssä</li>
+          <li>Jos alkuperäinen on parempi — käytä alkuperäistä</li>
+        </ol>
+        <p class="practice-label">Liitä parannettu versio tähän (valinnainen — tallentuu seuraavaan osioon)</p>
+        <textarea class="practice-textarea" id="b44RefinedPrompt" rows="8" placeholder="Liitä ChatGPT:n parannettu versio tähän jos käytit sitä…" style="background:var(--paper);color:var(--text);"></textarea>
+        <button type="button" class="practice-btn" style="margin-top:0.75rem;background:var(--accent2);" onclick="b44SaveRefined()">Tallenna parannettu ohje</button>
+        <p class="ok-msg" id="b44RefinedOk">Tallennettu — voit palata tähän myöhemmin samalta laitteelta.</p>
+      </div>
+    </details>
+
+    <div class="b44-cta-build">
+      <button type="button" class="practice-btn" onclick="b44GoToBuild()">Jatka rakentamiseen →</button>
+      <p class="b44-cta-sub">Vie rakennusohje Base44:ään — seuraavassa osiossa ohjataan askel askeleelta</p>
     </div>
   </div>
 </section>
@@ -411,7 +500,7 @@ document.querySelectorAll('.fade-up').forEach(el=>fadeObs.observe(el));
 </script>
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
-<script src="/js/base44-module.js?v=b44-2"></script>
+<script src="/js/base44-module.js?v=b44-3"></script>
 <script>
 fetch('/ai-chat-widget.html').then(r=>r.text()).then(html=>{document.body.insertAdjacentHTML('beforeend',html);}).catch(()=>{});
 </script>
