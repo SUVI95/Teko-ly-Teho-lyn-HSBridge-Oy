@@ -231,16 +231,21 @@
           d.onclick = function () {
             [].forEach.call(box.querySelectorAll('.pick-card'), function (x) { x.classList.remove('selected'); });
             d.classList.add('selected');
-            document.getElementById('pBio').value = b;
+            var ta = document.getElementById('pBio');
+            ta.value = b;
             savePortfolioField('bio', b);
             updateContentPreview();
+            ta.focus();
+            try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (e) {}
           };
           box.appendChild(d);
         });
         if (bios[0]) {
-          document.getElementById('pBio').value = bios[0];
+          var ta0 = document.getElementById('pBio');
+          ta0.value = bios[0];
           savePortfolioField('bio', bios[0]);
           updateContentPreview();
+          ta0.focus();
         }
       })
       .catch(function (e) { alert(e.message); })
