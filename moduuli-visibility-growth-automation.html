@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Näkyvyys, Kasvu & Automaatio — AI:n avulla ilman kokopäivätyötä</title>
+<title>Rakenna oma sovellus — Base44 | HS Bridge Oy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -17,7 +17,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;background:rgba(
 .nav-module{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.22);padding:4px 12px;border-radius:4px;}
 .nav-title{font-size:0.85rem;font-weight:500;color:var(--muted);}
 .nav-steps{display:flex;gap:5px;align-items:center;}
-.step-pip{width:28px;height:4px;border-radius:2px;background:var(--warm);transition:background 0.4s;cursor:pointer;}
+.step-pip{width:28px;height:4px;border-radius:2px;background:var(--warm);transition:background 0.4s;cursor:pointer;border:none;padding:0;font:inherit;}
 .step-pip.active{background:var(--accent);}
 .step-pip.done{background:var(--accent3);}
 .section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:96px 2rem 5rem;position:relative;}
@@ -46,8 +46,46 @@ h1.hero-title em{font-style:italic;color:#a78bfa;}
 .hero-sub{font-size:1.15rem;color:rgba(255,255,255,0.55);max-width:520px;line-height:1.75;margin-bottom:3rem;font-weight:300;}
 .hero-cta{display:inline-flex;align-items:center;gap:12px;background:var(--accent);color:#fff;padding:16px 36px;border-radius:6px;font-weight:600;font-size:0.95rem;cursor:pointer;text-decoration:none;transition:all 0.25s;}
 .hero-cta:hover{background:#6d28d9;transform:translateY(-2px);box-shadow:0 8px 24px rgba(124,58,237,0.35);}
-.hero-time{display:flex;align-items:center;gap:8px;margin-top:2rem;font-size:0.82rem;color:rgba(255,255,255,0.3);}
-.hero-time::before{content:'⏱';font-size:0.9rem;}
+
+.chat-container{max-height:420px;overflow-y:auto;padding:1rem 0;display:flex;flex-direction:column;gap:0.75rem;}
+.chat-msg{display:flex;width:100%;}
+.chat-msg.user{justify-content:flex-end;}
+.chat-msg.ai{justify-content:flex-start;}
+.chat-bubble{max-width:85%;padding:0.85rem 1.1rem;border-radius:12px;font-size:0.9rem;line-height:1.6;}
+.chat-msg.user .chat-bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px;}
+.chat-msg.ai .chat-bubble{background:#fff;border:1px solid var(--border);border-bottom-left-radius:4px;}
+.b44-chat-wrap{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-top:1.25rem;}
+.b44-input-row{display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap;align-items:center;}
+.b44-input-row input[type="text"]{flex:1;min-width:200px;padding:0.75rem 1rem;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.92rem;}
+.b44-idea-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;margin-top:1.25rem;}
+#b44IdeaCards{display:none;}
+.b44-idea-card{background:#fff;border:2px solid var(--border);border-radius:12px;padding:1.25rem;cursor:default;transition:border-color 0.2s,box-shadow 0.2s;}
+.b44-idea-card:hover{border-color:rgba(124,58,237,0.35);}
+.b44-idea-card.selected{border-color:var(--accent);box-shadow:0 4px 20px rgba(124,58,237,0.15);}
+.b44-idea-badge{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;}
+.b44-idea-name{font-size:1.05rem;margin:0.5rem 0 0.35rem;font-family:'DM Serif Display',serif;color:var(--ink);}
+.b44-idea-does,.b44-idea-saves{font-size:0.85rem;color:var(--muted);margin:0.25rem 0;line-height:1.5;}
+.b44-chip-row{display:flex;flex-wrap:wrap;gap:0.5rem;margin:1rem 0;}
+.b44-chip{padding:0.5rem 1rem;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:0.85rem;cursor:pointer;font-family:inherit;color:var(--text);}
+.b44-chip.active{background:rgba(124,58,237,0.12);border-color:var(--accent);font-weight:600;}
+.b44-selected-box{display:none;margin-top:1rem;padding:1rem 1.25rem;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.25);border-radius:10px;font-size:0.9rem;line-height:1.65;}
+.b44-prompt-out{background:var(--ink);color:rgba(255,255,255,0.88);border-radius:10px;padding:1.25rem;font-size:0.8rem;line-height:1.65;white-space:pre-wrap;max-height:340px;overflow:auto;font-family:'DM Mono',monospace;margin-top:0.75rem;}
+.b44-copy-row{margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;}
+.b44-orange-card{background:linear-gradient(135deg,rgba(199,91,58,0.12),rgba(124,58,237,0.08));border:1px solid rgba(199,91,58,0.25);border-radius:12px;padding:1.5rem;margin-top:1.5rem;}
+.b44-orange-card h4{font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--accent2);margin-bottom:0.75rem;font-weight:400;}
+.b44-flow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0.5rem 1rem;margin:1.5rem 0;font-size:0.85rem;color:var(--muted);}
+.b44-flow-node{background:#fff;border:1px solid var(--border);padding:0.45rem 0.9rem;border-radius:8px;color:var(--text);}
+.b44-flow-arrow{color:var(--muted);font-family:'DM Mono',monospace;}
+.b44-step-list{counter-reset:b44;list-style:none;margin:1rem 0;}
+.b44-step-list li{counter-increment:b44;position:relative;padding-left:2.5rem;margin-bottom:1rem;font-size:0.92rem;line-height:1.65;}
+.b44-step-list li::before{content:counter(b44);position:absolute;left:0;top:0;width:1.75rem;height:1.75rem;border-radius:50%;background:var(--accent);color:#fff;font-size:0.8rem;display:flex;align-items:center;justify-content:center;font-weight:600;}
+.copy-fix{cursor:pointer;border:1px dashed var(--border);padding:0.6rem 0.85rem;border-radius:8px;font-size:0.78rem;margin:0.4rem 0;transition:border-color 0.2s;font-family:'DM Mono',monospace;line-height:1.5;background:var(--paper2);}
+.copy-fix:hover{border-color:var(--accent);}
+.ok-msg{display:none;margin-top:0.75rem;font-size:0.85rem;color:var(--accent3);font-weight:500;}
+.celebration-link{display:inline-block;margin-top:0.75rem;color:#a78bfa;word-break:break-all;font-size:0.95rem;}
+.challenge-box{margin-top:1.5rem;padding:1rem 1.25rem;background:rgba(255,255,255,0.06);border-radius:10px;border:1px solid rgba(255,255,255,0.12);}
+.challenge-box label{display:flex;align-items:flex-start;gap:0.6rem;font-size:0.88rem;cursor:pointer;color:rgba(255,255,255,0.75);}
+#b44ChallengeMsg{display:none;margin-top:0.75rem;font-size:0.88rem;color:#a78bfa;line-height:1.6;}
 
 .stats-box{background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(37,99,168,0.06));border:1px solid rgba(124,58,237,0.2);border-radius:12px;padding:2rem;margin:2rem 0;}
 .stats-box h4{font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:1rem;}
@@ -117,6 +155,9 @@ h1.hero-title em{font-style:italic;color:#a78bfa;}
 .btn-back{display:inline-flex;align-items:center;gap:8px;background:transparent;color:rgba(255,255,255,0.45);padding:15px 24px;border-radius:6px;font-weight:500;font-size:0.95rem;border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.25s;}
 .btn-back:hover{color:#fff;border-color:rgba(255,255,255,0.3);}
 .finale-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
+.celebration-banner{background:linear-gradient(135deg,var(--ink),#2d2d44);border-radius:16px;padding:3rem 2rem;text-align:center;margin-bottom:2rem;position:relative;overflow:hidden;}
+.celebration-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 30% 20%,rgba(124,58,237,0.2) 0%,transparent 55%);pointer-events:none;}
+.celebration-tagline{font-family:'DM Serif Display',serif;font-size:clamp(1.5rem,4vw,2.5rem);color:#fff;margin-bottom:1rem;position:relative;z-index:1;}
 @media(max-width:768px){nav{padding:0 1.25rem;}.section{padding:80px 1.25rem 4rem;}}
 </style>
 </head>
@@ -132,337 +173,177 @@ h1.hero-title em{font-style:italic;color:#a78bfa;}
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
       <span>Edellinen</span>
     </a>
-    <span class="nav-module">Näkyvyys, Kasvu &amp; Automaatio</span>
-    <span class="nav-title">Visibility, Growth</span>
+    <a href="/module/moduuli-ai-simulation-lab" style="display:flex;align-items:center;gap:0.5rem;text-decoration:none;color:var(--muted);margin-right:1rem;font-size:0.85rem;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">
+      <span>Seuraava</span>
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </a>
+    <span class="nav-module">Base44</span>
+    <span class="nav-title">Oma sovellus</span>
   </div>
   <div class="nav-steps" id="navSteps"></div>
 </nav>
 
-<!-- HERO -->
 <section class="section" id="hero" data-index="0">
   <div class="hero-inner">
     <div class="hero-eyebrow">
-      <span class="eyebrow-num">TÄYTEMODUULI</span>
+      <span class="eyebrow-num">Rakenna</span>
       <span class="eyebrow-line"></span>
-      <span class="eyebrow-label">Näkyvyys</span>
+      <span class="eyebrow-label">Tuotantoon asti</span>
     </div>
-    <h1 class="hero-title">Näkyvyys, Kasvu<br><em>&amp; Automaatio</em></h1>
-    <p class="hero-sub">Rakenna ammattimainen näkyvyys ja houkuttele mahdollisuuksia AI:n avulla — ilman että siitä tulee kokopäivätyö.</p>
-    <a href="#miksi" class="hero-cta">Aloita <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></a>
-    <div class="hero-time">Noin 40 minuuttia</div>
+    <h1 class="hero-title">Rakenna oma<br><em>sovellus — Base44</em></h1>
+    <p class="hero-sub">Kävelet ulos tästä moduulista oikean sovelluksen ja tallennetun linkin kanssa. Claude haastattelee sinut, ChatGPT tarkentaa englanninkielisen promptin, Base44 rakentaa — ilman kiirettä ja ilman aikarajoja.</p>
+    <a href="#b44-teoria" class="hero-cta">Aloita <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></a>
   </div>
 </section>
 
-<!-- PERUSTEET -->
-<section class="section" id="miksi" data-index="1">
+<section class="section" id="b44-teoria" data-index="1">
   <div class="section-inner fade-up">
-    <div class="section-label">Perusteet</div>
-    <h2 class="section-h2">Miksi tämä on <em>tärkeää</em></h2>
+    <div class="section-label">Osa 1 — Teoria</div>
+    <h2 class="section-h2">Miksi <em>yksi pieni sovellus</em> kannattaa</h2>
     <div class="divider"></div>
-    <p class="lead">LinkedIn on nyt yli 922 miljoonan ammattilaisen alusta. B2B-ammattilaisille LinkedIn tuottaa konversioita kaksi kertaa enemmän kuin kylmät sähköpostit. Mutta näkyvyyden rakentaminen vie aikaa — ellei käytä AI:ta.</p>
-    <p class="prose">Sivut ja profiilit jotka julkaisevat säännöllisesti saavat kaksi kertaa enemmän sitoutumista kuin ne jotka julkaisevat satunnaisesti. Ongelma: useimmilla ammattilaisilla ei ole aikaa. AI ratkaisee tämän kolmella tavalla:</p>
+    <p class="lead">Base44 ja vastaavat työkalut muuttavat idean toimivaksi käyttöliittymäksi minuuteissa — kun sinulla on selkeä kuvaus ongelmasta ja käyttäjästä.</p>
+    <p class="prose">Tässä moduulissa et arvuuttele sattumanvaraisia ideoita. Claude kysyy sinulta enintään kymmenen kohdennettua kysymystä, ymmärtää työsi rutiinit ja tuottaa seitsemän erilaista sovellusideaa. Valitset yhden — ja vain se kulkee eteenpäin promptiin.</p>
     <div class="stats-box">
+      <h4>Polku lyhyesti</h4>
       <ul>
-        <li><strong>1. Sisällöntuotanto</strong> — AI kirjoittaa postaukset sinulle</li>
-        <li><strong>2. Ajastus ja julkaisu</strong> — AI julkaisee oikeaan aikaan automaattisesti</li>
-        <li><strong>3. Automaatio</strong> — toistuvat tehtävät hoituvat ilman sinua</li>
+        <li><strong>1. Haastattelu</strong> — keskustelu Clauden kanssa, täysi viestihistoria säilyy</li>
+        <li><strong>2. Valinta</strong> — seitsemän ideaa korteissa; raaka analyysi ei jää chattiin</li>
+        <li><strong>3. Promptti</strong> — OpenAI muodostaa englanninkielisen Base44-promptin teknisillä vaatimuksilla</li>
+        <li><strong>4. Rakennus</strong> — liität promptin Base44:ään, julkaiset ja tallennat URL:n</li>
+        <li><strong>5. Reflektio</strong> — kolme lyhyttä ajatusta ja tallennus kurssille</li>
       </ul>
     </div>
+    <p class="prose">Lopputulos on konkreettinen: sovellus joka ratkaisee sinulle tutun arkiongelman ja linkki jota voit näyttää kollegalle tai työnantajalle.</p>
   </div>
 </section>
 
-<!-- MIKSI AUTOMAATIO MUUTTAA KAIKEN -->
-<section class="section section-alt" id="automaatio" data-index="2">
+<section class="section section-alt" id="b44-haastattelu" data-index="2">
   <div class="section-inner fade-up">
-    <div class="section-label">Koulutus</div>
-    <h2 class="section-h2">Miksi <em>automaatio</em> muuttaa kaiken</h2>
+    <div class="section-label">Osa 2 — Claude-haastattelu</div>
+    <h2 class="section-h2">Löydä oma <em>rakennettava ideasi</em></h2>
     <div class="divider"></div>
-    <p class="lead">Automaatio ei tarkoita että et tee mitään — se tarkoittaa että toistuvat tehtävät toimivat ilman sinua.</p>
-    <p class="prose">Ilman automaatiota: kirjoitat viestin, muistat lähettää, lähetät manuaalisesti, muistat seurata, seuraat manuaalisesti. Jokainen askel vie aikaasi ja ajatustasi.</p>
-    <p class="prose">Automaatiolla: asiakas täyttää lomakkeen → saa tervetuloviestin heti → viikon päästä saa follow-up → kaksi viikkoa myöhemmin saa tarjouslinkin. Kaikki tapahtuu ilman sinua.</p>
-    <p class="prose">Algoritmit palkitsevat säännöllisyyttä. Satunnainen julkaisu tarkoittaa satunnaista näkyvyyttä. Automaatio pitää sinut aktiivisena vaikka olisit muualla — asiakkaan luona, lomalla, nukkumassa.</p>
+    <p class="lead">Aloita haastattelu. Vastaa rehellisesti — Claude etenee yksi kysymys kerrallaan ja päätteeksi ehdottaa seitsemän erilaista sovellusta.</p>
+    <button type="button" class="practice-btn" id="b44StartInterviewBtn" onclick="b44StartInterview()">Aloita haastattelu</button>
+    <div class="b44-chat-wrap">
+      <div class="chat-container" id="b44Chat" aria-live="polite"></div>
+      <div class="b44-input-row">
+        <input type="text" id="b44Input" placeholder="Kirjoita vastauksesi…" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();b44SendChat();}">
+        <button type="button" class="practice-btn" id="b44SendBtn" onclick="b44SendChat()" disabled>Lähetä</button>
+      </div>
+    </div>
+    <p class="prose" id="b44IdeaInstr" style="display:none;margin-top:1.25rem;"><strong>Valitse yksi idea</strong> ja jatka prompttiosioon.</p>
+    <div class="b44-idea-grid" id="b44IdeaCards"></div>
+    <div id="b44SelectedIdeaBox" class="b44-selected-box"></div>
+    <button type="button" class="practice-btn" id="b44ContinueBtn" style="margin-top:1.25rem;" onclick="b44ContinueToPrompt()" disabled>Jatka prompttiin →</button>
   </div>
 </section>
 
-<!-- KATEGORIA 1 — SISÄLLÖNTUOTANTO -->
-<section class="section" id="kategoria1" data-index="3">
+<section class="section" id="s3-prompt" data-index="3">
   <div class="section-inner fade-up">
-    <div class="section-label">Kategoria 1</div>
-    <h2 class="section-h2">Sisällöntuotanto</h2>
+    <div class="section-label">Osa 3 — Promptti</div>
+    <h2 class="section-h2">ChatGPT <em>tarkentaa</em>, Base44 <em>rakentaa</em></h2>
     <div class="divider"></div>
-
-    <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>ChatGPT / Claude</h4>
-        <span class="badge">Paras aloituspiste — riittää useimmille</span>
-        <span class="price">Ilmainen / 18–20€/kk</span>
-      </div>
-      <p>Ennen erikoistyökaluja: ChatGPT ja Claude riittävät täysin LinkedIn-sisällön kirjoittamiseen. Claude on erityisen hyvä pitkämuotoisiin, harkittuihin postauksiin ammattimaisella äänellä.</p>
-      <p><strong>Käytä tätä promptia:</strong> "Olet ammattilainen alalla [oma alasi]. Kirjoita LinkedIn-postaus aiheesta [aihe]. Tyyli: asiantunteva mutta lämmin. Rakenne: vahva aloituslause joka pysäyttää scrollauksen, 3–4 kappaletta oivallusta tai tarinaa, lopetus joka kutsuu kommentoimaan. Maksimissaan 200 sanaa."</p>
-      <p class="limit">Milloin riittää: Jos julkaiset kerran tai kahdesti viikossa ja sinulla on idea mistä kirjoitat — ChatGPT riittää täysin. Et tarvitse erikoistyökalua.</p>
+    <div class="b44-flow">
+      <span class="b44-flow-node">Valittu idea</span>
+      <span class="b44-flow-arrow">→</span>
+      <span class="b44-flow-node">Kentät</span>
+      <span class="b44-flow-arrow">→</span>
+      <span class="b44-flow-node">OpenAI-promptti (EN)</span>
+      <span class="b44-flow-arrow">→</span>
+      <span class="b44-flow-node">ChatGPT</span>
+      <span class="b44-flow-arrow">→</span>
+      <span class="b44-flow-node">Base44</span>
     </div>
-
-    <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>Taplio</h4>
-        <span class="badge">Kaikki-yhdessä LinkedIn-kasvu</span>
-        <span class="price">Starter 39€/kk — Standard 52€/kk — Pro 149€/kk</span>
-      </div>
-      <p>Taplio on täysin LinkedIn-keskittynyt työkalu. Kirjoitat aiheen tai liität linkin, Taplio generoi postauksen draftin. Karusellit, optimoidut julkaisuajat, analytiikka ja yli 3 miljoonan kontaktin tietokanta verkoston kasvattamiseen. Käyttäjät raportoivat noin 70% ajansäästön sisällöntuotannossa.</p>
-      <p class="limit">Rehellinen rajoitus: Starter 39€/kk ei sisällä AI-sisältöä — tarvitset Standard 52€/kk. Sisältö vaatii usein muokkausta jotta kuulostaa sinulta.</p>
+    <p class="lead">Täydennä neljä kenttää — ne täsmentävät valittua ideaa. Paina <strong>Luo Base44-promptti</strong>; järjestelmä kutsuu OpenAI:a ja tuottaa valmiin englanninkielisen promptin teknisine vaatimuksineen.</p>
+    <p class="practice-label">Päälaite</p>
+    <div class="b44-chip-row">
+      <button type="button" class="b44-chip active" data-dev="Molemmat" onclick="b44SetDevice('Molemmat')">Molemmat</button>
+      <button type="button" class="b44-chip" data-dev="Puhelin ensisijainen" onclick="b44SetDevice('Puhelin ensisijainen')">Puhelin ensisijainen</button>
+      <button type="button" class="b44-chip" data-dev="Tietokone ensisijainen" onclick="b44SetDevice('Tietokone ensisijainen')">Tietokone ensisijainen</button>
     </div>
-
     <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>Kleo</h4>
-        <span class="badge">Paras ilmainen — tutki mikä toimii</span>
-        <span class="price">Ilmainen Chrome-laajennus</span>
-      </div>
-      <p>Kleo näyttää mikä sisältö toimii hyvin alallasi suoraan LinkedInissä. Tutki viraaleja postauksia ja käytä niitä inspiraationa. Ennen kuin kirjoitat mitään — kannattaa tietää mikä toimii. Käytä Kleoa tutkimiseen, ChatGPT:tä kirjoittamiseen.</p>
+      <p class="practice-label">1) Mitä tietoa käsitellään?</p>
+      <textarea class="practice-textarea" id="b44InData" rows="3" placeholder="Esim. asiakaslista, tehtävät, mittarit…"></textarea>
+      <p class="practice-label">2) Mitä käyttäjä tekee sovelluksella?</p>
+      <textarea class="practice-textarea" id="b44InActions" rows="3" placeholder="Lisää, muokkaa, suodata, vienti…"></textarea>
+      <p class="practice-label">3) Kenelle sovellus on?</p>
+      <textarea class="practice-textarea" id="b44InWho" rows="2" placeholder="Sinä, tiimi, asiakas…"></textarea>
+      <p class="practice-label">4) Tärkein ominaisuus (yksi asia)</p>
+      <textarea class="practice-textarea" id="b44InMust" rows="2" placeholder="Esim. nopea haku, muistutus, yksi näkymä…"></textarea>
+      <button type="button" class="practice-btn" onclick="b44BuildPrompt()">Luo Base44-promptti (OpenAI)</button>
     </div>
-  </div>
-</section>
-
-<!-- KATEGORIA 2 — AJASTUS JA JULKAISU -->
-<section class="section section-alt" id="kategoria2" data-index="4">
-  <div class="section-inner fade-up">
-    <div class="section-label">Kategoria 2</div>
-    <h2 class="section-h2">Ajastus ja julkaisu</h2>
-    <div class="divider"></div>
-
-    <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>Buffer</h4>
-        <span class="badge">Paras monialustainen ajastin</span>
-        <span class="price">Ilmainen (3 kanavaa) / Essentials 6€/kk per kanava</span>
-      </div>
-      <p>Buffer ajastaa LinkedIniin, Twitteriin, Instagramiin ja Facebookiin yhdestä paikasta. Työnkulku: kirjoitat viikon postaukset kerralla ChatGPT:llä, ajastat Bufferiin, Buffer julkaisee parhaimpaan aikaan automaattisesti. Tämä "batch processing" -lähestymistapa — viikon sisällön luominen yhdessä tunnissa päivittäisen julkaisemisen sijaan — parantaa sekä laatua että säästää aikaa merkittävästi.</p>
+    <p class="practice-label">Valmis promptti (kopioi)</p>
+    <pre class="b44-prompt-out" id="b44PromptOut">Painike luo promptin tähän.</pre>
+    <div class="b44-copy-row">
+      <button type="button" class="practice-btn" onclick="b44CopyPrompt(this)">📋 Kopioi Base44-pohja</button>
     </div>
-
-    <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>ContentIn</h4>
-        <span class="badge">LinkedIn-spesifi ajastin syvällä analytiikalla</span>
-        <span class="price">19–39€/kk</span>
-      </div>
-      <p>ContentIn ei vain julkaise — se näyttää miten menee. Yksityiskohtainen tieto sitoutumisesta, seuraajakasvusta ja vertailusta muihin alallasi. Sisältää yli 100 todistettua postaustemplaattia. Erityisen hyvä niille jotka haluavat ymmärtää tarkasti mikä toimii.</p>
+    <div class="b44-orange-card">
+      <h4>Vaihe ChatGPT:ssä (suositus)</h4>
+      <p class="prose" style="margin-bottom:0.75rem;font-size:0.9rem;">Liitä alla olevaan kenttään promptti, pyydä ChatGPT:tä tiukentamaan ja lyhentämään turhat kohdat, ja säilyttämään tekninen checklist. Kopioi parannettu versio Base44:ään.</p>
+      <textarea class="practice-textarea" id="b44RefinedPrompt" rows="8" placeholder="Liitä tähän ChatGPT:n parannettu englanninkielinen promptti…" style="background:#fff;color:var(--text);"></textarea>
+      <button type="button" class="practice-btn" style="margin-top:0.75rem;background:var(--accent2);" onclick="b44SaveRefined()">Tallenna viimeisin promptti (tallentuu selaimeen)</button>
+      <p class="ok-msg" id="b44RefinedOk">Tallennettu — voit palata tähän myöhemmin samalta laitteelta.</p>
     </div>
   </div>
 </section>
 
-<!-- KATEGORIA 3 — AUTOMAATIO -->
-<section class="section" id="kategoria3" data-index="5">
+<section class="section section-alt" id="b44-rakennus" data-index="4">
   <div class="section-inner fade-up">
-    <div class="section-label">Kategoria 3</div>
-    <h2 class="section-h2">Automaatio — <em>todellinen tehokkuus</em></h2>
+    <div class="section-label">Osa 4 — Base44</div>
+    <h2 class="section-h2">Julkaise ja <em>tallenna URL</em></h2>
     <div class="divider"></div>
-    <p class="lead">Automaatiotyökalut yhdistävät eri sovellukset toisiinsa niin että tieto liikkuu ja tehtävät tapahtuvat automaattisesti — ilman manuaalista työtä.</p>
-
+    <ol class="b44-step-list">
+      <li>Kirjaudu Base44:ään (tai vastaavaan) ja luo uusi projekti.</li>
+      <li>Liitä <strong>viimeisin</strong> promptti — mieluiten ChatGPT:n tarkentama versio.</li>
+      <li>Anna mallin rakentaa; testaa lista, lomake ja tyhjät tilat puhelimella ja tietokoneella.</li>
+      <li>Julkaise ja kopioi julkinen tai jaettava linkki alla olevaan kenttään.</li>
+    </ol>
     <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>Zapier</h4>
-        <span class="badge">Markkinajohtaja — yli 8 000 sovellusta</span>
-        <span class="price">Ilmainen (100 tehtävää/kk) / Starter ~20€/kk / Professional ~50€/kk</span>
-      </div>
-      <p>Zapier yhdistää yli 7 000 sovellusta — CRM:stä markkinointiautomaatioon, projektinhallintaan ja taloussovelluksiin. Toimii logiikalla: "Jos tämä tapahtuu → tee tämä." Nämä automatisoidut työnkulut ovat "Zappeja."</p>
-      <p><strong>Käytännön esimerkkejä:</strong> Uusi kontakti täyttää lomakkeesi → lisätään CRM:ään + lähetetään tervetuloviesti. Saat uuden sähköpostin → luodaan tehtävä Notioniin. LinkedIn-viesti → tallennetaan Google Sheetsiin. Zapierilla on myös AI-ominaisuuksia: Copilot luo Zappeja luonnollisella kielellä.</p>
-      <p><strong>Hinta:</strong> Ilmainen 100 tehtävää/kk. Starter ~20€/kk: 750 tehtävää. Professional ~50€/kk: 2 000 tehtävää.</p>
-      <p class="limit">Rehellinen rajoitus: Hinnoittelu on tehtäväpohjainen — kulut voivat nousta nopeasti. Ilmaisessa versiossa vain 100 tehtävää kuukaudessa. Kenelle: Kaikille jotka haluavat automatisoida toistuvia tehtäviä ilman koodausta.</p>
+      <h4 style="margin-bottom:0.75rem;">Jos jokin näyttää väärältä</h4>
+      <p class="prose" style="font-size:0.88rem;margin-bottom:0.5rem;">Kopioi korjauskehotus Base44:n chat-ikkunaan:</p>
+      <div class="copy-fix" onclick="b44CopyFix(this)">Fix: Add loading spinner on all async actions. Show friendly empty state when lists are empty.</div>
+      <div class="copy-fix" onclick="b44CopyFix(this)">Fix: Validate forms — block save if required fields are empty and show inline errors.</div>
+      <div class="copy-fix" onclick="b44CopyFix(this)">Fix: Ensure dark sidebar + light content; add subtle page transition on route change.</div>
     </div>
-
     <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>Make (ent. Integromat)</h4>
-        <span class="badge">Tehokkaampi monimutkaisiin työnkulkuihin</span>
-        <span class="price">Ilmainen (1 000 operaatiota/kk) / Core 9€/kk / Pro 16€/kk</span>
-      </div>
-      <p>Make on tehokkaampi vaihtoehto monimutkaisiin, haarautuviin työnkulkuihin. Visuaalinen työnkulkurakentaja näyttää automaatiosi graafisena kaaviona. Halvempi kuin Zapier samalle käyttötasolle.</p>
-      <p><strong>Milloin valita Make Zapierin sijaan:</strong> Monimutkaisia työnkulkuja joissa paljon ehtoja ja haaroja. Haluat enemmän kontrollia datan muokkaukseen. Budjetti on tiukka — Make on edullisempi.</p>
-      <p class="limit">Kenelle: Hieman teknisemmille käyttäjille jotka haluavat enemmän valtaa työnkulkuihinsa.</p>
-    </div>
-
-    <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>HubSpot</h4>
-        <span class="badge">Paras kokonaisratkaisu — CRM + markkinointi + automaatio</span>
-        <span class="price">Ilmainen CRM / Starter 15€/kk / Professional 890€/kk</span>
-      </div>
-      <p>HubSpot yhdistää CRM:n, markkinoinnin, myynnin ja asiakaspalvelun yhteen alustaan. Breeze AI sisältää: Copilot (AI-assistentti), Agents (automaattiset agentit), Intelligence (rikastaa kontaktitietoja).</p>
-      <p><strong>Käytännössä:</strong> Kontaktinhallinta, sähköpostiautomaatio, LinkedIn-integraatio, AI-sisältö, raportit. Ilmainen: yllättävän hyvä — kontaktinhallinta, sähköpostimarkkinointi, lomakkeet, live chat, perus-AI. Starter 15€/kk poistaa HubSpot-brändin.</p>
-      <p class="limit">Rehellinen rajoitus: Tehokkaat AI-ominaisuudet ovat lukittu kalleimpiin planeihin (Professional 890€/kk). Kenelle: Kaikille jotka haluavat yhden alustan. Aloita ilmaisella.</p>
+      <p class="practice-label">Sovelluksen julkinen URL</p>
+      <input type="text" class="practice-textarea" id="b44AppUrl" placeholder="https://…" style="min-height:auto;">
+      <button type="button" class="practice-btn" onclick="b44SaveAppUrl()">Tallenna URL (näkyy juhlaosion linkissä)</button>
+      <p class="ok-msg" id="b44UrlOk">URL tallennettu.</p>
     </div>
   </div>
 </section>
 
-<!-- KATEGORIA 4 — VERKOSTON KASVU -->
-<section class="section section-alt" id="kategoria4" data-index="6">
+<section class="section" id="b44-lopetus" data-index="5">
   <div class="section-inner fade-up">
-    <div class="section-label">Kategoria 4</div>
-    <h2 class="section-h2">Verkoston kasvu ja outreach</h2>
-    <div class="divider"></div>
-
-    <div class="warning-box">
-      <strong>⚠ Tärkeä huomio:</strong> LinkedIn kieltää aggressiivisen automaation. Tilin jäädyttäminen on mahdollista jos käytät kiellettyä automaatiota. Alla olevat työkalut toimivat sääntöjen sisällä.
+    <div class="celebration-banner">
+      <div class="celebration-tagline">Sovelluksesi on olemassa.</div>
+      <p style="color:rgba(255,255,255,0.55);max-width:520px;margin:0 auto 1rem;line-height:1.7;font-size:0.95rem;">Avaa linkki ja varmista että se toimii. Tämä on konkreettinen näyte siitä, miten rakennat työkaluja AI:n kanssa.</p>
+      <a class="celebration-link" id="b44CelebrateLink" href="#" target="_blank" rel="noopener">Tallenna URL yllä — linkki päivittyy tähän.</a>
     </div>
-
-    <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>Engage AI</h4>
-        <span class="badge">Näy verkostossasi kommenteissa</span>
-        <span class="price">Ilmainen / 10–30€/kk</span>
+    <div class="reflection-card">
+      <div class="reflection-label">Reflektio</div>
+      <h3>Kolme ajatusta ennen kuin jatkat</h3>
+      <p>Kirjoita jokaiseen vähintään pari lausetta. Ne yhdistetään yhdeksi tallenteeksi kurssialustalle.</p>
+      <p class="reflection-label" style="margin-top:1rem;">1) Mikä yllätti?</p>
+      <textarea class="reflection-textarea" id="b44Refl1" placeholder="Mikä ideoissa, promptissa tai Base44:ssa yllätti…"></textarea>
+      <p class="reflection-label" style="margin-top:1rem;">2) Mikä ongelma ja miten aikaa säästyy?</p>
+      <textarea class="reflection-textarea" id="b44Refl2" placeholder="Konkreettinen ongelma ja hyöty…"></textarea>
+      <p class="reflection-label" style="margin-top:1rem;">3) Toinen sovellusidea</p>
+      <textarea class="reflection-textarea" id="b44Refl3" placeholder="Lyhyt kuvaus toisesta ideasta…"></textarea>
+      <div class="challenge-box">
+        <label><input type="checkbox" id="b44ChallengeCb" onchange="b44ChallengeCheck()"> Haluan bonuksen: jaan sovelluslinkin yhdelle kollegalle ja pyydän palautetta.</label>
+        <p id="b44ChallengeMsg">Hienoa — kirjaa palaute reflektioon tai seuraavaan moduuliin.</p>
       </div>
-      <p>AI analysoi LinkedIn-postauksia ja ehdottaa kontekstuaalisia vastauksia valitsemassasi sävyssä — tukeva, naseva, utelias tai haastava. Kommentointi muiden postauksia on usein tehokkaampi tapa kasvattaa näkyvyyttä kuin oman sisällön julkaiseminen.</p>
+      <textarea id="reflectionText" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" aria-hidden="true" tabindex="-1"></textarea>
+      <button type="button" class="reflection-save" onclick="b44SaveReflections()">Tallenna reflektio</button>
     </div>
-
-    <div class="tool-card">
-      <div class="tool-card-header">
-        <h4>Shield Analytics</h4>
-        <span class="badge">Tiedä tarkasti mikä toimii</span>
-        <span class="price">25–35€/kk — ilmainen kokeilu</span>
-      </div>
-      <p>Syvempi analytiikka kuin LinkedIn natiivisti tarjoaa. Näkyvyystrendit, parhaat postaukset, paras julkaisuaika, yleisön kasvu — kaikki yhdessä dashboardissa. Käytä kun julkaiset säännöllisesti ja haluat optimoida strategiaasi datan perusteella.</p>
-    </div>
-  </div>
-</section>
-
-<!-- SÄHKÖPOSTIAUTOMAATIO -->
-<section class="section" id="email-automation" data-index="7">
-  <div class="section-inner fade-up">
-    <div class="section-label">Sähköpostiautomaatio</div>
-    <h2 class="section-h2">Miten <em>sähköpostiautomaatio</em> toimii käytännössä</h2>
-    <div class="divider"></div>
-    <p class="lead">Sähköpostiautomaatio on yksi tehokkaimmista tavoista kasvattaa liiketoimintaa. Ymmärtämällä miten se toimii, voit käyttää sitä välittömästi.</p>
-
-    <div class="prose">
-      <p><strong>Mitä se on:</strong> Sähköpostiautomaatio lähettää viestejä oikealle henkilölle oikeaan aikaan ilman että kirjoitat jokaisen viestin erikseen.</p>
-      <p><strong>Miten se toimii:</strong> Säännöt määrittävät milloin viesti lähetetään. "Kun joku tilaa uutiskirjeen" → lähetä viesti 1. "Kun 7 päivää on kulunut" → lähetä viesti 2. "Kun 14 päivää on kulunut" → lähetä tarjous. Työkalu hoitaa loput.</p>
-      <p><strong>AI + sähköposti:</strong> ChatGPT tai Claude kirjoittavat sarjan viestit. Sinä määrität säännöt. Zapier tai HubSpot lähettää. Sama periaate kuin LinkedIn-sisällön kanssa: AI luo, sinä muokkaat, automaatio hoitaa.</p>
-      <p><strong>Parhaat työkalut:</strong> Mailchimp (Ilmainen / 13€/kk) — helpoin aloittaa. Brevo (Ilmainen / 25€/kk) — parempi automaatio ilmaisessa. HubSpot (Ilmainen / 15€/kk) — paras jos haluat CRM + sähköposti yhdessä.</p>
-    </div>
-  </div>
-</section>
-
-<!-- STRATEGIA -->
-<section class="section section-alt" id="strategia" data-index="8">
-  <div class="section-inner fade-up">
-    <div class="section-label">Strategia</div>
-    <h2 class="section-h2">Miten rakennat näkyvyyden <em>ilman kokopäivätyötä</em></h2>
-    <div class="divider"></div>
-    <p class="lead">Ei tarkoitus käyttää kaikkia työkaluja. Valitse taso joka sopii sinulle nyt ja rakenna siitä eteenpäin.</p>
-
-    <div class="tool-card">
-      <h4>TASO 1 — Ilmainen startti (0€/kk)</h4>
-      <p>ChatGPT ilmainen + Kleo ilmainen + LinkedIn natiivi ajastin + Engage AI ilmainen + HubSpot ilmainen CRM. Työnkulku: 1 tunti viikossa. Kirjoita 2–3 postausta ChatGPT:llä, ajasta LinkedInissä, kommentoi 5–10 postausta Engage AI:lla, hallinnoi kontakteja HubSpotissa.</p>
-    </div>
-    <div class="tool-card">
-      <h4>TASO 2 — Kasvutyökalu (6–40€/kk)</h4>
-      <p>Buffer 6€/kk + Zapier Starter 20€/kk + HubSpot ilmainen. Työnkulku: 2 tuntia kuukaudessa. Luo kuukauden sisältö kerralla, Buffer ajastaa automaattisesti, Zapier hoitaa toistuvat tehtävät sovellusten välillä.</p>
-    </div>
-    <div class="tool-card">
-      <h4>TASO 3 — Ammattilainen (52–80€/kk)</h4>
-      <p>Taplio Standard 52€/kk + Make Pro 16€/kk + Shield Analytics 25€/kk. Työnkulku: 2 tuntia viikossa. Taplio generoi sisällön, Make hoitaa monimutkaiset automaatiot, Shield kertoo mikä toimii.</p>
-    </div>
-  </div>
-</section>
-
-<!-- VERTAILUTAULUKKO -->
-<section class="section" id="vertailu" data-index="9">
-  <div class="section-inner fade-up">
-    <div class="section-label">Yhteenveto</div>
-    <h2 class="section-h2">Vertailutaulukko — <em>mikä mihinkin</em></h2>
-    <div class="divider"></div>
-
-    <div class="tool-table-wrap">
-    <table class="tool-table">
-      <thead>
-        <tr><th>Tilanne</th><th>Työkalu</th><th>Hinta</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>Kirjoita LinkedIn-postaukset nopeasti</td><td>ChatGPT tai Claude</td><td>Ilmainen / 18–20€/kk</td></tr>
-        <tr><td>Tutki mikä sisältö toimii alallasi</td><td>Kleo</td><td>Ilmainen</td></tr>
-        <tr><td>Ajasta postaukset useampaan alustaan</td><td>Buffer</td><td>6€/kk</td></tr>
-        <tr><td>Kaikki LinkedIn-kasvu yhdessä paikassa</td><td>Taplio</td><td>39–52€/kk</td></tr>
-        <tr><td>Yhdistä sovellukset — helpoin tapa</td><td>Zapier</td><td>Ilmainen / 20€/kk</td></tr>
-        <tr><td>Monimutkaiset työnkulut edullisemmin</td><td>Make</td><td>Ilmainen / 9€/kk</td></tr>
-        <tr><td>CRM + markkinointi + automaatio yhdessä</td><td>HubSpot</td><td>Ilmainen / 15€/kk</td></tr>
-        <tr><td>Näy kommenteissa ilman omaa sisältöä</td><td>Engage AI</td><td>Ilmainen / 10€/kk</td></tr>
-        <tr><td>Sähköpostiautomaatio yksinkertaisesti</td><td>Mailchimp tai Brevo</td><td>Ilmainen / 13€/kk</td></tr>
-        <tr><td>Syvä analytiikka mikä toimii</td><td>Shield Analytics</td><td>25–35€/kk</td></tr>
-      </tbody>
-    </table>
-    </div>
-  </div>
-</section>
-
-<!-- HARJOITUS -->
-<section class="section section-alt" id="harjoitus" data-index="10">
-  <div class="section-inner fade-up">
-    <div class="section-label">Harjoitus</div>
-    <h2 class="section-h2">Rakenna oma <em>näkyvyysstrategiasi</em></h2>
-    <div class="divider"></div>
-    <p class="lead">Vastaa kolmeen kysymykseen — AI rakentaa sinulle konkreettisen suunnitelman.</p>
-
-    <div class="practice-wrap">
-      <div class="practice-header">
-        <div class="practice-header-icon">🎯</div>
-        <div class="practice-header-text">
-          <h3>AI rakentaa strategian</h3>
-          <p>Vastaa kysymyksiin — saat henkilökohtaisen suunnitelman</p>
-        </div>
-      </div>
-      <div class="practice-body">
-        <div class="practice-label">1. Kuinka usein olet valmis julkaisemaan?</div>
-        <select class="practice-textarea" id="q1" style="min-height:auto;height:auto;padding:0.9rem 1.1rem;">
-          <option value="kerran viikossa">Kerran viikossa</option>
-          <option value="kahdesti viikossa">Kahdesti viikossa</option>
-          <option value="päivittäin">Päivittäin</option>
-        </select>
-        <div class="practice-label" style="margin-top:1.25rem;">2. Mikä on päätavoitteesi?</div>
-        <select class="practice-textarea" id="q2" style="min-height:auto;height:auto;padding:0.9rem 1.1rem;">
-          <option value="uudet asiakkaat">Uudet asiakkaat</option>
-          <option value="verkostoituminen">Verkostoituminen</option>
-          <option value="asiantuntijabrändi">Asiantuntijabrändi</option>
-          <option value="työnhaku">Työnhaku</option>
-        </select>
-        <div class="practice-label" style="margin-top:1.25rem;">3. Paljonko olet valmis käyttämään kuukaudessa?</div>
-        <select class="practice-textarea" id="q3" style="min-height:auto;height:auto;padding:0.9rem 1.1rem;">
-          <option value="0€">0€</option>
-          <option value="alle 20€">Alle 20€</option>
-          <option value="20–50€">20–50€</option>
-          <option value="yli 50€">Yli 50€</option>
-        </select>
-        <button class="practice-btn" id="strategyBtn" onclick="buildStrategy()">🎯 Rakenna strategia</button>
-        <div class="practice-response" id="strategyResponse">
-          <div class="practice-response-text" id="strategyText"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- REFLECTION + OUTRO -->
-<section class="section" id="lopetus" data-index="11">
-  <div class="section-inner fade-up">
-    <div class="section-label">Ennen kuin jatkat</div>
-    <h2 class="section-h2">Valitse yksi <em>konkreettinen askel</em></h2>
-    <div class="divider"></div>
-    <p class="lead">Mitä teet tänään tai huomenna?</p>
-
-    <div class="reflection-card" style="margin-bottom:3rem;">
-      <div class="reflection-label">Yksi konkreettinen askel</div>
-      <h3>Mitä teet tänään tai huomenna?</h3>
-      <p>Esim: "Kirjoitan ensimmäisen LinkedIn-postaukseni ChatGPT:llä" tai "Asennan Kleon ja tutkin mikä toimii alallani"</p>
-      <textarea class="reflection-textarea" id="reflectionText" placeholder="Esim: Kirjoitan ensimmäisen LinkedIn-postaukseni..."></textarea>
-      <button class="reflection-save" onclick="saveReflection()">Tallenna</button>
-      <div class="reflection-confirm" id="reflConfirm" style="display:none;font-size:0.85rem;color:rgba(255,255,255,0.4);margin-top:0.75rem;">✓ Tallennettu</div>
-    </div>
-
-    <div class="finale-card">
-      <span class="finale-icon">✅</span>
-      <h2>Moduuli suoritettu.<br><em>Jatketaan eteenpäin.</em></h2>
-      <p>Olet oppinut miten näkyvyys, kasvu ja automaatio toimivat yhdessä. Seuraavaksi voit jatkaa työnhakuun tai soveltaa oppimaasi.</p>
+    <div class="finale-card" style="margin-top:3rem;">
+      <span class="finale-icon">✦</span>
+      <h2>Moduuli valmis.<br><em>Seuraavaksi data ja päätökset.</em></h2>
+      <p>Sinulla on nyt julkaistu sovellus ja dokumentoitu oppiminen. Simulation Lab syventää analyysiä ja päätöksentekoa.</p>
       <div class="finale-actions">
-        <a href="/module/moduuli-ai-simulation-lab" class="btn-next">Seuraava moduuli — AI Simulation Lab →</a>
+        <a href="/module/moduuli-ai-simulation-lab" class="btn-next">Seuraava — AI Simulation Lab →</a>
         <a href="/module/moduuli-ai-verkkosivustotyokalut" class="btn-back">← Edellinen</a>
         <a href="/" class="btn-back">Etusivu</a>
       </div>
@@ -475,8 +356,10 @@ const sections = document.querySelectorAll('.section[data-index]');
 const navSteps = document.getElementById('navSteps');
 const progressBar = document.getElementById('progress-bar');
 sections.forEach((s,i) => {
-  const pip = document.createElement('div');
+  const pip = document.createElement('button');
+  pip.type = 'button';
   pip.className = 'step-pip'+(i===0?' active':'');
+  pip.setAttribute('aria-label','Osio '+(i+1));
   pip.addEventListener('click', () => s.scrollIntoView({behavior:'smooth'}));
   navSteps.appendChild(pip);
 });
@@ -490,49 +373,12 @@ function updateProgress() {
 window.addEventListener('scroll',updateProgress,{passive:true});
 const fadeObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');fadeObs.unobserve(e.target);}});},{threshold:0.12});
 document.querySelectorAll('.fade-up').forEach(el=>fadeObs.observe(el));
-
-async function buildStrategy() {
-  const q1 = document.getElementById('q1').value;
-  const q2 = document.getElementById('q2').value;
-  const q3 = document.getElementById('q3').value;
-  const btn = document.getElementById('strategyBtn');
-  const resp = document.getElementById('strategyResponse');
-  const txt = document.getElementById('strategyText');
-  btn.disabled = true;
-  txt.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
-  resp.style.display = 'block';
-  resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', max_tokens: 800,
-        system: 'Olet LinkedIn-strategisti. Luo käyttäjälle konkreettinen, yksinkertainen näkyvyyssuunnitelma suomeksi. Sisältää: 1) suositellut työkalut budjetin mukaan (ChatGPT, Kleo, Buffer, Zapier, Make, HubSpot, Taplio, Engage AI, Shield) 2) viikoittainen työnkulku 3) 3 ensimmäistä konkreettista askelta. Käytännönläheinen.',
-        messages: [{ role: 'user', content: `Julkaisutahti: ${q1}. Päätavoite: ${q2}. Budjetti työkaluihin/kk: ${q3}. Luo suunnitelma.` }]
-      })
-    });
-    const data = await res.json();
-    const text = data.text || data.reply || 'Yhteysvirhe. Yritä uudelleen.';
-    txt.innerHTML = text.replace(/\n/g, '<br>');
-  } catch(e) {
-    txt.textContent = 'Yhteysvirhe. Kokeile ChatGPT:tä suoraan.';
-  }
-  btn.disabled = false;
-}
-
-function saveReflection() {
-  window.saveReflectionToAPI('moduuli-visibility-growth-automation');
-}
 </script>
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
+<script src="/js/base44-module.js?v=b44-1"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.loadReflection) window.loadReflection('moduuli-visibility-growth-automation');
-  else try { const s = localStorage.getItem('moduuli-visibility-growth-automation_reflection'); if (s) document.getElementById('reflectionText').value = s; } catch(e) {}
-});
-fetch('/ai-chat-widget.html').then(r=>r.text()).then(html=>{document.body.insertAdjacentHTML('beforeend',html);}).catch(e=>console.error(e));
+fetch('/ai-chat-widget.html').then(r=>r.text()).then(html=>{document.body.insertAdjacentHTML('beforeend',html);}).catch(()=>{});
 </script>
 </body>
 </html>
