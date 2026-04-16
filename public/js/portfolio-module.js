@@ -36,6 +36,41 @@
       });
   }
 
+  /** Claude (Anthropic) — richer prompts when ANTHROPIC_API_KEY is set; falls back in API route. */
+  function claudeMessages(systemPrompt, messages, maxTokens) {
+    var url = (window.location.origin || '') + getApiBase() + '/api/ai/claude';
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        system: systemPrompt,
+        messages: messages,
+        max_tokens: maxTokens || 4500
+      })
+    }).then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+      .then(function (o) {
+        if (!o.ok) throw new Error(o.data.error || o.data.message || 'Claude-virhe');
+        return o.data.text || '';
+      });
+  }
+
+  function withMasterPromptMandatoryBlock() {
+    return '\n\n=== USER NON-NEGOTIABLE REQUIREMENTS (you MUST embed every item below in the final English build prompt in full detail — do not summarize away) ===\n' +
+      '1) PORTFOLIO CHATBOT (MANDATORY): The site MUST include a visible, modern on-page AI chatbot for visitors. Specify: placement (e.g. floating action button bottom-right opening a chat drawer, OR a dedicated "Kysy minulta" / Ask me section above the footer). Include 3–5 suggested starter questions visitors can tap (in Finnish if the site is Finnish) that the bot should answer using only the candidate\'s content on the page (skills, experience, achievements). Require mobile-friendly UI (full-width panel on small screens), accessible focus/labels, and on-brand styling matching the rest of the site.\n' +
+      '2) MODERN VISUAL DESIGN (2024–2025): Explicitly demand a contemporary premium look — not a dated template. Refined type scale (clear hierarchy), generous whitespace, cohesive palette from brand hex colors, optional subtle gradients or glass cards, crisp spacing, professional imagery placeholders if needed. Avoid generic "AI slop" or cluttered hero.\n' +
+      '3) MOTION & MICRO-INTERACTIONS (MANDATORY DETAIL): Spell out concrete animation behavior: smooth scroll; section entrances on scroll (staggered fade-up or slide-in with sensible duration/easing); hover states on cards and primary CTAs (subtle lift, shadow, or scale); button and link transitions. Mention respecting prefers-reduced-motion (simpler fades for users who prefer less motion). Optional: very subtle hero background motion (slow gradient drift) — only if it stays professional.\n' +
+      '4) POLISH: Keyboard focus rings, WCAG-minded contrast, fast perceived load, consistent component styling.\n' +
+      'The output must be ONE copy-paste English prompt for Lovable/Base44 with enough specificity that the builder implements chatbot + motion + modern UI without the user having to add follow-ups.\n';
+  }
+
+  function callMasterPromptModel(systemPrompt, userContent, maxTokens) {
+    var msgs = [{ role: 'user', content: userContent }];
+    return claudeMessages(systemPrompt, msgs, maxTokens).catch(function () {
+      return openAiMessages(systemPrompt, msgs, maxTokens);
+    });
+  }
+
   var selectedTool = portfolioData.tool || '';
   var brandThread = [];
   var lastBrandRecommendation = '';
@@ -326,7 +361,8 @@
     return getContentContext() + '\n\nTagline: ' + (portfolioData.tagline || '') +
       '\nBio: ' + (portfolioData.bio || '') +
       '\nSaavutukset:\n' + (portfolioData.achievements || '') +
-      '\nBrändi (täysi):\n' + (portfolioData.brandIdentity || portfolioData.designBrief || '');
+      '\nBrändi (täysi):\n' + (portfolioData.brandIdentity || portfolioData.designBrief || '') +
+      withMasterPromptMandatoryBlock();
   }
 
   window.buildMasterPrompt = function () {
@@ -338,14 +374,17 @@
     txt.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
     document.getElementById('promptChecklist').classList.remove('hidden');
     document.getElementById('masterInstr').classList.remove('hidden');
-    var sys = 'Olet kokenut web-kehittäjä ja UI-suunnittelija. Luo täydellinen master prompt ' + toolLabel + '-työkalulle henkilökohtaisen portfolio-sivuston rakentamiseksi. Promptin tulee sisältää:\n\n' +
-      'DESIGN: Värit hex-koodeina, fontit, tyyli ja tunnelma — käytä tallennettua brändi-identiteettiä\n' +
-      'RAKENNE: Tarkat osiot järjestyksessä — hero, about/bio, saavutukset, taidot tageinä, urahistoria aikajana-muodossa, yhteystiedot\n' +
-      'SISÄLTÖ: Kaikki teksti valmiina — tagline, bio, saavutukset, taidot, urahistoria\n' +
-      'TEKNISET VAATIMUKSET: Responsiivinen mobiilille, smooth scroll navigaatio, hover-efektit taitokorteille, ammattimainen footer\n' +
-      'SÄVY: Ei koodijargonia — kirjoita niin kuin puhuisit rakentajalle joka ei tunne henkilöä\n\n' +
-      'Kirjoita englanniksi koska Lovable ja Base44 toimivat parhaiten englanninkielisillä prompteilla. Promptin tulee olla valmis liitettäväksi sellaisenaan — ei ohjeita miten käyttää, vain prompt itse.';
-    openAiMessages(sys, [{ role: 'user', content: masterPromptUserPayload() }], 3500)
+    var sys = 'You are a senior product designer and front-end architect. Write ONE comprehensive English master prompt for ' + toolLabel + ' to build a single-page (or clearly sectioned) personal portfolio website for a job seeker.\n\n' +
+      'The user message includes CV/brand content AND a block marked USER NON-NEGOTIABLE REQUIREMENTS. You must integrate EVERY requirement (especially the on-site chatbot, detailed motion/animation specs, and modern 2024–2025 visual direction) into the build prompt with concrete, implementation-ready wording — not a vague bullet list.\n\n' +
+      'Your output structure (all in English, paste-ready):\n' +
+      '1) PROJECT GOAL — one short paragraph\n' +
+      '2) VISUAL DESIGN SYSTEM — colors (hex), fonts, spacing vibe, imagery, what to avoid\n' +
+      '3) INFORMATION ARCHITECTURE — ordered sections: Hero, About/Bio, Achievements, Skills (as tags/chips), Experience timeline, Contact, plus the CHATBOT (placement, UX flow, starter questions, behavior, mobile)\n' +
+      '4) COPY — embed all provided Finnish copy in appropriate sections (tagline, bio, achievements, skills, experience) — you may lightly adapt for clarity in context but do not invent employers or degrees\n' +
+      '5) INTERACTIONS & ANIMATION — explicit: scroll behavior, section reveal pattern, hover/focus micro-interactions, reduced-motion fallback\n' +
+      '6) QUALITY BAR — accessibility, contrast, performance\n\n' +
+      'Rules: No meta-instructions ("here is a prompt"). No markdown title fences unless they help the builder. No code blocks unless essential. Output only the master prompt text that the user will paste into ' + toolLabel + '.';
+    callMasterPromptModel(sys, masterPromptUserPayload(), 4500)
       .then(function (reply) {
         txt.textContent = reply;
         savePortfolioField('masterPrompt', reply);
@@ -359,10 +398,10 @@
     var prev = document.getElementById('masterPromptText').textContent;
     var txt = document.getElementById('masterPromptText');
     txt.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
-    var sys = 'Päivitä seuraava portfolio-master prompt käyttäjän toiveen mukaan. Säilytä rakenne. Kirjoita koko lopputulos englanniksi, valmiina liitettäväksi.';
-    openAiMessages(sys, [
-      { role: 'user', content: 'Nykyinen prompt:\n' + prev + '\n\nMuutos / tarkennus:\n' + note }
-    ], 3500)
+    var sys = 'Update the following portfolio master prompt per the user\'s change request. Output the FULL revised prompt in English, paste-ready for Lovable/Base44.\n' +
+      'CRITICAL: You must PRESERVE and RE-EMBED all non-negotiable requirements: on-site AI chatbot (placement, starter questions, mobile, on-brand), modern 2024–2025 visual direction, and detailed motion/micro-interactions with reduced-motion fallback. If the user\'s note accidentally removes them, still keep them.\n' +
+      'Do not add meta commentary — only the prompt text.';
+    callMasterPromptModel(sys, 'Nykyinen prompt:\n' + prev + '\n\nMuutos / tarkennus (suomeksi tai englanniksi):\n' + note + withMasterPromptMandatoryBlock(), 4500)
       .then(function (reply) {
         txt.textContent = reply;
         savePortfolioField('masterPrompt', reply);
@@ -420,7 +459,7 @@
     result.style.display = 'block';
     cards.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
     var sys = 'Olet kolme eri asiantuntijaa arvioimassa portfoliosivustoa. Anna palautetta tässä rakenteessa:\n' +
-      'REKRYTOIJA (10 sekunnin ensivaikutelma):\nMitä huomaan ensin?\nJäänkö sivustolle vai poistunko?\nMitä jää puuttumaan?\nYksi konkreettinen parannusehdotus\n\n' +
+      'REKRYTOIJA (10 sekunnin ensivaikutelma):\nMitä huomaan ensin?\nJäänkö sivustolle vai poistunko?\nMitä jää puuttumaan?\nOnko portfolio-chatbot helposti löydettävissä ja uskottava — vai puuttuuko se?\nYksi konkreettinen parannusehdotus\n\n' +
       'UX-SUUNNITTELIJA (käytettävyys ja visuaalisuus):\nMikä designissa toimii?\nMikä haittaa lukukokemusta?\nYksi konkreettinen parannusehdotus\n\n' +
       'KILPAILIJA (strateginen katse):\nMikä erottaa tämän hakijan muista?\nMikä on tämän sivuston heikoin kohta kilpailullisesti?\nYksi asia jonka tekisin eri tavalla\n\n' +
       'Päätä yhteenvetoon: TOP 2 parannusta tärkeysjärjestyksessä.\n\n' +

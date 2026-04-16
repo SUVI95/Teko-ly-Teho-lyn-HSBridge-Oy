@@ -91,6 +91,18 @@ app.get('/js/ai-helper.js', (req, res) => {
   });
 });
 
+// Elävä CV module — always fresh (avoid stale portfolio builder after edits)
+app.get('/js/portfolio-module.js', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'js', 'portfolio-module.js');
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      res.status(404).send('/* portfolio-module.js not found */');
+    }
+  });
+});
+
 // Static files
 app.use(express.static('public'));
 
