@@ -1479,22 +1479,25 @@
       
       const isCompleted = completedModules.has(module.id);
       const isComingSoon = module.comingSoon === true;
-      const isSessionLocked = temporarilyLockedModuleIds.has(module.id) && !isAdminUser();
+      /** Kurssipäivän lukko: oppilas ei avaa; admin näkee merkinnän mutta voi avata */
+      const sessionLockActive = temporarilyLockedModuleIds.has(module.id);
+      const sessionLockBlocksStudent = sessionLockActive && !isAdminUser();
       
       // Before onboarding is complete, show it as the first module and lock the rest.
       const shouldLockForOnboarding = window.currentUser &&
         !window.currentUser.is_admin &&
         window.onboardingStatusKnown &&
         window.onboardingCompleted !== true;
-      const isLocked = isComingSoon || shouldLockForOnboarding || isSessionLocked;
+      const isLocked = isComingSoon || shouldLockForOnboarding || sessionLockBlocksStudent;
       
       let lockBadge = '';
       if (isComingSoon) lockBadge = '<div class="locked-badge">🚧 Tulossa pian</div>';
       else if (shouldLockForOnboarding) lockBadge = '<div class="locked-badge">🔒 Suorita ensin aloitusmoduuli</div>';
-      else if (isSessionLocked) lockBadge = '<div class="locked-badge">🔒 Ei käytössä tänään</div>';
+      else if (sessionLockActive && isAdminUser()) lockBadge = '<div class="locked-badge">🔒 Lukittu oppilaille tänään — admin voi avata</div>';
+      else if (sessionLockActive) lockBadge = '<div class="locked-badge">🔒 Ei käytössä tänään</div>';
       
       let progressBlock = '';
-      if (isSessionLocked) {
+      if (sessionLockBlocksStudent) {
         progressBlock = '<div class="progress-text">Ei käytössä tänään</div>';
       } else if (isComingSoon) {
         progressBlock = '<div class="progress-text">Moduuli on kehityksessä</div>';

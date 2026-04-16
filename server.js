@@ -218,13 +218,15 @@ app.get('/module/:moduleId', async (req, res) => {
     }
   }
 
-  // Try multiple paths (Vercel may use different cwd)
+  // Try multiple paths (Vercel may use different cwd).
+  // Prefer repo-root *.html first so edits match what developers save; public/module is fallback.
   let paths = [
     path.join(__dirname, 'public', 'ai-simulation-lab.html'),
     path.join(process.cwd(), 'public', 'ai-simulation-lab.html'),
+    path.join(__dirname, `${moduleId}.html`),
+    path.join(process.cwd(), `${moduleId}.html`),
     path.join(__dirname, 'public', 'module', `${moduleId}.html`),
-    path.join(process.cwd(), 'public', 'module', `${moduleId}.html`),
-    path.join(__dirname, `${moduleId}.html`)
+    path.join(process.cwd(), 'public', 'module', `${moduleId}.html`)
   ];
   if (moduleId !== 'moduuli-ai-simulation-lab') {
     paths = paths.filter(x => !x.includes('ai-simulation-lab'));
@@ -243,6 +245,8 @@ app.get('/module/:moduleId', async (req, res) => {
     `);
   }
 
+  // Avoid stale module HTML behind CDN/browser cache after deploys
+  res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   res.sendFile(modulePath);
 });
 
