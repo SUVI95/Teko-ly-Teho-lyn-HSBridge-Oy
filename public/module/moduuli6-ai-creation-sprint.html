@@ -61,6 +61,12 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 .question-group label{display:block;font-size:0.95rem;font-weight:500;color:var(--ink);margin-bottom:0.5rem;}
 .question-group textarea,.question-group input[type="text"]{width:100%;background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem;font-size:0.92rem;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;resize:vertical;min-height:70px;line-height:1.6;}
 .question-group textarea:focus,.question-group input[type="text"]:focus{border-color:rgba(37,99,168,0.4);}
+.compare-input{width:100%;min-height:140px !important;padding:1rem 1.1rem !important;background:#fff !important;border:2px solid rgba(26,26,46,0.22) !important;border-radius:10px !important;font-size:0.95rem !important;font-family:'DM Sans',sans-serif !important;color:var(--ink) !important;line-height:1.65 !important;resize:vertical !important;box-shadow:0 2px 12px rgba(26,26,46,0.06);margin-top:0.35rem;display:block;}
+.compare-input:focus{border-color:var(--accent) !important;box-shadow:0 0 0 3px rgba(37,99,168,0.12),0 2px 12px rgba(26,26,46,0.06);}
+.compare-input-hint{font-size:0.82rem;color:var(--muted);margin-top:0.35rem;}
+.selected-prompt-wrap{margin-top:1.5rem;padding:1.35rem 1.5rem;background:var(--paper2);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);}
+.selected-prompt-wrap .prompt-label{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:600;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem;}
+.selected-prompt-wrap .prompt-title{font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:0.85rem;}
 .submit-section{background:#fff;border-radius:16px;padding:2.5rem;border:1px solid var(--border);box-shadow:var(--shadow-md);}
 .submit-section h3{font-family:'DM Serif Display',serif;font-size:1.4rem;font-weight:400;color:var(--ink);margin-bottom:1.5rem;}
 .upload-group{margin-bottom:1.5rem;}
@@ -195,22 +201,24 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
       <h4>Vaihe 1 — Valitse yksi tilanne</h4>
       <h3>Valitse yksi prompti jonka testaat molemmissa työkaluissa</h3>
       <div class="select-grid" id="taskCPrompts">
-        <div class="select-card" data-prompt="Kirjoita sähköpostin aloitus, jossa pyydän asiakkaalta palautetta projektista." onclick="selectPromptCard('taskCPrompts', this)">
+        <div class="select-card" data-title="Pyydä asiakaspalautetta" data-prompt="Kirjoita lyhyt sähköpostin aloitus, jossa pyydän asiakkaalta palautetta juuri päättyneestä projektista. Sävy: lämmin ja ammattimainen. Suomeksi. Max 3 lausetta." onclick="selectPromptCard('taskCPrompts', this)">
           ✉️ Pyydä asiakaspalautetta
         </div>
-        <div class="select-card" data-prompt="Kirjoita lyhyt esittely itsestäni LinkedIn-profiiliin. Olen [ammatti] ja autan [kohderyhmä]." onclick="selectPromptCard('taskCPrompts', this)">
+        <div class="select-card" data-title="LinkedIn-esittely" data-prompt="Kirjoita lyhyt LinkedIn-profiiliesittely minulle. Olen [ammatti] ja autan [kohderyhmä] saavuttamaan [hyöty]. Sävy: ihmisläheinen, ei korporaatiokieli. Max 4 lausetta. Suomeksi." onclick="selectPromptCard('taskCPrompts', this)">
           🔗 LinkedIn-esittely
         </div>
-        <div class="select-card" data-prompt="Kirjoita sisäinen tiedote tiimille: otamme käyttöön uuden AI-työkalun ensi viikolla." onclick="selectPromptCard('taskCPrompts', this)">
+        <div class="select-card" data-title="Sisäinen tiedote" data-prompt="Kirjoita lyhyt sisäinen tiedote tiimille. Viesti: otamme käyttöön uuden AI-työkalun ensi viikolla. Kerro miksi, mitä se tarkoittaa käytännössä ja mitä tehdä seuraavaksi. Suomeksi. Max 5 lausetta." onclick="selectPromptCard('taskCPrompts', this)">
           📢 Sisäinen tiedote
         </div>
-        <div class="select-card" data-prompt="Kirjoita 3 lauseen myyntipuhe palvelulleni: [palvelu] auttaa [asiakas] saavuttamaan [hyöty]." onclick="selectPromptCard('taskCPrompts', this)">
+        <div class="select-card" data-title="Myyntipuhe" data-prompt="Kirjoita 3 lauseen myyntipuhe suomeksi. Palvelu: [palvelu]. Asiakas: [kohderyhmä]. Hyöty: [mitä asiakas saa]. Aloita asiakkaan ongelmasta, ei omasta palvelusta." onclick="selectPromptCard('taskCPrompts', this)">
           🚀 Myyntipuhe
         </div>
       </div>
-      <div id="selectedPromptBox" style="display:none;">
+      <div id="selectedPromptBox" class="selected-prompt-wrap" style="display:none;">
+        <div class="prompt-label">Valitsemasi prompti</div>
+        <div class="prompt-title" id="selectedPromptTitle"></div>
         <div class="prompt-box" id="selectedPromptText"></div>
-        <button class="copy-prompt-btn" onclick="copyBox('selectedPromptText', this)">📋 Kopioi prompti</button>
+        <button type="button" class="copy-prompt-btn" onclick="copyBox('selectedPromptText', this)">📋 Kopioi prompti</button>
       </div>
     </div>
 
@@ -245,16 +253,19 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
       <h4>Vaihe 3 — Vertaile tuloksia</h4>
       <h3>Vastaa kolmeen kysymykseen</h3>
       <div class="question-group">
-        <label>1. Kumpi vastaus oli pitempi tai lyhyempi — ja kummasta pidät?</label>
-        <textarea id="compare1" placeholder="Kirjoita vastauksesi..."></textarea>
+        <label for="compare1">1. Kumpi vastaus oli pitempi tai lyhyempi — ja kummasta pidät?</label>
+        <div class="compare-input-hint">Kirjoita vastauksesi alle.</div>
+        <textarea id="compare1" class="compare-input" name="compare1" rows="5" placeholder="Esimerkki: ChatGPT oli lyhyempi, mutta pidin Clauden sävystä enemmän..."></textarea>
       </div>
       <div class="question-group">
-        <label>2. Kumpi kuulosti luonnollisemmalta suomelta?</label>
-        <textarea id="compare2" placeholder="Kirjoita vastauksesi..."></textarea>
+        <label for="compare2">2. Kumpi kuulosti luonnollisemmalta suomelta?</label>
+        <div class="compare-input-hint">Kirjoita vastauksesi alle.</div>
+        <textarea id="compare2" class="compare-input" name="compare2" rows="5" placeholder="Esimerkki: Claude kuulosti luonnollisemmalta, koska..."></textarea>
       </div>
       <div class="question-group">
-        <label>3. Kumpaa käyttäisit suoraan ilman muokkauksia — ja miksi?</label>
-        <textarea id="compare3" placeholder="Kirjoita vastauksesi..."></textarea>
+        <label for="compare3">3. Kumpaa käyttäisit suoraan ilman muokkauksia — ja miksi?</label>
+        <div class="compare-input-hint">Kirjoita vastauksesi alle.</div>
+        <textarea id="compare3" class="compare-input" name="compare3" rows="5" placeholder="Esimerkki: Käyttäisin ChatGPT:n versiota, koska..."></textarea>
       </div>
     </div>
   </div>
@@ -353,9 +364,13 @@ function selectCard(gridId, card) {
 function selectPromptCard(gridId, card) {
   document.querySelectorAll('#' + gridId + ' .select-card').forEach(function(c) { c.classList.remove('selected'); });
   card.classList.add('selected');
-  var prompt = card.getAttribute('data-prompt');
+  var prompt = card.getAttribute('data-prompt') || '';
+  var title = card.getAttribute('data-title') || '';
+  document.getElementById('selectedPromptTitle').textContent = title;
   document.getElementById('selectedPromptText').textContent = prompt;
-  document.getElementById('selectedPromptBox').style.display = 'block';
+  var box = document.getElementById('selectedPromptBox');
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function submitHomework() {
