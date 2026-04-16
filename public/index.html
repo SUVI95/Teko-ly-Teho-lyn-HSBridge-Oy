@@ -1398,6 +1398,39 @@
       }
     }
     
+    /** Moduulit jotka on piilotettu tältä kurssipäivältä (poista id listalta kun avaat). Admin näkee silti kaiken. */
+    const temporarilyLockedModuleIds = new Set([
+      'moduuli-ai-liidien-hankinta',
+      'moduuli-ai-simulation-lab',
+      'moduuli-excel-copilot-masterclass',
+      'moduuli-recap-game',
+      'moduuli-voice-deep-search',
+      'moduuli10-ai-tyonhakutyokalut',
+      'moduuli11-ai-etikka',
+      'moduuli10c-freelance',
+      'moduuli9d-henkilobrandi',
+      'moduuli8-ai-haastattelussa',
+      'moduuli9b-palkkaneuvottelu',
+      'moduuli9c-hylkays',
+      'moduuli9-ai-oppimisessa',
+      'moduuli10b-digitaaliset-perustaidot',
+      'moduuli10d-yrittajyys',
+      'moduuli5-ai-myynnissa-ja-markkinoinnissa',
+      'moduuli6-ai-taloushallinnossa',
+      'moduuli-hoitoala',
+      'moduuli-rakennusala',
+      'moduuli-markkinointi',
+      'moduuli-ravintola',
+      'moduuli-logistiikka',
+      'moduuli-it'
+    ]);
+    
+    function isAdminUser() {
+      const u = window.currentUser;
+      if (!u) return false;
+      return u.is_admin === true || u.is_admin === 'true' || u.is_admin === 1 || u.is_admin === '1';
+    }
+    
     // Render module card (all modules are accessible)
     function renderModuleCard(module, index, allModules, summary, completedModules, module4Completed, allPart1Completed = true) {
       // Homework module is always accessible
@@ -1446,27 +1479,43 @@
       
       const isCompleted = completedModules.has(module.id);
       const isComingSoon = module.comingSoon === true;
+      const isSessionLocked = temporarilyLockedModuleIds.has(module.id) && !isAdminUser();
       
       // Before onboarding is complete, show it as the first module and lock the rest.
       const shouldLockForOnboarding = window.currentUser &&
         !window.currentUser.is_admin &&
         window.onboardingStatusKnown &&
         window.onboardingCompleted !== true;
-      const isLocked = isComingSoon || shouldLockForOnboarding;
+      const isLocked = isComingSoon || shouldLockForOnboarding || isSessionLocked;
+      
+      let lockBadge = '';
+      if (isComingSoon) lockBadge = '<div class="locked-badge">🚧 Tulossa pian</div>';
+      else if (shouldLockForOnboarding) lockBadge = '<div class="locked-badge">🔒 Suorita ensin aloitusmoduuli</div>';
+      else if (isSessionLocked) lockBadge = '<div class="locked-badge">🔒 Ei käytössä tänään</div>';
+      
+      let progressBlock = '';
+      if (isSessionLocked) {
+        progressBlock = '<div class="progress-text">Ei käytössä tänään</div>';
+      } else if (isComingSoon) {
+        progressBlock = '<div class="progress-text">Moduuli on kehityksessä</div>';
+      } else if (progress > 0) {
+        progressBlock = `
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${progress}%"></div>
+            </div>
+            <div class="progress-text">${completedSections}/${totalSections} osiota suoritettu${isCompleted ? ' ✓' : ''}</div>`;
+      } else {
+        progressBlock = '<div class="progress-text">Valmis käyttöön</div>';
+      }
       
       return `
         <div class="module-card ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="window.location.href='/module/${module.id}'"` : ''}>
           ${isCompleted ? '<div class="completion-badge">✓</div>' : ''}
-          ${isComingSoon ? '<div class="locked-badge">🚧 Tulossa pian</div>' : shouldLockForOnboarding ? '<div class="locked-badge">🔒 Suorita ensin aloitusmoduuli</div>' : ''}
+          ${lockBadge}
           <div class="module-icon">${iconSVGs[module.icon]}</div>
           <h2>${module.title}</h2>
           <p>${module.description}</p>
-          ${isComingSoon ? '<div class="progress-text">Moduuli on kehityksessä</div>' : progress > 0 ? `
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: ${progress}%"></div>
-            </div>
-            <div class="progress-text">${completedSections}/${totalSections} osiota suoritettu${isCompleted ? ' ✓' : ''}</div>
-          ` : '<div class="progress-text">Valmis käyttöön</div>'}
+          ${progressBlock}
         </div>
       `;
     }
