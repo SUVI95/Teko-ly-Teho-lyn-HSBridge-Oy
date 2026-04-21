@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI-maisema — Grok, Manus ja DeepSeek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --text: #1a1a2e;
+    --muted: #6b6880;
+    --paper: #f5f3ef;
+    --paper2: #eeeae3;
+    --warm: #e8e0d4;
+    --border: rgba(26,26,46,0.12);
+    --accent: #7c3aed;
+    --accent2: #c75b3a;
+    --accent3: #2563a8;
+    --grok: #1d9bf0;
+    --manus: #10b981;
+    --deepseek: #6366f1;
+    --shadow: 0 1px 4px rgba(26,26,46,0.08);
+    --shadow-md: 0 4px 16px rgba(26,26,46,0.12);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--text); line-height: 1.7; font-size: 17px; }
+  #progress-bar { position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, var(--grok), var(--manus), var(--deepseek)); z-index: 1000; transition: width 0.2s ease; }
+
+  nav { position: fixed; top: 3px; left: 0; right: 0; height: 64px; background: rgba(245,243,239,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; z-index: 999; }
+  .nav-badge { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--grok); border: 1px solid var(--grok); border-radius: 4px; padding: 3px 10px; }
+  .nav-title { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--muted); }
+  .nav-time { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .nav-time::before { content: ''; display: inline-block; width: 7px; height: 7px; background: var(--manus); border-radius: 50%; }
+
+  /* HERO */
+  .hero { background: var(--ink); background-image: radial-gradient(ellipse at 15% 60%, rgba(29,155,240,0.2) 0%, transparent 50%), radial-gradient(ellipse at 85% 20%, rgba(16,185,129,0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(99,102,241,0.15) 0%, transparent 50%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 120px 32px 80px; text-align: center; }
+  .hero-inner { max-width: 780px; }
+  .hero-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 32px; }
+  .hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2.4rem, 5vw, 3.8rem); color: #fff; line-height: 1.15; margin-bottom: 24px; }
+  .hero h1 em { font-style: italic; color: #67e8f9; }
+  .hero-sub { font-size: 18px; font-weight: 300; color: rgba(255,255,255,0.5); max-width: 580px; margin: 0 auto 48px; line-height: 1.75; }
+
+  .tool-trio { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+  .trio-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px 24px; text-align: center; min-width: 150px; flex: 1; max-width: 200px; }
+  .trio-card-icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+  .trio-card-name { font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+  .trio-card-role { font-size: 13px; color: rgba(255,255,255,0.6); }
+  .trio-card.grok { border-color: rgba(29,155,240,0.3); }
+  .trio-card.grok .trio-card-name { color: #67e8f9; }
+  .trio-card.manus { border-color: rgba(16,185,129,0.3); }
+  .trio-card.manus .trio-card-name { color: #6ee7b7; }
+  .trio-card.deepseek { border-color: rgba(99,102,241,0.3); }
+  .trio-card.deepseek .trio-card-name { color: #c4b5fd; }
+
+  .hero-cta { display: inline-block; background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; padding: 14px 32px; border-radius: 6px; text-decoration: none; transition: background 0.2s ease; }
+  .hero-cta:hover { background: rgba(255,255,255,0.18); }
+
+  /* SECTIONS */
+  .section { padding: 96px 32px; background: var(--paper); }
+  .section-alt { background: var(--paper2); }
+  .section-dark { background: var(--ink); }
+  .section-inner { max-width: 820px; margin: 0 auto; }
+  .section-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; display: block; }
+  h2.section-h2 { font-family: 'DM Serif Display', serif; font-size: clamp(1.8rem, 3.5vw, 2.6rem); color: var(--ink); line-height: 1.2; margin-bottom: 20px; }
+  h2.section-h2 em { font-style: italic; color: var(--accent); }
+  h2.section-h2.light { color: #fff; }
+  h2.section-h2.light em { color: #67e8f9; }
+  .section-divider { width: 48px; height: 3px; background: var(--grok); margin-bottom: 32px; border-radius: 2px; }
+  .section-divider.green { background: var(--manus); }
+  .section-divider.purple { background: var(--deepseek); }
+  .lead { font-size: 19px; font-weight: 300; color: var(--muted); line-height: 1.75; margin-bottom: 40px; }
+  .lead-light { color: rgba(255,255,255,0.55); }
+  p { margin-bottom: 20px; }
+
+  /* PART HEADER */
+  .part-header { display: flex; align-items: center; gap: 16px; margin-bottom: 40px; padding: 20px 24px; border-radius: 12px; }
+  .part-header.grok { background: rgba(29,155,240,0.08); border: 1px solid rgba(29,155,240,0.2); }
+  .part-header.manus { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); }
+  .part-header.deepseek { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); }
+  .part-header-icon { font-size: 2.2rem; flex-shrink: 0; }
+  .part-header-content { flex: 1; }
+  .part-header-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+  .part-header.grok .part-header-label { color: var(--grok); }
+  .part-header.manus .part-header-label { color: var(--manus); }
+  .part-header.deepseek .part-header-label { color: var(--deepseek); }
+  .part-header h3 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--ink); margin-bottom: 4px; }
+  .part-header p { font-size: 14px; color: var(--muted); margin: 0; }
+  .part-header-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+  /* EXERCISE */
+  .exercise { background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 32px; box-shadow: var(--shadow-md); }
+  .exercise-header { background: var(--ink); padding: 20px 28px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .exercise-num { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 4px; padding: 4px 10px; white-space: nowrap; }
+  .exercise-num.grok { color: #67e8f9; background: rgba(29,155,240,0.15); border: 1px solid rgba(29,155,240,0.3); }
+  .exercise-num.manus { color: #6ee7b7; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); }
+  .exercise-title { font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 16px; color: #fff; }
+  .exercise-time { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.35); white-space: nowrap; }
+  .exercise-body { padding: 28px 32px; }
+  .exercise-steps { counter-reset: step; list-style: none; padding: 0; }
+  .exercise-steps li { counter-increment: step; display: flex; gap: 16px; margin-bottom: 24px; align-items: flex-start; }
+  .exercise-steps li::before { content: counter(step); font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; color: #fff; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .exercise-steps.grok li::before { background: var(--grok); }
+  .exercise-steps.manus li::before { background: var(--manus); }
+  .step-content { flex: 1; }
+  .step-content strong { display: block; color: var(--ink); font-weight: 600; margin-bottom: 6px; }
+
+  /* PROMPT BLOCK */
+  .prompt-block { background: #0f0f1a; border: 1px solid rgba(103,232,249,0.2); border-radius: 10px; padding: 20px 24px; margin: 16px 0; position: relative; }
+  .prompt-block.green { border-color: rgba(110,231,183,0.2); }
+  .prompt-block-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: #67e8f9; }
+  .prompt-block.green .prompt-block-label { color: #6ee7b7; }
+  .prompt-block-label::after { content: 'kopioi ja käytä'; background: rgba(103,232,249,0.1); border: 1px solid rgba(103,232,249,0.2); border-radius: 3px; padding: 2px 8px; font-size: 9px; }
+  .prompt-block.green .prompt-block-label::after { background: rgba(110,231,183,0.1); border-color: rgba(110,231,183,0.2); }
+  .prompt-block p { font-family: 'DM Mono', monospace; font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.7; margin: 0; }
+  .prompt-block em { color: #fb923c; font-style: normal; font-weight: 500; }
+  .copy-btn { position: absolute; top: 14px; right: 14px; background: rgba(103,232,249,0.1); border: 1px solid rgba(103,232,249,0.2); border-radius: 4px; padding: 5px 12px; font-family: 'DM Mono', monospace; font-size: 10px; color: #67e8f9; cursor: pointer; transition: background 0.15s; }
+  .copy-btn:hover { background: rgba(103,232,249,0.2); }
+
+  /* CALLOUTS */
+  .callout { border-radius: 10px; padding: 20px 24px; margin: 24px 0; display: flex; gap: 16px; align-items: flex-start; }
+  .callout-warning { background: rgba(199,91,58,0.08); border-left: 3px solid var(--accent2); }
+  .callout-info { background: rgba(37,99,168,0.07); border-left: 3px solid var(--accent3); }
+  .callout-tip { background: rgba(124,58,237,0.07); border-left: 3px solid var(--accent); }
+  .callout-grok { background: rgba(29,155,240,0.07); border-left: 3px solid var(--grok); }
+  .callout-manus { background: rgba(16,185,129,0.07); border-left: 3px solid var(--manus); }
+  .callout-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+  .callout-text { flex: 1; }
+  .callout-text strong { color: var(--ink); display: block; margin-bottom: 4px; }
+  .callout-text p { margin: 0; font-size: 15px; color: var(--muted); }
+
+  /* COMPARE GRID */
+  .compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+  .compare-col { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: var(--shadow); }
+  .compare-col-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+  .compare-col.perplexity .compare-col-label { color: var(--accent); }
+  .compare-col.grok .compare-col-label { color: var(--grok); }
+  .compare-col h4 { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--ink); margin-bottom: 10px; }
+  .compare-col ul { list-style: none; padding: 0; }
+  .compare-col ul li { font-size: 14px; color: var(--muted); padding: 6px 0; border-bottom: 1px solid var(--border); padding-left: 16px; position: relative; }
+  .compare-col ul li::before { content: '→'; position: absolute; left: 0; color: var(--muted); }
+  .compare-col ul li:last-child { border-bottom: none; }
+  .compare-col.grok ul li::before { color: var(--grok); }
+  .compare-col.perplexity ul li::before { color: var(--accent); }
+
+  /* AGENT VS CHATBOT */
+  .agent-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 32px 0; }
+  .agent-col { border-radius: 12px; padding: 24px; }
+  .agent-col.chatbot { background: var(--paper2); border: 1px solid var(--border); }
+  .agent-col.agent { background: var(--ink); border: 1px solid rgba(16,185,129,0.3); position: relative; overflow: hidden; }
+  .agent-col.agent::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at 80% 20%, rgba(16,185,129,0.15) 0%, transparent 60%); pointer-events: none; }
+  .agent-col-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+  .agent-col.chatbot .agent-col-label { color: var(--muted); }
+  .agent-col.agent .agent-col-label { color: #6ee7b7; }
+  .agent-col h4 { font-family: 'DM Serif Display', serif; font-size: 1.1rem; margin-bottom: 12px; }
+  .agent-col.chatbot h4 { color: var(--ink); }
+  .agent-col.agent h4 { color: #fff; }
+  .agent-col ul { list-style: none; padding: 0; }
+  .agent-col ul li { font-size: 14px; padding: 7px 0; border-bottom: 1px solid rgba(26,26,46,0.08); padding-left: 18px; position: relative; }
+  .agent-col.agent ul li { border-bottom-color: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+  .agent-col.chatbot ul li { color: var(--muted); }
+  .agent-col ul li::before { content: '→'; position: absolute; left: 0; }
+  .agent-col.chatbot ul li::before { color: var(--muted); }
+  .agent-col.agent ul li::before { color: #6ee7b7; }
+  .agent-col ul li:last-child { border-bottom: none; }
+
+  /* TOOL LINK */
+  .tool-link { display: inline-flex; align-items: center; gap: 8px; border-radius: 6px; padding: 8px 16px; font-family: 'DM Mono', monospace; font-size: 13px; text-decoration: none; transition: background 0.15s; margin: 4px 0; }
+  .tool-link.grok { background: rgba(29,155,240,0.08); border: 1px solid rgba(29,155,240,0.2); color: var(--grok); }
+  .tool-link.grok:hover { background: rgba(29,155,240,0.15); }
+  .tool-link.manus { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: var(--manus); }
+  .tool-link.manus:hover { background: rgba(16,185,129,0.15); }
+
+  /* CARD */
+  .card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 28px 32px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .card-title { font-family: 'DM Serif Display', serif; font-size: 1.15rem; color: var(--ink); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+
+  /* DEEPSEEK CARD */
+  .deepseek-box { background: var(--ink); border-radius: 16px; padding: 40px; margin: 32px 0; position: relative; overflow: hidden; }
+  .deepseek-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at 30% 50%, rgba(99,102,241,0.25) 0%, transparent 60%); pointer-events: none; }
+  .deepseek-box h3 { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: #fff; margin-bottom: 16px; position: relative; }
+  .deepseek-box h3 em { font-style: italic; color: #c4b5fd; }
+  .deepseek-box p { color: rgba(255,255,255,0.6); font-size: 16px; margin-bottom: 16px; position: relative; line-height: 1.75; }
+  .deepseek-box p:last-child { margin-bottom: 0; }
+
+  /* REFLECTION */
+  .reflection { background: var(--warm); border-radius: 12px; padding: 28px 32px; margin: 32px 0; }
+  .reflection h3 { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--ink); margin-bottom: 14px; }
+  .reflection ul { list-style: none; padding: 0; }
+  .reflection ul li { padding: 8px 0; border-bottom: 1px solid rgba(26,26,46,0.08); font-size: 15px; color: var(--muted); padding-left: 20px; position: relative; }
+  .reflection ul li::before { content: '→'; position: absolute; left: 0; color: var(--accent2); }
+  .reflection ul li:last-child { border-bottom: none; }
+
+  /* PULL QUOTE */
+  .pull-quote { border-left: 3px solid var(--grok); padding: 12px 24px; margin: 28px 0; font-family: 'DM Serif Display', serif; font-size: 1.2rem; font-style: italic; color: var(--ink); line-height: 1.5; }
+  .pull-quote.green { border-left-color: var(--manus); }
+
+  /* AI MAP */
+  .ai-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 32px 0; }
+  .ai-map-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 16px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+  .ai-map-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .ai-map-card.chatgpt::before { background: #10a37f; }
+  .ai-map-card.claude::before { background: var(--accent2); }
+  .ai-map-card.perplexity::before { background: var(--accent); }
+  .ai-map-card.grok::before { background: var(--grok); }
+  .ai-map-card.manus::before { background: var(--manus); }
+  .ai-map-card.deepseek::before { background: var(--deepseek); }
+  .ai-map-name { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; color: var(--ink); }
+  .ai-map-role { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .ai-map-tag { display: inline-block; font-family: 'DM Mono', monospace; font-size: 10px; padding: 2px 7px; border-radius: 3px; margin-top: 8px; }
+  .ai-map-tag.free { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
+  .ai-map-tag.limited { background: rgba(199,91,58,0.08); color: var(--accent2); border: 1px solid rgba(199,91,58,0.18); }
+
+  /* FINAL */
+  .final-section { background: var(--ink); background-image: radial-gradient(ellipse at 15% 50%, rgba(29,155,240,0.15) 0%, transparent 50%), radial-gradient(ellipse at 85% 30%, rgba(16,185,129,0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 85%, rgba(99,102,241,0.15) 0%, transparent 50%); padding: 96px 32px; text-align: center; }
+  .final-section h2 { font-family: 'DM Serif Display', serif; font-size: clamp(1.8rem, 3.5vw, 2.8rem); color: #fff; margin-bottom: 20px; }
+  .final-section h2 em { color: #67e8f9; }
+  .final-section > .section-inner > p { color: rgba(255,255,255,0.5); max-width: 560px; margin: 0 auto 48px; font-size: 17px; font-weight: 300; }
+
+  @media (max-width: 640px) {
+    nav { padding: 0 16px; }
+    .nav-title { display: none; }
+    .section { padding: 72px 20px; }
+    .hero { padding: 100px 20px 60px; }
+    .tool-trio { flex-direction: column; align-items: center; }
+    .compare-row, .agent-compare, .ai-map { grid-template-columns: 1fr; }
+    .exercise-time { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<nav>
+  <span class="nav-badge">Moduuli 9</span>
+  <span class="nav-title">AI-maisema</span>
+  <span class="nav-time">~1 tunti</span>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="hero-inner">
+    <div class="hero-label">HS Bridge AI — Tekoälykoulutus · Viimeinen moduuli</div>
+    <h1>Maailma on suurempi kuin <em>ChatGPT.</em></h1>
+    <p class="hero-sub">Olet oppinut perustyökalut. Nyt on aika katsoa isompaa kuvaa. Kolme työkalua jotka tekevät asioita joita mikään muu ei tee — ja joita sinun pitää tietää.</p>
+    <div class="tool-trio">
+      <div class="trio-card grok">
+        <span class="trio-card-icon">🔵</span>
+        <div class="trio-card-name">Grok</div>
+        <div class="trio-card-role">Reaaliaikainen X-data ja nopein DeepSearch</div>
+      </div>
+      <div class="trio-card manus">
+        <span class="trio-card-icon">🤖</span>
+        <div class="trio-card-name">Manus</div>
+        <div class="trio-card-role">AI-agentti joka tekee — ei vain vastaa</div>
+      </div>
+      <div class="trio-card deepseek">
+        <span class="trio-card-icon">⚡</span>
+        <div class="trio-card-name">DeepSeek</div>
+        <div class="trio-card-role">Avoimen lähdekoodin vallankumous</div>
+      </div>
+    </div>
+    <a href="#intro" class="hero-cta">Aloitetaan ↓</a>
+  </div>
+</section>
+
+<!-- INTRO -->
+<section class="section" id="intro">
+  <div class="section-inner">
+    <span class="section-label">Miksi tämä moduuli</span>
+    <h2 class="section-h2">Kaikki tekoälytyökalut eivät ole <em>sama asia</em></h2>
+    <div class="section-divider"></div>
+    <p class="lead">ChatGPT, Claude, Perplexity, NotebookLM, Lovable — olet oppinut ne kaikki. Mutta maailma ei pysähdy niihin. Tässä moduulissa opit kolme työkalua jotka edustavat eri suuntia johon AI kehittyy — ja joista jokainen tekee jotain mitä muut eivät.</p>
+
+    <div class="ai-map">
+      <div class="ai-map-card chatgpt">
+        <div class="ai-map-name">ChatGPT</div>
+        <div class="ai-map-role">Yleiskäyttöinen, luova, laajin käyttäjäkunta</div>
+        <span class="ai-map-tag free">tuttu</span>
+      </div>
+      <div class="ai-map-card claude">
+        <div class="ai-map-name">Claude</div>
+        <div class="ai-map-role">Pitkä konteksti, syvä analyysi, turvallisuus</div>
+        <span class="ai-map-tag free">tuttu</span>
+      </div>
+      <div class="ai-map-card perplexity">
+        <div class="ai-map-name">Perplexity</div>
+        <div class="ai-map-role">Haku + synteesi, lähteet näkyvissä</div>
+        <span class="ai-map-tag free">tuttu</span>
+      </div>
+      <div class="ai-map-card grok">
+        <div class="ai-map-name">Grok</div>
+        <div class="ai-map-role">Reaaliaikainen X-data, nopein web-haku</div>
+        <span class="ai-map-tag limited">tänään</span>
+      </div>
+      <div class="ai-map-card manus">
+        <div class="ai-map-name">Manus</div>
+        <div class="ai-map-role">Autonominen agentti — tekee tehtäviä itsenäisesti</div>
+        <span class="ai-map-tag limited">tänään</span>
+      </div>
+      <div class="ai-map-card deepseek">
+        <div class="ai-map-name">DeepSeek</div>
+        <div class="ai-map-role">Avoimen lähdekoodin, ajettavissa paikallisesti</div>
+        <span class="ai-map-tag limited">tänään</span>
+      </div>
+    </div>
+
+    <p style="font-size:15px; color:var(--muted);">Vihreä = tuttu. Oranssi = tänään. Moduulin lopussa sinulla on täydellinen kartta AI-maailmasta.</p>
+  </div>
+</section>
+
+<!-- PART 1: GROK -->
+<section class="section section-alt" id="grok">
+  <div class="section-inner">
+
+    <div class="part-header grok">
+      <div class="part-header-icon">🔵</div>
+      <div class="part-header-content">
+        <div class="part-header-label">Osa 1 — Grok · xAI · Elon Musk</div>
+        <h3>Reaaliaikainen tieto ja nopein haku</h3>
+        <p>Ainoa ilmainen työkalu joka hakee suoraan X:stä (entinen Twitter) — trendit, uutiset, ihmisten mielipiteet juuri nyt</p>
+      </div>
+      <div class="part-header-time">⏱ 25 min</div>
+    </div>
+
+    <p class="lead">Grok on xAI:n lipputuote. Se tekee yhden asian paremmin kuin kaikki muut: pääsee käsiksi siihen mitä ihmiset sanovat X:ssä juuri tällä hetkellä. Ei eilen. Ei viime kuussa. Nyt.</p>
+
+    <div class="card">
+      <div class="card-title">🔵 Grok — mitä sinun pitää tietää</div>
+      <table style="width:100%; border-collapse:collapse; font-size:15px;">
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 0; color:var(--muted); width:35%;">Ilmainen tili</td>
+          <td style="padding:10px 0; font-weight:500; color:var(--ink);">Kyllä — grok.com, pelkkä sähköposti riittää</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 0; color:var(--muted);">Ilmainen raja</td>
+          <td style="padding:10px 0; color:var(--ink);">~10 viestiä per 2 tuntia — riittää harjoituksiin</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 0; color:var(--muted);">X-tili</td>
+          <td style="padding:10px 0; color:var(--ink);">Ei pakollinen — grok.com toimii ilman</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 0; color:var(--muted);">DeepSearch</td>
+          <td style="padding:10px 0; color:var(--ink);">10× nopeampi kuin ChatGPT deep research, 3× enemmän sivuja</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0; color:var(--muted);">Tärkein ero</td>
+          <td style="padding:10px 0; font-weight:500; color:var(--grok);">Hakee X:stä — tietää mitä ihmiset sanovat nyt</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="pull-quote">"Perplexity lukee verkkosivuja. Grok kuuntelee ihmisiä."</div>
+
+    <a href="https://grok.com" target="_blank" class="tool-link grok" style="margin-bottom:32px; display:inline-flex;">🔵 grok.com — avaa uudessa välilehdessä ennen harjoituksia</a>
+
+    <!-- EXERCISE 1: GROK VS PERPLEXITY -->
+    <div class="exercise">
+      <div class="exercise-header">
+        <span class="exercise-num grok">Harjoitus 1</span>
+        <span class="exercise-title">Grok vs. Perplexity — sama kysymys, eri maailma</span>
+        <span class="exercise-time">⏱ 12 min</span>
+      </div>
+      <div class="exercise-body">
+        <p style="color:var(--muted); margin-bottom:24px;">Avataan kaksi välilehteä — Perplexity ja Grok — ja haetaan täsmälleen sama kysymys molemmista. Tulos kertoo enemmän kuin mikään selitys.</p>
+
+        <ol class="exercise-steps grok">
+          <li>
+            <div class="step-content">
+              <strong>Valitse aihe joka muuttuu nopeasti</strong>
+              Parhaita aiheita ovat: teknologiatrendit, alan uutiset, yleinen mielipide jostakin ilmiöstä. Esimerkiksi: <em>"Mitä ihmiset ajattelevat tekoälystä tällä hetkellä?"</em> tai <em>"Mitkä ovat kuumat puheenaiheet [sinun alallasi] tällä hetkellä?"</em>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Hae ensin Perplexitystä — Web-tilassa</strong>
+              Kirjoita sama kysymys Perplexityyn. Katso vastaus. Mitkä ovat lähteet? Miltä ajalta tieto on?
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Hae sama Grokista — käytä DeepSearch</strong>
+              Avaa grok.com. Kirjoita sama kysymys. Paina DeepSearch-nappia jos se näkyy — tai kirjoita hakuun. Katso: mainitaanko X-postauksia? Näkyykö viittauksia ihmisten mielipiteisiin? Miltä ajalta tieto on?
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Vertaa tuloksia</strong>
+              Täytä alla:
+              <div style="background:var(--paper2); border-radius:8px; padding:16px 20px; margin-top:12px;">
+                <div class="compare-row">
+                  <div class="compare-col perplexity">
+                    <div class="compare-col-label">Perplexity vastasi</div>
+                    <h4>Lähteet olivat...</h4>
+                    <ul>
+                      <li>Verkkosivuja ja artikkeleita</li>
+                      <li>Tiede / tutkimus / media</li>
+                      <li>Ajalta: viikot/kuukaudet sitten</li>
+                    </ul>
+                  </div>
+                  <div class="compare-col grok">
+                    <div class="compare-col-label">Grok vastasi</div>
+                    <h4>Lähteet olivat...</h4>
+                    <ul>
+                      <li>X-postauksia, keskusteluja</li>
+                      <li>Ihmisten suorat mielipiteet</li>
+                      <li>Ajalta: tunnit/päivät sitten</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ol>
+
+        <div class="callout callout-grok">
+          <div class="callout-icon">💡</div>
+          <div class="callout-text">
+            <strong>Milloin käytät Grokia vs. Perplexityä?</strong>
+            <p>Perplexity: kun haluat tutkittua tietoa, artikkeleita, faktoja. Grok: kun haluat tietää mitä ihmiset ajattelevat nyt, mitkä trendit nousevat, mikä puhuttaa. Ne täydentävät toisiaan.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXERCISE 2: GROK DEEPSEARCH -->
+    <div class="exercise">
+      <div class="exercise-header">
+        <span class="exercise-num grok">Harjoitus 2</span>
+        <span class="exercise-title">DeepSearch — anna sen etsiä syvältä</span>
+        <span class="exercise-time">⏱ 10 min</span>
+      </div>
+      <div class="exercise-body">
+        <p style="color:var(--muted); margin-bottom:24px;">DeepSearch on Grokin tehokkain ominaisuus. Se käy läpi useita sivuja ja X-postauksia yhtä aikaa — 10× nopeammin kuin ChatGPT. Kokeillaan sitä aiheellasi.</p>
+
+        <ol class="exercise-steps grok">
+          <li>
+            <div class="step-content">
+              <strong>Kysy Grokista jotain jonka tiedät olevan ajankohtaista</strong>
+              <div class="prompt-block">
+                <div class="prompt-block-label">Kokeile näitä — muokkaa omaan aiheeseen</div>
+                <button class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
+                <p>Use DeepSearch to find what people are actually saying about [<em>aiheesi</em>] right now on X and the web. What are the main opinions, controversies, or emerging trends?</p>
+              </div>
+              <p style="font-size:14px; color:var(--muted); margin-top:8px;">Huomio: DeepSearch toimii usein paremmin englanniksi — se löytää enemmän lähteitä.</p>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Katso miten Grok ajattelee ääneen</strong>
+              Grokin vastaus näyttää usein mistä se haki — X-postauksia, uutisia, sivuja. Tämä läpinäkyvyys on erilainen kuin muissa työkaluissa. Lue rauhassa.
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Kysy jatkokysymys — Grok muistaa kontekstin</strong>
+              <div class="prompt-block">
+                <div class="prompt-block-label">Jatkokysymys</div>
+                <button class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
+                <p>Based on what you found: what would be the most useful tool or app someone could build to address these problems? Give me 2–3 concrete ideas.</p>
+              </div>
+            </div>
+          </li>
+        </ol>
+
+        <div class="callout callout-warning">
+          <div class="callout-icon">⚠️</div>
+          <div class="callout-text">
+            <strong>Tärkeä huomio Grokista — lue tämä</strong>
+            <p>Grok hakee X:stä — missä myös misinformaatio ja muut ongelmalliset sisällöt leviävät. Jos X:ssä kiertää virheellinen uutinen, Grok saattaa toistaa sen. <strong>Tarkista aina kriittiset tiedot toisesta lähteestä.</strong> Tämä ei ole Grokin heikkous — se on kaikkien reaaliaikaisten lähteiden ominaisuus.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PART 2: MANUS -->
+<section class="section" id="manus">
+  <div class="section-inner">
+
+    <div class="part-header manus">
+      <div class="part-header-icon">🤖</div>
+      <div class="part-header-content">
+        <div class="part-header-label">Osa 2 — Manus · Butterfly Effect</div>
+        <h3>AI joka tekee — ei vain vastaa</h3>
+        <p>Ensimmäinen laajasti saatavilla oleva autonominen AI-agentti. Saat antaa sille tehtävän ja se hoitaa sen loppuun asti.</p>
+      </div>
+      <div class="part-header-time">⏱ 25 min</div>
+    </div>
+
+    <p class="lead">Kaikki tähän asti oppimasi AI-työkalu odottaa sinua. Kirjoitat, se vastaa. Sinä ohjaat, se seuraa. Manus on erilainen. Se on agentti — se suunnittelee tehtävän itse, selaa verkkoa, kirjoittaa tiedostoja ja jatkaa kunnes työ on valmis. Sinä voit mennä kahville.</p>
+
+    <div class="agent-compare">
+      <div class="agent-col chatbot">
+        <div class="agent-col-label">Chatbotti — ChatGPT, Claude</div>
+        <h4>Vastaa kysymyksiin</h4>
+        <ul>
+          <li>Sinä kysyt → se vastaa</li>
+          <li>Yksi vastaus kerrallaan</li>
+          <li>Sinä johdat koko prosessin</li>
+          <li>Lopettaa kun vastaa</li>
+          <li>Et voi poistua — tarvitaan jatkuva ohjaus</li>
+        </ul>
+      </div>
+      <div class="agent-col agent">
+        <div class="agent-col-label">Agentti — Manus</div>
+        <h4>Suorittaa tehtäviä</h4>
+        <ul>
+          <li>Sinä annat tehtävän → se hoitaa</li>
+          <li>Monta vaihetta itsenäisesti</li>
+          <li>Se suunnittelee prosessin itse</li>
+          <li>Jatkaa kunnes valmis</li>
+          <li>Voit sulkea selaimen — se jatkaa pilvestä</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout callout-manus">
+      <div class="callout-icon">💳</div>
+      <div class="callout-text">
+        <strong>Ilmainen tili — mitä saat</strong>
+        <p>300 krediittiä päivässä jotka nollautuvat joka päivä. Yksinkertainen tutkimustehtävä kuluttaa noin 50–100 krediittiä. Kompleksi monivaiheinen tehtävä voi kuluttaa kaikki 300. Ilmainen tili riittää yhteen tai kahteen hyvään tehtävään päivässä. Rekisteröityminen Google-tilillä — manus.im.</p>
+      </div>
+    </div>
+
+    <div class="pull-quote green">"Anna Manukselle tehtävä. Mene kahville. Tule takaisin. Se on tehnyt sen."</div>
+
+    <a href="https://manus.im" target="_blank" class="tool-link manus" style="margin-bottom:32px; display:inline-flex;">🤖 manus.im — avaa ja luo tili ennen harjoitusta</a>
+
+    <!-- EXERCISE 3: MANUS RESEARCH TASK -->
+    <div class="exercise">
+      <div class="exercise-header">
+        <span class="exercise-num manus">Harjoitus 3</span>
+        <span class="exercise-title">Anna Manukselle monivaiheinen tehtävä — katso mitä tapahtuu</span>
+        <span class="exercise-time">⏱ 15 min</span>
+      </div>
+      <div class="exercise-body">
+        <p style="color:var(--muted); margin-bottom:24px;">Tässä harjoituksessa annetaan Manukselle tehtävä joka vaatisi normaalisti sinulta 30–60 minuuttia: tutkia aihe, koota tiedot ja kirjoittaa raportti. Katsotaan miten se suoriutuu.</p>
+
+        <ol class="exercise-steps manus">
+          <li>
+            <div class="step-content">
+              <strong>Kirjaudu Manukseen ja luo uusi tehtävä</strong>
+              Avaa manus.im. Kirjaudu Google-tilillä. Klikkaa "New Task" tai vastaava. Sinulle avautuu kenttä johon kirjoitat tehtävän.
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Liitä tämä tehtävä — muokkaa aiheesi mukaan</strong>
+              <div class="prompt-block green">
+                <div class="prompt-block-label">Tehtävä Manukselle</div>
+                <button class="copy-btn" onclick="copyPrompt(this)">kopioi ja muokkaa</button>
+                <p>Research [<em>kirjoita aiheesi</em>] and create a structured summary report. Include: 1) What is the current state of this field, 2) The 3 biggest challenges people face, 3) What tools or solutions already exist, 4) What is missing or could be improved. Save the report as a document I can download. Use web sources and cite them.</p>
+              </div>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Lähetä tehtävä ja seuraa mitä tapahtuu</strong>
+              Klikkaa lähetä. Nyt tapahtuu jotain poikkeuksellista: näet Manuksen ajattelevan ääneen. Se suunnittelee vaiheet, avaa sivuja, lukee niitä, kirjoittaa muistiinpanoja — kaikki näkyy reaaliajassa. Seuraa ensimmäiset 2–3 minuuttia.
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Sulje selain — tule takaisin 5–10 minuutin päästä</strong>
+              Tämä on tärkein kohta. Manus jatkaa pilvestä vaikka et ole paikalla. Kun tulet takaisin, tehtävä on valmis ja raportti ladattavissa. <em>Tätä ei mikään muu työkalu tee.</em>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <strong>Lataa raportti ja arvioi</strong>
+              Avaa valmis dokumentti. Kuinka hyvä se on? Mitä se löysi jota et olisi itse löytänyt? Mitä se jätti pois? Tämä on agenttitekoälyn ensimmäinen kosketuksesi.
+            </div>
+          </li>
+        </ol>
+
+        <div class="callout callout-tip">
+          <div class="callout-icon">🎯</div>
+          <div class="callout-text">
+            <strong>Tärkeä oppi agentteista</strong>
+            <p>Mitä tarkempi tehtäväsi kuvaus, sitä parempi tulos. "Tutki AI:ta" tuottaa yleistä. "Tutki AI:n käyttöä suomalaisissa PK-yrityksissä 2024–2025 ja listaa kolme konkreettista hyötytapausta" tuottaa käyttökelpoista. Agenttien kanssa promptin laatu on kaksinkertaisesti tärkeää.</p>
+          </div>
+        </div>
+
+        <div class="reflection">
+          <h3>💭 Mieti tätä</h3>
+          <ul>
+            <li>Mitä tehtäviä tekisit Manuksella eri tavoin kuin tähän asti?</li>
+            <li>Mihin sinun arjessasi kuluisi 30–60 minuuttia jotka Manus voisi tehdä?</li>
+            <li>Mitä pitää olla varovainen antaa agentin tehdä itsenäisesti?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PART 3: DEEPSEEK -->
+<section class="section section-alt" id="deepseek">
+  <div class="section-inner">
+    <span class="section-label">Osa 3 — DeepSeek · 10 minuuttia · Ei harjoituksia</span>
+    <h2 class="section-h2">DeepSeek: tarina joka <em>muutti kaiken</em></h2>
+    <div class="section-divider purple"></div>
+    <p class="lead">DeepSeekistä ei ole tänään harjoituksia — mutta sen tarina on tärkein asia jonka tiedät tekoälystä vuonna 2025. Se kertoo mihin tämä kaikki on menossa.</p>
+
+    <div class="deepseek-box">
+      <h3>Miksi <em>DeepSeek on tärkeä</em> vaikka et käyttäisi sitä</h3>
+      <p>Tammikuussa 2025 kiinalainen startup julkaisi DeepSeek R1 -mallin. Se oli avointa lähdekoodia — kuka tahansa sai ladata ja ajaa sen omalla koneellaan. Suorituskyky oli GPT-4:n tasolla. Hinta? Noin 2,7% siitä mitä GPT-4 API maksaa. Koulutukseen kulunut budjetti? Murto-osa siitä mitä OpenAI, Google ja Anthropic ovat käyttäneet.</p>
+      <p>Tämä ei ollut tekninen uutinen. Se oli poliittinen, taloudellinen ja filosofinen mullistus. Se osoitti: huippuluokan tekoäly ei vaadi miljardien dollarien budjettia. Se demokratisoi AI:n. Yhden yön aikana kaikki muuttui.</p>
+      <p>DeepSeek käyttää <strong>mixture of experts</strong> -arkkitehtuuria — vain murto-osa mallin parametreista aktivoituu per kysymys. Tämä tekee siitä nopean huolimatta satojen miljardien parametrien koosta. Pienempiä versioita voi ajaa tavallisella kannettavalla.</p>
+    </div>
+
+    <div class="callout callout-warning">
+      <div class="callout-icon">🔐</div>
+      <div class="callout-text">
+        <strong>Miksi emme käytä deepseek.com -verkkoversiota tällä kurssilla</strong>
+        <p>DeepSeekin pilviversio on kiinalainen palvelu ja GDPR-näkökulmasta ongelmallinen eurooppalaisille käyttäjille. <strong>Älä laita sinne mitään henkilökohtaista tai arkaluonteista.</strong> Jos haluat käyttää DeepSeekiä yksityisesti — aja se paikallisesti omalla koneellasi Ollaman kautta. Data ei lähde minnekään.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚡ Mitä DeepSeek tarkoittaa sinulle käytännössä</div>
+      <p style="font-size:15px; color:var(--muted); margin-bottom:12px;"><strong style="color:var(--ink);">Huippuluokan AI ei ole enää vain suuryritysten asia.</strong> Pienet tiimit, yrittäjät, tutkijat voivat ajaa huippumallia omalla infrallaan ilman jatkuvia tilausmaksuja.</p>
+      <p style="font-size:15px; color:var(--muted); margin-bottom:12px;"><strong style="color:var(--ink);">Kilpailu kiihtyy.</strong> Kun yksi tiimi osoittaa että GPT-tason malli voidaan rakentaa murto-osalla kuluista, kaikki muut joutuvat tekemään samoin. Tämä on hyvä uutinen käyttäjille.</p>
+      <p style="font-size:15px; color:var(--muted); margin:0;"><strong style="color:var(--ink);">Avoimen lähdekoodin AI kasvaa.</strong> Meta (Llama), DeepSeek, Mistral — yhä useampi huipputason malli on vapaasti saatavilla. Tämä muuttaa koko toimialan dynamiikan.</p>
+    </div>
+  </div>
+</section>
+
+<!-- AI MAP FINAL -->
+<section class="section" id="map">
+  <div class="section-inner">
+    <span class="section-label">Yhteenveto</span>
+    <h2 class="section-h2">Sinulla on nyt <em>täydellinen kartta</em></h2>
+    <div class="section-divider"></div>
+    <p class="lead">Olet käynyt läpi kaikki tärkeimmät AI-työkalut. Nyt on aika tietää milloin käyttää mitäkin.</p>
+
+    <div class="card">
+      <div class="card-title">🗺️ Milloin käytät mitäkin</div>
+      <table style="width:100%; border-collapse:collapse; font-size:15px;">
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:12px 0; font-weight:600; color:var(--ink); width:40%;">Haluan kirjoittaa tai analysoida</td>
+          <td style="padding:12px 0; color:var(--muted);">ChatGPT tai Claude</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:12px 0; font-weight:600; color:var(--ink);">Haluan hakea tietoa ja lähteitä</td>
+          <td style="padding:12px 0; color:var(--muted);">Perplexity — web, academic tai social</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:12px 0; font-weight:600; color:var(--ink);">Haluan syventyä omiin lähteisiini</td>
+          <td style="padding:12px 0; color:var(--muted);">NotebookLM</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:12px 0; font-weight:600; color:var(--ink);">Haluan tietää mitä ihmiset sanovat nyt</td>
+          <td style="padding:12px 0; color:var(--grok); font-weight:500;">Grok + DeepSearch</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:12px 0; font-weight:600; color:var(--ink);">Haluan rakentaa sovelluksen</td>
+          <td style="padding:12px 0; color:var(--muted);">Lovable (+ Claude/GPT promptin rakentamiseen)</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:12px 0; font-weight:600; color:var(--ink);">Haluan antaa monivaiheisen tehtävän ja poistua</td>
+          <td style="padding:12px 0; color:var(--manus); font-weight:500;">Manus</td>
+        </tr>
+        <tr>
+          <td style="padding:12px 0; font-weight:600; color:var(--ink);">Haluan ajaa AI:ta omalla koneellani</td>
+          <td style="padding:12px 0; color:var(--muted);">DeepSeek paikallisesti (teknisempi vaihtoehto)</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL -->
+<section class="final-section" id="final">
+  <div class="section-inner" style="max-width:820px; margin:0 auto;">
+    <span class="section-label" style="color:rgba(255,255,255,0.25);">Kurssin päätös</span>
+    <h2>Olet nyt <em>AI-lukutaitoinen.</em></h2>
+    <p>Aloitit tietämättä mitä tekoäly todella tekee. Lopetat tietäen miten se toimii, mitkä sen rajat ovat, milloin käyttää mitäkin — ja olet rakentanut oikeita asioita omiin tarpeisiisi.</p>
+
+    <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:48px;">
+      <a href="https://grok.com" target="_blank" class="tool-link grok" style="border-radius:6px;">🔵 grok.com</a>
+      <a href="https://manus.im" target="_blank" class="tool-link manus" style="border-radius:6px;">🤖 manus.im</a>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:32px; max-width:600px; margin:0 auto;">
+      <p style="font-family:'DM Serif Display',serif; font-size:1.3rem; color:#fff; font-style:italic; line-height:1.6; margin:0;">"AI ei tule viemään työtäsi. Mutta henkilö joka osaa käyttää AI:ta paremmin kuin sinä — saattaa."</p>
+      <p style="font-size:13px; color:rgba(255,255,255,0.3); margin-top:16px; margin-bottom:0; font-family:'DM Mono',monospace; text-transform:uppercase; letter-spacing:0.06em;">HS Bridge AI — Tekoälykoulutus</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const progress = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+    document.getElementById('progress-bar').style.width = progress + '%';
+  });
+
+  function copyPrompt(btn) {
+    const text = btn.closest('.prompt-block').querySelector('p').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'kopioitu ✓';
+      btn.style.color = '#4ade80';
+      setTimeout(() => { btn.textContent = 'kopioi'; btn.style.color = ''; }, 2000);
+    });
+  }
+
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const t = document.querySelector(a.getAttribute('href'));
+      if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+</body>
+</html>
