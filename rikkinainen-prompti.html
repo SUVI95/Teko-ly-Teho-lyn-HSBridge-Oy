@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rikkinäinen Prompti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#1a1a2e; --ink2:#2d2d44; --paper:#f5f3ef; --paper2:#eeeae3; --warm:#e8e0d4;
+  --accent:#c75b3a; --accent2:#2563a8; --accent3:#2a7a4b; --gold:#b8860b; --danger:#b91c1c;
+  --text:#1a1a2e; --muted:#6b6880; --border:rgba(26,26,46,0.12);
+  --shadow:0 2px 20px rgba(26,26,46,0.08); --shadow-md:0 8px 40px rgba(26,26,46,0.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.7;overflow-x:hidden;}
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:200;transition:width 0.4s ease;width:0%;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;background:rgba(245,243,239,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2.5rem;justify-content:space-between;}
+.nav-left{display:flex;align-items:center;gap:1rem;}
+.nav-module{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--accent2);letter-spacing:0.12em;text-transform:uppercase;background:rgba(37,99,168,0.08);border:1px solid rgba(37,99,168,0.25);padding:4px 12px;border-radius:4px;}
+.nav-title{font-size:0.85rem;color:var(--muted);}
+.home-link{display:flex;align-items:center;gap:0.5rem;text-decoration:none;color:var(--muted);font-size:0.85rem;font-weight:500;transition:color 0.2s;}
+.home-link:hover{color:var(--ink);}
+.nav-steps{display:flex;gap:5px;}
+.step-pip{width:28px;height:4px;border-radius:2px;background:var(--warm);cursor:pointer;transition:background 0.4s;}
+.step-pip.active{background:var(--accent2);}
+.step-pip.done{background:var(--accent3);}
+
+.section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:96px 2rem 5rem;}
+.section-inner{max-width:960px;width:100%;}
+.section-alt{background:var(--paper2);}
+.fade-up{opacity:0;transform:translateY(24px);transition:opacity 0.65s ease,transform 0.65s ease;}
+.fade-up.in{opacity:1;transform:translateY(0);}
+.section-label{font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:10px;}
+.section-label::after{content:'';flex:0 0 32px;height:1px;background:currentColor;opacity:0.4;}
+h2.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4.5vw,3.3rem);font-weight:400;line-height:1.1;color:var(--ink);margin-bottom:1.25rem;letter-spacing:-0.01em;}
+h2.section-h2 em{font-style:italic;color:var(--accent2);}
+.lead{font-size:1.05rem;color:var(--muted);max-width:680px;line-height:1.8;margin-bottom:2rem;font-weight:300;}
+.divider{width:48px;height:2px;background:var(--accent2);margin-bottom:2rem;border-radius:1px;}
+
+/* Hero */
+#hero{background:var(--ink);min-height:100vh;position:relative;overflow:hidden;}
+#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 60%,rgba(37,99,168,0.22) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 80% 20%,rgba(199,91,58,0.14) 0%,transparent 60%);}
+.hero-inner{max-width:880px;width:100%;position:relative;z-index:1;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;margin-bottom:2rem;}
+.eyebrow-num{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--accent2);letter-spacing:0.15em;text-transform:uppercase;}
+.eyebrow-line{width:40px;height:1px;background:rgba(37,99,168,0.45);}
+.eyebrow-label{font-family:'DM Mono',monospace;font-size:0.72rem;color:rgba(255,255,255,0.35);letter-spacing:0.1em;text-transform:uppercase;}
+h1.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.6rem,6vw,4.8rem);font-weight:400;line-height:1.05;color:#fff;margin-bottom:1.5rem;letter-spacing:-0.01em;}
+h1.hero-title em{font-style:italic;color:#87b5ef;}
+.hero-sub{font-size:1.05rem;color:rgba(255,255,255,0.6);max-width:620px;line-height:1.8;margin-bottom:2.25rem;font-weight:300;}
+.hero-cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.5rem;}
+@media(max-width:640px){.hero-cards{grid-template-columns:1fr;}}
+.hero-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:1.5rem;text-decoration:none;color:#fff;transition:all 0.25s;cursor:pointer;}
+.hero-card:hover{background:rgba(255,255,255,0.08);border-color:rgba(37,99,168,0.4);transform:translateY(-2px);}
+.hero-card .num{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--accent2);letter-spacing:0.1em;margin-bottom:0.5rem;}
+.hero-card .name{font-family:'DM Serif Display',serif;font-size:1.2rem;font-weight:400;margin-bottom:0.25rem;}
+.hero-card .meta{font-size:0.83rem;color:rgba(255,255,255,0.5);line-height:1.5;}
+
+/* Shared */
+.station-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:2.25rem;box-shadow:var(--shadow-md);margin-bottom:1.75rem;}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:8px;border:none;background:var(--accent2);color:#fff;font-family:inherit;font-weight:600;font-size:0.92rem;cursor:pointer;transition:all 0.25s;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(37,99,168,0.3);}
+.btn-primary:disabled{opacity:0.45;transform:none;box-shadow:none;cursor:default;}
+.btn-dark{background:var(--ink);color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;border:none;cursor:pointer;font-family:inherit;font-size:0.9rem;transition:all 0.25s;}
+.btn-dark:hover{background:var(--ink2);transform:translateY(-1px);}
+.btn-ghost{background:#fff;color:var(--ink);padding:12px 22px;border-radius:8px;font-weight:600;border:1px solid var(--border);cursor:pointer;font-family:inherit;font-size:0.87rem;transition:all 0.2s;}
+.btn-ghost:hover{border-color:var(--accent2);color:var(--accent2);}
+.cta-row{display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap;align-items:center;}
+.textarea{width:100%;background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:0.9rem 1.1rem;font-size:0.93rem;font-family:'DM Sans',sans-serif;color:var(--text);resize:vertical;min-height:110px;outline:none;line-height:1.65;transition:border-color 0.2s;}
+.textarea:focus{border-color:rgba(37,99,168,0.4);}
+.loader{display:inline-flex;align-items:center;gap:8px;font-size:0.88rem;color:var(--muted);}
+.spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent2);border-radius:50%;animation:sp 0.7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.alert{padding:0.85rem 1.15rem;border-radius:10px;font-size:0.9rem;margin-top:1rem;}
+.alert-ok{background:rgba(42,122,75,0.1);border:1px solid rgba(42,122,75,0.3);color:var(--accent3);}
+.alert-err{background:rgba(185,28,28,0.08);border:1px solid rgba(185,28,28,0.25);color:var(--danger);}
+.alert-info{background:rgba(37,99,168,0.06);border:1px solid rgba(37,99,168,0.2);color:var(--accent2);}
+
+/* Round 1: output + prompts */
+.challenge{border:1px solid var(--border);border-radius:14px;padding:1.75rem;background:#fff;box-shadow:var(--shadow);margin-bottom:1.25rem;}
+.ch-head{display:flex;align-items:center;gap:12px;margin-bottom:1rem;}
+.ch-num{width:36px;height:36px;border-radius:50%;background:var(--accent2);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:1.05rem;}
+.ch-topic{font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;color:var(--ink);}
+.ai-out{background:var(--paper);border-left:3px solid var(--accent2);border-radius:0 8px 8px 0;padding:1.1rem 1.4rem;font-size:0.9rem;color:var(--text);white-space:pre-wrap;line-height:1.75;margin-bottom:1.25rem;}
+.choices{display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.25rem;}
+.choice{display:flex;gap:0.75rem;background:var(--paper);border:1px solid var(--border);border-radius:10px;padding:0.9rem 1.1rem;cursor:pointer;transition:all 0.2s;font-size:0.9rem;line-height:1.6;}
+.choice:hover{border-color:var(--accent2);}
+.choice input{margin-top:3px;flex-shrink:0;accent-color:var(--accent2);}
+.choice.picked{border-color:var(--accent2);background:rgba(37,99,168,0.05);}
+.choice .label{font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--accent2);font-weight:600;margin-right:0.4rem;}
+
+/* Results */
+.result-wrap{background:var(--ink);color:#fff;border-radius:16px;padding:2rem;position:relative;overflow:hidden;margin-top:1.5rem;}
+.result-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 80% 20%,rgba(37,99,168,0.2) 0%,transparent 60%);pointer-events:none;}
+.result-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;position:relative;z-index:1;flex-wrap:wrap;gap:0.75rem;}
+.result-head .lbl{font-family:'DM Mono',monospace;font-size:0.7rem;color:rgba(255,255,255,0.4);letter-spacing:0.15em;text-transform:uppercase;}
+.score-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(42,122,75,0.25);color:#fff;border:1px solid rgba(42,122,75,0.55);padding:6px 14px;border-radius:20px;font-size:0.85rem;font-weight:600;}
+.result-body{font-size:0.95rem;line-height:1.85;color:rgba(255,255,255,0.88);white-space:pre-wrap;position:relative;z-index:1;}
+.result-body strong{color:#87b5ef;font-weight:600;}
+
+/* Round 2 */
+.r2-item{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.5rem 1.75rem;margin-bottom:1.25rem;box-shadow:var(--shadow);}
+.r2-prompt{background:#0f1419;color:#e2e8f0;border-radius:10px;padding:1.1rem 1.35rem;font-family:'DM Mono',monospace;font-size:0.83rem;line-height:1.7;margin-bottom:1rem;white-space:pre-wrap;}
+.r2-side{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;}
+@media(max-width:720px){.r2-side{grid-template-columns:1fr;}}
+.r2-col{background:var(--paper);border-radius:10px;padding:1rem 1.2rem;font-size:0.88rem;line-height:1.7;}
+.r2-col h4{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:0.5rem;}
+.r2-col .body{color:var(--text);white-space:pre-wrap;}
+.r2-col.actual{background:var(--ink);color:rgba(255,255,255,0.9);}
+.r2-col.actual h4{color:rgba(255,255,255,0.5);}
+.r2-col.actual .body{color:rgba(255,255,255,0.92);}
+
+.lock-card{background:var(--paper2);border:1px dashed var(--border);border-radius:14px;padding:2rem;text-align:center;color:var(--muted);}
+.lock-card strong{color:var(--ink);display:block;font-family:'DM Serif Display',serif;font-size:1.2rem;margin-bottom:0.5rem;font-weight:400;}
+
+@media(max-width:768px){
+  nav{padding:0 1.25rem;}
+  .nav-title{display:none;}
+  .section{padding:80px 1.25rem 4rem;}
+  .station-card,.challenge,.r2-item{padding:1.5rem;}
+}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav>
+  <div class="nav-left">
+    <a href="/" class="home-link" style="margin-right:1rem;">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+      </svg>
+      <span>Etusivu</span>
+    </a>
+    <span class="nav-module">Bonusmoduuli</span>
+    <span class="nav-title">Rikkinäinen Prompti</span>
+  </div>
+  <div class="nav-steps" id="navSteps"></div>
+</nav>
+
+<!-- HERO -->
+<section class="section" id="hero" data-index="0">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">
+      <span class="eyebrow-num">Haaste</span>
+      <span class="eyebrow-line"></span>
+      <span class="eyebrow-label">Promptilukutaito</span>
+    </div>
+    <h1 class="hero-title">Rikkinäinen<br><em>Prompti.</em></h1>
+    <p class="hero-sub">Kaksi kierrosta. Ensimmäisessä yrität tunnistaa millainen prompti tuotti millaisen tuloksen. Toisessa ennustat mitä tekoäly tuottaa — ennen kuin näet oikean vastauksen. Molemmissa paljastuu missä mielikuvasi tekoälystä pitää paikkansa ja missä ei.</p>
+    <div class="hero-cards">
+      <a class="hero-card" href="#r1"><div class="num">Kierros 1</div><div class="name">Rikkinäinen Prompti</div><div class="meta">5 tulosta · 3 promptia · valitse ja perustele</div></a>
+      <a class="hero-card" href="#r2"><div class="num">Kierros 2</div><div class="name">Ennuste ja vertailu</div><div class="meta">5 promptia · ennusta · vertaa oikeaan</div></a>
+    </div>
+  </div>
+</section>
+
+<!-- ROUND 1 -->
+<section class="section section-alt" id="r1" data-index="1">
+  <div class="section-inner fade-up">
+    <div class="section-label">Kierros 01</div>
+    <h2 class="section-h2">Mistä promptista<br><em>tämä tuli?</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Alla on 5 erinomaista tekoälyn tuottamaa tulosta. Kussakin on kolme vaihtoehtoista promptia — vain yksi niistä todella olisi tuottanut tämän. Valitse se ja perustele valintasi. <strong>Pelkkä oikea valinta ilman järkevää perustelua ei riitä.</strong></p>
+
+    <div id="r1-list"></div>
+
+    <div class="cta-row">
+      <button type="button" class="btn-primary" id="r1-submit">Arvioi vastaukseni</button>
+      <span id="r1-load" class="loader" style="display:none;"><span class="spin"></span> Ladataan...</span>
+    </div>
+    <div id="r1-err" class="alert alert-err" style="display:none;"></div>
+
+    <div id="r1-result" style="display:none;">
+      <div class="result-wrap">
+        <div class="result-head">
+          <span class="lbl">Opettajan palaute</span>
+          <span class="score-chip" id="r1-score"></span>
+        </div>
+        <div class="result-body" id="r1-result-body"></div>
+      </div>
+      <div class="cta-row">
+        <button type="button" class="btn-dark" id="r1-save">Tallenna tulos</button>
+        <a href="#r2" class="btn-ghost">Avaa kierros 2 →</a>
+        <span id="r1-sload" class="loader" style="display:none;"><span class="spin"></span> Ladataan...</span>
+      </div>
+      <div id="r1-saved" class="alert alert-ok" style="display:none;">Tallennettu.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ROUND 2 -->
+<section class="section" id="r2" data-index="2">
+  <div class="section-inner fade-up">
+    <div class="section-label">Kierros 02</div>
+    <h2 class="section-h2">Ennusta — <em>näe totuus.</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Alla on 5 erittäin tarkkaa promptia. Lue kukin huolella ja kirjoita mitä odotat tekoälyn tuottavan. Kun olet valmis, paina nappia — tekoäly ajaa promptit ja vertaa ennusteitasi oikeisiin tuloksiin.</p>
+
+    <div id="r2-lock" class="lock-card">
+      <strong>Kierros 2 avautuu kun olet tehnyt kierroksen 1.</strong>
+      <span>Palaa ylös ja arvioi ensimmäisen kierroksen vastauksesi.</span>
+    </div>
+
+    <div id="r2-body" style="display:none;">
+      <div id="r2-list"></div>
+      <div class="cta-row">
+        <button type="button" class="btn-primary" id="r2-run">Aja promptit & vertaa</button>
+        <span id="r2-load" class="loader" style="display:none;"><span class="spin"></span> Ladataan — tekoäly ajaa promptit...</span>
+      </div>
+      <div id="r2-err" class="alert alert-err" style="display:none;"></div>
+
+      <div id="r2-pairs" style="display:none;margin-top:1.5rem;"></div>
+
+      <div id="r2-analysis" style="display:none;">
+        <div class="result-wrap">
+          <div class="result-head"><span class="lbl">Vertaileva analyysi</span></div>
+          <div class="result-body" id="r2-analysis-body"></div>
+        </div>
+        <div class="cta-row">
+          <button type="button" class="btn-dark" id="r2-save">Tallenna tulos</button>
+          <span id="r2-sload" class="loader" style="display:none;"><span class="spin"></span> Ladataan...</span>
+        </div>
+        <div id="r2-saved" class="alert alert-ok" style="display:none;">Tallennettu.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLOSING -->
+<section class="section section-alt" id="done" data-index="3">
+  <div class="section-inner fade-up" style="text-align:center;">
+    <div style="font-family:'DM Serif Display',serif;font-size:3rem;color:var(--accent2);margin-bottom:1rem;">◆</div>
+    <h2 class="section-h2" style="text-align:center;">Nyt näit mistä<br><em>kyse oikeasti on.</em></h2>
+    <div class="divider" style="margin:2rem auto;"></div>
+    <p style="color:var(--muted);max-width:560px;margin:0 auto 2.5rem;line-height:1.8;">Promptilukutaito on tarkkaavaisuutta: rakenne, sävy, rajoitteet, numerot. Mitä tarkemmin näet nämä, sitä paremmin ohjaat tekoälyä.</p>
+    <div class="cta-row" style="justify-content:center;">
+      <a href="/" class="btn-dark">Palaa etusivulle</a>
+      <a href="#hero" class="btn-ghost">↑ Ylös</a>
+    </div>
+  </div>
+</section>
+
+<script>
+(function() {
+  function getApiBase() {
+    var o = window.location || {};
+    var p = o.pathname || '', base = '';
+    var i = p.indexOf('/module/'); if (i > 0) base = p.substring(0, i);
+    return (o.origin || '') + base;
+  }
+  var API = getApiBase() + '/api/final';
+  function $(id) { return document.getElementById(id); }
+  function show(id, v) { var el = $(id); if (el) el.style.display = v ? '' : 'none'; }
+  function err(id, v, m) { var el = $(id); if (!el) return; el.style.display = v ? '' : 'none'; if (m !== undefined) el.textContent = m; }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function fmt(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
+
+  // Nav
+  var sections = document.querySelectorAll('.section[data-index]');
+  var navSteps = $('navSteps'), progressBar = $('progress-bar');
+  sections.forEach(function(s, i) {
+    var pip = document.createElement('div'); pip.className = 'step-pip' + (i === 0 ? ' active' : '');
+    pip.addEventListener('click', function() { s.scrollIntoView({ behavior: 'smooth' }); });
+    navSteps.appendChild(pip);
+  });
+  function updateProgress() {
+    var st = window.scrollY, dh = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (dh > 0 ? (st / dh) * 100 : 0) + '%';
+    var pips = navSteps.querySelectorAll('.step-pip'); var ai = 0;
+    sections.forEach(function(s, i) { if (s.getBoundingClientRect().top <= window.innerHeight * 0.5) ai = i; });
+    pips.forEach(function(p, i) { p.classList.remove('active', 'done'); if (i === ai) p.classList.add('active'); else if (i < ai) p.classList.add('done'); });
+  }
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  var obs = new IntersectionObserver(function(es) { es.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } }); }, { threshold: 0.12 });
+  document.querySelectorAll('.fade-up').forEach(function(el) { obs.observe(el); });
+
+  // Round 1
+  var round1 = [];
+  fetch(API + '/rikki-round1').then(function(r) { return r.json(); }).then(function(d) {
+    round1 = d.items || []; renderRound1();
+  });
+  function renderRound1() {
+    var list = $('r1-list'); list.textContent = '';
+    round1.forEach(function(it, i) {
+      var card = document.createElement('div'); card.className = 'challenge';
+      var head = document.createElement('div'); head.className = 'ch-head';
+      var num = document.createElement('div'); num.className = 'ch-num'; num.textContent = String(i + 1);
+      var topic = document.createElement('div'); topic.className = 'ch-topic'; topic.textContent = it.topic;
+      head.appendChild(num); head.appendChild(topic); card.appendChild(head);
+      var out = document.createElement('div'); out.className = 'ai-out'; out.textContent = it.output; card.appendChild(out);
+      var ch = document.createElement('div'); ch.className = 'choices';
+      it.prompts.forEach(function(p) {
+        var lbl = document.createElement('label'); lbl.className = 'choice'; lbl.dataset.id = p.id;
+        var radio = document.createElement('input'); radio.type = 'radio'; radio.name = 'r1-' + it.id; radio.value = p.id;
+        radio.addEventListener('change', function() {
+          ch.querySelectorAll('.choice').forEach(function(c) { c.classList.remove('picked'); });
+          lbl.classList.add('picked');
+        });
+        var span = document.createElement('span');
+        var lab = document.createElement('span'); lab.className = 'label'; lab.textContent = p.id.toUpperCase() + '.';
+        var txt = document.createElement('span'); txt.textContent = ' ' + p.text;
+        span.appendChild(lab); span.appendChild(txt);
+        lbl.appendChild(radio); lbl.appendChild(span); ch.appendChild(lbl);
+      });
+      card.appendChild(ch);
+      var jLbl = document.createElement('label'); jLbl.style.fontSize = '0.88rem'; jLbl.style.fontWeight = '600'; jLbl.style.color = 'var(--ink)'; jLbl.style.display = 'block'; jLbl.style.marginBottom = '0.4rem'; jLbl.textContent = 'Perustele valintasi — mikä promptissa tuotti juuri tämän tuloksen?';
+      var ta = document.createElement('textarea'); ta.className = 'textarea'; ta.rows = 3; ta.id = 'r1-just-' + it.id; ta.placeholder = 'Esim. Promptin vaatimus bold-otsikoista ja numeroista näkyy suoraan rakenteessa...';
+      card.appendChild(jLbl); card.appendChild(ta);
+      list.appendChild(card);
+    });
+  }
+
+  var round1Saved = null;
+  $('r1-submit').addEventListener('click', function() {
+    if (!round1.length) return;
+    var answers = [];
+    for (var i = 0; i < round1.length; i++) {
+      var it = round1[i];
+      var sel = document.querySelector('input[name="r1-' + it.id + '"]:checked');
+      var just = $('r1-just-' + it.id);
+      answers.push({ choice: sel ? sel.value : null, justification: just ? just.value : '' });
+    }
+    if (answers.some(function(a) { return !a.choice; })) { err('r1-err', true, 'Valitse jokaiseen kohtaan yksi promptti.'); return; }
+    err('r1-err', false);
+    var btn = this; btn.disabled = true; show('r1-load', true);
+    fetch(API + '/rikki-round1-evaluate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ answers: answers })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        show('r1-load', false); btn.disabled = false;
+        if (!x.ok || !x.d.text) { err('r1-err', true, 'Jokin meni pieleen — yritä uudelleen'); return; }
+        round1Saved = { answers: answers, graded: x.d.graded, feedback: x.d.text, correct_count: x.d.correct_count, total: x.d.total };
+        $('r1-result-body').innerHTML = fmt(x.d.text);
+        $('r1-score').textContent = 'Oikein: ' + x.d.correct_count + ' / ' + x.d.total;
+        show('r1-result', true);
+        // Unlock round 2
+        show('r2-lock', false); show('r2-body', true);
+        if (!round2.length) loadRound2();
+      }).catch(function() { show('r1-load', false); btn.disabled = false; err('r1-err', true, 'Jokin meni pieleen — yritä uudelleen'); });
+  });
+
+  $('r1-save').addEventListener('click', function() {
+    if (!round1Saved) return;
+    var btn = this; btn.disabled = true; show('r1-sload', true);
+    fetch(API + '/rikki-save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ round: 1, payload: round1Saved })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        show('r1-sload', false); btn.disabled = false;
+        if (!x.ok) { err('r1-err', true, 'Tallennus epäonnistui'); return; }
+        show('r1-saved', true);
+      }).catch(function() { show('r1-sload', false); btn.disabled = false; });
+  });
+
+  // Round 2
+  var round2 = [];
+  var round2Actuals = [];
+  var round2Compare = null;
+
+  function loadRound2() {
+    fetch(API + '/rikki-round2').then(function(r) { return r.json(); }).then(function(d) {
+      round2 = d.items || []; renderRound2();
+    });
+  }
+  function renderRound2() {
+    var list = $('r2-list'); list.textContent = '';
+    round2.forEach(function(it, i) {
+      var card = document.createElement('div'); card.className = 'r2-item';
+      var head = document.createElement('div'); head.className = 'ch-head';
+      var num = document.createElement('div'); num.className = 'ch-num'; num.textContent = String(i + 1);
+      var topic = document.createElement('div'); topic.className = 'ch-topic'; topic.textContent = 'Prompti ' + (i + 1);
+      head.appendChild(num); head.appendChild(topic); card.appendChild(head);
+      var pre = document.createElement('div'); pre.className = 'r2-prompt'; pre.textContent = it.prompt; card.appendChild(pre);
+      var lbl = document.createElement('label'); lbl.style.fontSize = '0.88rem'; lbl.style.fontWeight = '600'; lbl.style.color = 'var(--ink)'; lbl.style.display = 'block'; lbl.style.marginBottom = '0.4rem'; lbl.textContent = 'Ennusta: mitä tekoäly tuottaa tällä promptilla?';
+      var ta = document.createElement('textarea'); ta.className = 'textarea'; ta.rows = 5; ta.id = 'r2-pred-' + it.id; ta.placeholder = 'Kirjoita ennusteesi — lyhyt luonnos tai pääpointit riittää.';
+      card.appendChild(lbl); card.appendChild(ta);
+      list.appendChild(card);
+    });
+  }
+
+  $('r2-run').addEventListener('click', function() {
+    if (!round2.length) return;
+    var preds = round2.map(function(it) { return { id: it.id, prompt: it.prompt, prediction: ($('r2-pred-' + it.id) || {}).value || '' }; });
+    if (preds.some(function(p) { return !p.prediction.trim(); })) { err('r2-err', true, 'Kirjoita ennuste jokaiseen kohtaan.'); return; }
+    err('r2-err', false);
+    var btn = this; btn.disabled = true; show('r2-load', true);
+    var actuals = new Array(preds.length).fill(null);
+    // Run prompts sequentially (keep load stable & cheap)
+    function runOne(i) {
+      if (i >= preds.length) { compareAll(preds, actuals, btn); return; }
+      fetch(API + '/rikki-round2-run', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ id: preds[i].id })
+      }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+        .then(function(x) {
+          if (!x.ok || !x.d.text) { throw new Error(); }
+          actuals[i] = x.d.text; runOne(i + 1);
+        }).catch(function() { show('r2-load', false); btn.disabled = false; err('r2-err', true, 'Jokin meni pieleen — yritä uudelleen'); });
+    }
+    runOne(0);
+  });
+
+  function compareAll(preds, actuals, btn) {
+    // Render side-by-side first
+    var pairs = $('r2-pairs'); pairs.textContent = '';
+    preds.forEach(function(p, i) {
+      var wrap = document.createElement('div'); wrap.className = 'r2-item';
+      var head = document.createElement('div'); head.className = 'ch-head';
+      var num = document.createElement('div'); num.className = 'ch-num'; num.textContent = String(i + 1);
+      var topic = document.createElement('div'); topic.className = 'ch-topic'; topic.textContent = 'Vertailu ' + (i + 1);
+      head.appendChild(num); head.appendChild(topic); wrap.appendChild(head);
+      var side = document.createElement('div'); side.className = 'r2-side';
+      var left = document.createElement('div'); left.className = 'r2-col';
+      var lh = document.createElement('h4'); lh.textContent = 'Sinun ennusteesi'; left.appendChild(lh);
+      var lb = document.createElement('div'); lb.className = 'body'; lb.textContent = p.prediction; left.appendChild(lb);
+      var right = document.createElement('div'); right.className = 'r2-col actual';
+      var rh = document.createElement('h4'); rh.textContent = 'Tekoälyn oikea tulos'; right.appendChild(rh);
+      var rb = document.createElement('div'); rb.className = 'body'; rb.textContent = actuals[i] || ''; right.appendChild(rb);
+      side.appendChild(left); side.appendChild(right); wrap.appendChild(side);
+      pairs.appendChild(wrap);
+    });
+    show('r2-pairs', true);
+    // Compare call
+    round2Actuals = actuals;
+    var items = preds.map(function(p, i) { return { prompt: p.prompt, prediction: p.prediction, actual: actuals[i] || '' }; });
+    fetch(API + '/rikki-round2-compare', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ items: items })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        show('r2-load', false); btn.disabled = false;
+        if (!x.ok || !x.d.text) { err('r2-err', true, 'Jokin meni pieleen — yritä uudelleen'); return; }
+        round2Compare = { preds: preds, actuals: actuals, analysis: x.d.text };
+        $('r2-analysis-body').innerHTML = fmt(x.d.text);
+        show('r2-analysis', true);
+      }).catch(function() { show('r2-load', false); btn.disabled = false; err('r2-err', true, 'Jokin meni pieleen — yritä uudelleen'); });
+  }
+
+  $('r2-save').addEventListener('click', function() {
+    if (!round2Compare) return;
+    var btn = this; btn.disabled = true; show('r2-sload', true);
+    fetch(API + '/rikki-save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ round: 2, payload: round2Compare })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        show('r2-sload', false); btn.disabled = false;
+        if (!x.ok) { err('r2-err', true, 'Tallennus epäonnistui'); return; }
+        show('r2-saved', true);
+      }).catch(function() { show('r2-sload', false); btn.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

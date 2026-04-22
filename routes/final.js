@@ -60,6 +60,37 @@ async function ensureFinalTables() {
   await pool.query(
     'CREATE INDEX IF NOT EXISTS idx_final_module_gallery_created ON final_module_gallery(created_at DESC)'
   );
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS mythology_submissions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      myth_selected TEXT NOT NULL,
+      perplexity_finding TEXT,
+      claude_argument TEXT,
+      own_voice TEXT,
+      final_argument TEXT NOT NULL,
+      ai_evaluation TEXT,
+      strength_score INTEGER,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_mythology_submissions_user ON mythology_submissions(user_id)');
+  await pool.query(
+    'CREATE INDEX IF NOT EXISTS idx_mythology_submissions_score ON mythology_submissions(strength_score DESC)'
+  );
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS broken_prompt_submissions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      round INTEGER NOT NULL,
+      payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_broken_prompt_user ON broken_prompt_submissions(user_id)');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_broken_prompt_round ON broken_prompt_submissions(round)');
 }
 
 const uploadDir = path.join(__dirname, '..', 'public', 'uploads', 'final-gallery');
@@ -367,6 +398,386 @@ router.get('/gallery', async (req, res) => {
     res.json({ items: r.rows });
   } catch (e) {
     console.error('gallery list:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+const MYTHS = [
+  {
+    id: 1,
+    text: 'Tekoäly vie kaikki työpaikat — vain koodarit ja insinöörit selviävät',
+    warning: 'Tämä pelottaa ihmisiä siksi, että se sisältää tilastoja jotka näyttävät oikeilta.'
+  },
+  {
+    id: 2,
+    text: 'Tekoäly on puolueeton — se ei syrji koska se ei ole ihminen',
+    warning: 'Tämä on erityisen vaarallinen koska se kuulostaa loogiselta.'
+  },
+  {
+    id: 3,
+    text: 'Jos tekoäly sanoo sen, se on totta — se on laskenut miljardeista lähteistä',
+    warning: 'Useimmat ihmiset uskovat tähän ääneti vaikka tietäisivät ettei se pidä paikkaansa.'
+  },
+  {
+    id: 4,
+    text: 'Tekoäly ymmärtää sinut — se oppii sinusta ja välittää vastauksistaan',
+    warning: 'Tämä on emotionaalisesti houkuttelevin myytti — ja siksi vaarallisin.'
+  },
+  {
+    id: 5,
+    text: 'Tekoäly on niin monimutkainen ettei tavallinen ihminen voi ymmärtää miten se toimii — asiantuntijat päättävät',
+    warning: 'Tämä vie vallan kansalaisilta juuri silloin kun sitä eniten tarvitaan.'
+  }
+];
+
+router.get('/myths', (req, res) => {
+  res.json({ myths: MYTHS });
+});
+
+function parseStrengthScore(evaluationText) {
+  if (!evaluationText) return null;
+  var m = evaluationText.match(/VAHVUUS[^0-9]{0,12}(\d{1,2})/i);
+  if (m) {
+    var n = parseInt(m[1], 10);
+    if (!isNaN(n) && n >= 1 && n <= 10) return n;
+  }
+  m = evaluationText.match(/\b([1-9]|10)\s*\/\s*10\b/);
+  if (m) {
+    var n2 = parseInt(m[1], 10);
+    if (!isNaN(n2)) return n2;
+  }
+  return null;
+}
+
+router.post('/mythology-evaluate', authenticateToken, async (req, res) => {
+  try {
+    await ensureFinalTables();
+    const { myth_selected, perplexity_finding, claude_argument, own_voice, final_argument } = req.body;
+    if (!myth_selected || !final_argument) {
+      return res.status(400).json({ error: 'Myytti ja lopullinen argumentti vaaditaan' });
+    }
+    const system = `Olet kriittinen akateeminen arvioija. Saat argumentin jolla henkilö yrittää kumota tekoälymyytin. Arvioi argumentti kolmesta näkökulmasta:
+
+1. VAHVUUS (1-10): Kuinka vakuuttava tämä on skeptiselle kuulijalle?
+2. HEIKKOUS: Mikä on se yksi kohta jossa argumentti vuotaa tai on helppo hyökätä vastaan?
+3. TERÄVÖITYS: Kirjoita yksi lause joka tekisi tästä argumentista merkittävästi vahvemman.
+
+Ole armottoman rehellinen. Ei kannustuspuhetta. Sävy: Oxfordin väittelyn tuomari.
+
+Muotoile vastauksesi näin:
+**VAHVUUS:** [numero]/10
+**HEIKKOUS:** [yksi kappale]
+**TERÄVÖITYS:** [yksi lause]`;
+
+    const userMessage = `MYYTTI: ${myth_selected}
+
+PERPLEXITYN LÖYTÖ:
+${perplexity_finding || '(ei annettu)'}
+
+CLAUDEN ARGUMENTTI:
+${claude_argument || '(ei annettu)'}
+
+OMA ÄÄNI:
+${own_voice || '(ei annettu)'}
+
+LOPULLINEN ARGUMENTTI (tämä on arvioitava teksti):
+${final_argument}`;
+
+    const text = await openaiChat(system, userMessage, 'gpt-4o', 1200);
+    const score = parseStrengthScore(text);
+    res.json({ text, strength_score: score });
+  } catch (e) {
+    console.error('mythology-evaluate:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+router.post('/mythology-save', authenticateToken, async (req, res) => {
+  try {
+    await ensureFinalTables();
+    const {
+      myth_selected,
+      perplexity_finding,
+      claude_argument,
+      own_voice,
+      final_argument,
+      ai_evaluation,
+      strength_score
+    } = req.body;
+    if (!myth_selected || !final_argument) {
+      return res.status(400).json({ error: 'Myytti ja lopullinen argumentti vaaditaan' });
+    }
+    const score = Number.isInteger(strength_score) ? strength_score : parseStrengthScore(ai_evaluation);
+    await pool.query(
+      `INSERT INTO mythology_submissions
+        (user_id, myth_selected, perplexity_finding, claude_argument, own_voice, final_argument, ai_evaluation, strength_score)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        req.user.id,
+        String(myth_selected).slice(0, 2000),
+        perplexity_finding || null,
+        claude_argument || null,
+        own_voice || null,
+        final_argument,
+        ai_evaluation || null,
+        score
+      ]
+    );
+    res.json({ success: true });
+  } catch (e) {
+    console.error('mythology-save:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+router.get('/admin-mythology', authenticateToken, async (req, res) => {
+  if (!req.user || !req.user.is_admin) {
+    return res.status(403).json({ error: 'Admin-oikeus vaaditaan' });
+  }
+  try {
+    await ensureFinalTables();
+    const r = await pool.query(
+      `SELECT m.id, m.myth_selected, m.final_argument, m.ai_evaluation, m.strength_score, m.created_at,
+              COALESCE(u.name, u.email) AS user_label
+       FROM mythology_submissions m
+       JOIN users u ON u.id = m.user_id
+       ORDER BY m.strength_score DESC NULLS LAST, m.created_at DESC`
+    );
+    res.json({ items: r.rows });
+  } catch (e) {
+    console.error('admin-mythology:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+/* ===== Rikkinäinen Prompti ===== */
+
+const RIKKI_ROUND1 = [
+  {
+    id: 1,
+    topic: 'Sähköposti kollegalle projektimuutoksesta',
+    output:
+      'Hei Mika,\n\nLyhyt info: eilisen tiimipalaverin perusteella aikataulua siirretään viikolla. Uusi deadline on pe 24.5. Käytännössä tämä tarkoittaa että A-osuus (sinun vastuulla) valmistuu maanantaina 20.5. ja B-osuus (minulla) keskiviikkona 22.5. Testit ajetaan torstaina yhdessä.\n\nJos maanantai näyttää tiukalta, soita minulle perjantaina 14 jälkeen niin mietitään vaihtoehtoja.\n\nt. Sanna',
+    prompts: [
+      { id: 'a', text: 'Kirjoita kollegalle sähköposti josta käy ilmi uusi deadline ja kenen vastuulla mikäkin osuus on. Mainitse testit ja jätä ovi auki neuvottelulle jos aikataulu ei onnistu. Sävy: ammattimainen mutta rento.', correct: true },
+      { id: 'b', text: 'Kerro tiimille muodollisesti että projekti on myöhässä. Ole tarkka syistä. Käytä virallista sävyä ja mainitse vastuuvelvollisuus.', correct: false },
+      { id: 'c', text: 'Kirjoita asiakkaalle pahoitteluviesti myöhästymisestä ja lupaa uusi aikataulu viikon sisään.', correct: false }
+    ]
+  },
+  {
+    id: 2,
+    topic: 'Tuotekuvaus verkkokauppaan',
+    output:
+      'Kuparikynttilänjalka Aalto — käsin valettua kuparia, harjattu pinta. Paino 680 g, korkeus 14 cm. Istuu pöydällä kuin veistos, toimii niin arkena kuin juhlassa. Patina syvenee käytössä — tämä ei mene pois muodista.\n\nSuunnittelijan kommentti: "Halusin esineen joka vanhenee kauniimmin kuin uutena."',
+    prompts: [
+      { id: 'a', text: 'Kirjoita kuparikynttilänjalan tuotekuvaus verkkokauppaan. Korosta että se on käsintehty, kuparia, 14 cm korkea, 680 g. Lisää lyhyt suunnittelijan kommentti. Sävy: premium, hieman runollinen, ei myyntipuheinen.', correct: true },
+      { id: 'b', text: 'Kirjoita myyvä tuotekuvaus kuparisesta kynttilänjalasta. Käytä tehokeinoja, pakkausta, kiireellisyyttä. Pyri konversioon.', correct: false },
+      { id: 'c', text: 'Tee lista kuparikynttilänjalan teknisistä ominaisuuksista: materiaali, mitat, paino, hoito-ohjeet.', correct: false }
+    ]
+  },
+  {
+    id: 3,
+    topic: 'Vastaus negatiiviseen asiakaspalautteeseen',
+    output:
+      'Hei Petra,\n\nPahoittelen tilannetta ja kiitän siitä että kerroit. Varaus numerollasi oli kirjautunut meille keskiviikolle klo 18 — nyt näen järjestelmästä että sinä odotit paikkaa jo kello 17. Syy oli meidän puolellamme: uudessa varausohjelmassa aikakentät näkyvät UTC-ajassa ja osa varauksista on siirtynyt tunnilla. Korjaus on tehty tänään aamulla.\n\nHyvitämme sinulle koko aterian hinnan (48 €) tilillesi tämän viikon aikana. Jos haluat tulla meille uudestaan, olen varannut sinulle pöydän kenen tahansa iltana tällä viikolla — vastaa vain tähän viestiin ja kerro milloin sopii.\n\nt. Tuomas, ravintolapäällikkö',
+    prompts: [
+      { id: 'a', text: 'Kirjoita ravintolapäällikön vastaus tyytymättömälle asiakkaalle. Myönnä virhe konkreettisesti, selitä mitä tapahtui (aikavyöhykevirhe järjestelmässä), tarjoa rahallinen hyvitys ja uusi vierailu. Allekirjoita etunimellä ja roolilla. Älä puolustele.', correct: true },
+      { id: 'b', text: 'Vastaa kohteliaasti asiakkaan valitukseen ja pyydä lisätietoja tilanteesta, jotta voitte selvittää asian.', correct: false },
+      { id: 'c', text: 'Kirjoita ammattimainen pahoitteluviesti tyytymättömälle asiakkaalle. Mainitse että teidän asiakaspalvelunne on tärkeää ja tarjoa alennuskoodi.', correct: false }
+    ]
+  },
+  {
+    id: 4,
+    topic: 'Tiivistelmä pitkästä raportista',
+    output:
+      '**3 keskeistä pointtia**\n1. Etätyö ei heikennä tuottavuutta aggregaattitasolla, mutta vaihtelu tiimien välillä on suurempaa kuin toimistolla.\n2. Yhden päivän toimistopäivä viikossa näyttää riittävän sosiaalisen pääoman ylläpitoon — 2-3 päivää ei tuota lisäarvoa.\n3. Keskitason esimiehet kokevat etätyön raskaimpana; heihin kohdistuva tuki on vähentynyt.\n\n**Yksi yllättävä löydös**\nTiimit joissa oli selkeät kirjoitetut työohjeet pärjäsivät etätyössä paremmin kuin tiimit joilla oli vahva läsnäolokulttuuri.',
+    prompts: [
+      { id: 'a', text: 'Lue raportti etätyön vaikutuksista tuottavuuteen ja palauta tasan 3 keskeistä pointtia + 1 yllättävä löydös. Käytä bold-otsikot ja numeroidut listat. Älä lisää mitään mitä raportissa ei sanottu.', correct: true },
+      { id: 'b', text: 'Tee tiivistelmä pitkästä etätyöraportista. Pidä lyhyenä ja selkeänä.', correct: false },
+      { id: 'c', text: 'Analysoi etätyön vaikutukset organisaatioon ja kerro omat suosituksesi siitä miten hybridimalli tulisi rakentaa.', correct: false }
+    ]
+  },
+  {
+    id: 5,
+    topic: 'LinkedIn-postaus uudesta roolista',
+    output:
+      'Uusi luku alkaa — aloitan ensi maanantaina Visman tuotepäällikkönä (B2B-talouspalvelut).\n\nKiitos Nordean upealle tiimille viidestä vuodesta. Opin teiltä enemmän kuin osasin odottaa, erityisesti Mari L. ja Joonas P.\n\nTulevassa roolissa pääsen vihdoin tekemään sitä mitä olen halunnut vuosia: rakentamaan tuotteita joita pienet ja keskisuuret yritykset tosiaan käyttävät arjessaan.\n\nJos olet PK-yrittäjä ja haluat kertoa minkä taloushallinnon kohdan haluaisit nähdä helpompana — lähetä viesti. Kuuntelen.',
+    prompts: [
+      { id: 'a', text: 'Kirjoita LinkedIn-postaus jossa kerron aloittavani uudessa roolissa (tuotepäällikkö, Visma, B2B-talouspalvelut, aloitus ensi maanantaina). Kiitä edellistä tiimiä (Nordea, 5v) ja mainitse nimeltä kaksi kollegaa. Perustele miksi tämä rooli on minulle oikea. Lopeta pyynnöllä että PK-yrittäjät kertovat minulle kipupisteistään. Sävy: aito, ei liian kiillotettu.', correct: true },
+      { id: 'b', text: 'Kerro LinkedInissä että vaihdat työpaikkaa. Kiitä entistä työnantajaa ja kerro olevasi innoissasi uudesta roolista. Ole kannustava.', correct: false },
+      { id: 'c', text: 'Kirjoita ammattimainen ilmoitus työpaikan vaihdosta. Korosta saavutuksia edellisessä roolissa ja listaa mitä tuot mukanasi uuteen tehtävään.', correct: false }
+    ]
+  }
+];
+
+const RIKKI_ROUND2 = [
+  {
+    id: 1,
+    prompt:
+      'Toimi talousvalmentajana suomalaiselle 32-vuotiaalle freelancerille jonka tulot vaihtelevat 2500–6500 €/kk. Rakenna kuukausibudjetti kun tulot ovat 4200 €. Budjetti: 1) kiinteät menot (vuokra 950, laskut 180, vakuutukset 90), 2) muuttuvat menot (ruoka, liikenne), 3) verot (YEL + ennakot) 4) säästöt ja puskuri. Näytä taulukkona. Käytä eurot-merkkiä ja prosentteja.'
+  },
+  {
+    id: 2,
+    prompt:
+      'Kirjoita hylätty saksalaisen ylioppilaskirjoituksen aine teemasta "Miksi nuoret eivät luota mediaan enää". Rajoitukset: 180 sanaa, 3 kappaletta, yksi tilastoviite (keksitty mutta uskottava), yksi sitaatti (keksitty, lähteenä fiktiivinen saksalainen sosiologi). Sävy: hieman kärsivä, akateeminen. Kieli: suomi. Ei kliseitä "sosiaalinen media pilaa nuoret".'
+  },
+  {
+    id: 3,
+    prompt:
+      'Olet lastenkirjailija. Kirjoita 4-vuotiaalle iltasatu kissasta nimeltä Kauno, jolla on vaikeus nukahtaa. Rajoitukset: max 200 sanaa, 4 kappaletta, toistuva rytmi ("Kauno kuunteli. Kauno nuuski. Kauno..."), lempeä loppu ilman opetusta tai moraalia. Ei henkilöidy vanhempiin.'
+  },
+  {
+    id: 4,
+    prompt:
+      'Kirjoita teknisen tuotteen lanseeraustiedote. Tuote: uusi suomalainen sähkötyöpyöräpolttimo (fiktio) nimeltä Valohovi V1. Pitää sisältää: 1 johdantolause, 3 konkreettista teknistä numeroa (W, Lux, elinkaari tunneissa), 1 sitaatti toimitusjohtajalta (keksi), 1 maininta saatavuudesta (kesäkuu 2026). 150 sanaa. Sävy: hillitty pohjoismainen, ei hypeä.'
+  },
+  {
+    id: 5,
+    prompt:
+      'Tee lyhyt analyysi yritykselle: pitäisikö pienen suomalaisen graafisen suunnittelutoimiston (5 hlöä, 1,1 M€ liikevaihto, Helsinki) palkata myyntihenkilö vai panostaa asiakashankintaan sisältömarkkinoinnilla. Rakenne: puolesta/vastaan molemmille, yksi selkeä suositus, yksi riski jota suositus ei ratkaise. 200 sanaa. Ei bullet-listoja, jatkuva teksti.'
+  }
+];
+
+router.get('/rikki-round1', (req, res) => {
+  const sanitized = RIKKI_ROUND1.map(function(it) {
+    return {
+      id: it.id,
+      topic: it.topic,
+      output: it.output,
+      prompts: it.prompts.map(function(p) { return { id: p.id, text: p.text }; })
+    };
+  });
+  res.json({ items: sanitized });
+});
+
+router.get('/rikki-round2', (req, res) => {
+  const items = RIKKI_ROUND2.map(function(it) { return { id: it.id, prompt: it.prompt }; });
+  res.json({ items });
+});
+
+router.post('/rikki-round1-evaluate', authenticateToken, async (req, res) => {
+  try {
+    const { answers } = req.body;
+    if (!Array.isArray(answers) || answers.length !== RIKKI_ROUND1.length) {
+      return res.status(400).json({ error: 'Jokaiseen kohtaan tulee antaa vastaus' });
+    }
+    const graded = RIKKI_ROUND1.map(function(item, i) {
+      const a = answers[i] || {};
+      const chosen = a.choice;
+      const correctChoice = item.prompts.find(function(p) { return p.correct; });
+      return {
+        id: item.id,
+        topic: item.topic,
+        chosen: chosen,
+        correct_choice: correctChoice.id,
+        is_correct: chosen === correctChoice.id,
+        justification: String(a.justification || ''),
+        output: item.output,
+        correct_prompt: correctChoice.text
+      };
+    });
+
+    const blocks = graded.map(function(g, i) {
+      return `KOHTA ${i + 1} — ${g.topic}
+AI:n TULOS:
+${g.output}
+
+OIKEA PROMPTI:
+${g.correct_prompt}
+
+OPPILAAN VALINTA: ${g.chosen || '(ei valintaa)'} ${g.is_correct ? '(OIKEIN)' : '(VÄÄRIN, oikea: ' + g.correct_choice + ')'}
+OPPILAAN PERUSTELU: ${g.justification || '(ei perustelua)'}`;
+    }).join('\n\n');
+
+    const system = `Olet promptisuunnittelun opettaja. Saat 5 tapausta jossa oppilas on nähnyt AI:n tuloksen ja kolme promptia. Hän valitsi yhden ja perusteli valintansa.
+
+Arvioi kunkin oppilaan perustelu — EI vain sitä saiko hän oikein. Pelkkä oikea valinta ilman kelvollista perustelua ei ansaitse täysiä pisteitä. Hyvä perustelu tunnistaa mitä promptissa on spesifistä joka näkyy tuloksessa (rakenne, sävy, rajoitteet, numerot, yms).
+
+Palauta kuhunkin kohtaan: 
+**KOHTA [n] — [aihe]**
+Valinta: oikein / väärin
+Perustelun taso: vahva / kohtalainen / heikko
+Palaute: 2–3 lauseen palaute ajattelun laadusta. Ole suora.
+
+Lopuksi yksi kappale **KOKONAISARVIO** (enintään 4 lausetta): mitä oppilaan promptilukutaidosta voi sanoa?`;
+
+    const text = await openaiChat(system, blocks, 'gpt-4o', 1800);
+    const correctCount = graded.filter(function(g) { return g.is_correct; }).length;
+    res.json({ text: text, graded: graded, correct_count: correctCount, total: graded.length });
+  } catch (e) {
+    console.error('rikki-round1-evaluate:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+router.post('/rikki-round2-run', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.body;
+    const item = RIKKI_ROUND2.find(function(x) { return x.id === id; });
+    if (!item) return res.status(400).json({ error: 'Tuntematon kohde' });
+    const text = await openaiChat(
+      'Olet tarkka ja ammattimainen tekoälymalli. Noudata promptia täsmälleen.',
+      item.prompt,
+      'gpt-4o',
+      1800
+    );
+    res.json({ text });
+  } catch (e) {
+    console.error('rikki-round2-run:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+router.post('/rikki-round2-compare', authenticateToken, async (req, res) => {
+  try {
+    const { items } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Ei vertailtavia kohteita' });
+    }
+    const block = items.map(function(it, i) {
+      return `KOHTA ${i + 1}
+PROMPTI:
+${it.prompt}
+
+OPPILAAN ENNUSTE:
+${it.prediction || '(tyhjä)'}
+
+TEKOÄLYN TODELLINEN TULOS:
+${it.actual || '(tyhjä)'}`;
+    }).join('\n\n');
+
+    const system = `Olet vertaileva arvioija. Saat sarjan tapauksia. Kussakin tapauksessa oppilas on nähnyt promptin ja ennustanut mitä tekoäly tuottaisi. Tämän jälkeen tekoäly tuotti oikean tuloksen.
+
+Vertaa ennustetta ja todellista tulosta kohta kerrallaan:
+**KOHTA [n]** 
+Mikä osui: [lause]
+Mikä meni yllättävämmin kuin oppilas odotti: [lause]
+Mitä tämä paljastaa oppilaan mielikuvasta tekoälystä: [lause]
+
+Lopeta yhdellä yhteenvedolla (enintään 4 lausetta) siitä mistä oppilaan mielikuva tekoälyn toiminnasta eniten eroaa todellisuudesta.`;
+
+    const text = await openaiChat(system, block, 'gpt-4o', 2000);
+    res.json({ text });
+  } catch (e) {
+    console.error('rikki-round2-compare:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+router.post('/rikki-save', authenticateToken, async (req, res) => {
+  try {
+    await ensureFinalTables();
+    const { round, payload } = req.body;
+    if (round !== 1 && round !== 2) {
+      return res.status(400).json({ error: 'Tuntematon kierros' });
+    }
+    await pool.query(
+      `INSERT INTO broken_prompt_submissions (user_id, round, payload) VALUES ($1, $2, $3::jsonb)`,
+      [req.user.id, round, JSON.stringify(payload || {})]
+    );
+    res.json({ success: true });
+  } catch (e) {
+    console.error('rikki-save:', e);
     res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
   }
 });

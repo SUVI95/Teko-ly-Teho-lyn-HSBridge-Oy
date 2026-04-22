@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · Myytinmurtaja</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#f5f3ef;color:#1a1a2e;font-family:'DM Sans',sans-serif;padding:2rem;line-height:1.6;}
+header{max-width:1200px;margin:0 auto 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+header h1{font-family:'DM Serif Display',serif;font-size:2rem;font-weight:400;}
+header .sub{font-family:'DM Mono',monospace;font-size:0.75rem;color:#6b6880;letter-spacing:0.12em;text-transform:uppercase;}
+header a{color:#c75b3a;text-decoration:none;font-size:0.9rem;font-weight:500;}
+header a:hover{text-decoration:underline;}
+.wrap{max-width:1200px;margin:0 auto;background:#fff;border:1px solid rgba(26,26,46,0.12);border-radius:12px;overflow:hidden;box-shadow:0 2px 20px rgba(26,26,46,0.06);}
+table{width:100%;border-collapse:collapse;font-size:0.9rem;}
+th{background:#1a1a2e;color:#fff;padding:14px 16px;text-align:left;font-family:'DM Mono',monospace;font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:500;}
+td{padding:14px 16px;border-bottom:1px solid rgba(26,26,46,0.08);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr:hover{background:#faf8f4;}
+.score{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 10px;border-radius:18px;background:#1a1a2e;color:#fff;font-weight:700;font-family:'DM Serif Display',serif;}
+.score.high{background:#2a7a4b;}
+.score.low{background:#b91c1c;}
+.myth{max-width:260px;font-style:italic;color:#2d2d44;}
+.arg{max-width:460px;color:#1a1a2e;line-height:1.6;}
+.empty{padding:3rem;text-align:center;color:#6b6880;}
+.meta{font-size:0.8rem;color:#6b6880;}
+.expand-btn{background:none;border:none;color:#c75b3a;cursor:pointer;font-size:0.8rem;font-family:inherit;padding:0;margin-top:0.35rem;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Myytinmurtaja — argumentit</h1>
+    <div class="sub">Admin-näkymä · järjestetty vahvuuden mukaan</div>
+  </div>
+  <a href="/admin">← Admin-etusivulle</a>
+</header>
+<div class="wrap" id="wrap">
+  <div class="empty">Ladataan...</div>
+</div>
+<script>
+(function(){
+  function escapeHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function scoreClass(n){if(n==null)return '';if(n>=8)return 'high';if(n<=4)return 'low';return '';}
+  fetch('/api/final/admin-mythology',{credentials:'include'})
+    .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+    .then(function(x){
+      var wrap = document.getElementById('wrap');
+      if(!x.ok){ wrap.innerHTML = '<div class="empty">Virhe: ' + escapeHtml((x.d&&x.d.error)||'') + '</div>'; return; }
+      var items = x.d.items || [];
+      if(!items.length){ wrap.innerHTML = '<div class="empty">Ei vielä lähetyksiä.</div>'; return; }
+      var html = '<table><thead><tr><th>Käyttäjä</th><th>Myytti</th><th>Vahvuus</th><th>Lopullinen argumentti</th><th>Pvm</th></tr></thead><tbody>';
+      items.forEach(function(it){
+        var d = new Date(it.created_at);
+        var dateStr = d.toLocaleDateString('fi-FI') + ' ' + d.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
+        var s = it.strength_score;
+        var scoreHtml = s != null ? '<span class="score ' + scoreClass(s) + '">' + s + '</span>' : '<span class="meta">—</span>';
+        html += '<tr>'
+             + '<td>' + escapeHtml(it.user_label || '') + '</td>'
+             + '<td class="myth">"' + escapeHtml(it.myth_selected || '') + '"</td>'
+             + '<td>' + scoreHtml + '</td>'
+             + '<td class="arg">' + escapeHtml(it.final_argument || '') + '</td>'
+             + '<td class="meta">' + escapeHtml(dateStr) + '</td>'
+             + '</tr>';
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    })
+    .catch(function(){
+      document.getElementById('wrap').innerHTML = '<div class="empty">Jokin meni pieleen — yritä uudelleen</div>';
+    });
+})();
+</script>
+</body>
+</html>

@@ -1259,6 +1259,26 @@
             day: 'bridge',
             cardBadge: 'Huipennus',
             statusLine: 'Valmis käyttöön'
+          },
+          {
+            id: 'myytinmurtaja',
+            title: 'Myytinmurtaja',
+            description: 'Valitse tekoälymyyttien kovin — ja tuhoa se.',
+            icon: 'sparkles',
+            part: 2,
+            day: 'bridge',
+            cardBadge: 'Haaste',
+            statusLine: 'Valmis käyttöön'
+          },
+          {
+            id: 'rikkinainen-prompti',
+            title: 'Rikkinäinen Prompti',
+            description: 'Kaksi kierrosta: arvaa oikea prompti, ennusta tekoälyn tulos.',
+            icon: 'sparkles',
+            part: 2,
+            day: 'bridge',
+            cardBadge: 'Bonus',
+            statusLine: 'Valmis käyttöön'
           }
         ];
         
@@ -1341,9 +1361,12 @@
         const part3Modules = modules.filter(m => m.part === 3);
         
         const loppumoduuliModule = modules.find(m => m.id === 'loppumoduuli-sina-ja-tekoaly') || null;
-        // Group Part 2 modules by day (Loppumoduuli piilotetaan täältä — lisätään manuaalisesti Alanavaihtajan jälkeen)
+        const myytinmurtajaModule = modules.find(m => m.id === 'myytinmurtaja') || null;
+        const rikkinainenPromptiModule = modules.find(m => m.id === 'rikkinainen-prompti') || null;
+        const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti']);
+        // Group Part 2 modules by day (nämä moduulit piilotetaan täältä — injektoidaan manuaalisesti Alanavaihtajan jälkeen)
         const day1_5Modules = part2Modules
-          .filter(m => m.day === 'bridge' && m.id !== 'loppumoduuli-sina-ja-tekoaly')
+          .filter(m => m.day === 'bridge' && !injectedIds.has(m.id))
           .sort((a, b) => a.order - b.order);
         const day2Modules = part2Modules.filter(m => m.day === 2).sort((a, b) => a.order - b.order);
         const day3Modules = part2Modules.filter(m => m.day === 3).sort((a, b) => a.order - b.order);
@@ -1378,26 +1401,38 @@
         }
         
         // Render bridge section — between DAY 1 and DAY 2 (Loppumoduuli heti Alanavaihtajan kartta -kortin jälkeen)
+        function renderFinalCluster(idxBase) {
+          let out = '';
+          out += '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
+          if (loppumoduuliModule) {
+            out += renderModuleCard(loppumoduuliModule, idxBase, modules, summary, completedModules, module4Completed, allPart1Completed);
+          }
+          if (myytinmurtajaModule) {
+            out += renderModuleCard(myytinmurtajaModule, idxBase + 1, modules, summary, completedModules, module4Completed, allPart1Completed);
+          }
+          if (rikkinainenPromptiModule) {
+            out += renderModuleCard(rikkinainenPromptiModule, idxBase + 2, modules, summary, completedModules, module4Completed, allPart1Completed);
+          }
+          return out;
+        }
+
         if (day1_5Modules.length > 0) {
           html += '<div class="part-section" id="section-bridge"><h2 class="part-title">Käytännön AI-taidot</h2><div class="modules-grid">';
-          let loppumoduuliPlaced = false;
+          let finalsPlaced = false;
           day1_5Modules.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
-            if (loppumoduuliModule && module.id === 'moduuli-alanavaihtajan-kartta') {
-              html += '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
-              html += renderModuleCard(loppumoduuliModule, index, modules, summary, completedModules, module4Completed, allPart1Completed);
-              loppumoduuliPlaced = true;
+            if (!finalsPlaced && module.id === 'moduuli-alanavaihtajan-kartta') {
+              html += renderFinalCluster(index + 1);
+              finalsPlaced = true;
             }
           });
-          if (loppumoduuliModule && !loppumoduuliPlaced) {
-            html += '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
-            html += renderModuleCard(loppumoduuliModule, 0, modules, summary, completedModules, module4Completed, allPart1Completed);
+          if (!finalsPlaced) {
+            html += renderFinalCluster(day1_5Modules.length);
           }
           html += '</div></div>';
-        } else if (loppumoduuliModule) {
+        } else {
           html += '<div class="part-section" id="section-bridge"><h2 class="part-title">Käytännön AI-taidot</h2><div class="modules-grid">';
-          html += '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
-          html += renderModuleCard(loppumoduuliModule, 0, modules, summary, completedModules, module4Completed, allPart1Completed);
+          html += renderFinalCluster(0);
           html += '</div></div>';
         }
         

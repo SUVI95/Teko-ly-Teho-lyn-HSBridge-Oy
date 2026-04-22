@@ -198,3 +198,30 @@ CREATE TABLE IF NOT EXISTS final_module_gallery (
 );
 CREATE INDEX IF NOT EXISTS idx_final_module_gallery_user ON final_module_gallery(user_id);
 CREATE INDEX IF NOT EXISTS idx_final_module_gallery_created ON final_module_gallery(created_at DESC);
+
+-- Myytinmurtaja
+CREATE TABLE IF NOT EXISTS mythology_submissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    myth_selected TEXT NOT NULL,
+    perplexity_finding TEXT,
+    claude_argument TEXT,
+    own_voice TEXT,
+    final_argument TEXT NOT NULL,
+    ai_evaluation TEXT,
+    strength_score INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_mythology_submissions_user ON mythology_submissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_mythology_submissions_score ON mythology_submissions(strength_score DESC);
+
+-- Rikkinäinen Prompti
+CREATE TABLE IF NOT EXISTS broken_prompt_submissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    round INTEGER NOT NULL,
+    payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_broken_prompt_user ON broken_prompt_submissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_broken_prompt_round ON broken_prompt_submissions(round);
