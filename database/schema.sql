@@ -166,3 +166,35 @@ CREATE TABLE IF NOT EXISTS user_onboarding (
 
 CREATE INDEX IF NOT EXISTS idx_user_onboarding_user_id ON user_onboarding(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_onboarding_created ON user_onboarding(created_at);
+
+-- Loppumoduuli — Sinä ja tekoäly
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE TABLE IF NOT EXISTS final_module_reflections (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reflection_text TEXT NOT NULL,
+    answers_json JSONB NOT NULL DEFAULT '[]',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT final_module_reflections_user_unique UNIQUE(user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_final_module_reflections_user ON final_module_reflections(user_id);
+
+CREATE TABLE IF NOT EXISTS final_module_automations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    automation_name VARCHAR(200) NOT NULL,
+    generated_prompt TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_final_module_automations_user ON final_module_automations(user_id);
+
+CREATE TABLE IF NOT EXISTS final_module_gallery (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    image_path VARCHAR(500) NOT NULL,
+    caption TEXT NOT NULL,
+    image_prompt_used TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_final_module_gallery_user ON final_module_gallery(user_id);
+CREATE INDEX IF NOT EXISTS idx_final_module_gallery_created ON final_module_gallery(created_at DESC);

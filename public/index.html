@@ -151,6 +151,20 @@
     gap: 2rem;
   }
   
+  .module-card-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    background: rgba(199, 91, 58, 0.1);
+    border: 1px solid rgba(199, 91, 58, 0.22);
+    padding: 5px 11px;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+  }
+  
   .module-card {
     background: #fff;
     border: 1px solid var(--border);
@@ -1235,6 +1249,16 @@
             order: 19,
             part: 3,
             industry: 'it'
+          },
+          {
+            id: 'loppumoduuli-sina-ja-tekoaly',
+            title: 'Loppumoduuli — Sinä ja tekoäly',
+            description: 'Kurssin huipennus. Kolme osiota. Yksi valmis tuotos.',
+            icon: 'trophy',
+            order: 1,
+            part: 4,
+            cardBadge: 'Huipennus',
+            statusLine: 'Valmis käyttöön'
           }
         ];
         
@@ -1315,6 +1339,7 @@
         const part1ModulesList = modules.filter(m => m.part === 1);
         const part2Modules = modules.filter(m => m.part === 2);
         const part3Modules = modules.filter(m => m.part === 3);
+        const part4Modules = modules.filter(m => m.part === 4).sort((a, b) => a.order - b.order);
         
         // Group Part 2 modules by day
         const day1_5Modules = part2Modules.filter(m => m.day === 'bridge').sort((a, b) => a.order - b.order);
@@ -1332,6 +1357,7 @@
           { id: 'section-day3', label: 'DAY 3' },
           { id: 'section-day4', label: 'DAY 4' },
           { id: 'section-day5', label: 'DAY 5' },
+          { id: 'section-loppu', label: 'Loppumoduuli' },
           { id: 'section-feedback', label: 'Palautte' }
         ];
         html += '<div class="section-jump-nav" style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:2rem;padding:1rem;background:var(--paper2);border-radius:12px;">';
@@ -1391,6 +1417,16 @@
           html += '<p style="max-width: 800px; margin: 0 auto 2rem; color: var(--muted); line-height: 1.6; text-align: center;">Valitse oman alasi moduuli. Näillä moduuleilla opit soveltamaan AI:ta omaan työelämääsi.</p>';
           html += '<div class="modules-grid">';
           part3Modules.forEach((module, index) => {
+            html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
+          });
+          html += '</div></div>';
+        }
+        
+        if (part4Modules.length > 0) {
+          html += '<div class="part-section" id="section-loppu"><h2 class="part-title">Loppumoduuli</h2>';
+          html += '<p style="max-width: 800px; margin: 0 auto 2rem; color: var(--muted); line-height: 1.6; text-align: center;">Kurssin huipennus: kuulustelu, automaatio ja kuvagalleria — kaikki yhdessä moduulissa.</p>';
+          html += '<div class="modules-grid">';
+          part4Modules.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
           });
           html += '</div></div>';
@@ -1534,7 +1570,7 @@
             </div>
             <div class="progress-text">${completedSections}/${totalSections} osiota suoritettu${isCompleted ? ' ✓' : ''}</div>`;
       } else {
-        progressBlock = '<div class="progress-text">Valmis käyttöön</div>';
+        progressBlock = `<div class="progress-text">${module.statusLine || 'Valmis käyttöön'}</div>`;
       }
       
       return `
@@ -1542,6 +1578,7 @@
           ${isCompleted ? '<div class="completion-badge">✓</div>' : ''}
           ${lockBadge}
           <div class="module-icon">${iconSVGs[module.icon]}</div>
+          ${module.cardBadge ? `<div class="module-card-tag">${module.cardBadge}</div>` : ''}
           <h2>${module.title}</h2>
           <p>${module.description}</p>
           ${progressBlock}

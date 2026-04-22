@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loppumoduuli — Sinä ja tekoäly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#1a1a2e; --ink2:#2d2d44; --paper:#f5f3ef; --paper2:#eeeae3; --warm:#e8e0d4;
+  --accent:#c75b3a; --accent2:#2563a8; --accent3:#2a7a4b;
+  --text:#1a1a2e; --muted:#6b6880; --border:rgba(26,26,46,0.12);
+  --shadow:0 2px 20px rgba(26,26,46,0.08); --shadow-md:0 8px 40px rgba(26,26,46,0.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;line-height:1.7;overflow-x:hidden;}
+nav{position:sticky;top:0;z-index:100;background:rgba(245,243,239,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;padding:0.9rem 2rem;}
+.nav-left{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+.nav-pill{font-family:'DM Mono',monospace;font-size:0.68rem;font-weight:500;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;background:rgba(199,91,58,0.08);border:1px solid rgba(199,91,58,0.2);padding:4px 12px;border-radius:4px;}
+a.nav-link{color:var(--muted);text-decoration:none;font-size:0.85rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;}
+a.nav-link:hover{color:var(--ink);}
+.wrap{max-width:880px;margin:0 auto;padding:2.5rem 1.5rem 5rem;}
+.intro-block{background:#fff;border:1px solid var(--border);border-radius:16px;padding:2.5rem;box-shadow:var(--shadow);margin-bottom:2.5rem;}
+.intro-block h1{font-family:'DM Serif Display',serif;font-size:clamp(1.75rem,4vw,2.5rem);font-weight:400;color:var(--ink);line-height:1.15;margin-bottom:1.25rem;}
+.intro-block p{color:var(--muted);font-size:1.05rem;font-weight:300;line-height:1.8;}
+.station-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2rem;}
+@media(max-width:720px){.station-row{grid-template-columns:1fr;}}
+.station-pick{background:var(--paper2);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1rem;cursor:pointer;transition:all 0.2s;text-align:left;font:inherit;color:inherit;}
+.station-pick:hover{border-color:var(--accent);box-shadow:var(--shadow);}
+.station-pick span{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;display:block;margin-bottom:0.35rem;}
+.station-pick strong{font-size:0.95rem;font-weight:600;color:var(--ink);}
+.section-station{scroll-margin-top:100px;padding:3rem 0;border-top:1px solid var(--border);}
+.section-station:first-of-type{border-top:none;padding-top:0.5rem;}
+.station-head{font-family:'DM Serif Display',serif;font-size:clamp(1.5rem,3.5vw,2rem);color:var(--ink);margin-bottom:1rem;}
+.station-lead{color:var(--muted);font-size:1.02rem;margin-bottom:1.75rem;max-width:46rem;}
+.btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 28px;border-radius:8px;font-size:0.95rem;font-weight:600;cursor:pointer;border:none;background:var(--accent);color:#fff;font-family:inherit;transition:all 0.2s;}
+.btn-primary:hover{filter:brightness(0.95);transform:translateY(-1px);box-shadow:0 4px 14px rgba(199,91,58,0.25);}
+.btn-primary:disabled{opacity:0.5;cursor:default;transform:none;box-shadow:none;}
+.btn-secondary{display:inline-flex;align-items:center;justify-content:center;padding:10px 22px;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--ink);font-family:inherit;}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.label{display:block;font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;}
+textarea.inp, input.inp{width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:0.9rem 1rem;font-size:0.95rem;font-family:'DM Sans',sans-serif;resize:vertical;min-height:100px;outline:none;transition:border-color 0.2s;}
+input.inp{min-height:unset;resize:none;}
+textarea.inp:focus, input.inp:focus{border-color:rgba(199,91,58,0.4);}
+.muted-hint{font-size:0.82rem;color:var(--muted);margin-top:0.4rem;}
+.q-number{font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--accent);letter-spacing:0.06em;margin-bottom:0.75rem;}
+.q-text{font-size:1.1rem;font-weight:500;margin-bottom:1rem;color:var(--ink);}
+.reflection-box{background:var(--paper2);border:1px solid var(--border);border-radius:12px;padding:1.5rem 1.75rem;margin-top:1.25rem;white-space:pre-wrap;font-size:0.95rem;line-height:1.75;}
+.demo-box{background:var(--ink);color:#fff;border-radius:12px;padding:1.5rem 1.75rem;margin:1.5rem 0;}
+.demo-box h3{font-family:'DM Serif Display',serif;font-size:1.2rem;font-weight:400;margin-bottom:0.5rem;}
+.demo-box p{font-size:0.9rem;color:rgba(255,255,255,0.6);line-height:1.65;}
+.tab-row{display:flex;flex-wrap:wrap;gap:0.5rem;margin:1.25rem 0;}
+.tab-btn{padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:0.85rem;font-weight:500;font-family:inherit;color:var(--muted);transition:all 0.2s;}
+.tab-btn.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.pane-tab{display:none !important;}
+.pane-tab.active{display:block !important;}
+.out-box{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin-top:1rem;white-space:pre-wrap;font-size:0.9rem;line-height:1.75;}
+.code-box{background:#0f1419;color:#e2e8f0;border-radius:10px;padding:1.25rem 1.5rem;font-family:'DM Mono',monospace;font-size:0.8rem;white-space:pre-wrap;line-height:1.65;margin-top:1rem;border:1px solid rgba(255,255,255,0.08);}
+.steps-num{list-style:decimal;padding-left:1.4rem;}
+.steps-num li{margin-bottom:0.75rem;padding-left:0.25rem;}
+.alert-ok{background:rgba(42,122,75,0.1);border:1px solid rgba(42,122,75,0.3);color:var(--accent3);padding:0.75rem 1rem;border-radius:8px;font-size:0.9rem;margin-top:0.75rem;}
+.alert-err{background:rgba(220,50,50,0.08);border:1px solid rgba(220,50,50,0.2);color:#b91c1c;padding:0.75rem 1rem;border-radius:8px;font-size:0.9rem;margin-top:0.75rem;}
+.loading-inline{display:inline-flex;align-items:center;gap:8px;font-size:0.9rem;color:var(--muted);}
+.spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp 0.7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.gal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:1.5rem;}
+@media(max-width:900px){.gal-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:520px){.gal-grid{grid-template-columns:1fr;}}
+.gal-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);}
+.gal-card img{width:100%;height:200px;object-fit:cover;display:block;background:var(--paper2);}
+.gal-card .body{padding:1rem 1.1rem;}
+.gal-card .cap{font-size:0.9rem;color:var(--text);line-height:1.5;margin-bottom:0.5rem;}
+.gal-card .who{font-size:0.8rem;color:var(--muted);}
+.file-inp input[type="file"]{width:100%;padding:0.6rem;border:2px dashed var(--border);border-radius:8px;cursor:pointer;background:var(--paper);}
+hr.soft{border:0;border-top:1px solid var(--border);margin:2.5rem 0;}
+h3.sub{font-size:1.1rem;font-weight:600;margin:1.5rem 0 0.75rem;color:var(--ink);}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <a class="nav-link" href="/">← Etusivu</a>
+    <span class="nav-pill">Loppumoduuli</span>
+  </div>
+  <a class="nav-link" href="#station-1">Asemat ↓</a>
+</nav>
+
+<div class="wrap">
+  <div class="intro-block">
+    <h1>Tänään et opiskele. Tänään todistat.</h1>
+    <p>Viisi päivää, kahdeksan työkalua, yksi iso kysymys: mitä sinä teet tällä kaikella? Tänään saat vastauksen. Kolme osiota — jokainen rakentaa jotain oikeaa.</p>
+    <div class="station-row" role="navigation" aria-label="Asemat">
+      <button type="button" class="station-pick" data-go="station-1"><span>01</span><strong>Kuulustelukoppi</strong></button>
+      <button type="button" class="station-pick" data-go="station-2"><span>02</span><strong>Automaatio</strong></button>
+      <button type="button" class="station-pick" data-go="station-3"><span>03</span><strong>Kuva + Galleria</strong></button>
+    </div>
+  </div>
+
+  <!-- STATION 1 -->
+  <section class="section-station" id="station-1">
+    <h2 class="station-head">01 — Kuulustelukoppi</h2>
+    <p class="station-lead">Tekoäly esittää sinulle 10 kysymystä. Ei tenttiä — oikeita kysymyksiä. Vastaa rehellisesti. Lopussa saat henkilökohtaisen analyysin siitä, minkälainen tekoälyajattelija olet.</p>
+    <div id="k1-welcome">
+      <button type="button" class="btn-primary" id="k1-start">Aloita kuulustelu</button>
+    </div>
+    <div id="k1-flow" style="display:none;">
+      <p class="q-number" id="k1-num"></p>
+      <p class="q-text" id="k1-q"></p>
+      <label class="label" for="k1-answer">Vastauksesi</label>
+      <textarea class="inp" id="k1-answer" rows="5" placeholder="Kirjoita vastauksesi..."></textarea>
+      <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;">
+        <button type="button" class="btn-primary" id="k1-next">Seuraava kysymys</button>
+        <span id="k1-load" class="loading-inline" style="display:none;"><span class="spin"></span> Ladataan...</span>
+      </div>
+    </div>
+    <div id="k1-analyze-block" style="display:none;margin-top:1.5rem;">
+      <button type="button" class="btn-primary" id="k1-analyze">Analysoi vastaukseni</button>
+    </div>
+    <div id="k1-result-wrap" style="display:none;">
+      <h3 class="sub">Reflektiosi</h3>
+      <div class="reflection-box" id="k1-reflection"></div>
+      <div style="margin-top:1rem;">
+        <button type="button" class="btn-primary" id="k1-save">Tallenna reflektioni</button>
+        <span id="k1-sload" class="loading-inline" style="display:none;margin-left:10px;"><span class="spin"></span> Ladataan...</span>
+      </div>
+      <div id="k1-saved" class="alert-ok" style="display:none;margin-top:0.75rem;">Reflektio tallennettu.</div>
+    </div>
+    <div id="k1-err" class="alert-err" style="display:none;"></div>
+  </section>
+
+  <hr class="soft">
+
+  <!-- STATION 2 -->
+  <section class="section-station" id="station-2">
+    <h2 class="station-head">02 — Rakenna oma automaatio</h2>
+    <p class="station-lead">Automaatio ei tarkoita koodausta tai uusia työkaluja. Se tarkoittaa promptia joka tekee saman asian aina kun pyydät — luotettavasti, nopeasti, sinun tavallasi.</p>
+
+    <div class="demo-box">
+      <h3>Katso ensin miten se toimii</h3>
+      <p>Alla on kolme valmista automaatiota. Kokeile yhtä — liitä oikeaa tekstiä ja katso mitä tapahtuu.</p>
+    </div>
+
+    <div class="tab-row" role="tablist">
+      <button type="button" class="tab-btn active" data-tab="t-memo" role="tab" aria-selected="true">Viikkopalaverin muistio</button>
+      <button type="button" class="tab-btn" data-tab="t-research" role="tab">Tutkimustiivistelmä</button>
+      <button type="button" class="tab-btn" data-tab="t-email" role="tab">Sähköpostianalyysi</button>
+    </div>
+
+    <div id="t-memo" class="pane-tab active" role="tabpanel">
+      <p class="station-lead" style="margin-bottom:0.75rem;">Liitä sekavat muistiinpanot kokouksesta. Saat takaisin: päätökset, toimenpiteet, kuka tekee mitä.</p>
+      <textarea class="inp" id="demo-memo" rows="6" placeholder="Liitä kokousmuistiinpanosi tähän — voivat olla sekavia, raakoja, epätäydellisiä..."></textarea>
+      <button type="button" class="btn-primary" style="margin-top:0.75rem;" data-demo="memo">Muodosta muistio</button>
+    </div>
+    <div id="t-research" class="pane-tab" role="tabpanel">
+      <p class="station-lead" style="margin-bottom:0.75rem;">Liitä mikä tahansa artikkeli, raportti tai pitkä teksti. Saat: 3 pääpointsia, yhden asian jota kyseenalaistaa, yhden asian jota tehdä.</p>
+      <textarea class="inp" id="demo-research" rows="6" placeholder="Liitä artikkeli tai pitkä teksti tähän..."></textarea>
+      <button type="button" class="btn-primary" style="margin-top:0.75rem;" data-demo="research">Tiivistä ja analysoi</button>
+    </div>
+    <div id="t-email" class="pane-tab" role="tabpanel">
+      <p class="station-lead" style="margin-bottom:0.75rem;">Liitä sähköpostiviesti tai viestejä. Saat: mistä on kyse, mitä vaaditaan sinulta, mikä on kiireellisyys, ehdotettu vastaus.</p>
+      <textarea class="inp" id="demo-email" rows="6" placeholder="Liitä sähköposti tai sähköpostiketju tähän..."></textarea>
+      <button type="button" class="btn-primary" style="margin-top:0.75rem;" data-demo="email">Analysoi sähköposti</button>
+    </div>
+    <div id="demo-out-wrap" style="display:none;">
+      <div class="out-box" id="demo-out"></div>
+    </div>
+    <div id="demo-err" class="alert-err" style="display:none;"></div>
+    <p id="demo-load" class="loading-inline" style="display:none;margin-top:0.5rem;"><span class="spin"></span> Ladataan...</p>
+
+    <h3 class="sub">Nyt sinun vuorosi — rakenna oma</h3>
+    <p class="station-lead">Valitse jokin toistuva asia omasta työstäsi. Vastaa kolmeen kysymykseen — tekoäly rakentaa sinulle valmiin automaatiopromptin jonka voit käyttää heti.</p>
+    <label class="label" for="b1">Mikä on se toistuva tehtävä tai tilanne?</label>
+    <input class="inp" type="text" id="b1" placeholder="esim. asiakaspalautteiden läpikäynti, viikkoraportin kirjoittaminen...">
+    <label class="label" for="b2" style="margin-top:1rem;">Mikä on tyypillinen syöte? (mitä liität tai kirjoitat)</label>
+    <input class="inp" type="text" id="b2" placeholder="esim. sähköpostiketju, muistiinpanot, lista, artikkeli...">
+    <label class="label" for="b3" style="margin-top:1rem;">Mikä on täydellinen tulos?</label>
+    <input class="inp" type="text" id="b3" placeholder="esim. selkeä yhteenveto, toimenpidelista, vastausluonnos...">
+    <button type="button" class="btn-primary" style="margin-top:1rem;" id="b-build">Rakenna automaatiopromptini</button>
+    <p id="b-load" class="loading-inline" style="display:none;margin-top:0.5rem;"><span class="spin"></span> Ladataan...</p>
+    <div id="b-out-wrap" style="display:none;">
+      <div class="code-box" id="b-out"></div>
+      <label class="label" for="b-name" style="margin-top:1.25rem;">Nimeä automaatiosi</label>
+      <input class="inp" type="text" id="b-name" placeholder="Esim. Viikkoraportti" style="min-height:unset;">
+      <button type="button" class="btn-primary" style="margin-top:0.75rem;" id="b-save">Tallenna automaationi</button>
+    </div>
+    <div id="b-saved" class="alert-ok" style="display:none;"></div>
+    <div id="b-err" class="alert-err" style="display:none;"></div>
+  </section>
+
+  <hr class="soft">
+
+  <!-- STATION 3 -->
+  <section class="section-station" id="station-3">
+    <h2 class="station-head">03 — Kuva ja galleria</h2>
+    <p class="station-lead">Viimeinen tehtävä on luova. Luo kuva joka kuvaa sinun suhdettasi tekoälyyn — abstraktisti, konkreettisesti, hauskasti tai vakavasti. Sinä päätät. Käytä ChatGPT:tä tai Geminiä kuvan luomiseen.</p>
+    <ol class="steps-num" style="margin:1.25rem 0 1.5rem;color:var(--muted);">
+      <li>Mieti: miltä tekoäly tuntuu sinulle nyt kurssin jälkeen? Mikä metafora, tunnelma tai kuva tulee mieleen?</li>
+      <li>Mene ChatGPT:hen tai Geminiin. Kirjoita kuvaprompti englanniksi — mitä yksityiskohtaisempi, sitä parempi. Lataa kuva koneellesi.</li>
+      <li>Kirjoita yksi lause joka selittää kuvasi: mitä se tarkoittaa sinulle?</li>
+      <li>Lataa kuva ja lauseesi alle.</li>
+    </ol>
+
+    <form id="gal-form" style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.5rem;box-shadow:var(--shadow);">
+      <div class="file-inp" style="margin-bottom:1rem;">
+        <label class="label">Kuva (JPG, PNG, WebP, max 5MB)</label>
+        <input type="file" id="gal-file" accept="image/jpeg,image/png,image/webp" required>
+      </div>
+      <label class="label" for="gal-cap">Yksi lause — mitä tämä kuva tarkoittaa sinulle?</label>
+      <textarea class="inp" id="gal-cap" rows="3" maxlength="200" required placeholder="Enintään 200 merkkiä."></textarea>
+      <p class="muted-hint" id="gal-cap-len">0 / 200</p>
+      <label class="label" for="gal-prompt" style="margin-top:1rem;">Mikä prompti käytit kuvan luomiseen? (vapaaehtoinen)</label>
+      <textarea class="inp" id="gal-prompt" rows="2" placeholder="Kuvan luontiprompti..."></textarea>
+      <button type="submit" class="btn-primary" style="margin-top:1rem;">Lisää galleriaan</button>
+    </form>
+    <p id="gal-load" class="loading-inline" style="display:none;margin-top:0.75rem;"><span class="spin"></span> Ladataan...</p>
+    <div id="gal-ok" class="alert-ok" style="display:none;">Kuvasi on lisätty galleriaan!</div>
+    <div id="gal-err" class="alert-err" style="display:none;"></div>
+
+    <h3 class="sub" style="margin-top:2.5rem;">Ryhmän galleria — näin me näimme tekoälyn</h3>
+    <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+      <button type="button" class="btn-secondary" id="gal-refresh">Päivitä galleria</button>
+      <span id="gal-gload" class="loading-inline" style="display:none;"><span class="spin"></span> Ladataan...</span>
+    </div>
+    <div id="gal-grid" class="gal-grid"></div>
+  </section>
+</div>
+
+<script>
+(function() {
+  var QUESTIONS = [
+    'Selitä omin sanoin: mikä on prompti ja miksi sillä on väliä?',
+    'Mitä työkalua käytit tällä kurssilla eniten — ja miksi juuri sitä?',
+    'Mikä tekoälyssä yllätti sinut eniten tällä viikolla?',
+    'Mitä et antaisi tekoälyn koskaan päättää puolestasi — ja miksi?',
+    "Kollega sanoo: 'tekoäly on vain hypeä.' Sinulla on 60 sekuntia. Mitä sanot?",
+    'Nimeä yksi konkreettinen asia jonka teet ensi maanantaina eri tavalla tämän kurssin jälkeen.',
+    'Mikä on suurin väärinkäsitys tekoälystä jonka olet kuullut ihmisten uskovan?',
+    'Jos voisit poistaa yhden käyttämistäsi tekoälytyökaluista — minkä ja miksi?',
+    'Miten tekoäly muuttaa sinun alaasi tai työtäsi seuraavan kolmen vuoden aikana?',
+    'Mitä haluaisit sanoa itsellesi viisi päivää sitten ennen kuin tämä kurssi alkoi?'
+  ];
+
+  function getApiBase() {
+    var o = window.location || {};
+    var pathname = o.pathname || '';
+    var base = '';
+    var idx = pathname.indexOf('/module/');
+    if (idx > 0) base = pathname.substring(0, idx);
+    return (o.origin || '') + base;
+  }
+  var API = getApiBase() + '/api/final';
+
+  function showErr(id, show, msg) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = show ? 'block' : 'none';
+    if (msg) el.textContent = msg;
+  }
+
+  function scrollToId(id) {
+    var n = document.getElementById(id);
+    if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  document.querySelectorAll('.station-pick').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      scrollToId(btn.getAttribute('data-go'));
+    });
+  });
+
+  // --- Station 1 ---
+  var k1Index = 0;
+  var k1Answers = [];
+  var k1Reflection = '';
+  var startB = document.getElementById('k1-start');
+  if (startB) startB.addEventListener('click', function() {
+    document.getElementById('k1-welcome').style.display = 'none';
+    document.getElementById('k1-flow').style.display = 'block';
+    k1Index = 0;
+    k1Answers = new Array(10).fill('');
+    renderK1();
+  });
+  function renderK1() {
+    document.getElementById('k1-num').textContent = (k1Index + 1) + ' / 10';
+    document.getElementById('k1-q').textContent = QUESTIONS[k1Index];
+    document.getElementById('k1-answer').value = k1Answers[k1Index] || '';
+  }
+  document.getElementById('k1-answer').addEventListener('input', function() {
+    k1Answers[k1Index] = this.value;
+  });
+  var nextB = document.getElementById('k1-next');
+  nextB.addEventListener('click', function() {
+    k1Answers[k1Index] = document.getElementById('k1-answer').value;
+    if (k1Index < 9) {
+      k1Index++;
+      renderK1();
+    } else {
+      document.getElementById('k1-flow').style.display = 'none';
+      document.getElementById('k1-analyze-block').style.display = 'block';
+    }
+  });
+  document.getElementById('k1-analyze').addEventListener('click', function() {
+    showErr('k1-err', false);
+    var btn = this;
+    document.getElementById('k1-load').style.display = 'inline-flex';
+    btn.disabled = true;
+    fetch(API + '/kuulustelu-analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ questions: QUESTIONS, answers: k1Answers })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        document.getElementById('k1-load').style.display = 'none';
+        btn.disabled = false;
+        if (!x.ok || !x.d || !x.d.text) {
+          showErr('k1-err', true, 'Jokin meni pieleen — yritä uudelleen');
+          return;
+        }
+        k1Reflection = x.d.text;
+        document.getElementById('k1-analyze-block').style.display = 'none';
+        document.getElementById('k1-result-wrap').style.display = 'block';
+        document.getElementById('k1-reflection').textContent = k1Reflection;
+      }).catch(function() {
+        document.getElementById('k1-load').style.display = 'none';
+        btn.disabled = false;
+        showErr('k1-err', true, 'Jokin meni pieleen — yritä uudelleen');
+      });
+  });
+  document.getElementById('k1-save').addEventListener('click', function() {
+    if (!k1Reflection) return;
+    showErr('k1-err', false);
+    var pairs = QUESTIONS.map(function(q, i) {
+      return { question: q, answer: k1Answers[i] || '' };
+    });
+    var btn = this;
+    document.getElementById('k1-sload').style.display = 'inline-flex';
+    btn.disabled = true;
+    fetch(API + '/reflection-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ reflection_text: k1Reflection, answers_json: pairs })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        document.getElementById('k1-sload').style.display = 'none';
+        btn.disabled = false;
+        if (!x.ok) {
+          showErr('k1-err', true, 'Jokin meni pieleen — yritä uudelleen');
+          return;
+        }
+        document.getElementById('k1-saved').style.display = 'block';
+      }).catch(function() {
+        document.getElementById('k1-sload').style.display = 'none';
+        btn.disabled = false;
+        showErr('k1-err', true, 'Jokin meni pieleen — yritä uudelleen');
+      });
+  });
+
+  // --- Station 2 tabs ---
+  var tabs = document.querySelectorAll('.tab-btn');
+  tabs.forEach(function(t) {
+    t.addEventListener('click', function() {
+      var id = t.getAttribute('data-tab');
+      tabs.forEach(function(x) { x.classList.remove('active'); x.setAttribute('aria-selected', 'false'); });
+      t.classList.add('active');
+      t.setAttribute('aria-selected', 'true');
+      document.querySelectorAll('.pane-tab').forEach(function(p) {
+        p.classList.toggle('active', p.id === id);
+      });
+    });
+  });
+  var genPrompt = '';
+  document.querySelectorAll('[data-demo]').forEach(function(b) {
+    b.addEventListener('click', function() {
+      var type = b.getAttribute('data-demo');
+      var ta = { memo: 'demo-memo', research: 'demo-research', email: 'demo-email' }[type];
+      var text = document.getElementById(ta) && document.getElementById(ta).value;
+      if (!text || !String(text).trim()) {
+        showErr('demo-err', true, 'Liitä ensin teksti.');
+        return;
+      }
+      showErr('demo-err', false);
+      document.getElementById('demo-load').style.display = 'flex';
+      b.disabled = true;
+      fetch(API + '/automation-demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ type: type, text: text })
+      }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+        .then(function(x) {
+          document.getElementById('demo-load').style.display = 'none';
+          b.disabled = false;
+          if (!x.ok || !x.d || !x.d.text) {
+            showErr('demo-err', true, 'Jokin meni pieleen — yritä uudelleen');
+            return;
+          }
+          document.getElementById('demo-out-wrap').style.display = 'block';
+          document.getElementById('demo-out').textContent = x.d.text;
+        }).catch(function() {
+          document.getElementById('demo-load').style.display = 'none';
+          b.disabled = false;
+          showErr('demo-err', true, 'Jokin meni pieleen — yritä uudelleen');
+        });
+    });
+  });
+  var buildBtn = document.getElementById('b-build');
+  buildBtn.addEventListener('click', function() {
+    var f1 = document.getElementById('b1').value.trim();
+    var f2 = document.getElementById('b2').value.trim();
+    var f3 = document.getElementById('b3').value.trim();
+    if (!f1 || !f2 || !f3) {
+      showErr('b-err', true, 'Täytä kaikki kentät.');
+      return;
+    }
+    showErr('b-err', false);
+    document.getElementById('b-load').style.display = 'flex';
+    buildBtn.disabled = true;
+    fetch(API + '/automation-build', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ field1: f1, field2: f2, field3: f3 })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        document.getElementById('b-load').style.display = 'none';
+        buildBtn.disabled = false;
+        if (!x.ok || !x.d || !x.d.text) {
+          showErr('b-err', true, 'Jokin meni pieleen — yritä uudelleen');
+          return;
+        }
+        genPrompt = x.d.text;
+        document.getElementById('b-out-wrap').style.display = 'block';
+        document.getElementById('b-out').textContent = genPrompt;
+      }).catch(function() {
+        document.getElementById('b-load').style.display = 'none';
+        buildBtn.disabled = false;
+        showErr('b-err', true, 'Jokin meni pieleen — yritä uudelleen');
+      });
+  });
+  document.getElementById('b-save').addEventListener('click', function() {
+    var n = document.getElementById('b-name').value.trim();
+    if (!n || !genPrompt) {
+      showErr('b-err', true, 'Nimeä automaatio ja generoi promptti ensin.');
+      return;
+    }
+    showErr('b-err', false);
+    var btn = this;
+    btn.disabled = true;
+    fetch(API + '/automation-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ automation_name: n, generated_prompt: genPrompt })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        btn.disabled = false;
+        if (!x.ok) {
+          showErr('b-err', true, 'Jokin meni pieleen — yritä uudelleen');
+          return;
+        }
+        var el = document.getElementById('b-saved');
+        el.textContent = "✓ Automaatiosi '" + n + "' on tallennettu. Löydät sen profiilistasi.";
+        el.style.display = 'block';
+      }).catch(function() {
+        btn.disabled = false;
+        showErr('b-err', true, 'Jokin meni pieleen — yritä uudelleen');
+      });
+  });
+
+  // --- Gallery ---
+  var cap = document.getElementById('gal-cap');
+  var capLen = document.getElementById('gal-cap-len');
+  if (cap && capLen) {
+    function upd() {
+      capLen.textContent = cap.value.length + ' / 200';
+    }
+    cap.addEventListener('input', upd);
+    upd();
+  }
+  function loadGallery() {
+    var gl = document.getElementById('gal-gload');
+    gl.style.display = 'inline-flex';
+    showErr('gal-err', false);
+    fetch(API + '/gallery', { credentials: 'include' })
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        gl.style.display = 'none';
+        if (!x.ok || !x.d || !x.d.items) {
+          showErr('gal-err', true, 'Jokin meni pieleen — yritä uudelleen');
+          return;
+        }
+        var grid = document.getElementById('gal-grid');
+        grid.textContent = '';
+        x.d.items.forEach(function(it) {
+          var card = document.createElement('div');
+          card.className = 'gal-card';
+          var img = document.createElement('img');
+          var src = (it.image_path || '').indexOf('http') === 0 ? it.image_path : getApiBase() + it.image_path;
+          img.src = src;
+          img.alt = '';
+          var body = document.createElement('div');
+          body.className = 'body';
+          var capP = document.createElement('p');
+          capP.className = 'cap';
+          capP.textContent = it.caption || '';
+          var whoP = document.createElement('p');
+          whoP.className = 'who';
+          whoP.textContent = it.first_name || '';
+          body.appendChild(capP);
+          body.appendChild(whoP);
+          card.appendChild(img);
+          card.appendChild(body);
+          grid.appendChild(card);
+        });
+      }).catch(function() {
+        gl.style.display = 'none';
+        showErr('gal-err', true, 'Jokin meni pieleen — yritä uudelleen');
+      });
+  }
+  document.getElementById('gal-refresh').addEventListener('click', loadGallery);
+  document.getElementById('gal-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var fileEl = document.getElementById('gal-file');
+    if (!fileEl.files || !fileEl.files[0]) {
+      showErr('gal-err', true, 'Valitse kuva.');
+      return;
+    }
+    var fd = new FormData();
+    fd.append('image', fileEl.files[0]);
+    fd.append('caption', document.getElementById('gal-cap').value.trim());
+    var pu = document.getElementById('gal-prompt').value.trim();
+    if (pu) fd.append('image_prompt_used', pu);
+    showErr('gal-err', false);
+    document.getElementById('gal-ok').style.display = 'none';
+    document.getElementById('gal-load').style.display = 'flex';
+    fetch(API + '/gallery-upload', { method: 'POST', body: fd, credentials: 'include' })
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        document.getElementById('gal-load').style.display = 'none';
+        if (!x.ok) {
+          showErr('gal-err', true, (x.d && x.d.error) || 'Jokin meni pieleen — yritä uudelleen');
+          return;
+        }
+        document.getElementById('gal-ok').style.display = 'block';
+        document.getElementById('gal-form').reset();
+        if (capLen) capLen.textContent = '0 / 200';
+        loadGallery();
+      }).catch(function() {
+        document.getElementById('gal-load').style.display = 'none';
+        showErr('gal-err', true, 'Jokin meni pieleen — yritä uudelleen');
+      });
+  });
+  loadGallery();
+})();
+</script>
+</body>
+</html>

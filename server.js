@@ -25,6 +25,7 @@ const adminRoutes = require('./routes/admin');
 const feedbackRoutes = require('./routes/feedback');
 const setupRoutes = require('./routes/setup');
 const gdprRoutes = require('./routes/gdpr');
+const { router: finalModuleRoutes } = require('./routes/final');
 const { authenticateToken, authenticatePage } = require('./middleware/auth');
 
 const app = express();
@@ -39,6 +40,12 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(
+  '/uploads',
+  express.static(path.join(__dirname, 'public', 'uploads'), {
+    maxAge: process.env.NODE_ENV === 'production' ? '7d' : 0
+  })
+);
 
 // API Routes (before static files)
 app.use('/api/auth', authRoutes);
@@ -50,6 +57,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/setup', setupRoutes);
 app.use('/api/gdpr', gdprRoutes);
+app.use('/api/final', finalModuleRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
