@@ -1375,27 +1375,36 @@
         const rikkinainenPromptiModule = modules.find(m => m.id === 'rikkinainen-prompti') || null;
         const palauteModule = modules.find(m => m.id === 'palaute') || null;
         const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti', 'palaute']);
+
+        // Piilota lukitut moduulit opiskelijoilta kokonaan; admin näkee ne edelleen.
+        // Näin etusivu pysyy siistinä: kun moduuli avataan, poista id temporarilyLockedModuleIds-listasta.
+        const viewerIsAdmin = isAdminUser();
+        const isStudentLockedOut = (m) => !viewerIsAdmin && temporarilyLockedModuleIds.has(m.id);
+        const hideLockedForStudent = (list) => list.filter(m => !isStudentLockedOut(m));
+
         // Group Part 2 modules by day (nämä moduulit piilotetaan täältä — injektoidaan manuaalisesti Alanavaihtajan jälkeen)
-        const day1_5Modules = part2Modules
+        const day1_5Modules = hideLockedForStudent(part2Modules
           .filter(m => m.day === 'bridge' && !injectedIds.has(m.id))
-          .sort((a, b) => a.order - b.order);
-        const day2Modules = part2Modules.filter(m => m.day === 2).sort((a, b) => a.order - b.order);
-        const day3Modules = part2Modules.filter(m => m.day === 3).sort((a, b) => a.order - b.order);
-        const day4Modules = part2Modules.filter(m => m.day === 4).sort((a, b) => a.order - b.order);
+          .sort((a, b) => a.order - b.order));
+        const day2Modules = hideLockedForStudent(part2Modules.filter(m => m.day === 2).sort((a, b) => a.order - b.order));
+        const day3Modules = hideLockedForStudent(part2Modules.filter(m => m.day === 3).sort((a, b) => a.order - b.order));
+        const day4Modules = hideLockedForStudent(part2Modules.filter(m => m.day === 4).sort((a, b) => a.order - b.order));
+        const part1RenderList = hideLockedForStudent(part1ModulesList);
+        const part3RenderList = hideLockedForStudent(part3Modules);
         
         let html = '';
         
-        // Quick jump nav (shows all sections so users know to scroll)
+        // Quick jump nav — näytetään vain osiot joilla on näkyviä moduuleja tälle käyttäjälle
         const sectionIds = [
-          { id: 'section-day1', label: 'DAY 1' },
-          { id: 'section-bridge', label: 'Käytännön AI-taidot' },
-          { id: 'section-day2', label: 'DAY 2' },
-          { id: 'section-day3', label: 'DAY 3' },
-          { id: 'section-day4', label: 'DAY 4' },
-          { id: 'section-loppu', label: 'Loppumoduuli' },
-          { id: 'section-day5', label: 'DAY 5' },
-          { id: 'section-feedback', label: 'Palautte' }
-        ];
+          { id: 'section-day1', label: 'DAY 1', show: part1RenderList.length > 0 },
+          { id: 'section-bridge', label: 'Käytännön AI-taidot', show: true },
+          { id: 'section-day2', label: 'DAY 2', show: day2Modules.length > 0 },
+          { id: 'section-day3', label: 'DAY 3', show: day3Modules.length > 0 },
+          { id: 'section-day4', label: 'DAY 4', show: day4Modules.length > 0 },
+          { id: 'section-loppu', label: 'Loppumoduuli', show: !!loppumoduuliModule },
+          { id: 'section-day5', label: 'DAY 5', show: part3RenderList.length > 0 },
+          { id: 'section-feedback', label: 'Palautte', show: true }
+        ].filter(s => s.show);
         html += '<div class="section-jump-nav" style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:2rem;padding:1rem;background:var(--paper2);border-radius:12px;">';
         sectionIds.forEach(s => {
           html += `<a href="#${s.id}" class="section-jump-link" style="padding:8px 16px;border-radius:8px;font-size:0.85rem;font-weight:600;text-decoration:none;color:var(--muted);background:#fff;border:1px solid var(--border);transition:all 0.2s;">${s.label}</a>`;
@@ -1403,9 +1412,9 @@
         html += '</div>';
         
         // Render Part 1
-        if (part1ModulesList.length > 0) {
+        if (part1RenderList.length > 0) {
           html += '<div class="part-section" id="section-day1"><h2 class="part-title">DAY 1 — "Ymmärrä tekoäly"</h2><div class="modules-grid">';
-          part1ModulesList.forEach((module, index) => {
+          part1RenderList.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, true);
           });
           html += '</div></div>';
@@ -1478,11 +1487,11 @@
         }
         
         // Render Part 3: Industry-specific modules
-        if (part3Modules.length > 0) {
+        if (part3RenderList.length > 0) {
           html += '<div class="part-section" id="section-day5"><h2 class="part-title">DAY 5 — "Sovella omaan alaasi"</h2>';
           html += '<p style="max-width: 800px; margin: 0 auto 2rem; color: var(--muted); line-height: 1.6; text-align: center;">Valitse oman alasi moduuli. Näillä moduuleilla opit soveltamaan AI:ta omaan työelämääsi.</p>';
           html += '<div class="modules-grid">';
-          part3Modules.forEach((module, index) => {
+          part3RenderList.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
           });
           html += '</div></div>';
