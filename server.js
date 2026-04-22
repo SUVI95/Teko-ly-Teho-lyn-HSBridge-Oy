@@ -224,6 +224,19 @@ app.get('/admin/loppumoduuli', authenticateToken, (req, res) => {
   res.status(404).send('Ei löytynyt');
 });
 
+app.get('/admin/rikkinainen-prompti', authenticateToken, (req, res) => {
+  if (!req.user || !req.user.is_admin) {
+    return res.status(403).send('<h1>403 - Pääsy kielletty</h1>');
+  }
+  const candidates = [
+    path.join(__dirname, 'admin-rikkinainen-prompti.html'),
+    path.join(process.cwd(), 'admin-rikkinainen-prompti.html')
+  ];
+  const p = candidates.find(c => fs.existsSync(c));
+  if (p) return res.sendFile(p);
+  res.status(404).send('Ei löytynyt');
+});
+
 app.get('/final/mythology', (req, res) => {
   res.redirect(302, '/module/myytinmurtaja');
 });

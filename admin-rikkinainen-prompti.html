@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · Rikkinäinen Prompti</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#f5f3ef;color:#1a1a2e;font-family:'DM Sans',sans-serif;padding:2rem;line-height:1.6;}
+header{max-width:1280px;margin:0 auto 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+header h1{font-family:'DM Serif Display',serif;font-size:2rem;font-weight:400;}
+header .sub{font-family:'DM Mono',monospace;font-size:0.75rem;color:#6b6880;letter-spacing:0.12em;text-transform:uppercase;}
+header a{color:#c75b3a;text-decoration:none;font-size:0.9rem;font-weight:500;}
+.wrap{max-width:1280px;margin:0 auto;}
+.empty{background:#fff;border:1px solid rgba(26,26,46,0.12);border-radius:12px;padding:3rem;text-align:center;color:#6b6880;}
+.nav-links{max-width:1280px;margin:0 auto 1.25rem;display:flex;gap:.75rem;flex-wrap:wrap;}
+.nav-links a{background:#fff;border:1px solid rgba(26,26,46,0.12);color:#1a1a2e;text-decoration:none;padding:.45rem .85rem;border-radius:999px;font-size:.8rem;font-weight:500;}
+.nav-links a:hover{border-color:#c75b3a;color:#c75b3a;}
+
+.student{background:#fff;border:1px solid rgba(26,26,46,0.12);border-radius:14px;padding:1.5rem 1.75rem;margin-bottom:1.1rem;box-shadow:0 2px 20px rgba(26,26,46,0.06);}
+.head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.75rem;border-bottom:1px solid rgba(26,26,46,0.08);padding-bottom:.9rem;margin-bottom:1rem;}
+.name{font-family:'DM Serif Display',serif;font-size:1.3rem;}
+.email{font-family:'DM Mono',monospace;font-size:.75rem;color:#6b6880;}
+.chip{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .6rem;border-radius:999px;border:1px solid rgba(26,26,46,.15);background:#faf8f4;color:#6b6880;display:inline-block;margin-right:.4rem;}
+.chip.on{background:#2a7a4b;color:#fff;border-color:#2a7a4b;}
+
+.round{background:#faf8f4;border:1px solid rgba(26,26,46,0.08);border-radius:10px;padding:1rem 1.15rem;margin-bottom:.75rem;}
+.round-title{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:#c75b3a;font-weight:500;margin-bottom:.6rem;}
+.pre{font-family:'DM Mono',monospace;font-size:.82rem;background:#fff;border:1px solid rgba(26,26,46,0.06);border-radius:8px;padding:.75rem;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow:auto;}
+.time{font-family:'DM Mono',monospace;font-size:.72rem;color:#6b6880;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Rikkinäinen Prompti</h1>
+    <div class="sub">Admin-näkymä · lähetykset käyttäjäkohtaisesti</div>
+  </div>
+  <a href="/admin">← Admin-etusivulle</a>
+</header>
+<nav class="nav-links">
+  <a href="/admin/loppumoduuli">Loppumoduuli</a>
+  <a href="/admin/mythology">Myytinmurtaja</a>
+  <a href="/admin/rikkinainen-prompti">Rikkinäinen Prompti (tämä)</a>
+</nav>
+<div class="wrap" id="wrap">
+  <div class="empty">Ladataan...</div>
+</div>
+<script>
+(function(){
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function fmt(iso){ try{ var d=new Date(iso); return d.toLocaleDateString('fi-FI')+' '+d.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});}catch(_){return '';} }
+
+  fetch('/api/final/admin-rikki',{credentials:'include'})
+    .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+    .then(function(x){
+      var wrap=document.getElementById('wrap');
+      if(!x.ok){ wrap.innerHTML='<div class="empty">Virhe: '+esc((x.d&&x.d.error)||'')+'</div>'; return; }
+      var items=x.d.items||[];
+      if(!items.length){ wrap.innerHTML='<div class="empty">Ei vielä lähetyksiä.</div>'; return; }
+
+      var html='';
+      items.forEach(function(u){
+        var subs=u.submissions||[];
+        var hasR1 = subs.some(function(s){ return s.round===1; });
+        var hasR2 = subs.some(function(s){ return s.round===2; });
+        var roundsHtml = subs.map(function(s){
+          return '<div class="round">'
+            + '<div class="round-title">Kierros '+esc(s.round)+' · <span class="time">'+esc(fmt(s.created_at))+'</span></div>'
+            + '<pre class="pre">'+esc(JSON.stringify(s.payload||{}, null, 2))+'</pre>'
+            + '</div>';
+        }).join('');
+        html += '<div class="student">'
+          + '<div class="head">'
+          +   '<div><div class="name">'+esc(u.user_label||'')+'</div><div class="email">'+esc(u.user_email||'')+'</div></div>'
+          +   '<div>'
+          +     '<span class="chip '+(hasR1?'on':'')+'">Kierros 1 '+(hasR1?'✓':'—')+'</span>'
+          +     '<span class="chip '+(hasR2?'on':'')+'">Kierros 2 '+(hasR2?'✓':'—')+'</span>'
+          +   '</div>'
+          + '</div>'
+          + roundsHtml
+          + '</div>';
+      });
+      wrap.innerHTML=html;
+    })
+    .catch(function(){
+      document.getElementById('wrap').innerHTML='<div class="empty">Jokin meni pieleen — yritä uudelleen</div>';
+    });
+})();
+</script>
+</body>
+</html>

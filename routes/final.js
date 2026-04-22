@@ -60,6 +60,10 @@ async function ensureFinalTables() {
   await pool.query(
     'CREATE INDEX IF NOT EXISTS idx_final_module_gallery_created ON final_module_gallery(created_at DESC)'
   );
+  // Vercel-yhteensopivuus: kuvat BYTEA:na tietokantaan (public/uploads on read-only)
+  await pool.query('ALTER TABLE final_module_gallery ADD COLUMN IF NOT EXISTS image_bytes BYTEA');
+  await pool.query('ALTER TABLE final_module_gallery ADD COLUMN IF NOT EXISTS image_mime VARCHAR(50)');
+  await pool.query('ALTER TABLE final_module_gallery ALTER COLUMN image_path DROP NOT NULL');
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS mythology_submissions (
@@ -127,30 +131,9 @@ async function ensureFinalTables() {
   );
 }
 
-const uploadDir = path.join(__dirname, '..', 'public', 'uploads', 'final-gallery');
-function ensureUploadDir() {
-  try {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  } catch (e) {
-    console.error('final-gallery upload dir:', e);
-  }
-}
-ensureUploadDir();
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    ensureUploadDir();
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const extMap = { 'image/jpeg': '.jpg', 'image/jpg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
-    const ext = extMap[file.mimetype] || path.extname(file.originalname || '') || '.jpg';
-    cb(null, `${uuidv4()}${ext}`);
-  }
-});
-
+// Gallery-kuvat muistin kautta (Vercel-yhteensopivuus; bytes talteen tietokantaan)
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ok = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.mimetype);
@@ -392,42 +375,70 @@ router.post(
   async (req, res) => {
     try {
       await ensureFinalTables();
-      if (!req.file) {
+      if (!req.file || !req.file.buffer) {
         return res.status(400).json({ error: 'Kuva vaaditaan' });
       }
       const caption = (req.body.caption || '').trim();
       if (!caption) {
-        try {
-          fs.unlinkSync(req.file.path);
-        } catch (e) {}
         return res.status(400).json({ error: 'Kuvateksti vaaditaan' });
       }
       if (caption.length > 200) {
-        try {
-          fs.unlinkSync(req.file.path);
-        } catch (e) {}
         return res.status(400).json({ error: 'Kuvateksti on liian pitkä (max 200 merkkiä)' });
       }
-      const relPath = '/uploads/final-gallery/' + path.basename(req.file.path);
       const imagePrompt = (req.body.image_prompt_used || '').trim() || null;
+      const imageId = uuidv4();
+      const apiPath = `/api/final/gallery-image/${imageId}`;
       await pool.query(
-        `INSERT INTO final_module_gallery (user_id, image_path, caption, image_prompt_used) VALUES ($1, $2, $3, $4)`,
-        [req.user.id, relPath, caption, imagePrompt]
+        `INSERT INTO final_module_gallery (id, user_id, image_path, caption, image_prompt_used, image_bytes, image_mime)
+         VALUES ($1::uuid, $2, $3, $4, $5, $6, $7)`,
+        [imageId, req.user.id, apiPath, caption, imagePrompt, req.file.buffer, req.file.mimetype || 'application/octet-stream']
       );
-      res.json({ success: true, image_path: relPath });
+      res.json({ success: true, image_path: apiPath, id: imageId });
     } catch (e) {
       console.error('gallery-upload:', e);
-      if (req.file && req.file.path) {
-        try {
-          fs.unlinkSync(req.file.path);
-        } catch (e2) {}
-      }
       res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
     }
   }
 );
 
-router.get('/gallery', async (req, res) => {
+// Lataa kuva tietokannasta — omistaja tai admin. Fallback: levyllä oleva vanha kuva.
+router.get('/gallery-image/:id', authenticateToken, async (req, res) => {
+  const id = (req.params.id || '').trim();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return res.status(400).send('Virheellinen tunniste');
+  }
+  try {
+    await ensureFinalTables();
+    const r = await pool.query(
+      `SELECT user_id, image_bytes, image_mime, image_path
+       FROM final_module_gallery WHERE id = $1::uuid`,
+      [id]
+    );
+    if (!r.rows.length) return res.status(404).send('Ei löydy');
+    const row = r.rows[0];
+    if (row.user_id !== req.user.id && !req.user.is_admin) {
+      return res.status(403).send('Pääsy kielletty');
+    }
+    if (row.image_bytes) {
+      const buf = Buffer.from(row.image_bytes);
+      res.setHeader('Content-Type', row.image_mime || 'image/jpeg');
+      res.setHeader('Cache-Control', 'private, max-age=300');
+      return res.send(buf);
+    }
+    // Vanha tallennus levyllä
+    if (row.image_path && String(row.image_path).startsWith('/uploads/')) {
+      const abs = path.join(__dirname, '..', 'public', String(row.image_path).replace(/^\//, ''));
+      if (fs.existsSync(abs)) return res.sendFile(abs);
+    }
+    return res.status(404).send('Kuva ei ole saatavilla');
+  } catch (e) {
+    console.error('gallery-image GET:', e);
+    return res.status(500).send('Virhe');
+  }
+});
+
+// VAIN kirjautuneen käyttäjän omat kuvat
+router.get('/gallery', authenticateToken, async (req, res) => {
   try {
     await ensureFinalTables();
     const r = await pool.query(
@@ -438,9 +449,18 @@ router.get('/gallery', async (req, res) => {
         END AS first_name
        FROM final_module_gallery g
        JOIN users u ON u.id = g.user_id
-       ORDER BY g.created_at DESC`
+       WHERE g.user_id = $1
+       ORDER BY g.created_at DESC`,
+      [req.user.id]
     );
-    res.json({ items: r.rows });
+    // Varmista että vanhat rivit ohjataan uuteen API-pathiin (näin kuvat näkyvät Vercelissä)
+    const items = r.rows.map(row => ({
+      ...row,
+      image_path: row.image_path && row.image_path.startsWith('/uploads/')
+        ? `/api/final/gallery-image/${row.id}`
+        : row.image_path
+    }));
+    res.json({ items });
   } catch (e) {
     console.error('gallery list:', e);
     res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
@@ -505,16 +525,32 @@ function parseStrengthScore(evaluationText) {
  */
 async function extractPdfTextFromBuffer(buf) {
   if (!buf || !buf.length) return '';
-  let parseFn;
+  // pdf-parse v2.x exportoi luokan PDFParse; v1.x oli funktio. Tuetaan molempia.
+  let mod;
   try {
-    parseFn = require('pdf-parse');
+    mod = require('pdf-parse');
   } catch (loadErr) {
     console.error('pdf-parse module load failed:', loadErr);
     return '';
   }
   try {
-    const data = await parseFn(buf);
-    return (data && data.text ? data.text : '').trim();
+    // v2.x: uusi API
+    if (mod && typeof mod.PDFParse === 'function') {
+      const parser = new mod.PDFParse({ data: buf });
+      try {
+        const r = await parser.getText();
+        return (r && r.text ? String(r.text) : '').trim();
+      } finally {
+        try { await parser.destroy(); } catch (_) {}
+      }
+    }
+    // v1.x: funktio
+    if (typeof mod === 'function') {
+      const data = await mod(buf);
+      return (data && data.text ? String(data.text) : '').trim();
+    }
+    console.error('pdf-parse: unknown module shape', typeof mod);
+    return '';
   } catch (e) {
     console.error('pdf-parse error:', e);
     return '';
@@ -672,7 +708,9 @@ router.get('/admin-mythology', authenticateToken, async (req, res) => {
     const r = await pool.query(
       `SELECT m.id, m.myth_selected, m.pdf_path, m.pdf_original_name, m.questions_json,
               m.ai_insight, m.ai_evaluation, m.strength_score, m.final_argument, m.created_at,
-              COALESCE(u.name, u.email) AS user_label
+              u.id AS user_id,
+              COALESCE(u.name, u.email) AS user_label,
+              u.email AS user_email
        FROM mythology_submissions m
        JOIN users u ON u.id = m.user_id
        ORDER BY m.created_at DESC`
@@ -1043,29 +1081,112 @@ router.get('/capstone-pdf/:id/:slot', authenticateToken, async (req, res) => {
   }
 });
 
+// Koontinäkymä admin-paneeliin: jokaisesta käyttäjästä reflektio + kapstonen kartat +
+// podcast-vastaukset + galleria — kaikki paikoin joissa käyttäjä on tuottanut jotain.
 router.get('/admin-loppumoduuli', authenticateToken, async (req, res) => {
   if (!req.user || !req.user.is_admin) {
     return res.status(403).json({ error: 'Admin-oikeus vaaditaan' });
   }
   try {
     await ensureFinalTables();
+    const [usersR, reflR, capR, galR] = await Promise.all([
+      pool.query(
+        `SELECT DISTINCT u.id, COALESCE(u.name, u.email) AS user_label, u.email AS user_email
+         FROM users u
+         WHERE u.id IN (
+           SELECT user_id FROM final_module_reflections
+           UNION SELECT user_id FROM final_module_capstone
+           UNION SELECT user_id FROM final_module_gallery
+         )
+         ORDER BY u.id`
+      ),
+      pool.query(
+        `SELECT user_id, reflection_text, answers_json, created_at
+         FROM final_module_reflections`
+      ),
+      pool.query(
+        `SELECT id, user_id,
+                map1_name, (map1_bytes IS NOT NULL) AS has_map1,
+                map2_name, (map2_bytes IS NOT NULL) AS has_map2,
+                map3_name, (map3_bytes IS NOT NULL) AS has_map3,
+                podcast_right, podcast_missed, podcast_insight,
+                created_at, updated_at
+         FROM final_module_capstone`
+      ),
+      pool.query(
+        `SELECT id, user_id, image_path, caption, image_prompt_used,
+                (image_bytes IS NOT NULL) AS has_bytes, image_mime, created_at
+         FROM final_module_gallery
+         ORDER BY created_at DESC`
+      )
+    ]);
+
+    const reflByUser = new Map();
+    reflR.rows.forEach(r => reflByUser.set(r.user_id, r));
+    const capByUser = new Map();
+    capR.rows.forEach(r => capByUser.set(r.user_id, r));
+    const galByUser = new Map();
+    galR.rows.forEach(r => {
+      if (!galByUser.has(r.user_id)) galByUser.set(r.user_id, []);
+      galByUser.get(r.user_id).push({
+        id: r.id,
+        caption: r.caption,
+        image_prompt_used: r.image_prompt_used,
+        created_at: r.created_at,
+        image_url: r.has_bytes ? `/api/final/gallery-image/${r.id}`
+                   : (r.image_path && r.image_path.startsWith('/api/') ? r.image_path : (r.image_path || null))
+      });
+    });
+
+    const items = usersR.rows.map(u => ({
+      user_id: u.id,
+      user_label: u.user_label,
+      user_email: u.user_email,
+      reflection: reflByUser.get(u.id) || null,
+      capstone: capByUser.get(u.id) || null,
+      gallery: galByUser.get(u.id) || []
+    }));
+    res.json({ items });
+  } catch (e) {
+    console.error('admin-loppumoduuli:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+// Admin — Rikkinäinen Prompti: kaikki lähetykset ryhmiteltynä käyttäjäkohtaisesti
+router.get('/admin-rikki', authenticateToken, async (req, res) => {
+  if (!req.user || !req.user.is_admin) {
+    return res.status(403).json({ error: 'Admin-oikeus vaaditaan' });
+  }
+  try {
+    await ensureFinalTables();
     const r = await pool.query(
-      `SELECT c.id,
-              c.map1_name, (c.map1_bytes IS NOT NULL) AS has_map1,
-              c.map2_name, (c.map2_bytes IS NOT NULL) AS has_map2,
-              c.map3_name, (c.map3_bytes IS NOT NULL) AS has_map3,
-              c.podcast_right, c.podcast_missed, c.podcast_insight,
-              c.created_at, c.updated_at,
+      `SELECT b.id, b.round, b.payload, b.created_at,
               u.id AS user_id,
               COALESCE(u.name, u.email) AS user_label,
               u.email AS user_email
-       FROM final_module_capstone c
-       JOIN users u ON u.id = c.user_id
-       ORDER BY c.updated_at DESC`
+       FROM broken_prompt_submissions b
+       JOIN users u ON u.id = b.user_id
+       ORDER BY b.created_at DESC`
     );
-    res.json({ items: r.rows });
+    // Ryhmittele käyttäjäkohtaisesti
+    const byUser = new Map();
+    r.rows.forEach(row => {
+      if (!byUser.has(row.user_id)) {
+        byUser.set(row.user_id, {
+          user_id: row.user_id,
+          user_label: row.user_label,
+          user_email: row.user_email,
+          submissions: []
+        });
+      }
+      byUser.get(row.user_id).submissions.push({
+        id: row.id, round: row.round, payload: row.payload, created_at: row.created_at
+      });
+    });
+    res.json({ items: Array.from(byUser.values()) });
   } catch (e) {
-    console.error('admin-loppumoduuli:', e);
+    console.error('admin-rikki:', e);
     res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
   }
 });
