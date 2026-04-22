@@ -1255,8 +1255,8 @@
             title: 'Loppumoduuli — Sinä ja tekoäly',
             description: 'Kurssin huipennus. Kolme osiota. Yksi valmis tuotos.',
             icon: 'trophy',
-            order: 1,
-            part: 4,
+            part: 2,
+            day: 'bridge',
             cardBadge: 'Huipennus',
             statusLine: 'Valmis käyttöön'
           }
@@ -1339,10 +1339,12 @@
         const part1ModulesList = modules.filter(m => m.part === 1);
         const part2Modules = modules.filter(m => m.part === 2);
         const part3Modules = modules.filter(m => m.part === 3);
-        const part4Modules = modules.filter(m => m.part === 4).sort((a, b) => a.order - b.order);
         
-        // Group Part 2 modules by day
-        const day1_5Modules = part2Modules.filter(m => m.day === 'bridge').sort((a, b) => a.order - b.order);
+        const loppumoduuliModule = modules.find(m => m.id === 'loppumoduuli-sina-ja-tekoaly') || null;
+        // Group Part 2 modules by day (Loppumoduuli piilotetaan täältä — lisätään manuaalisesti Alanavaihtajan jälkeen)
+        const day1_5Modules = part2Modules
+          .filter(m => m.day === 'bridge' && m.id !== 'loppumoduuli-sina-ja-tekoaly')
+          .sort((a, b) => a.order - b.order);
         const day2Modules = part2Modules.filter(m => m.day === 2).sort((a, b) => a.order - b.order);
         const day3Modules = part2Modules.filter(m => m.day === 3).sort((a, b) => a.order - b.order);
         const day4Modules = part2Modules.filter(m => m.day === 4).sort((a, b) => a.order - b.order);
@@ -1356,8 +1358,8 @@
           { id: 'section-day2', label: 'DAY 2' },
           { id: 'section-day3', label: 'DAY 3' },
           { id: 'section-day4', label: 'DAY 4' },
-          { id: 'section-day5', label: 'DAY 5' },
           { id: 'section-loppu', label: 'Loppumoduuli' },
+          { id: 'section-day5', label: 'DAY 5' },
           { id: 'section-feedback', label: 'Palautte' }
         ];
         html += '<div class="section-jump-nav" style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:2rem;padding:1rem;background:var(--paper2);border-radius:12px;">';
@@ -1375,12 +1377,27 @@
           html += '</div></div>';
         }
         
-        // Render bridge section — between DAY 1 and DAY 2
+        // Render bridge section — between DAY 1 and DAY 2 (Loppumoduuli heti Alanavaihtajan kartta -kortin jälkeen)
         if (day1_5Modules.length > 0) {
           html += '<div class="part-section" id="section-bridge"><h2 class="part-title">Käytännön AI-taidot</h2><div class="modules-grid">';
+          let loppumoduuliPlaced = false;
           day1_5Modules.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
+            if (loppumoduuliModule && module.id === 'moduuli-alanavaihtajan-kartta') {
+              html += '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
+              html += renderModuleCard(loppumoduuliModule, index, modules, summary, completedModules, module4Completed, allPart1Completed);
+              loppumoduuliPlaced = true;
+            }
           });
+          if (loppumoduuliModule && !loppumoduuliPlaced) {
+            html += '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
+            html += renderModuleCard(loppumoduuliModule, 0, modules, summary, completedModules, module4Completed, allPart1Completed);
+          }
+          html += '</div></div>';
+        } else if (loppumoduuliModule) {
+          html += '<div class="part-section" id="section-bridge"><h2 class="part-title">Käytännön AI-taidot</h2><div class="modules-grid">';
+          html += '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
+          html += renderModuleCard(loppumoduuliModule, 0, modules, summary, completedModules, module4Completed, allPart1Completed);
           html += '</div></div>';
         }
         
@@ -1417,16 +1434,6 @@
           html += '<p style="max-width: 800px; margin: 0 auto 2rem; color: var(--muted); line-height: 1.6; text-align: center;">Valitse oman alasi moduuli. Näillä moduuleilla opit soveltamaan AI:ta omaan työelämääsi.</p>';
           html += '<div class="modules-grid">';
           part3Modules.forEach((module, index) => {
-            html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
-          });
-          html += '</div></div>';
-        }
-        
-        if (part4Modules.length > 0) {
-          html += '<div class="part-section" id="section-loppu"><h2 class="part-title">Loppumoduuli</h2>';
-          html += '<p style="max-width: 800px; margin: 0 auto 2rem; color: var(--muted); line-height: 1.6; text-align: center;">Kurssin huipennus: kuulustelu, automaatio ja kuvagalleria — kaikki yhdessä moduulissa.</p>';
-          html += '<div class="modules-grid">';
-          part4Modules.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
           });
           html += '</div></div>';
