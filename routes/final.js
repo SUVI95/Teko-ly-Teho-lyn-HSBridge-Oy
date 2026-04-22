@@ -104,6 +104,25 @@ async function ensureFinalTables() {
   await pool.query('CREATE INDEX IF NOT EXISTS idx_broken_prompt_user ON broken_prompt_submissions(user_id)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_broken_prompt_round ON broken_prompt_submissions(round)');
 
+  // Kurssipalaute — 5 tähtikysymystä + vapaa palaute
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS course_feedback (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      q1_rating INTEGER,
+      q2_rating INTEGER,
+      q3_rating INTEGER,
+      q4_rating INTEGER,
+      q5_rating INTEGER,
+      comment TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT course_feedback_user_unique UNIQUE(user_id)
+    )
+  `);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_course_feedback_user ON course_feedback(user_id)');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_course_feedback_created ON course_feedback(created_at DESC)');
+
   // Loppumoduuli Osio 02 — Kolme karttaa Napkin.ai:lla + NotebookLM podcast
   await pool.query(`
     CREATE TABLE IF NOT EXISTS final_module_capstone (
@@ -1187,6 +1206,96 @@ router.get('/admin-rikki', authenticateToken, async (req, res) => {
     res.json({ items: Array.from(byUser.values()) });
   } catch (e) {
     console.error('admin-rikki:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+/* ===== Kurssipalaute — 5 tähtikysymystä ===== */
+
+function clampRating(v) {
+  const n = parseInt(v, 10);
+  if (!Number.isFinite(n)) return null;
+  if (n < 1) return 1;
+  if (n > 5) return 5;
+  return n;
+}
+
+router.get('/my-feedback', authenticateToken, async (req, res) => {
+  try {
+    await ensureFinalTables();
+    const r = await pool.query(
+      `SELECT q1_rating, q2_rating, q3_rating, q4_rating, q5_rating, comment, updated_at, created_at
+       FROM course_feedback WHERE user_id = $1`,
+      [req.user.id]
+    );
+    res.json({ feedback: r.rows[0] || null });
+  } catch (e) {
+    console.error('my-feedback:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+router.post('/feedback-save', authenticateToken, async (req, res) => {
+  try {
+    await ensureFinalTables();
+    const ratings = [
+      clampRating(req.body.q1_rating),
+      clampRating(req.body.q2_rating),
+      clampRating(req.body.q3_rating),
+      clampRating(req.body.q4_rating),
+      clampRating(req.body.q5_rating)
+    ];
+    if (ratings.some(r => r == null)) {
+      return res.status(400).json({ error: 'Vastaa kaikkiin 5 kysymykseen tähdillä ennen lähetystä.' });
+    }
+    const comment = (req.body.comment || '').toString().trim().slice(0, 2000) || null;
+    await pool.query(
+      `INSERT INTO course_feedback (user_id, q1_rating, q2_rating, q3_rating, q4_rating, q5_rating, comment, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+       ON CONFLICT (user_id) DO UPDATE SET
+         q1_rating = EXCLUDED.q1_rating,
+         q2_rating = EXCLUDED.q2_rating,
+         q3_rating = EXCLUDED.q3_rating,
+         q4_rating = EXCLUDED.q4_rating,
+         q5_rating = EXCLUDED.q5_rating,
+         comment = EXCLUDED.comment,
+         updated_at = CURRENT_TIMESTAMP`,
+      [req.user.id, ratings[0], ratings[1], ratings[2], ratings[3], ratings[4], comment]
+    );
+    res.json({ success: true });
+  } catch (e) {
+    console.error('feedback-save:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+router.get('/admin-feedback', authenticateToken, async (req, res) => {
+  if (!req.user || !req.user.is_admin) {
+    return res.status(403).json({ error: 'Admin-oikeus vaaditaan' });
+  }
+  try {
+    await ensureFinalTables();
+    const items = await pool.query(
+      `SELECT f.id, f.q1_rating, f.q2_rating, f.q3_rating, f.q4_rating, f.q5_rating,
+              f.comment, f.created_at, f.updated_at,
+              u.id AS user_id, COALESCE(u.name, u.email) AS user_label, u.email AS user_email
+       FROM course_feedback f
+       JOIN users u ON u.id = f.user_id
+       ORDER BY f.updated_at DESC`
+    );
+    const agg = await pool.query(
+      `SELECT
+         COUNT(*)::int AS n,
+         ROUND(AVG(q1_rating)::numeric, 2) AS avg_q1,
+         ROUND(AVG(q2_rating)::numeric, 2) AS avg_q2,
+         ROUND(AVG(q3_rating)::numeric, 2) AS avg_q3,
+         ROUND(AVG(q4_rating)::numeric, 2) AS avg_q4,
+         ROUND(AVG(q5_rating)::numeric, 2) AS avg_q5
+       FROM course_feedback`
+    );
+    res.json({ items: items.rows, stats: agg.rows[0] || { n: 0 } });
+  } catch (e) {
+    console.error('admin-feedback:', e);
     res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
   }
 });

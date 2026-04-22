@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · Kurssipalaute</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#f5f3ef;color:#1a1a2e;font-family:'DM Sans',sans-serif;padding:2rem;line-height:1.6;}
+header{max-width:1280px;margin:0 auto 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+header h1{font-family:'DM Serif Display',serif;font-size:2rem;font-weight:400;}
+header .sub{font-family:'DM Mono',monospace;font-size:0.75rem;color:#6b6880;letter-spacing:0.12em;text-transform:uppercase;}
+header a{color:#c75b3a;text-decoration:none;font-size:0.9rem;font-weight:500;}
+header a:hover{text-decoration:underline;}
+.wrap{max-width:1280px;margin:0 auto;}
+.empty{background:#fff;border:1px solid rgba(26,26,46,0.12);border-radius:12px;padding:3rem;text-align:center;color:#6b6880;box-shadow:0 2px 20px rgba(26,26,46,0.06);}
+.nav-links{max-width:1280px;margin:0 auto 1.25rem;display:flex;gap:.75rem;flex-wrap:wrap;}
+.nav-links a{background:#fff;border:1px solid rgba(26,26,46,0.12);color:#1a1a2e;text-decoration:none;padding:.45rem .85rem;border-radius:999px;font-size:.8rem;font-weight:500;}
+.nav-links a:hover{border-color:#c75b3a;color:#c75b3a;}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stat-card{background:linear-gradient(135deg,#fff 0%,#faf8f4 100%);border:1px solid rgba(26,26,46,0.12);border-radius:14px;padding:1.25rem 1.25rem 1.15rem;box-shadow:0 2px 20px rgba(26,26,46,0.05);position:relative;overflow:hidden;}
+.stat-card .lbl{font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:#6b6880;margin-bottom:0.3rem;display:flex;align-items:center;gap:.4rem;}
+.stat-card .val{font-family:'DM Serif Display',serif;font-size:2rem;font-weight:400;color:#1a1a2e;line-height:1.1;}
+.stat-card .stars{color:#f4b740;font-size:1.1rem;letter-spacing:2px;margin-top:.3rem;}
+.stat-card .bar{position:relative;height:6px;background:rgba(26,26,46,0.08);border-radius:999px;overflow:hidden;margin-top:.5rem;}
+.stat-card .bar > i{display:block;height:100%;background:linear-gradient(90deg,#c75b3a,#f4b740);border-radius:999px;}
+.summary{background:#fff;border:1px solid rgba(26,26,46,0.12);border-radius:14px;padding:1rem 1.4rem;margin-bottom:1.5rem;display:flex;gap:2rem;flex-wrap:wrap;}
+.summary b{font-family:'DM Serif Display',serif;font-size:1.5rem;color:#1a1a2e;font-weight:400;}
+.summary .item{display:flex;align-items:baseline;gap:.5rem;}
+.summary .lbl{font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:#6b6880;}
+
+.student{background:#fff;border:1px solid rgba(26,26,46,0.12);border-radius:14px;padding:1.4rem 1.6rem;margin-bottom:1rem;box-shadow:0 2px 20px rgba(26,26,46,0.06);}
+.sh{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.75rem;border-bottom:1px solid rgba(26,26,46,0.08);padding-bottom:.85rem;margin-bottom:1rem;}
+.who .name{font-family:'DM Serif Display',serif;font-size:1.2rem;color:#1a1a2e;}
+.who .email{font-family:'DM Mono',monospace;font-size:.74rem;color:#6b6880;}
+.sh .time{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:0.08em;color:#6b6880;text-transform:uppercase;}
+
+.ratings{display:grid;grid-template-columns:repeat(5, 1fr);gap:.75rem;margin-bottom:.85rem;}
+@media(max-width:700px){.ratings{grid-template-columns:repeat(2, 1fr);}}
+.rating{background:#faf8f4;border:1px solid rgba(26,26,46,0.08);border-radius:10px;padding:.7rem .8rem;display:flex;flex-direction:column;gap:.2rem;}
+.rating .q-lbl{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:0.08em;text-transform:uppercase;color:#6b6880;display:flex;align-items:center;gap:.3rem;}
+.rating .stars{color:#f4b740;font-size:1.05rem;letter-spacing:1.5px;}
+.rating .stars .off{color:#d9d3c5;}
+.rating .val{font-family:'DM Mono',monospace;font-size:.72rem;color:#1a1a2e;font-weight:500;}
+.comment{background:#fff7ed;border:1px solid rgba(199,91,58,0.2);border-radius:10px;padding:.8rem 1rem;font-size:.9rem;white-space:pre-wrap;line-height:1.6;position:relative;}
+.comment::before{content:'💭';position:absolute;top:.35rem;right:.6rem;opacity:0.3;font-size:1.1rem;}
+.comment.empty{background:transparent;border:1px dashed rgba(26,26,46,0.1);color:#a0a0b0;font-style:italic;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Kurssipalaute</h1>
+    <div class="sub">Admin-näkymä · keskiarvot + yksittäiset palautteet</div>
+  </div>
+  <a href="/admin">← Admin-etusivulle</a>
+</header>
+<nav class="nav-links">
+  <a href="/admin/loppumoduuli">Loppumoduuli</a>
+  <a href="/admin/mythology">Myytinmurtaja</a>
+  <a href="/admin/rikkinainen-prompti">Rikkinäinen Prompti</a>
+  <a href="/admin/palaute">Palaute (tämä)</a>
+</nav>
+<div class="wrap" id="wrap">
+  <div class="empty">Ladataan…</div>
+</div>
+<script>
+(function(){
+  var QS = [
+    { key:'q1_rating', emoji:'💡', lbl:'Opitko uutta' },
+    { key:'q2_rating', emoji:'🚀', lbl:'Käytätkö' },
+    { key:'q3_rating', emoji:'🤖', lbl:'Muutti näkemystä' },
+    { key:'q4_rating', emoji:'❤️', lbl:'Suosittelu' },
+    { key:'q5_rating', emoji:'🌟', lbl:'Kokonaisuus' }
+  ];
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function fmt(iso){ try{ var d=new Date(iso); return d.toLocaleDateString('fi-FI')+' '+d.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});}catch(_){return '';} }
+  function starsHtml(v){
+    v = parseInt(v, 10) || 0;
+    var s = '';
+    for (var i=1;i<=5;i++){ s += (i<=v ? '★' : '<span class="off">★</span>'); }
+    return s;
+  }
+
+  fetch('/api/final/admin-feedback',{credentials:'include'})
+    .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+    .then(function(x){
+      var wrap=document.getElementById('wrap');
+      if(!x.ok){ wrap.innerHTML='<div class="empty">Virhe: '+esc((x.d&&x.d.error)||'')+'</div>'; return; }
+      var items=x.d.items||[];
+      var stats=x.d.stats||{};
+      var html = '';
+
+      if (stats.n > 0) {
+        html += '<div class="summary">'
+          + '<div class="item"><span class="lbl">Palautteita yhteensä</span> <b>' + stats.n + '</b></div>'
+          + '</div>';
+        html += '<div class="stats-grid">';
+        QS.forEach(function(q){
+          var avg = stats['avg_'+q.key.replace('_rating','')];
+          var avgNum = avg == null ? 0 : parseFloat(avg);
+          html += '<div class="stat-card">'
+            + '<div class="lbl">'+q.emoji+' '+esc(q.lbl)+'</div>'
+            + '<div class="val">'+(avg == null ? '—' : Number(avgNum).toFixed(2))+' <span style="font-size:0.9rem;color:#6b6880;">/ 5</span></div>'
+            + '<div class="stars">'+starsHtml(Math.round(avgNum))+'</div>'
+            + '<div class="bar"><i style="width:'+(avgNum/5*100).toFixed(1)+'%"></i></div>'
+            + '</div>';
+        });
+        html += '</div>';
+      }
+
+      if (!items.length) {
+        html += '<div class="empty">Ei vielä palautteita.</div>';
+        wrap.innerHTML = html;
+        return;
+      }
+
+      items.forEach(function(it){
+        var ratingsHtml = QS.map(function(q){
+          var v = it[q.key];
+          return '<div class="rating">'
+            + '<div class="q-lbl">'+q.emoji+' '+esc(q.lbl)+'</div>'
+            + '<div class="stars">'+starsHtml(v)+'</div>'
+            + '<div class="val">'+(v == null ? '—' : (v + ' / 5'))+'</div>'
+            + '</div>';
+        }).join('');
+        var commentHtml = it.comment
+          ? '<div class="comment">'+esc(it.comment)+'</div>'
+          : '<div class="comment empty">— ei vapaata palautetta —</div>';
+        html += '<div class="student">'
+          + '<div class="sh">'
+          +   '<div class="who"><div class="name">'+esc(it.user_label||'')+'</div><div class="email">'+esc(it.user_email||'')+'</div></div>'
+          +   '<div class="time">Päivitetty '+esc(fmt(it.updated_at||it.created_at))+'</div>'
+          + '</div>'
+          + '<div class="ratings">'+ratingsHtml+'</div>'
+          + commentHtml
+          + '</div>';
+      });
+      wrap.innerHTML = html;
+    })
+    .catch(function(){
+      document.getElementById('wrap').innerHTML='<div class="empty">Jokin meni pieleen — yritä uudelleen</div>';
+    });
+})();
+</script>
+</body>
+</html>

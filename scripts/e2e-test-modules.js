@@ -277,8 +277,47 @@ async function postForm(pathUrl, token, fields) {
     C('B my-capstone returns empty', myCapB.status === 200 && (myCapB.json?.item == null || myCapB.json?.capstone == null));
 
     /* ===== ADMIN HTML PAGES ===== */
+    /* ===== MODULE 4 — Kurssipalaute (stars) ===== */
+    S('Kurssipalaute · save + validation + upsert');
+    // 1. Try incomplete ratings — should 400
+    const bad = await api('POST', '/api/final/feedback-save', tokenA, {
+      q1_rating: 5, q2_rating: 4, q3_rating: null, q4_rating: 5, q5_rating: 5, comment: 'puuttuu'
+    });
+    C('POST /feedback-save with missing rating → 400', bad.status === 400);
+    // 2. Save complete feedback
+    const good = await api('POST', '/api/final/feedback-save', tokenA, {
+      q1_rating: 5, q2_rating: 4, q3_rating: 5, q4_rating: 5, q5_rating: 4, comment: 'Kurssi oli mahtava! 🌟'
+    });
+    C('POST /feedback-save (all 5 ratings) → 200', good.status === 200, 'status=' + good.status);
+    // 3. Verify in DB
+    const fbRow = (await pool.query('SELECT q1_rating,q2_rating,q3_rating,q4_rating,q5_rating,comment FROM course_feedback WHERE user_id=$1', [studentA.id])).rows[0];
+    C('feedback stored in DB with all 5 ratings', fbRow && fbRow.q1_rating === 5 && fbRow.q2_rating === 4 && fbRow.q3_rating === 5 && fbRow.q4_rating === 5 && fbRow.q5_rating === 4);
+    C('comment stored', fbRow?.comment === 'Kurssi oli mahtava! 🌟');
+    // 4. Upsert: change ratings, confirm single row
+    const upsert = await api('POST', '/api/final/feedback-save', tokenA, {
+      q1_rating: 4, q2_rating: 4, q3_rating: 4, q4_rating: 4, q5_rating: 5, comment: 'Päivitys'
+    });
+    C('POST /feedback-save again (upsert) → 200', upsert.status === 200);
+    const fbCount = (await pool.query('SELECT COUNT(*)::int AS n FROM course_feedback WHERE user_id=$1', [studentA.id])).rows[0].n;
+    C('only 1 row per user after upsert', fbCount === 1);
+    const fbNew = (await pool.query('SELECT q1_rating, comment FROM course_feedback WHERE user_id=$1', [studentA.id])).rows[0];
+    C('upsert updated values', fbNew.q1_rating === 4 && fbNew.comment === 'Päivitys');
+    // 5. GET /my-feedback
+    const myFb = await api('GET', '/api/final/my-feedback', tokenA);
+    C('GET /my-feedback returns saved feedback', myFb.status === 200 && myFb.json?.feedback?.q5_rating === 5);
+    // 6. Isolation: student B has no feedback
+    const bFb = await api('GET', '/api/final/my-feedback', tokenB);
+    C('GET /my-feedback as B → null (isolated)', bFb.status === 200 && bFb.json?.feedback == null);
+    // 7. Admin view
+    const asStudentFb = await api('GET', '/api/final/admin-feedback', tokenA);
+    C('admin-feedback as student → 403', asStudentFb.status === 403);
+    const admFb = await api('GET', '/api/final/admin-feedback', tokenAdmin);
+    C('admin-feedback as admin → 200', admFb.status === 200);
+    C('admin sees student A feedback', (admFb.json?.items || []).some(it => it.user_id === studentA.id));
+    C('admin gets aggregate stats (n, avg_q1…q5)', admFb.json?.stats?.n >= 1 && admFb.json?.stats?.avg_q1 != null);
+
     S('Admin HTML pages mounted');
-    for (const p of ['/admin/loppumoduuli', '/admin/mythology', '/admin/rikkinainen-prompti']) {
+    for (const p of ['/admin/loppumoduuli', '/admin/mythology', '/admin/rikkinainen-prompti', '/admin/palaute']) {
       const r = await api('GET', p, tokenAdmin);
       C('GET ' + p + ' as admin → 200 HTML', r.status === 200 && /html/i.test(r.contentType));
       const r2 = await api('GET', p, tokenA);
@@ -298,6 +337,7 @@ async function postForm(pathUrl, token, fields) {
         try { await pool.query('DELETE FROM final_module_gallery WHERE user_id=$1', [u.id]); } catch (e) {}
         try { await pool.query('DELETE FROM mythology_submissions WHERE user_id=$1', [u.id]); } catch (e) {}
         try { await pool.query('DELETE FROM broken_prompt_submissions WHERE user_id=$1', [u.id]); } catch (e) {}
+        try { await pool.query('DELETE FROM course_feedback WHERE user_id=$1', [u.id]); } catch (e) {}
         await cleanupUser(u.id);
       }
     }
