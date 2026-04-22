@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · Loppumoduuli</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#f5f3ef;color:#1a1a2e;font-family:'DM Sans',sans-serif;padding:2rem;line-height:1.6;}
+header{max-width:1280px;margin:0 auto 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+header h1{font-family:'DM Serif Display',serif;font-size:2rem;font-weight:400;}
+header .sub{font-family:'DM Mono',monospace;font-size:0.75rem;color:#6b6880;letter-spacing:0.12em;text-transform:uppercase;}
+header a{color:#c75b3a;text-decoration:none;font-size:0.9rem;font-weight:500;}
+header a:hover{text-decoration:underline;}
+
+.wrap{max-width:1280px;margin:0 auto;}
+.empty{background:#fff;border:1px solid rgba(26,26,46,0.12);border-radius:12px;padding:3rem;text-align:center;color:#6b6880;box-shadow:0 2px 20px rgba(26,26,46,0.06);}
+
+.submission{background:#fff;border:1px solid rgba(26,26,46,0.12);border-radius:14px;padding:1.75rem;margin-bottom:1.25rem;box-shadow:0 2px 20px rgba(26,26,46,0.06);}
+.sub-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.75rem;border-bottom:1px solid rgba(26,26,46,0.08);padding-bottom:1rem;margin-bottom:1.25rem;}
+.sub-who{display:flex;flex-direction:column;gap:0.25rem;}
+.sub-name{font-family:'DM Serif Display',serif;font-size:1.35rem;color:#1a1a2e;}
+.sub-email{font-family:'DM Mono',monospace;font-size:0.78rem;color:#6b6880;}
+.sub-time{font-family:'DM Mono',monospace;font-size:0.78rem;color:#6b6880;text-align:right;}
+.sub-time .lbl{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#a0a0b0;display:block;}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+@media(max-width:860px){.grid{grid-template-columns:1fr;}}
+
+.block-title{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:#c75b3a;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.85rem;}
+
+.map-list{display:flex;flex-direction:column;gap:0.6rem;}
+.map-item{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:#faf8f4;border:1px solid rgba(26,26,46,0.08);border-radius:10px;gap:1rem;}
+.map-item .label{display:flex;flex-direction:column;gap:0.15rem;min-width:0;}
+.map-item .lbl-top{font-weight:600;font-size:0.9rem;color:#1a1a2e;}
+.map-item .lbl-sub{font-family:'DM Mono',monospace;font-size:0.73rem;color:#6b6880;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pdf-link{display:inline-flex;align-items:center;gap:6px;color:#c75b3a;text-decoration:none;font-weight:600;font-size:0.82rem;padding:6px 12px;border:1px solid rgba(199,91,58,0.3);border-radius:6px;background:rgba(199,91,58,0.05);flex-shrink:0;}
+.pdf-link:hover{background:#c75b3a;color:#fff;border-color:#c75b3a;}
+.missing{font-size:0.78rem;color:#a0a0b0;font-style:italic;}
+
+.qa-list{display:flex;flex-direction:column;gap:1rem;}
+.qa-item .q{font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:#6b6880;margin-bottom:0.3rem;}
+.qa-item .a{background:#f0fff4;border:1px solid rgba(42,122,75,0.18);border-radius:8px;padding:0.75rem 0.95rem;font-size:0.9rem;color:#1a1a2e;line-height:1.55;white-space:pre-wrap;}
+
+.qa-item.q1 .a{background:#f0fff4;border-color:rgba(42,122,75,0.2);}
+.qa-item.q2 .a{background:#fff7ed;border-color:rgba(199,91,58,0.2);}
+.qa-item.q3 .a{background:#eff6ff;border-color:rgba(37,99,168,0.2);}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Loppumoduuli — Osio 02 · Kartat + Podcast</h1>
+    <div class="sub">Admin-näkymä · uusin ensin</div>
+  </div>
+  <a href="/admin">← Admin-etusivulle</a>
+</header>
+<div class="wrap" id="wrap">
+  <div class="empty">Ladataan...</div>
+</div>
+<script>
+(function(){
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function formatDate(iso){
+    try {
+      var d = new Date(iso);
+      return d.toLocaleDateString('fi-FI') + ' ' + d.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
+    } catch(_) { return ''; }
+  }
+
+  fetch('/api/final/admin-loppumoduuli',{credentials:'include'})
+    .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+    .then(function(x){
+      var wrap = document.getElementById('wrap');
+      if(!x.ok){ wrap.innerHTML = '<div class="empty">Virhe: ' + esc((x.d&&x.d.error)||'') + '</div>'; return; }
+      var items = x.d.items || [];
+      if(!items.length){ wrap.innerHTML = '<div class="empty">Ei vielä lähetyksiä.</div>'; return; }
+
+      var html = '';
+      items.forEach(function(it){
+        var mapLabels = [
+          { n: 1, title: 'Kartta 1 — AI tänään', has: it.has_map1, name: it.map1_name },
+          { n: 2, title: 'Kartta 2 — AI huomenna', has: it.has_map2, name: it.map2_name },
+          { n: 3, title: 'Kartta 3 — Minä ja AI',  has: it.has_map3, name: it.map3_name }
+        ];
+        var mapsHtml = mapLabels.map(function(m){
+          var right = m.has
+            ? '<a class="pdf-link" href="/api/final/capstone-pdf/' + esc(it.id) + '/' + m.n + '" target="_blank" rel="noopener">📄 Avaa PDF</a>'
+            : '<span class="missing">— ei ladattu —</span>';
+          return ''
+            + '<div class="map-item">'
+            +   '<div class="label">'
+            +     '<span class="lbl-top">' + esc(m.title) + '</span>'
+            +     '<span class="lbl-sub">' + esc(m.name || (m.has ? 'kartta-' + m.n + '.pdf' : '—')) + '</span>'
+            +   '</div>'
+            +   right
+            + '</div>';
+        }).join('');
+
+        html += ''
+          + '<div class="submission">'
+          +   '<div class="sub-head">'
+          +     '<div class="sub-who">'
+          +       '<div class="sub-name">' + esc(it.user_label || '') + '</div>'
+          +       '<div class="sub-email">' + esc(it.user_email || '') + '</div>'
+          +     '</div>'
+          +     '<div class="sub-time">'
+          +       '<span class="lbl">Päivitetty</span>' + esc(formatDate(it.updated_at || it.created_at))
+          +     '</div>'
+          +   '</div>'
+          +   '<div class="grid">'
+          +     '<div>'
+          +       '<div class="block-title">Osa 1 · Kolme karttaa (Napkin.ai PDF:t)</div>'
+          +       '<div class="map-list">' + mapsHtml + '</div>'
+          +     '</div>'
+          +     '<div>'
+          +       '<div class="block-title">Osa 2 · NotebookLM podcast — vastaukset</div>'
+          +       '<div class="qa-list">'
+          +         '<div class="qa-item q1"><div class="q">1. Mitä tekoäly sai oikein?</div><div class="a">' + esc(it.podcast_right || '—') + '</div></div>'
+          +         '<div class="qa-item q2"><div class="q">2. Mitä se jätti huomaamatta / ymmärsi väärin?</div><div class="a">' + esc(it.podcast_missed || '—') + '</div></div>'
+          +         '<div class="qa-item q3"><div class="q">3. Mitä tämä kertoo tekoälyn tavasta tiivistää?</div><div class="a">' + esc(it.podcast_insight || '—') + '</div></div>'
+          +       '</div>'
+          +     '</div>'
+          +   '</div>'
+          + '</div>';
+      });
+      wrap.innerHTML = html;
+    })
+    .catch(function(){
+      document.getElementById('wrap').innerHTML = '<div class="empty">Jokin meni pieleen — yritä uudelleen</div>';
+    });
+})();
+</script>
+</body>
+</html>

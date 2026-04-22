@@ -230,3 +230,23 @@ CREATE TABLE IF NOT EXISTS broken_prompt_submissions (
 );
 CREATE INDEX IF NOT EXISTS idx_broken_prompt_user ON broken_prompt_submissions(user_id);
 CREATE INDEX IF NOT EXISTS idx_broken_prompt_round ON broken_prompt_submissions(round);
+
+-- Loppumoduuli Osio 02 — Kolme karttaa Napkin.ai:lla + NotebookLM podcast
+CREATE TABLE IF NOT EXISTS final_module_capstone (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    map1_bytes BYTEA,
+    map1_name VARCHAR(300),
+    map2_bytes BYTEA,
+    map2_name VARCHAR(300),
+    map3_bytes BYTEA,
+    map3_name VARCHAR(300),
+    podcast_right TEXT,
+    podcast_missed TEXT,
+    podcast_insight TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT final_module_capstone_user_unique UNIQUE(user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_final_module_capstone_user ON final_module_capstone(user_id);
+CREATE INDEX IF NOT EXISTS idx_final_module_capstone_created ON final_module_capstone(created_at DESC);

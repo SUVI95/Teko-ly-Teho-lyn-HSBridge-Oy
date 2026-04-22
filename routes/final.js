@@ -99,6 +99,32 @@ async function ensureFinalTables() {
   `);
   await pool.query('CREATE INDEX IF NOT EXISTS idx_broken_prompt_user ON broken_prompt_submissions(user_id)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_broken_prompt_round ON broken_prompt_submissions(round)');
+
+  // Loppumoduuli Osio 02 — Kolme karttaa Napkin.ai:lla + NotebookLM podcast
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS final_module_capstone (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      map1_bytes BYTEA,
+      map1_name VARCHAR(300),
+      map2_bytes BYTEA,
+      map2_name VARCHAR(300),
+      map3_bytes BYTEA,
+      map3_name VARCHAR(300),
+      podcast_right TEXT,
+      podcast_missed TEXT,
+      podcast_insight TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT final_module_capstone_user_unique UNIQUE(user_id)
+    )
+  `);
+  await pool.query(
+    'CREATE INDEX IF NOT EXISTS idx_final_module_capstone_user ON final_module_capstone(user_id)'
+  );
+  await pool.query(
+    'CREATE INDEX IF NOT EXISTS idx_final_module_capstone_created ON final_module_capstone(created_at DESC)'
+  );
 }
 
 const uploadDir = path.join(__dirname, '..', 'public', 'uploads', 'final-gallery');
@@ -886,6 +912,160 @@ router.post('/rikki-save', authenticateToken, async (req, res) => {
     res.json({ success: true });
   } catch (e) {
     console.error('rikki-save:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+/* ===== Loppumoduuli Osio 02 — Kolme karttaa Napkin.ai:lla + NotebookLM podcast ===== */
+
+// 3 PDF:ää kentissä map1/map2/map3 + 3 tekstikenttää
+const capstoneUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 3 },
+  fileFilter: (req, file, cb) => {
+    const ok = file.mimetype === 'application/pdf' || (file.originalname || '').toLowerCase().endsWith('.pdf');
+    if (ok) cb(null, true);
+    else cb(new Error('Vain PDF-tiedostoja'));
+  }
+});
+
+const capstoneFields = capstoneUpload.fields([
+  { name: 'map1', maxCount: 1 },
+  { name: 'map2', maxCount: 1 },
+  { name: 'map3', maxCount: 1 }
+]);
+
+router.get('/my-capstone', authenticateToken, async (req, res) => {
+  try {
+    await ensureFinalTables();
+    const r = await pool.query(
+      `SELECT id,
+              (map1_bytes IS NOT NULL) AS has_map1, map1_name,
+              (map2_bytes IS NOT NULL) AS has_map2, map2_name,
+              (map3_bytes IS NOT NULL) AS has_map3, map3_name,
+              podcast_right, podcast_missed, podcast_insight,
+              created_at, updated_at
+       FROM final_module_capstone
+       WHERE user_id = $1`,
+      [req.user.id]
+    );
+    res.json({ submission: r.rows[0] || null });
+  } catch (e) {
+    console.error('my-capstone:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+router.post('/capstone-submit', authenticateToken, (req, res) => {
+  capstoneFields(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message || 'PDF-lataus epäonnistui' });
+    }
+    try {
+      await ensureFinalTables();
+      const files = req.files || {};
+      const m1 = files.map1 && files.map1[0];
+      const m2 = files.map2 && files.map2[0];
+      const m3 = files.map3 && files.map3[0];
+      if (!m1 || !m2 || !m3) {
+        return res.status(400).json({ error: 'Kaikki kolme karttaa (PDF) vaaditaan.' });
+      }
+      const { podcast_right, podcast_missed, podcast_insight } = req.body || {};
+      if (!podcast_right || !podcast_missed || !podcast_insight) {
+        return res.status(400).json({ error: 'Vastaa kaikkiin kolmeen podcast-kysymykseen.' });
+      }
+
+      const trimName = (s) => (s || '').toString().slice(0, 300) || null;
+
+      // Upsert — jos käyttäjä lähettää uudelleen, korvaa aiemmat
+      await pool.query(
+        `INSERT INTO final_module_capstone
+           (user_id, map1_bytes, map1_name, map2_bytes, map2_name, map3_bytes, map3_name,
+            podcast_right, podcast_missed, podcast_insight, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
+         ON CONFLICT (user_id) DO UPDATE SET
+           map1_bytes = EXCLUDED.map1_bytes, map1_name = EXCLUDED.map1_name,
+           map2_bytes = EXCLUDED.map2_bytes, map2_name = EXCLUDED.map2_name,
+           map3_bytes = EXCLUDED.map3_bytes, map3_name = EXCLUDED.map3_name,
+           podcast_right = EXCLUDED.podcast_right,
+           podcast_missed = EXCLUDED.podcast_missed,
+           podcast_insight = EXCLUDED.podcast_insight,
+           updated_at = CURRENT_TIMESTAMP`,
+        [
+          req.user.id,
+          m1.buffer, trimName(m1.originalname),
+          m2.buffer, trimName(m2.originalname),
+          m3.buffer, trimName(m3.originalname),
+          String(podcast_right).slice(0, 5000),
+          String(podcast_missed).slice(0, 5000),
+          String(podcast_insight).slice(0, 5000)
+        ]
+      );
+      res.json({ success: true });
+    } catch (e) {
+      console.error('capstone-submit:', e);
+      res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+    }
+  });
+});
+
+router.get('/capstone-pdf/:id/:slot', authenticateToken, async (req, res) => {
+  const id = (req.params.id || '').trim();
+  const slot = parseInt(req.params.slot, 10);
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return res.status(400).send('Virheellinen tunniste');
+  }
+  if (![1, 2, 3].includes(slot)) {
+    return res.status(400).send('Virheellinen kartta');
+  }
+  try {
+    await ensureFinalTables();
+    const col = `map${slot}_bytes`;
+    const nameCol = `map${slot}_name`;
+    const r = await pool.query(
+      `SELECT user_id, ${col} AS bytes, ${nameCol} AS name FROM final_module_capstone WHERE id = $1::uuid`,
+      [id]
+    );
+    if (!r.rows.length) return res.status(404).send('Ei löydy');
+    const row = r.rows[0];
+    if (row.user_id !== req.user.id && !req.user.is_admin) {
+      return res.status(403).send('Pääsy kielletty');
+    }
+    if (!row.bytes) return res.status(404).send('PDF puuttuu');
+    const buf = Buffer.from(row.bytes);
+    const name = (row.name || `kartta-${slot}.pdf`).replace(/[^\w.\-\u00C0-\u024F ]+/g, '_');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(name)}`);
+    return res.send(buf);
+  } catch (e) {
+    console.error('capstone-pdf GET:', e);
+    return res.status(500).send('Virhe');
+  }
+});
+
+router.get('/admin-loppumoduuli', authenticateToken, async (req, res) => {
+  if (!req.user || !req.user.is_admin) {
+    return res.status(403).json({ error: 'Admin-oikeus vaaditaan' });
+  }
+  try {
+    await ensureFinalTables();
+    const r = await pool.query(
+      `SELECT c.id,
+              c.map1_name, (c.map1_bytes IS NOT NULL) AS has_map1,
+              c.map2_name, (c.map2_bytes IS NOT NULL) AS has_map2,
+              c.map3_name, (c.map3_bytes IS NOT NULL) AS has_map3,
+              c.podcast_right, c.podcast_missed, c.podcast_insight,
+              c.created_at, c.updated_at,
+              u.id AS user_id,
+              COALESCE(u.name, u.email) AS user_label,
+              u.email AS user_email
+       FROM final_module_capstone c
+       JOIN users u ON u.id = c.user_id
+       ORDER BY c.updated_at DESC`
+    );
+    res.json({ items: r.rows });
+  } catch (e) {
+    console.error('admin-loppumoduuli:', e);
     res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
   }
 });
