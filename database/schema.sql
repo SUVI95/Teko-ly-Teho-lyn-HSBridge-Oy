@@ -214,6 +214,7 @@ CREATE TABLE IF NOT EXISTS mythology_submissions (
     pdf_original_name VARCHAR(300),
     questions_json JSONB DEFAULT '{}'::jsonb,
     ai_insight TEXT,
+    pdf_bytes BYTEA,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_mythology_submissions_user ON mythology_submissions(user_id);

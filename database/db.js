@@ -25,7 +25,10 @@ pool.on('connect', () => {
 
 pool.on('error', (err) => {
   console.error('❌ Unexpected error on idle client', err);
-  process.exit(-1);
+  // Vercel/serverless: älä tapa koko prosessia — se aiheuttaa 500 FUNCTION_INVOCATION_FAILED
+  if (!process.env.VERCEL) {
+    process.exit(-1);
+  }
 });
 
 module.exports = pool;

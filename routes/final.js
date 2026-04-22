@@ -84,6 +84,7 @@ async function ensureFinalTables() {
   await pool.query('ALTER TABLE mythology_submissions ADD COLUMN IF NOT EXISTS pdf_original_name VARCHAR(300)');
   await pool.query("ALTER TABLE mythology_submissions ADD COLUMN IF NOT EXISTS questions_json JSONB DEFAULT '{}'::jsonb");
   await pool.query('ALTER TABLE mythology_submissions ADD COLUMN IF NOT EXISTS ai_insight TEXT');
+  await pool.query('ALTER TABLE mythology_submissions ADD COLUMN IF NOT EXISTS pdf_bytes BYTEA');
   // Vanha final_argument-sarake ei enää pakollinen uudessa virrassa
   await pool.query('ALTER TABLE mythology_submissions ALTER COLUMN final_argument DROP NOT NULL');
 
@@ -132,22 +133,9 @@ const upload = multer({
   }
 });
 
-// --- Myytinmurtaja PDF upload ---
-const mythPdfDir = path.join(__dirname, '..', 'public', 'uploads', 'mythology-pdfs');
-function ensureMythPdfDir() {
-  try { fs.mkdirSync(mythPdfDir, { recursive: true }); } catch (e) { console.error('mythology-pdfs dir:', e); }
-}
-ensureMythPdfDir();
-
-const pdfStorage = multer.diskStorage({
-  destination: (req, file, cb) => { ensureMythPdfDir(); cb(null, mythPdfDir); },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname || '').toLowerCase() === '.pdf' ? '.pdf' : '.pdf';
-    cb(null, `${uuidv4()}${ext}`);
-  }
-});
+// Myytinmurtaja PDF: muisti (multer.memoryStorage) — Vercel/serverless ei salli kirjoitusta public/uploads:iin
 const pdfUpload = multer({
-  storage: pdfStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ok = file.mimetype === 'application/pdf' || (file.originalname || '').toLowerCase().endsWith('.pdf');
@@ -486,13 +474,20 @@ function parseStrengthScore(evaluationText) {
  *  2) Rakentaa refutaatio-PDF:n Claudella
  *  3) Lataa PDF:n alustalle + vastaa ohjattuihin kysymyksiin
  *  4) Tekoäly lukee PDF:n ja antaa positiivisen, rakentavan insight-vastauksen
+ *
+ * PDF tallennetaan BYTEA:na (Vercel/serverless: vain /tmp on kirjoitettavissa).
  */
-const pdfParse = require('pdf-parse');
-
-async function extractPdfText(filePath) {
+async function extractPdfTextFromBuffer(buf) {
+  if (!buf || !buf.length) return '';
+  let parseFn;
   try {
-    const buf = fs.readFileSync(filePath);
-    const data = await pdfParse(buf);
+    parseFn = require('pdf-parse');
+  } catch (loadErr) {
+    console.error('pdf-parse module load failed:', loadErr);
+    return '';
+  }
+  try {
+    const data = await parseFn(buf);
     return (data && data.text ? data.text : '').trim();
   } catch (e) {
     console.error('pdf-parse error:', e);
@@ -500,12 +495,47 @@ async function extractPdfText(filePath) {
   }
 }
 
+/** Lataa tallennettu PDF (omistaja tai admin). */
+router.get('/mythology-pdf/:id', authenticateToken, async (req, res) => {
+  const id = (req.params.id || '').trim();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return res.status(400).send('Virheellinen tunniste');
+  }
+  try {
+    await ensureFinalTables();
+    const r = await pool.query(
+      `SELECT user_id, pdf_bytes, pdf_original_name, pdf_path FROM mythology_submissions WHERE id = $1::uuid`,
+      [id]
+    );
+    if (!r.rows.length) return res.status(404).send('Ei löydy');
+    const row = r.rows[0];
+    if (row.user_id !== req.user.id && !req.user.is_admin) {
+      return res.status(403).send('Pääsy kielletty');
+    }
+    const buf = row.pdf_bytes ? Buffer.from(row.pdf_bytes) : null;
+    if (buf && buf.length) {
+      const name = (row.pdf_original_name || 'dokumentti.pdf').replace(/[^\w.\-\u00C0-\u024F ]+/g, '_');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(name)}`);
+      return res.send(buf);
+    }
+    if (row.pdf_path && String(row.pdf_path).startsWith('/uploads/')) {
+      const abs = path.join(__dirname, '..', 'public', String(row.pdf_path).replace(/^\//, ''));
+      if (fs.existsSync(abs)) return res.sendFile(abs);
+    }
+    return res.status(404).send('PDF ei ole saatavilla');
+  } catch (e) {
+    console.error('mythology-pdf GET:', e);
+    return res.status(500).send('Virhe');
+  }
+});
+
 router.post('/mythology-pdf-submit', authenticateToken, (req, res) => {
   pdfUpload.single('pdf')(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ error: err.message || 'PDF-lataus epäonnistui' });
     }
-    if (!req.file) {
+    if (!req.file || !req.file.buffer) {
       return res.status(400).json({ error: 'PDF-tiedosto vaaditaan' });
     }
     try {
@@ -517,13 +547,12 @@ router.post('/mythology-pdf-submit', authenticateToken, (req, res) => {
         own_addition
       } = req.body || {};
       if (!myth_selected || !strongest_point || !own_addition) {
-        try { fs.unlinkSync(req.file.path); } catch (_) {}
         return res.status(400).json({ error: 'Myytti ja kysymysten vastaukset vaaditaan' });
       }
 
-      const pdfText = await extractPdfText(req.file.path);
+      const pdfBuf = req.file.buffer;
+      const pdfText = await extractPdfTextFromBuffer(pdfBuf);
       if (!pdfText || pdfText.length < 50) {
-        try { fs.unlinkSync(req.file.path); } catch (_) {}
         return res.status(400).json({
           error: 'PDF:n tekstiä ei saatu luettua. Varmista että PDF sisältää tekstiä (ei kuvatiedosto).'
         });
@@ -571,11 +600,11 @@ ${trimmed}
         insight = await openaiChat(system, userMessage, 'gpt-4o', 1400);
       } catch (aiErr) {
         console.error('mythology pdf insight AI error:', aiErr);
-        try { fs.unlinkSync(req.file.path); } catch (_) {}
         return res.status(503).json({ error: 'AI ei juuri nyt vastaa — yritä hetken päästä uudelleen' });
       }
 
-      const relPdfPath = '/uploads/mythology-pdfs/' + path.basename(req.file.path);
+      const submissionId = uuidv4();
+      const apiPdfPath = `/api/final/mythology-pdf/${submissionId}`;
       const questions = {
         perplexity_finding: perplexity_finding || '',
         strongest_point,
@@ -584,24 +613,25 @@ ${trimmed}
 
       await pool.query(
         `INSERT INTO mythology_submissions
-          (user_id, myth_selected, perplexity_finding, own_voice, pdf_path, pdf_original_name, questions_json, ai_insight, ai_evaluation)
-         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $8)`,
+          (id, user_id, myth_selected, perplexity_finding, own_voice, pdf_path, pdf_original_name, questions_json, ai_insight, ai_evaluation, pdf_bytes)
+         VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $9, $10)`,
         [
+          submissionId,
           req.user.id,
           String(myth_selected).slice(0, 2000),
           (perplexity_finding || '').toString().slice(0, 4000) || null,
           (own_addition || '').toString().slice(0, 4000) || null,
-          relPdfPath,
+          apiPdfPath,
           (req.file.originalname || '').slice(0, 300) || null,
           JSON.stringify(questions),
-          insight
+          insight,
+          pdfBuf
         ]
       );
 
-      res.json({ success: true, insight, pdf_path: relPdfPath });
+      res.json({ success: true, insight, pdf_path: apiPdfPath, submission_id: submissionId });
     } catch (e) {
       console.error('mythology-pdf-submit:', e);
-      try { if (req.file) fs.unlinkSync(req.file.path); } catch (_) {}
       res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
     }
   });
