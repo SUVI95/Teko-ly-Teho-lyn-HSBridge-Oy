@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS final_module_gallery (
 CREATE INDEX IF NOT EXISTS idx_final_module_gallery_user ON final_module_gallery(user_id);
 CREATE INDEX IF NOT EXISTS idx_final_module_gallery_created ON final_module_gallery(created_at DESC);
 
--- Myytinmurtaja
+-- Myytinmurtaja (PDF-pohjainen virta: Perplexity → Claude PDF → upload → AI insight)
 CREATE TABLE IF NOT EXISTS mythology_submissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -207,9 +207,13 @@ CREATE TABLE IF NOT EXISTS mythology_submissions (
     perplexity_finding TEXT,
     claude_argument TEXT,
     own_voice TEXT,
-    final_argument TEXT NOT NULL,
+    final_argument TEXT,
     ai_evaluation TEXT,
     strength_score INTEGER,
+    pdf_path VARCHAR(500),
+    pdf_original_name VARCHAR(300),
+    questions_json JSONB DEFAULT '{}'::jsonb,
+    ai_insight TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_mythology_submissions_user ON mythology_submissions(user_id);

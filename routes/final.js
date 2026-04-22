@@ -79,6 +79,13 @@ async function ensureFinalTables() {
   await pool.query(
     'CREATE INDEX IF NOT EXISTS idx_mythology_submissions_score ON mythology_submissions(strength_score DESC)'
   );
+  // Uusi PDF-pohjainen virta: pdf_path + kysymysvastaukset JSONB + positiivinen insight
+  await pool.query('ALTER TABLE mythology_submissions ADD COLUMN IF NOT EXISTS pdf_path VARCHAR(500)');
+  await pool.query('ALTER TABLE mythology_submissions ADD COLUMN IF NOT EXISTS pdf_original_name VARCHAR(300)');
+  await pool.query("ALTER TABLE mythology_submissions ADD COLUMN IF NOT EXISTS questions_json JSONB DEFAULT '{}'::jsonb");
+  await pool.query('ALTER TABLE mythology_submissions ADD COLUMN IF NOT EXISTS ai_insight TEXT');
+  // Vanha final_argument-sarake ei enää pakollinen uudessa virrassa
+  await pool.query('ALTER TABLE mythology_submissions ALTER COLUMN final_argument DROP NOT NULL');
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS broken_prompt_submissions (
@@ -122,6 +129,30 @@ const upload = multer({
     const ok = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.mimetype);
     if (ok) cb(null, true);
     else cb(new Error('Vain JPG, PNG tai WebP'));
+  }
+});
+
+// --- Myytinmurtaja PDF upload ---
+const mythPdfDir = path.join(__dirname, '..', 'public', 'uploads', 'mythology-pdfs');
+function ensureMythPdfDir() {
+  try { fs.mkdirSync(mythPdfDir, { recursive: true }); } catch (e) { console.error('mythology-pdfs dir:', e); }
+}
+ensureMythPdfDir();
+
+const pdfStorage = multer.diskStorage({
+  destination: (req, file, cb) => { ensureMythPdfDir(); cb(null, mythPdfDir); },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase() === '.pdf' ? '.pdf' : '.pdf';
+    cb(null, `${uuidv4()}${ext}`);
+  }
+});
+const pdfUpload = multer({
+  storage: pdfStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ok = file.mimetype === 'application/pdf' || (file.originalname || '').toLowerCase().endsWith('.pdf');
+    if (ok) cb(null, true);
+    else cb(new Error('Vain PDF-tiedosto'));
   }
 });
 
@@ -449,85 +480,131 @@ function parseStrengthScore(evaluationText) {
   return null;
 }
 
-router.post('/mythology-evaluate', authenticateToken, async (req, res) => {
+/**
+ * UUSI VIRTA — Myytinmurtaja PDF-pohjainen:
+ *  1) Käyttäjä tutkii aiheen Perplexityllä
+ *  2) Rakentaa refutaatio-PDF:n Claudella
+ *  3) Lataa PDF:n alustalle + vastaa ohjattuihin kysymyksiin
+ *  4) Tekoäly lukee PDF:n ja antaa positiivisen, rakentavan insight-vastauksen
+ */
+const pdfParse = require('pdf-parse');
+
+async function extractPdfText(filePath) {
   try {
-    await ensureFinalTables();
-    const { myth_selected, perplexity_finding, claude_argument, own_voice, final_argument } = req.body;
-    if (!myth_selected || !final_argument) {
-      return res.status(400).json({ error: 'Myytti ja lopullinen argumentti vaaditaan' });
-    }
-    const system = `Olet kriittinen akateeminen arvioija. Saat argumentin jolla henkilö yrittää kumota tekoälymyytin. Arvioi argumentti kolmesta näkökulmasta:
-
-1. VAHVUUS (1-10): Kuinka vakuuttava tämä on skeptiselle kuulijalle?
-2. HEIKKOUS: Mikä on se yksi kohta jossa argumentti vuotaa tai on helppo hyökätä vastaan?
-3. TERÄVÖITYS: Kirjoita yksi lause joka tekisi tästä argumentista merkittävästi vahvemman.
-
-Ole armottoman rehellinen. Ei kannustuspuhetta. Sävy: Oxfordin väittelyn tuomari.
-
-Muotoile vastauksesi näin:
-**VAHVUUS:** [numero]/10
-**HEIKKOUS:** [yksi kappale]
-**TERÄVÖITYS:** [yksi lause]`;
-
-    const userMessage = `MYYTTI: ${myth_selected}
-
-PERPLEXITYN LÖYTÖ:
-${perplexity_finding || '(ei annettu)'}
-
-CLAUDEN ARGUMENTTI:
-${claude_argument || '(ei annettu)'}
-
-OMA ÄÄNI:
-${own_voice || '(ei annettu)'}
-
-LOPULLINEN ARGUMENTTI (tämä on arvioitava teksti):
-${final_argument}`;
-
-    const text = await openaiChat(system, userMessage, 'gpt-4o', 1200);
-    const score = parseStrengthScore(text);
-    res.json({ text, strength_score: score });
+    const buf = fs.readFileSync(filePath);
+    const data = await pdfParse(buf);
+    return (data && data.text ? data.text : '').trim();
   } catch (e) {
-    console.error('mythology-evaluate:', e);
-    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+    console.error('pdf-parse error:', e);
+    return '';
   }
-});
+}
 
-router.post('/mythology-save', authenticateToken, async (req, res) => {
-  try {
-    await ensureFinalTables();
-    const {
-      myth_selected,
-      perplexity_finding,
-      claude_argument,
-      own_voice,
-      final_argument,
-      ai_evaluation,
-      strength_score
-    } = req.body;
-    if (!myth_selected || !final_argument) {
-      return res.status(400).json({ error: 'Myytti ja lopullinen argumentti vaaditaan' });
+router.post('/mythology-pdf-submit', authenticateToken, (req, res) => {
+  pdfUpload.single('pdf')(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message || 'PDF-lataus epäonnistui' });
     }
-    const score = Number.isInteger(strength_score) ? strength_score : parseStrengthScore(ai_evaluation);
-    await pool.query(
-      `INSERT INTO mythology_submissions
-        (user_id, myth_selected, perplexity_finding, claude_argument, own_voice, final_argument, ai_evaluation, strength_score)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [
-        req.user.id,
-        String(myth_selected).slice(0, 2000),
-        perplexity_finding || null,
-        claude_argument || null,
-        own_voice || null,
-        final_argument,
-        ai_evaluation || null,
-        score
-      ]
-    );
-    res.json({ success: true });
-  } catch (e) {
-    console.error('mythology-save:', e);
-    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
-  }
+    if (!req.file) {
+      return res.status(400).json({ error: 'PDF-tiedosto vaaditaan' });
+    }
+    try {
+      await ensureFinalTables();
+      const {
+        myth_selected,
+        perplexity_finding,
+        strongest_point,
+        own_addition
+      } = req.body || {};
+      if (!myth_selected || !strongest_point || !own_addition) {
+        try { fs.unlinkSync(req.file.path); } catch (_) {}
+        return res.status(400).json({ error: 'Myytti ja kysymysten vastaukset vaaditaan' });
+      }
+
+      const pdfText = await extractPdfText(req.file.path);
+      if (!pdfText || pdfText.length < 50) {
+        try { fs.unlinkSync(req.file.path); } catch (_) {}
+        return res.status(400).json({
+          error: 'PDF:n tekstiä ei saatu luettua. Varmista että PDF sisältää tekstiä (ei kuvatiedosto).'
+        });
+      }
+      const trimmed = pdfText.length > 14000 ? pdfText.slice(0, 14000) + '\n…(leikattu)…' : pdfText;
+
+      const system = `Olet lämmin, rohkaiseva ja tarkkanäköinen AI-valmentaja. Saat käyttäjän rakentaman refutaatio-PDF:n (tekoälymyytin kumoaminen) sekä heidän omat vastauksensa kolmeen kysymykseen.
+
+Tehtäväsi on antaa POSITIIVINEN JA RAKENTAVA insight suomeksi. Tätä ei arvostella numeroilla. Tätä ei revitä auki. Tämä on rohkaisu joka vahvistaa käyttäjän ajattelua.
+
+Palauta AINA seuraava rakenne:
+
+**Mitä teit todella hyvin**
+(2–3 lausetta — nimeä konkreettisesti mitä PDF:ssä tai vastauksissa toimii. Sitoo todisteisiin.)
+
+**Mikä tässä on ajattelullisesti terävää**
+(1 kappale — mikä heidän lähestymistavassaan, näkökulmassaan tai "omassa lisäyksessään" on arvokasta ja alkuperäistä.)
+
+**Yksi rohkaisu eteenpäin**
+(1 lause — mitä tämä argumentti voisi avata heille jatkossa, miten he voivat viedä tätä ajattelua kauemmas työssään tai arjessaan.)
+
+Ole rehellinen — älä keksi ylistyksiä. Mutta sävy on rohkaiseva, ei arvosteleva. Älä anna pisteitä. Älä käytä sanoja kuten "heikkous" tai "virhe". Puhu suoraan sinä-muodossa.`;
+
+      const userMessage = `MYYTTI JONKA KÄYTTÄJÄ VALITSI:
+${myth_selected}
+
+KÄYTTÄJÄN VASTAUKSET OHJATTUIHIN KYSYMYKSIIN:
+
+1) Mikä oli Perplexityn tärkein löytö jonka otit mukaan PDF:ään?
+${(perplexity_finding || '(ei vastausta)').toString().slice(0, 1500)}
+
+2) Mikä PDF:n argumentti on mielestäsi vahvin ja miksi?
+${strongest_point.toString().slice(0, 1500)}
+
+3) Mitä sinä itse lisäät PDF:n argumenttiin omasta kokemuksestasi tai näkökulmastasi?
+${own_addition.toString().slice(0, 1500)}
+
+KÄYTTÄJÄN CLAUDELLA RAKENTAMA PDF-REFUTAATIO (tekstimuoto):
+"""
+${trimmed}
+"""`;
+
+      let insight = '';
+      try {
+        insight = await openaiChat(system, userMessage, 'gpt-4o', 1400);
+      } catch (aiErr) {
+        console.error('mythology pdf insight AI error:', aiErr);
+        try { fs.unlinkSync(req.file.path); } catch (_) {}
+        return res.status(503).json({ error: 'AI ei juuri nyt vastaa — yritä hetken päästä uudelleen' });
+      }
+
+      const relPdfPath = '/uploads/mythology-pdfs/' + path.basename(req.file.path);
+      const questions = {
+        perplexity_finding: perplexity_finding || '',
+        strongest_point,
+        own_addition
+      };
+
+      await pool.query(
+        `INSERT INTO mythology_submissions
+          (user_id, myth_selected, perplexity_finding, own_voice, pdf_path, pdf_original_name, questions_json, ai_insight, ai_evaluation)
+         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $8)`,
+        [
+          req.user.id,
+          String(myth_selected).slice(0, 2000),
+          (perplexity_finding || '').toString().slice(0, 4000) || null,
+          (own_addition || '').toString().slice(0, 4000) || null,
+          relPdfPath,
+          (req.file.originalname || '').slice(0, 300) || null,
+          JSON.stringify(questions),
+          insight
+        ]
+      );
+
+      res.json({ success: true, insight, pdf_path: relPdfPath });
+    } catch (e) {
+      console.error('mythology-pdf-submit:', e);
+      try { if (req.file) fs.unlinkSync(req.file.path); } catch (_) {}
+      res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+    }
+  });
 });
 
 router.get('/admin-mythology', authenticateToken, async (req, res) => {
@@ -537,11 +614,12 @@ router.get('/admin-mythology', authenticateToken, async (req, res) => {
   try {
     await ensureFinalTables();
     const r = await pool.query(
-      `SELECT m.id, m.myth_selected, m.final_argument, m.ai_evaluation, m.strength_score, m.created_at,
+      `SELECT m.id, m.myth_selected, m.pdf_path, m.pdf_original_name, m.questions_json,
+              m.ai_insight, m.ai_evaluation, m.strength_score, m.final_argument, m.created_at,
               COALESCE(u.name, u.email) AS user_label
        FROM mythology_submissions m
        JOIN users u ON u.id = m.user_id
-       ORDER BY m.strength_score DESC NULLS LAST, m.created_at DESC`
+       ORDER BY m.created_at DESC`
     );
     res.json({ items: r.rows });
   } catch (e) {

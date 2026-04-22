@@ -19,21 +19,23 @@ th{background:#1a1a2e;color:#fff;padding:14px 16px;text-align:left;font-family:'
 td{padding:14px 16px;border-bottom:1px solid rgba(26,26,46,0.08);vertical-align:top;}
 tr:last-child td{border-bottom:none;}
 tr:hover{background:#faf8f4;}
-.score{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 10px;border-radius:18px;background:#1a1a2e;color:#fff;font-weight:700;font-family:'DM Serif Display',serif;}
-.score.high{background:#2a7a4b;}
-.score.low{background:#b91c1c;}
 .myth{max-width:260px;font-style:italic;color:#2d2d44;}
-.arg{max-width:460px;color:#1a1a2e;line-height:1.6;}
 .empty{padding:3rem;text-align:center;color:#6b6880;}
 .meta{font-size:0.8rem;color:#6b6880;}
-.expand-btn{background:none;border:none;color:#c75b3a;cursor:pointer;font-size:0.8rem;font-family:inherit;padding:0;margin-top:0.35rem;}
+.pdf-link{display:inline-flex;align-items:center;gap:6px;color:#c75b3a;text-decoration:none;font-weight:600;font-size:0.85rem;padding:6px 10px;border:1px solid rgba(199,91,58,0.3);border-radius:6px;background:rgba(199,91,58,0.05);}
+.pdf-link:hover{background:#c75b3a;color:#fff;border-color:#c75b3a;}
+.q-block{margin-top:0.5rem;font-size:0.82rem;color:#2d2d44;line-height:1.55;}
+.q-block .q-lbl{display:block;font-family:'DM Mono',monospace;font-size:0.68rem;color:#6b6880;text-transform:uppercase;letter-spacing:0.1em;margin-top:0.5rem;margin-bottom:0.15rem;}
+.insight{max-width:420px;background:#f0fff4;border:1px solid rgba(42,122,75,0.25);border-radius:8px;padding:10px 12px;font-size:0.82rem;color:#1a1a2e;line-height:1.55;white-space:pre-wrap;}
+.insight strong{color:#2a7a4b;font-weight:600;}
+details summary{cursor:pointer;color:#c75b3a;font-size:0.8rem;font-weight:600;margin-top:0.35rem;}
 </style>
 </head>
 <body>
 <header>
   <div>
-    <h1>Myytinmurtaja — argumentit</h1>
-    <div class="sub">Admin-näkymä · järjestetty vahvuuden mukaan</div>
+    <h1>Myytinmurtaja — PDF-lähetykset</h1>
+    <div class="sub">Admin-näkymä · uusin ensin</div>
   </div>
   <a href="/admin">← Admin-etusivulle</a>
 </header>
@@ -43,7 +45,7 @@ tr:hover{background:#faf8f4;}
 <script>
 (function(){
   function escapeHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-  function scoreClass(n){if(n==null)return '';if(n>=8)return 'high';if(n<=4)return 'low';return '';}
+  function formatInsight(t){return escapeHtml(t||'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');}
   fetch('/api/final/admin-mythology',{credentials:'include'})
     .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
     .then(function(x){
@@ -51,17 +53,32 @@ tr:hover{background:#faf8f4;}
       if(!x.ok){ wrap.innerHTML = '<div class="empty">Virhe: ' + escapeHtml((x.d&&x.d.error)||'') + '</div>'; return; }
       var items = x.d.items || [];
       if(!items.length){ wrap.innerHTML = '<div class="empty">Ei vielä lähetyksiä.</div>'; return; }
-      var html = '<table><thead><tr><th>Käyttäjä</th><th>Myytti</th><th>Vahvuus</th><th>Lopullinen argumentti</th><th>Pvm</th></tr></thead><tbody>';
+      var html = '<table><thead><tr><th>Käyttäjä</th><th>Myytti</th><th>PDF</th><th>Vastaukset</th><th>AI-insight</th><th>Pvm</th></tr></thead><tbody>';
       items.forEach(function(it){
         var d = new Date(it.created_at);
         var dateStr = d.toLocaleDateString('fi-FI') + ' ' + d.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});
-        var s = it.strength_score;
-        var scoreHtml = s != null ? '<span class="score ' + scoreClass(s) + '">' + s + '</span>' : '<span class="meta">—</span>';
+        var q = it.questions_json || {};
+        var pdfHtml = it.pdf_path
+          ? '<a class="pdf-link" href="' + escapeHtml(it.pdf_path) + '" target="_blank" rel="noopener">📄 Avaa PDF</a>'
+            + (it.pdf_original_name ? '<div class="meta" style="margin-top:0.35rem;">' + escapeHtml(it.pdf_original_name) + '</div>' : '')
+          : '<span class="meta">—</span>';
+        var qHtml = '<div class="q-block">';
+        if (q.perplexity_finding) qHtml += '<span class="q-lbl">Perplexity</span>' + escapeHtml(q.perplexity_finding);
+        if (q.strongest_point) qHtml += '<span class="q-lbl">Vahvin pointti</span>' + escapeHtml(q.strongest_point);
+        if (q.own_addition) qHtml += '<span class="q-lbl">Oma lisäys</span>' + escapeHtml(q.own_addition);
+        if (!q.perplexity_finding && !q.strongest_point && !q.own_addition && it.final_argument) {
+          qHtml += '<span class="q-lbl">Argumentti (vanha virta)</span>' + escapeHtml(it.final_argument);
+        }
+        qHtml += '</div>';
+        var insightHtml = it.ai_insight
+          ? '<details class="insight"><summary>Näytä insight</summary><div style="margin-top:0.5rem;">' + formatInsight(it.ai_insight) + '</div></details>'
+          : '<span class="meta">—</span>';
         html += '<tr>'
              + '<td>' + escapeHtml(it.user_label || '') + '</td>'
              + '<td class="myth">"' + escapeHtml(it.myth_selected || '') + '"</td>'
-             + '<td>' + scoreHtml + '</td>'
-             + '<td class="arg">' + escapeHtml(it.final_argument || '') + '</td>'
+             + '<td>' + pdfHtml + '</td>'
+             + '<td>' + qHtml + '</td>'
+             + '<td>' + insightHtml + '</td>'
              + '<td class="meta">' + escapeHtml(dateStr) + '</td>'
              + '</tr>';
       });
