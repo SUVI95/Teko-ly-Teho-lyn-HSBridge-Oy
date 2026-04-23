@@ -542,9 +542,13 @@ function parseStrengthScore(evaluationText) {
  *
  * PDF tallennetaan BYTEA:na (Vercel/serverless: vain /tmp on kirjoitettavissa).
  */
-async function extractPdfTextFromBuffer(buf) {
-  if (!buf || !buf.length) return '';
-  // pdf-parse v2.x exportoi luokan PDFParse; v1.x oli funktio. Tuetaan molempia.
+/**
+ * PDF-tekstinpoiminta: yritetään ensin pdf-parse (nopea), ja jos se epäonnistuu
+ * tai palauttaa liian vähän tekstiä (tyypillisesti tyylitellyissä/värjätyissä
+ * PDF:ssä tai subset-fonteilla), kaadutaan pdfjs-dist:iin (Mozillan pdf.js)
+ * joka osaa lukea laajemman kirjon PDF-rakenteita.
+ */
+async function extractWithPdfParse(buf) {
   let mod;
   try {
     mod = require('pdf-parse');
@@ -553,7 +557,6 @@ async function extractPdfTextFromBuffer(buf) {
     return '';
   }
   try {
-    // v2.x: uusi API
     if (mod && typeof mod.PDFParse === 'function') {
       const parser = new mod.PDFParse({ data: buf });
       try {
@@ -563,7 +566,6 @@ async function extractPdfTextFromBuffer(buf) {
         try { await parser.destroy(); } catch (_) {}
       }
     }
-    // v1.x: funktio
     if (typeof mod === 'function') {
       const data = await mod(buf);
       return (data && data.text ? String(data.text) : '').trim();
@@ -571,9 +573,63 @@ async function extractPdfTextFromBuffer(buf) {
     console.error('pdf-parse: unknown module shape', typeof mod);
     return '';
   } catch (e) {
-    console.error('pdf-parse error:', e);
+    console.error('pdf-parse error:', e && e.message ? e.message : e);
     return '';
   }
+}
+
+async function extractWithPdfjs(buf) {
+  // Käytetään pdf-parse:n mukana tulevaa pdfjs-dist-buildiä (ESM, dynamic import).
+  // Näin vältämme duplikaattikirjastojen version-yhteentörmäykset.
+  let pdfjs;
+  try {
+    const { pathToFileURL } = require('url');
+    const path = require('path');
+    // pdf-parse main tiedosto sijaitsee sen asennushakemistossa — kiipeillään takaisin ylös
+    const pdfParseMain = require.resolve('pdf-parse');
+    const pdfParseDir = path.resolve(path.dirname(pdfParseMain), '..', '..', '..');
+    const pdfjsMjs = path.join(pdfParseDir, 'node_modules', 'pdfjs-dist', 'legacy', 'build', 'pdf.mjs');
+    pdfjs = await import(pathToFileURL(pdfjsMjs).href);
+  } catch (loadErr) {
+    console.error('pdfjs-dist load failed:', loadErr && loadErr.message ? loadErr.message : loadErr);
+    return '';
+  }
+  try {
+    const uint8 = new Uint8Array(buf);
+    const loadingTask = pdfjs.getDocument({
+      data: uint8,
+      disableWorker: true,
+      isEvalSupported: false,
+      useSystemFonts: false,
+      verbosity: 0
+    });
+    const doc = await loadingTask.promise;
+    const pages = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      const txt = (content.items || [])
+        .map(it => (typeof it.str === 'string' ? it.str : ''))
+        .join(' ');
+      pages.push(txt);
+      try { page.cleanup(); } catch (_) {}
+    }
+    try { await doc.destroy(); } catch (_) {}
+    return pages.join('\n').replace(/\s+\n/g, '\n').trim();
+  } catch (e) {
+    console.error('pdfjs-dist error:', e && e.message ? e.message : e);
+    return '';
+  }
+}
+
+async function extractPdfTextFromBuffer(buf) {
+  if (!buf || !buf.length) return '';
+  const primary = await extractWithPdfParse(buf);
+  if (primary && primary.length >= 50) return primary;
+  const fallback = await extractWithPdfjs(buf);
+  if (fallback && fallback.length >= 50) return fallback;
+  // Palauta parempi näistä kahdesta — voi olla tyhjä
+  return (fallback && fallback.length > primary.length) ? fallback : primary;
 }
 
 /** Lataa tallennettu PDF (omistaja tai admin). */
@@ -633,14 +689,17 @@ router.post('/mythology-pdf-submit', authenticateToken, (req, res) => {
 
       const pdfBuf = req.file.buffer;
       const pdfText = await extractPdfTextFromBuffer(pdfBuf);
-      if (!pdfText || pdfText.length < 50) {
-        return res.status(400).json({
-          error: 'PDF:n tekstiä ei saatu luettua. Varmista että PDF sisältää tekstiä (ei kuvatiedosto).'
-        });
-      }
-      const trimmed = pdfText.length > 14000 ? pdfText.slice(0, 14000) + '\n…(leikattu)…' : pdfText;
+      // Jos PDF:stä ei saatu luettua tekstiä luotettavasti, älä hukkaa käyttäjän
+      // kirjoittamia vastauksia — jatketaan lipulla ja ohjeistetaan tekoälyä
+      // nojaamaan käyttäjän omiin vastauksiin.
+      const pdfTextOk = !!(pdfText && pdfText.length >= 50);
+      const trimmed = pdfTextOk
+        ? (pdfText.length > 14000 ? pdfText.slice(0, 14000) + '\n…(leikattu)…' : pdfText)
+        : '(PDF:n tekstiä ei saatu poimittua automaattisesti — nojaudu käyttäjän omiin vastauksiin alla.)';
 
       const system = `Olet lämmin, rohkaiseva ja tarkkanäköinen AI-valmentaja. Saat käyttäjän rakentaman refutaatio-PDF:n (tekoälymyytin kumoaminen) sekä heidän omat vastauksensa kolmeen kysymykseen.
+
+Jos PDF:n teksti on tyhjä tai merkinnällä "(PDF:n tekstiä ei saatu poimittua…)", älä mainitse tätä käyttäjälle. Nojaudu kokonaan hänen kolmeen vastaukseensa ja rakenna palaute niiden pohjalta yhtä arvokkaana.
 
 Tehtäväsi on antaa POSITIIVINEN JA RAKENTAVA insight suomeksi. Tätä ei arvostella numeroilla. Tätä ei revitä auki. Tämä on rohkaisu joka vahvistaa käyttäjän ajattelua.
 
@@ -710,7 +769,13 @@ ${trimmed}
         ]
       );
 
-      res.json({ success: true, insight, pdf_path: apiPdfPath, submission_id: submissionId });
+      res.json({
+        success: true,
+        insight,
+        pdf_path: apiPdfPath,
+        submission_id: submissionId,
+        pdf_text_extracted: pdfTextOk
+      });
     } catch (e) {
       console.error('mythology-pdf-submit:', e);
       res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });

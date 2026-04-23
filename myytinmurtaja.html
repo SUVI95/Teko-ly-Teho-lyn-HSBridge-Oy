@@ -373,6 +373,40 @@ h1.hero-title em{font-style:italic;color:#e8a58a;}
     });
   });
 
+  // ---- Auto-save käyttäjän vastaukset localStorageen, jotta refresh ei hukkaa tekstiä ----
+  var LS_KEY = 'myytinmurtaja_draft_v1';
+  function readDraft() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null') || {}; } catch (e) { return {}; }
+  }
+  function saveDraft() {
+    var d = {
+      myth: ($('f-myth').value || '').trim(),
+      perplexity: ($('q-perplexity').value || ''),
+      strongest: ($('q-strongest').value || ''),
+      own: ($('q-own').value || ''),
+      ts: Date.now()
+    };
+    try { localStorage.setItem(LS_KEY, JSON.stringify(d)); } catch (e) {}
+  }
+  function clearDraft() { try { localStorage.removeItem(LS_KEY); } catch (e) {} }
+  (function restoreDraft() {
+    var d = readDraft();
+    if (d.perplexity) $('q-perplexity').value = d.perplexity;
+    if (d.strongest) $('q-strongest').value = d.strongest;
+    if (d.own) $('q-own').value = d.own;
+    if (d.myth) $('f-myth').value = d.myth;
+  })();
+  ['q-perplexity','q-strongest','q-own'].forEach(function(id){
+    var el = $(id);
+    if (el) el.addEventListener('input', saveDraft);
+  });
+  // Tallenna myös myytin valinnan yhteydessä
+  document.addEventListener('click', function(e){
+    if (e.target && e.target.classList && e.target.classList.contains('myth-pick')) {
+      setTimeout(saveDraft, 50);
+    }
+  });
+
   // File drop
   var drop = $('file-drop'), input = $('pdf-input'), fnameEl = $('file-name');
   var selectedFile = null;
@@ -432,6 +466,8 @@ h1.hero-title em{font-style:italic;color:#e8a58a;}
         show('insight-result', true);
         $('insight-body').innerHTML = formatInsight(x.d.insight);
         show('save-ok', true);
+        // Onnistunut tallennus — voidaan tyhjentää luonnos
+        clearDraft();
         $('step4').scrollIntoView({ behavior: 'smooth' });
       })
       .catch(function() {
