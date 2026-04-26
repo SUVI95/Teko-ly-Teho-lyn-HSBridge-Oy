@@ -269,6 +269,13 @@ async function postForm(pathUrl, token, fields) {
     C('admin-rikki as admin → 200', admRki.status === 200);
     C('admin sees A\'s rikki submissions (round 1 & 2)', ((admRki.json?.items || []).find(it => it.user_id === studentA.id)?.submissions || []).length === 2);
 
+    const admCourtList = await api('GET', '/api/admin/court-module-submissions', tokenAdmin);
+    C('court-module-submissions as admin → 200', admCourtList.status === 200 && Array.isArray(admCourtList.json?.submissions));
+    const admTbList = await api('GET', '/api/admin/tool-builder-submissions', tokenAdmin);
+    C('tool-builder-submissions as admin → 200', admTbList.status === 200 && Array.isArray(admTbList.json?.submissions));
+    const stCourtList = await api('GET', '/api/admin/court-module-submissions', tokenA);
+    C('court-module-submissions as student → 403', stCourtList.status === 403);
+
     /* ===== PER-USER ISOLATION: student B endpoints ===== */
     S('Isolation: student B sees empty / own data');
     const refB = await api('GET', '/api/final/gallery', tokenB);
@@ -317,7 +324,7 @@ async function postForm(pathUrl, token, fields) {
     C('admin gets aggregate stats (n, avg_q1…q5)', admFb.json?.stats?.n >= 1 && admFb.json?.stats?.avg_q1 != null);
 
     S('Admin HTML pages mounted');
-    for (const p of ['/admin/loppumoduuli', '/admin/mythology', '/admin/rikkinainen-prompti', '/admin/palaute']) {
+    for (const p of ['/admin/loppumoduuli', '/admin/mythology', '/admin/rikkinainen-prompti', '/admin/tuomioistuin', '/admin/tyokalurakentaja', '/admin/palaute']) {
       const r = await api('GET', p, tokenAdmin);
       C('GET ' + p + ' as admin → 200 HTML', r.status === 200 && /html/i.test(r.contentType));
       const r2 = await api('GET', p, tokenA);
@@ -338,6 +345,8 @@ async function postForm(pathUrl, token, fields) {
         try { await pool.query('DELETE FROM mythology_submissions WHERE user_id=$1', [u.id]); } catch (e) {}
         try { await pool.query('DELETE FROM broken_prompt_submissions WHERE user_id=$1', [u.id]); } catch (e) {}
         try { await pool.query('DELETE FROM course_feedback WHERE user_id=$1', [u.id]); } catch (e) {}
+        try { await pool.query('DELETE FROM court_submissions WHERE user_id=$1', [u.id]); } catch (e) {}
+        try { await pool.query('DELETE FROM tool_builder_submissions WHERE user_id=$1', [u.id]); } catch (e) {}
         await cleanupUser(u.id);
       }
     }

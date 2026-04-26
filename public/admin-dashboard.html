@@ -877,6 +877,8 @@ nav {
           <a href="/admin/loppumoduuli">Tekoäly ja minä (3 stations)<span>Reflection, 3 Napkin PDFs, podcast answers, gallery</span></a>
           <a href="/admin/mythology">Myytinmurtaja<span>Uploaded PDF + three answers + AI insight</span></a>
           <a href="/admin/rikkinainen-prompti">Rikkinäinen Prompti<span>Both rounds — saved payload per student</span></a>
+          <a href="/admin/tuomioistuin">Tekoäly tuomioistuimessa<span>Perplexity, Gamma, Canva, 3 vastausta + havainto</span></a>
+          <a href="/admin/tyokalurakentaja">Rakenna oma AI-työkalu<span>Promptti, testit, reflektio, julkaisu</span></a>
           <a href="/admin/palaute">Kurssipalaute (stars)<span>5 ratings + optional comment</span></a>
         </div>
       </div>
@@ -1418,7 +1420,93 @@ nav {
 
     function renderStudentDetail(data) {
       const container = document.getElementById('studentDetailContainer');
-      const { user, reflections, feedback, closingActions, progress, checklist, consent } = data;
+      const { user, reflections, feedback, closingActions, progress, checklist, consent, courtSubmission, toolBuilderSubmission } = data;
+      const origin = window.location.origin || '';
+      const aiModuleTabCount = (courtSubmission ? 1 : 0) + (toolBuilderSubmission ? 1 : 0);
+
+      function jsonPre(obj) {
+        try { return escapeHtml(JSON.stringify(obj, null, 2)); } catch (e) { return escapeHtml(String(obj)); }
+      }
+
+      const courtSection = (() => {
+        if (!courtSubmission) return '';
+        const c = courtSubmission;
+        const canvaHref = c.canva_image_path
+          ? (String(c.canva_image_path).startsWith('http') ? c.canva_image_path : origin + c.canva_image_path)
+          : '';
+        const gamma = (c.gamma_url || '').trim();
+        return `
+          <h3 style="margin: 0 0 1rem; font-family: 'DM Serif Display', serif; color: var(--ink);">Tekoäly tuomioistuimessa</h3>
+          <div class="content-item">
+            <div class="content-item-header">
+              <div>
+                <span class="module-badge">TAPAUS ${escapeHtml(c.scenario_selected || '—')}</span>
+                <span class="content-item-title">Lähetys ${c.completed_at ? '<span style="color:var(--accent3);font-weight:600;">✓ Valmis</span>' : '<span style="color:var(--muted);">Kesken</span>'}</span>
+              </div>
+              <div class="content-item-date">${formatDate(c.created_at)}</div>
+            </div>
+            <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">ID: <code style="font-size:0.8rem;">${escapeHtml(c.id || '')}</code></p>
+            ${gamma ? `<p style="margin:0.5rem 0;"><a href="${escapeHtml(gamma)}" target="_blank" rel="noopener" style="color:var(--accent2);font-weight:600;">Gamma-dokumentti →</a></p>` : ''}
+            ${canvaHref ? `<p style="margin:0.5rem 0;"><a href="${escapeHtml(canvaHref)}" target="_blank" rel="noopener" style="color:var(--accent2);font-weight:600;">Canva-kortti (kuva) →</a></p>` : ''}
+            <h4 style="margin:1rem 0 0.5rem;font-size:0.95rem;">Perplexity-löydöt</h4>
+            <div class="content-item-text" style="white-space:pre-wrap;max-height:320px;overflow:auto;">${escapeHtml(c.perplexity_findings || '—')}</div>
+            ${c.followup_q1 ? `<h4 style="margin:1rem 0 0.35rem;font-size:0.95rem;">Kysymys 1</h4><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(c.followup_q1)}</div><h4 style="margin:0.75rem 0 0.35rem;font-size:0.9rem;color:var(--muted);">Vastaus</h4><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(c.followup_a1 || '—')}</div>` : ''}
+            ${c.followup_q2 ? `<h4 style="margin:1rem 0 0.35rem;font-size:0.95rem;">Kysymys 2</h4><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(c.followup_q2)}</div><h4 style="margin:0.75rem 0 0.35rem;font-size:0.9rem;color:var(--muted);">Vastaus</h4><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(c.followup_a2 || '—')}</div>` : ''}
+            ${c.followup_q3 ? `<h4 style="margin:1rem 0 0.35rem;font-size:0.95rem;">Kysymys 3</h4><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(c.followup_q3)}</div><h4 style="margin:0.75rem 0 0.35rem;font-size:0.9rem;color:var(--muted);">Vastaus</h4><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(c.followup_a3 || '—')}</div>` : ''}
+            ${c.ai_observation ? `<h4 style="margin:1rem 0 0.35rem;font-size:0.95rem;">Tekoälyn havainto</h4><div class="content-item-text" style="white-space:pre-wrap;font-style:italic;">${escapeHtml(c.ai_observation)}</div>` : ''}
+          </div>
+        `;
+      })();
+
+      const toolSection = (() => {
+        if (!toolBuilderSubmission) return '';
+        const t = toolBuilderSubmission;
+        const canvaHref = t.canva_card_path
+          ? (String(t.canva_card_path).startsWith('http') ? t.canva_card_path : origin + t.canva_card_path)
+          : '';
+        const gamma = (t.gamma_url || '').trim();
+        return `
+          <h3 style="margin: 2rem 0 1rem; font-family: 'DM Serif Display', serif; color: var(--ink);">Rakenna oma AI-työkalu</h3>
+          <div class="content-item">
+            <div class="content-item-header">
+              <div>
+                <span class="module-badge">${escapeHtml(t.tool_name || 'Työkalu')}</span>
+                <span class="content-item-title">${t.completed_at ? '<span style="color:var(--accent3);font-weight:600;">✓ Julkaistu</span>' : '<span style="color:var(--muted);">Kesken</span>'}</span>
+              </div>
+              <div class="content-item-date">${formatDate(t.created_at)}</div>
+            </div>
+            <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;">ID: <code style="font-size:0.8rem;">${escapeHtml(t.id || '')}</code></p>
+            ${t.one_sentence_description ? `<p style="margin:0.5rem 0;font-weight:500;">${escapeHtml(t.one_sentence_description)}</p>` : ''}
+            ${gamma ? `<p style="margin:0.5rem 0;"><a href="${escapeHtml(gamma)}" target="_blank" rel="noopener" style="color:var(--accent2);font-weight:600;">Gamma-dokumentaatio →</a></p>` : ''}
+            ${canvaHref ? `<p style="margin:0.5rem 0;"><a href="${escapeHtml(canvaHref)}" target="_blank" rel="noopener" style="color:var(--accent2);font-weight:600;">Canva-kortti (kuva) →</a></p>` : ''}
+            <h4 style="margin:1rem 0 0.5rem;font-size:0.95rem;">Ongelma</h4>
+            <div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(t.problem_description || '—')}</div>
+            <h4 style="margin:1rem 0 0.5rem;font-size:0.95rem;">Suunnittelukentät</h4>
+            <div class="content-item-text" style="white-space:pre-wrap;font-size:0.88rem;"><strong>Rooli:</strong> ${escapeHtml(t.field_role || '—')}</div>
+            <div class="content-item-text" style="white-space:pre-wrap;font-size:0.88rem;margin-top:0.5rem;"><strong>Syöte:</strong> ${escapeHtml(t.field_input || '—')}</div>
+            <div class="content-item-text" style="white-space:pre-wrap;font-size:0.88rem;margin-top:0.5rem;"><strong>Rakenne:</strong> ${escapeHtml(t.field_structure || '—')}</div>
+            <div class="content-item-text" style="white-space:pre-wrap;font-size:0.88rem;margin-top:0.5rem;"><strong>Rajoitteet:</strong> ${escapeHtml(t.field_constraints || '—')}</div>
+            <div class="content-item-text" style="white-space:pre-wrap;font-size:0.88rem;margin-top:0.5rem;"><strong>Reunatapaukset:</strong> ${escapeHtml(t.field_edge_cases || '—')}</div>
+            <h4 style="margin:1rem 0 0.5rem;font-size:0.95rem;">System prompt v1</h4>
+            <pre style="font-family:'DM Mono',monospace;font-size:0.78rem;background:var(--paper2);padding:0.85rem;border-radius:8px;overflow:auto;max-height:240px;white-space:pre-wrap;word-break:break-word;">${escapeHtml(t.system_prompt_v1 || '—')}</pre>
+            ${t.system_prompt_v2 ? `<h4 style="margin:1rem 0 0.5rem;font-size:0.95rem;">System prompt v2</h4><pre style="font-family:'DM Mono',monospace;font-size:0.78rem;background:var(--paper2);padding:0.85rem;border-radius:8px;overflow:auto;max-height:240px;white-space:pre-wrap;word-break:break-word;">${escapeHtml(t.system_prompt_v2)}</pre>` : ''}
+            <h4 style="margin:1rem 0 0.5rem;font-size:0.95rem;">Testit (JSON)</h4>
+            <pre style="font-family:'DM Mono',monospace;font-size:0.75rem;background:#fff;padding:0.85rem;border:1px solid var(--border);border-radius:8px;overflow:auto;max-height:200px;">Syötteet:\n${jsonPre(t.test_inputs)}\n\nTulosteet:\n${jsonPre(t.test_outputs)}</pre>
+            <h4 style="margin:1rem 0 0.5rem;font-size:0.95rem;">Reflektio (testien jälkeen)</h4>
+            <div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(t.reflection_text || '—')}</div>
+            <h4 style="margin:1rem 0 0.5rem;font-size:0.95rem;">Lopullinen oivallus</h4>
+            <div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(t.final_insight || '—')}</div>
+          </div>
+        `;
+      })();
+
+      const aiModulesEmptyHtml = `
+        <div class="empty-state">
+          <div class="empty-state-icon">⚖️</div>
+          <p>Ei tallennettuja lähetyksiä moduuleista <strong>Tekoäly tuomioistuimessa</strong> tai <strong>Rakenna oma AI-työkalu</strong>.</p>
+          <p style="font-size:0.9rem;color:var(--muted);margin-top:0.5rem;">Kokonaislistat: <a href="/admin/tuomioistuin" style="color:var(--accent2);">Tuomioistuin</a> · <a href="/admin/tyokalurakentaja" style="color:var(--accent2);">Työkalurakentaja</a></p>
+        </div>
+      `;
 
       // Calculate progress metrics
       const modules = [...new Set(progress.map(p => p.module_id))];
@@ -1484,6 +1572,7 @@ nav {
           <div class="tabs">
             <button class="tab active" onclick="switchTab('reflections', event)">Reflektiot (${reflections.length})</button>
             <button class="tab" onclick="switchTab('feedback', event)">Palautteet (${feedback.length})</button>
+            <button class="tab" onclick="switchTab('aiModules', event)">Tuomioistuin &amp; työkalu (${aiModuleTabCount})</button>
             <button class="tab" onclick="switchTab('closingActions', event)">Sulkemistoimenpiteet (${closingActions.length})</button>
             <button class="tab" onclick="switchTab('consent', event)">Suostumus (${consent ? '1' : '0'})</button>
             <button class="tab" onclick="switchTab('progress', event)">Edistyminen</button>
@@ -1621,6 +1710,11 @@ nav {
                 `}).join('')}
               ` : ''}
             `}
+          </div>
+
+          <!-- Tekoäly tuomioistuin + Työkalurakentaja -->
+          <div id="tab-aiModules" class="tab-content">
+            ${!courtSubmission && !toolBuilderSubmission ? aiModulesEmptyHtml : `${courtSection}${toolSection}`}
           </div>
 
           <!-- Consent Tab -->
@@ -1887,7 +1981,7 @@ nav {
       
       try {
         // Create CSV from current student data
-        const { user, reflections, feedback, closingActions, consent } = currentStudentData;
+        const { user, reflections, feedback, closingActions, consent, courtSubmission, toolBuilderSubmission } = currentStudentData;
         
         // Reflections CSV
         const reflectionsCSV = [
@@ -1951,6 +2045,21 @@ nav {
           setTimeout(() => {
             downloadCSV(consentCSV, `${user.email}-consent-${new Date().toISOString().split('T')[0]}.csv`);
           }, 1500);
+        }
+        if (courtSubmission || toolBuilderSubmission) {
+          const delay = consentCSV ? 2000 : 1500;
+          setTimeout(() => {
+            const payload = { courtSubmission: courtSubmission || null, toolBuilderSubmission: toolBuilderSubmission || null };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${(user.email || 'student').replace(/[^a-z0-9._-]/gi, '_')}-tuomioistuin-tyokalurakentaja-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          }, delay);
         }
       } catch (error) {
         showError('CSV:n lataaminen epäonnistui', 'detailErrorMessage');

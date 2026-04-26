@@ -254,6 +254,32 @@ app.get('/admin/palaute', authenticateToken, (req, res) => {
   res.status(404).send('Ei löytynyt');
 });
 
+app.get('/admin/tuomioistuin', authenticateToken, (req, res) => {
+  if (!req.user || !req.user.is_admin) {
+    return res.status(403).send('<h1>403 - Pääsy kielletty</h1>');
+  }
+  const candidates = [
+    path.join(__dirname, 'admin-tuomioistuin.html'),
+    path.join(process.cwd(), 'admin-tuomioistuin.html')
+  ];
+  const p = candidates.find(c => fs.existsSync(c));
+  if (p) return res.sendFile(p);
+  res.status(404).send('Ei löytynyt');
+});
+
+app.get('/admin/tyokalurakentaja', authenticateToken, (req, res) => {
+  if (!req.user || !req.user.is_admin) {
+    return res.status(403).send('<h1>403 - Pääsy kielletty</h1>');
+  }
+  const candidates = [
+    path.join(__dirname, 'admin-tyokalurakentaja.html'),
+    path.join(process.cwd(), 'admin-tyokalurakentaja.html')
+  ];
+  const p = candidates.find(c => fs.existsSync(c));
+  if (p) return res.sendFile(p);
+  res.status(404).send('Ei löytynyt');
+});
+
 app.get('/final/mythology', (req, res) => {
   res.redirect(302, '/module/myytinmurtaja');
 });

@@ -2,6 +2,8 @@ const express = require('express');
 const pool = require('../database/db');
 const { authenticateToken } = require('../middleware/auth');
 const onboardingModule = require('./onboarding');
+const { ensureCourtTables } = require('./tuomioistuin');
+const { ensureToolBuilderTables } = require('./tyokalurakentaja');
 
 const router = express.Router();
 
@@ -240,7 +242,40 @@ router.get('/students/:userId', authenticateToken, requireAdmin, async (req, res
     } catch (e) {
       // gdpr_consent table might not exist
     }
-    
+
+    let courtSubmission = null;
+    let toolBuilderSubmission = null;
+    try {
+      await ensureCourtTables();
+      const courtR = await pool.query(
+        `SELECT id, scenario_selected, perplexity_findings, gamma_url, canva_image_path,
+                followup_q1, followup_q2, followup_q3, followup_a1, followup_a2, followup_a3,
+                ai_observation, completed_at, created_at
+         FROM court_submissions WHERE user_id = $1
+         ORDER BY created_at DESC LIMIT 1`,
+        [userId]
+      );
+      courtSubmission = courtR.rows[0] || null;
+    } catch (e) {
+      console.error('court_submissions in student detail:', e.message);
+    }
+
+    try {
+      await ensureToolBuilderTables();
+      const tbR = await pool.query(
+        `SELECT id, problem_description, field_role, field_input, field_structure, field_constraints,
+                field_edge_cases, system_prompt_v1, system_prompt_v2, test_inputs, test_outputs,
+                reflection_text, tool_name, one_sentence_description, gamma_url, canva_card_path,
+                final_insight, completed_at, created_at
+         FROM tool_builder_submissions WHERE user_id = $1
+         ORDER BY created_at DESC LIMIT 1`,
+        [userId]
+      );
+      toolBuilderSubmission = tbR.rows[0] || null;
+    } catch (e) {
+      console.error('tool_builder_submissions in student detail:', e.message);
+    }
+
     res.json({
       user,
       reflections: reflectionsResult.rows,
@@ -248,11 +283,56 @@ router.get('/students/:userId', authenticateToken, requireAdmin, async (req, res
       closingActions: closingActionsResult.rows,
       progress: progressResult.rows,
       checklist: checklistResult.rows,
-      consent
+      consent,
+      courtSubmission,
+      toolBuilderSubmission
     });
   } catch (error) {
     console.error('Get student data error:', error);
     res.status(500).json({ error: 'Failed to get student data' });
+  }
+});
+
+// Admin — Tekoäly tuomioistuimessa: kaikki lähetykset (viimeisimmät ensin)
+router.get('/court-module-submissions', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    await ensureCourtTables();
+    const r = await pool.query(
+      `SELECT c.id, c.user_id, c.scenario_selected, c.perplexity_findings, c.gamma_url, c.canva_image_path,
+              c.followup_q1, c.followup_q2, c.followup_q3, c.followup_a1, c.followup_a2, c.followup_a3,
+              c.ai_observation, c.completed_at, c.created_at,
+              COALESCE(u.name, u.email) AS user_label, u.email AS user_email
+       FROM court_submissions c
+       JOIN users u ON u.id = c.user_id
+       ORDER BY c.created_at DESC
+       LIMIT 500`
+    );
+    res.json({ submissions: r.rows });
+  } catch (e) {
+    console.error('admin court-module-submissions:', e);
+    res.status(500).json({ error: 'Failed to list court submissions' });
+  }
+});
+
+// Admin — Rakenna oma AI-työkalu: kaikki lähetykset
+router.get('/tool-builder-submissions', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    await ensureToolBuilderTables();
+    const r = await pool.query(
+      `SELECT t.id, t.user_id, t.problem_description, t.field_role, t.field_input, t.field_structure,
+              t.field_constraints, t.field_edge_cases, t.system_prompt_v1, t.system_prompt_v2,
+              t.test_inputs, t.test_outputs, t.reflection_text, t.tool_name, t.one_sentence_description,
+              t.gamma_url, t.canva_card_path, t.final_insight, t.completed_at, t.created_at,
+              COALESCE(u.name, u.email) AS user_label, u.email AS user_email
+       FROM tool_builder_submissions t
+       JOIN users u ON u.id = t.user_id
+       ORDER BY t.created_at DESC
+       LIMIT 500`
+    );
+    res.json({ submissions: r.rows });
+  } catch (e) {
+    console.error('admin tool-builder-submissions:', e);
+    res.status(500).json({ error: 'Failed to list tool builder submissions' });
   }
 });
 

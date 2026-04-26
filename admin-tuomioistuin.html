@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · Tekoäly tuomioistuimessa</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#f5f3ef;color:#1a1a2e;font-family:'DM Sans',sans-serif;padding:2rem;line-height:1.6;}
+header{max-width:1280px;margin:0 auto 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+header h1{font-family:'DM Serif Display',serif;font-size:2rem;font-weight:400;}
+header .sub{font-family:'DM Mono',monospace;font-size:0.75rem;color:#6b6880;letter-spacing:0.12em;text-transform:uppercase;}
+header a{color:#c75b3a;text-decoration:none;font-size:0.9rem;font-weight:500;}
+.wrap{max-width:1280px;margin:0 auto;}
+.empty{background:#fff;border:1px solid rgba(26,26,46,0.12);border-radius:12px;padding:3rem;text-align:center;color:#6b6880;}
+.nav-links{max-width:1280px;margin:0 auto 1.25rem;display:flex;gap:.75rem;flex-wrap:wrap;}
+.nav-links a{background:#fff;border:1px solid rgba(26,26,46,0.12);color:#1a1a2e;text-decoration:none;padding:.45rem .85rem;border-radius:999px;font-size:.8rem;font-weight:500;}
+.nav-links a:hover{border-color:#c75b3a;color:#c75b3a;}
+
+.card{background:#fff;border:1px solid rgba(26,26,46,0.12);border-radius:14px;padding:1.5rem 1.75rem;margin-bottom:1.25rem;box-shadow:0 2px 20px rgba(26,26,46,0.06);}
+.head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.75rem;border-bottom:1px solid rgba(26,26,46,0.08);padding-bottom:.9rem;margin-bottom:1rem;}
+.name{font-family:'DM Serif Display',serif;font-size:1.25rem;}
+.email{font-family:'DM Mono',monospace;font-size:.75rem;color:#6b6880;}
+.chip{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .6rem;border-radius:999px;border:1px solid rgba(26,26,46,.15);background:#faf8f4;color:#6b6880;display:inline-block;margin-right:.4rem;}
+.chip.done{background:#2a7a4b;color:#fff;border-color:#2a7a4b;}
+.block{margin-bottom:1rem;}
+.block-title{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:#2563a8;font-weight:500;margin-bottom:.45rem;}
+.pre{font-family:'DM Mono',monospace;font-size:.82rem;background:#faf8f4;border:1px solid rgba(26,26,46,0.06);border-radius:8px;padding:.75rem;white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto;}
+.time{font-family:'DM Mono',monospace;font-size:.72rem;color:#6b6880;}
+a.link{color:#2563a8;font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Tekoäly tuomioistuimessa</h1>
+    <div class="sub">Admin · kaikki lähetykset (viimeisimmät ensin)</div>
+  </div>
+  <a href="/admin">← Admin-etusivulle</a>
+</header>
+<nav class="nav-links">
+  <a href="/admin/loppumoduuli">Tekoäly ja minä</a>
+  <a href="/admin/mythology">Myytinmurtaja</a>
+  <a href="/admin/rikkinainen-prompti">Rikkinäinen Prompti</a>
+  <a href="/admin/tuomioistuin">Tuomioistuin (tämä)</a>
+  <a href="/admin/tyokalurakentaja">Työkalurakentaja</a>
+  <a href="/admin/palaute">Palaute</a>
+</nav>
+<div class="wrap" id="wrap">
+  <div class="empty">Ladataan...</div>
+</div>
+<script>
+(function(){
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function fmt(iso){ try{ var d=new Date(iso); return d.toLocaleDateString('fi-FI')+' '+d.toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit'});}catch(_){return '';} }
+
+  fetch('/api/admin/court-module-submissions',{credentials:'include'})
+    .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+    .then(function(x){
+      var wrap=document.getElementById('wrap');
+      if(x.d&&x.d.error){ wrap.innerHTML='<div class="empty">Virhe: '+esc(x.d.error)+'</div>'; return; }
+      if(!x.ok){ wrap.innerHTML='<div class="empty">Virhe: ei oikeuksia tai palvelinvirhe.</div>'; return; }
+      var rows=x.d.submissions||[];
+      if(!rows.length){ wrap.innerHTML='<div class="empty">Ei vielä lähetyksiä.</div>'; return; }
+
+      wrap.innerHTML=rows.map(function(s){
+        var gamma=(s.gamma_url||'').trim();
+        var canva=(s.canva_image_path||'').trim();
+        var origin=window.location.origin||'';
+        var canvaHref=canva?(canva.indexOf('http')===0?canva:origin+canva):'';
+        return '<div class="card">'
+          + '<div class="head">'
+          +   '<div><div class="name">'+esc(s.user_label||'')+'</div><div class="email">'+esc(s.user_email||'')+' · user_id '+esc(s.user_id)+'</div></div>'
+          +   '<div><span class="chip">TAPAUS '+esc(s.scenario_selected||'—')+'</span>'
+          +   '<span class="chip '+(s.completed_at?'done':'')+'">'+(s.completed_at?'Valmis':'Kesken')+'</span><br><span class="time">'+esc(fmt(s.created_at))+'</span></div>'
+          + '</div>'
+          + '<p style="font-size:0.8rem;color:#6b6880;margin-bottom:0.75rem;">UUID: <code>'+esc(s.id)+'</code></p>'
+          + (gamma?'<p><a class="link" href="'+esc(gamma)+'" target="_blank" rel="noopener">Gamma →</a></p>':'')
+          + (canvaHref?'<p><a class="link" href="'+esc(canvaHref)+'" target="_blank" rel="noopener">Canva-kuva →</a></p>':'')
+          + '<div class="block"><div class="block-title">Perplexity-löydöt</div><pre class="pre">'+esc(s.perplexity_findings||'—')+'</pre></div>'
+          + (s.followup_q1?'<div class="block"><div class="block-title">Kysymys 1</div><pre class="pre">'+esc(s.followup_q1)+'</pre><div class="block-title" style="margin-top:0.5rem;">Vastaus 1</div><pre class="pre">'+esc(s.followup_a1||'—')+'</pre></div>':'')
+          + (s.followup_q2?'<div class="block"><div class="block-title">Kysymys 2</div><pre class="pre">'+esc(s.followup_q2)+'</pre><div class="block-title" style="margin-top:0.5rem;">Vastaus 2</div><pre class="pre">'+esc(s.followup_a2||'—')+'</pre></div>':'')
+          + (s.followup_q3?'<div class="block"><div class="block-title">Kysymys 3</div><pre class="pre">'+esc(s.followup_q3)+'</pre><div class="block-title" style="margin-top:0.5rem;">Vastaus 3</div><pre class="pre">'+esc(s.followup_a3||'—')+'</pre></div>':'')
+          + (s.ai_observation?'<div class="block"><div class="block-title">Tekoälyn havainto</div><pre class="pre" style="font-style:italic;">'+esc(s.ai_observation)+'</pre></div>':'')
+          + '</div>';
+      }).join('');
+    })
+    .catch(function(){ document.getElementById('wrap').innerHTML='<div class="empty">Yhteysvirhe.</div>'; });
+})();
+</script>
+</body>
+</html>
