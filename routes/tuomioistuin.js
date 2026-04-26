@@ -27,7 +27,7 @@ async function ensureCourtTables() {
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       scenario_selected VARCHAR(100),
       perplexity_findings TEXT,
-      gamma_url VARCHAR(500),
+      manus_url VARCHAR(500),
       canva_image_path VARCHAR(500),
       canva_image_bytes BYTEA,
       canva_image_mime VARCHAR(50),
@@ -42,6 +42,25 @@ async function ensureCourtTables() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  try {
+    await pool.query(`
+      DO $migrate$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'court_submissions' AND column_name = 'gamma_url'
+        ) AND NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'court_submissions' AND column_name = 'manus_url'
+        ) THEN
+          ALTER TABLE court_submissions RENAME COLUMN gamma_url TO manus_url;
+        END IF;
+      END
+      $migrate$;
+    `);
+  } catch (e) {
+    console.error('court_submissions gamma_url→manus_url migrate:', e.message);
+  }
   await pool.query('CREATE INDEX IF NOT EXISTS idx_court_submissions_user ON court_submissions(user_id)');
   await pool.query(
     'CREATE INDEX IF NOT EXISTS idx_court_submissions_completed ON court_submissions(completed_at DESC)'
@@ -176,15 +195,15 @@ router.post('/submit-step3', authenticateToken, (req, res) => {
     }
     try {
       await ensureCourtTables();
-      const { submission_id, gamma_url } = req.body || {};
+      const { submission_id, manus_url, gamma_url } = req.body || {};
       if (!isUuid(submission_id)) {
         return res.status(400).json({ error: 'Virheellinen tunniste' });
       }
       const owned = await loadOwned(submission_id, req.user.id);
       if (!owned) return res.status(404).json({ error: 'Tallennusta ei löytynyt' });
-      const url = (gamma_url || '').toString().trim();
+      const url = (manus_url || gamma_url || '').toString().trim();
       if (!/^https?:\/\/[^\s]+$/i.test(url)) {
-        return res.status(400).json({ error: 'Anna kelvollinen URL (https://gamma.app/...)' });
+        return res.status(400).json({ error: 'Anna kelvollinen URL (https://manus.im/...)' });
       }
       if (url.length > 500) {
         return res.status(400).json({ error: 'URL on liian pitkä' });
@@ -195,7 +214,7 @@ router.post('/submit-step3', authenticateToken, (req, res) => {
       const apiPath = `/api/tuomioistuin/canva-image/${submission_id}`;
       await pool.query(
         `UPDATE court_submissions
-         SET gamma_url = $1, canva_image_path = $2, canva_image_bytes = $3, canva_image_mime = $4
+         SET manus_url = $1, canva_image_path = $2, canva_image_bytes = $3, canva_image_mime = $4
          WHERE id = $5::uuid AND user_id = $6`,
         [url, apiPath, req.file.buffer, req.file.mimetype || 'image/png', submission_id, req.user.id]
       );
@@ -241,7 +260,8 @@ router.post('/generate-questions', authenticateToken, async (req, res) => {
     }
     const sub = await loadOwned(submission_id, req.user.id);
     if (!sub) return res.status(404).json({ error: 'Tallennusta ei löytynyt' });
-    if (!sub.scenario_selected || !sub.perplexity_findings || !sub.gamma_url || !sub.canva_image_bytes) {
+    const docUrl = sub.manus_url || sub.gamma_url;
+    if (!sub.scenario_selected || !sub.perplexity_findings || !docUrl || !sub.canva_image_bytes) {
       return res.status(400).json({ error: 'Täytä ensin vaiheet 1–3' });
     }
     const scen = SCENARIOS[sub.scenario_selected] || { name: sub.scenario_selected, description: '' };
@@ -251,7 +271,7 @@ router.post('/generate-questions', authenticateToken, async (req, res) => {
 Sinulla on:
 - Heidän valitsemansa tapaus
 - Heidän Perplexity-löytönsä
-- URL heidän Gamma-dokumenttiinsa
+- URL heidän Manus-sivulleen (argumenttisivu)
 - Heidän Canva-tuomiokorttinsa kuva
 
 Tehtäväsi: Esitä TASAN KOLME kysymystä.
@@ -270,8 +290,8 @@ Säännöt jotka et riko koskaan:
 Perplexity-löydöt:
 ${(sub.perplexity_findings || '').slice(0, 4000)}
 
-Gamma URL: ${sub.gamma_url}
-Heidän kantansa on nähtävissä Gamma-dokumentissa.
+Manus URL: ${docUrl}
+Heidän kantansa on nähtävissä Manus-sivulla.
 
 Esitä kolme kysymystä.`;
 
@@ -429,7 +449,7 @@ router.get('/my-submission', authenticateToken, async (req, res) => {
   try {
     await ensureCourtTables();
     const r = await pool.query(
-      `SELECT id, scenario_selected, perplexity_findings, gamma_url, canva_image_path,
+      `SELECT id, scenario_selected, perplexity_findings, manus_url, canva_image_path,
               followup_q1, followup_q2, followup_q3,
               followup_a1, followup_a2, followup_a3,
               ai_observation, completed_at, created_at

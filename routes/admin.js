@@ -248,7 +248,7 @@ router.get('/students/:userId', authenticateToken, requireAdmin, async (req, res
     try {
       await ensureCourtTables();
       const courtR = await pool.query(
-        `SELECT id, scenario_selected, perplexity_findings, gamma_url, canva_image_path,
+        `SELECT id, scenario_selected, perplexity_findings, manus_url, canva_image_path,
                 followup_q1, followup_q2, followup_q3, followup_a1, followup_a2, followup_a3,
                 ai_observation, completed_at, created_at
          FROM court_submissions WHERE user_id = $1
@@ -299,7 +299,7 @@ router.get('/court-module-submissions', authenticateToken, requireAdmin, async (
   try {
     await ensureCourtTables();
     const r = await pool.query(
-      `SELECT c.id, c.user_id, c.scenario_selected, c.perplexity_findings, c.gamma_url, c.canva_image_path,
+      `SELECT c.id, c.user_id, c.scenario_selected, c.perplexity_findings, c.manus_url, c.canva_image_path,
               c.followup_q1, c.followup_q2, c.followup_q3, c.followup_a1, c.followup_a2, c.followup_a3,
               c.ai_observation, c.completed_at, c.created_at,
               COALESCE(u.name, u.email) AS user_label, u.email AS user_email

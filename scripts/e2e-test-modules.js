@@ -265,7 +265,7 @@ async function postForm(pathUrl, token, fields) {
     const courtPng = pngBuffer();
     const st3 = await postForm('/api/tuomioistuin/submit-step3', tokenA, [
       { name: 'submission_id', value: courtSid },
-      { name: 'gamma_url', value: 'https://gamma.app/docs/e2e-test-doc' },
+      { name: 'manus_url', value: 'https://manus.im/share/e2e-test-doc' },
       { name: 'canva_image', value: courtPng, filename: 'tuomio-kortti.png', contentType: 'image/png' }
     ]);
     C('POST tuomioistuin/submit-step3 (multipart PNG) → 200', st3.status === 200, 'status=' + st3.status);
