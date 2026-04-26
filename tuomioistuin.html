@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tekoäly tuomioistuimessa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#1a1a2e; --ink2:#2d2d44; --paper:#f5f3ef; --paper2:#eeeae3; --warm:#e8e0d4;
+  --accent:#c75b3a; --accent2:#2563a8; --accent3:#2a7a4b; --gold:#b8860b; --danger:#b91c1c;
+  --text:#1a1a2e; --muted:#6b6880; --border:rgba(26,26,46,0.12);
+  --shadow:0 2px 20px rgba(26,26,46,0.08); --shadow-md:0 8px 40px rgba(26,26,46,0.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.7;overflow-x:hidden;}
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:200;transition:width 0.4s ease;width:0%;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;background:rgba(245,243,239,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2.5rem;justify-content:space-between;}
+.nav-left{display:flex;align-items:center;gap:1rem;}
+.nav-module{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--accent2);letter-spacing:0.12em;text-transform:uppercase;background:rgba(37,99,168,0.08);border:1px solid rgba(37,99,168,0.25);padding:4px 12px;border-radius:4px;}
+.nav-title{font-size:0.85rem;color:var(--muted);}
+.home-link{display:flex;align-items:center;gap:0.5rem;text-decoration:none;color:var(--muted);font-size:0.85rem;font-weight:500;transition:color 0.2s;}
+.home-link:hover{color:var(--ink);}
+.nav-steps{display:flex;gap:5px;}
+.step-pip{width:28px;height:4px;border-radius:2px;background:var(--warm);cursor:pointer;transition:background 0.4s;}
+.step-pip.active{background:var(--accent2);}
+.step-pip.done{background:var(--accent3);}
+
+.section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:96px 2rem 5rem;}
+.section-inner{max-width:1080px;width:100%;}
+.section-alt{background:var(--paper2);}
+.fade-up{opacity:0;transform:translateY(24px);transition:opacity 0.65s ease,transform 0.65s ease;}
+.fade-up.in{opacity:1;transform:translateY(0);}
+.section-label{font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:10px;}
+.section-label::after{content:'';flex:0 0 32px;height:1px;background:currentColor;opacity:0.4;}
+h2.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(1.9rem,4vw,3.1rem);font-weight:400;line-height:1.1;color:var(--ink);margin-bottom:1.25rem;letter-spacing:-0.01em;}
+h2.section-h2 em{font-style:italic;color:var(--accent2);}
+.lead{font-size:1.02rem;color:var(--muted);max-width:720px;line-height:1.8;margin-bottom:2rem;font-weight:300;}
+.divider{width:48px;height:2px;background:var(--accent2);margin-bottom:2rem;border-radius:1px;}
+
+/* Hero */
+#hero{background:var(--ink);min-height:100vh;position:relative;overflow:hidden;}
+#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 70%,rgba(37,99,168,0.22) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 80% 25%,rgba(199,91,58,0.15) 0%,transparent 60%);}
+.hero-inner{max-width:980px;width:100%;position:relative;z-index:1;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;margin-bottom:2rem;}
+.eyebrow-num{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--accent2);letter-spacing:0.15em;text-transform:uppercase;}
+.eyebrow-line{width:40px;height:1px;background:rgba(37,99,168,0.45);}
+.eyebrow-label{font-family:'DM Mono',monospace;font-size:0.72rem;color:rgba(255,255,255,0.35);letter-spacing:0.1em;text-transform:uppercase;}
+h1.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.2rem,5.4vw,4.3rem);font-weight:400;line-height:1.08;color:#fff;margin-bottom:1.5rem;letter-spacing:-0.01em;}
+h1.hero-title em{font-style:italic;color:#87b5ef;}
+.hero-sub{font-size:1.05rem;color:rgba(255,255,255,0.62);max-width:680px;line-height:1.85;margin-bottom:2.25rem;font-weight:300;}
+.progress-row{display:flex;flex-wrap:wrap;gap:0.5rem 1rem;margin-top:2rem;color:rgba(255,255,255,0.55);font-family:'DM Mono',monospace;font-size:0.78rem;letter-spacing:0.05em;}
+.progress-row span{display:inline-flex;align-items:center;gap:0.5rem;}
+.progress-row .arrow{color:rgba(135,181,239,0.55);}
+.progress-row .num{color:#87b5ef;font-weight:600;}
+
+/* Shared blocks */
+.station-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:2rem;box-shadow:var(--shadow-md);margin-bottom:1.75rem;}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:8px;border:none;background:var(--accent2);color:#fff;font-family:inherit;font-weight:600;font-size:0.92rem;cursor:pointer;transition:all 0.25s;text-decoration:none;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(37,99,168,0.3);}
+.btn-primary:disabled{opacity:0.45;transform:none;box-shadow:none;cursor:default;}
+.btn-dark{background:var(--ink);color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;border:none;cursor:pointer;font-family:inherit;font-size:0.9rem;transition:all 0.25s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;}
+.btn-dark:hover{background:var(--ink2);transform:translateY(-1px);}
+.btn-ghost{background:#fff;color:var(--ink);padding:12px 22px;border-radius:8px;font-weight:600;border:1px solid var(--border);cursor:pointer;font-family:inherit;font-size:0.87rem;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;}
+.btn-ghost:hover{border-color:var(--accent2);color:var(--accent2);}
+.cta-row{display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap;align-items:center;}
+.textarea,.input{width:100%;background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:0.9rem 1.1rem;font-size:0.93rem;font-family:'DM Sans',sans-serif;color:var(--text);resize:vertical;outline:none;line-height:1.65;transition:border-color 0.2s;}
+.textarea{min-height:160px;}
+.textarea:focus,.input:focus{border-color:rgba(37,99,168,0.4);}
+.field-row{display:block;margin-bottom:1rem;}
+.field-row label{display:block;font-size:0.88rem;font-weight:600;color:var(--ink);margin-bottom:0.4rem;}
+.field-row .hint{font-size:0.8rem;color:var(--muted);margin-top:0.4rem;line-height:1.6;}
+.charcount{font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--muted);margin-top:0.4rem;}
+.charcount.ok{color:var(--accent3);}
+.loader{display:inline-flex;align-items:center;gap:8px;font-size:0.88rem;color:var(--muted);}
+.spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent2);border-radius:50%;animation:sp 0.7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.alert{padding:0.85rem 1.15rem;border-radius:10px;font-size:0.9rem;margin-top:1rem;}
+.alert-ok{background:rgba(42,122,75,0.1);border:1px solid rgba(42,122,75,0.3);color:var(--accent3);}
+.alert-err{background:rgba(185,28,28,0.08);border:1px solid rgba(185,28,28,0.25);color:var(--danger);}
+.alert-info{background:rgba(37,99,168,0.06);border:1px solid rgba(37,99,168,0.2);color:var(--accent2);}
+.warn-box{background:rgba(199,91,58,0.07);border:1px solid rgba(199,91,58,0.3);border-radius:10px;padding:0.9rem 1.1rem;font-size:0.9rem;color:var(--accent);margin-top:1rem;line-height:1.65;}
+
+/* Locked sections */
+.locked-section{position:relative;}
+.locked-section .section-inner{filter:grayscale(0.4) opacity(0.55);pointer-events:none;}
+.locked-overlay{position:absolute;inset:96px 1rem 5rem;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.locked-pill{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:10px 22px;font-size:0.82rem;color:var(--muted);box-shadow:var(--shadow);}
+.locked-pill svg{width:14px;height:14px;}
+
+/* Step 1: scenario grid */
+.scenario-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-top:1.5rem;}
+.scenario-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.5rem;display:flex;flex-direction:column;cursor:pointer;transition:all 0.25s;box-shadow:var(--shadow);}
+.scenario-card:hover{border-color:var(--accent2);transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.scenario-card.picked{border-color:var(--accent2);background:#fff;box-shadow:0 8px 32px rgba(37,99,168,0.18);outline:2px solid rgba(37,99,168,0.25);outline-offset:-1px;}
+.sc-num{font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--accent2);letter-spacing:0.15em;margin-bottom:0.5rem;}
+.sc-title{font-family:'DM Serif Display',serif;font-size:1.35rem;font-weight:400;color:var(--ink);margin-bottom:0.6rem;line-height:1.2;}
+.sc-desc{font-size:0.9rem;color:var(--ink2);line-height:1.65;margin-bottom:0.9rem;}
+.sc-warn{font-size:0.82rem;color:var(--accent);background:rgba(199,91,58,0.08);border-left:3px solid var(--accent);padding:0.55rem 0.75rem;border-radius:0 6px 6px 0;line-height:1.5;margin-bottom:1rem;}
+.sc-pick{margin-top:auto;align-self:flex-start;background:var(--paper2);border:1px solid var(--border);color:var(--ink);padding:9px 16px;border-radius:8px;font-size:0.83rem;font-weight:600;font-family:inherit;cursor:pointer;transition:all 0.2s;}
+.scenario-card.picked .sc-pick{background:var(--accent2);color:#fff;border-color:var(--accent2);}
+
+/* Step 2/3: parallel layout */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:1.5rem;}
+@media(max-width:880px){.two-col{grid-template-columns:1fr;}}
+.tool-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.75rem;box-shadow:var(--shadow);display:flex;flex-direction:column;}
+.tool-tag{font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--accent2);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem;}
+.tool-title{font-family:'DM Serif Display',serif;font-size:1.3rem;font-weight:400;color:var(--ink);margin-bottom:0.5rem;}
+.tool-body{font-size:0.92rem;color:var(--ink2);line-height:1.7;margin-bottom:1.1rem;}
+.prompt-box{background:#0f1419;color:#e2e8f0;border-radius:10px;padding:1rem 1.2rem;font-family:'DM Mono',monospace;font-size:0.8rem;line-height:1.7;white-space:pre-wrap;word-break:break-word;position:relative;margin-bottom:0.8rem;}
+.prompt-box .copy{position:absolute;top:0.55rem;right:0.55rem;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.18);padding:5px 11px;border-radius:6px;font-size:0.7rem;cursor:pointer;font-family:inherit;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;transition:background 0.2s;}
+.prompt-box .copy:hover{background:rgba(135,181,239,0.2);}
+.prompt-box .copy.copied{background:rgba(42,122,75,0.4);border-color:rgba(42,122,75,0.6);}
+.tool-instructions{font-size:0.86rem;color:var(--ink2);line-height:1.7;background:var(--paper);border-radius:8px;padding:0.85rem 1rem;margin-bottom:1rem;}
+.tool-instructions ol{padding-left:1.2rem;}
+.tool-instructions li{margin-bottom:0.25rem;}
+
+/* Step 4: dramatic */
+#step4{background:var(--ink);color:#fff;}
+#step4 .section-inner{position:relative;z-index:1;}
+#step4::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 30% 30%,rgba(199,91,58,0.18) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 80% 80%,rgba(37,99,168,0.18) 0%,transparent 60%);pointer-events:none;}
+#step4 .section-label{color:rgba(255,255,255,0.5);}
+#step4 h2.section-h2{color:#fff;font-size:clamp(2.1rem,5vw,3.6rem);}
+#step4 h2.section-h2 em{color:#f0a888;}
+#step4 .lead{color:rgba(255,255,255,0.7);}
+#step4 .divider{background:var(--accent);}
+#step4 .station-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);box-shadow:none;}
+#step4 .textarea{background:rgba(0,0,0,0.25);color:#fff;border:1px solid rgba(255,255,255,0.18);}
+#step4 .textarea:focus{border-color:rgba(135,181,239,0.5);}
+#step4 .charcount{color:rgba(255,255,255,0.5);}
+#step4 .charcount.ok{color:#7fc699;}
+#step4 .alert-info{background:rgba(135,181,239,0.1);border-color:rgba(135,181,239,0.3);color:#cfe1f7;}
+#step4 .alert-err{background:rgba(255,150,140,0.1);border-color:rgba(255,150,140,0.4);color:#ffb0a3;}
+
+.q-block{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:1.75rem 1.9rem;margin-bottom:1.25rem;}
+.q-num{font-family:'DM Mono',monospace;font-size:0.72rem;color:rgba(135,181,239,0.85);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:0.75rem;}
+.q-text{font-family:'DM Serif Display',serif;font-size:clamp(1.25rem,2.5vw,1.65rem);line-height:1.4;color:#fff;margin-bottom:1.25rem;font-weight:400;}
+
+.observation-box{background:linear-gradient(135deg,rgba(199,91,58,0.12),rgba(37,99,168,0.12));border:1px solid rgba(255,255,255,0.18);border-radius:18px;padding:2.25rem;margin-top:2rem;position:relative;}
+.observation-box::before{content:'◆';position:absolute;top:1.25rem;right:1.5rem;font-family:'DM Serif Display',serif;color:rgba(135,181,239,0.45);font-size:1.4rem;}
+.observation-box .lbl{font-family:'DM Mono',monospace;font-size:0.7rem;color:rgba(255,255,255,0.5);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:0.85rem;}
+.observation-box .body{font-family:'DM Serif Display',serif;font-style:italic;font-size:1.15rem;line-height:1.7;color:#fff;}
+
+/* Closing */
+#done{background:var(--paper);}
+.tool-meta{display:flex;align-items:center;gap:0.6rem;font-size:0.85rem;color:var(--muted);margin-top:0.5rem;flex-wrap:wrap;}
+.tool-meta a{color:var(--accent2);text-decoration:none;font-weight:600;}
+.tool-meta a:hover{text-decoration:underline;}
+
+/* File picker */
+.file-row{display:flex;align-items:center;gap:0.75rem;margin-top:0.6rem;flex-wrap:wrap;}
+.file-pill{font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--muted);background:var(--paper);border:1px solid var(--border);padding:8px 12px;border-radius:8px;}
+.file-pill.ok{color:var(--accent3);border-color:rgba(42,122,75,0.4);}
+.file-input{display:none;}
+.file-btn{background:#fff;border:1px dashed var(--border);color:var(--ink);padding:10px 18px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.86rem;font-weight:600;transition:all 0.2s;}
+.file-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+
+@media(max-width:768px){
+  nav{padding:0 1.25rem;}
+  .nav-title{display:none;}
+  .section{padding:80px 1.25rem 4rem;}
+  .station-card,.tool-card{padding:1.4rem;}
+  .observation-box{padding:1.5rem;}
+}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav>
+  <div class="nav-left">
+    <a href="/" class="home-link" style="margin-right:1rem;">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+      </svg>
+      <span>Etusivu</span>
+    </a>
+    <span class="nav-module">Haaste</span>
+    <span class="nav-title">Tekoäly tuomioistuimessa</span>
+  </div>
+  <div class="nav-steps" id="navSteps"></div>
+</nav>
+
+<!-- HERO -->
+<section class="section" id="hero" data-index="0">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">
+      <span class="eyebrow-num">Haaste</span>
+      <span class="eyebrow-line"></span>
+      <span class="eyebrow-label">Kriittinen ajattelu</span>
+    </div>
+    <h1 class="hero-title">Tekoäly tekee päätöksiä ihmisistä.<br><em>Sinä päätät mitä siitä ajattelet.</em></h1>
+    <p class="hero-sub">Tässä moduulissa et vain lue tekoälystä — otat kantaa. Valitset oikean tapauksen, tutkit sen Perplexityllä, rakennat molemmat argumentit Claudella, julkaiset kantasi Gammassa ja suunnittelet visuaalisen tuomiokortin Canvassa. Lopussa tekoäly lukee kaiken ja haastaa sinut kolmella kysymyksellä joihin ei ole helppoa vastausta.</p>
+    <div class="progress-row">
+      <span><span class="num">01</span> Valitse tapaus</span><span class="arrow">→</span>
+      <span><span class="num">02</span> Tutki &amp; argumentoi</span><span class="arrow">→</span>
+      <span><span class="num">03</span> Gamma + Canva</span><span class="arrow">→</span>
+      <span><span class="num">04</span> Tekoälyn haaste</span>
+    </div>
+    <div class="cta-row" style="margin-top:2.25rem;">
+      <a class="btn-primary" href="#step1">Aloita tästä →</a>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 1 -->
+<section class="section section-alt" id="step1" data-index="1">
+  <div class="section-inner fade-up">
+    <div class="section-label">Vaihe 01</div>
+    <h2 class="section-h2">Valitse <em>tapaus</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Nämä ovat oikeita päätöksiä joita tehdään nyt. Jokainen on vaikea. Valitse se josta sinulla on eniten sanottavaa.</p>
+
+    <div class="scenario-grid" id="scenarioGrid"></div>
+
+    <div id="step1-err" class="alert alert-err" style="display:none;"></div>
+    <div id="step1-saved" class="alert alert-ok" style="display:none;">Tapaus valittu — vaihe 2 avautui.</div>
+  </div>
+</section>
+
+<!-- STEP 2 -->
+<section class="section locked-section" id="step2" data-index="2">
+  <div class="section-inner fade-up">
+    <div class="section-label">Vaihe 02</div>
+    <h2 class="section-h2">Tutki &amp; <em>rakenna argumentit</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Kaksi työkalua. Yksi virta. Tee molemmat ennen kuin jatkat.</p>
+
+    <div class="two-col">
+      <div class="tool-card">
+        <div class="tool-tag">Askel 1 — Perplexity</div>
+        <div class="tool-title">🔎 Hae faktat Perplexityllä</div>
+        <p class="tool-body">Mene Perplexity Academiciin. Hae tutkimustietoa joka tukee JA kumoaa tapauksesi. Kopioi vähintään 3 konkreettista löytöä — tutkimuksia, tilastoja, todennettuja tapauksia.</p>
+        <div class="prompt-box" id="perplexityPromptBox">
+          <button type="button" class="copy" data-target="perplexityPrompt">Kopioi</button>
+          <span id="perplexityPrompt">Valitse ensin tapaus.</span>
+        </div>
+        <div class="cta-row" style="margin-top:0;">
+          <a href="https://www.perplexity.ai" target="_blank" rel="noopener" class="btn-dark">Avaa Perplexity →</a>
+        </div>
+        <div class="field-row" style="margin-top:1.25rem;">
+          <label for="perplexityFindings">Liitä Perplexityn tärkeimmät löydöt tähän</label>
+          <textarea id="perplexityFindings" class="textarea" placeholder="Kopioi löydöt suoraan Perplexitystä — tutkimukset, tilastot, tapaukset. Vähintään 3 konkreettista löytöä. Älä tiivistä vielä — kopioi raaka data."></textarea>
+          <div class="charcount" id="perplexityCount">0 / 200 merkkiä</div>
+        </div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-tag">Askel 2 — Claude</div>
+        <div class="tool-title">⚖️ Rakenna argumentit Claudella</div>
+        <p class="tool-body">Liitä Perplexityn löydöt Claudelle alla olevan promptin kanssa. Claude rakentaa molemmat argumentit yhtä vahvoina. Tallenna Clauden vastaus Gammaan vaiheessa 3.</p>
+        <div class="prompt-box" id="claudePromptBox">
+          <button type="button" class="copy" data-target="claudePrompt">Kopioi</button>
+          <span id="claudePrompt">Valitse ensin tapaus.</span>
+        </div>
+        <div class="cta-row" style="margin-top:0;">
+          <a href="https://claude.ai" target="_blank" rel="noopener" class="btn-dark">Avaa Claude →</a>
+        </div>
+        <div class="alert alert-info" style="margin-top:1.25rem;">Tallenna Clauden vastaus muistiin — käytät sitä Gammassa vaiheessa 3.</div>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <button type="button" class="btn-primary" id="step2-submit">Tallenna ja jatka vaiheeseen 3 →</button>
+      <span id="step2-load" class="loader" style="display:none;"><span class="spin"></span> Ladataan...</span>
+    </div>
+    <div id="step2-err" class="alert alert-err" style="display:none;"></div>
+    <div id="step2-saved" class="alert alert-ok" style="display:none;">Tallennettu — vaihe 3 avautui.</div>
+  </div>
+  <div class="locked-overlay" id="step2-overlay">
+    <span class="locked-pill">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 11v3m-6-3V7a6 6 0 0112 0v4M5 11h14a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1v-8a1 1 0 011-1z"/></svg>
+      Vaihe 2 avautuu kun valitset tapauksen
+    </span>
+  </div>
+</section>
+
+<!-- STEP 3 -->
+<section class="section section-alt locked-section" id="step3" data-index="3">
+  <div class="section-inner fade-up">
+    <div class="section-label">Vaihe 03</div>
+    <h2 class="section-h2">Julkaise ja <em>visualisoi</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Kaksi työkalua, kaksi eri tehtävää. Molemmat vaaditaan. Tee ne rinnakkain tai peräkkäin — järjestys on sinun.</p>
+
+    <div class="two-col">
+      <div class="tool-card">
+        <div class="tool-tag">Track A — Gamma</div>
+        <div class="tool-title">🎯 Gamma — Argumenttidokumentti</div>
+        <p class="tool-body">Rakenna Clauden argumenteista julkaisukelpoinen dokumentti Gammassa. Ei esitys — dokumentti. Yksi sivu. Sellainen joka voitaisiin oikeasti lähettää päätöksentekijälle.</p>
+        <div class="prompt-box" id="gammaPromptBox">
+          <button type="button" class="copy" data-target="gammaPrompt">Kopioi</button>
+          <span id="gammaPrompt">Valitse ensin tapaus.</span>
+        </div>
+        <div class="tool-instructions">
+          <ol>
+            <li>Avaa Gamma → Luo uusi → <strong>Document</strong> (ei Presentation)</li>
+            <li>Liitä tämä prompt</li>
+            <li>Täytä hakasulkuihin tulevat kohdat omilla tiedoillasi</li>
+            <li>Kirjoita OMA KANTA -osioon oma päätöksesi perusteluineen</li>
+            <li>Vie tai jaa dokumentti — kopioi julkinen linkki</li>
+          </ol>
+        </div>
+        <div class="cta-row" style="margin-top:0;">
+          <a href="https://gamma.app" target="_blank" rel="noopener" class="btn-dark">Avaa Gamma →</a>
+        </div>
+        <div class="field-row" style="margin-top:1.25rem;">
+          <label for="gammaUrl">Liitä Gamma-dokumenttisi julkinen linkki</label>
+          <input id="gammaUrl" class="input" type="url" placeholder="https://gamma.app/docs/...">
+        </div>
+      </div>
+
+      <div class="tool-card">
+        <div class="tool-tag">Track B — Canva</div>
+        <div class="tool-title">🎨 Canva — Tuomiokortti</div>
+        <p class="tool-body">Suunnittele A5-kokoinen visuaalinen tuomiokortti joka kertoo yhdellä silmäyksellä: tapaus, sinun kantasi, vahvin argumenttisi. Ei pitkää tekstiä — visuaalinen päätös.</p>
+        <div class="prompt-box" id="canvaBriefBox">
+          <button type="button" class="copy" data-target="canvaBrief">Kopioi</button>
+          <span id="canvaBrief">Luo Canvassa A5-dokumentti (148×210 mm).
+
+SISÄLTÖ — tasan nämä elementit, ei enempää:
+1. Tapauksen nimi isolla (esim. REKRYTOINTI)
+2. Sinun kantasi kahdella sanalla (esim. KIELLETÄÄN / SALLITAAN / SÄÄNNELLÄÄN)
+3. Vahvin argumenttisi — yksi lause
+4. Yksi numero tai tilasto Perplexityn löydöistä
+5. Päivämäärä
+
+TYYLI:
+- Vain kaksi väriä + musta/valkoinen
+- Ei stockkuvia, ei ikoneja
+- Typografia tekee kaiken työn
+- Näyttää viralliselta asiakirjalta, ei some-postaukselta
+
+Tallenna PNG-muodossa.</span>
+        </div>
+        <div class="tool-instructions">
+          <ol>
+            <li>Avaa Canva → Luo uusi → Custom size → 148 × 210 mm</li>
+            <li>Rakenna kortti yllä olevan ohjeistuksen mukaan</li>
+            <li>Lataa PNG-muodossa (Share → Download → PNG)</li>
+          </ol>
+        </div>
+        <div class="cta-row" style="margin-top:0;">
+          <a href="https://www.canva.com" target="_blank" rel="noopener" class="btn-dark">Avaa Canva →</a>
+        </div>
+        <div class="field-row" style="margin-top:1.25rem;">
+          <label>Lataa Canva-tuomiokorttisi (PNG tai JPG, max 5 MB)</label>
+          <div class="file-row">
+            <label for="canvaImage" class="file-btn">Valitse tiedosto</label>
+            <input id="canvaImage" class="file-input" type="file" accept="image/png,image/jpeg">
+            <span class="file-pill" id="canvaPill">Ei valittu</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <button type="button" class="btn-primary" id="step3-submit">Tallenna ja jatka vaiheeseen 4 →</button>
+      <span id="step3-load" class="loader" style="display:none;"><span class="spin"></span> Ladataan...</span>
+    </div>
+    <div id="step3-err" class="alert alert-err" style="display:none;"></div>
+    <div id="step3-saved" class="alert alert-ok" style="display:none;">Tallennettu — vaihe 4 avautui.</div>
+  </div>
+  <div class="locked-overlay" id="step3-overlay">
+    <span class="locked-pill">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 11v3m-6-3V7a6 6 0 0112 0v4M5 11h14a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1v-8a1 1 0 011-1z"/></svg>
+      Vaihe 3 avautuu kun olet tallentanut Perplexity-löydöt
+    </span>
+  </div>
+</section>
+
+<!-- STEP 4 -->
+<section class="section locked-section" id="step4" data-index="4">
+  <div class="section-inner fade-up">
+    <div class="section-label">Vaihe 04 — Tekoälyn haaste</div>
+    <h2 class="section-h2">Tekoäly on lukenut kaiken.<br><em>Nyt se kysyy.</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Tekoäly on analysoinut Perplexityn löytösi, Gamma-dokumenttisi ja Canva-korttisi. Se esittää sinulle kolme kysymystä. Ne eivät ole helppoja. Niihin ei ole oikeaa vastausta. Mutta heikon vastauksen tunnistaa heti.</p>
+
+    <div class="cta-row" id="analyzeRow">
+      <button type="button" class="btn-primary" id="analyzeBtn">Analysoi työni</button>
+      <span id="analyze-load" class="loader" style="display:none;"><span class="spin"></span> Tekoäly lukee työtäsi...</span>
+    </div>
+    <div id="step4-err" class="alert alert-err" style="display:none;"></div>
+
+    <div id="questionsArea" style="margin-top:2rem;display:none;"></div>
+
+    <div id="observationArea" style="display:none;">
+      <div class="observation-box">
+        <div class="lbl">Tekoälyn havainto</div>
+        <div class="body" id="observationBody"></div>
+      </div>
+      <div class="cta-row" style="justify-content:center;">
+        <button type="button" class="btn-primary" id="completeBtn">Tallenna ja jatka moduuliin 5 →</button>
+        <span id="complete-load" class="loader" style="display:none;"><span class="spin"></span> Ladataan...</span>
+      </div>
+      <div id="complete-err" class="alert alert-err" style="display:none;"></div>
+    </div>
+
+    <div id="completedArea" style="display:none;text-align:center;margin-top:2.5rem;">
+      <div style="font-family:'DM Serif Display',serif;font-size:2.4rem;color:#fff;margin-bottom:1rem;">Valmis.</div>
+      <p style="color:rgba(255,255,255,0.7);max-width:520px;margin:0 auto 1.5rem;line-height:1.8;">Tuomiokorttisi on tallennettu. Vie nyt ajatteluasi eteenpäin moduulissa 5 — rakenna oma AI-työkalu.</p>
+      <div class="cta-row" style="justify-content:center;">
+        <a class="btn-primary" href="/module/tyokalurakentaja">Avaa moduuli 5 →</a>
+        <a class="btn-ghost" href="/" style="background:transparent;color:#fff;border-color:rgba(255,255,255,0.3);">Etusivulle</a>
+      </div>
+    </div>
+  </div>
+  <div class="locked-overlay" id="step4-overlay">
+    <span class="locked-pill">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 11v3m-6-3V7a6 6 0 0112 0v4M5 11h14a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1v-8a1 1 0 011-1z"/></svg>
+      Vaihe 4 avautuu kun Gamma-linkki ja Canva-kortti on tallennettu
+    </span>
+  </div>
+</section>
+
+<script>
+(function() {
+  function getApiBase() {
+    var o = window.location || {};
+    var p = o.pathname || '', base = '';
+    var i = p.indexOf('/module/'); if (i > 0) base = p.substring(0, i);
+    return (o.origin || '') + base;
+  }
+  var API = getApiBase() + '/api/tuomioistuin';
+  function $(id) { return document.getElementById(id); }
+  function show(id, v) { var el = $(id); if (el) el.style.display = v ? '' : 'none'; }
+  function err(id, v, m) { var el = $(id); if (!el) return; el.style.display = v ? '' : 'none'; if (m !== undefined) el.textContent = m; }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  /* ===== Scenarios ===== */
+  var SCENARIOS = [
+    {
+      id: '01',
+      title: 'Rekrytointi',
+      desc: 'Yritys käyttää tekoälyä CV:iden seulontaan — 80% hakijoista ei koskaan päädy ihmisen nähtäväksi.',
+      warn: '⚠ Tehostaa prosessia mutta piilottaa hylkäysperusteet täysin näkymättömiin.',
+      perplexity: 'Search academic sources: what does peer-reviewed research show about AI screening in hiring? Find: documented bias cases with specific companies or studies, measured efficiency gains with numbers, cases where AI screening was legally challenged. Sources from 2019-2024 only.',
+      claude: 'Minulla on seuraavat tutkimuslöydöt tekoälyn käytöstä rekrytoinnissa: [LIITÄ PERPLEXITYN LÖYDÖT]\n\nRakenna strukturoitu analyysi jossa on TASAN kaksi osaa, molemmat yhtä vahvat:\n\nPUOLESTA — Kolme vahvinta perusteltua argumenttia sille miksi tekoälyseulonta rekrytoinnissa on oikein. Jokainen argumentti: väite + tutkimusnäyttö + käytännön seuraus.\n\nVASTAAN — Kolme vahvinta perusteltua argumenttia sitä vastaan. Sama rakenne. Yhtä vahvat.\n\nSävy: policy brief joka esitetään ministeriölle. Ei mielipiteitä, ei johdantoa, ei yhteenvetoa. Vain kaksi osiota. Aloita suoraan PUOLESTA-otsikolla.',
+      gamma: 'Create a one-page professional policy document in Finnish. Topic: Tekoäly rekrytoinnissa\n\nStructure exactly as follows:\nTAPAUS: [one sentence describing the scenario]\nPUOLESTA — three arguments FOR, each with: claim, evidence, consequence\nVASTAAN — three arguments AGAINST, same structure\nOMA KANTA: [leave this section blank — I will fill it myself]\nAVOIN KYSYMYS: The one thing this analysis cannot resolve\n\nStyle: European policy brief. Clean, no decorative elements, no icons. Black text on white. Headers in bold. Dense but readable.\nThis document will be reviewed by experts.'
+    },
+    {
+      id: '02',
+      title: 'Luottopäätökset',
+      desc: 'Pankki myöntää tai hylkää lainan tekoälyalgoritmin perusteella — ilman että kukaan ihminen katsoo hakemusta.',
+      warn: '⚠ Nopea ja tasapuolinen — vai vahvistaako se olemassa olevan epätasa-arvon?',
+      perplexity: 'Search academic sources: what does research show about algorithmic credit scoring? Find: documented discrimination cases with evidence, accuracy compared to human decisions with data, regulatory responses in EU or US. Sources from 2019-2024 only.',
+      claude: 'Minulla on seuraavat tutkimuslöydöt tekoälyn käytöstä luottopäätöksissä: [LIITÄ PERPLEXITYN LÖYDÖT]\n\nRakenna strukturoitu analyysi jossa on TASAN kaksi osaa, molemmat yhtä vahvat:\n\nPUOLESTA — Kolme vahvinta perusteltua argumenttia sille miksi algoritminen luottopäätös on oikein. Jokainen argumentti: väite + tutkimusnäyttö + käytännön seuraus.\n\nVASTAAN — Kolme vahvinta perusteltua argumenttia sitä vastaan. Sama rakenne. Yhtä vahvat.\n\nSävy: policy brief joka esitetään EU-komissiolle. Ei mielipiteitä, ei johdantoa, ei yhteenvetoa.',
+      gamma: 'Create a one-page professional policy document in Finnish. Topic: Algoritminen luottopäätös\n\nStructure exactly as follows:\nTAPAUS: [one sentence describing the scenario]\nPUOLESTA — three arguments FOR, each with: claim, evidence, consequence\nVASTAAN — three arguments AGAINST, same structure\nOMA KANTA: [leave this section blank — I will fill it myself]\nAVOIN KYSYMYS: The one thing this analysis cannot resolve\n\nStyle: European policy brief. Clean, no decorative elements, no icons. Black text on white. Headers in bold. Dense but readable.\nThis document will be reviewed by experts.'
+    },
+    {
+      id: '03',
+      title: 'Lääketieteellinen diagnoosi',
+      desc: 'Sairaala käyttää tekoälyä syöpäseulonnassa — löytää enemmän tapauksia kuin radiologi mutta tekee myös enemmän vääriä hälytyksiä.',
+      warn: '⚠ Enemmän pelastettuja henkiä — mutta myös enemmän turhaa ahdistusta ja hoitoa.',
+      perplexity: 'Search academic sources: what does research show about AI in cancer screening? Find: sensitivity and specificity numbers compared to radiologists, documented false positive rates and their consequences, hospitals currently using AI diagnosis. Sources from 2019-2024 only.',
+      claude: 'Minulla on seuraavat tutkimuslöydöt tekoälyn käytöstä lääketieteellisessä diagnoosissa: [LIITÄ PERPLEXITYN LÖYDÖT]\n\nRakenna strukturoitu analyysi:\n\nPUOLESTA — Kolme argumenttia miksi tekoälydiagnoosi on eettisesti perusteltua. Väite + näyttö + seuraus.\n\nVASTAAN — Kolme argumenttia sitä vastaan. Yhtä vahvat.\n\nSävy: lääkintäeettiselle lautakunnalle. Ei johdantoa. Aloita suoraan PUOLESTA-otsikolla.',
+      gamma: 'Create a one-page professional policy document in Finnish. Topic: Tekoäly lääketieteellisessä diagnoosissa\n\nStructure exactly as follows:\nTAPAUS: [one sentence describing the scenario]\nPUOLESTA — three arguments FOR, each with: claim, evidence, consequence\nVASTAAN — three arguments AGAINST, same structure\nOMA KANTA: [leave this section blank — I will fill it myself]\nAVOIN KYSYMYS: The one thing this analysis cannot resolve\n\nStyle: European policy brief. Clean, no decorative elements, no icons. Black text on white. Headers in bold. Dense but readable.\nThis document will be reviewed by experts.'
+    },
+    {
+      id: '04',
+      title: 'Kouluarviointi',
+      desc: 'Opettaja käyttää tekoälyä esseiden arviointiin — sama kriteeristö kaikille, ei subjektiivista vaihtelua.',
+      warn: '⚠ Oikeudenmukaisempi vai rankaisee epäkonventionaalista ajattelua?',
+      perplexity: 'Search academic sources: what does research show about AI essay grading? Find: accuracy compared to human teachers with data, documented cases of bias against creative writing, student and teacher reactions from real implementations. Sources from 2019-2024 only.',
+      claude: 'Minulla on seuraavat tutkimuslöydöt tekoälyn käytöstä kouluarvioinnissa: [LIITÄ PERPLEXITYN LÖYDÖT]\n\nRakenna strukturoitu analyysi:\n\nPUOLESTA — Kolme argumenttia miksi tekoälyarviointi on pedagogisesti perusteltua. Väite + näyttö + seuraus.\n\nVASTAAN — Kolme argumenttia sitä vastaan. Yhtä vahvat.\n\nSävy: opetusministeriön selvitys. Ei johdantoa. Aloita suoraan PUOLESTA-otsikolla.',
+      gamma: 'Create a one-page professional policy document in Finnish. Topic: Tekoäly kouluarvioinnissa\n\nStructure exactly as follows:\nTAPAUS: [one sentence describing the scenario]\nPUOLESTA — three arguments FOR, each with: claim, evidence, consequence\nVASTAAN — three arguments AGAINST, same structure\nOMA KANTA: [leave this section blank — I will fill it myself]\nAVOIN KYSYMYS: The one thing this analysis cannot resolve\n\nStyle: European policy brief. Clean, no decorative elements, no icons. Black text on white. Headers in bold. Dense but readable.\nThis document will be reviewed by experts.'
+    },
+    {
+      id: '05',
+      title: 'Sisällön moderointi',
+      desc: 'Some-alusta poistaa tekoälyn merkitsemät postaukset automaattisesti — ihminen tarkistaa vain valitukset.',
+      warn: '⚠ Skaalautuu miljardeihin viesteihin mutta kuka vastaa virheistä?',
+      perplexity: 'Search academic sources: what does research show about automated content moderation? Find: false positive rates with data, documented cases of political or cultural bias, platforms that reversed automated decisions after public pressure. Sources from 2019-2024 only.',
+      claude: 'Minulla on seuraavat tutkimuslöydöt automaattisesta sisällönmoderoinnista: [LIITÄ PERPLEXITYN LÖYDÖT]\n\nRakenna strukturoitu analyysi:\n\nPUOLESTA — Kolme argumenttia miksi automaattinen moderointi on perusteltua. Väite + näyttö + seuraus.\n\nVASTAAN — Kolme argumenttia sitä vastaan. Yhtä vahvat.\n\nSävy: some-sääntelyä käsittelevälle valiokunnalle. Ei johdantoa. Aloita suoraan PUOLESTA-otsikolla.',
+      gamma: 'Create a one-page professional policy document in Finnish. Topic: Automaattinen sisällönmoderointi\n\nStructure exactly as follows:\nTAPAUS: [one sentence describing the scenario]\nPUOLESTA — three arguments FOR, each with: claim, evidence, consequence\nVASTAAN — three arguments AGAINST, same structure\nOMA KANTA: [leave this section blank — I will fill it myself]\nAVOIN KYSYMYS: The one thing this analysis cannot resolve\n\nStyle: European policy brief. Clean, no decorative elements, no icons. Black text on white. Headers in bold. Dense but readable.\nThis document will be reviewed by experts.'
+    }
+  ];
+
+  var state = {
+    submissionId: null,
+    scenarioId: null,
+    findingsLen: 0,
+    gammaUrl: '',
+    canvaFile: null,
+    canvaUploaded: false,
+    questions: [],
+    answers: ['', '', ''],
+    activeQ: 0,
+    observation: ''
+  };
+
+  /* ===== Nav / progress ===== */
+  var sections = document.querySelectorAll('.section[data-index]');
+  var navSteps = $('navSteps'), progressBar = $('progress-bar');
+  sections.forEach(function(s, i) {
+    var pip = document.createElement('div'); pip.className = 'step-pip' + (i === 0 ? ' active' : '');
+    pip.addEventListener('click', function() { s.scrollIntoView({ behavior: 'smooth' }); });
+    navSteps.appendChild(pip);
+  });
+  function updateProgress() {
+    var st = window.scrollY, dh = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (dh > 0 ? (st / dh) * 100 : 0) + '%';
+    var pips = navSteps.querySelectorAll('.step-pip'); var ai = 0;
+    sections.forEach(function(s, i) { if (s.getBoundingClientRect().top <= window.innerHeight * 0.5) ai = i; });
+    pips.forEach(function(p, i) { p.classList.remove('active', 'done'); if (i === ai) p.classList.add('active'); else if (i < ai) p.classList.add('done'); });
+  }
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  var obs = new IntersectionObserver(function(es) { es.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } }); }, { threshold: 0.12 });
+  document.querySelectorAll('.fade-up').forEach(function(el) { obs.observe(el); });
+
+  /* ===== Step 1: scenario grid ===== */
+  function renderScenarios() {
+    var grid = $('scenarioGrid'); grid.textContent = '';
+    SCENARIOS.forEach(function(s) {
+      var card = document.createElement('div');
+      card.className = 'scenario-card';
+      card.dataset.id = s.id;
+      card.innerHTML =
+        '<div class="sc-num">TAPAUS ' + s.id + '</div>' +
+        '<div class="sc-title">' + esc(s.title) + '</div>' +
+        '<div class="sc-desc">' + esc(s.desc) + '</div>' +
+        '<div class="sc-warn">' + esc(s.warn) + '</div>' +
+        '<button type="button" class="sc-pick">Valitse tämä</button>';
+      card.addEventListener('click', function() { pickScenario(s.id); });
+      grid.appendChild(card);
+    });
+  }
+  function pickScenario(id) {
+    state.scenarioId = id;
+    var cards = document.querySelectorAll('.scenario-card');
+    cards.forEach(function(c) { c.classList.toggle('picked', c.dataset.id === id); });
+    var s = SCENARIOS.find(function(x) { return x.id === id; });
+    if (s) {
+      $('perplexityPrompt').textContent = s.perplexity;
+      $('claudePrompt').textContent = s.claude;
+      $('gammaPrompt').textContent = s.gamma;
+    }
+    unlock('step2');
+    show('step1-saved', true);
+    setTimeout(function() { show('step1-saved', false); }, 2200);
+  }
+
+  /* ===== Lock/unlock ===== */
+  function unlock(id) {
+    var sec = $(id);
+    if (!sec) return;
+    sec.classList.remove('locked-section');
+    var ov = $(id + '-overlay');
+    if (ov) ov.style.display = 'none';
+  }
+  function isLocked(id) { return $(id).classList.contains('locked-section'); }
+
+  /* ===== Copy buttons ===== */
+  document.querySelectorAll('.prompt-box .copy').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var t = $(btn.dataset.target);
+      if (!t) return;
+      var txt = t.textContent || '';
+      try {
+        navigator.clipboard.writeText(txt).then(function() {
+          btn.classList.add('copied'); btn.textContent = 'Kopioitu ✓';
+          setTimeout(function() { btn.classList.remove('copied'); btn.textContent = 'Kopioi'; }, 1800);
+        });
+      } catch (e) {
+        var ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(ta);
+        btn.classList.add('copied'); btn.textContent = 'Kopioitu ✓';
+        setTimeout(function() { btn.classList.remove('copied'); btn.textContent = 'Kopioi'; }, 1800);
+      }
+    });
+  });
+
+  /* ===== Step 2: findings count + submit ===== */
+  var findings = $('perplexityFindings');
+  findings.addEventListener('input', function() {
+    var n = (findings.value || '').trim().length;
+    state.findingsLen = n;
+    var c = $('perplexityCount');
+    c.textContent = n + ' / 200 merkkiä';
+    c.classList.toggle('ok', n >= 200);
+  });
+
+  $('step2-submit').addEventListener('click', function() {
+    err('step2-err', false);
+    if (!state.scenarioId) { err('step2-err', true, 'Valitse ensin tapaus.'); return; }
+    var text = (findings.value || '').trim();
+    if (text.length < 200) { err('step2-err', true, 'Liitä Perplexityn löydöt — vähintään 200 merkkiä.'); return; }
+    var btn = this; btn.disabled = true; show('step2-load', true);
+    fetch(API + '/submit-step2', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ scenario: state.scenarioId, perplexity_findings: text, submission_id: state.submissionId })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        show('step2-load', false); btn.disabled = false;
+        if (!x.ok) { err('step2-err', true, x.d.error || 'Jokin meni pieleen — yritä uudelleen'); return; }
+        state.submissionId = x.d.submission_id;
+        unlock('step3');
+        show('step2-saved', true);
+        setTimeout(function() { show('step2-saved', false); }, 2400);
+      }).catch(function() { show('step2-load', false); btn.disabled = false; err('step2-err', true, 'Jokin meni pieleen — yritä uudelleen'); });
+  });
+
+  /* ===== Step 3: gamma url + canva file ===== */
+  $('gammaUrl').addEventListener('input', function() { state.gammaUrl = this.value.trim(); });
+  $('canvaImage').addEventListener('change', function(e) {
+    var f = e.target.files && e.target.files[0]; if (!f) { state.canvaFile = null; updateCanvaPill(); return; }
+    if (f.size > 5 * 1024 * 1024) { err('step3-err', true, 'Tiedosto on liian suuri (max 5 MB).'); state.canvaFile = null; updateCanvaPill(); return; }
+    if (!/^image\/(png|jpeg|jpg)$/i.test(f.type)) { err('step3-err', true, 'Vain PNG tai JPG.'); state.canvaFile = null; updateCanvaPill(); return; }
+    err('step3-err', false);
+    state.canvaFile = f; updateCanvaPill();
+  });
+  function updateCanvaPill() {
+    var pill = $('canvaPill');
+    if (state.canvaFile) {
+      pill.textContent = state.canvaFile.name + ' — ' + Math.round(state.canvaFile.size / 1024) + ' kB';
+      pill.classList.add('ok');
+    } else {
+      pill.textContent = 'Ei valittu';
+      pill.classList.remove('ok');
+    }
+  }
+
+  $('step3-submit').addEventListener('click', function() {
+    err('step3-err', false);
+    if (!state.submissionId) { err('step3-err', true, 'Tallenna ensin vaihe 2.'); return; }
+    var url = (state.gammaUrl || $('gammaUrl').value || '').trim();
+    if (!/^https?:\/\/[^\s]+$/i.test(url)) { err('step3-err', true, 'Anna kelvollinen Gamma-linkki (https://...).'); return; }
+    if (!state.canvaFile) { err('step3-err', true, 'Lataa Canva-kortti (PNG tai JPG).'); return; }
+    var fd = new FormData();
+    fd.append('submission_id', state.submissionId);
+    fd.append('gamma_url', url);
+    fd.append('canva_image', state.canvaFile);
+    var btn = this; btn.disabled = true; show('step3-load', true);
+    fetch(API + '/submit-step3', { method: 'POST', credentials: 'include', body: fd })
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        show('step3-load', false); btn.disabled = false;
+        if (!x.ok) { err('step3-err', true, x.d.error || 'Jokin meni pieleen — yritä uudelleen'); return; }
+        state.canvaUploaded = true;
+        unlock('step4');
+        show('step3-saved', true);
+        setTimeout(function() { show('step3-saved', false); }, 2400);
+      }).catch(function() { show('step3-load', false); btn.disabled = false; err('step3-err', true, 'Jokin meni pieleen — yritä uudelleen'); });
+  });
+
+  /* ===== Step 4: AI questions ===== */
+  $('analyzeBtn').addEventListener('click', function() {
+    err('step4-err', false);
+    if (!state.submissionId) { err('step4-err', true, 'Suorita ensin vaiheet 1–3.'); return; }
+    var btn = this; btn.disabled = true; show('analyze-load', true);
+    fetch(API + '/generate-questions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ submission_id: state.submissionId })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        show('analyze-load', false); btn.disabled = false;
+        if (!x.ok || !x.d.questions || x.d.questions.length < 3) {
+          err('step4-err', true, (x.d && x.d.error) ? x.d.error : 'Jokin meni pieleen — yritä uudelleen'); return;
+        }
+        state.questions = x.d.questions.slice(0, 3);
+        state.activeQ = 0;
+        renderQuestion(0);
+        $('analyzeRow').style.display = 'none';
+        show('questionsArea', true);
+      }).catch(function() { show('analyze-load', false); btn.disabled = false; err('step4-err', true, 'Jokin meni pieleen — yritä uudelleen'); });
+  });
+
+  function renderQuestion(idx) {
+    var area = $('questionsArea');
+    if (idx >= state.questions.length) { onAllAnswered(); return; }
+    var q = state.questions[idx];
+    var card = document.createElement('div'); card.className = 'q-block';
+    card.id = 'q-' + idx;
+    card.innerHTML =
+      '<div class="q-num">Kysymys ' + (idx + 1) + ' / ' + state.questions.length + '</div>' +
+      '<div class="q-text">' + esc(q) + '</div>' +
+      '<textarea class="textarea" id="ans-' + idx + '" placeholder="Kirjoita rehellinen vastauksesi — vähintään 150 merkkiä." style="min-height:160px;"></textarea>' +
+      '<div class="charcount" id="cc-' + idx + '">0 / 150 merkkiä</div>' +
+      '<div class="cta-row">' +
+        '<button type="button" class="btn-primary" id="next-' + idx + '" disabled>' +
+          (idx < state.questions.length - 1 ? 'Seuraava kysymys →' : 'Anna tekoälyn lukea vastauksesi') +
+        '</button>' +
+        '<span id="next-load-' + idx + '" class="loader" style="display:none;"><span class="spin"></span> Ladataan...</span>' +
+      '</div>' +
+      '<div id="next-err-' + idx + '" class="alert alert-err" style="display:none;"></div>';
+    area.appendChild(card);
+    var ta = $('ans-' + idx), cc = $('cc-' + idx), btn = $('next-' + idx);
+    ta.focus();
+    ta.addEventListener('input', function() {
+      var n = (ta.value || '').trim().length;
+      cc.textContent = n + ' / 150 merkkiä';
+      cc.classList.toggle('ok', n >= 150);
+      btn.disabled = n < 150;
+    });
+    btn.addEventListener('click', function() {
+      var v = (ta.value || '').trim();
+      if (v.length < 150) return;
+      btn.disabled = true; show('next-load-' + idx, true); err('next-err-' + idx, false);
+      fetch(API + '/submit-answer', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ submission_id: state.submissionId, index: idx, answer: v })
+      }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+        .then(function(x) {
+          show('next-load-' + idx, false);
+          if (!x.ok) { btn.disabled = false; err('next-err-' + idx, true, x.d.error || 'Jokin meni pieleen — yritä uudelleen'); return; }
+          state.answers[idx] = v;
+          ta.disabled = true; btn.style.display = 'none';
+          renderQuestion(idx + 1);
+          var nextEl = $('q-' + (idx + 1));
+          if (nextEl) nextEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }).catch(function() { show('next-load-' + idx, false); btn.disabled = false; err('next-err-' + idx, true, 'Jokin meni pieleen — yritä uudelleen'); });
+    });
+  }
+
+  function onAllAnswered() {
+    show('observationArea', true);
+    var box = $('observationBody');
+    box.textContent = 'Tekoäly muodostaa havaintoaan...';
+    show('complete-load', true);
+    fetch(API + '/complete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ submission_id: state.submissionId })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        show('complete-load', false);
+        if (!x.ok || !x.d.ai_observation) { err('complete-err', true, (x.d && x.d.error) || 'Jokin meni pieleen — yritä uudelleen'); box.textContent = ''; return; }
+        state.observation = x.d.ai_observation;
+        box.textContent = state.observation;
+      }).catch(function() { show('complete-load', false); err('complete-err', true, 'Jokin meni pieleen — yritä uudelleen'); box.textContent = ''; });
+  }
+
+  $('completeBtn').addEventListener('click', function() {
+    show('observationArea', false);
+    show('completedArea', true);
+    var done = $('completedArea'); if (done) done.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  /* ===== Restore session if user returns ===== */
+  function restore() {
+    fetch(API + '/my-submission', { credentials: 'include' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(d) {
+        if (!d || !d.submission) return;
+        var s = d.submission;
+        state.submissionId = s.id;
+        if (s.scenario_selected) pickScenario(s.scenario_selected);
+        if (s.perplexity_findings) {
+          findings.value = s.perplexity_findings;
+          findings.dispatchEvent(new Event('input'));
+        }
+        if (s.gamma_url) { $('gammaUrl').value = s.gamma_url; state.gammaUrl = s.gamma_url; }
+        if (s.canva_image_path) {
+          state.canvaUploaded = true;
+          var pill = $('canvaPill'); pill.textContent = 'Tallennettu aiemmin'; pill.classList.add('ok');
+          unlock('step3');
+        }
+        if (s.perplexity_findings && (s.perplexity_findings + '').trim().length >= 200) unlock('step3');
+        if (s.gamma_url && s.canva_image_path) unlock('step4');
+        if (s.completed_at) {
+          unlock('step4');
+          if (s.followup_q1) {
+            state.questions = [s.followup_q1, s.followup_q2, s.followup_q3].filter(Boolean);
+          }
+          if (s.ai_observation) {
+            $('analyzeRow').style.display = 'none';
+            show('observationArea', true);
+            $('observationBody').textContent = s.ai_observation;
+          }
+        }
+      }).catch(function() {});
+  }
+
+  renderScenarios();
+  restore();
+})();
+</script>
+</body>
+</html>

@@ -26,6 +26,8 @@ const feedbackRoutes = require('./routes/feedback');
 const setupRoutes = require('./routes/setup');
 const gdprRoutes = require('./routes/gdpr');
 const { router: finalModuleRoutes } = require('./routes/final');
+const { router: courtRoutes } = require('./routes/tuomioistuin');
+const { router: toolBuilderRoutes } = require('./routes/tyokalurakentaja');
 const { authenticateToken, authenticatePage } = require('./middleware/auth');
 
 const app = express();
@@ -58,6 +60,8 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/setup', setupRoutes);
 app.use('/api/gdpr', gdprRoutes);
 app.use('/api/final', finalModuleRoutes);
+app.use('/api/tuomioistuin', courtRoutes);
+app.use('/api/tyokalurakentaja', toolBuilderRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
