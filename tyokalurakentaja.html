@@ -124,6 +124,26 @@ h1.hero-title em{font-style:italic;color:#7fc699;}
 .test-status{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);margin-top:0.6rem;letter-spacing:0.06em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;}
 .test-status.done{color:var(--accent3);}
 
+/* Step 3: chat + prompt split */
+.split-test{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:1.5rem;align-items:start;}
+@media(max-width:880px){.split-test{grid-template-columns:1fr;}}
+.prompt-panel,.chat-panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.5rem;box-shadow:var(--shadow);}
+.panel-title{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--accent3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.75rem;}
+.prompt-readonly-wrap{position:relative;}
+.prompt-readonly{min-height:160px;}
+.prompt-edit-wrap{display:none;margin-top:1rem;}
+.prompt-edit-wrap.show{display:block;}
+.ver-label{font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--muted);margin-bottom:0.5rem;}
+.chat-log{max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:0.85rem;background:var(--paper);margin-bottom:1rem;}
+.chat-msg{margin-bottom:0.85rem;max-width:92%;font-size:0.9rem;line-height:1.65;white-space:pre-wrap;word-break:break-word;}
+.chat-msg.user{margin-left:auto;text-align:right;color:var(--ink2);background:rgba(42,122,75,0.08);padding:0.65rem 0.85rem;border-radius:10px 10px 4px 10px;}
+.chat-msg.ai{text-align:left;color:var(--text);background:#fff;border:1px solid var(--border);padding:0.65rem 0.85rem;border-radius:10px 10px 10px 4px;}
+.chat-meta{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);margin-top:0.25rem;}
+.verdict-box{margin-top:1rem;padding:1rem 1.15rem;border-radius:12px;border:2px solid rgba(199,91,58,0.55);background:rgba(199,91,58,0.06);font-size:0.95rem;line-height:1.7;color:var(--ink2);}
+.iter-banner{margin-top:1rem;padding:0.9rem 1.1rem;border-radius:10px;background:rgba(199,91,58,0.1);border:1px solid rgba(199,91,58,0.35);font-size:0.9rem;color:var(--accent);line-height:1.65;}
+.weakness-list{margin:0;padding-left:1.2rem;line-height:1.75;color:var(--ink2);font-size:0.92rem;}
+.weakness-list li{margin-bottom:0.65rem;}
+
 /* Step 4: parallel tracks */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:1.5rem;}
 @media(max-width:880px){.two-col{grid-template-columns:1fr;}}
@@ -251,8 +271,8 @@ h1.hero-title em{font-style:italic;color:#7fc699;}
     <div class="section-label">Vaihe 02</div>
     <h2 class="section-h2">Suunnittele <em>arkkitehtuuri</em></h2>
     <div class="divider"></div>
-    <p class="lead">Tässä vaiheessa <strong>määrittelet koko työkalun</strong>: rooli, syöte, palautteen rakenne, rajat ja reunatapaukset. Tekoäly muuntaa ne yhdeksi <strong>system promptiksi</strong> — se on työkalusi “käyttöohje malleille”. Ilman sitä chat on satunnaista; system promptin kanssa saat <strong>toistettavan tuloksen</strong> (sama rakenne joka kerta) kun liität sen ChatGPT:hen tai Claudeen. Jos prompt on hutera, työkalu käyttäytyy hutusti — sen huomaat heti seuraavassa vaiheessa.</p>
-    <div class="alert-info" style="margin-bottom:1.5rem;">Kun painat <strong>Kokoa system prompt</strong>, syntyy työkalun <strong>versio 1.0</strong>. Se ei ole sivun lopetus — vasta sitten siirryt <strong>testaamaan</strong>, kuin ajaisit oikeaa ohjelmaa.</div>
+    <p class="lead">Tässä vaiheessa <strong>määrittelet koko työkalun</strong>: rooli, syöte, palautteen rakenne, rajat ja reunatapaukset. Sen jälkeen kirjoitat <strong>oman raakapromptisi</strong>, saat tekoälyltä kolme kovaa heikkoutta, korjaat ne — ja vasta sitten tekoäly <strong>kokoaa lopullisen system promptin</strong> samalla rakenteella kuin ammattilainen.</p>
+    <div class="alert-info" style="margin-bottom:1.5rem;">Kaksi vaihetta: <strong>arvio</strong> (mitä raakatekstissäsi on pielessä) ja <strong>kokoonpano</strong> (lopullinen käyttökelpoinen prompt). Vasta kokoonpanon jälkeen siirryt testaamaan.</div>
 
     <div class="station-card">
       <div class="field-row">
@@ -288,25 +308,48 @@ h1.hero-title em{font-style:italic;color:#7fc699;}
         <div class="hint">Työkalu joka ei osaa epäonnistua hallitusti on vaarallisempi kuin työkalu joka ei toimi ollenkaan.</div>
       </div>
 
-      <div class="cta-row">
-        <button type="button" class="btn-primary" id="step2-build" disabled>Kokoa työkalun system prompt (v1.0)</button>
-        <span id="step2-load" class="loader" style="display:none;"><span class="spin"></span> Tekoäly kokoaa prompttia...</span>
+      <div id="phaseRawBlock" style="display:none;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+        <div class="field-row" style="margin-bottom:0;">
+          <label for="rawPromptDraft">Kirjoita oma raakaversio system promptistasi</label>
+          <textarea id="rawPromptDraft" class="textarea" style="min-height:140px;" placeholder="Älä mieti rakennetta — kirjoita vain mitä haluat työkalun tekevän. Voi olla sekava. Se on tarkoitus."></textarea>
+          <div class="charcount" id="cc-rawDraft">0 / 80 merkkiä</div>
+        </div>
+        <div class="cta-row">
+          <button type="button" class="btn-primary" id="step2-evaluate" disabled>Lähetä arvioitavaksi</button>
+          <span id="step2-eval-load" class="loader" style="display:none;"><span class="spin"></span> Ladataan...</span>
+        </div>
       </div>
+
+      <div id="weaknessBlock" style="display:none;margin-top:1.5rem;">
+        <div class="warn-box" style="margin-top:0;">
+          <strong>Tekoälyn havaitsemat heikkoudet</strong>
+          <ol class="weakness-list" id="weaknessList"></ol>
+        </div>
+        <div class="field-row" style="margin-top:1.25rem;margin-bottom:0;">
+          <label for="correctedPrompt">Korjaa nämä heikkoudet — kirjoita parannettu versio</label>
+          <textarea id="correctedPrompt" class="textarea" style="min-height:180px;"></textarea>
+        </div>
+        <div class="cta-row">
+          <button type="button" class="btn-primary" id="step2-assemble">Kokoa lopullinen system prompt</button>
+          <span id="step2-asm-load" class="loader" style="display:none;"><span class="spin"></span> Ladataan...</span>
+        </div>
+      </div>
+
       <div id="step2-err" class="alert alert-err" style="display:none;"></div>
     </div>
 
     <div id="promptResult" style="display:none;">
       <div class="station-card">
-        <div class="section-label" style="margin-bottom:0.6rem;">Työkalusi moottori — system prompt v1.0</div>
-        <p class="lead" style="font-size:0.95rem;margin-bottom:1rem;">Alla oleva teksti <strong>on</strong> työkalusi käyttökelpoinen ydin: kopioi se ChatGPT:n tai Clauden <strong>system-/ohje-kenttään</strong> (tai projektin ohjeisiin). Käyttäjän viesti on sitten vain raakasyötteesi — malli noudattaa tätä rakennetta. Seuraavassa vaiheessa näet <strong>oikean lähdön</strong> kun painat <strong>Testaa</strong>.</p>
+        <div class="section-label" style="margin-bottom:0.6rem;">Työkalusi moottori — koottu system prompt</div>
+        <p class="lead" style="font-size:0.95rem;margin-bottom:1rem;">Alla oleva teksti <strong>on</strong> työkalusi käyttökelpoinen ydin: kopioi se ChatGPT:n tai Clauden <strong>system-/ohje-kenttään</strong>. Seuraavassa vaiheessa testaat sitä <strong>live-chatin</strong> tavoin.</p>
         <div class="prompt-output" id="promptOutBox">
           <button type="button" class="copy" data-target="promptOut">Kopioi</button>
           <span id="promptOut"></span>
         </div>
         <div class="field-row" style="margin-top:1.5rem;">
-          <label for="promptEdit">Muokkaa jos haluat — tämä on versio 1.0</label>
-          <textarea id="promptEdit" class="textarea" style="min-height:200px;" placeholder="Voit muokata system promptia ennen kuin testaat sen vaiheessa 3."></textarea>
-          <div class="hint">Tätä versiota käytetään kaikissa testeissä vaiheessa 3.</div>
+          <label for="promptEdit">Viimeistele ennen testejä (valinnainen)</label>
+          <textarea id="promptEdit" class="textarea" style="min-height:200px;" placeholder="Voit hienosäätää system promptia ennen vaihetta 3."></textarea>
+          <div class="hint">Muutokset tallennetaan automaattisesti testejä varten, jos poikkeat kootusta versiosta.</div>
         </div>
         <div class="cta-row">
           <button type="button" class="btn-primary" id="step2-next">Jatka testaukseen →</button>
@@ -328,20 +371,51 @@ h1.hero-title em{font-style:italic;color:#7fc699;}
     <div class="section-label">Vaihe 03</div>
     <h2 class="section-h2">Testaa kunnes se <em>hajoaa</em></h2>
     <div class="divider"></div>
-    <p class="lead">Nyt <strong>ajat työkaluasi</strong>: sama system prompt kuin yllä, mutta vaihtelet <strong>käyttäjän syötettä</strong> (testikenttä). Jokainen <strong>Testaa</strong>-nappi on kuin “ajo” — alla näkyvä laatikko on <strong>työkalun tulos</strong>, ei uusi promptti. Ammattilainen testaa reunatapauksia. Viisi slottia, älä skippaile.</p>
+    <p class="lead">Nyt <strong>ajat työkaluasi</strong> keskusteluna: sama system prompt, eri syötteet. Kun olet lähettänyt vähintään <strong>viisi</strong> testiviestiä, voit pyytää <strong>tekoälyarvion</strong>. Arvion jälkeen sinun pitää <strong>päivittää promptti</strong> ja tehdä <strong>vähintään kaksi uutta testiä</strong> — vasta sitten reflektio ja jatkaminen.</p>
 
-    <div id="testSlots"></div>
-
-    <div class="station-card" id="reflectionCard">
-      <div class="field-row" style="margin-bottom:0;">
-        <label for="reflectionText">Mitä hajoaa — ja miten korjaat sen?</label>
-        <textarea id="reflectionText" class="textarea" style="min-height:200px;" placeholder="Kirjoita rehellisesti: mikä testeistä paljasti heikkouden? Mikä rajoite puuttui? Mitä lisäisit system promptiin jos tekisit sen uudelleen? Vähintään 100 merkkiä."></textarea>
-        <div class="charcount" id="reflectionCount">0 / 100 merkkiä</div>
+    <div class="split-test" id="splitTest">
+      <div class="prompt-panel">
+        <div class="panel-title">System prompt (aktiivinen)</div>
+        <div class="ver-label" id="promptVersionLabel">Versio —</div>
+        <div class="prompt-readonly-wrap" id="promptReadonlyWrap">
+          <div class="prompt-output prompt-readonly" id="activePromptDisplay"></div>
+        </div>
+        <div class="prompt-edit-wrap" id="promptEditWrap">
+          <textarea id="activePromptEdit" class="textarea" style="min-height:200px;font-family:'DM Mono',monospace;font-size:0.85rem;"></textarea>
+          <div class="cta-row" style="margin-top:0.75rem;">
+            <button type="button" class="btn-primary" id="promptSaveBtn">Tallenna</button>
+            <span id="prompt-save-load" class="loader" style="display:none;"><span class="spin"></span> Ladataan...</span>
+          </div>
+        </div>
+        <div class="cta-row" style="margin-top:1rem;">
+          <button type="button" class="btn-ghost" id="promptToggleEdit">Muokkaa promptia</button>
+        </div>
       </div>
-      <div class="field-row" style="margin-top:1.5rem;margin-bottom:0;">
-        <label for="promptV2">Päivitä system promptisi (valinnainen)</label>
-        <span class="sub">Jos testit paljastivat heikkouden — kirjoita parannettu versio. Tallennamme sekä v1:n että v2:n.</span>
-        <textarea id="promptV2" class="textarea" style="min-height:180px;font-family:'DM Mono',monospace;font-size:0.85rem;"></textarea>
+      <div class="chat-panel">
+        <div class="panel-title">Testikeskustelu</div>
+        <div class="chat-log" id="chatLog"></div>
+        <div class="field-row" style="margin-bottom:0;">
+          <textarea id="chatInput" class="textarea" style="min-height:100px;" placeholder="Syötä testisyöte..."></textarea>
+        </div>
+        <div class="cta-row" style="margin-top:0.75rem;">
+          <button type="button" class="btn-blue" id="chatSendBtn">Testaa →</button>
+          <span id="chat-send-load" class="loader" style="display:none;"><span class="spin"></span> Ladataan...</span>
+        </div>
+        <div id="chat-err" class="alert alert-err" style="display:none;"></div>
+        <div class="cta-row" style="margin-top:1rem;">
+          <button type="button" class="btn-dark" id="verdictBtn" style="display:none;">Pyydä tekoälyarvio →</button>
+          <span id="verdict-load" class="loader" style="display:none;"><span class="spin"></span> Ladataan...</span>
+        </div>
+        <div id="verdictBox" class="verdict-box" style="display:none;"></div>
+        <div id="iterBanner" class="iter-banner" style="display:none;">Päivitä promptisi ennen kuin jatkat. Tee vähintään 2 uutta testiä muutoksen jälkeen.</div>
+      </div>
+    </div>
+
+    <div class="station-card" id="reflectionCard" style="display:none;margin-top:1.5rem;">
+      <div class="field-row" style="margin-bottom:0;">
+        <label for="reflectionText">Mitä hajoaa — ja miten korjasit sen?</label>
+        <textarea id="reflectionText" class="textarea" style="min-height:200px;" placeholder="Kirjoita rehellisesti: mikä testeistä paljasti heikkouden? Mitä muutit promptiin ja miksi? Vähintään 100 merkkiä."></textarea>
+        <div class="charcount" id="reflectionCount">0 / 100 merkkiä</div>
       </div>
     </div>
 
@@ -353,7 +427,7 @@ h1.hero-title em{font-style:italic;color:#7fc699;}
   <div class="locked-overlay" id="step3-overlay">
     <span class="locked-pill">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 11v3m-6-3V7a6 6 0 0112 0v4M5 11h14a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1v-8a1 1 0 011-1z"/></svg>
-      Vaihe 3 avautuu kun työkalun system prompt (v1.0) on valmis
+      Vaihe 3 avautuu kun lopullinen system prompt on koottu
     </span>
   </div>
 </section>
@@ -463,7 +537,7 @@ Tallenna PNG-muodossa.</span>
   <div class="locked-overlay" id="step4-overlay">
     <span class="locked-pill">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 11v3m-6-3V7a6 6 0 0112 0v4M5 11h14a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1v-8a1 1 0 011-1z"/></svg>
-      Vaihe 4 avautuu kun olet testannut työkalun ja kirjoittanut reflektion
+      Vaihe 4 avautuu kun arvio, promptin päivitys, testit ja reflektio on tehty
     </span>
   </div>
 </section>
@@ -488,10 +562,15 @@ Tallenna PNG-muodossa.</span>
           <input id="oneSent" class="input" type="text" maxlength="200" placeholder="Yksi lause. Esim: 'Projektijohtajille jotka haluavat muuttaa 45 minuutin kokousmuistiinpanot 5 minuutin toimenpidelistaksi.'">
           <div class="charcount" id="oneSentCount">0 / 200 merkkiä</div>
         </div>
-        <div class="field-row" style="margin-bottom:0;">
+        <div class="field-row">
           <label for="finalInsight">Mikä oli vaikein kohta rakentamisessa — ja mitä se opetti sinulle promptaamisesta?</label>
           <textarea id="finalInsight" class="textarea" style="min-height:200px;" placeholder="Vähintään 50 sanaa. Tämä on se rehellinen oivallus jonka muistat vielä vuoden päästä."></textarea>
           <div class="charcount" id="insightCount">0 / 50 sanaa</div>
+        </div>
+        <div class="field-row" style="margin-bottom:0;">
+          <label for="pitchText">Myy tämä työkalu yhdelle kollegallesi — kirjoita se viesti jonka lähettäisit</label>
+          <textarea id="pitchText" class="textarea" style="min-height:100px;" maxlength="300" placeholder="Ei markkinointipuhetta. Kerro konkreettisesti: mikä ongelma, miten työkalu ratkaisee sen, mitä he tekevät ensin. Yksi lause riittää — jos se on rehellinen."></textarea>
+          <div class="charcount" id="pitchCount">0 / 300 merkkiä</div>
         </div>
         <div class="cta-row">
           <button type="button" class="btn-primary" id="publishBtn" disabled>Julkaise työkalu</button>
@@ -578,20 +657,18 @@ Tallenna PNG-muodossa.</span>
     ]}
   ];
 
-  var TEST_SLOTS = [
-    { label: 'Testi 1 — Tyypillinen tapaus', desc: 'Syötä se asia mihin työkalu on tehty. Helpon pitäisi onnistua.' },
-    { label: 'Testi 2 — Puutteellinen syöte', desc: 'Syötä jotain epätäydellistä — puuttuvia tietoja, kesken jäänyt teksti, vain 3 sanaa. Mitä työkalu tekee?' },
-    { label: 'Testi 3 — Reunatapaus', desc: 'Syötä jotain mitä et osannut odottaa. Väärä kieli, täysin eri aihe, jotain absurdia. Hajoaako?' },
-    { label: 'Testi 4 — Vaikea versio', desc: 'Syötä pitkä, monimutkainen, ristiriitainen syöte. Pysyykö rakenne?' },
-    { label: 'Testi 5 — Sinun valintasi', desc: 'Testaa se joka sinua pelottaa eniten. Se kohta jossa arvelit sen voivan hajota.' }
-  ];
-
   var state = {
     submissionId: null,
     pickedOption: null,
-    promptV1: '',
-    promptV2: '',
-    testsRun: [false, false, false, false, false],
+    promptRaw: '',
+    promptAssembled: '',
+    activePrompt: '',
+    promptVersionN: 0,
+    chatHistory: [],
+    verdictText: '',
+    verdictAt: null,
+    lastUserPromptSaveAt: null,
+    editingPrompt: false,
     gammaUrl: '',
     canvaFile: null,
     canvaCardPath: null,
@@ -697,14 +774,16 @@ Tallenna PNG-muodossa.</span>
     $('step2').scrollIntoView({ behavior: 'smooth' });
   });
 
-  /* ===== Step 2: 5 fields + generate ===== */
+  /* ===== Step 2: 5 fields + evaluate + assemble ===== */
   var FIELD_IDS = ['fRole', 'fInput', 'fStructure', 'fConstraints', 'fEdges'];
   function checkStep2Ready() {
     var ok = FIELD_IDS.every(function(id) {
       var el = $(id), m = parseInt(el.dataset.min, 10) || 0;
       return (el.value || '').trim().length >= m;
     });
-    $('step2-build').disabled = !ok;
+    show('phaseRawBlock', ok);
+    $('step2-evaluate').disabled = !ok;
+    if (!ok) { show('weaknessBlock', false); }
   }
   FIELD_IDS.forEach(function(id) {
     var el = $(id), cc = $('cc-' + id), m = parseInt(el.dataset.min, 10) || 0;
@@ -716,9 +795,38 @@ Tallenna PNG-muodossa.</span>
     });
   });
 
-  $('step2-build').addEventListener('click', function() {
+  function parseWeaknessesToList(text) {
+    var raw = String(text || '').trim();
+    var ol = $('weaknessList');
+    ol.textContent = '';
+    var parts = raw.split(/\n(?=\s*\d+\.\s)/).map(function(s) { return s.trim(); }).filter(Boolean);
+    if (parts.length < 2) {
+      var li = document.createElement('li');
+      li.textContent = raw;
+      ol.appendChild(li);
+      return;
+    }
+    parts.forEach(function(p) {
+      var li = document.createElement('li');
+      li.textContent = p.replace(/^\d+\.\s*/, '');
+      ol.appendChild(li);
+    });
+  }
+
+  $('rawPromptDraft').addEventListener('input', function() {
+    var n = (this.value || '').trim().length;
+    var c = $('cc-rawDraft');
+    c.textContent = n + ' / 80 merkkiä';
+    c.classList.toggle('ok', n >= 80);
+    $('step2-evaluate').disabled = !FIELD_IDS.every(function(id) {
+      var el = $(id), m = parseInt(el.dataset.min, 10) || 0;
+      return (el.value || '').trim().length >= m;
+    }) || n < 80;
+  });
+
+  $('step2-evaluate').addEventListener('click', function() {
     err('step2-err', false);
-    var btn = this; btn.disabled = true; show('step2-load', true);
+    var btn = this; btn.disabled = true; show('step2-eval-load', true);
     var body = {
       submission_id: state.submissionId,
       problem_description: ($('problemDesc').value || '').trim(),
@@ -726,98 +834,265 @@ Tallenna PNG-muodossa.</span>
       field_input: ($('fInput').value || '').trim(),
       field_structure: ($('fStructure').value || '').trim(),
       field_constraints: ($('fConstraints').value || '').trim(),
-      field_edge_cases: ($('fEdges').value || '').trim()
+      field_edge_cases: ($('fEdges').value || '').trim(),
+      raw_system_prompt: ($('rawPromptDraft').value || '').trim()
     };
-    fetch(API + '/generate-prompt', {
+    fetch(API + '/evaluate-raw-prompt', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
       body: JSON.stringify(body)
     }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
       .then(function(x) {
-        show('step2-load', false); btn.disabled = false; checkStep2Ready();
+        show('step2-eval-load', false);
+        btn.disabled = false;
+        var n = ($('rawPromptDraft').value || '').trim().length;
+        btn.disabled = n < 80;
         if (!x.ok) { err('step2-err', true, x.d.error || 'Jokin meni pieleen — yritä uudelleen'); return; }
         state.submissionId = x.d.submission_id;
-        state.promptV1 = x.d.system_prompt || '';
-        $('promptOut').textContent = state.promptV1;
-        $('promptEdit').value = state.promptV1;
-        show('promptResult', true);
-        $('promptResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }).catch(function() { show('step2-load', false); btn.disabled = false; checkStep2Ready(); err('step2-err', true, 'Jokin meni pieleen — yritä uudelleen'); });
+        state.promptRaw = body.raw_system_prompt;
+        parseWeaknessesToList(x.d.weaknesses);
+        show('weaknessBlock', true);
+        $('correctedPrompt').value = body.raw_system_prompt;
+        $('weaknessBlock').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }).catch(function() {
+        show('step2-eval-load', false); btn.disabled = false;
+        err('step2-err', true, 'Jokin meni pieleen — yritä uudelleen');
+      });
   });
 
+  $('step2-assemble').addEventListener('click', function() {
+    err('step2-err', false);
+    if (!state.submissionId) { err('step2-err', true, 'Lähetä ensin arvioitavaksi.'); return; }
+    var improved = ($('correctedPrompt').value || '').trim();
+    if (improved.length < 30) { err('step2-err', true, 'Kirjoita korjattu versio.'); return; }
+    var btn = this; btn.disabled = true; show('step2-asm-load', true);
+    fetch(API + '/assemble-final-prompt', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ submission_id: state.submissionId, improved_system_prompt: improved })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        show('step2-asm-load', false); btn.disabled = false;
+        if (!x.ok) { err('step2-err', true, x.d.error || 'Jokin meni pieleen — yritä uudelleen'); return; }
+        state.promptAssembled = x.d.system_prompt || '';
+        state.activePrompt = state.promptAssembled;
+        state.promptVersionN = x.d.prompt_version_n || 1;
+        $('promptOut').textContent = state.promptAssembled;
+        $('promptEdit').value = state.promptAssembled;
+        show('promptResult', true);
+        $('promptResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }).catch(function() {
+        show('step2-asm-load', false); btn.disabled = false;
+        err('step2-err', true, 'Jokin meni pieleen — yritä uudelleen');
+      });
+  });
+
+  function syncPromptIfEditedBeforeStep3(cb) {
+    var edited = ($('promptEdit').value || '').trim();
+    if (!edited || edited.length < 30) { err('step2-err', true, 'System prompt puuttuu.'); return; }
+    if (edited === state.activePrompt) { cb(); return; }
+    fetch(API + '/save-prompt-version', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ submission_id: state.submissionId, system_prompt: edited })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        if (!x.ok) { err('step2-err', true, x.d.error || 'Jokin meni pieleen — yritä uudelleen'); return; }
+        state.activePrompt = edited;
+        state.promptVersionN = x.d.prompt_version_n;
+        cb();
+      }).catch(function() { err('step2-err', true, 'Jokin meni pieleen — yritä uudelleen'); });
+  }
+
   $('step2-next').addEventListener('click', function() {
-    state.promptV2 = ($('promptEdit').value || '').trim() || state.promptV1;
-    if (!state.promptV2 || state.promptV2.length < 30) {
+    var edited = ($('promptEdit').value || '').trim() || state.promptAssembled;
+    if (!edited || edited.length < 30) {
       err('step2-err', true, 'System prompt puuttuu — kokoa se ensin.'); return;
     }
     err('step2-err', false);
-    renderTestSlots();
-    unlock('step3');
-    $('step3').scrollIntoView({ behavior: 'smooth' });
+    syncPromptIfEditedBeforeStep3(function() {
+      initStep3Ui();
+      unlock('step3');
+      $('step3').scrollIntoView({ behavior: 'smooth' });
+    });
   });
 
-  /* ===== Step 3: test slots ===== */
-  function renderTestSlots() {
-    var host = $('testSlots');
-    if (host.dataset.rendered === '1') return;
-    host.dataset.rendered = '1';
-    host.textContent = '';
-    TEST_SLOTS.forEach(function(t, i) {
-      var slot = document.createElement('div'); slot.className = 'test-slot'; slot.dataset.slot = String(i);
-      slot.innerHTML =
-        '<div class="test-head"><div class="test-num">' + (i + 1) + '</div><div class="test-label">' + esc(t.label) + '</div></div>' +
-        '<div class="test-desc">' + esc(t.desc) + '</div>' +
-        '<textarea class="textarea" id="ti-' + i + '" placeholder="Syötä testi-input tähän."></textarea>' +
-        '<div class="cta-row" style="margin-top:0.85rem;">' +
-          '<button type="button" class="btn-blue" data-run="' + i + '">Testaa</button>' +
-          '<span id="tl-' + i + '" class="loader" style="display:none;"><span class="spin"></span> Tekoäly testaa promptiasi...</span>' +
-          '<span id="ts-' + i + '" class="test-status">Ei suoritettu</span>' +
-        '</div>' +
-        '<div id="te-' + i + '" class="alert alert-err" style="display:none;"></div>' +
-        '<div id="to-' + i + '" class="test-output"></div>';
-      host.appendChild(slot);
-    });
-    host.addEventListener('click', onRunTest);
-  }
-  function onRunTest(ev) {
-    var btn = ev.target.closest('[data-run]'); if (!btn) return;
-    var i = parseInt(btn.dataset.run, 10);
-    var input = ($('ti-' + i).value || '').trim();
-    if (!input) { err('te-' + i, true, 'Kirjoita testi-input.'); return; }
-    err('te-' + i, false);
-    btn.disabled = true; show('tl-' + i, true);
-    var sys = ($('promptEdit').value || '').trim() || state.promptV1;
-    fetch(API + '/test', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({ submission_id: state.submissionId, slot: i, system_prompt: sys, test_input: input })
-    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
-      .then(function(x) {
-        show('tl-' + i, false); btn.disabled = false;
-        if (!x.ok || !x.d.output) { err('te-' + i, true, (x.d && x.d.error) || 'Jokin meni pieleen — yritä uudelleen'); return; }
-        var out = $('to-' + i); out.textContent = x.d.output; out.classList.add('show');
-        var st = $('ts-' + i); st.textContent = 'Suoritettu ✓'; st.classList.add('done');
-        state.testsRun[i] = true;
-        checkStep3Ready();
-      }).catch(function() { show('tl-' + i, false); btn.disabled = false; err('te-' + i, true, 'Jokin meni pieleen — yritä uudelleen'); });
+  /* ===== Step 3: chat + verdict ===== */
+  function countUserMessages() {
+    return state.chatHistory.filter(function(m) { return m.role === 'user'; }).length;
   }
 
-  function checkStep3Ready() {
-    var allTests = state.testsRun.every(Boolean);
-    var refl = ($('reflectionText').value || '').trim();
-    $('step3-next').disabled = !(allTests && refl.length >= 100);
+  function userMsgsAfter(iso) {
+    if (!iso) return 0;
+    var t = new Date(iso).getTime();
+    var n = 0;
+    state.chatHistory.forEach(function(m) {
+      if (m.role !== 'user' || !m.at) return;
+      if (new Date(m.at).getTime() > t) n++;
+    });
+    return n;
   }
+
+  function refreshStep3Gates() {
+    var userN = countUserMessages();
+    var vb = $('verdictBtn');
+    vb.style.display = userN >= 5 ? '' : 'none';
+    if (state.verdictText) vb.disabled = true;
+    else vb.disabled = false;
+    var vlow = (state.verdictText || '').toLowerCase();
+    var showBanner = vlow.indexOf('rikki') >= 0 || vlow.indexOf('korjata') >= 0;
+    show('iterBanner', !!(showBanner && state.verdictText));
+
+    var reflOk = ($('reflectionText').value || '').trim().length >= 100;
+    var needRefl = step3IterationComplete();
+    show('reflectionCard', needRefl);
+    $('step3-next').disabled = !(needRefl && reflOk);
+  }
+
+  function step3IterationComplete() {
+    if (!state.verdictText) return false;
+    var vlow = state.verdictText.toLowerCase();
+    if (vlow.indexOf('rikki') < 0 && vlow.indexOf('korjata') < 0) {
+      return true;
+    }
+    if (!state.verdictAt || !state.lastUserPromptSaveAt) return false;
+    var vt = new Date(state.verdictAt).getTime();
+    if (new Date(state.lastUserPromptSaveAt).getTime() <= vt) return false;
+    return userMsgsAfter(state.lastUserPromptSaveAt) >= 2;
+  }
+
+  function renderChat() {
+    var log = $('chatLog');
+    log.textContent = '';
+    state.chatHistory.forEach(function(m) {
+      var div = document.createElement('div');
+      div.className = 'chat-msg ' + (m.role === 'user' ? 'user' : 'ai');
+      var body = document.createElement('div');
+      body.textContent = m.content || '';
+      div.appendChild(body);
+      if (m.at) {
+        var meta = document.createElement('div');
+        meta.className = 'chat-meta';
+        try { meta.textContent = new Date(m.at).toLocaleString('fi-FI'); } catch (_) {}
+        div.appendChild(meta);
+      }
+      log.appendChild(div);
+    });
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function updatePromptPanel() {
+    $('activePromptDisplay').textContent = state.activePrompt || '';
+    $('promptVersionLabel').textContent = state.promptVersionN ? 'Versio v' + state.promptVersionN : 'Versio —';
+    $('activePromptEdit').value = state.activePrompt || '';
+  }
+
+  function initStep3Ui() {
+    updatePromptPanel();
+    state.editingPrompt = false;
+    $('promptEditWrap').classList.remove('show');
+    $('promptToggleEdit').textContent = 'Muokkaa promptia';
+    renderChat();
+    refreshStep3Gates();
+  }
+
+  $('promptToggleEdit').addEventListener('click', function() {
+    state.editingPrompt = !state.editingPrompt;
+    $('promptEditWrap').classList.toggle('show', state.editingPrompt);
+    this.textContent = state.editingPrompt ? 'Peruuta muokkaus' : 'Muokkaa promptia';
+    if (state.editingPrompt) $('activePromptEdit').value = state.activePrompt;
+  });
+
+  $('promptSaveBtn').addEventListener('click', function() {
+    err('chat-err', false);
+    var text = ($('activePromptEdit').value || '').trim();
+    if (text.length < 30) { err('chat-err', true, 'System prompt liian lyhyt.'); return; }
+    var btn = this; btn.disabled = true; show('prompt-save-load', true);
+    fetch(API + '/save-prompt-version', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ submission_id: state.submissionId, system_prompt: text })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        show('prompt-save-load', false); btn.disabled = false;
+        if (!x.ok) { err('chat-err', true, x.d.error || 'Jokin meni pieleen — yritä uudelleen'); return; }
+        state.activePrompt = text;
+        state.promptVersionN = x.d.prompt_version_n;
+        if (state.verdictAt && x.d.saved_at && new Date(x.d.saved_at) > new Date(state.verdictAt)) {
+          state.lastUserPromptSaveAt = x.d.saved_at;
+        }
+        $('activePromptDisplay').textContent = state.activePrompt;
+        $('promptVersionLabel').textContent = 'Versio v' + state.promptVersionN;
+        state.editingPrompt = false;
+        $('promptEditWrap').classList.remove('show');
+        $('promptToggleEdit').textContent = 'Muokkaa promptia';
+        refreshStep3Gates();
+      }).catch(function() {
+        show('prompt-save-load', false); btn.disabled = false;
+        err('chat-err', true, 'Jokin meni pieleen — yritä uudelleen');
+      });
+  });
+
+  $('chatSendBtn').addEventListener('click', function() {
+    err('chat-err', false);
+    var input = ($('chatInput').value || '').trim();
+    if (!input) { err('chat-err', true, 'Kirjoita testisyöte.'); return; }
+    if (!state.submissionId) return;
+    var btn = this; btn.disabled = true; show('chat-send-load', true);
+    fetch(API + '/test', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({
+        submission_id: state.submissionId,
+        system_prompt: state.activePrompt,
+        test_input: input
+      })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        show('chat-send-load', false); btn.disabled = false;
+        if (!x.ok || x.d.output == null) {
+          err('chat-err', true, (x.d && x.d.error) || 'Jokin meni pieleen — yritä uudelleen');
+          return;
+        }
+        state.chatHistory = x.d.chat_history || state.chatHistory;
+        $('chatInput').value = '';
+        renderChat();
+        refreshStep3Gates();
+      }).catch(function() {
+        show('chat-send-load', false); btn.disabled = false;
+        err('chat-err', true, 'Jokin meni pieleen — yritä uudelleen');
+      });
+  });
+
+  $('verdictBtn').addEventListener('click', function() {
+    err('chat-err', false);
+    var btn = this; btn.disabled = true; show('verdict-load', true);
+    fetch(API + '/chat-verdict', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ submission_id: state.submissionId, system_prompt: state.activePrompt })
+    }).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+      .then(function(x) {
+        show('verdict-load', false); btn.disabled = false;
+        if (!x.ok) { err('chat-err', true, x.d.error || 'Jokin meni pieleen — yritä uudelleen'); return; }
+        state.verdictText = x.d.verdict || '';
+        state.verdictAt = x.d.verdict_generated_at || new Date().toISOString();
+        $('verdictBox').style.display = '';
+        $('verdictBox').textContent = state.verdictText;
+        refreshStep3Gates();
+      }).catch(function() {
+        show('verdict-load', false); btn.disabled = false;
+        err('chat-err', true, 'Jokin meni pieleen — yritä uudelleen');
+      });
+  });
+
   $('reflectionText').addEventListener('input', function() {
     var n = (this.value || '').trim().length;
     var c = $('reflectionCount');
     c.textContent = n + ' / 100 merkkiä';
     c.classList.toggle('ok', n >= 100);
-    checkStep3Ready();
+    refreshStep3Gates();
   });
+
   $('step3-next').addEventListener('click', function() {
     var refl = ($('reflectionText').value || '').trim();
     if (refl.length < 100) { err('step3-err', true, 'Kirjoita reflektio (vähintään 100 merkkiä).'); return; }
-    if (!state.testsRun.every(Boolean)) { err('step3-err', true, 'Aja kaikki 5 testiä ennen jatkamista.'); return; }
+    if (!step3IterationComplete()) { err('step3-err', true, 'Täytä arvion jälkeinen iterointi (promptti + 2 testiä).'); return; }
     err('step3-err', false);
-    state.promptV2 = ($('promptV2').value || '').trim();
     unlock('step4');
     $('step4').scrollIntoView({ behavior: 'smooth' });
   });
@@ -855,8 +1130,7 @@ Tallenna PNG-muodossa.</span>
     fd.append('submission_id', state.submissionId);
     fd.append('gamma_url', url);
     fd.append('reflection_text', refl);
-    var v2 = ($('promptV2').value || '').trim();
-    if (v2 && v2 !== state.promptV1) fd.append('system_prompt_v2', v2);
+    if (state.activePrompt) fd.append('system_prompt_v2', state.activePrompt);
     if (state.canvaFile) fd.append('canva_card', state.canvaFile);
     var btn = this; btn.disabled = true; show('step4-load', true);
     fetch(API + '/submit-step4', { method: 'POST', credentials: 'include', body: fd })
@@ -877,9 +1151,11 @@ Tallenna PNG-muodossa.</span>
     var name = ($('toolName').value || '').trim();
     var desc = ($('oneSent').value || '').trim();
     var insight = ($('finalInsight').value || '').trim();
+    var pitch = ($('pitchText').value || '').trim();
     var ok = name.length > 0 && name.length <= 40 &&
              desc.length > 0 && desc.length <= 200 &&
-             wordCount(insight) >= 50;
+             wordCount(insight) >= 50 &&
+             pitch.length > 0 && pitch.length <= 300;
     $('publishBtn').disabled = !ok;
   }
   $('toolName').addEventListener('input', function() {
@@ -899,6 +1175,12 @@ Tallenna PNG-muodossa.</span>
     c.classList.toggle('ok', w >= 50);
     checkStep5Ready();
   });
+  $('pitchText').addEventListener('input', function() {
+    var n = (this.value || '').length;
+    $('pitchCount').textContent = n + ' / 300 merkkiä';
+    $('pitchCount').classList.toggle('ok', n > 0 && n <= 300);
+    checkStep5Ready();
+  });
 
   $('publishBtn').addEventListener('click', function() {
     err('step5-err', false);
@@ -908,7 +1190,8 @@ Tallenna PNG-muodossa.</span>
       submission_id: state.submissionId,
       tool_name: ($('toolName').value || '').trim(),
       one_sentence_description: ($('oneSent').value || '').trim(),
-      final_insight: ($('finalInsight').value || '').trim()
+      final_insight: ($('finalInsight').value || '').trim(),
+      pitch_text: ($('pitchText').value || '').trim()
     };
     fetch(API + '/complete', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
@@ -953,40 +1236,88 @@ Tallenna PNG-muodossa.</span>
           ['field_constraints', 'fConstraints'],
           ['field_edge_cases', 'fEdges']
         ];
-        fields.forEach(function(p) { if (s[p[0]]) { $(p[1]).value = s[p[0]]; $(p[1]).dispatchEvent(new Event('input')); } });
-        if (s.system_prompt_v1) {
-          state.promptV1 = s.system_prompt_v1;
-          $('promptOut').textContent = s.system_prompt_v1;
-          $('promptEdit').value = s.system_prompt_v2 || s.system_prompt_v1;
-          show('promptResult', true);
-          unlock('step2');
-          renderTestSlots();
-          unlock('step3');
-        }
-        if (Array.isArray(s.test_inputs) && Array.isArray(s.test_outputs)) {
-          for (var i = 0; i < 5; i++) {
-            var ti = s.test_inputs[i], to = s.test_outputs[i];
-            if (ti && ti.input != null) {
-              var el = $('ti-' + i); if (el) el.value = ti.input;
-            }
-            if (to && to.output != null) {
-              var oe = $('to-' + i); if (oe) { oe.textContent = to.output; oe.classList.add('show'); }
-              var st = $('ts-' + i); if (st) { st.textContent = 'Suoritettu ✓'; st.classList.add('done'); }
-              state.testsRun[i] = true;
-            }
+        fields.forEach(function(p) {
+          if (s[p[0]]) {
+            $(p[1]).value = s[p[0]];
+            $(p[1]).dispatchEvent(new Event('input'));
           }
+        });
+        checkStep2Ready();
+        unlock('step2');
+
+        if (s.system_prompt_raw) {
+          $('rawPromptDraft').value = s.system_prompt_raw;
+          $('rawPromptDraft').dispatchEvent(new Event('input'));
         }
+        if (s.weaknesses_text) {
+          parseWeaknessesToList(s.weaknesses_text);
+          show('weaknessBlock', true);
+          $('correctedPrompt').value = s.system_prompt_v1 || s.system_prompt_raw || '';
+        }
+
+        if (s.system_prompt_v2) {
+          state.promptAssembled = s.system_prompt_v2;
+          state.activePrompt = s.system_prompt_v2;
+          var pvers = Array.isArray(s.prompt_versions) ? s.prompt_versions : [];
+          state.promptVersionN = pvers.length
+            ? Math.max.apply(
+                null,
+                pvers.map(function(p) {
+                  return parseInt(p.n, 10) || 0;
+                })
+              )
+            : 1;
+          $('promptOut').textContent = s.system_prompt_v2;
+          $('promptEdit').value = s.system_prompt_v2;
+          show('promptResult', true);
+          unlock('step3');
+          state.chatHistory = Array.isArray(s.chat_history) ? s.chat_history : [];
+          state.verdictText = s.ai_verdict || '';
+          state.verdictAt = s.verdict_generated_at || null;
+          if (state.verdictText) {
+            $('verdictBox').style.display = '';
+            $('verdictBox').textContent = state.verdictText;
+          }
+          var vt = state.verdictAt ? new Date(state.verdictAt).getTime() : 0;
+          state.lastUserPromptSaveAt = null;
+          if (pvers.length && vt) {
+            pvers.forEach(function(p) {
+              if (p.source !== 'user_edit' || !p.saved_at) return;
+              if (new Date(p.saved_at).getTime() > vt) {
+                if (!state.lastUserPromptSaveAt || new Date(p.saved_at) > new Date(state.lastUserPromptSaveAt)) {
+                  state.lastUserPromptSaveAt = p.saved_at;
+                }
+              }
+            });
+          }
+          initStep3Ui();
+        }
+
         if (s.reflection_text) {
           $('reflectionText').value = s.reflection_text;
           $('reflectionText').dispatchEvent(new Event('input'));
         }
-        if (s.system_prompt_v2) $('promptV2').value = s.system_prompt_v2;
-        checkStep3Ready();
-        if (s.gamma_url) { $('gammaUrl').value = s.gamma_url; state.gammaUrl = s.gamma_url; }
-        if (s.canva_card_path) { state.canvaCardPath = s.canva_card_path; state.canvaUploaded = true; updateCanvaPill(); }
-        if (s.gamma_url && s.canva_card_path) unlock('step5');
+        refreshStep3Gates();
+
+        if (s.gamma_url) {
+          $('gammaUrl').value = s.gamma_url;
+          state.gammaUrl = s.gamma_url;
+        }
+        if (s.canva_card_path) {
+          state.canvaCardPath = s.canva_card_path;
+          state.canvaUploaded = true;
+          updateCanvaPill();
+        }
+        if (s.gamma_url && s.canva_card_path) {
+          unlock('step4');
+          unlock('step5');
+        }
         if (s.tool_name) $('toolName').value = s.tool_name;
         if (s.one_sentence_description) $('oneSent').value = s.one_sentence_description;
+        if (s.pitch_text) {
+          $('pitchText').value = s.pitch_text;
+          $('pitchText').dispatchEvent(new Event('input'));
+        }
         if (s.final_insight) {
           $('finalInsight').value = s.final_insight;
           $('finalInsight').dispatchEvent(new Event('input'));

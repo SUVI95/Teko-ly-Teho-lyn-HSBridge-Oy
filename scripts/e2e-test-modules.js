@@ -303,8 +303,8 @@ async function postForm(pathUrl, token, fields) {
     )).rows[0];
     C('court row completed in DB', !!(courtRow && courtRow.completed_at && courtRow.has_q));
 
-    /* ===== Rakenna oma AI-työkalu — generate-prompt, test, upload, complete ===== */
-    S('Työkalurakentaja · generate-prompt (OpenAI), test, submit-step4, complete');
+    /* ===== Rakenna oma AI-työkalu — evaluate, assemble, chat-test, verdict, iterate, complete ===== */
+    S('Työkalurakentaja · evaluate-raw, assemble, chat, verdict, submit-step4, complete');
     const tbBody = {
       problem_description:
         'Toistuva ongelma: tiivistän kokousmuistiinpanoja toimenpiteiksi vähintään kerran viikossa tiimissäni. ' +
@@ -320,29 +320,70 @@ async function postForm(pathUrl, token, fields) {
       field_edge_cases:
         'Jos syöte alle 40 sanaa, pyydä lisää kontekstia. Jos kieli on englanti, vastaa suomeksi ja mainitse kieli.'
     };
-    const gp = await api('POST', '/api/tyokalurakentaja/generate-prompt', tokenA, tbBody);
-    C('POST generate-prompt → 200 (OpenAI)', gp.status === 200);
-    const tbId = gp.json && gp.json.submission_id;
-    const sysPrompt = (gp.json && gp.json.system_prompt) || '';
-    C('system_prompt from AI non-trivial', sysPrompt.length >= 120);
+    const rawDraft =
+      'x'.repeat(85) +
+      ' Haluan työkalun joka lukee kokousmuistiinpanot ja palauttaa päätökset ja toimenpiteet samassa muodossa joka kerta.';
+    const ev = await api('POST', '/api/tyokalurakentaja/evaluate-raw-prompt', tokenA, {
+      ...tbBody,
+      raw_system_prompt: rawDraft
+    });
+    C('POST evaluate-raw-prompt → 200 (OpenAI)', ev.status === 200);
+    const tbId = ev.json && ev.json.submission_id;
+    const weaknesses = (ev.json && ev.json.weaknesses) || '';
+    C('weaknesses from AI non-trivial', weaknesses.length >= 40);
+
+    const improved = rawDraft + ' Korjattu: käytä vain annettuja nimiä; tiivistä suomeksi; älä keksi päivämääriä.';
+    const assem = await api('POST', '/api/tyokalurakentaja/assemble-final-prompt', tokenA, {
+      submission_id: tbId,
+      improved_system_prompt: improved
+    });
+    C('POST assemble-final-prompt → 200 (OpenAI)', assem.status === 200);
+    let sysPrompt = (assem.json && assem.json.system_prompt) || '';
+    C('assembled system_prompt non-trivial', sysPrompt.length >= 120);
     C('system prompt mentions role or kokous', /kokous|analyyt|tehtävä|rooli/i.test(sysPrompt));
 
-    const te0 = await api('POST', '/api/tyokalurakentaja/test', tokenA, {
+    for (let i = 0; i < 5; i++) {
+      const te = await api('POST', '/api/tyokalurakentaja/test', tokenA, {
+        submission_id: tbId,
+        system_prompt: sysPrompt,
+        test_input: 'Testiviesti ' + i + ': Päätettiin API-dokumentaatio. Matti vie kirjautumisen. Avoin: virhekoodit.'
+      });
+      C('POST tyokalurakentaja/test chat ' + i + ' → 200', te.status === 200);
+      if (i === 0) {
+        const out0 = (te.json && te.json.output) || '';
+        C('test output substantive', out0.length >= 30);
+      }
+    }
+
+    const vd = await api('POST', '/api/tyokalurakentaja/chat-verdict', tokenA, {
       submission_id: tbId,
-      slot: 0,
-      system_prompt: sysPrompt,
-      test_input:
-        'Päätettiin: API dokumentoidaan perjantaihin. Matti vie kirjautumisen. Avoin: virhekoodit. ' +
-        'Seuraava palaveri tiistaina.'
+      system_prompt: sysPrompt
     });
-    C('POST tyokalurakentaja/test slot 0 → 200', te0.status === 200);
-    const out0 = (te0.json && te0.json.output) || '';
-    C('test output structured / substantive', out0.length >= 40);
+    C('POST chat-verdict → 200 (OpenAI)', vd.status === 200);
+    const verdictText = (vd.json && vd.json.verdict) || '';
+    C('verdict substantive', verdictText.length >= 60);
+
+    const edited = sysPrompt + '\n\n[E2E-tarkennus: älä koskaan keksi päivämääriä tai osallistujia.]';
+    const sv = await api('POST', '/api/tyokalurakentaja/save-prompt-version', tokenA, {
+      submission_id: tbId,
+      system_prompt: edited
+    });
+    C('POST save-prompt-version → 200', sv.status === 200);
+    sysPrompt = edited;
+
+    for (let j = 0; j < 2; j++) {
+      const te2 = await api('POST', '/api/tyokalurakentaja/test', tokenA, {
+        submission_id: tbId,
+        system_prompt: sysPrompt,
+        test_input: 'E2e iterointi ' + j + ': lyhyt muistio — päätös X, toimenpide Y.'
+      });
+      C('POST tyokalurakentaja/test after edit ' + j + ' → 200', te2.status === 200);
+    }
 
     const tbStep4 = await postForm('/api/tyokalurakentaja/submit-step4', tokenA, [
       { name: 'submission_id', value: tbId },
       { name: 'gamma_url', value: 'https://gamma.app/docs/e2e-tool-doc' },
-      { name: 'reflection_text', value: 'R'.repeat(100) + ' Reflektio: testi paljasti että rajoitteet piti täsmentää reunatapauksissa.' },
+      { name: 'reflection_text', value: 'R'.repeat(100) + ' Reflektio: arvio ja kaksi testiä muutoksen jälkeen vahvistivat promptin rajat.' },
       { name: 'canva_card', value: pngBuffer(), filename: 'tool-card.png', contentType: 'image/png' }
     ]);
     C('POST submit-step4 (multipart) → 200', tbStep4.status === 200);
@@ -351,16 +392,18 @@ async function postForm(pathUrl, token, fields) {
       submission_id: tbId,
       tool_name: 'E2EKokousTyökalu',
       one_sentence_description: 'Tiimin kokousmuistiinpanot toimenpiteiksi ilman manuaalista säätöä.',
-      final_insight: insight50
+      final_insight: insight50,
+      pitch_text: 'Hei — tämä tiivistää kokoukset toimenpiteiksi: liitä muistio, saat päätökset ja tehtävät. Kokeile ensin lyhyellä pöytäkirjalla.'
     });
     C('POST tyokalurakentaja/complete → 200', tbDone.status === 200);
     const tbCardGet = await api('GET', '/api/tyokalurakentaja/canva-card/' + tbId, tokenA);
     C('GET canva-card as owner → 200 image', tbCardGet.status === 200 && /image/i.test(tbCardGet.contentType));
     const tbRow = (await pool.query(
-      'SELECT completed_at, LENGTH(system_prompt_v1::text) AS sp_len FROM tool_builder_submissions WHERE id = $1::uuid',
+      'SELECT completed_at, LENGTH(system_prompt_raw::text) AS raw_len, pitch_text FROM tool_builder_submissions WHERE id = $1::uuid',
       [tbId]
     )).rows[0];
-    C('tool_builder row completed in DB', !!(tbRow && tbRow.completed_at && tbRow.sp_len > 50));
+    C('tool_builder row completed in DB', !!(tbRow && tbRow.completed_at && tbRow.raw_len > 50));
+    C('pitch_text saved', !!(tbRow && tbRow.pitch_text && tbRow.pitch_text.length > 10));
 
     const admCourtRows = await api('GET', '/api/admin/court-module-submissions', tokenAdmin);
     C('admin court list includes A submission', (admCourtRows.json.submissions || []).some(s => s.id === courtSid));

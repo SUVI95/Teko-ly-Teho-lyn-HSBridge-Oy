@@ -29,6 +29,7 @@ async function ensureToolBuilderTables() {
       field_structure TEXT,
       field_constraints TEXT,
       field_edge_cases TEXT,
+      system_prompt_raw TEXT,
       system_prompt_v1 TEXT,
       system_prompt_v2 TEXT,
       test_inputs JSONB DEFAULT '[]'::jsonb,
@@ -45,6 +46,22 @@ async function ensureToolBuilderTables() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  const alters = [
+    `ALTER TABLE tool_builder_submissions ADD COLUMN IF NOT EXISTS system_prompt_raw TEXT`,
+    `ALTER TABLE tool_builder_submissions ADD COLUMN IF NOT EXISTS prompt_versions JSONB DEFAULT '[]'::jsonb`,
+    `ALTER TABLE tool_builder_submissions ADD COLUMN IF NOT EXISTS chat_history JSONB DEFAULT '[]'::jsonb`,
+    `ALTER TABLE tool_builder_submissions ADD COLUMN IF NOT EXISTS ai_verdict TEXT`,
+    `ALTER TABLE tool_builder_submissions ADD COLUMN IF NOT EXISTS pitch_text VARCHAR(300)`,
+    `ALTER TABLE tool_builder_submissions ADD COLUMN IF NOT EXISTS weaknesses_text TEXT`,
+    `ALTER TABLE tool_builder_submissions ADD COLUMN IF NOT EXISTS verdict_generated_at TIMESTAMP`
+  ];
+  for (const sql of alters) {
+    try {
+      await pool.query(sql);
+    } catch (e) {
+      /* ignore */
+    }
+  }
   await pool.query('CREATE INDEX IF NOT EXISTS idx_tool_builder_user ON tool_builder_submissions(user_id)');
   await pool.query(
     'CREATE INDEX IF NOT EXISTS idx_tool_builder_completed ON tool_builder_submissions(completed_at DESC)'
@@ -105,82 +122,92 @@ async function loadOwned(submissionId, userId) {
   return r.rows[0] || null;
 }
 
-router.post('/generate-prompt', authenticateToken, async (req, res) => {
-  try {
-    await ensureToolBuilderTables();
-    const {
-      submission_id,
-      problem_description,
-      field_role,
-      field_input,
-      field_structure,
-      field_constraints,
-      field_edge_cases
-    } = req.body || {};
+function validateFiveFields(body) {
+  const fields = {
+    problem: (body.problem_description || '').toString().trim(),
+    role: (body.field_role || '').toString().trim(),
+    input: (body.field_input || '').toString().trim(),
+    structure: (body.field_structure || '').toString().trim(),
+    constraints: (body.field_constraints || '').toString().trim(),
+    edges: (body.field_edge_cases || '').toString().trim()
+  };
+  if (fields.problem.length < 60) {
+    return { error: 'Tarkenna ongelma — vähintään 60 merkkiä.' };
+  }
+  if (fields.role.length < 80) return { error: 'Rooli vaatii vähintään 80 merkkiä.' };
+  if (fields.input.length < 80) return { error: 'Syöte vaatii vähintään 80 merkkiä.' };
+  if (fields.structure.length < 100) return { error: 'Rakenne vaatii vähintään 100 merkkiä.' };
+  if (fields.constraints.length < 80) return { error: 'Rajoitteet vaativat vähintään 80 merkkiä.' };
+  if (fields.edges.length < 60) return { error: 'Reunatapaukset vaativat vähintään 60 merkkiä.' };
+  return { fields };
+}
 
-    const fields = {
-      problem: (problem_description || '').toString().trim(),
-      role: (field_role || '').toString().trim(),
-      input: (field_input || '').toString().trim(),
-      structure: (field_structure || '').toString().trim(),
-      constraints: (field_constraints || '').toString().trim(),
-      edges: (field_edge_cases || '').toString().trim()
-    };
+function fieldsUserBlock(f) {
+  return `1. ROOLI:
+${f.role}
 
-    if (fields.problem.length < 60) {
-      return res.status(400).json({ error: 'Tarkenna ongelma — vähintään 60 merkkiä.' });
-    }
-    if (fields.role.length < 80) return res.status(400).json({ error: 'Rooli vaatii vähintään 80 merkkiä.' });
-    if (fields.input.length < 80) return res.status(400).json({ error: 'Syöte vaatii vähintään 80 merkkiä.' });
-    if (fields.structure.length < 100) {
-      return res.status(400).json({ error: 'Rakenne vaatii vähintään 100 merkkiä.' });
-    }
-    if (fields.constraints.length < 80) {
-      return res.status(400).json({ error: 'Rajoitteet vaativat vähintään 80 merkkiä.' });
-    }
-    if (fields.edges.length < 60) {
-      return res.status(400).json({ error: 'Reunatapaukset vaativat vähintään 60 merkkiä.' });
-    }
+2. SYÖTE:
+${f.input}
 
-    const system = `Olet promptisuunnittelun asiantuntija. Saat 5 kenttää jotka kuvaavat AI-työkalun. Rakenna niistä täydellinen, heti käytettävä system prompt suomeksi.
+3. RAKENNE:
+${f.structure}
+
+4. RAJOITTEET:
+${f.constraints}
+
+5. REUNATAPAUKSET:
+${f.edges}`;
+}
+
+const ASSEMBLE_SYSTEM = `Olet promptisuunnittelun asiantuntija. Saat käyttäjän korjatun luonnoksen system promptista sekä viisi suunnittelukenttää jotka kuvaavat AI-työkalun. Rakenna niistä täydellinen, heti käytettävä system prompt suomeksi.
 
 Rakenne jota noudatat:
 1. Roolimäärittely (1–2 lausetta)
 2. Syötteen kuvaus (1 lause)
 3. Output-rakenne (tarkka, kopioitu käyttäjän kenttä 3:sta mutta siistittynä)
-4. Rajoitteet (lista, täsmälleen mitä käyttäjä kirjoitti)
+4. Rajoitteet (lista, täsmälleen mitä käyttäjä kirjoitti kenttään 4)
 5. Reunatapausten käsittely
+
+Huomioi käyttäjän korjattu luonnos lähtökohtana sävylle ja painotuksille, mutta lopputulos on oltava yhtenäinen system prompt.
 
 Palauta VAIN valmis system prompt. Ei otsikkoa "System Prompt:". Ei selityksiä ennen tai jälkeen. Aloita suoraan roolimäärittelyllä.`;
 
-    const userMessage = `1. ROOLI:
-${fields.role}
+/** Vaihe 2 — vaihe 1: heikkoudet raakapromptista */
+router.post('/evaluate-raw-prompt', authenticateToken, async (req, res) => {
+  try {
+    await ensureToolBuilderTables();
+    const v = validateFiveFields(req.body || {});
+    if (v.error) return res.status(400).json({ error: v.error });
+    const { fields } = v;
+    const rawDraft = (req.body.raw_system_prompt || '').toString().trim();
+    if (rawDraft.length < 80) {
+      return res.status(400).json({ error: 'Raakaprompt vaatii vähintään 80 merkkiä.' });
+    }
+    if (rawDraft.length > 12000) {
+      return res.status(400).json({ error: 'Liian pitkä luonnos.' });
+    }
 
-2. SYÖTE:
-${fields.input}
+    const sys = `Olet kokenut prompt-insinööri. Saat aloittelevan käyttäjän kirjoittaman raakaversion system promptista sekä heidän viisi suunnittelukenttäänsä. Listaa TASAN KOLME konkreettista heikkoutta tässä promptissa. Jokainen heikkous: yksi lause joka kuvaa ongelman + yksi lause joka kertoo mitä tapahtuu jos sitä ei korjata. Ei johdantoa. Ei kehuja. Aloita suoraan: "1."`;
 
-3. RAKENNE:
-${fields.structure}
+    const userMsg = `Viisi kenttää:
+${fieldsUserBlock(fields)}
 
-4. RAJOITTEET:
-${fields.constraints}
+Käyttäjän raakaprompt:
+${rawDraft}`;
 
-5. REUNATAPAUKSET:
-${fields.edges}`;
-
-    let prompt = '';
+    let weaknesses = '';
     try {
-      prompt = await openaiChat(system, userMessage, 'gpt-4o', 1500, 0.4);
+      weaknesses = await openaiChat(sys, userMsg, 'gpt-4o', 900, 0.5);
     } catch (aiErr) {
-      console.error('toolbuilder generate-prompt AI:', aiErr);
+      console.error('evaluate-raw AI:', aiErr);
       return res.status(503).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
     }
-    prompt = String(prompt || '').trim();
-    if (!prompt) {
+    weaknesses = String(weaknesses || '').trim();
+    if (!weaknesses) {
       return res.status(502).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
     }
 
-    let id = isUuid(submission_id) ? submission_id : null;
+    let id = isUuid(req.body.submission_id) ? req.body.submission_id : null;
     if (id) {
       const owned = await loadOwned(id, req.user.id);
       if (!owned) id = null;
@@ -190,8 +217,8 @@ ${fields.edges}`;
       await pool.query(
         `INSERT INTO tool_builder_submissions
           (id, user_id, problem_description, field_role, field_input, field_structure,
-           field_constraints, field_edge_cases, system_prompt_v1)
-         VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9)`,
+           field_constraints, field_edge_cases, system_prompt_raw, system_prompt_v1, weaknesses_text)
+         VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
         [
           id,
           req.user.id,
@@ -201,7 +228,9 @@ ${fields.edges}`;
           fields.structure,
           fields.constraints,
           fields.edges,
-          prompt
+          rawDraft,
+          rawDraft,
+          weaknesses
         ]
       );
     } else {
@@ -209,8 +238,10 @@ ${fields.edges}`;
         `UPDATE tool_builder_submissions
          SET problem_description = $1, field_role = $2, field_input = $3,
              field_structure = $4, field_constraints = $5, field_edge_cases = $6,
-             system_prompt_v1 = $7
-         WHERE id = $8::uuid AND user_id = $9`,
+             system_prompt_raw = $7, system_prompt_v1 = $8, weaknesses_text = $9,
+             system_prompt_v2 = NULL, prompt_versions = '[]'::jsonb, chat_history = '[]'::jsonb,
+             ai_verdict = NULL, verdict_generated_at = NULL
+         WHERE id = $10::uuid AND user_id = $11`,
         [
           fields.problem,
           fields.role,
@@ -218,16 +249,133 @@ ${fields.edges}`;
           fields.structure,
           fields.constraints,
           fields.edges,
-          prompt,
+          rawDraft,
+          rawDraft,
+          weaknesses,
           id,
           req.user.id
         ]
       );
     }
 
-    res.json({ success: true, submission_id: id, system_prompt: prompt });
+    res.json({ success: true, submission_id: id, weaknesses });
   } catch (e) {
-    console.error('toolbuilder generate-prompt:', e);
+    console.error('evaluate-raw-prompt:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+/** Vaihe 2 — vaihe 2: kokoa lopullinen system prompt */
+router.post('/assemble-final-prompt', authenticateToken, async (req, res) => {
+  try {
+    await ensureToolBuilderTables();
+    const { submission_id, improved_system_prompt } = req.body || {};
+    if (!isUuid(submission_id)) {
+      return res.status(400).json({ error: 'Virheellinen tunniste' });
+    }
+    const sub = await loadOwned(submission_id, req.user.id);
+    if (!sub) return res.status(404).json({ error: 'Tallennusta ei löytynyt' });
+
+    const improved = (improved_system_prompt || '').toString().trim();
+    if (improved.length < 30) {
+      return res.status(400).json({ error: 'Kirjoita korjattu versio — vähintään 30 merkkiä.' });
+    }
+
+    const fields = {
+      problem: (sub.problem_description || '').trim(),
+      role: (sub.field_role || '').trim(),
+      input: (sub.field_input || '').trim(),
+      structure: (sub.field_structure || '').trim(),
+      constraints: (sub.field_constraints || '').trim(),
+      edges: (sub.field_edge_cases || '').trim()
+    };
+    const v = validateFiveFields({
+      problem_description: fields.problem,
+      field_role: fields.role,
+      field_input: fields.input,
+      field_structure: fields.structure,
+      field_constraints: fields.constraints,
+      field_edge_cases: fields.edges
+    });
+    if (v.error) return res.status(400).json({ error: v.error });
+
+    const userMessage = `Käyttäjän korjattu luonnos (lähtökohta):
+${improved}
+
+Viisi suunnittelukenttää:
+${fieldsUserBlock(v.fields)}`;
+
+    let prompt = '';
+    try {
+      prompt = await openaiChat(ASSEMBLE_SYSTEM, userMessage, 'gpt-4o', 1500, 0.4);
+    } catch (aiErr) {
+      console.error('assemble-final AI:', aiErr);
+      return res.status(503).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+    }
+    prompt = String(prompt || '').trim();
+    if (!prompt) {
+      return res.status(502).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+    }
+
+    const nowIso = new Date().toISOString();
+    const initialVersions = [{ n: 1, text: prompt, saved_at: nowIso, source: 'assemble' }];
+
+    await pool.query(
+      `UPDATE tool_builder_submissions
+       SET system_prompt_v2 = $1,
+           prompt_versions = $2::jsonb,
+           chat_history = '[]'::jsonb,
+           ai_verdict = NULL,
+           verdict_generated_at = NULL,
+           test_inputs = '[]'::jsonb,
+           test_outputs = '[]'::jsonb
+       WHERE id = $3::uuid AND user_id = $4`,
+      [prompt, JSON.stringify(initialVersions), submission_id, req.user.id]
+    );
+
+    res.json({ success: true, submission_id, system_prompt: prompt, prompt_version_n: 1 });
+  } catch (e) {
+    console.error('assemble-final-prompt:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+/** Tallenna uusi prompt-versio (vaihe 3) */
+router.post('/save-prompt-version', authenticateToken, async (req, res) => {
+  try {
+    await ensureToolBuilderTables();
+    const { submission_id, system_prompt } = req.body || {};
+    if (!isUuid(submission_id)) {
+      return res.status(400).json({ error: 'Virheellinen tunniste' });
+    }
+    const sub = await loadOwned(submission_id, req.user.id);
+    if (!sub) return res.status(404).json({ error: 'Tallennusta ei löytynyt' });
+    const text = (system_prompt || '').toString().trim();
+    if (text.length < 30) {
+      return res.status(400).json({ error: 'System prompt liian lyhyt.' });
+    }
+
+    let versions = Array.isArray(sub.prompt_versions) ? [...sub.prompt_versions] : [];
+    const maxN = versions.reduce((m, p) => Math.max(m, parseInt(p.n, 10) || 0), 0);
+    const n = maxN + 1;
+    const nowIso = new Date().toISOString();
+    versions.push({ n, text, saved_at: nowIso, source: 'user_edit' });
+
+    await pool.query(
+      `UPDATE tool_builder_submissions
+       SET system_prompt_v2 = $1, prompt_versions = $2::jsonb
+       WHERE id = $3::uuid AND user_id = $4`,
+      [text, JSON.stringify(versions), submission_id, req.user.id]
+    );
+
+    res.json({
+      success: true,
+      prompt_version_n: n,
+      prompt_versions: versions,
+      saved_at: versions[versions.length - 1].saved_at
+    });
+  } catch (e) {
+    console.error('save-prompt-version:', e);
     res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
   }
 });
@@ -235,17 +383,14 @@ ${fields.edges}`;
 router.post('/test', authenticateToken, async (req, res) => {
   try {
     await ensureToolBuilderTables();
-    const { submission_id, slot, system_prompt, test_input } = req.body || {};
+    const { submission_id, system_prompt, test_input } = req.body || {};
     if (!isUuid(submission_id)) {
       return res.status(400).json({ error: 'Virheellinen tunniste' });
     }
     const sub = await loadOwned(submission_id, req.user.id);
     if (!sub) return res.status(404).json({ error: 'Tallennusta ei löytynyt' });
-    const slotIdx = parseInt(slot, 10);
-    if (![0, 1, 2, 3, 4].includes(slotIdx)) {
-      return res.status(400).json({ error: 'Virheellinen testislotti (0–4)' });
-    }
-    const sys = (system_prompt || sub.system_prompt_v1 || '').toString().trim();
+
+    const sys = (system_prompt || sub.system_prompt_v2 || '').toString().trim();
     if (!sys || sys.length < 30) {
       return res.status(400).json({ error: 'System prompt puuttuu' });
     }
@@ -265,23 +410,97 @@ router.post('/test', authenticateToken, async (req, res) => {
       return res.status(503).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
     }
 
-    const inputs = Array.isArray(sub.test_inputs) ? sub.test_inputs.slice(0, 5) : [];
-    const outputs = Array.isArray(sub.test_outputs) ? sub.test_outputs.slice(0, 5) : [];
-    while (inputs.length < 5) inputs.push(null);
-    while (outputs.length < 5) outputs.push(null);
-    inputs[slotIdx] = { slot: slotIdx, input };
-    outputs[slotIdx] = { slot: slotIdx, output, model: 'gpt-4o' };
+    const nowIso = new Date().toISOString();
+    let chat = Array.isArray(sub.chat_history) ? [...sub.chat_history] : [];
+    chat.push({ role: 'user', content: input, at: nowIso });
+    chat.push({ role: 'assistant', content: output, at: new Date().toISOString() });
+
+    const legacyIn = Array.isArray(sub.test_inputs) ? [...sub.test_inputs] : [];
+    const legacyOut = Array.isArray(sub.test_outputs) ? [...sub.test_outputs] : [];
+    const pairIdx = legacyIn.filter(Boolean).length;
+    legacyIn.push({ turn: pairIdx, input, at: nowIso });
+    legacyOut.push({ turn: pairIdx, output, model: 'gpt-4o', at: new Date().toISOString() });
 
     await pool.query(
       `UPDATE tool_builder_submissions
-       SET test_inputs = $1::jsonb, test_outputs = $2::jsonb
-       WHERE id = $3::uuid AND user_id = $4`,
-      [JSON.stringify(inputs), JSON.stringify(outputs), submission_id, req.user.id]
+       SET chat_history = $1::jsonb, test_inputs = $2::jsonb, test_outputs = $3::jsonb,
+           system_prompt_v2 = $4
+       WHERE id = $5::uuid AND user_id = $6`,
+      [JSON.stringify(chat), JSON.stringify(legacyIn), JSON.stringify(legacyOut), sys, submission_id, req.user.id]
     );
 
-    res.json({ success: true, output });
+    const userMessageCount = chat.filter(m => m.role === 'user').length;
+    res.json({ success: true, output, user_message_count: userMessageCount, chat_history: chat });
   } catch (e) {
     console.error('toolbuilder test:', e);
+    res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+  }
+});
+
+router.post('/chat-verdict', authenticateToken, async (req, res) => {
+  try {
+    await ensureToolBuilderTables();
+    const { submission_id, system_prompt } = req.body || {};
+    if (!isUuid(submission_id)) {
+      return res.status(400).json({ error: 'Virheellinen tunniste' });
+    }
+    const sub = await loadOwned(submission_id, req.user.id);
+    if (!sub) return res.status(404).json({ error: 'Tallennusta ei löytynyt' });
+
+    const chat = Array.isArray(sub.chat_history) ? sub.chat_history : [];
+    const userMsgs = chat.filter(m => m.role === 'user');
+    if (userMsgs.length < 5) {
+      return res.status(400).json({ error: 'Lähetä vähintään 5 testiviestiä ennen arviota.' });
+    }
+
+    const activePrompt = (system_prompt || sub.system_prompt_v2 || '').toString().trim();
+    if (!activePrompt) {
+      return res.status(400).json({ error: 'System prompt puuttuu' });
+    }
+
+    let qa = '';
+    for (let i = 0; i < chat.length; i++) {
+      const m = chat[i];
+      if (m.role === 'user') {
+        qa += `K: ${m.content}\n`;
+      } else if (m.role === 'assistant') {
+        qa += `V: ${m.content}\n\n`;
+      }
+    }
+
+    const sys = `Olet kriittinen laadunarvioija. Saat AI-työkalun system promptin ja testikeskustelun. Kirjoita lyhyt arvio — 4-6 lausetta. Rakenne tasan näin: Ensin yksi lause siitä mikä toimii. Sitten kaksi lausetta siitä mikä on rikki tai epäjohdonmukainen. Sitten yksi lause siitä mitä käyttäjän pitää korjata ennen kuin tämä työkalu on käyttökelpoinen. Aloita suoraan arviolla, ei johdannolla.`;
+
+    const userMessage = `System prompt:
+${activePrompt.slice(0, 12000)}
+
+Testikeskustelu:
+${qa.slice(0, 14000)}`;
+
+    let verdict = '';
+    try {
+      verdict = await openaiChat(sys, userMessage, 'gpt-4o', 500, 0.45);
+    } catch (aiErr) {
+      console.error('chat-verdict AI:', aiErr);
+      return res.status(503).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+    }
+    verdict = String(verdict || '').trim();
+    if (!verdict) {
+      return res.status(502).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
+    }
+
+    await pool.query(
+      `UPDATE tool_builder_submissions SET ai_verdict = $1, verdict_generated_at = CURRENT_TIMESTAMP WHERE id = $2::uuid AND user_id = $3`,
+      [verdict, submission_id, req.user.id]
+    );
+    const tsR = await pool.query(
+      `SELECT verdict_generated_at FROM tool_builder_submissions WHERE id = $1::uuid AND user_id = $2`,
+      [submission_id, req.user.id]
+    );
+    const verdict_generated_at = tsR.rows[0]?.verdict_generated_at || null;
+
+    res.json({ success: true, verdict, verdict_generated_at });
+  } catch (e) {
+    console.error('chat-verdict:', e);
     res.status(500).json({ error: 'Jokin meni pieleen — yritä uudelleen' });
   }
 });
@@ -318,7 +537,45 @@ router.post('/submit-step4', authenticateToken, (req, res) => {
         return res.status(400).json({ error: 'Reflektio liian pitkä.' });
       }
 
-      const v2 = (system_prompt_v2 || '').toString().trim() || null;
+      if (!sub.ai_verdict || !String(sub.ai_verdict).trim()) {
+        return res.status(400).json({ error: 'Pyydä ensin tekoälyarvio vaiheessa 3.' });
+      }
+
+      const verdictAt = sub.verdict_generated_at ? new Date(sub.verdict_generated_at) : null;
+      const versions = Array.isArray(sub.prompt_versions) ? sub.prompt_versions : [];
+      const editAfterVerdict = versions.some(p => {
+        if (!verdictAt || !p.saved_at) return false;
+        return new Date(p.saved_at) > verdictAt && p.source === 'user_edit';
+      });
+      if (!editAfterVerdict) {
+        return res.status(400).json({ error: 'Päivitä promptti arvion jälkeen ennen jatkamista.' });
+      }
+
+      let lastUserEditAt = null;
+      for (const p of versions) {
+        if (p.source === 'user_edit' && p.saved_at && verdictAt && new Date(p.saved_at) > verdictAt) {
+          const t = new Date(p.saved_at);
+          if (!lastUserEditAt || t > lastUserEditAt) lastUserEditAt = t;
+        }
+      }
+      if (!lastUserEditAt) {
+        return res.status(400).json({ error: 'Tallenna promptin muutos arvion jälkeen.' });
+      }
+
+      const chat = Array.isArray(sub.chat_history) ? sub.chat_history : [];
+      let userAfter = 0;
+      for (const m of chat) {
+        if (m.role === 'user' && m.at && new Date(m.at) > lastUserEditAt) {
+          userAfter++;
+        }
+      }
+      if (userAfter < 2) {
+        return res.status(400).json({
+          error: 'Lähetä vähintään 2 uutta testiviestiä promptin päivityksen jälkeen.'
+        });
+      }
+
+      const v2 = (system_prompt_v2 || '').toString().trim() || sub.system_prompt_v2 || null;
 
       let canvaPath = sub.canva_card_path;
       let canvaBytes = sub.canva_card_bytes;
@@ -380,7 +637,7 @@ function countWords(s) {
 router.post('/complete', authenticateToken, async (req, res) => {
   try {
     await ensureToolBuilderTables();
-    const { submission_id, tool_name, one_sentence_description, final_insight } = req.body || {};
+    const { submission_id, tool_name, one_sentence_description, final_insight, pitch_text } = req.body || {};
     if (!isUuid(submission_id)) {
       return res.status(400).json({ error: 'Virheellinen tunniste' });
     }
@@ -393,6 +650,7 @@ router.post('/complete', authenticateToken, async (req, res) => {
     const name = (tool_name || '').toString().trim();
     const desc = (one_sentence_description || '').toString().trim();
     const insight = (final_insight || '').toString().trim();
+    const pitch = (pitch_text || '').toString().trim();
 
     if (!name || name.length > 40) {
       return res.status(400).json({ error: 'Anna työkalulle nimi (1–40 merkkiä).' });
@@ -406,13 +664,16 @@ router.post('/complete', authenticateToken, async (req, res) => {
     if (insight.length > 6000) {
       return res.status(400).json({ error: 'Liian pitkä — leikkaa enintään 6000 merkkiin.' });
     }
+    if (!pitch || pitch.length > 300) {
+      return res.status(400).json({ error: 'Kirjoita kollegaviesti (1–300 merkkiä).' });
+    }
 
     await pool.query(
       `UPDATE tool_builder_submissions
-       SET tool_name = $1, one_sentence_description = $2, final_insight = $3,
+       SET tool_name = $1, one_sentence_description = $2, final_insight = $3, pitch_text = $4,
            completed_at = CURRENT_TIMESTAMP
-       WHERE id = $4::uuid AND user_id = $5`,
-      [name.slice(0, 40), desc.slice(0, 300), insight, submission_id, req.user.id]
+       WHERE id = $5::uuid AND user_id = $6`,
+      [name.slice(0, 40), desc.slice(0, 300), insight, pitch.slice(0, 300), submission_id, req.user.id]
     );
 
     res.json({
@@ -433,9 +694,11 @@ router.get('/my-submission', authenticateToken, async (req, res) => {
     await ensureToolBuilderTables();
     const r = await pool.query(
       `SELECT id, problem_description, field_role, field_input, field_structure,
-              field_constraints, field_edge_cases, system_prompt_v1, system_prompt_v2,
+              field_constraints, field_edge_cases,
+              system_prompt_raw, system_prompt_v1, system_prompt_v2, weaknesses_text,
+              prompt_versions, chat_history, ai_verdict, verdict_generated_at,
               test_inputs, test_outputs, reflection_text,
-              tool_name, one_sentence_description, gamma_url, canva_card_path,
+              tool_name, one_sentence_description, pitch_text, gamma_url, canva_card_path,
               final_insight, completed_at, created_at
        FROM tool_builder_submissions WHERE user_id = $1
        ORDER BY created_at DESC LIMIT 1`,

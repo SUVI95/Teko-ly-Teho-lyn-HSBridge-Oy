@@ -264,9 +264,10 @@ router.get('/students/:userId', authenticateToken, requireAdmin, async (req, res
       await ensureToolBuilderTables();
       const tbR = await pool.query(
         `SELECT id, problem_description, field_role, field_input, field_structure, field_constraints,
-                field_edge_cases, system_prompt_v1, system_prompt_v2, test_inputs, test_outputs,
-                reflection_text, tool_name, one_sentence_description, gamma_url, canva_card_path,
-                final_insight, completed_at, created_at
+                field_edge_cases, system_prompt_raw, system_prompt_v1, system_prompt_v2,
+                weaknesses_text, prompt_versions, chat_history, ai_verdict, verdict_generated_at,
+                test_inputs, test_outputs, reflection_text, tool_name, one_sentence_description,
+                pitch_text, gamma_url, canva_card_path, final_insight, completed_at, created_at
          FROM tool_builder_submissions WHERE user_id = $1
          ORDER BY created_at DESC LIMIT 1`,
         [userId]
@@ -320,9 +321,10 @@ router.get('/tool-builder-submissions', authenticateToken, requireAdmin, async (
     await ensureToolBuilderTables();
     const r = await pool.query(
       `SELECT t.id, t.user_id, t.problem_description, t.field_role, t.field_input, t.field_structure,
-              t.field_constraints, t.field_edge_cases, t.system_prompt_v1, t.system_prompt_v2,
+              t.field_constraints, t.field_edge_cases, t.system_prompt_raw, t.system_prompt_v1, t.system_prompt_v2,
+              t.weaknesses_text, t.prompt_versions, t.chat_history, t.ai_verdict, t.verdict_generated_at,
               t.test_inputs, t.test_outputs, t.reflection_text, t.tool_name, t.one_sentence_description,
-              t.gamma_url, t.canva_card_path, t.final_insight, t.completed_at, t.created_at,
+              t.pitch_text, t.gamma_url, t.canva_card_path, t.final_insight, t.completed_at, t.created_at,
               COALESCE(u.name, u.email) AS user_label, u.email AS user_email
        FROM tool_builder_submissions t
        JOIN users u ON u.id = t.user_id
