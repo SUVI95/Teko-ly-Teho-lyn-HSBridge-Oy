@@ -7,7 +7,7 @@
 //  - Data saves to DB
 //  - Per-user isolation (student A cannot see student B's data)
 //  - Admin can see all data
-// Reads live server on PORT env (default 3001).
+// Reads live server on PORT env (default 3000, same as server.js).
 
 const fs = require('fs');
 const path = require('path');
@@ -15,7 +15,7 @@ const crypto = require('crypto');
 const pool = require('../database/db');
 const bcrypt = require('bcrypt');
 
-const BASE = 'http://localhost:' + (process.env.PORT || 3001);
+const BASE = 'http://localhost:' + (process.env.PORT || 3000);
 const PASS = 'TestPass1234!';
 
 function C(label, ok, extra) {
@@ -248,6 +248,124 @@ async function postForm(pathUrl, token, fields) {
     C('POST /rikki-save round 2 → 200', rk2.status === 200);
     const rkCount = (await pool.query('SELECT COUNT(*)::int AS n FROM broken_prompt_submissions WHERE user_id=$1', [studentA.id])).rows[0].n;
     C('2 rikki rows in DB', rkCount === 2);
+
+    /* ===== Tekoäly tuomioistuimessa — DB + upload + OpenAI ===== */
+    S('Tuomioistuin · submit-step2, step3 (PNG), generate-questions, answers, complete');
+    const perplexityText =
+      'E2E testilöydöt rivi 1: tutkimus X vuonna 2020. Riv 2: tilasto Y 45%. Riv 3: tapaus Z tuomioistuimessa. ' +
+      'Lisää kontekstia jotta ylitämme kaksisataa merkkiä ja voimme tallentaa vaiheen kaksi. ' +
+      'Tämä on keinotekoinen mutta kelvollinen Perplexity-tyyppinen raakateksti testiä varten.';
+    const st2 = await api('POST', '/api/tuomioistuin/submit-step2', tokenA, {
+      scenario: '01',
+      perplexity_findings: perplexityText
+    });
+    C('POST tuomioistuin/submit-step2 → 200', st2.status === 200, 'status=' + st2.status);
+    const courtSid = st2.json && st2.json.submission_id;
+    C('court submission_id UUID', typeof courtSid === 'string' && courtSid.length > 30);
+    const courtPng = pngBuffer();
+    const st3 = await postForm('/api/tuomioistuin/submit-step3', tokenA, [
+      { name: 'submission_id', value: courtSid },
+      { name: 'gamma_url', value: 'https://gamma.app/docs/e2e-test-doc' },
+      { name: 'canva_image', value: courtPng, filename: 'tuomio-kortti.png', contentType: 'image/png' }
+    ]);
+    C('POST tuomioistuin/submit-step3 (multipart PNG) → 200', st3.status === 200, 'status=' + st3.status);
+    const canvaPath = st3.json && st3.json.canva_image_path;
+    C('response canva_image_path', typeof canvaPath === 'string' && canvaPath.includes(courtSid));
+    const imgOwn = await api('GET', '/api/tuomioistuin/canva-image/' + courtSid, tokenA);
+    C('GET canva-image as owner → 200 image', imgOwn.status === 200 && /image/i.test(imgOwn.contentType));
+    const imgOther = await api('GET', '/api/tuomioistuin/canva-image/' + courtSid, tokenB);
+    C('GET canva-image as other student → 403', imgOther.status === 403);
+
+    const gq = await api('POST', '/api/tuomioistuin/generate-questions', tokenA, { submission_id: courtSid });
+    C('POST generate-questions → 200 (OpenAI)', gq.status === 200, 'status=' + gq.status);
+    const qs = (gq.json && gq.json.questions) || [];
+    C('three Socratic questions returned', qs.length === 3, 'n=' + qs.length);
+    C('questions look substantive', qs.every(q => String(q).length >= 15));
+
+    const longAns = 'Tämä on e2e-vastaus joka on tarkoituksella pitkä, jotta se ylittää 150 merkin rajan. ' +
+      'Argumentoin että tekoälyn käyttö päätöksenteossa vaatii läpinäkyvyyttä, vastuullisuutta ja ihmisen valvontaa. ' +
+      'En väitä että tämä olisi täydellinen vastaus, mutta se riittää testaamaan tallennuspolkua.';
+    for (let i = 0; i < 3; i++) {
+      const sa = await api('POST', '/api/tuomioistuin/submit-answer', tokenA, {
+        submission_id: courtSid,
+        index: i,
+        answer: longAns + ' Kysymysindeksi ' + i + '.'
+      });
+      C('POST submit-answer idx ' + i + ' → 200', sa.status === 200);
+    }
+    const compCourt = await api('POST', '/api/tuomioistuin/complete', tokenA, { submission_id: courtSid });
+    C('POST tuomioistuin/complete → 200 (OpenAI havainto)', compCourt.status === 200);
+    const obs = (compCourt.json && compCourt.json.ai_observation) || '';
+    C('ai_observation substantive', obs.length >= 80 && /Vastaustesi perusteella/i.test(obs));
+    const courtRow = (await pool.query(
+      'SELECT completed_at, followup_q1 IS NOT NULL AS has_q FROM court_submissions WHERE id = $1::uuid',
+      [courtSid]
+    )).rows[0];
+    C('court row completed in DB', !!(courtRow && courtRow.completed_at && courtRow.has_q));
+
+    /* ===== Rakenna oma AI-työkalu — generate-prompt, test, upload, complete ===== */
+    S('Työkalurakentaja · generate-prompt (OpenAI), test, submit-step4, complete');
+    const tbBody = {
+      problem_description:
+        'Toistuva ongelma: tiivistän kokousmuistiinpanoja toimenpiteiksi vähintään kerran viikossa tiimissäni. ' +
+        'Tarvitsen rakenteen joka toistuu.',
+      field_role:
+        'Olet kokousanalyytikko joka on erikoistunut B2B-projekteihin ja muunnat raakamuistiinpanot toimenpiteiksi ilman keksittyjä nimiä.',
+      field_input:
+        'Käyttäjä liittää kokouksen muistiinpanot: päätökset, avoimet kysymykset ja henkilöiden nimet jos mainittu.',
+      field_structure:
+        '**Päätökset:** numeroitu lista. **Toimenpiteet:** Tehtävä — Vastuu — Deadline. **Riskit:** lista. **Seuraavat askeleet:** lyhyt lista.',
+      field_constraints:
+        'Älä keksi osallistujia. Älä lisää bullet-listoja rajoitteiden ulkopuolella. Älä tiivistä yli 40% ilman merkintää.',
+      field_edge_cases:
+        'Jos syöte alle 40 sanaa, pyydä lisää kontekstia. Jos kieli on englanti, vastaa suomeksi ja mainitse kieli.'
+    };
+    const gp = await api('POST', '/api/tyokalurakentaja/generate-prompt', tokenA, tbBody);
+    C('POST generate-prompt → 200 (OpenAI)', gp.status === 200);
+    const tbId = gp.json && gp.json.submission_id;
+    const sysPrompt = (gp.json && gp.json.system_prompt) || '';
+    C('system_prompt from AI non-trivial', sysPrompt.length >= 120);
+    C('system prompt mentions role or kokous', /kokous|analyyt|tehtävä|rooli/i.test(sysPrompt));
+
+    const te0 = await api('POST', '/api/tyokalurakentaja/test', tokenA, {
+      submission_id: tbId,
+      slot: 0,
+      system_prompt: sysPrompt,
+      test_input:
+        'Päätettiin: API dokumentoidaan perjantaihin. Matti vie kirjautumisen. Avoin: virhekoodit. ' +
+        'Seuraava palaveri tiistaina.'
+    });
+    C('POST tyokalurakentaja/test slot 0 → 200', te0.status === 200);
+    const out0 = (te0.json && te0.json.output) || '';
+    C('test output structured / substantive', out0.length >= 40);
+
+    const tbStep4 = await postForm('/api/tyokalurakentaja/submit-step4', tokenA, [
+      { name: 'submission_id', value: tbId },
+      { name: 'gamma_url', value: 'https://gamma.app/docs/e2e-tool-doc' },
+      { name: 'reflection_text', value: 'R'.repeat(100) + ' Reflektio: testi paljasti että rajoitteet piti täsmentää reunatapauksissa.' },
+      { name: 'canva_card', value: pngBuffer(), filename: 'tool-card.png', contentType: 'image/png' }
+    ]);
+    C('POST submit-step4 (multipart) → 200', tbStep4.status === 200);
+    const insight50 = Array.from({ length: 52 }, () => 'sana').join(' ');
+    const tbDone = await api('POST', '/api/tyokalurakentaja/complete', tokenA, {
+      submission_id: tbId,
+      tool_name: 'E2EKokousTyökalu',
+      one_sentence_description: 'Tiimin kokousmuistiinpanot toimenpiteiksi ilman manuaalista säätöä.',
+      final_insight: insight50
+    });
+    C('POST tyokalurakentaja/complete → 200', tbDone.status === 200);
+    const tbCardGet = await api('GET', '/api/tyokalurakentaja/canva-card/' + tbId, tokenA);
+    C('GET canva-card as owner → 200 image', tbCardGet.status === 200 && /image/i.test(tbCardGet.contentType));
+    const tbRow = (await pool.query(
+      'SELECT completed_at, LENGTH(system_prompt_v1::text) AS sp_len FROM tool_builder_submissions WHERE id = $1::uuid',
+      [tbId]
+    )).rows[0];
+    C('tool_builder row completed in DB', !!(tbRow && tbRow.completed_at && tbRow.sp_len > 50));
+
+    const admCourtRows = await api('GET', '/api/admin/court-module-submissions', tokenAdmin);
+    C('admin court list includes A submission', (admCourtRows.json.submissions || []).some(s => s.id === courtSid));
+    const admTbRows = await api('GET', '/api/admin/tool-builder-submissions', tokenAdmin);
+    C('admin tool-builder list includes A submission', (admTbRows.json.submissions || []).some(s => s.id === tbId));
 
     /* ===== ADMIN VIEWS ===== */
     S('Admin endpoints — visibility + isolation');
