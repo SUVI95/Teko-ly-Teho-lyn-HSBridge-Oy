@@ -356,6 +356,43 @@ router.get('/feedback', authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
+// Kotitehtävät / moduulilomakkeet tallennettu `feedback`-tauluun (question_type = module_feedback)
+router.get('/homework-feedback', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { module, from, to } = req.query;
+    const params = [];
+    const where = [`f.question_type = 'module_feedback'`];
+    if (module) {
+      params.push(module);
+      where.push(`f.module_id = $${params.length}`);
+    }
+    if (from) {
+      params.push(from);
+      where.push(`f.created_at::date >= $${params.length}::date`);
+    }
+    if (to) {
+      params.push(to);
+      where.push(`f.created_at::date <= $${params.length}::date`);
+    }
+    const result = await pool.query(
+      `
+      SELECT f.id, f.module_id, f.feedback_text, f.rating, f.created_at,
+             u.id AS user_id, u.email, u.name, u.last_login, u.created_at AS user_registered_at
+      FROM feedback f
+      JOIN users u ON f.user_id = u.id
+      WHERE ${where.join(' AND ')}
+      ORDER BY u.email ASC NULLS LAST, f.created_at DESC
+      LIMIT 500
+    `,
+      params
+    );
+    res.json({ submissions: result.rows });
+  } catch (error) {
+    console.error('Get homework-feedback error:', error);
+    res.status(500).json({ error: 'Failed to get homework feedback' });
+  }
+});
+
 // Get structured module reflections with filters
 router.get('/module-reflections', authenticateToken, requireAdmin, async (req, res) => {
   try {

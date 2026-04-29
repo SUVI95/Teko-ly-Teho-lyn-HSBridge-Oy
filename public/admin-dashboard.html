@@ -289,6 +289,45 @@ nav {
   font-size: 0.86rem;
 }
 
+.homework-json-pre {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin-top: 0.5rem;
+  overflow: auto;
+  max-height: 420px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.homework-user-block {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  background: #fff;
+}
+.homework-user-head {
+  background: var(--paper2);
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.homework-submission-row {
+  padding: 1rem 1rem 0.25rem;
+  border-top: 1px solid var(--border);
+}
+.homework-submission-row:first-of-type {
+  border-top: none;
+}
+
 .module-feedback-table th {
   background: var(--paper2);
   color: var(--ink);
@@ -872,7 +911,7 @@ nav {
 
       <div class="admin-module-shortcuts">
         <h2>New course modules — submissions &amp; PDFs</h2>
-        <p>Student work for the modules we added (reflection, maps, myth buster PDFs, broken prompt, feedback) is stored on these pages. Open one, then find the student by email (e.g. Sami).</p>
+        <p>Student work for the modules we added (reflection, maps, myth buster PDFs, broken prompt, feedback) is stored on these pages. Open one, then find the student by email (e.g. Sami). <strong>Kotitehtävät (JSON + tiedostonimet)</strong> ovat päädashboardilla osiossa <em>Kotitehtävät &amp; moduulilähetykset</em> — ryhmittäin käyttäjän sähköpostin ja ID:n mukaan.</p>
         <div class="admin-module-shortcuts-grid">
           <a href="/admin/loppumoduuli">Tekoäly ja minä (3 stations)<span>Reflection, 3 Napkin PDFs, podcast answers, gallery</span></a>
           <a href="/admin/mythology">Myytinmurtaja<span>Uploaded PDF + three answers + AI insight</span></a>
@@ -939,8 +978,9 @@ nav {
 
       <div class="module-feedback-panel">
         <div class="section-header" style="margin-bottom:0.75rem;">
-          <h2 class="section-title" style="font-size:1.6rem;">Moduulipalautteet</h2>
+          <h2 class="section-title" style="font-size:1.6rem;">Moduulin reflektiovirrat</h2>
         </div>
+        <p style="color:var(--muted);font-size:0.9rem;margin:-0.25rem 0 0.85rem;">Taulu <code style="font-size:0.82rem;">module_reflections</code> (fiilis, quiz, avoin teksti). Ei sama kuin kotitehtävän JSON alla.</p>
         <div class="search-filter-bar" style="margin-bottom:0.85rem;">
           <select class="search-input" id="moduleFeedbackModuleFilter" style="max-width:320px;">
             <option value="">Kaikki moduulit</option>
@@ -954,6 +994,28 @@ nav {
         </div>
         <div id="moduleFeedbackContainer">
           <div class="loading">Ladataan moduulipalautteita...</div>
+        </div>
+      </div>
+
+      <div class="module-feedback-panel homework-feedback-panel">
+        <div class="section-header" style="margin-bottom:0.75rem;">
+          <h2 class="section-title" style="font-size:1.6rem;">Kotitehtävät &amp; moduulilähetykset</h2>
+        </div>
+        <p style="color:var(--muted);font-size:0.92rem;margin-bottom:1rem;">Tallennettu <code style="font-size:0.82rem;">feedback</code>-tauluun (<code>module_feedback</code>). Jokainen rivi on kirjautunut käyttäjä — ryhmittely sähköpostin / käyttäjä-ID:n mukaan. Moduuli 6: tekstivastaukset + tiedostonimet PDF:stä ja kuvasta.</p>
+        <div class="search-filter-bar" style="margin-bottom:0.85rem;">
+          <select class="search-input" id="homeworkModuleFilter" style="max-width:360px;">
+            <option value="">Kaikki moduulit (module_feedback)</option>
+            <option value="moduuli6-ai-creation-sprint">Moduuli 6 — AI Creation Sprint</option>
+            <option value="moduuli-voice-deep-search">Ääni &amp; Deep Search</option>
+            <option value="home">Koko kurssi (home)</option>
+          </select>
+          <input class="search-input" type="date" id="homeworkFromDate" style="max-width:200px;" title="Alkaen">
+          <input class="search-input" type="date" id="homeworkToDate" style="max-width:200px;" title="Päättyen">
+          <button class="btn btn-secondary" type="button" id="homeworkFeedbackApplyBtn">Suodata</button>
+          <button class="btn btn-secondary" type="button" id="homeworkFeedbackResetBtn">Tyhjennä</button>
+        </div>
+        <div id="homeworkFeedbackContainer">
+          <div class="loading">Ladataan kotitehtäviä...</div>
         </div>
       </div>
 
@@ -997,6 +1059,7 @@ nav {
     let currentStudentId = null;
     let currentStudentData = null;
     let moduleReflections = [];
+    let homeworkSubmissions = [];
     let courseStartProfiles = [];
     let onboardingDashboard = { profiles: [], stats: {} };
 
@@ -1006,6 +1069,7 @@ nav {
       await loadOnboardingProfiles();
       await loadCourseStartProfiles();
       await loadModuleReflections();
+      await loadHomeworkFeedback();
       setupEventListeners();
     });
 
@@ -1022,6 +1086,13 @@ nav {
         document.getElementById('moduleFeedbackFromDate').value = '';
         document.getElementById('moduleFeedbackToDate').value = '';
         loadModuleReflections();
+      });
+      document.getElementById('homeworkFeedbackApplyBtn').addEventListener('click', loadHomeworkFeedback);
+      document.getElementById('homeworkFeedbackResetBtn').addEventListener('click', () => {
+        document.getElementById('homeworkModuleFilter').value = '';
+        document.getElementById('homeworkFromDate').value = '';
+        document.getElementById('homeworkToDate').value = '';
+        loadHomeworkFeedback();
       });
       document.getElementById('downloadOnboardingCsvBtn').addEventListener('click', downloadOnboardingCsv);
     }
@@ -1079,6 +1150,94 @@ nav {
         moduleReflections = data.moduleReflections;
         renderModuleReflections();
       }
+    }
+
+    async function loadHomeworkFeedback() {
+      const moduleName = document.getElementById('homeworkModuleFilter').value;
+      const from = document.getElementById('homeworkFromDate').value;
+      const to = document.getElementById('homeworkToDate').value;
+      const params = new URLSearchParams();
+      if (moduleName) params.set('module', moduleName);
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      const query = params.toString() ? `?${params.toString()}` : '';
+      const data = await apiCall(`/admin/homework-feedback${query}`);
+      if (data && Array.isArray(data.submissions)) {
+        homeworkSubmissions = data.submissions;
+        renderHomeworkFeedback();
+      } else {
+        const c = document.getElementById('homeworkFeedbackContainer');
+        if (c) c.innerHTML = '<div class="empty-state"><p>Ei dataa tai lataus epäonnistui</p></div>';
+      }
+    }
+
+    function formatFeedbackJsonForAdmin(raw) {
+      if (raw == null || raw === '') return '<div class="content-item-text">—</div>';
+      const s = String(raw).trim();
+      if (s.startsWith('{') || s.startsWith('[')) {
+        try {
+          const o = JSON.parse(s);
+          return `<pre class="homework-json-pre">${escapeHtml(JSON.stringify(o, null, 2))}</pre>`;
+        } catch (e) { /* fall through */ }
+      }
+      return `<div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(s)}</div>`;
+    }
+
+    function groupHomeworkByUser(rows) {
+      const order = [];
+      const byId = {};
+      for (const r of rows) {
+        const id = r.user_id;
+        if (!byId[id]) {
+          byId[id] = { meta: r, rows: [] };
+          order.push(id);
+        }
+        byId[id].rows.push(r);
+      }
+      return order.map((uid) => ({ meta: byId[uid].meta, rows: byId[uid].rows }));
+    }
+
+    function renderHomeworkFeedback() {
+      const container = document.getElementById('homeworkFeedbackContainer');
+      const rows = homeworkSubmissions || [];
+      if (!container) return;
+      if (!rows.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📎</div>
+            <p>Ei kotitehtäväpalautteita valituilla suodattimilla</p>
+          </div>
+        `;
+        return;
+      }
+      const groups = groupHomeworkByUser(rows);
+      container.innerHTML = groups.map(({ meta, rows: userRows }) => `
+        <div class="homework-user-block">
+          <div class="homework-user-head">
+            <div>
+              <strong>${escapeHtml(meta.name || 'Nimetön')}</strong>
+              <span style="color:var(--muted);font-size:0.85rem;"> · ${escapeHtml(meta.email || '')}</span>
+              <div style="font-size:0.8rem;color:var(--muted);margin-top:0.35rem;">
+                User ID: <code>${escapeHtml(String(meta.user_id))}</code>
+                · Viimeksi kirjautunut: ${formatDate(meta.last_login) || '—'}
+                · Tili luotu: ${formatDate(meta.user_registered_at) || '—'}
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="loadStudentDetail(${meta.user_id})">Avaa profiili →</button>
+          </div>
+          <div>
+            ${userRows.map((r, idx) => `
+              <div class="homework-submission-row" style="border-top:${idx ? '1px solid var(--border)' : 'none'};padding-top:${idx ? '0.75rem' : '1rem'};">
+                <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.35rem;">
+                  ${formatDate(r.created_at) || '—'} · <strong>${escapeHtml(r.module_id || '—')}</strong>
+                  ${r.rating ? ` · tähdet: ${escapeHtml(String(r.rating))}/5` : ''}
+                </div>
+                ${formatFeedbackJsonForAdmin(r.feedback_text)}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
     }
 
     async function loadCourseStartProfiles() {
@@ -1378,6 +1537,7 @@ nav {
                     <span style="padding:3px 10px;border-radius:4px;font-size:0.75rem;font-weight:600;${s.is_approved ? 'background:rgba(42,122,75,0.12);color:#2a7a4b;' : 'background:rgba(199,91,58,0.12);color:#c75b3a;'}">${s.is_approved ? 'Hyväksytty' : 'Odottaa'}</span>
                   </div>
                   <div class="student-email">${escapeHtml(s.email)}</div>
+                  <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem;">ID: ${s.id}</div>
                   <div class="student-meta">
                     <span>Viimeksi kirjautunut: ${formatDate(s.last_login) || 'Ei koskaan'}</span>
                   </div>
@@ -1533,6 +1693,14 @@ nav {
             <div class="student-detail-email">${escapeHtml(user.email)}</div>
             <div class="student-detail-meta">
               <div class="meta-item">
+                <span class="meta-label">Opiskelija-ID</span>
+                <span class="meta-value"><code style="font-size:0.9rem;">${escapeHtml(String(user.id))}</code></span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Sähköposti (kirjautuminen)</span>
+                <span class="meta-value">${escapeHtml(user.email || '—')}</span>
+              </div>
+              <div class="meta-item">
                 <span class="meta-label">Rekisteröitynyt</span>
                 <span class="meta-value">${formatDate(user.created_at)}</span>
               </div>
@@ -1667,13 +1835,13 @@ nav {
               ` : ''}
               
               ${moduleFeedback.length > 0 ? `
-                <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-family: 'DM Serif Display', serif; color: var(--ink);">Moduulipalautteet</h3>
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-family: 'DM Serif Display', serif; color: var(--ink);">Moduulipalautteet (kotitehtävät &amp; lomakkeet)</h3>
                 ${moduleFeedback.map(f => `
                   <div class="content-item">
                     <div class="content-item-header">
                       <div>
-                        <span class="module-badge">${f.module_id === 'home' ? 'Koko kurssi' : 'Moduuli ' + (f.module_id || '-')}</span>
-                        <span class="content-item-title">Moduulipalautteet</span>
+                        <span class="module-badge">${f.module_id === 'home' ? 'Koko kurssi' : (f.module_id === 'moduuli6-ai-creation-sprint' ? 'Moduuli 6 — Creation Sprint' : 'Moduuli ' + (f.module_id || '-'))}</span>
+                        <span class="content-item-title">Lähetetty sisältö</span>
                         ${f.rating ? `
                           <span class="feedback-rating">
                             ${Array.from({ length: 5 }, (_, i) => 
@@ -1684,7 +1852,7 @@ nav {
                       </div>
                       <div class="content-item-date">${formatDate(f.created_at)}</div>
                     </div>
-                    <div class="content-item-text">${escapeHtml(f.feedback_text || '-')}</div>
+                    ${formatFeedbackJsonForAdmin(f.feedback_text)}
                   </div>
                 `).join('')}
               ` : ''}
