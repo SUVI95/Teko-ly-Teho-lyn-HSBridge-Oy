@@ -127,8 +127,7 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 .static-step-card h3{font-size:1.05rem;color:var(--ink);margin-bottom:0.75rem;}
 .brief-card{background:linear-gradient(135deg,rgba(37,99,168,0.08),rgba(199,91,58,0.05));border:1px solid rgba(37,99,168,0.2);border-radius:14px;padding:1.35rem 1.5rem;margin:1rem 0;font-size:0.95rem;line-height:1.8;color:var(--text);}
 .brief-card strong{color:var(--ink);}
-.benchmark-panel{display:none;margin-top:1.5rem;}
-.benchmark-panel.is-visible{display:block;}
+.benchmark-panel{margin-top:1.5rem;}
 .bench-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.75rem;}
 .bench-col{border-radius:12px;padding:1.15rem;font-size:0.82rem;line-height:1.65;}
 .bench-bad{background:rgba(199,91,58,0.08);border:1px solid rgba(199,91,58,0.25);}
@@ -137,12 +136,9 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 .bench-bad .bench-label{color:var(--accent2);}
 .bench-good .bench-label{color:var(--accent3);}
 .bench-body{font-family:'DM Mono',monospace;color:var(--ink);white-space:pre-wrap;}
-.station-placeholder{text-align:center;padding:2rem 1.5rem;background:var(--paper2);border-radius:14px;border:1px dashed var(--border);margin-bottom:1.25rem;}
-.station-placeholder p{font-size:0.92rem;color:var(--muted);margin-bottom:1rem;}
 .author-reflection-box{background:linear-gradient(180deg,rgba(37,99,168,0.09),rgba(245,243,239,0.5));border:2px solid rgba(37,99,168,0.35);border-radius:14px;padding:1.35rem 1.5rem;margin-bottom:1.5rem;}
 .author-reflection-box label{font-size:1.02rem;color:var(--ink);}
-.station2-body{display:none;}
-.station2-body.is-open{display:block;}
+.topic-free-note{font-size:0.88rem;color:var(--muted);margin-top:0.5rem;}
 @media(max-width:800px){.select-grid{grid-template-columns:1fr;}.two-col,.field-row,.bench-grid{grid-template-columns:1fr;}nav{padding:0 1.25rem;}.nav-title{display:none;}.nav-steps{max-width:50%;}.section{padding:80px 1.1rem 4rem;}}
 </style>
 </head>
@@ -168,8 +164,12 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
   <div class="hero-inner">
     <div class="section-label" style="color:#8eaad1;">Moduuli 6</div>
     <h1 class="hero-title">AI Creation Sprint — <em>kuva, PDF ja pitch</em></h1>
-    <p class="hero-sub">Yksi viiva: ajattelu ChatGPT:ssä → tuotanto Claudella → valmis PDF ja lyhyt esittely. Ei valikkoa — etenet asemasta toiseen.</p>
+    <p class="hero-sub">Ajattelu ChatGPT:ssä → tuotanto Claudella → PDF ja pitch. Voit valita valmiin aiheen, kirjoittaa oman tai hypätä suoraan mihin tahansa osioon — mikään ei ole lukittu.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
     <a href="#station1" class="hero-cta">Aloita sprintti</a>
+    <a href="#station2" class="hero-cta" style="background:transparent;border:1px solid rgba(255,255,255,0.35);">Hypää asemaan 2</a>
+    <a href="#station3" class="hero-cta" style="background:transparent;border:1px solid rgba(255,255,255,0.35);">Hypää palautukseen</a>
+    </div>
   </div>
 </section>
 
@@ -179,23 +179,26 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
     <div class="section-label">Asema 1 · ~15 min</div>
     <h2 class="section-h2">Aivoriihi <em>ChatGPT:ssä</em></h2>
     <div class="divider"></div>
-    <p class="lead">Kirjoitat itse promptin. Sivu ei tee sitä puolestasi — vasta sen jälkeen näet vertailun hyvästä ja huonosta.</p>
+    <p class="lead">Kirjoitat itse ChatGPT-promptin. Alla on ehdotettu briefi ja vertailuesimerkit — voit myös valita täysin oman aiheen tai jättää aiheen valinnan tyhjäksi ja silti jatkaa.</p>
 
     <div class="homework-task">
-      <h4>Valitse tuotoksen muoto</h4>
-      <p class="step-instruction">Tämä ohjaa myöhemmät Claude-promptit; varsinainen ChatGPT-prompti kirjoitat itse alla.</p>
+      <h4>Ehdotettu aihe (vapaaehtoinen)</h4>
+      <p class="step-instruction">Valitse yksi alla olevista <em>tai</em> kuvaile oma aihe tekstikentässä. Molemmat voi jättää tyhjiksi: Claude-promptit toimivat silti yleisellä työasiakirjakontekstilla.</p>
       <div class="select-grid" id="taskATopics">
         <div class="select-card" data-topic="Muistio tai tiedote tiimille" onclick="selectTaskATopic(this)">📋 Muistio tai tiedote tiimille</div>
         <div class="select-card" data-topic="Asiakasesittely tai one-pager" onclick="selectTaskATopic(this)">📄 Asiakasesittely tai one-pager</div>
         <div class="select-card" data-topic="Työnhakukirje ja CV-tiivistelmä" onclick="selectTaskATopic(this)">💼 Työnhakukirje ja CV-tiivistelmä</div>
         <div class="select-card" data-topic="LinkedIn-postaus ja bio" onclick="selectTaskATopic(this)">🔗 LinkedIn-postaus ja bio</div>
       </div>
+      <label class="practice-label" style="margin-top:1.1rem;">Oma aihe (jos et käytä yllä olevia)</label>
+      <textarea class="practice-textarea" id="topicFree" rows="2" placeholder="Esim. kickoff-kutsu, asiakastapaus, sisäinen tiedote uudesta käytännöstä..." oninput="onTopicFreeInput()"></textarea>
+      <p class="topic-free-note">Kun kirjoitat tähän, valintaruudukon korostus poistuu — käytämme tätä tekstiä aiheena Claude-prompteissa.</p>
     </div>
 
     <div class="brief-card">
-      <strong>Työelämän briefi</strong><br>
-      Tarvitset <strong>yhden sivun</strong> mittaisen asiakirjan, joka vakuuttaa <strong>skeptisen esihenkilön</strong> hyväksymään uuden työkalun tai prosessin. ChatGPT:n ensimmäinen luonnos: enintään noin <strong>150 sanaa</strong> (tiivis, ei esseetä).<br><br>
-      <strong>Sinun tehtäväsi:</strong> kirjoita <em>kokonainen</em> englannin- tai suomenkielinen prompti, jonka liität <a href="https://chat.openai.com" target="_blank" rel="noopener" style="color:var(--accent);">ChatGPT:hen</a>. Älä odota automaattista promptia tältä sivulta.
+      <strong>Ehdotettu työelämän briefi</strong> (voit noudattaa tai ohittaa)<br>
+      Tarvitset <strong>yhden sivun</strong> mittaisen asiakirjan, joka vakuuttaa <strong>skeptisen esihenkilön</strong> hyväksymään uuden työkalun tai prosessin. ChatGPT:n ensimmäinen luonnos: esim. enintään noin <strong>150 sanaa</strong>.<br><br>
+      Kirjoita <em>kokonainen</em> prompti suomeksi tai englanniksi ja vie se <a href="https://chat.openai.com" target="_blank" rel="noopener" style="color:var(--accent);">ChatGPT:hen</a> — tai käytä täysin eri tehtävää, jos oma työtilanteesi vaatii.
     </div>
 
     <div class="practice-wrap">
@@ -208,8 +211,7 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
       </div>
       <div class="practice-body">
         <textarea class="practice-textarea" id="station1_ownPrompt" rows="10" placeholder="Esimerkki: rooli + kohde + rakenne + pituusraja + sävy + mitä pyydät päätökseksi..."></textarea>
-        <button type="button" class="practice-btn" id="btnStation1Commit" onclick="commitStation1Prompt()">Tallenna promptini ja näe vertailuesimerkit</button>
-        <div class="ai-gen-error" id="errStation1"></div>
+        <p class="step-instruction" style="margin-top:0.75rem;">Vertailu alla — voit käyttää sitä milloin vain, ei erillistä lukkoa.</p>
 
         <div id="benchmarkPanel" class="benchmark-panel">
           <p class="step-instruction" style="margin-top:0.5rem;">Vertaa — mitä jäi puuttumaan omastasi?</p>
@@ -225,12 +227,10 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
           </div>
         </div>
 
-        <div id="station1AfterBench" style="display:none;margin-top:1.75rem;">
+        <div id="station1AfterBench" style="margin-top:1.75rem;">
           <div class="practice-label">Raakaluonnos ChatGPT:stä</div>
-          <p class="step-instruction">Mene ChatGPT:hen, liitä promptisi, kopioi <strong>koko vastaus</strong> tähän.</p>
-          <textarea class="practice-textarea" id="station1_chatgpt_raw" rows="10" placeholder="Liitä ChatGPT:n vastaus tähän..."></textarea>
-          <button type="button" class="practice-btn" id="btnOpenStation2" onclick="openStation2()">Avaa asema 2 — tuotanto</button>
-          <div class="ai-gen-error" id="errStation1b"></div>
+          <p class="step-instruction">Mene ChatGPT:hen, liitä promptisi, kopioi <strong>koko vastaus</strong> tähän. Teksti kopioidaan myös automaattisesti aseman 2 -kenttään (voit muokata siellä).</p>
+          <textarea class="practice-textarea" id="station1_chatgpt_raw" rows="10" placeholder="Liitä ChatGPT:n vastaus tähän..." oninput="syncRawToStation2()"></textarea>
         </div>
       </div>
     </div>
@@ -244,13 +244,8 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
     <div class="section-label">Asema 2 · ~20 min</div>
     <h2 class="section-h2">Rakenna <em>PDF Claudella</em></h2>
     <div class="divider"></div>
-    <p class="lead">Liitä sama luonnos, pyydä sivulta kolme Claude-promptia, luo kuva, koosta yksi sivu PDF:ksi.</p>
+    <p class="lead">Liitä luonnos (tai kirjoita suoraan tähän), pyydä kolme Claude-promptia, luo kuva, koosta PDF.</p>
 
-    <div id="station2Placeholder" class="station-placeholder">
-      <p>Asema 2 avautuu, kun olet asemassa 1 tallentanut promptisi, nähnyt vertailun ja liittänyt ChatGPT-vastauksen.</p>
-    </div>
-
-    <div id="station2Body" class="station2-body">
     <div class="practice-wrap">
       <div class="practice-header">
         <div class="practice-header-icon">✨</div>
@@ -261,7 +256,7 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
       </div>
       <div class="practice-body">
         <div class="practice-label">ChatGPT:n raakateksti (voit vielä muokata ennen generointia)</div>
-        <textarea class="practice-textarea" id="taskA_gptPaste" rows="8" placeholder="Luonnos näkyy tässä automaattisesti asemasta 1..."></textarea>
+        <textarea class="practice-textarea" id="taskA_gptPaste" rows="8" placeholder="Liitä ChatGPT:n luonnos tähän tai kirjoita oma lähtöteksti. Jos täytit aseman 1, teksti synkronoituu tänne."></textarea>
         <button type="button" class="practice-btn" id="btnTaskA_claude" onclick="runTaskA_claudePrompts()">Luo 3 Claude-promptia</button>
         <div class="ai-gen-error" id="errTaskA_claude"></div>
         <div class="practice-response" id="respTaskA_claude">
@@ -305,7 +300,6 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
           <li>File → Download → PDF.</li>
         </ol>
       </div>
-    </div>
     </div>
     <div class="task-divider"></div>
   </div>
@@ -427,49 +421,32 @@ function copyTextEl(id, btn) {
   });
 }
 
+function effectiveTopic() {
+  var free = val('topicFree');
+  if (free) return free;
+  return taskATopic || 'työasiakirja (yleinen)';
+}
+
 function selectTaskATopic(card) {
   document.querySelectorAll('#taskATopics .select-card').forEach(function(c) { c.classList.remove('selected'); });
   card.classList.add('selected');
   taskATopic = card.getAttribute('data-topic') || '';
+  var tf = document.getElementById('topicFree');
+  if (tf) tf.value = '';
 }
 
-function commitStation1Prompt() {
-  showErr('errStation1', '');
-  if (!taskATopic) {
-    showErr('errStation1', 'Valitse ensin tuotoksen muoto (ruudukosta).');
-    return;
-  }
-  var own = val('station1_ownPrompt');
-  if (!own || own.length < 40) {
-    showErr('errStation1', 'Kirjoita vähintään muutama virke täysi prompti (vähintään ~40 merkkiä).');
-    return;
-  }
-  var bench = document.getElementById('benchmarkPanel');
-  if (bench) bench.classList.add('is-visible');
-  var after = document.getElementById('station1AfterBench');
-  if (after) after.style.display = 'block';
-  var btn = document.getElementById('btnStation1Commit');
-  if (btn) {
-    btn.textContent = '✓ Vertailu näkyvissä';
-    btn.disabled = true;
+function onTopicFreeInput() {
+  var free = val('topicFree');
+  if (free) {
+    document.querySelectorAll('#taskATopics .select-card').forEach(function(c) { c.classList.remove('selected'); });
+    taskATopic = '';
   }
 }
 
-function openStation2() {
-  showErr('errStation1b', '');
-  var raw = val('station1_chatgpt_raw');
-  if (!raw || raw.length < 30) {
-    showErr('errStation1b', 'Liitä ChatGPT:n vastaus (vähintään muutama virke).');
-    return;
-  }
+function syncRawToStation2() {
+  var raw = document.getElementById('station1_chatgpt_raw');
   var paste = document.getElementById('taskA_gptPaste');
-  if (paste) paste.value = document.getElementById('station1_chatgpt_raw').value;
-  var ph = document.getElementById('station2Placeholder');
-  if (ph) ph.style.display = 'none';
-  var body = document.getElementById('station2Body');
-  if (body) body.classList.add('is-open');
-  var st2 = document.getElementById('station2');
-  if (st2) st2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (raw && paste) paste.value = raw.value;
 }
 
 function val(id) {
@@ -540,7 +517,7 @@ async function runTaskA_imagePrompt() {
   setLoading(btn, true);
   try {
     var sys = 'Olet visuaalisen viestinnän asiantuntija. Tuota yksi englanninkielinen kuvanluontiprompti (DALL·E / Midjourney / Copilot -tyyli). Vaatimukset: professional workplace imagery, clean modern realistic look, soft neutral colors ja yksi accent-väri, ei tekstiä kuvassa, sopii suomalaiseen työasiakirjaan. Vastaa vain promptilla, max 80 sanaa.';
-    var user = 'Ammattirooli tai ala: ' + role + '\nDokumentin aihekokonaisuus (jos tiedossa): ' + (taskATopic || 'yleinen työasiakirja');
+    var user = 'Ammattirooli tai ala: ' + role + '\nDokumentin aihekokonaisuus (jos tiedossa): ' + effectiveTopic();
     var out = await hwAiChat(sys, user, 400);
     showResponseWrap('respTaskA_img', 'textTaskA_img', out);
   } catch (err) {
@@ -551,20 +528,16 @@ async function runTaskA_imagePrompt() {
 
 async function runTaskA_claudePrompts() {
   showErr('errTaskA_claude', '');
-  if (!taskATopic) {
-    showErr('errTaskA_claude', 'Valitse tuotoksen muoto asemassa 1 (tai päivitä sivu).');
-    return;
-  }
   var pasted = val('taskA_gptPaste');
   if (!pasted || pasted.length < 20) {
-    showErr('errTaskA_claude', 'Liitä ChatGPT:n teksti (vähintään muutama virke).');
+    showErr('errTaskA_claude', 'Liitä tai kirjoita lähtöteksti (vähintään muutama virke).');
     return;
   }
   var btn = document.getElementById('btnTaskA_claude');
   setLoading(btn, true);
   try {
     var sys = 'Olet promptisuunnittelija. Tuotat kolme peräkkäistä Claude-promptia suomeksi. Ne liitetään Claudeen järjestyksessä samaan luonnokseen. Muotoile vastaus TÄSMÄLLEEN näin merkattuna:\n[PROMPT1]...[/PROMPT1]\n[PROMPT2]...[/PROMPT2]\n[PROMPT3]...[/PROMPT3]\n\nPromptti 1: paranna kieli luonnolliseksi suomeksi, poista toistot, säilytä rakenne, älä lisää uutta sisältöä.\nPromptti 2: muuta vain aloituslause puhuttelemaan lukijaa suoraan.\nPromptti 3: heikoin kohta ja parannus (kysy mikä on heikko ja paranna).';
-    var user = 'Dokumenttityyppi (konteksti): ' + (taskATopic || 'työasiakirja') + '\n\nTässä on ChatGPT:n luonnos:\n\n' + pasted;
+    var user = 'Dokumentin aihe / tyyppi (konteksti): ' + effectiveTopic() + '\n\nTässä on ChatGPT:n luonnos tai lähtöteksti:\n\n' + pasted;
     var raw = await hwAiChat(sys, user, 900);
     var p1 = extractTagged(raw, 'PROMPT1');
     var p2 = extractTagged(raw, 'PROMPT2');
@@ -606,7 +579,9 @@ async function submitHomework() {
   var feedbackText = JSON.stringify({
     type: 'kotitehtava_ai_creation_sprint',
     structure_version: 2,
-    task_topic: taskATopic,
+    task_topic_card: taskATopic,
+    topic_free: val('topicFree'),
+    topic_effective: effectiveTopic(),
     station1_own_prompt: val('station1_ownPrompt'),
     station1_chatgpt_raw: val('station1_chatgpt_raw'),
     reflection_author: val('reflectionAuthor'),
