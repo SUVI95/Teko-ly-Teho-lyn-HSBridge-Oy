@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Minä meidän osana (external static app): production origin only — no trailing slash or path. -->
+<meta name="mina-meidan-osana-origin" content="https://min-meid-n-osana-taitoa-ty-yhteis-n.vercel.app">
 <title>AI Polku — Tekoäly työelämään | HSBridge</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
@@ -890,11 +892,22 @@
         }
         window.currentSummary = summary; // Store for statistics
 
-        // Minä meidän osana — erillinen staattinen Vercel-sivusto (vaihda tuotanto-URL tähän tai aseta window.MINA_MEIDAN_OSANA_ORIGIN ennen tätä skriptiä).
-        const MINA_MEIDAN_OSANA_ORIGIN =
-          (typeof window !== 'undefined' && window.MINA_MEIDAN_OSANA_ORIGIN) ||
-          'https://REPLACE-MINA-VERCEL-HOST.vercel.app';
-        const MINA_MEIDAN_OSANA_UNELMATYO_URL = `${MINA_MEIDAN_OSANA_ORIGIN.replace(/\/$/, '')}/unelmatyo.html`;
+        // Minä meidän osana — set meta[name="mina-meidan-osana-origin"] in <head> or window.MINA_MEIDAN_OSANA_ORIGIN (https origin, no path). No fake default: bogus *.vercel.app hosts return DEPLOYMENT_NOT_FOUND.
+        function resolveMinaMeidanOsanaUnelmatyoUrl() {
+          let origin = '';
+          if (typeof window !== 'undefined' && window.MINA_MEIDAN_OSANA_ORIGIN) {
+            origin = String(window.MINA_MEIDAN_OSANA_ORIGIN).trim();
+          } else if (typeof document !== 'undefined') {
+            const el = document.querySelector('meta[name="mina-meidan-osana-origin"]');
+            const c = el && el.getAttribute('content');
+            if (c) origin = String(c).trim();
+          }
+          origin = origin.replace(/\/$/, '');
+          if (!origin || !/^https:\/\//i.test(origin)) return '';
+          if (/placeholder|replace-mina|example\.com/i.test(origin)) return '';
+          return `${origin}/unelmatyo.html`;
+        }
+        const MINA_MEIDAN_OSANA_UNELMATYO_URL = resolveMinaMeidanOsanaUnelmatyoUrl();
         
         const modules = [
           {
@@ -1626,7 +1639,7 @@
         `;
       }
 
-      if (module.isExternal && module.externalUrl) {
+      if (module.isExternal) {
         const shouldLockForOnboarding = window.currentUser &&
           !window.currentUser.is_admin &&
           window.onboardingStatusKnown &&
@@ -1640,6 +1653,19 @@
               <h2>${module.title}</h2>
               <p>${module.description}</p>
               <div class="progress-text">Avautuu aloituksen jälkeen</div>
+            </div>
+          `;
+        }
+        if (!module.externalUrl) {
+          return `
+            <div class="module-card locked">
+              <div class="locked-badge">⚙️ External URL not configured</div>
+              <div class="module-icon">${iconSVGs[module.icon]}</div>
+              ${module.cardBadge ? `<div class="module-card-tag">${module.cardBadge}</div>` : ''}
+              <h2>${module.title}</h2>
+              <p>${module.description}</p>
+              <p style="font-size:0.88rem;color:var(--muted);margin-top:0.75rem;">Set the Minä meidän osana production origin in <code style="font-size:0.8em;">public/index.html</code>: empty meta <code style="font-size:0.8em;">mina-meidan-osana-origin</code> → fill <code style="font-size:0.8em;">content="https://…"</code> (origin only), or set <code style="font-size:0.8em;">window.MINA_MEIDAN_OSANA_ORIGIN</code> before load. The previous placeholder hostname is not a real Vercel deployment, so Vercel showed DEPLOYMENT_NOT_FOUND.</p>
+              <div class="progress-text">Ei linkkiä — lisää tuotanto-osoite</div>
             </div>
           `;
         }
