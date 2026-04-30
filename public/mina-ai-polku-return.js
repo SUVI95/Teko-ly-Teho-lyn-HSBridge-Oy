@@ -1,8 +1,13 @@
 /**
  * Minä meidän osana — paluu AI Polkuun
- * Lisää tämä sivun loppuun (ennen </body>): <script src="https://<AI-POLKU-HOST>/mina-ai-polku-return.js" defer></script>
- * Kun käyttäjä avaa sivun linkistä, jossa on ?ai_polku_return=https%3A%2F%2F..., tämä skripti ohjaa
- * a[href="index.html"] ja a[href="./index.html"] -linkit takaisin AI Polkuun (ei Minä-sivuston etusivulle).
+ * Lisää sivun loppuun (ennen </body>):
+ * <script src="https://<AI-POLKU-HOST>/mina-ai-polku-return.js" defer></script>
+ *
+ * Kun käyttäjä avaa sivun linkistä, jossa on ?ai_polku_return=https%3A%2F%2F...,
+ * skripti ohjaa a[href="index.html"] / a[href="./index.html"] takaisin AI Polkuun.
+ *
+ * Optional: lisää URL:iin hide_external_breadcrumb=1 jos haluat piilottaa
+ * Minä-sivuston yläpolun ("Etusivu › AI-moduulit › ...") näiltä käyttäjiltä.
  */
 (function () {
   'use strict';
@@ -39,12 +44,30 @@
     });
   }
 
+  function hideExternalBreadcrumbIfRequested(sp) {
+    if (sp.get('hide_external_breadcrumb') !== '1') return;
+
+    // unelmatyo.html style nav breadcrumbs
+    document.querySelectorAll('.nav-left .nav-sep, .nav-left .nav-badge, .nav-left .nav-title').forEach(function (el) {
+      el.style.display = 'none';
+    });
+    document.querySelectorAll('.nav-left a[href="ai-modules.html"], .nav-left a[href="./ai-modules.html"]').forEach(function (el) {
+      el.style.display = 'none';
+    });
+
+    // module-01-confidence.html sticky nav breadcrumb
+    document.querySelectorAll('.sticky-nav .nav-breadcrumb').forEach(function (el) {
+      el.style.display = 'none';
+    });
+  }
+
   function run() {
     try {
       var sp = new URLSearchParams(window.location.search);
       var ret = normalizeReturn(sp.get('ai_polku_return'));
       if (!ret) return;
       patchAnchors(ret);
+      hideExternalBreadcrumbIfRequested(sp);
     } catch (e) {}
   }
 
