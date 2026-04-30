@@ -893,7 +893,7 @@
         window.currentSummary = summary; // Store for statistics
 
         // Minä meidän osana — set meta[name="mina-meidan-osana-origin"] in <head> or window.MINA_MEIDAN_OSANA_ORIGIN (https origin, no path). No fake default: bogus *.vercel.app hosts return DEPLOYMENT_NOT_FOUND.
-        function resolveMinaMeidanOsanaUnelmatyoUrl() {
+        function getMinaMeidanOsanaOrigin() {
           let origin = '';
           if (typeof window !== 'undefined' && window.MINA_MEIDAN_OSANA_ORIGIN) {
             origin = String(window.MINA_MEIDAN_OSANA_ORIGIN).trim();
@@ -905,9 +905,16 @@
           origin = origin.replace(/\/$/, '');
           if (!origin || !/^https:\/\//i.test(origin)) return '';
           if (/placeholder|replace-mina|example\.com/i.test(origin)) return '';
-          return `${origin}/unelmatyo.html`;
+          return origin;
         }
-        const MINA_MEIDAN_OSANA_UNELMATYO_URL = resolveMinaMeidanOsanaUnelmatyoUrl();
+        function minaMeidanOsanaPageUrl(path) {
+          const origin = getMinaMeidanOsanaOrigin();
+          if (!origin) return '';
+          const p = path.startsWith('/') ? path : `/${path}`;
+          return `${origin}${p}`;
+        }
+        const MINA_MEIDAN_OSANA_UNELMATYO_URL = minaMeidanOsanaPageUrl('/unelmatyo.html');
+        const MINA_MEIDAN_OSANA_CONFIDENCE_URL = minaMeidanOsanaPageUrl('/module-01-confidence.html');
         
         const modules = [
           {
@@ -1007,6 +1014,19 @@
             externalUrl: MINA_MEIDAN_OSANA_UNELMATYO_URL,
             cardBadge: 'Ulkoinen',
             statusLine: 'Avaa uudessa välilehdessä →'
+          },
+          {
+            id: 'external-mina-meidan-osana-itseluottamus',
+            title: 'Minä meidän osana — Itseluottamus',
+            description: 'Sinä olet jo tarpeeksi hyvä — oma esittely 30 sekunnissa. Noin 60 min. Avautuu toiseen sivustoon uuteen välilehteen; palaa AI Polkuun toisen sivun yläpalkista.',
+            icon: 'star',
+            order: 5.6,
+            part: 2,
+            day: 'bridge',
+            isExternal: true,
+            externalUrl: MINA_MEIDAN_OSANA_CONFIDENCE_URL,
+            cardBadge: 'Ulkoinen',
+            statusLine: '60 min · Avaa uudessa välilehdessä →'
           },
           {
             id: 'moduuli-esitykset-tarjoukset-viestinta',
