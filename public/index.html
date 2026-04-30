@@ -889,6 +889,12 @@
           console.log('Progress not available (not logged in), continuing without progress tracking');
         }
         window.currentSummary = summary; // Store for statistics
+
+        // Minä meidän osana — erillinen staattinen Vercel-sivusto (vaihda tuotanto-URL tähän tai aseta window.MINA_MEIDAN_OSANA_ORIGIN ennen tätä skriptiä).
+        const MINA_MEIDAN_OSANA_ORIGIN =
+          (typeof window !== 'undefined' && window.MINA_MEIDAN_OSANA_ORIGIN) ||
+          'https://REPLACE-MINA-VERCEL-HOST.vercel.app';
+        const MINA_MEIDAN_OSANA_UNELMATYO_URL = `${MINA_MEIDAN_OSANA_ORIGIN.replace(/\/$/, '')}/unelmatyo.html`;
         
         const modules = [
           {
@@ -975,6 +981,19 @@
             order: 5,
             part: 2,
             day: 'bridge'
+          },
+          {
+            id: 'external-mina-meidan-osana-unelmatyo',
+            title: 'Minä meidän osana — unelmatyö-harjoitus',
+            description: 'Avautuu toiseen Vercel-sivustoon uuteen välilehteen. Tee harjoitus siellä ja palaa takaisin AI Polkuun milloin tahansa (myös toisen sivun yläpalkista).',
+            icon: 'star',
+            order: 5.5,
+            part: 2,
+            day: 'bridge',
+            isExternal: true,
+            externalUrl: MINA_MEIDAN_OSANA_UNELMATYO_URL,
+            cardBadge: 'Ulkoinen',
+            statusLine: 'Avaa uudessa välilehdessä →'
           },
           {
             id: 'moduuli-esitykset-tarjoukset-viestinta',
@@ -1313,7 +1332,7 @@
         ];
         
         // Check which modules are completed (only count main modules, not homework)
-        const mainModules = modules.filter(m => !m.isHomework && !m.isOnboarding);
+        const mainModules = modules.filter(m => !m.isHomework && !m.isOnboarding && !m.isExternal);
         const part1Modules = mainModules.filter(m => m.part === 1);
         const completedModules = new Set();
         let totalProgress = 0;
@@ -1603,6 +1622,35 @@
             <h2>${module.title}</h2>
             <p>${module.description}</p>
             <div class="progress-text">${onboardingDone ? 'Suoritettu ✓' : 'Aloita tästä ennen moduuli 1:tä'}</div>
+          </a>
+        `;
+      }
+
+      if (module.isExternal && module.externalUrl) {
+        const shouldLockForOnboarding = window.currentUser &&
+          !window.currentUser.is_admin &&
+          window.onboardingStatusKnown &&
+          window.onboardingCompleted !== true;
+        if (shouldLockForOnboarding) {
+          return `
+            <div class="module-card locked">
+              <div class="locked-badge">🔒 Suorita ensin aloitusmoduuli</div>
+              <div class="module-icon">${iconSVGs[module.icon]}</div>
+              ${module.cardBadge ? `<div class="module-card-tag">${module.cardBadge}</div>` : ''}
+              <h2>${module.title}</h2>
+              <p>${module.description}</p>
+              <div class="progress-text">Avautuu aloituksen jälkeen</div>
+            </div>
+          `;
+        }
+        const extUrl = String(module.externalUrl).replace(/"/g, '%22');
+        return `
+          <a class="module-card" href="${extUrl}" target="_blank" rel="noopener noreferrer">
+            <div class="module-icon">${iconSVGs[module.icon]}</div>
+            ${module.cardBadge ? `<div class="module-card-tag">${module.cardBadge}</div>` : ''}
+            <h2>${module.title}</h2>
+            <p>${module.description}</p>
+            <div class="progress-text">${module.statusLine || 'Ulkoinen sivusto →'}</div>
           </a>
         `;
       }
