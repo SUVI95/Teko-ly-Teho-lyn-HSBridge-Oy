@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moduuli 6: AI-hallusinaatiot — AI Polku</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{--ink:#1a1a2e;--paper:#f5f3ef;--paper2:#eeeae3;--accent:#c75b3a;--accent2:#2563a8;--accent3:#2a7a4b;--gold:#b8860b;--text:#1a1a2e;--muted:#6b6880;--border:rgba(26,26,46,.12);--shadow:0 2px 20px rgba(26,26,46,.08);--shadow-md:0 8px 40px rgba(26,26,46,.12)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.7}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(26,26,46,.97);backdrop-filter:blur(12px);padding:.6rem 2rem;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{color:#fff;text-decoration:none;font-family:'DM Serif Display',serif;font-size:1.1rem}
+.nav-steps{display:flex;gap:6px;align-items:center}
+.step-pip{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);cursor:pointer;transition:.2s}
+.step-pip.active{background:var(--accent);transform:scale(1.3)}.step-pip.done{background:var(--accent3)}
+.progress-track{position:fixed;top:0;left:0;right:0;height:3px;z-index:101;background:rgba(255,255,255,.06)}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .3s}
+.section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:6rem 2rem 4rem}
+.section-alt{background:var(--paper2)}.section-dark{background:var(--ink);color:#fff}
+.section-dark .section-label{color:rgba(255,255,255,.4)}.section-dark .divider{background:rgba(255,255,255,.1)}
+.section-inner{max-width:880px;width:100%}
+.section-label{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:400;line-height:1.15;margin-bottom:1rem}
+.section-h2 em{color:var(--accent);font-style:italic}
+.divider{width:60px;height:3px;background:var(--accent);border-radius:3px;margin-bottom:2rem}
+.lead{font-size:1.05rem;color:var(--muted);max-width:640px;line-height:1.8;margin-bottom:2rem;font-weight:300}
+.fade-up{opacity:0;transform:translateY(30px);transition:opacity .6s,transform .6s}.fade-up.in{opacity:1;transform:translateY(0)}
+.hero-inner{max-width:880px;text-align:center}
+.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.2rem,5vw,3.5rem);font-weight:400;color:#fff;line-height:1.1;margin-bottom:1.5rem}
+.hero-title em{color:var(--accent)}
+.hero-sub{font-size:1.15rem;color:rgba(255,255,255,.55);max-width:560px;line-height:1.75;margin:0 auto 3rem;font-weight:300}
+.hero-cta{display:inline-flex;align-items:center;gap:12px;background:var(--accent);color:#fff;padding:16px 36px;border-radius:6px;font-weight:600;font-size:.95rem;cursor:pointer;text-decoration:none;transition:all .25s}
+.hero-badge{display:inline-block;background:rgba(199,91,58,.2);color:var(--accent);font-size:.75rem;font-weight:600;padding:6px 14px;border-radius:20px;margin-bottom:1.5rem;letter-spacing:.05em}
+.warn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.25rem;margin:2rem 0}
+.warn-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.5rem;border-left:4px solid var(--accent)}
+.warn-card h4{font-size:.9rem;margin-bottom:.5rem}.warn-card p{font-size:.85rem;color:var(--muted);line-height:1.7}
+.skills-banner{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:2rem 0;padding:1.5rem;background:rgba(42,122,75,.06);border:1px solid rgba(42,122,75,.15);border-radius:12px}
+.skill-item{display:flex;align-items:flex-start;gap:8px;font-size:.88rem}.skill-item .check{color:var(--accent3);flex-shrink:0;margin-top:2px}
+textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:1rem;font-family:'DM Sans',sans-serif;font-size:.9rem;line-height:1.7;resize:vertical;min-height:100px;background:#fff;transition:border-color .2s}
+textarea:focus{outline:none;border-color:var(--accent2)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover{background:#a84a2e}
+.btn-blue{background:var(--accent2);color:#fff}.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.ai-result{display:none;margin-top:1.25rem;background:rgba(37,99,168,.04);border:1px solid rgba(37,99,168,.12);border-radius:10px;padding:1.25rem 1.5rem}
+.ai-result-label{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent2);margin-bottom:.5rem}
+.ai-result-text{font-size:.9rem;line-height:1.8;white-space:pre-wrap}
+.scenario-card{background:rgba(37,99,168,.04);border:1px solid rgba(37,99,168,.12);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:1.5rem}
+.sc-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.5rem;margin-top:1rem}
+.sc-fact{display:flex;justify-content:space-between;font-size:.82rem;padding:.4rem .6rem;background:rgba(255,255,255,.8);border-radius:6px}
+.sc-fact-label{color:var(--muted)}.sc-fact-value{font-weight:600}.sc-fact-value.red{color:var(--accent)}.sc-fact-value.green{color:var(--accent3)}
+.claim-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;transition:all .2s;margin-bottom:1rem}
+.claim-num{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;color:var(--muted);margin-bottom:.5rem}
+.claim-text{font-size:.9rem;line-height:1.7;margin-bottom:1rem;font-style:italic}
+.claim-context{display:none;font-size:.82rem;color:var(--muted);line-height:1.7;margin-bottom:1rem;padding:1rem;background:rgba(0,0,0,.02);border-radius:8px}
+.claim-btns{display:flex;gap:.5rem;flex-wrap:wrap}
+.claim-btn{padding:8px 16px;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:#fff;transition:all .2s}
+.claim-btn.selected-ok{background:var(--accent3);color:#fff;border-color:var(--accent3)}
+.claim-btn.selected-hal{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fact-sheet{background:rgba(42,122,75,.04);border:1px solid rgba(42,122,75,.15);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.fact-sheet h4{font-size:.9rem;color:var(--accent3);margin-bottom:1rem}
+.fact-row{display:flex;justify-content:space-between;padding:.4rem 0;font-size:.85rem;border-bottom:1px solid rgba(42,122,75,.08)}
+.fact-row:last-child{border-bottom:none}.fact-label{color:var(--muted)}.fact-value{font-weight:600}.fact-value.danger{color:var(--accent)}
+.letter-box{background:#fff;border:1px solid var(--border);border-radius:12px;padding:2rem;margin:1.5rem 0;font-size:.92rem;line-height:2}
+.hal-hl{background:rgba(199,91,58,.08);padding:2px 4px;border-radius:4px;cursor:pointer;transition:all .2s;border-bottom:2px dashed rgba(199,91,58,.3)}
+.hal-hl:hover{background:rgba(199,91,58,.15)}
+.hal-hl.found{background:rgba(199,91,58,.25);border-bottom-color:var(--accent);color:var(--accent);font-weight:600}
+.hal-hl.missed{background:rgba(199,91,58,.4);border-bottom-color:var(--accent);animation:pulse .5s 2}
+.hal-hl.correct-miss{background:rgba(42,122,75,.15);border-bottom-color:var(--accent3);color:var(--accent3)}
+.hal-hl.wrong-click{background:rgba(199,91,58,.5);color:#fff;text-decoration:line-through}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.counter{font-family:'DM Mono',monospace;font-size:.82rem;color:var(--muted);margin:1rem 0}.counter strong{color:var(--ink)}
+.locked-ex{opacity:.4;pointer-events:none;position:relative}
+.locked-ex::after{content:'🔒 Avautuu kun arvioit edellisen harjoituksen';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--ink);color:#fff;padding:12px 24px;border-radius:8px;font-size:.85rem;font-weight:600;white-space:nowrap;z-index:5}
+.conf-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0}
+@media(max-width:640px){.conf-grid{grid-template-columns:1fr}}
+.conf-card{background:#fff;border:2px solid var(--border);border-radius:12px;padding:1.5rem;cursor:pointer;transition:all .2s}
+.conf-card:hover{border-color:var(--accent2)}.conf-card.selected{border-color:var(--accent3);background:rgba(42,122,75,.04)}
+.conf-card.wrong-pick{border-color:var(--accent);background:rgba(199,91,58,.04)}
+.conf-card h4{font-size:.88rem;margin-bottom:.75rem}.conf-card p{font-size:.85rem;color:var(--muted);line-height:1.7}
+.expand-card{border:1px solid var(--border);border-radius:10px;margin-bottom:.75rem;overflow:hidden}
+.expand-head{padding:1rem 1.25rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.9rem;background:#fff}
+.expand-body{display:none;padding:1rem 1.25rem;font-size:.85rem;line-height:1.8;color:var(--muted);border-top:1px solid var(--border);background:#fafaf7}
+.expand-body.open{display:block}
+.self-check{display:flex;flex-direction:column;gap:.5rem;margin:1.5rem 0;padding:1rem;background:rgba(42,122,75,.04);border:1px solid rgba(42,122,75,.12);border-radius:10px}
+.self-check label{display:flex;gap:8px;font-size:.85rem;cursor:pointer}.self-check input{margin-top:4px;accent-color:var(--accent3)}
+.loading-dots{display:inline-flex;gap:4px}.loading-dots span{width:6px;height:6px;border-radius:50%;background:var(--accent2);animation:blink 1.2s infinite}
+.loading-dots span:nth-child(2){animation-delay:.2s}.loading-dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:1.5rem 0}
+.info-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.25rem}
+.info-card h5{font-size:.82rem;color:var(--accent2);margin-bottom:.5rem}.info-card p{font-size:.82rem;color:var(--muted);line-height:1.65}
+.result-box{margin-top:1.5rem;padding:1.5rem;border-radius:12px;display:none;font-size:.9rem;line-height:1.8}
+@media(max-width:640px){.section{padding:5rem 1.25rem 3rem}.sc-facts{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav><a href="/" class="nav-logo">AI Polku</a><div class="nav-steps" id="navSteps"></div></nav>
+<div class="progress-track"><div class="progress-bar" id="progress-bar"></div></div>
+
+<section class="section section-dark" id="hero" data-index="0">
+<div class="hero-inner fade-up">
+<div class="hero-badge">⚡ BONUS — Lisäharjoitukset</div>
+<h1 class="hero-title">Kun vastaus näyttää oikealta,<br><em>mutta ei ole sitä</em></h1>
+<p class="hero-sub">Tekoäly voi kirjoittaa väärän tiedon yhtä sujuvasti kuin oikean. Opi tunnistamaan hallusinaatiot ennen kuin ne aiheuttavat ongelmia.</p>
+<a href="#teoria" class="hero-cta">Aloita <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></a>
+</div></section>
+
+<section class="section" id="teoria" data-index="1">
+<div class="section-inner fade-up">
+<div class="section-label">Mitä hallusinaatiot ovat</div>
+<h2 class="section-h2">AI ei aina tiedä —<br><em>se usein arvaa uskottavasti</em></h2>
+<div class="divider"></div>
+<p class="lead">Hallusinaatio tarkoittaa tilannetta, jossa tekoäly antaa vakuuttavan mutta väärän vastauksen. Se ei näytä virheeltä — ja siksi se on vaarallinen.</p>
+<div class="skills-banner">
+<div class="skill-item"><span class="check">✓</span> Miten tunnistaa milloin AI todennäköisesti arvaa</div>
+<div class="skill-item"><span class="check">✓</span> Miten tarkistaa vastaus ennen lähettämistä</div>
+<div class="skill-item"><span class="check">✓</span> Yleisimmät virhetilanteet: luvut, takuut, lupaukset</div>
+<div class="skill-item"><span class="check">✓</span> Päätösmalli: hyväksy, tarkista tai hylkää</div>
+</div>
+<div style="margin:2rem 0;padding:1.25rem 1.5rem;background:rgba(199,91,58,.04);border:1px solid rgba(199,91,58,.12);border-radius:10px;">
+<div style="font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.75rem;">Hallusinaatio tarkoittaa, että AI:</div>
+<div style="display:flex;flex-direction:column;gap:.5rem;">
+<div style="display:flex;gap:10px;font-size:.9rem;"><span style="color:var(--accent);">—</span> keksii tietoa jota ei ole annettu</div>
+<div style="display:flex;gap:10px;font-size:.9rem;"><span style="color:var(--accent);">—</span> esittää arvauksen varmana faktana</div>
+<div style="display:flex;gap:10px;font-size:.9rem;"><span style="color:var(--accent);">—</span> yhdistää oikeita asioita tavalla joka ei pidä paikkaansa</div>
+</div></div>
+<h3 style="font-family:'DM Serif Display',serif;font-size:1.2rem;margin:2rem 0 1rem;">Kolme tärkeintä varoitusmerkkiä</h3>
+<div class="warn-grid">
+<div class="warn-card"><h4>Varoitusmerkki 1</h4><p><strong>Tarkat numerot ilman lähdettä.</strong> Jos näet "palautusaika on 14 päivää" mutta et ole antanut tätä tietoa, kyse voi olla keksitystä.</p></div>
+<div class="warn-card"><h4>Varoitusmerkki 2</h4><p><strong>Ehdottomat lupaukset.</strong> "Paketti saapuu huomenna" tai "hyvitys 3 päivässä" ilman dataa — todennäköisesti arvaus.</p></div>
+<div class="warn-card"><h4>Varoitusmerkki 3</h4><p><strong>Liian tarkat lakiviittaukset.</strong> Yksityiskohtaiset pykälät ilman lähdettä voivat olla virheellisiä tai keksittyjä.</p></div>
+</div>
+<div style="background:var(--ink);color:#fff;border-radius:12px;padding:2rem;text-align:center;margin:2rem 0;">
+<div style="font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:.75rem;">Ydinajatus</div>
+<div style="font-family:'DM Serif Display',serif;font-size:1.3rem;font-style:italic;line-height:1.5;">AI ei aina tiedä — se usein arvaa uskottavasti.</div>
+</div>
+<div style="background:rgba(37,99,168,.06);border:1px solid rgba(37,99,168,.15);border-radius:12px;padding:1.5rem;margin:2rem 0;">
+<h4 style="font-size:.95rem;margin-bottom:1rem;">Tarkistus ennen lähettämistä</h4>
+<div style="display:flex;gap:10px;margin-bottom:.6rem;font-size:.88rem;"><span style="color:var(--accent2);">—</span> Tuleeko tämä tieto järjestelmästä vai AI:n oletuksesta?</div>
+<div style="display:flex;gap:10px;margin-bottom:.6rem;font-size:.88rem;"><span style="color:var(--accent2);">—</span> Voinko varmistaa tämän tiedon jostain?</div>
+<div style="display:flex;gap:10px;margin-bottom:.6rem;font-size:.88rem;"><span style="color:var(--accent2);">—</span> Onko tässä jotain mitä en oikeasti tiedä?</div>
+<p style="font-size:.85rem;color:var(--accent);margin-top:1rem;font-weight:600;">Jos olet epävarma, älä lähetä vastausta sellaisenaan.</p>
+</div>
+</div></section>
+
+<section class="section section-alt" id="worst-prompt" data-index="2">
+<div class="section-inner fade-up">
+<div class="section-label">Harjoitus — päinvastainen tehtävä</div>
+<h2 class="section-h2">Kirjoita pahin mahdollinen<br><em>prompti</em></h2>
+<div class="divider"></div>
+<p class="lead">Kirjoita mahdollisimman huono prompti — epämääräinen, tyhjä, oletuksia kutsuva. Katso mitä AI keksii ilman ohjausta.</p>
+<div class="scenario-card">
+<h4>🎧 Pekka Salonen — pesukone kolinoi</h4>
+<p style="font-size:.88rem;margin-bottom:1rem;">Pekka osti pesukoneen (tilaus #91234, 689 €) 3 viikkoa sitten. Se on kolissut oudosti ensimmäisestä pesusta lähtien.</p>
+<div class="sc-facts">
+<div class="sc-fact"><span class="sc-fact-label">Takuu</span><span class="sc-fact-value green">12 kk — voimassa</span></div>
+<div class="sc-fact"><span class="sc-fact-label">Toimituskumppani</span><span class="sc-fact-value">Posti</span></div>
+<div class="sc-fact"><span class="sc-fact-label">Hinta</span><span class="sc-fact-value">689 €</span></div>
+<div class="sc-fact"><span class="sc-fact-label">Edellisiä kontakteja</span><span class="sc-fact-value">ei</span></div>
+</div></div>
+<textarea id="worstInput" placeholder="Kirjoita pahin mahdollinen prompti tähän..." style="min-height:80px;"></textarea>
+<div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem;">
+<button class="btn btn-accent" id="worstBtn" onclick="testWorst()">Lähetä huono prompti →</button>
+<button class="btn btn-outline" onclick="testGood()">Näytä hyvä prompti vertailuna →</button>
+</div>
+<div class="ai-result" id="worstRes"><div class="ai-result-label">AI:n vastaus huonolla promptilla</div><div class="ai-result-text" id="worstTxt"></div></div>
+<div class="ai-result" id="goodRes"><div class="ai-result-label">AI:n vastaus hyvällä promptilla — vertaa!</div><div class="ai-result-text" id="goodTxt"></div></div>
+</div></section>
+
+<section class="section" id="hunt" data-index="3">
+<div class="section-inner fade-up">
+<div class="section-label">Hallusinaatiometsästys</div>
+<h2 class="section-h2">Kuusi väittämää —<br><em>tunnista hallusinaatiot</em></h2>
+<div class="divider"></div>
+<div style="background:rgba(37,99,168,.05);border:1px solid rgba(37,99,168,.12);border-radius:12px;padding:1.5rem;margin-bottom:2rem;">
+<div style="font-weight:600;margin-bottom:1rem;">KOLME KYSYMYSTÄ ENNEN ARVIOINTIA</div>
+<div class="info-grid">
+<div class="info-card"><h5>1. Oliko tieto saatavilla?</h5><p>Mistä AI sai tämän? Jos tarkka numero ilman lähdettä — keksitty.</p></div>
+<div class="info-card"><h5>2. Onko se liian tarkka?</h5><p>"3–5 arkipäivää Nordean mukaan" — miten AI tietää tämän?</p></div>
+<div class="info-card"><h5>3. Voiko sen tarkistaa?</h5><p>Jos et voi osoittaa lähdettä — älä lähetä.</p></div>
+</div></div>
+<div class="fact-sheet"><h4>📋 Faktat tarkistamiseen</h4>
+<div class="fact-row"><span class="fact-label">Kuluttajansuoja</span><span class="fact-value" style="font-weight:400;font-size:.82rem;">14 pvä palautusoikeus — EI kaikille. "Aina" on väärä.</span></div>
+<div class="fact-row"><span class="fact-label">EU-direktiivi 2019/771/EU</span><span class="fact-value" style="font-weight:400;font-size:.82rem;">Olemassa — mutta tarkat artiklanumerot vaativat tarkistuksen.</span></div>
+<div class="fact-row"><span class="fact-label">Vasteajat</span><span class="fact-value" style="font-weight:400;font-size:.82rem;">Chat &lt;60 sek, email 24h — yleistietoa.</span></div>
+<div class="fact-row"><span class="fact-label">Pankkisiirrot</span><span class="fact-value" style="font-weight:400;font-size:.82rem;">Ei vakioaikaa. AI:n tarkka aika on keksitty.</span></div>
+<div class="fact-row"><span class="fact-label">Kodin Elektro</span><span class="fact-value" style="font-weight:400;font-size:.82rem;">Posti (ei DB-Logistics). Tilausnro: 5 numeroa, alkaa 9:llä.</span></div>
+</div>
+<div id="claimsGrid"></div>
+<div id="huntScore" style="display:none;margin-top:1rem;padding:1rem;border-radius:10px;font-size:.9rem;font-weight:600;"></div>
+</div></section>
+
+<section class="section section-alt" id="ex1" data-index="4">
+<div class="section-inner fade-up">
+<div class="section-label">Harjoitus 1 — Toimitusjohtajan tarkistus</div>
+<h2 class="section-h2">AI kirjoitti kirjeen.<br><em>Sinä tarkistat sen.</em></h2>
+<div class="divider"></div>
+<div class="fact-sheet"><h4>📋 Kodin Elektro Oy — Faktat</h4>
+<div class="fact-row"><span class="fact-label">Palautusaika</span><span class="fact-value">21 päivää ostopäivästä</span></div>
+<div class="fact-row"><span class="fact-label">Tilausnumeromuoto</span><span class="fact-value">5 numeroa, alkaa 9:llä (esim. 98821)</span></div>
+<div class="fact-row"><span class="fact-label">Takuu</span><span class="fact-value">12 kk kaikille tuotteille</span></div>
+<div class="fact-row"><span class="fact-label">Toimituskumppani</span><span class="fact-value">Posti — ei DB-Logistics</span></div>
+<div class="fact-row"><span class="fact-label">Alennuskampanjat</span><span class="fact-value danger">Ei aktiivisia</span></div>
+<div class="fact-row"><span class="fact-label">Asiakaspalvelu</span><span class="fact-value">Ma–Pe klo 8–16</span></div>
+</div>
+<p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Klikkaa jokaista kohtaa jonka epäilet olevan hallusinaatio.</p>
+<div class="letter-box" id="letter1">Hei Matti,<br><br>Kiitos yhteydenotostasi! Tilauksesi <span class="hal-hl" data-id="h1" onclick="clickH(this,1)">#KE-4421</span> on vastaanotettu. Pakettisi on matkalla <span class="hal-hl" data-id="h2" onclick="clickH(this,1)">DB-Logisticsin kuljetusverkossa</span> ja <span class="hal-hl" data-id="h3" onclick="clickH(this,1)">saapuu viimeistään huomenna perjantaina</span>.<br><br>Teillä on <span class="hal-hl" data-id="h4" onclick="clickH(this,1)">14 päivän palautusoikeus</span> ostopäivästä. Asiakaspalvelumme tavoitettavissa <span class="hal-hl" data-id="h5" onclick="clickH(this,1)">arkisin klo 8–16</span>.<br><br>Lähetämme teille <span class="hal-hl" data-id="h6" onclick="clickH(this,1)">15 % alennuskoodin</span> seuraavaan tilaukseen. <span class="hal-hl" data-id="h7" onclick="clickH(this,1)">Kuluttajansuojalain 5 luvun 12 §:n mukaan teillä on oikeus täyteen korvaukseen.</span><br><br>Ystävällisin terveisin,<br>Kodin Elektro Oy</div>
+<div class="counter" id="cnt1">Merkitty: <strong>0</strong> / 6 hallusinaatiosta</div>
+<button class="btn btn-accent" onclick="checkEx(1)">Tarkista vastaukset →</button>
+<div class="result-box" id="res1"></div>
+</div></section>
+
+<section class="section" id="ex2" data-index="5">
+<div class="section-inner fade-up"><div id="ex2lock" class="locked-ex">
+<div class="section-label">Harjoitus 2 — Takuutarkistus</div>
+<h2 class="section-h2">Takuukirje.<br><em>Tunne ehdot.</em></h2><div class="divider"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+<div class="fact-sheet"><h4>📋 Takuuehdot</h4>
+<div class="fact-row"><span class="fact-label">Takuu</span><span class="fact-value">12 kk</span></div>
+<div class="fact-row"><span class="fact-label">Kattaa</span><span class="fact-value">Valmistusvirheet</span></div>
+<div class="fact-row"><span class="fact-label">EI kata</span><span class="fact-value danger">Vesivahinkoja</span></div>
+<div class="fact-row"><span class="fact-label">Korjausaika</span><span class="fact-value">30 arkipäivää</span></div>
+<div class="fact-row"><span class="fact-label">Vaihto uuteen</span><span class="fact-value">3 epäonnistuneen korjauksen jälkeen</span></div>
+<div class="fact-row"><span class="fact-label">Yhteydenotto</span><span class="fact-value">Puhelin ja sähköposti</span></div>
+</div>
+<div class="fact-sheet"><h4>📋 Kuluttajansuoja</h4>
+<div class="fact-row"><span class="fact-label">Reklamaatio-oikeus</span><span class="fact-value">2 vuotta</span></div>
+<div class="fact-row"><span class="fact-label">Ilmoitusaika</span><span class="fact-value">Kohtuullinen aika</span></div>
+<div class="fact-row"><span class="fact-label">Myyjän oikeus</span><span class="fact-value">Yrittää korjausta ensin</span></div>
+</div></div>
+<div class="letter-box" id="letter2">Hei Leena,<br><br>Tilauksenne <span class="hal-hl" data-id="e2h1" onclick="clickH(this,2)">#WM-3312</span> on takuun piirissä. Takuumme kattaa kaikki viat, mukaan lukien <span class="hal-hl" data-id="e2h2" onclick="clickH(this,2)">vesivahingot</span>. Korjaus suoritetaan <span class="hal-hl" data-id="e2h3" onclick="clickH(this,2)">14 arkipäivän kuluessa</span>. Jos korjaus ei onnistu, toimitamme <span class="hal-hl" data-id="e2h4" onclick="clickH(this,2)">välittömästi uuden laitteen</span>.<br><br>Ottakaa yhteyttä <span class="hal-hl" data-id="e2h5" onclick="clickH(this,2)">WhatsApp-palveluumme</span>. Teillä on <span class="hal-hl" data-id="e2h6" onclick="clickH(this,2)">2 vuoden reklamaatio-oikeus</span>.<br><br>Ystävällisin terveisin,<br>Kodin Elektro Oy</div>
+<div class="counter" id="cnt2">Merkitty: <strong>0</strong> / 5 hallusinaatiosta</div>
+<button class="btn btn-accent" onclick="checkEx(2)">Tarkista →</button>
+<div class="result-box" id="res2"></div>
+</div></div></section>
+
+<section class="section section-alt" id="ex3" data-index="6">
+<div class="section-inner fade-up"><div id="ex3lock" class="locked-ex">
+<div class="section-label">Harjoitus 3 — Hintalaskelma</div>
+<h2 class="section-h2">Laske oikea hinta<br><em>ennen kuin luet kirjeen.</em></h2><div class="divider"></div>
+<div class="fact-sheet"><h4>📋 Hinnasto</h4>
+<div class="fact-row"><span class="fact-label">WashPro 3000</span><span class="fact-value">589 €</span></div>
+<div class="fact-row"><span class="fact-label">Kampanja PYYKKIKONE10</span><span class="fact-value">–10 %</span></div>
+<div class="fact-row"><span class="fact-label">Kanta-asiakasalennus</span><span class="fact-value">5 %</span></div>
+<div class="fact-row"><span class="fact-label">HUOM!</span><span class="fact-value danger">Alennukset EI yhdistettävissä</span></div>
+<div class="fact-row"><span class="fact-label">Hintasuoja</span><span class="fact-value">14 päivää</span></div>
+</div>
+<div style="background:rgba(37,99,168,.05);border:1px solid rgba(37,99,168,.12);border-radius:10px;padding:1.25rem;margin:1.5rem 0;">
+<strong>Laske ensin:</strong> 589 × 0,90 = <strong>530,10 €</strong> (vain yksi alennus kerrallaan)
+</div>
+<div class="letter-box" id="letter3">Hei Pekka,<br><br>Tilauksenne <span class="hal-hl" data-id="e3h1" onclick="clickH(this,3)">#PE-2219</span>! Pesukone kuuluu <span class="hal-hl" data-id="e3h2" onclick="clickH(this,3)">kampanjaamme</span>.<br><br>Koodi <span class="hal-hl" data-id="e3h3" onclick="clickH(this,3)">PYYKKIKONE15 antaa 15 % alennuksen</span>, ja kanta-asiakasalennus lasketaan päälle. Hintanne on <span class="hal-hl" data-id="e3h4" onclick="clickH(this,3)">471,20 €</span>.<br><br>Hintasuoja: hinta laskee <span class="hal-hl" data-id="e3h5" onclick="clickH(this,3)">30 päivän kuluessa</span> → hyvitys automaattisesti.<br><br>Ystävällisin terveisin,<br>Kodin Elektro Oy</div>
+<div class="counter" id="cnt3">Merkitty: <strong>0</strong> / 4 hallusinaatiosta</div>
+<button class="btn btn-accent" onclick="checkEx(3)">Tarkista →</button>
+<div class="result-box" id="res3"></div>
+</div></div></section>
+
+<section class="section" id="ex4" data-index="7">
+<div class="section-inner fade-up"><div id="ex4lock" class="locked-ex">
+<div class="section-label">Harjoitus 4 — Väärennetty historia</div>
+<h2 class="section-h2">AI keksi historian<br><em>jota ei ole olemassa.</em></h2><div class="divider"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+<div class="fact-sheet"><h4>📋 Yrityksen faktat</h4>
+<div class="fact-row"><span class="fact-label">Tilausnro</span><span class="fact-value">5 numeroa, alkaa 9:llä</span></div>
+<div class="fact-row"><span class="fact-label">Palvelu</span><span class="fact-value">Ma–Pe 8–16</span></div>
+<div class="fact-row"><span class="fact-label">Henkilökunta</span><span class="fact-value">Matti, Siiri, Jaana</span></div>
+</div>
+<div class="fact-sheet"><h4>📋 Leena Virtanen</h4>
+<div class="fact-row"><span class="fact-label">Tilaus</span><span class="fact-value">#94331</span></div>
+<div class="fact-row"><span class="fact-label">Kontakteja</span><span class="fact-value danger">0</span></div>
+<div class="fact-row"><span class="fact-label">Kanta-asiakas</span><span class="fact-value danger">Ei jäsen</span></div>
+</div></div>
+<div class="letter-box" id="letter4">Hei Leena,<br><br>Kuten <span class="hal-hl" data-id="e4h1" onclick="clickH(this,4)">puhelimessa keskustelimme viime viikolla</span> <span class="hal-hl" data-id="e4h2" onclick="clickH(this,4)">Minnan kanssa</span>, tilauksenne <span class="hal-hl" data-id="e4h3" onclick="clickH(this,4)">#LV-221</span> on käsittelyssä.<br><br><span class="hal-hl" data-id="e4h4" onclick="clickH(this,4)">Kanta-asiakkaana tarjoamme 10 % alennuksen</span> seuraavasta tilauksesta. Palvelumme tavoitettavissa <span class="hal-hl" data-id="e4h5" onclick="clickH(this,4)">arkisin klo 8–16</span>.<br><br>Ystävällisin terveisin,<br>Kodin Elektro Oy</div>
+<div class="counter" id="cnt4">Merkitty: <strong>0</strong> / 4 hallusinaatiosta</div>
+<button class="btn btn-accent" onclick="checkEx(4)">Tarkista →</button>
+<div class="result-box" id="res4"></div>
+</div></div></section>
+
+<section class="section section-alt" id="confidence" data-index="8">
+<div class="section-inner fade-up">
+<div class="section-label">Luottamusansa</div>
+<h2 class="section-h2">Kumpi vastaus on<br><em>luotettavampi?</em></h2><div class="divider"></div>
+<div class="scenario-card">
+<h4>🎧 Viallinen kahvinkeitin — Matti Korhonen</h4>
+<p style="font-size:.88rem;">Kahvinkeitin hajosi <strong>8 viikkoa</strong> oston jälkeen. Matti kysyy oikeuksiaan.</p>
+</div>
+<div style="background:rgba(42,122,75,.04);border:1px solid rgba(42,122,75,.12);border-radius:10px;padding:1.25rem;margin-bottom:1.5rem;">
+<p style="font-size:.82rem;color:var(--muted);line-height:1.7;"><strong>Todellinen kuluttajansuoja:</strong> 2 vuoden reklamaatio-oikeus viallisille tuotteille. Myyjä voi yrittää korjausta ensin. Hyvitys jos 3 korjausyritystä epäonnistuu. Ei tarkkaa päivämäärärajaa reklamaatiolle.</p>
+</div>
+<div class="conf-grid">
+<div class="conf-card" id="confA" onclick="pickConf('A')"><h4>Vastaus A</h4><p>"Teillä saattaa olla oikeus hyvitykseen tai muuhun toimenpiteeseen tilanteesta riippuen. Suosittelemme olemaan yhteydessä asiakaspalveluumme tilanteen arvioimiseksi."</p></div>
+<div class="conf-card" id="confB" onclick="pickConf('B')"><h4>Vastaus B</h4><p>"Teillä on Kuluttajansuojalain 5 luvun 19 §:n mukaan oikeus täyteen hyvitykseen 30 päivän kuluessa ostosta. Voitte palauttaa tuotteen ilman lisäperusteluita ja saatte rahat takaisin 3–5 arkipäivässä."</p></div>
+</div>
+<div id="confResult" style="display:none;margin-top:1.5rem;padding:1.5rem;border-radius:12px;font-size:.9rem;line-height:1.8;"></div>
+</div></section>
+
+<section class="section" id="tone" data-index="9">
+<div class="section-inner fade-up">
+<div class="section-label">Korjaa sävy ennen lähetystä</div>
+<h2 class="section-h2">Kolme sävylipsahdusta —<br><em>tunnista ja korjaa</em></h2><div class="divider"></div>
+<div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:2rem;">
+<div class="expand-card"><div class="expand-head" onclick="togExp(this)"><span>ONGELMA 1 — HOLHOAVA SÄVY</span><span>›</span></div><div class="expand-body">"Ehkä ette ole täysin ymmärtäneet" on alentava — asiakas tietää tilanteensa.</div></div>
+<div class="expand-card"><div class="expand-head" onclick="togExp(this)"><span>ONGELMA 2 — YLIPOSITIIVISUUS</span><span>›</span></div><div class="expand-body">Hymiöt ja "Mahtava kysymys!" eivät sovi virhetilanteeseen.</div></div>
+<div class="expand-card"><div class="expand-head" onclick="togExp(this)"><span>ONGELMA 3 — DEFENSIIVINEN PASSIIVI</span><span>›</span></div><div class="expand-body">"Saattaa olla käsittelyssä", "voimme ehkä" — kukaan ei ota vastuuta.</div></div>
+</div>
+<div style="background:rgba(199,91,58,.04);border:1px solid rgba(199,91,58,.12);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+<div style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.75rem;">AI:n kirje — arvioi tämä</div>
+<p style="font-size:.95rem;line-height:1.9;font-style:italic;">"Mahtava kysymys! 😊 Ehkä ette ole täysin ymmärtäneet, mutta tilauksenne saattaa olla käsittelyssä, ja toimitus saattaa viivästyä hiukan — ei hätää kuitenkaan! Voimme ehkä katsoa asiaa. 😊"</p>
+</div>
+<textarea id="biasFind" placeholder="1. Holhoava: '...' koska...&#10;2. Ylipositiivisuus: '...' koska...&#10;3. Passiivi: '...' koska..." style="min-height:120px;"></textarea>
+<div style="font-weight:600;font-size:.9rem;margin:1.5rem 0 .75rem;">KORJATTU VERSIO</div>
+<textarea id="biasRewrite" placeholder="Kirjoita uudelleen. Ei hymiöitä, ei 'saattaa', ei 'ehkä'. Aktiivi, empatia, vastuu." style="min-height:100px;"></textarea>
+<div class="self-check">
+<label><input type="checkbox" id="bc1"> Lainannut esimerkin jokaisesta kolmesta ongelmasta</label>
+<label><input type="checkbox" id="bc2"> Ei hymiöitä, ei "Mahtava kysymys", ei "saattaa/ehkä"</label>
+<label><input type="checkbox" id="bc3"> Aktiivimuoto — joku tekee jotain</label>
+</div>
+<button class="btn btn-accent" id="biasBtn" onclick="evalBias()">Arvioi →</button>
+<div class="ai-result" id="biasRes"><div class="ai-result-label">AI:n palaute</div><div class="ai-result-text" id="biasTxt"></div></div>
+</div></section>
+
+<section id="outro" data-index="10">
+<div style="max-width:880px;margin:0 auto;padding:5rem 2rem 6rem;">
+<div style="width:100%;height:1px;background:var(--border);margin-bottom:3rem;"></div>
+<div style="font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:400;line-height:1.2;color:var(--ink);margin-bottom:1rem;">Hyvä työ!<br><em style="color:var(--accent);">Osaat nyt tunnistaa hallusinaatiot.</em></div>
+<p style="font-size:1rem;color:var(--muted);max-width:520px;line-height:1.75;margin-bottom:2.5rem;">Muista: AI ei aina tiedä, se usein arvaa uskottavasti. Tarkista aina ennen kuin lähetät.</p>
+<a href="/" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:14px 28px;border-radius:8px;font-weight:600;font-size:.9rem;text-decoration:none;">← Takaisin kurssille</a>
+</div></section>
+
+<script src="/js/reflections.js"></script>
+<script src="/js/feedback.js"></script>
+<script>
+/* NAV */
+const sections=document.querySelectorAll('[data-index]'),navSteps=document.getElementById('navSteps'),bar=document.getElementById('progress-bar');
+sections.forEach((s,i)=>{const p=document.createElement('div');p.className='step-pip'+(i===0?' active':'');p.onclick=()=>s.scrollIntoView({behavior:'smooth'});navSteps.appendChild(p)});
+function upProg(){const st=window.scrollY,dh=document.documentElement.scrollHeight-window.innerHeight;bar.style.width=(dh>0?(st/dh)*100:0)+'%';const ps=navSteps.querySelectorAll('.step-pip');let ai=0;sections.forEach((s,i)=>{if(s.getBoundingClientRect().top<=window.innerHeight*.5)ai=i});ps.forEach((p,i)=>{p.classList.remove('active','done');if(i===ai)p.classList.add('active');else if(i<ai)p.classList.add('done')})}
+window.addEventListener('scroll',upProg,{passive:true});
+const fo=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');fo.unobserve(x.target)}})},{threshold:.08});
+document.querySelectorAll('.fade-up').forEach(el=>fo.observe(el));
+
+/* AI */
+async function aiCall(sys,user,tok=900){try{const r=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({model:'gpt-4o-mini',max_tokens:tok,system:sys,messages:[{role:'user',content:user}]})});const d=await r.json();return d.text||'Virhe.'}catch(e){return'Yhteysvirhe.'}}
+function ld(el){el.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>'}
+function togExp(el){el.nextElementSibling.classList.toggle('open')}
+
+/* WORST PROMPT */
+const CTX='Pekka Salonen osti pesukoneen (tilaus #91234, 689€) 3 viikkoa sitten. Kolinoi. Takuu 12kk. Posti. Ei kontakteja.';
+async function testWorst(){const v=document.getElementById('worstInput').value.trim();if(!v){alert('Kirjoita ensin.');return}const b=document.getElementById('worstBtn'),r=document.getElementById('worstRes'),t=document.getElementById('worstTxt');b.disabled=true;r.style.display='block';ld(t);t.textContent=await aiCall('Olet chatbot. '+CTX,v,500);b.disabled=false}
+async function testGood(){const r=document.getElementById('goodRes'),t=document.getElementById('goodTxt');r.style.display='block';ld(t);t.textContent=await aiCall('Vastaa ammattimaisesti.','Olet Kodin Elektro Oy:n asiakaspalvelija. Pekka Salonen osti pesukoneen (#91234, 689€) 3 vk sitten, kolinoi. Takuu 12kk voimassa. Posti. Ei aiempia kontakteja.\n\nVaihtoehdot: 1) Takuukorjaus 2) Vaihto 3) Palautus 21 pv sisällä.\nSävy: empaattinen. Max 150 sanaa. ÄLÄ keksi tietoja.',500)}
+
+/* CLAIMS */
+const claimData=[
+{num:1,text:'"Kuluttajansuojalain mukaan verkko-ostoksille on aina 14 päivän palautusoikeus laskettuna tuotteen vastaanottopäivästä."',ans:'hal',fb:'Sana "aina" tekee väitteestä väärän — poikkeuksia on (räätälöidyt tuotteet, digitaalinen sisältö jne.).'},
+{num:2,text:'"Tilauksesi #44821 saapuu huomenna 15.3. kello 14–16 DB-Logisticsin aikataulun mukaan."',ans:'hal',fb:'Ei CRM-yhteyttä. Yritys käyttää Postia, ei DB-Logistics. Tarkka kellonaika ja päivämäärä keksitty. Tilausnumero väärässä muodossa.'},
+{num:3,text:'"Asiakkaalla on oikeus hyvitykseen — perustuu EU:n direktiiviin 2019/771/EU artiklaan 14, kohta 2."',ans:'hal',fb:'Direktiivi on olemassa mutta tarkka artikla+kohta on tyypillinen AI-sekoitus. Tarkista Finlexistä.'},
+{num:4,text:'"Chat on reaaliaikainen kanava. Asiakkaat odottavat vastausta alle 60 sekunnissa — sähköpostissa 24 tuntia."',ans:'ok',fb:'Tämä on yleistason alan tietoa, ei yrityskohtaista. Ei liian tarkkaa.'},
+{num:5,text:'"Hyvitys 47,90 € näkyy tilillä 3–5 arkipäivän kuluessa Nordean prosessointiajan mukaan."',ans:'hal',fb:'CRM ei näytä hyvityksestä mitään. Summa, pankki ja aika kaikki keksittyjä.'},
+{num:6,text:'"Hei Matti — näen CRM:stä että tilauksesi on käsittelyssä ja selvitän sen heti."',ans:'ok',fb:'CRM avattu, maltillinen viesti ilman keksittyjä lukuja. OK.'}
+];
+(function buildClaims(){const g=document.getElementById('claimsGrid');claimData.forEach(c=>{g.innerHTML+=`<div class="claim-card" id="claim${c.num}"><div class="claim-num">VÄITTÄMÄ ${c.num}</div><div class="claim-text">${c.text}</div><div class="claim-context" id="ctx${c.num}"></div><div class="claim-btns"><button class="claim-btn" onclick="judgeHal(${c.num},'ok')">Todennäköisesti oikein</button><button class="claim-btn" onclick="judgeHal(${c.num},'hal')">Mahdollinen hallusinaatio</button></div></div>`})})();
+let huntAnswered=0;
+function judgeHal(num,choice){const c=claimData.find(x=>x.num===num),card=document.getElementById('claim'+num),btns=card.querySelectorAll('.claim-btn'),ctx=document.getElementById('ctx'+num);
+btns.forEach(b=>b.disabled=true);
+if(choice===c.ans){btns.forEach(b=>{if((choice==='ok'&&b.textContent.includes('oikein'))||(choice==='hal'&&b.textContent.includes('hallusinaatio')))b.classList.add('selected-'+(choice==='ok'?'ok':'hal'))});card.style.borderColor='var(--accent3)'}
+else{btns.forEach(b=>{if((choice==='ok'&&b.textContent.includes('oikein'))||(choice==='hal'&&b.textContent.includes('hallusinaatio')))b.style.textDecoration='line-through'});card.style.borderColor='var(--accent)'}
+ctx.textContent=c.fb;ctx.style.display='block';huntAnswered++;
+if(huntAnswered===6){const score=document.querySelectorAll('.claim-card').length;let correct=0;claimData.forEach(cl=>{const cd=document.getElementById('claim'+cl.num);if(cd.style.borderColor==='var(--accent3)')correct++});const el=document.getElementById('huntScore');el.style.display='block';el.style.background=correct>=5?'rgba(42,122,75,.1)':'rgba(199,91,58,.1)';el.textContent=`Oikein: ${correct}/6`+(correct>=5?' — Erinomainen!' :' — Kertaa varoitusmerkit.')}}
+
+/* LETTER EXERCISES */
+const answers={
+1:{h1:'hal',h2:'hal',h3:'hal',h4:'hal',h5:'ok',h6:'hal',h7:'hal',total:6,
+fb:{h1:'Väärä muoto — pitää olla 5 numeroa, alkaa 9:llä.',h2:'Posti, ei DB-Logistics.',h3:'Ei voi luvata toimitusaikaa ilman dataa.',h4:'21 päivää, ei 14.',h5:'✓ OIKEIN — arkisin klo 8–16 on totta.',h6:'Ei aktiivisia kampanjoita.',h7:'Keksitty lakipykälä.'}},
+2:{e2h1:'hal',e2h2:'hal',e2h3:'hal',e2h4:'hal',e2h5:'hal',e2h6:'ok',total:5,
+fb:{e2h1:'Väärä muoto — pitää alkaa 9:llä.',e2h2:'Takuu EI kata vesivahinkoja.',e2h3:'30 arkipäivää, ei 14.',e2h4:'Vasta 3 epäonnistuneen korjauksen jälkeen.',e2h5:'Vain puhelin ja sähköposti.',e2h6:'✓ OIKEIN — 2 vuoden reklamaatio-oikeus on totta.'}},
+3:{e3h1:'hal',e3h2:'ok',e3h3:'hal',e3h4:'hal',e3h5:'hal',total:4,
+fb:{e3h1:'Väärä muoto — pitää alkaa 9:llä.',e3h2:'✓ OIKEIN — pesukone kuuluu kampanjaan.',e3h3:'PYYKKIKONE10 (10%), ei 15. Ja alennuksia ei yhdistetä.',e3h4:'Oikea hinta 530,10 € — ei 471,20 €.',e3h5:'14 päivää, ei 30.'}},
+4:{e4h1:'hal',e4h2:'hal',e4h3:'hal',e4h4:'hal',e4h5:'ok',total:4,
+fb:{e4h1:'0 edellisiä kontakteja — puhelua ei ole ollut.',e4h2:'Henkilökunta: Matti, Siiri, Jaana. Ei Minnaa.',e4h3:'Oikea tilaus #94331. #LV-221 on väärä.',e4h4:'Ei kanta-asiakas — ei alennusta.',e4h5:'✓ OIKEIN — arkisin klo 8–16 on totta.'}}
+};
+const clickState={1:{},2:{},3:{},4:{}};
+function clickH(el,ex){const id=el.dataset.id;if(clickState[ex][id]===undefined)clickState[ex][id]=false;clickState[ex][id]=!clickState[ex][id];el.classList.toggle('found',clickState[ex][id]);
+const count=Object.values(clickState[ex]).filter(Boolean).length;document.querySelector('#cnt'+ex+' strong').textContent=count}
+
+function checkEx(ex){const ans=answers[ex],res=document.getElementById('res'+ex);let correct=0,total=ans.total,html='';
+const allIds=Object.keys(ans).filter(k=>k!=='total'&&k!=='fb');
+allIds.forEach(id=>{const el=document.querySelector(`[data-id="${id}"]`);if(!el)return;const clicked=clickState[ex][id]||false,isHal=ans[id]==='hal';
+if(isHal&&clicked){el.className='hal-hl found';correct++}
+else if(isHal&&!clicked){el.className='hal-hl missed'}
+else if(!isHal&&!clicked){el.className='hal-hl correct-miss';correct++}
+else if(!isHal&&clicked){el.className='hal-hl wrong-click'}
+html+=`<div style="margin-bottom:.5rem;font-size:.85rem;"><strong>${id}:</strong> ${ans.fb[id]}</div>`});
+const pct=Math.round(correct/allIds.length*100);
+res.style.display='block';
+res.style.background=pct>=80?'rgba(42,122,75,.08)':pct>=50?'rgba(184,134,11,.08)':'rgba(199,91,58,.08)';
+res.style.border='1px solid '+(pct>=80?'rgba(42,122,75,.2)':pct>=50?'rgba(184,134,11,.2)':'rgba(199,91,58,.2)');
+res.innerHTML=`<div style="font-weight:700;margin-bottom:1rem;">${correct}/${allIds.length} oikein (${pct}%)</div>${html}`;
+res.scrollIntoView({behavior:'smooth',block:'nearest'});
+/* Unlock next */
+if(ex<4){const next=document.getElementById('ex'+(ex+1)+'lock');if(next)next.classList.remove('locked-ex')}}
+
+/* CONFIDENCE */
+let confDone=false;
+function pickConf(choice){if(confDone)return;confDone=true;
+const a=document.getElementById('confA'),b=document.getElementById('confB'),r=document.getElementById('confResult');
+if(choice==='A'){a.classList.add('selected');r.style.background='rgba(42,122,75,.08)';r.style.border='1px solid rgba(42,122,75,.2)';r.innerHTML='<strong>✓ Oikein!</strong> Vastaus A on turvallisempi. Se ei lupaa mitään väärää. Vastaus B sisältää 5 virhettä: keksitty lakipykälä, "30 päivän" raja (ei ole sellaista), "täyteen hyvitykseen" (myyjä voi korjata ensin), "3–5 arkipäivässä" (keksitty) ja "ilman lisäperusteluita" (reklamaatio vaatii perustelun).'}
+else{b.classList.add('wrong-pick');a.classList.add('selected');r.style.background='rgba(199,91,58,.08)';r.style.border='1px solid rgba(199,91,58,.2)';r.innerHTML='<strong>✗ Vastaus A oli turvallisempi.</strong> B kuulostaa vakuuttavammalta, mutta sisältää 5 virhettä: keksitty lakipykälä, väärä 30 pv raja, "täyteen hyvitykseen" ilman korjausyritystä, keksitty 3–5 pv aika, ja "ilman lisäperusteluita". Tarkka ≠ oikea.'}
+r.style.display='block';r.scrollIntoView({behavior:'smooth',block:'nearest'})}
+
+/* BIAS */
+async function evalBias(){const f=document.getElementById('biasFind').value.trim(),rw=document.getElementById('biasRewrite').value.trim();
+if(f.length<30||rw.length<20){alert('Kirjoita sekä tunnistus (lainauksin) että korjattu versio.');return}
+if(!document.getElementById('bc1').checked||!document.getElementById('bc2').checked||!document.getElementById('bc3').checked){alert('Rastita kaikki kolme tarkistusta ensin.');return}
+const btn=document.getElementById('biasBtn'),res=document.getElementById('biasRes'),txt=document.getElementById('biasTxt');
+btn.disabled=true;res.style.display='block';ld(txt);
+txt.textContent=await aiCall(`Olet asiakaspalvelun laadun arvioija. Opiskelija tunnisti kolme sävyongelmaa AI-kirjeestä ja kirjoitti korjatun version.
+
+Alkuperäinen kirje: "Mahtava kysymys! 😊 Ehkä ette ole täysin ymmärtäneet, mutta tilauksenne saattaa olla käsittelyssä, ja toimitus saattaa viivästyä hiukan — ei hätää kuitenkaan! Voimme ehkä katsoa asiaa. 😊"
+
+Kolme ongelmaa: 1) Holhoava sävy ("Ehkä ette ole ymmärtäneet") 2) Ylipositiivisuus (hymiöt, "Mahtava kysymys!") 3) Defensiivinen passiivi ("saattaa", "voimme ehkä")
+
+Arvioi: löysikö opiskelija kaikki kolme? Onko korjattu versio parempi? Anna konkreettinen palaute suomeksi.`,`TUNNISTUS:\n${f}\n\nKORJATTU VERSIO:\n${rw}`,600);
+btn.disabled=false;res.scrollIntoView({behavior:'smooth',block:'nearest'})}
+</script>
+<script>fetch('/ai-chat-widget.html').then(r=>r.text()).then(h=>{document.body.insertAdjacentHTML('beforeend',h)}).catch(e=>console.error('Widget:',e))</script>
+</body></html>
