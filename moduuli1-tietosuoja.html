@@ -2738,10 +2738,31 @@ async function checkAnonymization() {
         model: 'gpt-4o-mini',
         max_tokens: 800,
         system: `Olet tietosuoja-auditoija. Vertaa alkuperäistä tekstiä opiskelijan anonymisoituun versioon.
-Vastaa JSON: {"grade": "PASS|PARTIAL|FAIL", "found_pii": ["lista jäljelle jääneistä arkaluonteisista tiedoista"], "removed_pii": ["lista onnistuneesti poistetuista"], "feedback": "lyhyt palaute", "tip": "yksi konkreettinen parannus"}
-PASS = kaikki arkaluonteiset tiedot poistettu ja teksti on silti hyödyllinen.
-PARTIAL = joitakin jäljellä.
-FAIL = useita vakavia puutteita.`,
+
+ARKALUONTEISET TIEDOT (PITÄÄ POISTAA):
+- Koko nimi (etunimi + sukunimi)
+- Henkilötunnus (hetu)
+- Osoite
+- Puhelinnumero, sähköposti
+- Pankkitilinumero
+- Tarkka palkka euroissa
+- Terveystiedot ja lääkitys
+- Työnantajan luottamukselliset tiedot (sopimusarvot, irtisanomismäärät, julkaisemattomat tiedot)
+
+TURVALLISTA JAKAA (ÄLÄ merkitse riskeiksi):
+- Ammattinimike (esim. "asiakaspalvelupäällikkö")
+- Yleinen kokemus (esim. "6 vuotta kokemusta")
+- Toimiala (esim. "lentoyhtiö", "kaupan ala")
+- Osaaminen ja taidot (esim. "Excel, projektinhallinta")
+- Ura-tavoitteet (esim. "haluan siirtyä markkinointiin")
+- Koulutustaso
+- Sukupuoli, ikähaarukka
+
+Vastaa JSON: {"grade": "PASS|PARTIAL|FAIL", "found_pii": ["lista jäljelle jääneistä ARKALUONTEISISTA tiedoista"], "removed_pii": ["lista onnistuneesti poistetuista"], "feedback": "lyhyt positiivinen palaute", "tip": "yksi konkreettinen parannus"}
+PASS = kaikki arkaluonteiset tiedot poistettu. Ammatillinen tieto saa ja PITÄÄ jäädä — se on hyödyllistä.
+PARTIAL = joitakin arkaluonteisia tietoja jäljellä.
+FAIL = useita vakavia puutteita (nimi, hetu, pankkitili tms. jäljellä).
+TÄRKEÄÄ: Ole rohkaiseva. Opiskelija tulee käyttämään AI:ta CV:n parantamiseen — ammatillisen tiedon jakaminen on TURVALLISTA ja TOIVOTTAVAA.`,
         messages: [{ role: 'user', content: `ALKUPERÄINEN: ${originalPlain}\n\nOPISKELIJAN ANONYMISOITU VERSIO: ${input}\n\nTarkista.` }]
       })
     });
