@@ -847,11 +847,24 @@ HAKIJAN TAIDOT:
         <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;"><span style="color:var(--accent3);">✦</span> Hero-osio nimellä + taglinella</div>
         <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;"><span style="color:var(--accent3);">✦</span> Animoitu taitopalkisto</div>
         <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;"><span style="color:var(--accent3);">✦</span> Kokemus-aikajana</div>
+        <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;"><span style="color:var(--accent3);">✦</span> AI-chatbot (kelluva, suomeksi)</div>
         <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;"><span style="color:var(--accent3);">✦</span> Scroll-animaatiot</div>
         <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;"><span style="color:var(--accent3);">✦</span> Yhteystiedot + LinkedIn-linkki</div>
         <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;"><span style="color:var(--accent3);">✦</span> Mobiiliystävällinen</div>
         <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;"><span style="color:var(--accent3);">✦</span> Dark/light teema</div>
         <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;"><span style="color:var(--accent3);">✦</span> Oma URL jaettavaksi</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3>Haluatko ladata CV:si? (vapaaehtoinen)</h3>
+      <p>AI poimii vahvuudet ja taidot — yhdistää haastatteluun ja Lovable-promptiin.</p>
+      <textarea class="form-textarea" id="cvUploadText" placeholder="Liitä CV:n teksti tähän..." style="min-height:90px;" oninput="saveCvField('cvUploadRaw',this.value)"></textarea>
+      <input type="file" id="cvUploadFile" accept=".txt,.md,text/plain" style="margin:.5rem 0;font-size:.85rem;">
+      <button class="btn-secondary" onclick="extractCvUpload()">🔍 AI poimii tiedot CV:stä (Claude)</button>
+      <div class="ai-result" id="cvExtractResult" style="display:none;">
+        <div class="ai-result-label">CV:stä poimitut tiedot</div>
+        <div class="ai-result-text" id="cvExtractText"></div>
       </div>
     </div>
 
@@ -913,6 +926,74 @@ HAKIJAN TAIDOT:
 </section>
 
 <script>
+
+function buildStudentProfileBundle() {
+  var lines = [];
+  function add(title, body) {
+    if (!body || !String(body).trim()) return;
+    lines.push('=== ' + title + ' ===\n' + String(body).trim());
+  }
+  add('HENKILÖTIEDOT',
+    'Nimi: ' + (cvData.name || '') + '\nPaikkakunta: ' + (cvData.city || '') +
+    '\nSähköposti: ' + (cvData.emailPublic || '') + '\nPuhelin: ' + (cvData.phonePublic || '') +
+    '\nLinkedIn: ' + (cvData.linkedinUrl || '') + '\nTavoiterooli: ' + (cvData.targetRole || ''));
+  add('KOULUTUS JA KIELET', (cvData.education || '') + '\nKurssit: ' + (cvData.courses || '') + '\nKielet: ' + (cvData.languages || ''));
+  if (cvData.careerSummary || cvData.aiSummary) add('URAHISTORIA (tiivistelmä)', cvData.careerSummary || cvData.aiSummary);
+  if (typeof chatHistory !== 'undefined' && chatHistory.length > 1) {
+    var userOnly = chatHistory.filter(function(m) { return m.role === 'user'; }).map(function(m, i) {
+      return 'Vastaus ' + (i + 1) + ': ' + m.content;
+    }).join('\n');
+    add('HAASTATTELUN VASTAUKSET', userOnly);
+    if (!cvData.careerSummary && !cvData.aiSummary) {
+      add('HAASTATTELU (koko)', chatHistory.map(function(m) {
+        return (m.role === 'user' ? 'Käyttäjä' : 'Valmentaja') + ': ' + m.content;
+      }).join('\n'));
+    }
+  }
+  add('TAIDOT', cvData.skills || cvData.aiSkills);
+  add('LISÄTAIDOT', cvData.extraSkills);
+  add('PIILOTETUT VAHVUUDET', cvData.hiddenStrengths);
+  if (cvData.hiddenQ1 || cvData.hiddenQ2 || cvData.hiddenQ3) {
+    add('PIILOTETUT VASTAUKSET', 'Apua: ' + (cvData.hiddenQ1 || '') + '\nHelppoa: ' + (cvData.hiddenQ2 || '') + '\nHarrastukset: ' + (cvData.hiddenQ3 || ''));
+  }
+  add('KEHITYSKOHTEET', cvData.gapAnalysis);
+  add('CV-POIMINNAT', cvData.cvExtract);
+  if (cvData.oldCv) add('VANHA CV (käyttäjän liittämä)', cvData.oldCv);
+  if (cvData.jobs) {
+    var jp = [];
+    for (var n = 1; n <= 5; n++) {
+      var j = cvData.jobs[n];
+      if (j && (j.posting || j.analysis)) {
+        jp.push('TYÖ ' + n + ': ' + (j.company || '') + ' — ' + (j.title || '') + '\n' + (j.analysis || (j.posting || '').slice(0, 500)));
+      }
+    }
+    if (jp.length) add('TYÖPAIKKA-ANALYYSIT', jp.join('\n\n'));
+  }
+  add('DEEP SEARCH', cvData.deepSearchResults);
+  return lines.join('\n\n');
+}
+
+async function extractCvUpload() {
+  var raw = ((document.getElementById('cvUploadText') || {}).value || cvData.cvUploadRaw || '').trim();
+  if (!raw) { alert('Liitä CV:n teksti ensin.'); return; }
+  saveCvField('cvUploadRaw', raw);
+  var result = document.getElementById('cvExtractResult');
+  var txt = document.getElementById('cvExtractText');
+  if (!result || !txt) return;
+  txt.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  result.style.display = 'block';
+  try {
+    var extracted = await window.aiClaude(
+      'Poimi CV-tekstistä strukturoitu profiili SUOMEKSI. Älä keksi. Palauta: YHTEENVETO, TYÖKOKEMUS, TAIDOT, KOULUTUS, VAHVUUDET, ATS-AVAINSANAT.',
+      raw.slice(0, 14000),
+      2800
+    );
+    txt.textContent = extracted;
+    saveCvField('cvExtract', extracted);
+    checkPortfolioData();
+  } catch (e) { txt.textContent = (e && e.message) || 'Yhteysvirhe. Tarkista ANTHROPIC_API_KEY.'; }
+}
+
 /* ── PORTFOLIO COLOR SELECTION ── */
 var selectedColor = 'dark';
 function selectColor(id, bg, accent) {
@@ -930,7 +1011,7 @@ function checkPortfolioData() {
   var checks = [
     { id:'Name', val: cvData.name || document.getElementById('cvName')?.value },
     { id:'Role', val: cvData.targetRole || document.getElementById('cvTarget')?.value },
-    { id:'Summary', val: cvData.careerSummary || cvData.aiSummary },
+    { id:'Summary', val: cvData.careerSummary || cvData.aiSummary || (typeof chatHistory !== 'undefined' && chatHistory.filter(function(m){return m.role==='user';}).length >= 3) },
     { id:'Skills', val: cvData.skills || cvData.aiSkills }
   ];
   checks.forEach(function(c){
@@ -947,124 +1028,52 @@ function checkPortfolioData() {
 }
 
 /* ── LOVABLE PROMPT GENERATOR ── */
-function generateLovablePrompt() {
+async function generateLovablePrompt() {
   var btn = document.getElementById('generatePortfolioPromptBtn');
-  btn.disabled = true;
-  btn.textContent = '⏳ Generoidaan...';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Claude kirjoittaa promptin...'; }
 
-  // Gather ALL data from the module
-  var name = cvData.name || document.getElementById('cvName')?.value || '';
-  var city = cvData.city || document.getElementById('cvCity')?.value || '';
-  var target = cvData.targetRole || document.getElementById('cvTarget')?.value || '';
-  var email = cvData.emailPublic || document.getElementById('cvEmail')?.value || '';
-  var phone = cvData.phonePublic || document.getElementById('cvPhone')?.value || '';
-  var linkedin = cvData.linkedinUrl || document.getElementById('cvLinkedin')?.value || '';
-  var tagline = cvData.portfolioTagline || document.getElementById('pfTagline')?.value || '';
-  var summary = cvData.careerSummary || cvData.aiSummary || '';
-  var skills = cvData.skills || cvData.aiSkills || '';
-  var education = cvData.education || document.getElementById('cvEducation')?.value || '';
-  var languages = cvData.languages || document.getElementById('cvLanguages')?.value || '';
-  var liHeadline = cvData.liHeadline || document.getElementById('liHeadline')?.value || '';
-  var liAbout = cvData.liAbout || document.getElementById('liAbout')?.value || '';
-
-  // Job analysis data
-  var jobsInfo = '';
-  for(var i=1;i<=5;i++){
-    var jc = cvData['job'+i+'company'] || '';
-    var jt = cvData['job'+i+'title'] || '';
-    if(jc||jt) jobsInfo += '- '+jc+(jt?' — '+jt:'')+'\n';
+  var bundle = buildStudentProfileBundle();
+  if (!bundle.trim()) {
+    alert('Täytä ensin perustiedot (Askel 1) ja tee urahaastattelu (Askel 2).');
+    if (btn) { btn.disabled = false; btn.textContent = '✦ Generoi Lovable-prompt'; }
+    return;
   }
 
+  var tagline = cvData.portfolioTagline || document.getElementById('pfTagline')?.value || '';
   var colorMap = {
-    dark: 'dark background (#1a1a2e), gold accent (#b8860b), serif headings, premium editorial feel',
-    blue: 'light background (#f0f4ff), blue accent (#2563a8), clean professional look',
-    purple: 'dark background (#1e1040), purple accent (#a855f7), modern tech feel',
-    minimal: 'white background, black typography, ultra-minimal, no-noise design'
+    dark: 'dark executive (#1a1a2e), gold accent (#b8860b), premium editorial',
+    blue: 'light professional (#f0f4ff), blue accent (#2563a8)',
+    purple: 'dark modern (#1e1040), purple accent (#a855f7)',
+    minimal: 'white minimal, black typography, ultra-clean'
   };
-  var colorDesc = colorMap[selectedColor] || colorMap['dark'];
+  var colorDesc = colorMap[selectedColor] || colorMap.dark;
 
-  // Build the student data block
-  var studentData = '';
-  if(name) studentData += 'NAME: '+name+'\n';
-  if(city) studentData += 'LOCATION: '+city+'\n';
-  if(target) studentData += 'TARGET ROLE: '+target+'\n';
-  if(tagline) studentData += 'TAGLINE: '+tagline+'\n';
-  if(email) studentData += 'EMAIL: '+email+'\n';
-  if(phone) studentData += 'PHONE: '+phone+'\n';
-  if(linkedin) studentData += 'LINKEDIN: '+linkedin+'\n';
-  if(summary) studentData += '\nCAREER SUMMARY & EXPERIENCE:\n'+summary+'\n';
-  if(skills) studentData += '\nSKILLS:\n'+skills+'\n';
-  if(education) studentData += '\nEDUCATION:\n'+education+'\n';
-  if(languages) studentData += '\nLANGUAGES: '+languages+'\n';
-  if(liAbout) studentData += '\nLINKEDIN ABOUT (use for bio tone):\n'+liAbout+'\n';
-  if(jobsInfo) studentData += '\nTARGET COMPANIES/ROLES:\n'+jobsInfo;
-
-  var prompt = `Build me a stunning, modern portfolio website. Here is ALL the content and data to use:
-
-━━━━━━━━━━━━━━━━━━━━━━
-PERSON DATA
-━━━━━━━━━━━━━━━━━━━━━━
-${studentData || '[Student data not found — please fill in your info in the earlier steps of this module]'}
-━━━━━━━━━━━━━━━━━━━━━━
-DESIGN STYLE
-━━━━━━━━━━━━━━━━━━━━━━
-${colorDesc}
-Typography: pair a serif display font with a clean sans-serif body font.
-Add subtle grain texture overlay for depth.
-
-━━━━━━━━━━━━━━━━━━━━━━
-REQUIRED SECTIONS (in order)
-━━━━━━━━━━━━━━━━━━━━━━
-
-1. HERO SECTION
-   - Full-viewport height
-   - Large name in serif display font
-   - Tagline or target role as subtitle
-   - Smooth fade-in animation on load (name slides up, subtitle fades in 0.3s delay)
-   - Animated gradient or subtle particle background
-   - CTA button "Ota yhteyttä" that scrolls to contact section
-
-2. ABOUT / BIO SECTION
-   - 2-column layout: short punchy bio on left, key stats on right
-   - Stats: years of experience, number of skills, cities worked in (derive from data)
-   - Bio written in first person, warm and professional tone
-   - Count-up animation on stats when section enters viewport
-
-3. SKILLS SECTION
-   - Animated skill bars or tags
-   - Group by category if categories are present in the data
-   - Each skill animates in when scrolled into view (staggered, 0.1s delay each)
-   - Use accent color for the bar fills
-
-4. EXPERIENCE TIMELINE
-   - Vertical timeline design
-   - Each job: company, role, dates, 2-3 bullet points
-   - Timeline line animates drawing downward on scroll
-   - Cards slide in from alternating left/right sides
-
-5. CONTACT SECTION
-   - Clean, minimal
-   - Email, phone, LinkedIn as styled links with hover effects
-   - Location shown with a small icon
-
-━━━━━━━━━━━━━━━━━━━━━━
-TECHNICAL REQUIREMENTS
-━━━━━━━━━━━━━━━━━━━━━━
-- Single HTML file with embedded CSS and JS (no frameworks needed)
-- Fully responsive — mobile first
-- Smooth scroll behavior
-- All animations use CSS transitions or Intersection Observer (no heavy libraries)
-- Performance: fast loading, no unnecessary dependencies
-- Navigation: fixed top nav with smooth scroll links, hides on scroll down, shows on scroll up
-- Progress bar at top of page showing scroll position
-- DO NOT use placeholder content — use ONLY the real data provided above
-- If a field is empty, omit that section gracefully rather than showing placeholder text`;
-
-  document.getElementById('lovablePromptText').textContent = prompt;
+  document.getElementById('lovablePromptText').textContent = 'Generoidaan Claude API:lla...';
   document.getElementById('lovablePromptResult').style.display = 'block';
-  btn.disabled = false;
-  btn.textContent = '✦ Generoi uudelleen';
-  btn.innerHTML = '✦ Generoi uudelleen';
+
+  try {
+    var prompt = await window.aiClaude(
+      'You are a senior product designer. Write ONE paste-ready English prompt for Lovable.dev to build a premium EXECUTIVE personal portfolio website.\n\n' +
+      'MANDATORY:\n' +
+      '- Hero: name, target role, tagline, fade-in animation\n' +
+      '- Animated skill bars (6-8 skills from data), scroll-triggered\n' +
+      '- Experience timeline with scroll animations\n' +
+      '- Floating AI CHATBOT: bottom-right FAB, slide-out panel, 4 Finnish starter questions; answers ONLY from page content; mobile-friendly\n' +
+      '- Contact: email, phone, LinkedIn\n' +
+      '- Design: ' + colorDesc + ', refined typography, subtle gradients, executive feel\n' +
+      '- Use ONLY candidate facts. No invented employers or metrics.\n' +
+      'Output: English Lovable prompt only, no markdown fences.',
+      'CANDIDATE DATA:\n' + bundle + (tagline ? '\n\nPreferred tagline: ' + tagline : ''),
+      4500
+    );
+    document.getElementById('lovablePromptText').textContent = prompt;
+    saveCvField('lovablePrompt', prompt);
+    checkPortfolioData();
+  } catch (e) {
+    document.getElementById('lovablePromptText').textContent = (e && e.message) || 'Virhe. Varmista että Claude API (ANTHROPIC_API_KEY) on käytössä.';
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '✦ Generoi uudelleen'; }
 }
 
 function copyLovablePrompt() {
@@ -1118,6 +1127,8 @@ function copyLovablePrompt() {
       <h3>Vaihe 1: Generoi ensimmäinen versio</h3>
       <p>AI rakentaa CV:n kaikista keräämistäsi tiedoista. Tämä on <em>luonnos</em> — ei valmis versio.</p>
       <button class="btn-primary" id="buildCVBtn" onclick="buildCVDraft()">⚙️ Generoi CV-luonnos</button>
+      <button class="btn-secondary" id="buildVisualCvPromptBtn" onclick="generateVisualCvLovablePrompt()" style="margin-left:.5rem;">✦ Visuaalinen CV-prompt (Lovable)</button>
+
       <div class="ai-result" id="cvDraftResult">
         <div class="ai-result-label">CV-luonnos v1</div>
         <div class="ai-result-text" id="cvDraftText"></div>
@@ -1613,7 +1624,7 @@ function _loadFromServer() {
 }
 
 function restoreFields() {
-  var map = {cvName:'name',cvCity:'city',cvTarget:'targetRole',cvEmail:'emailPublic',cvPhone:'phonePublic',cvLinkedin:'linkedinUrl',cvEducation:'education',cvCourses:'courses',cvLanguages:'languages',hiddenQ1:'hiddenQ1',hiddenQ2:'hiddenQ2',hiddenQ3:'hiddenQ3',extraSkills:'extraSkills',oldCvInput:'oldCv',deepSearchResults:'deepSearchResults',pTagline:'portfolioTagline',pBio:'portfolioBio',liHeadline:'liHeadline',liAbout:'liAbout'};
+  var map = {cvName:'name',cvCity:'city',cvTarget:'targetRole',cvEmail:'emailPublic',cvPhone:'phonePublic',cvLinkedin:'linkedinUrl',cvEducation:'education',cvCourses:'courses',cvLanguages:'languages',hiddenQ1:'hiddenQ1',hiddenQ2:'hiddenQ2',hiddenQ3:'hiddenQ3',extraSkills:'extraSkills',oldCvInput:'oldCv',cvUploadText:'cvUploadRaw',deepSearchResults:'deepSearchResults',pTagline:'portfolioTagline',pBio:'portfolioBio',liHeadline:'liHeadline',liAbout:'liAbout'};
   for (var id in map) { var el = document.getElementById(id); if (el && cvData[map[id]]) el.value = cvData[map[id]]; }
 }
 
@@ -1876,9 +1887,7 @@ function previewPhoto(input){
   r.onload=function(e){var img=document.getElementById('photoPreview');img.src=e.target.result;img.style.display='block';document.getElementById('photoPlaceholder').style.display='none';};
   r.readAsDataURL(portfolioPhotoFile);
 }
-function getPortfolioContext(){
-  return 'Nimi: '+(cvData.name||'')+'\nPaikkakunta: '+(cvData.city||'')+'\nTavoiterooli: '+(cvData.targetRole||'')+'\nUrahistoria:\n'+(cvData.careerSummary||'')+'\nTaidot:\n'+(cvData.skills||'')+'\nKoulutus: '+(cvData.education||'')+'\nKielet: '+(cvData.languages||'');
-}
+function getPortfolioContext(){ return buildStudentProfileBundle(); }
 async function generatePortfolioTagline(){
   var btn=document.querySelector('[onclick="generatePortfolioTagline()"]');if(btn)btn.disabled=true;
   try{
@@ -1947,14 +1956,45 @@ function restorePortfolioFields(){
 /* ═══════════════════════════════════════
    CV ITERATION
 ═══════════════════════════════════════ */
+async function generateVisualCvLovablePrompt() {
+  var bundle = buildStudentProfileBundle();
+  if (!bundle.trim()) { alert('Täytä moduulin tiedot ensin.'); return; }
+  var btn = document.getElementById('buildVisualCvPromptBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Claude...'; }
+  try {
+    var prompt = await window.aiClaude(
+      'Write ONE English Lovable.dev prompt for a premium EXECUTIVE one-page CV/resume site. ATS-friendly plain-text sections PLUS stunning print-ready layout: serif headings, gold accents, skill tags, timeline, PDF-export friendly. Use ONLY facts from data. No invention.',
+      bundle,
+      4000
+    );
+    var ta = document.getElementById('visualCvPromptOut');
+    if (!ta) {
+      ta = document.createElement('textarea');
+      ta.id = 'visualCvPromptOut';
+      ta.className = 'form-textarea';
+      ta.style.minHeight = '120px';
+      ta.style.marginTop = '1rem';
+      document.getElementById('buildCVBtn').parentElement.appendChild(ta);
+    }
+    ta.value = prompt;
+    ta.style.display = 'block';
+    saveCvField('visualCvLovablePrompt', prompt);
+    alert('Visuaalinen CV-prompt valmis — kopioi ja liitä Lovableen.');
+  } catch (e) { alert((e && e.message) || 'Claude API -virhe'); }
+  if (btn) { btn.disabled = false; btn.textContent = '✦ Visuaalinen CV-prompt (Lovable)'; }
+}
+
 async function buildCVDraft(){
   var btn=document.getElementById('buildCVBtn');btn.disabled=true;btn.textContent='⏳ Generoidaan...';
   var result=document.getElementById('cvDraftResult');var txt=document.getElementById('cvDraftText');
   txt.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';result.style.display='block';
   var j1=(cvData.jobs&&cvData.jobs[1])||{};
   try{
-    var prompt='Kirjoita ATS-optimoitu CV.\nSÄÄNNÖT:\n- Jokainen työkuvaus alkaa TOIMINTAVERBILLÄ\n- Numerot mukaan jos mainittu, muuten [TÄYDENNÄ]\n- Rakenne: Yhteystiedot → Profiili (2-3 lausetta) → Kokemus → Koulutus → Taidot → Kielet\n- Ei taulukoita, max 2 sivua\n- ÄLÄ keksi mitään\n- Profiiliteksti: iskevä, konkreettinen\n- Jos tehtäväilmoitus mukana: sisällytä sen avainsanat luonnollisesti\n\nHENKILÖ:\nNimi: '+(cvData.name||'[TÄYDENNÄ]')+'\nPaikkakunta: '+(cvData.city||'')+'\nTavoiterooli: '+(cvData.targetRole||'')+'\n\nURAHISTORIA:\n'+(cvData.careerSummary||'[TÄYDENNÄ]')+'\n\nKOULUTUS:\n'+(cvData.education||'')+'\n\nTAIDOT:\n'+(cvData.skills||'')+'\n'+(cvData.extraSkills?'Lisätaidot: '+cvData.extraSkills:'')+'\n\nKIELET:\n'+(cvData.languages||'')+(j1.posting?'\n\nHAETTAVA TEHTÄVÄ:\n'+j1.posting:'');
-    var cv=await window.aiChat('Olet CV-kirjoittaja. Noudata annettuja ohjeita tarkasti.',prompt,1800);
+    var bundle = buildStudentProfileBundle();
+    var cv = await window.aiClaude(
+      'Kirjoita valmis ATS-yhteensopiva CV suomeksi. Toimintaverbit, numerot, standardi otsikot (Profiili, Työkokemus, Koulutus, Taidot, Kielet), max 2 sivua, ei taulukoita. Käytä VAIN dataa. Älä keksi.',
+      bundle + (j1.posting ? '\n\n=== HAETTAVA TEHTÄVÄ (ilmoitus) ===\n' + j1.posting : ''),
+      4000);
     txt.textContent=cv; saveCvField('cvDraft',cv);
     setIterStep(1);
   }catch(e){txt.textContent='Yhteysvirhe.';}
@@ -2292,6 +2332,27 @@ document.addEventListener('DOMContentLoaded', function(){
   if(window.loadReflection) window.loadReflection('m_ai_tyonhaussa_reflection');
   // Default: modern template selected
   pickTemplate(cvData.portfolioTemplate||'modern');
+  var cvFile = document.getElementById('cvUploadFile');
+  if (cvFile) cvFile.addEventListener('change', function(e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function(ev) {
+      var ta = document.getElementById('cvUploadText');
+      if (ta) { ta.value = ev.target.result; saveCvField('cvUploadRaw', ta.value); }
+    };
+    r.readAsText(f);
+  });
+  if (cvData.cvExtract) {
+    var cer = document.getElementById('cvExtractResult');
+    var cet = document.getElementById('cvExtractText');
+    if (cer && cet) { cet.textContent = cvData.cvExtract; cer.style.display = 'block'; }
+  }
+  if (cvData.lovablePrompt) {
+    var lpt = document.getElementById('lovablePromptText');
+    var lpr = document.getElementById('lovablePromptResult');
+    if (lpt && lpr) { lpt.textContent = cvData.lovablePrompt; lpr.style.display = 'block'; }
+  }
 });
 </script>
 
