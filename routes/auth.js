@@ -2,20 +2,26 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../database/db');
+const {
+  KUOPIO_DEMO_DEFAULT_NAME,
+  normalizeEmail,
+  shouldAutoApproveStudent
+} = require('../config/demo-access');
 
 const router = express.Router();
 
 // Register new user
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email: rawEmail, password, name } = req.body;
+    const email = normalizeEmail(rawEmail);
     
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
     
     // Check if user exists
-    const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    const existingUser = await pool.query('SELECT id FROM users WHERE LOWER(TRIM(email)) = $1', [email]);
     if (existingUser.rows.length > 0) {
       return res.status(400).json({ error: 'User already exists' });
     }
@@ -27,10 +33,13 @@ router.post('/register', async (req, res) => {
     // Ensure is_approved column exists
     try { await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE'); } catch(e) {}
 
-    // Create user (not approved until admin approves)
+    const autoApprove = shouldAutoApproveStudent(email);
+    const displayName = name || (autoApprove ? KUOPIO_DEMO_DEFAULT_NAME : null);
+
+    // Create user (demo shoot account is approved immediately)
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash, name, is_approved) VALUES ($1, $2, $3, FALSE) RETURNING id, email, name',
-      [email, passwordHash, name || null]
+      'INSERT INTO users (email, password_hash, name, is_approved) VALUES ($1, $2, $3, $4) RETURNING id, email, name, is_approved',
+      [email, passwordHash, displayName, autoApprove]
     );
     
     const user = result.rows[0];
@@ -58,7 +67,8 @@ router.post('/register', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name
+        name: user.name,
+        is_approved: user.is_approved === true
       }
     });
   } catch (error) {
@@ -70,14 +80,15 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email: rawEmail, password } = req.body;
+    const email = normalizeEmail(rawEmail);
     
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
     
     // Find user
-    const result = await pool.query('SELECT * FROM users WHERE email = $1 AND is_active = TRUE', [email]);
+    const result = await pool.query('SELECT * FROM users WHERE LOWER(TRIM(email)) = $1 AND is_active = TRUE', [email]);
     
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -91,6 +102,11 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
+    if (shouldAutoApproveStudent(email) && !user.is_approved) {
+      await pool.query('UPDATE users SET is_approved = TRUE WHERE id = $1', [user.id]);
+      user.is_approved = true;
+    }
+
     // Update last login
     await pool.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
     
@@ -117,7 +133,8 @@ router.post('/login', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name
+        name: user.name,
+        is_approved: user.is_approved === true || shouldAutoApproveStudent(email)
       }
     });
   } catch (error) {
@@ -160,8 +177,16 @@ router.get('/me', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid session' });
     }
+
+    const user = result.rows[0];
+    if (shouldAutoApproveStudent(user.email) && !user.is_approved) {
+      await pool.query('UPDATE users SET is_approved = TRUE WHERE id = $1', [user.id]);
+      user.is_approved = true;
+    } else if (shouldAutoApproveStudent(user.email)) {
+      user.is_approved = true;
+    }
     
-    res.json({ user: result.rows[0] });
+    res.json({ user });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to get user' });
