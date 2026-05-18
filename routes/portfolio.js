@@ -117,11 +117,17 @@ router.post('/photo', authenticateToken, (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Ei kuvaa' });
     try {
       await ready();
-      await pool.query(
-        'UPDATE student_portfolios SET photo_bytes=$2, photo_mime=$3, updated_at=CURRENT_TIMESTAMP WHERE user_id=$1',
+      console.log('Photo upload: user=' + req.user.id + ', size=' + req.file.buffer.length + ', mime=' + req.file.mimetype);
+      const result = await pool.query(
+        'UPDATE student_portfolios SET photo_bytes=$2, photo_mime=$3, updated_at=CURRENT_TIMESTAMP WHERE user_id=$1 RETURNING slug',
         [req.user.id, req.file.buffer, req.file.mimetype]);
+      if (!result.rows.length) {
+        console.error('Photo upload: no portfolio found for user_id=' + req.user.id);
+        return res.status(404).json({ error: 'Portfoliota ei löydy — tallenna portfolio ensin' });
+      }
+      console.log('Photo saved for slug=' + result.rows[0].slug);
       res.json({ success: true });
-    } catch (e) { console.error('Photo:', e); res.status(500).json({ error: 'Virhe' }); }
+    } catch (e) { console.error('Photo:', e); res.status(500).json({ error: 'Virhe: ' + e.message }); }
   });
 });
 

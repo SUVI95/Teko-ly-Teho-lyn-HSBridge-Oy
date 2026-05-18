@@ -634,21 +634,7 @@ h1.hero-title em{font-style:italic;color:#e8c870;}
     </div>
 
     <div class="info-card">
-      <h3>3. Valitse brändiväri</h3>
-      <p>Portfolion pääväri — valitse itsellesi sopiva:</p>
-      <div id="colorPicker" style="display:flex;flex-wrap:wrap;gap:.75rem;margin:1rem 0;">
-        <button class="color-opt" onclick="pickColor('#2563a8')" style="width:48px;height:48px;border-radius:12px;background:#2563a8;border:3px solid transparent;cursor:pointer;" data-color="#2563a8"></button>
-        <button class="color-opt" onclick="pickColor('#7c3aed')" style="width:48px;height:48px;border-radius:12px;background:#7c3aed;border:3px solid transparent;cursor:pointer;" data-color="#7c3aed"></button>
-        <button class="color-opt" onclick="pickColor('#059669')" style="width:48px;height:48px;border-radius:12px;background:#059669;border:3px solid transparent;cursor:pointer;" data-color="#059669"></button>
-        <button class="color-opt" onclick="pickColor('#dc2626')" style="width:48px;height:48px;border-radius:12px;background:#dc2626;border:3px solid transparent;cursor:pointer;" data-color="#dc2626"></button>
-        <button class="color-opt" onclick="pickColor('#d97706')" style="width:48px;height:48px;border-radius:12px;background:#d97706;border:3px solid transparent;cursor:pointer;" data-color="#d97706"></button>
-        <button class="color-opt" onclick="pickColor('#0891b2')" style="width:48px;height:48px;border-radius:12px;background:#0891b2;border:3px solid transparent;cursor:pointer;" data-color="#0891b2"></button>
-        <button class="color-opt" onclick="pickColor('#1a1a2e')" style="width:48px;height:48px;border-radius:12px;background:#1a1a2e;border:3px solid transparent;cursor:pointer;" data-color="#1a1a2e"></button>
-      </div>
-    </div>
-
-    <div class="info-card">
-      <h3>4. Lisää kuva</h3>
+      <h3>3. Lisää kuva</h3>
       <p>Ammattimainen valokuva tekee vaikutuksen. Voit lisätä myöhemminkin.</p>
       <div style="display:flex;align-items:center;gap:1.5rem;margin:1rem 0;">
         <div id="photoPreviewWrap" style="width:100px;height:100px;border-radius:50%;background:var(--paper2);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
@@ -1703,14 +1689,26 @@ async function buildAndPublishPortfolio() {
 
     // Upload photo if selected
     if (portfolioPhotoFile) {
-      statusEl.textContent = '⏳ Ladataan kuvaa...';
+      statusEl.textContent = '⏳ Ladataan kuvaa (' + Math.round(portfolioPhotoFile.size/1024) + ' KB)...';
       var formData = new FormData();
       formData.append('photo', portfolioPhotoFile);
-      await fetch('/api/portfolio/photo', {
-        method: 'POST',
-        credentials: 'include',
-        body: formData
-      });
+      try {
+        var photoResp = await fetch('/api/portfolio/photo', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+        var photoRes = await photoResp.json();
+        if (!photoRes.success) {
+          console.error('Photo upload failed:', photoRes.error);
+          statusEl.textContent = '⚠️ Kuvan lataus epäonnistui: ' + (photoRes.error || 'tuntematon virhe');
+          statusEl.style.color = 'var(--accent2)';
+        }
+      } catch(photoErr) {
+        console.error('Photo upload error:', photoErr);
+        statusEl.textContent = '⚠️ Kuvan lataus epäonnistui';
+        statusEl.style.color = 'var(--accent2)';
+      }
     }
 
     // Publish
