@@ -609,6 +609,8 @@ Suomeksi. Ei aloita "Olen". Ei mainita "intohimoinen" tai "motivoitunut". Ei kli
           <div class="compare-result" id="h1cmp"></div>
           <div class="think-q" style="margin-top:1.25rem;"><div class="think-q-label">Mikä yksittäinen ohje asiantuntijan promptissa vaikutti eniten tulokseen? Miksi?</div><textarea class="tq" id="h1causal" placeholder="Esim: 'Monikielisyys = kilpailuetu' koska se pakotti AI:n nostamaan kielet esiin eikä vain mainitsemaan ne..."></textarea></div>
           <div class="think-q"><div class="think-q-label">Mitkä 2 riviä asiantuntijan promptista voisi poistaa ilman että laatu laskee?</div><textarea class="tq" id="h1sub" placeholder="Esim: Excel-maininta ei näy tuloksessa joten se voisi puuttua..."></textarea></div>
+          <button class="compare-btn" style="margin-top:1rem;" onclick="analyzeReflection('h1')">Analysoi vastaukseni →</button>
+          <div id="h1refAI" style="display:none;margin-top:1rem;background:rgba(37,99,168,0.05);border-left:3px solid var(--accent3);border-radius:0 8px 8px 0;padding:1rem;font-size:0.84rem;line-height:1.75;color:var(--text);"></div>
         </div>
       </div>
     </div>
@@ -712,6 +714,8 @@ Ei aloita "Hyvä asiakas" tai "Pahoittelemme". Ei sanoja "ymmärrän turhautumis
           <div class="compare-result" id="h2cmp"></div>
           <div class="think-q" style="margin-top:1.25rem;"><div class="think-q-label">Mikä yksittäinen ohje asiantuntijan promptissa vaikutti eniten tulokseen? Miksi?</div><textarea class="tq" id="h2causal" placeholder="Esim: KYLLÄ/EI-rajaus oli tärkein koska ilman sitä AI olisi saattanut luvata korjauksen tänään..."></textarea></div>
           <div class="think-q"><div class="think-q-label">Mitkä 2 riviä asiantuntijan promptista voisi poistaa ilman että laatu laskee?</div><textarea class="tq" id="h2sub" placeholder="Esim: 'Ammatillinen ja inhimillinen' on ehkä turha koska muut ohjeet jo pakottavat sen..."></textarea></div>
+          <button class="compare-btn" style="margin-top:1rem;" onclick="analyzeReflection('h2')">Analysoi vastaukseni →</button>
+          <div id="h2refAI" style="display:none;margin-top:1rem;background:rgba(37,99,168,0.05);border-left:3px solid var(--accent3);border-radius:0 8px 8px 0;padding:1rem;font-size:0.84rem;line-height:1.75;color:var(--text);"></div>
         </div>
       </div>
     </div>
@@ -814,6 +818,8 @@ TÄRKEÄÄ: Kaikki harjoitusvastaukset puhuttuna suomena. Max 4 lausetta per vas
           <div class="compare-result" id="h3cmp"></div>
           <div class="think-q" style="margin-top:1.25rem;"><div class="think-q-label">Mikä yksittäinen ohje asiantuntijan promptissa vaikutti eniten tulokseen? Miksi?</div><textarea class="tq" id="h3causal" placeholder="Esim: 'Puhuttuna suomena' koska ilman sitä AI olisi kirjoittanut kirjakielisiä esseitä..."></textarea></div>
           <div class="think-q"><div class="think-q-label">Mitkä 2 riviä asiantuntijan promptista voisi poistaa ilman että laatu laskee?</div><textarea class="tq" id="h3sub" placeholder="Esim: 'Ei pitkiä lauserakenteita' on ehkä sama asia kuin 'max 4 lausetta'..."></textarea></div>
+          <button class="compare-btn" style="margin-top:1rem;" onclick="analyzeReflection('h3')">Analysoi vastaukseni →</button>
+          <div id="h3refAI" style="display:none;margin-top:1rem;background:rgba(37,99,168,0.05);border-left:3px solid var(--accent3);border-radius:0 8px 8px 0;padding:1rem;font-size:0.84rem;line-height:1.75;color:var(--text);"></div>
         </div>
       </div>
     </div>
@@ -1288,6 +1294,17 @@ async function showExAndCompare(id){
   const expBtn=exBox.querySelector('.test-expert-btn');
   if(expBtn&&!state[id+'ex_exp']){expBtn.click();await new Promise(r=>{const iv=setInterval(()=>{if(state[id+'ex_exp']){clearInterval(iv);r();}},300);setTimeout(()=>{clearInterval(iv);r();},15000);});}
   if(state[id]){const cmpEl=document.getElementById(id+'cmp');if(cmpEl&&!cmpEl.textContent.trim()){cmp(id);}}
+}
+async function analyzeReflection(id){
+  const causal=document.getElementById(id+'causal')?.value?.trim()||'';
+  const sub=document.getElementById(id+'sub')?.value?.trim()||'';
+  if(!causal&&!sub){alert('Kirjoita ensin vastaukset molempiin kysymyksiin.');return;}
+  const el=document.getElementById(id+'refAI');
+  el.style.display='block';ld(el);
+  const expertPrompt=document.querySelector('#'+id+'ex .expert-prompt')?.textContent||'';
+  const feedback=await ai('Olet prompting-opettaja. Opiskelija analysoi asiantuntijan promptia. Arvioi lyhyesti (max 100 sanaa, suomeksi, rohkaisevasti):\n1) Osuiko opiskelijan kausaalianalyysi oikeaan — mikä ohje todella vaikutti eniten?\n2) Ovatko opiskelijan ehdottamat poistettavat rivit järkeviä — vai olisivatko ne oikeasti tärkeitä?\n3) Yksi oivallus jonka opiskelija voi viedä mukanaan.\nOle tarkka mutta kannustava.',`Asiantuntijan prompti:\n${expertPrompt}\n\nOpiskelijan kausaalianalyysi: ${causal}\n\nOpiskelijan poistoehdotus: ${sub}`,400);
+  el.textContent=feedback;
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 /* EXAMPLE */
