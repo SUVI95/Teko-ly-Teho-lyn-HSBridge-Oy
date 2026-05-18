@@ -3,12 +3,24 @@ const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../database/db');
 const {
-  KUOPIO_DEMO_DEFAULT_NAME,
+  getKuopioDemoDisplayName,
   normalizeEmail,
   shouldAutoApproveStudent
 } = require('../config/demo-access');
 
 const router = express.Router();
+
+async function applyKuopioDemoProfile(user) {
+  if (!user || !shouldAutoApproveStudent(user.email)) return user;
+  const displayName = getKuopioDemoDisplayName();
+  await pool.query(
+    'UPDATE users SET is_approved = TRUE, name = $1 WHERE id = $2',
+    [displayName, user.id]
+  );
+  user.is_approved = true;
+  user.name = displayName;
+  return user;
+}
 
 // Register new user
 router.post('/register', async (req, res) => {
@@ -34,7 +46,7 @@ router.post('/register', async (req, res) => {
     try { await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE'); } catch(e) {}
 
     const autoApprove = shouldAutoApproveStudent(email);
-    const displayName = name || (autoApprove ? KUOPIO_DEMO_DEFAULT_NAME : null);
+    const displayName = autoApprove ? getKuopioDemoDisplayName() : (name || null);
 
     // Create user (demo shoot account is approved immediately)
     const result = await pool.query(
@@ -42,7 +54,8 @@ router.post('/register', async (req, res) => {
       [email, passwordHash, displayName, autoApprove]
     );
     
-    const user = result.rows[0];
+    let user = result.rows[0];
+    if (autoApprove) user = await applyKuopioDemoProfile(user);
     
     // Create session
     const sessionToken = uuidv4();
@@ -102,9 +115,8 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
-    if (shouldAutoApproveStudent(email) && !user.is_approved) {
-      await pool.query('UPDATE users SET is_approved = TRUE WHERE id = $1', [user.id]);
-      user.is_approved = true;
+    if (shouldAutoApproveStudent(email)) {
+      user = await applyKuopioDemoProfile(user);
     }
 
     // Update last login
@@ -178,12 +190,9 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ error: 'Invalid session' });
     }
 
-    const user = result.rows[0];
-    if (shouldAutoApproveStudent(user.email) && !user.is_approved) {
-      await pool.query('UPDATE users SET is_approved = TRUE WHERE id = $1', [user.id]);
-      user.is_approved = true;
-    } else if (shouldAutoApproveStudent(user.email)) {
-      user.is_approved = true;
+    let user = result.rows[0];
+    if (shouldAutoApproveStudent(user.email)) {
+      user = await applyKuopioDemoProfile(user);
     }
     
     res.json({ user });
