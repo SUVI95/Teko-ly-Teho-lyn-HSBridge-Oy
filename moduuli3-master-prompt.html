@@ -957,6 +957,45 @@ TÄRKEÄÄ: Kaikki harjoitusvastaukset puhuttuna suomena. Max 4 lausetta per vas
           <div id="ownGrade" style="display:none;margin-top:1rem;background:rgba(37,99,168,0.06);border:1px solid rgba(37,99,168,0.15);border-radius:8px;padding:1rem;font-size:0.85rem;line-height:1.8;color:var(--text);"></div>
         </div>
       </div>
+
+      <div id="ownDiagBox" style="display:none;">
+        <div style="background:rgba(199,91,58,0.06);border:1px solid rgba(199,91,58,0.15);border-radius:10px;padding:1.25rem;margin-top:1.5rem;">
+          <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--accent2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.75rem;">Rakenne on kunnossa — mutta onko tulos hyvä?</div>
+          <p style="font-size:0.88rem;color:var(--text);line-height:1.7;margin-bottom:1rem;">Promptissasi oli oikeat elementit. Mutta <strong>rakenne ei takaa laatua</strong>. Katso AI:n tulosta ja vastaa:</p>
+          <div class="think-q" style="margin-bottom:0.75rem;"><div class="think-q-label">Mikä lause tuloksessa kuulostaa geneeriseltä — sellaiselta jonka voisi liittää kenen tahansa hakemukseen?</div><textarea class="tq" id="ownDiag1" placeholder="Esim: 'passionate about creating impactful solutions' voisi olla keneltä tahansa..."></textarea></div>
+          <div class="think-q" style="margin-bottom:1rem;"><div class="think-q-label">Mikä YKSI konkreettinen yksityiskohta (luku, projekti, tulos) tekisi tekstistä uskottavamman?</div><textarea class="tq" id="ownDiag2" placeholder="Esim: 'redesigned onboarding flow → 25% fewer support tickets'"></textarea></div>
+        </div>
+
+        <div style="background:rgba(42,122,75,0.06);border:1px solid rgba(42,122,75,0.15);border-radius:10px;padding:1.25rem;margin-top:1.25rem;">
+          <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.5rem;">Lisää yksi konkreettinen yksityiskohta</div>
+          <p style="font-size:0.85rem;color:var(--text);line-height:1.6;margin-bottom:0.75rem;">Kopioi promptisi alle ja lisää <strong>yksi lause</strong> joka sisältää konkreettisen tuloksen, luvun tai projektin. Testaa uudelleen.</p>
+          <textarea class="pt" id="h5p2" style="min-height:140px;" placeholder="Kopioi alkuperäinen promptisi tähän ja lisää yksi konkreettinen yksityiskohta..." oninput="wc('h5p2','h5wc2')"></textarea>
+          <div class="word-bar"><span class="wc" id="h5wc2">0 sanaa</span></div>
+          <button class="run-btn" style="margin-top:0.75rem;" id="h5btn2" onclick="runOwnRetest()">Testaa parannettu versio →</button>
+          <div class="ai-box" id="h5ab2" style="display:none;">
+            <div class="ai-label">Parannettu tulos</div>
+            <div class="ai-text" id="h5at2"></div>
+          </div>
+        </div>
+
+        <div id="ownCompareBox" style="display:none;margin-top:1.25rem;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div>
+              <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--accent2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;">Ensimmäinen versio</div>
+              <div style="background:rgba(199,91,58,0.04);border:1px solid rgba(199,91,58,0.15);border-radius:8px;padding:1rem;font-size:0.82rem;line-height:1.7;color:var(--muted);" id="ownCmp1">—</div>
+            </div>
+            <div>
+              <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;">+ konkreettinen yksityiskohta</div>
+              <div style="background:rgba(42,122,75,0.04);border:1px solid rgba(42,122,75,0.15);border-radius:8px;padding:1rem;font-size:0.82rem;line-height:1.7;color:var(--text);" id="ownCmp2">—</div>
+            </div>
+          </div>
+          <div id="ownFinalAI" style="display:none;margin-top:1rem;background:rgba(37,99,168,0.05);border-left:3px solid var(--accent3);border-radius:0 8px 8px 0;padding:1rem;font-size:0.84rem;line-height:1.75;color:var(--text);"></div>
+          <div style="margin-top:1.25rem;background:rgba(42,122,75,0.06);border:1px solid rgba(42,122,75,0.2);border-radius:8px;padding:1.25rem;display:none;" id="ownLesson">
+            <strong style="color:var(--accent);display:block;margin-bottom:0.4rem;">Tämän harjoituksen opetus</strong>
+            <p style="font-size:0.88rem;color:var(--text);line-height:1.7;">Oikea rakenne (rooli, konteksti, rajoitteet) on välttämätön — mutta <strong>yksi konkreettinen yksityiskohta</strong> muuttaa tuloksen geneerisestä uskottavaksi. Ammattilainen ei vain kerro AI:lle mitä kirjoittaa. Ammattilainen antaa AI:lle <strong>materiaalin</strong> jolla kirjoittaa.</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -1297,7 +1336,7 @@ async function runOwnTest(){
   const p=pEl.value.trim();
   if(p.split(/\s+/).filter(Boolean).length<12){alert('Prompti on liian lyhyt. Kirjoita vähintään 40 sanaa.');return;}
   btn.disabled=true;ab.style.display='block';ld(at);
-  const t=await ai('Vastaa pyyntöön ammattimaisesti. Suomeksi.',p,800);
+  const t=await ai('Vastaa pyyntöön ammattimaisesti.',p,800);
   at.textContent=t;state['h5']={p,r:t};
   ab.scrollIntoView({behavior:'smooth',block:'nearest'});
   const el=document.getElementById('ownGrade');
@@ -1305,6 +1344,29 @@ async function runOwnTest(){
   const g=await ai('Arvioi prompti: 1) Mitkä viisi elementtiä (rooli, konteksti, kohdeyleisö, formaatti, rajoitteet) löydät — merkitse ✓ tai ✗ jokaiseen, 2) Mikä on parasta, 3) Yksi konkreettinen parannusehdotus. Max 150 sanaa. Suomeksi. Ole rohkaiseva.',p,400);
   el.textContent=g;
   btn.disabled=false;
+  document.getElementById('ownDiagBox').style.display='block';
+  document.getElementById('ownDiagBox').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function runOwnRetest(){
+  const p2=document.getElementById('h5p2').value.trim();
+  if(!p2||p2.split(/\s+/).filter(Boolean).length<12){alert('Kopioi promptisi ja lisää konkreettinen yksityiskohta.');return;}
+  const btn2=document.getElementById('h5btn2');
+  const ab2=document.getElementById('h5ab2');
+  const at2=document.getElementById('h5at2');
+  btn2.disabled=true;ab2.style.display='block';ld(at2);
+  const t2=await ai('Vastaa pyyntöön ammattimaisesti.',p2,800);
+  at2.textContent=t2;state['h5v2']={p:p2,r:t2};
+  const cmpBox=document.getElementById('ownCompareBox');
+  cmpBox.style.display='block';
+  document.getElementById('ownCmp1').textContent=state['h5']?.r||'—';
+  document.getElementById('ownCmp2').textContent=t2;
+  const fEl=document.getElementById('ownFinalAI');
+  fEl.style.display='block';ld(fEl);
+  const analysis=await ai('Olet prompting-opettaja. Opiskelija kirjoitti saman promptin kahdesti — toisella kerralla lisäsi yhden konkreettisen yksityiskohdan. Vertaa tuloksia: 1) Mikä konkreettisesti muuttui (1 lause), 2) Muuttuiko teksti uskottavammaksi — miksi (1 lause), 3) Mitä tämä opettaa promptaamisesta (1 lause). Max 80 sanaa. Suomeksi. Rohkaiseva.',`Versio 1: ${state['h5']?.r||''}\nVersio 2: ${t2}`,300);
+  fEl.textContent=analysis;
+  document.getElementById('ownLesson').style.display='block';
+  btn2.disabled=false;
+  document.getElementById('ownLesson').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 /* ITERATION (H4) — Diagnostic approach */
