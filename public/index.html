@@ -1644,11 +1644,6 @@
       'moduuli-ai-verkkosivustotyokalut'
     ]);
 
-    /** Videokuvaus-demo: vain nämä session-lukitut moduulit ovat klikattavia (muut näkyvät 🔒). */
-    const kuopioDemoOpenModuleIds = new Set([
-      'moduuli-visibility-growth-automation'
-    ]);
-
     /** Videokuvaus-demo: vain nämä kortit näkyvät etusivulla (ei hallusinaatioita, ulkoisia, loppuosiota, DAY 2–4). */
     const kuopioDemoVisibleModuleIds = new Set([
       'moduuli1-tietosuoja',
@@ -1731,10 +1726,10 @@
       return module && module.part === 3;
     }
 
-    /** Session-lukko: admin aina; demo vain allowlist (Base44), muut bridge/alat 🔒. */
+    /** Session-lukko: admin ja demo aina; muut oppilaat vain jos moduuli ei ole päivän lukossa. */
     function canOpenSessionLockedModule(module) {
       if (isAdminUser()) return true;
-      if (isKuopioDemoStudent()) return kuopioDemoOpenModuleIds.has(module.id);
+      if (isKuopioDemoStudent()) return kuopioDemoVisibleModuleIds.has(module.id);
       return false;
     }
     
