@@ -206,23 +206,33 @@ async function sendAIChatMessage() {
   const loadingMsg = addAIChatMessage('ai', 'Ajatellaan...');
   
   try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 500,
-        system: 'Olet auttava tekoälyassistentti, joka auttaa käyttäjiä oppimaan tekoälystä ja sen käytöstä työnhaussa. Vastaa suomeksi, ystävällisesti ja käytännönläheisesti. Pidä vastaukset tiiviinä mutta informatiivisina.',
-        messages: [
-          ...aiChatHistory,
-          { role: 'user', content: message }
-        ]
-      })
-    });
-    
-    const data = await res.json();
-    const responseText = data.text || 'Anteeksi, en pystynyt vastaamaan. Yritä uudelleen.';
+    const systemPrompt = 'Olet auttava tekoälyassistentti, joka auttaa käyttäjiä oppimaan tekoälystä ja sen käytöstä työnhaussa. Vastaa suomeksi, ystävällisesti ja käytännönläheisesti. Pidä vastaukset tiiviinä mutta informatiivisina.';
+    let responseText;
+    if (window.MODULE_USE_CLAUDE && window.aiClaude) {
+      const historyBlock = aiChatHistory.length
+        ? 'Aiemmat viestit:\n' + aiChatHistory.map(function(m) {
+            return (m.role === 'user' ? 'Käyttäjä' : 'Assistentti') + ': ' + m.content;
+          }).join('\n') + '\n\n'
+        : '';
+      responseText = await window.aiClaude(systemPrompt, historyBlock + 'Kysymys: ' + message, 500);
+    } else {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          max_tokens: 500,
+          system: systemPrompt,
+          messages: [
+            ...aiChatHistory,
+            { role: 'user', content: message }
+          ]
+        })
+      });
+      const data = await res.json();
+      responseText = data.text || 'Anteeksi, en pystynyt vastaamaan. Yritä uudelleen.';
+    }
     
     // Remove loading message
     loadingMsg.remove();

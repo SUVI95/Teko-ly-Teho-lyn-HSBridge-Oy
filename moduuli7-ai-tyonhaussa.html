@@ -1723,7 +1723,7 @@ async function sendChat(){
   try{
     var ctx = chatHistory.map(function(m){return (m.role==='user'?'Käyttäjä':'Valmentaja')+': '+m.content;}).join('\n\n');
     var d = chatCount<5?'\n\nTämä on vastaus '+chatCount+'/5. Kaiva syvemmälle — kysy lukuja, vastuualueita, saavutuksia.':'\n\nVoit siirtyä seuraavaan vaiheeseen tai jatkaa syventämistä.';
-    var reply = await window.aiChat('Olet kokenut uravalmentaja. Kysy YKSI selkeä tarkentava kysymys. Älä anna CV-vinkkejä vielä. Kysy konkreettisia tarkennuksia: montako, opetitkö, millaisia tuloksia, millaista vastuuta? Vastaa suomeksi, lyhyesti ja kannustavasti.', ctx+d, 350);
+    var reply = await window.aiClaude('Olet kokenut uravalmentaja. Kysy YKSI selkeä tarkentava kysymys. Älä anna CV-vinkkejä vielä. Kysy konkreettisia tarkennuksia: montako, opetitkö, millaisia tuloksia, millaista vastuuta? Vastaa suomeksi, lyhyesti ja kannustavasti.', ctx+d, 350);
     addMsg(reply,false); chatHistory.push({role:'assistant',content:reply});
     try{localStorage.setItem('cv_chat_history',JSON.stringify(chatHistory));}catch(e){}
   }catch(e){addMsg('Yhteysvirhe — yritä uudelleen.',false);}
@@ -1791,7 +1791,7 @@ async function discoverHiddenStrengths(){
   var result=document.getElementById('hiddenResult');var txt=document.getElementById('hiddenText');
   txt.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';result.style.display='block';
   try{
-    var a=await window.aiChat('Analysoi vastaukset ja tunnista piilotetut taidot. 1) PIILOTETUT VAHVUUDET — taidot joita käyttäjä ei tunnista (esim. järjestää aina juhlat = tapahtumien koordinointi). 2) SIIRRETTÄVÄT TAIDOT — taidot muusta elämästä työelämään. 3) EROTTAVAT TEKIJÄT. Käännä jokainen asia CV-kielelle. Vastaa suomeksi.',
+    var a=await window.aiClaude('Analysoi vastaukset ja tunnista piilotetut taidot. 1) PIILOTETUT VAHVUUDET — taidot joita käyttäjä ei tunnista (esim. järjestää aina juhlat = tapahtumien koordinointi). 2) SIIRRETTÄVÄT TAIDOT — taidot muusta elämästä työelämään. 3) EROTTAVAT TEKIJÄT. Käännä jokainen asia CV-kielelle. Vastaa suomeksi.',
       'Apupyynnöt: '+(q1||'—')+'\nHelppoa: '+(q2||'—')+'\nHarrastukset/vapaaehtoistöistä: '+(q3||'—')+'\nTavoiterooli: '+(cvData.targetRole||''),800);
     txt.textContent=a; saveCvField('hiddenStrengths',a);
   }catch(e){txt.textContent='Yhteysvirhe.';}
@@ -1801,7 +1801,7 @@ async function analyzeGaps(){
   var result=document.getElementById('gapResult');var txt=document.getElementById('gapText');
   txt.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';result.style.display='block';
   try{
-    var g=await window.aiChat('Vertaa taitoja ja tavoiteroolia. Anna: 1) VAHVUUDET suhteessa rooliin 2) KEHITYSKOHTEET 3) NOPEAT VOITOT (1-2 viikossa opittavaa, ilmaisia kursseja) 4) MITEN SANOITTAA CV:SSÄ positiivisesti. Ole rehellinen mutta kannustava. Suomeksi.',
+    var g=await window.aiClaude('Vertaa taitoja ja tavoiteroolia. Anna: 1) VAHVUUDET suhteessa rooliin 2) KEHITYSKOHTEET 3) NOPEAT VOITOT (1-2 viikossa opittavaa, ilmaisia kursseja) 4) MITEN SANOITTAA CV:SSÄ positiivisesti. Ole rehellinen mutta kannustava. Suomeksi.',
       'Tavoiterooli: '+(cvData.targetRole||'')+'\nTaidot:\n'+(cvData.skills||'')+'\nHistoria:\n'+(cvData.careerSummary||''),950);
     txt.textContent=g; saveCvField('gapAnalysis',g);
   }catch(e){txt.textContent='Yhteysvirhe.';}
@@ -1815,7 +1815,7 @@ async function evaluateCV(){
   var result=document.getElementById('recruiterResult');var txt=document.getElementById('recruiterText');
   txt.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';result.style.display='block';
   try{
-    var f=await window.aiChat('Käyttäjä arvioi esimerkkiCV:tä. Palaute: 1) Mitä huomasi oikein 2) Mitä ei huomannut 3) Tärkeimmät opit. CV:n ongelmat: ei tavoiteroolia, passiiviset kuvaukset, ei numeroita, geneeriset taidot, turha harrastukset-osio. Vastaa suomeksi, kannustavasti.',
+    var f=await window.aiClaude('Käyttäjä arvioi esimerkkiCV:tä. Palaute: 1) Mitä huomasi oikein 2) Mitä ei huomannut 3) Tärkeimmät opit. CV:n ongelmat: ei tavoiteroolia, passiiviset kuvaukset, ei numeroita, geneeriset taidot, turha harrastukset-osio. Vastaa suomeksi, kannustavasti.',
       'Käyttäjän arvio: "'+e+'"',550);
     txt.textContent=f;
   }catch(e){txt.textContent='Yhteysvirhe.';}
@@ -1826,7 +1826,7 @@ async function evaluateOldCV(){
   var result=document.getElementById('oldCvResult');var txt=document.getElementById('oldCvText');
   txt.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';result.style.display='block';
   try{
-    var r=await window.aiChat('Arvioi tämä CV rekrytoijan silmin. 1) Ensivaikutelma 2) Vahvuudet 3) Heikkoudet 4) ATS-ongelmat 5) TOP 3 muutosta. Ole rehellinen. Suomeksi.',
+    var r=await window.aiClaude('Arvioi tämä CV rekrytoijan silmin. 1) Ensivaikutelma 2) Vahvuudet 3) Heikkoudet 4) ATS-ongelmat 5) TOP 3 muutosta. Ole rehellinen. Suomeksi.',
       'CV:\n'+cv,750);
     txt.textContent=r;
   }catch(e){txt.textContent='Yhteysvirhe.';}
@@ -1859,7 +1859,7 @@ async function analyzeJob(n){
   txt.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';result.style.display='block';
   var mySkills=(cvData.skills||'')+'\n'+(cvData.extraSkills||'');
   try{
-    var a=await window.aiChat('Analysoi ilmoitus: 1) PAKOLLISET VAATIMUKSET 2) ATS-AVAINSANAT 3) VERTAILU (✅ osaa ❌ puuttuu 💡 korostettava) 4) POSITIOINTI — miten hakijan kannattaa myydä itsensä. Konkreettisesti, suomeksi.',
+    var a=await window.aiClaude('Analysoi ilmoitus: 1) PAKOLLISET VAATIMUKSET 2) ATS-AVAINSANAT 3) VERTAILU (✅ osaa ❌ puuttuu 💡 korostettava) 4) POSITIOINTI — miten hakijan kannattaa myydä itsensä. Konkreettisesti, suomeksi.',
       'YRITYS: '+(j.company||'')+'\nTEHTÄVÄ: '+(j.title||'')+'\nILMOITUS:\n'+j.posting+'\nHAKIJAN TAIDOT:\n'+mySkills+'\nHISTORIA:\n'+(cvData.careerSummary||''),1100);
     txt.textContent=a; saveJobField(n,'analyzed',true); saveJobField(n,'analysis',a);
     if(n===1){saveCvField('jobPosting',j.posting);saveCvField('keywordAnalysis',a);}
@@ -2006,7 +2006,7 @@ async function startCVFeedback(){
   var panel2=document.getElementById('iterPanel2');panel2.style.display='block';panel2.scrollIntoView({behavior:'smooth',block:'start'});
   var txt=document.getElementById('cvFeedbackText');
   try{
-    var f=await window.aiChat('Olet rekrytoija. Anna ARMOTTOMAN REHELLINEN arvio. 1) ENSIVAIKUTELMA 2) ATS-ONGELMAT 3) KRITIIKKI (geneeriset ilmaisut, puuttuvat numerot, huono rakenne) 4) VAHVUUDET 5) TOP 3 PARANNUSTA. Vastaa suomeksi.',
+    var f=await window.aiClaude('Olet rekrytoija. Anna ARMOTTOMAN REHELLINEN arvio. 1) ENSIVAIKUTELMA 2) ATS-ONGELMAT 3) KRITIIKKI (geneeriset ilmaisut, puuttuvat numerot, huono rakenne) 4) VAHVUUDET 5) TOP 3 PARANNUSTA. Vastaa suomeksi.',
       'CV:\n'+cv+(cvData.jobPosting?'\nHaettava tehtävä:\n'+cvData.jobPosting:''),1000);
     txt.textContent=f; saveCvField('cvFeedback',f);
     setIterStep(2);
@@ -2023,7 +2023,7 @@ async function improveCVDraft(){
   var result=document.getElementById('cvImprovedResult');var txt=document.getElementById('cvImprovedText');
   txt.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';result.style.display='block';
   try{
-    var improved=await window.aiChat('Paranna tätä CV:tä seuraavan ohjeen mukaan. Säilytä kaikki muu. Tee VAIN pyydetty muutos.\nMUUTOS: '+note,
+    var improved=await window.aiClaude('Paranna tätä CV:tä seuraavan ohjeen mukaan. Säilytä kaikki muu. Tee VAIN pyydetty muutos.\nMUUTOS: '+note,
       'ALKUPERÄINEN CV:\n'+cv,1800);
     txt.textContent=improved; saveCvField('cvImproved',improved);
     setIterStep(3);
@@ -2052,7 +2052,7 @@ async function generateCoverLetter(){
   var result=document.getElementById('coverLetterResult');var txt=document.getElementById('coverLetterText');
   txt.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';result.style.display='block';
   try{
-    var l=await window.aiChat('Kirjoita ammattimainen saatekirje suomeksi. Aloita vahvasti miksi juuri tämä tehtävä. Yhdistä kokemus vaatimuksiin konkreettisesti. Lopeta toimintakehotuksella. Max 250 sanaa. Ei kliseitä.',
+    var l=await window.aiClaude('Kirjoita ammattimainen saatekirje suomeksi. Aloita vahvasti miksi juuri tämä tehtävä. Yhdistä kokemus vaatimuksiin konkreettisesti. Lopeta toimintakehotuksella. Max 250 sanaa. Ei kliseitä.',
       'HAKIJA:\nNimi: '+(cvData.name||'[TÄYDENNÄ]')+'\nHistoria: '+(cvData.careerSummary||'')+'\nTaidot: '+(cvData.skills||'')+'\n\nYRITYS: '+(j.company||'')+'\nTEHTÄVÄ: '+(j.title||'')+'\nILMOITUS:\n'+j.posting+(extra?'\n\nLISÄTIETO:\n'+extra:''),1100);
     txt.textContent=l;
   }catch(e){txt.textContent='Yhteysvirhe.';}
@@ -2358,10 +2358,14 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- External scripts (same as original) -->
 <script src="/js/ai-helper.js"></script>
+<script>if (window.aiClaude) window.aiChat = window.aiClaude;</script>
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
 <script>
-fetch('/ai-chat-widget.html').then(function(r){return r.text();}).then(function(h){document.body.insertAdjacentHTML('beforeend',h);}).catch(function(){});
+fetch('/ai-chat-widget.html').then(function(r){return r.text();}).then(function(h){
+  document.body.insertAdjacentHTML('beforeend', h);
+  window.MODULE_USE_CLAUDE = true;
+}).catch(function(){});
 </script>
 
 </body>
