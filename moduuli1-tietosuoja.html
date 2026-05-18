@@ -1942,35 +1942,34 @@ h2.section-h2 strong {
       </div>
     </div>
 
-    <!-- EXERCISE 3: TIETOSUOJA-OIKEUDENKÄYNTI -->
+    <!-- EXERCISE 3: MITÄ TEKISIT? (Quiz) -->
     <div class="trial-wrap">
       <div class="trial-header">
-        <div class="trial-header-icon">⚖️</div>
+        <div class="trial-header-icon">🤔</div>
         <div>
           <h3>Harjoitus 3: Mitä tekisit?</h3>
-          <p>Pohdi arkista tietosuojatilannetta yhdessä AI:n kanssa</p>
+          <p>Valitse paras tapa toimia jokaisessa tilanteessa</p>
         </div>
       </div>
       <div class="trial-body">
-        <div class="trial-case" id="trialCase">
-          <div class="trial-case-label">Tilanne</div>
-          <h4 id="trialCaseTitle">Ladataan tapausta...</h4>
-          <p id="trialCaseDesc">Hetki...</p>
+        <div id="quizProgress" style="display:flex;gap:6px;margin-bottom:1.25rem;"></div>
+        <div class="trial-case" id="quizCase">
+          <div class="trial-case-label" id="quizLabel">Tilanne 1 / 4</div>
+          <h4 id="quizTitle">Ladataan...</h4>
+          <p id="quizDesc"></p>
         </div>
-        <p style="font-size:0.88rem; color:var(--muted); margin-bottom:1rem;"><strong>Tehtäväsi:</strong> Kerro mitä tekisit tässä tilanteessa ja miksi. AI kyselee lisää ja lopuksi saat palautteen.</p>
-        <div class="trial-round-label" id="trialRoundLabel">Kierros 1 / 3</div>
-        <div class="trial-chat" id="trialChat"></div>
-        <div class="trial-input-area" id="trialInputArea">
-          <textarea id="trialInput" placeholder="Kerro mitä tekisit ja miksi..."></textarea>
-          <button class="trial-submit" id="trialSubmitBtn" onclick="submitTrialArgument()">💬 Lähetä vastauksesi</button>
+        <div id="quizOptions" style="display:flex;flex-direction:column;gap:0.75rem;margin-top:1.25rem;"></div>
+        <div id="quizFeedback" style="display:none;margin-top:1.25rem;padding:1.25rem;border-radius:10px;font-size:0.9rem;line-height:1.7;"></div>
+        <div id="quizNextWrap" style="display:none;margin-top:1rem;">
+          <button class="trial-submit" onclick="nextQuizQuestion()">Seuraava tilanne →</button>
         </div>
-        <div class="trial-ruling" id="trialRuling">
-          <h4>Arvio</h4>
-          <div class="verdict" id="trialVerdict"></div>
-          <p id="trialRulingText"></p>
-          <div class="teams-share" style="margin-top:1.25rem; background:rgba(255,255,255,0.06); border-color:rgba(255,255,255,0.12);">
-            <p style="color:rgba(255,255,255,0.5);">💬 <strong style="color:rgba(255,255,255,0.7);">Tiimikeskustelu:</strong> Mikä oli yllättävintä?</p>
-            <button class="copy-btn" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.6);" onclick="copyTrialResult()">Kopioi tulos</button>
+        <div id="quizScore" style="display:none;text-align:center;padding:2rem;">
+          <div style="width:100px;height:100px;border-radius:50%;border:4px solid var(--accent3);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-family:'DM Serif Display',serif;font-size:2rem;color:var(--accent3);" id="quizScoreCircle">–</div>
+          <h3 style="font-family:'DM Serif Display',serif;font-size:1.3rem;margin-bottom:0.5rem;" id="quizScoreTitle"></h3>
+          <p style="color:var(--muted);font-size:0.9rem;" id="quizScoreMsg"></p>
+          <div class="teams-share" style="margin-top:1.25rem;text-align:left;">
+            <p>💬 <strong>Tiimikeskustelu:</strong> Mikä tilanne oli vaikein?</p>
+            <button class="copy-btn" onclick="copyQuizScore()">Kopioi tulos</button>
           </div>
         </div>
       </div>
@@ -2799,156 +2798,163 @@ Ole ROHKAISEVA. Jos opiskelija poisti arkaluonteiset tiedot ja säilytti ammatil
 initAnon();
 
 // ══════════════════════════════════════════════════════════════
-// EXERCISE 3: TIETOSUOJA-OIKEUDENKÄYNTI (Privacy Trial)
+// EXERCISE 3: MITÄ TEKISIT? (Multiple Choice Quiz)
 // ══════════════════════════════════════════════════════════════
-const trialCases = [
+const quizQuestions = [
   {
-    title: 'Työnhakija ja työsopimus',
-    desc: 'Sait uuden työtarjouksen ja liitit koko työsopimuksen ChatGPT:hen kysyttäväksi "onko tämä normaali sopimus?". Sopimuksessa näkyi nimesi, palkkasi, työnantajan nimi ja salassapitoehdot. Oliko tämä ok vai pitikö toimia toisin?'
+    title: 'Työsopimuksen tarkistus',
+    desc: 'Sait uuden työtarjouksen ja haluat tarkistaa onko sopimus normaali. Mitä teet?',
+    options: [
+      { text: 'Liitän koko sopimuksen ChatGPT:hen sellaisenaan', correct: false, feedback: 'Sopimuksessa on nimesi, palkkasi ja salassapitoehdot — nämä ovat arkaluonteisia. Älä liitä sopimusta sellaisenaan.' },
+      { text: 'Kysyn yleisesti: "Mitä tarkoittaa kilpailukielto työsopimuksessa?"', correct: true, feedback: 'Juuri näin! Yleinen kysymys on turvallinen ja saat saman hyödyn. Voit myös kysyä "onko 3kk koeaika normaali?" ilman henkilötietoja.' },
+      { text: 'En käytä AI:ta ollenkaan sopimusasioissa', correct: false, feedback: 'AI on oikeasti hyödyllinen sopimusasioissa — kunhan kysyt yleisellä tasolla. Ei tarvitse välttää kokonaan!' }
+    ]
   },
   {
-    title: 'Kaveri pyytää apua Kela-hakemukseen',
-    desc: 'Kaverisi pyytää sinua auttamaan Kela-hakemuksen kanssa. Hän ehdottaa: "Liitetään koko hakemus ChatGPT:hen, niin se tarkistaa onko kaikki oikein." Hakemuksessa on kaverin henkilötunnus, osoite, tulotiedot ja terveystietoja. Mitä neuvot kaverillesi?'
+    title: 'Kaverin Kela-hakemus',
+    desc: 'Kaverisi pyytää: "Liitetään koko Kela-hakemus ChatGPT:hen, niin se tarkistaa onko kaikki oikein." Hakemuksessa on henkilötunnus, osoite ja terveystietoja. Mitä neuvot?',
+    options: [
+      { text: 'Hyvä idea — AI tarkistaa virheet nopeasti', correct: false, feedback: 'Hetu, osoite ja terveystiedot ovat juuri niitä 4 asiaa jotka pidetään itsellä. Kela-hakemusta ei saa liittää sellaisenaan.' },
+      { text: 'Poistetaan ensin hetu, osoite ja terveystiedot — sitten voidaan kysyä yleisesti', correct: true, feedback: 'Oikein! Voitte kysyä esim. "Mitä liitteitä Kela-hakemukseen tarvitaan?" tai "Miten täytän kohdan X?" ilman henkilötietoja.' },
+      { text: 'Ei kannata käyttää AI:ta Kela-asioissa ollenkaan', correct: false, feedback: 'AI voi auttaa Kela-asioissa — kunhan kysyt yleisellä tasolla. Esim. "Mitä tukia voi hakea työttömänä?" on täysin turvallista.' }
+    ]
   },
   {
-    title: 'LinkedIn-profiilin päivitys AI:lla',
-    desc: 'Haluat päivittää LinkedIn-profiilisi. Kirjoitat ChatGPT:lle: "Olen Matti, 35v, työskentelen Firma Oy:ssä myyntipäällikkönä. Palkkani on 4500€/kk. Kirjoita minulle parempi LinkedIn-esittely." Onko tässä ongelmaa vai onko kaikki ok?'
+    title: 'CV:n parantaminen',
+    desc: 'Haluat parantaa CV:täsi AI:lla. Mitä teet?',
+    options: [
+      { text: 'Kirjoitan: "Olen tradenomi, 6v kokemusta asiakaspalvelusta, osaan Excelin. Paranna CV-tekstini."', correct: true, feedback: 'Täydellinen! Ammattinimike, kokemus, osaaminen ja tavoitteet ovat turvallista tietoa — juuri tätä AI tarvitsee auttaakseen sinua.' },
+      { text: 'Liitän koko CV:ni kaikkine yhteystietoineen', correct: false, feedback: 'CV:ssä on usein kotiosoite, puhelin ja syntymäaika — nämä kannattaa jättää pois. Kerro sen sijaan osaamisesi omin sanoin.' },
+      { text: 'En uskalla käyttää AI:ta CV:n kanssa', correct: false, feedback: 'Ei huolta! CV:n parantaminen on juuri sitä mihin AI on parhaimmillaan. Kerro vain osaamisesi ja kokemuksesi — se riittää.' }
+    ]
+  },
+  {
+    title: 'LinkedIn-profiilin päivitys',
+    desc: 'Kirjoitat ChatGPT:lle: "Olen Matti, 35v, työskentelen Firma Oy:ssä. Palkkani on 4500€/kk. Kirjoita parempi LinkedIn-esittely." Onko tässä ongelmaa?',
+    options: [
+      { text: 'Kaikki ok — nimi ja työpaikka ovat julkista tietoa', correct: false, feedback: 'Nimi ja työpaikka ovat ok (ne näkyvät LinkedInissä), mutta tarkka palkka on arkaluonteinen tieto. Jätä se pois.' },
+      { text: 'Palkka pitää jättää pois, muu on ok', correct: true, feedback: 'Oikein! Nimi, ikä, ammatti ja työnantaja ovat julkista tietoa — ne näkyvät LinkedInissä. Mutta tarkka palkka on yksityisasia.' },
+      { text: 'Kaikki henkilötiedot pitää poistaa', correct: false, feedback: 'Ei tarvitse niin varovainen olla! Nimi, ammatti ja työnantaja ovat julkista LinkedIn-tietoa. Ainoastaan palkka kannattaa jättää pois.' }
+    ]
   }
 ];
 
-let trialRound = 0;
-const trialMaxRounds = 3;
-let trialConversation = [];
-let trialCaseIdx = Math.floor(Math.random() * trialCases.length);
-let trialResultText = '';
+let quizCurrent = 0;
+let quizCorrect = 0;
+let quizAnswered = false;
 
-function initTrial() {
-  const c = trialCases[trialCaseIdx];
-  document.getElementById('trialCaseTitle').textContent = c.title;
-  document.getElementById('trialCaseDesc').textContent = c.desc;
-  document.getElementById('trialRoundLabel').textContent = 'Kierros 1 / 3';
-  trialConversation = [];
-  trialRound = 0;
+function initQuiz() {
+  const progress = document.getElementById('quizProgress');
+  if (!progress) return;
+  progress.innerHTML = quizQuestions.map((_, i) =>
+    `<div class="roleplay-pip${i === 0 ? ' current' : ''}" style="flex:1;height:4px;border-radius:2px;background:${i === 0 ? 'var(--accent)' : 'var(--warm)'};transition:background 0.3s;"></div>`
+  ).join('');
+  loadQuizQuestion(0);
 }
 
-async function submitTrialArgument() {
-  const input = document.getElementById('trialInput').value.trim();
-  if (!input || input.length < 15) { alert('Kirjoita vähintään lyhyt perustelu.'); return; }
-  const btn = document.getElementById('trialSubmitBtn');
-  const chat = document.getElementById('trialChat');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> Vastapuoli pohtii...';
+function loadQuizQuestion(idx) {
+  if (idx >= quizQuestions.length) { showQuizScore(); return; }
+  const q = quizQuestions[idx];
+  document.getElementById('quizLabel').textContent = `Tilanne ${idx + 1} / ${quizQuestions.length}`;
+  document.getElementById('quizTitle').textContent = q.title;
+  document.getElementById('quizDesc').textContent = q.desc;
+  document.getElementById('quizFeedback').style.display = 'none';
+  document.getElementById('quizNextWrap').style.display = 'none';
+  quizAnswered = false;
 
-  const userMsg = document.createElement('div');
-  userMsg.className = 'trial-msg user';
-  userMsg.textContent = input;
-  chat.appendChild(userMsg);
-  document.getElementById('trialInput').value = '';
+  const optWrap = document.getElementById('quizOptions');
+  optWrap.innerHTML = q.options.map((opt, i) =>
+    `<button class="mis-card" style="text-align:left;font-size:0.92rem;padding:1rem 1.25rem;cursor:pointer;" onclick="pickQuizOption(${idx},${i})" id="qopt${i}">${opt.text}</button>`
+  ).join('');
+}
 
-  trialConversation.push({ role: 'user', content: input });
-  trialRound++;
+function pickQuizOption(qIdx, optIdx) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = quizQuestions[qIdx];
+  const opt = q.options[optIdx];
 
-  const tCase = trialCases[trialCaseIdx];
-  const isLastRound = trialRound >= trialMaxRounds;
-
-  const systemPrompt = isLastRound
-    ? `Olet tietosuojakouluttaja. Tilanne: "${tCase.title}: ${tCase.desc}". 
-Tämä on viimeinen kierros. Anna lyhyt kommentti (1-2 lausetta), sitten anna ARVIO.
-Vastaa JSON: {"counter": "lyhyt kommentti", "ruling": "OIKEIN TOIMITTU|VÄÄRIN TOIMITTU|OSITTAIN OIKEIN", "reasoning": "selkeä yhteenveto 2-3 lauseella: mitä olisi pitänyt tehdä toisin ja miksi", "gdpr_articles": "käytännön vinkki"}
-Ole rohkaiseva ja käytännönläheinen. Selitä yksinkertaisesti, ei lakikieltä. Tämä on työnhakijoille suunnattu kurssi.`
-    : `Olet tietosuojakouluttaja joka auttaa opiskelijaa pohtimaan tilannetta. Tilanne: "${tCase.title}: ${tCase.desc}".
-Kysy tarkentava kysymys tai esitä vastanäkökulma 1-2 lauseella. Ole ystävällinen ja rohkaiseva. Älä käytä lakikieltä — puhu arkikielellä kuten opettaisit kaveria. Vastaa suomeksi.`;
-
-  try {
-    const messages = isLastRound
-      ? [...trialConversation]
-      : [{ role: 'user', content: `Opiskelijan argumentti: ${input}` }];
-
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: isLastRound ? 600 : 400,
-        system: systemPrompt,
-        messages: messages
-      })
-    });
-    const data = await res.json();
-    const raw = data.text || '';
-
-    if (isLastRound) {
-      let parsed;
-      try {
-        const s = raw.indexOf('{'), e = raw.lastIndexOf('}');
-        parsed = JSON.parse(raw.slice(s, e + 1));
-      } catch(er) {
-        parsed = { counter: raw, ruling: 'OSITTAIN SYYLLINEN', reasoning: 'Tapaus vaatii lisäselvitystä.', gdpr_articles: '' };
-      }
-
-      if (parsed.counter) {
-        const aiMsg = document.createElement('div');
-        aiMsg.className = 'trial-msg ai';
-        aiMsg.textContent = parsed.counter;
-        chat.appendChild(aiMsg);
-      }
-
-      document.getElementById('trialInputArea').style.display = 'none';
-      const ruling = document.getElementById('trialRuling');
-      ruling.style.display = 'block';
-
-      const verdictStr = (parsed.ruling || '').toUpperCase();
-      const verdictEl = document.getElementById('trialVerdict');
-      if (verdictStr.includes('OIKEIN TOIMITTU')) {
-        verdictEl.textContent = 'OIKEIN TOIMITTU \u2714';
-        verdictEl.className = 'verdict innocent';
-      } else if (verdictStr.includes('OSITTAIN')) {
-        verdictEl.textContent = 'OSITTAIN OIKEIN';
-        verdictEl.className = 'verdict partial';
-      } else {
-        verdictEl.textContent = 'KANNATTAA TOIMIA TOISIN';
-        verdictEl.className = 'verdict guilty';
-      }
-
-      let rulingHtml = parsed.reasoning || '';
-      if (parsed.gdpr_articles) {
-        rulingHtml += `<br><br><strong>Käytännön vinkki:</strong> ${parsed.gdpr_articles}`;
-      }
-      document.getElementById('trialRulingText').innerHTML = rulingHtml;
-
-      trialResultText = `Tietosuojaharjoitus: "${tCase.title}" — Arvio: ${verdictEl.textContent}. ${parsed.reasoning || ''}`;
-      ruling.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    } else {
-      const aiMsg = document.createElement('div');
-      aiMsg.className = 'trial-msg ai';
-      aiMsg.textContent = raw;
-      chat.appendChild(aiMsg);
-      trialConversation.push({ role: 'assistant', content: raw });
-
-      document.getElementById('trialRoundLabel').textContent = `Kierros ${trialRound + 1} / 3`;
+  q.options.forEach((o, i) => {
+    const el = document.getElementById('qopt' + i);
+    if (!el) return;
+    el.style.pointerEvents = 'none';
+    if (i === optIdx && o.correct) {
+      el.style.borderColor = 'var(--accent3)';
+      el.style.background = 'rgba(42,122,75,0.08)';
+    } else if (i === optIdx && !o.correct) {
+      el.style.borderColor = 'var(--accent)';
+      el.style.background = 'rgba(199,91,58,0.06)';
     }
+    if (o.correct && i !== optIdx) {
+      el.style.borderColor = 'var(--accent3)';
+      el.style.background = 'rgba(42,122,75,0.08)';
+    }
+  });
 
-    chat.scrollTop = chat.scrollHeight;
-  } catch(e) {
-    const errMsg = document.createElement('div');
-    errMsg.className = 'trial-msg ai';
-    errMsg.textContent = 'Yhteysvirhe. Yritä uudelleen.';
-    chat.appendChild(errMsg);
+  if (opt.correct) quizCorrect++;
+
+  const fb = document.getElementById('quizFeedback');
+  fb.innerHTML = `<strong>${opt.correct ? '✓ Oikein!' : '→ Ei aivan'}</strong><br>${opt.feedback}`;
+  fb.style.display = 'block';
+  fb.style.background = opt.correct ? 'rgba(42,122,75,0.07)' : 'rgba(199,91,58,0.07)';
+  fb.style.border = opt.correct ? '1px solid rgba(42,122,75,0.2)' : '1px solid rgba(199,91,58,0.2)';
+  fb.style.color = opt.correct ? '#1d5c36' : '#8b3a20';
+
+  const pips = document.querySelectorAll('#quizProgress .roleplay-pip');
+  if (pips[qIdx]) { pips[qIdx].style.background = opt.correct ? 'var(--accent3)' : 'var(--accent)'; }
+
+  if (qIdx + 1 < quizQuestions.length) {
+    document.getElementById('quizNextWrap').style.display = 'block';
+  } else {
+    setTimeout(() => showQuizScore(), 1200);
   }
-
-  btn.disabled = false;
-  btn.innerHTML = isLastRound ? '✓ Oikeudenkäynti päättynyt' : '⚖️ Esitä argumenttisi';
-  if (isLastRound) btn.disabled = true;
 }
 
-function copyTrialResult() {
-  navigator.clipboard.writeText(trialResultText).then(() => {
+function nextQuizQuestion() {
+  quizCurrent++;
+  const pips = document.querySelectorAll('#quizProgress .roleplay-pip');
+  if (pips[quizCurrent]) pips[quizCurrent].style.background = 'var(--accent)';
+  loadQuizQuestion(quizCurrent);
+}
+
+function showQuizScore() {
+  document.getElementById('quizCase').style.display = 'none';
+  document.getElementById('quizOptions').style.display = 'none';
+  document.getElementById('quizFeedback').style.display = 'none';
+  document.getElementById('quizNextWrap').style.display = 'none';
+  document.getElementById('quizProgress').style.display = 'none';
+
+  const total = quizQuestions.length;
+  const scoreEl = document.getElementById('quizScore');
+  scoreEl.style.display = 'block';
+  document.getElementById('quizScoreCircle').textContent = `${quizCorrect}/${total}`;
+
+  let title, msg;
+  if (quizCorrect === total) {
+    title = 'Täydellinen!';
+    msg = 'Osaat erottaa turvalliset ja riskialttiit tilanteet. Olet valmis käyttämään AI:ta!';
+  } else if (quizCorrect >= total - 1) {
+    title = 'Hienosti!';
+    msg = 'Melkein täydet — lue vielä virheellisten kohtien palautteet.';
+  } else {
+    title = quizCorrect + '/' + total + ' oikein';
+    msg = 'Palaa teoriaosuuteen ja kertaa neljä asiaa jotka pidetään itsellä.';
+  }
+  document.getElementById('quizScoreTitle').textContent = title;
+  document.getElementById('quizScoreMsg').textContent = msg;
+  scoreEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+let quizScoreText = '';
+function copyQuizScore() {
+  quizScoreText = `Mitä tekisit? — tulos: ${quizCorrect}/${quizQuestions.length}`;
+  navigator.clipboard.writeText(quizScoreText).then(() => {
     event.target.textContent = '✓ Kopioitu!';
     setTimeout(() => { event.target.textContent = 'Kopioi tulos'; }, 2200);
   });
 }
 
-initTrial();
+initQuiz();
 
 updateProgress();
 </script>
