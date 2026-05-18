@@ -250,3 +250,46 @@ CREATE TABLE IF NOT EXISTS final_module_capstone (
 );
 CREATE INDEX IF NOT EXISTS idx_final_module_capstone_user ON final_module_capstone(user_id);
 CREATE INDEX IF NOT EXISTS idx_final_module_capstone_created ON final_module_capstone(created_at DESC);
+
+-- Student portfolio pages (Elävä CV)
+CREATE TABLE IF NOT EXISTS student_portfolios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    slug VARCHAR(120) NOT NULL,
+    published BOOLEAN DEFAULT FALSE,
+    -- Core data
+    full_name VARCHAR(255) NOT NULL,
+    tagline VARCHAR(300),
+    bio TEXT,
+    city VARCHAR(120),
+    target_role VARCHAR(300),
+    email_public VARCHAR(255),
+    phone_public VARCHAR(60),
+    linkedin_url VARCHAR(500),
+    -- Structured content (JSON)
+    experience JSONB DEFAULT '[]'::jsonb,
+    education JSONB DEFAULT '[]'::jsonb,
+    skills JSONB DEFAULT '[]'::jsonb,
+    achievements JSONB DEFAULT '[]'::jsonb,
+    languages JSONB DEFAULT '[]'::jsonb,
+    certificates JSONB DEFAULT '[]'::jsonb,
+    -- Branding
+    brand_color VARCHAR(10) DEFAULT '#2563a8',
+    brand_accent VARCHAR(10) DEFAULT '#c75b3a',
+    brand_bg VARCHAR(10) DEFAULT '#f5f3ef',
+    template VARCHAR(40) DEFAULT 'modern',
+    -- Photo (stored as bytes for Vercel compatibility)
+    photo_bytes BYTEA,
+    photo_mime VARCHAR(50),
+    -- AI-generated content reference
+    career_summary TEXT,
+    hidden_strengths TEXT,
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT student_portfolios_user_unique UNIQUE(user_id),
+    CONSTRAINT student_portfolios_slug_unique UNIQUE(slug)
+);
+CREATE INDEX IF NOT EXISTS idx_student_portfolios_user ON student_portfolios(user_id);
+CREATE INDEX IF NOT EXISTS idx_student_portfolios_slug ON student_portfolios(slug);
+CREATE INDEX IF NOT EXISTS idx_student_portfolios_published ON student_portfolios(published);

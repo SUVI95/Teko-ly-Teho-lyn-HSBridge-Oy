@@ -28,6 +28,7 @@ const gdprRoutes = require('./routes/gdpr');
 const { router: finalModuleRoutes } = require('./routes/final');
 const { router: courtRoutes } = require('./routes/tuomioistuin');
 const { router: toolBuilderRoutes } = require('./routes/tyokalurakentaja');
+const { router: portfolioRoutes } = require('./routes/portfolio');
 const { authenticateToken, authenticatePage } = require('./middleware/auth');
 
 const app = express();
@@ -62,6 +63,7 @@ app.use('/api/gdpr', gdprRoutes);
 app.use('/api/final', finalModuleRoutes);
 app.use('/api/tuomioistuin', courtRoutes);
 app.use('/api/tyokalurakentaja', toolBuilderRoutes);
+app.use('/api/portfolio', portfolioRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -298,6 +300,16 @@ app.get('/ai-simulation-lab', (req, res) => {
   const p = candidates.find(c => fs.existsSync(c));
   if (p) return res.sendFile(p);
   res.redirect(302, '/ai-simulation-lab.html');
+});
+
+// Public portfolio page — duunijobs.fi/portfolio/slug
+app.get('/portfolio/:slug', (req, res) => {
+  const templatePath = path.join(__dirname, 'public', 'portfolio-template.html');
+  if (!fs.existsSync(templatePath)) {
+    return res.status(404).send('Portfolio-sivua ei löydy.');
+  }
+  res.set('Cache-Control', 'public, max-age=60');
+  res.sendFile(templatePath);
 });
 
 app.get('/module/:moduleId', async (req, res) => {
