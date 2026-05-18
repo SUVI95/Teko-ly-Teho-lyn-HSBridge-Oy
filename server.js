@@ -318,6 +318,9 @@ app.get('/portfolio/:slug', async (req, res) => {
   }
 });
 
+/** Modules hidden from students; only admins may open (see adminOnlyModuleIds in public/index.html). */
+const ADMIN_ONLY_MODULE_IDS = new Set(['moduuli-ai-verkkosivustotyokalut']);
+
 app.get('/module/:moduleId', async (req, res) => {
   const moduleId = req.params.moduleId;
   const token = req.cookies && req.cookies.session_token;
@@ -333,6 +336,9 @@ app.get('/module/:moduleId', async (req, res) => {
         const u = sessionResult.rows[0];
         const isAdmin = u.is_admin === true;
         const approved = u.is_approved === true;
+        if (ADMIN_ONLY_MODULE_IDS.has(moduleId) && !isAdmin) {
+          return res.redirect(302, '/');
+        }
         if (!isAdmin && approved) {
           await onboardingRoutes.ensureUserOnboardingTable();
           const ob = await pool.query('SELECT id FROM user_onboarding WHERE user_id = $1', [u.id]);

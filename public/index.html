@@ -1070,7 +1070,8 @@
             icon: 'sparkles',
             order: 8,
             part: 2,
-            day: 'bridge'
+            day: 'bridge',
+            adminOnly: true
           },
           {
             id: 'moduuli-visibility-growth-automation',
@@ -1476,11 +1477,13 @@
         const palauteModule = modules.find(m => m.id === 'palaute') || null;
         const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti', 'tuomioistuin', 'tyokalurakentaja', 'palaute']);
 
-        // Piilota lukitut moduulit opiskelijoilta kokonaan; admin näkee ne edelleen.
-        // Näin etusivu pysyy siistinä: kun moduuli avataan, poista id temporarilyLockedModuleIds-listasta.
+        // Piilota lukitut / admin-only -moduulit opiskelijoilta kokonaan; admin näkee ne edelleen.
+        // Kun moduuli avataan opiskelijoille, poista id temporarilyLockedModuleIds-listasta.
         const viewerIsAdmin = isAdminUser();
-        const isStudentLockedOut = (m) => !viewerIsAdmin && temporarilyLockedModuleIds.has(m.id);
-        const hideLockedForStudent = (list) => list.filter(m => !isStudentLockedOut(m));
+        const isStudentHidden = (m) => !viewerIsAdmin && (
+          temporarilyLockedModuleIds.has(m.id) || adminOnlyModuleIds.has(m.id) || m.adminOnly === true
+        );
+        const hideLockedForStudent = (list) => list.filter(m => !isStudentHidden(m));
 
         // Group Part 2 modules by day (nämä moduulit piilotetaan täältä — injektoidaan manuaalisesti Alanavaihtajan jälkeen)
         const day1_5Modules = hideLockedForStudent(part2Modules
@@ -1622,12 +1625,16 @@
       }
     }
     
+    /** Piilotettu opiskelijoilta — vain admin voi nähdä ja avata (poista id kun haluat julkaista). */
+    const adminOnlyModuleIds = new Set([
+      'moduuli-ai-verkkosivustotyokalut'
+    ]);
+
     /** Moduulit jotka on piilotettu tältä kurssipäivältä (poista id listalta kun avaat). Admin näkee silti kaiken. */
     const temporarilyLockedModuleIds = new Set([
       // Bridge modules
       'moduuli7-ai-tyonhaussa',
       'moduuli-esitykset-tarjoukset-viestinta',
-      'moduuli-ai-verkkosivustotyokalut',
       'moduuli-visibility-growth-automation',
       'moduuli-perplexity-notebooklm',
       'moduuli-ideasta-tuotteeksi',
@@ -1761,6 +1768,7 @@
       
       const isCompleted = completedModules.has(module.id);
       const isComingSoon = module.comingSoon === true;
+      const isAdminOnlyModule = adminOnlyModuleIds.has(module.id) || module.adminOnly === true;
       /** Kurssipäivän lukko: oppilas ei avaa; admin näkee merkinnän mutta voi avata */
       const sessionLockActive = temporarilyLockedModuleIds.has(module.id);
       const sessionLockBlocksStudent = sessionLockActive && !isAdminUser();
@@ -1775,11 +1783,14 @@
       let lockBadge = '';
       if (isComingSoon) lockBadge = '<div class="locked-badge">🚧 Tulossa pian</div>';
       else if (shouldLockForOnboarding) lockBadge = '<div class="locked-badge">🔒 Suorita ensin aloitusmoduuli</div>';
+      else if (isAdminOnlyModule && isAdminUser()) lockBadge = '<div class="locked-badge" style="background:rgba(107,70,193,.12);color:#6b46c1;border-color:rgba(107,70,193,.25);">👤 Vain admin</div>';
       else if (sessionLockActive) lockBadge = '<div class="locked-badge">🔒 Ei käytössä tänään</div>';
       
       let progressBlock = '';
       if (sessionLockBlocksStudent) {
         progressBlock = '<div class="progress-text">Ei käytössä tänään</div>';
+      } else if (isAdminOnlyModule && isAdminUser()) {
+        progressBlock = '<div class="progress-text">Piilotettu opiskelijoilta · testaus</div>';
       } else if (isComingSoon) {
         progressBlock = '<div class="progress-text">Moduuli on kehityksessä</div>';
       } else if (progress > 0) {
