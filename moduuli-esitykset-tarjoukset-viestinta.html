@@ -1017,17 +1017,20 @@ function copyPromptCode(btn){
 /* ── LOADING DOTS ── */
 var LDOTS='<span class="loading-dots"><span></span><span></span><span></span></span>';
 
-/* ── AI HELPER (calls platform API) ── */
+/* ── AI HELPER (Claude API via ai-helper.js) ── */
 async function aiCall(system,user,maxTokens){
-  if(window.aiChat){return await window.aiChat(system,user,maxTokens||800);}
   if(window.aiClaude){return await window.aiClaude(system,user,maxTokens||800);}
-  var resp=await fetch('/api/ai/chat',{
+  var pathname=window.location.pathname||'';
+  var base=pathname.indexOf('/module/')>0?pathname.substring(0,pathname.indexOf('/module/')):'';
+  var url=(window.location.origin||'')+base+'/api/ai/claude';
+  var resp=await fetch(url,{
     method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens||800,system:system,messages:[{role:'user',content:user}]})
+    body:JSON.stringify({max_tokens:maxTokens||800,system:system,messages:[{role:'user',content:user}]})
   });
-  var data=await resp.json();
-  if(!resp.ok)throw new Error(data.error||'Virhe');
-  return data.text||data.reply||data.content||'';
+  var data={};
+  try{data=await resp.json();}catch(e){}
+  if(!resp.ok)throw new Error(data.error||data.message||'Claude API -virhe');
+  return data.text||data.reply||'';
 }
 
 /* ── PITCH DECK LIVE PREVIEW ── */
@@ -1090,7 +1093,7 @@ async function generatePitchDeck(){
       '\n\nTEHT\ÄV\Ä: Kirjoita täydellinen Gamma-prompt joka luo 8-dian pitch deckin näillä dioilla:\n1) OTSIKKO — nimi + Pitch Deck: [yritys] [tehtävä] + iskevä lause\n2) KUKA OLEN — 3 konkreettista faktaa\n3) MITÄ OLEN TEHNYT — tulokset numeroilla\n4) TUNNEN TEIDÄT — mitä tiedän yrityksestä ja miksi se inspiroi\n5) TEIDÄN HAASTEENNE — miten ymmärrän mitä tarvitsevat\n6) MITÄ TUON TEILLE — arvolupaus ensimmäiset 30 päivää\n7) MIKSI MINÄ — se yksi asia joka tekee minusta oikean valinnan\n8) SEURAAVA ASKEL — yhteystiedot + selkeä toimintakehotus\n\nSÄÄNNÖT: Ei kliseitä. Kaikki perustuu annettuihin tietoihin. Jokainen dia konkreettinen. Diojen sisältö suomeksi.',
       1800);
     txt.textContent=pitchPromptData;
-  }catch(e){txt.textContent='Yhteysvirhe — yritä uudelleen.';}
+  }catch(e){txt.textContent=(e&&e.message)||'Yhteysvirhe — tarkista ANTHROPIC_API_KEY.';}
   btn.disabled=false;btn.textContent='✦ Generoi Pitch Deck -prompt';
 }
 
@@ -1156,7 +1159,7 @@ async function generateBannerDesign(){
       document.getElementById('bannerPreview').style.background=hexes[0];
     }
     updateMockup();
-  }catch(e){txt.textContent='Yhteysvirhe — yritä uudelleen.';}
+  }catch(e){txt.textContent=(e&&e.message)||'Yhteysvirhe — tarkista ANTHROPIC_API_KEY.';}
   btn.disabled=false;btn.textContent='🎨 Suunnittele banneri AI:lla';
 }
 
@@ -1176,7 +1179,7 @@ async function getBannerFeedback(){
       'Bannerin tekijä: '+name+' ('+role+')\nBannerin kuvaus: '+refl,
       600);
     txt.textContent=feedback;
-  }catch(e){txt.textContent='Yhteysvirhe — yritä uudelleen.';}
+  }catch(e){txt.textContent=(e&&e.message)||'Yhteysvirhe — tarkista ANTHROPIC_API_KEY.';}
   btn.disabled=false;btn.textContent='🔍 Pyydä AI:lta palautetta banneristasi';
 }
 
@@ -1227,10 +1230,14 @@ document.addEventListener('DOMContentLoaded',function(){
 </script>
 
 <script src="/js/ai-helper.js"></script>
+<script>if(window.aiClaude)window.aiChat=window.aiClaude;</script>
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
 <script>
-fetch('/ai-chat-widget.html').then(function(r){return r.text();}).then(function(h){document.body.insertAdjacentHTML('beforeend',h);}).catch(function(){});
+fetch('/ai-chat-widget.html').then(function(r){return r.text();}).then(function(h){
+  document.body.insertAdjacentHTML('beforeend',h);
+  window.MODULE_USE_CLAUDE=true;
+}).catch(function(){});
 </script>
 </body>
 </html>
