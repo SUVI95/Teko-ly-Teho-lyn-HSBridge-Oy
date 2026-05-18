@@ -1947,29 +1947,29 @@ h2.section-h2 strong {
       <div class="trial-header">
         <div class="trial-header-icon">⚖️</div>
         <div>
-          <h3>Harjoitus 3: Tietosuoja-oikeudenkäynti</h3>
-          <p>Väittele AI:n kanssa todellisen tietosuojatapauksen ratkaisusta</p>
+          <h3>Harjoitus 3: Mitä tekisit?</h3>
+          <p>Pohdi arkista tietosuojatilannetta yhdessä AI:n kanssa</p>
         </div>
       </div>
       <div class="trial-body">
         <div class="trial-case" id="trialCase">
-          <div class="trial-case-label">Tapaus</div>
+          <div class="trial-case-label">Tilanne</div>
           <h4 id="trialCaseTitle">Ladataan tapausta...</h4>
           <p id="trialCaseDesc">Hetki...</p>
         </div>
-        <p style="font-size:0.88rem; color:var(--muted); margin-bottom:1rem;"><strong>Tehtäväsi:</strong> Esitä kantasi — oliko toiminta oikeutettua vai rikkoiko se tietosuojaa? Perustele. AI esittää vastaväitteitä. Kolmen kierroksen jälkeen saat tuomion.</p>
+        <p style="font-size:0.88rem; color:var(--muted); margin-bottom:1rem;"><strong>Tehtäväsi:</strong> Kerro mitä tekisit tässä tilanteessa ja miksi. AI kyselee lisää ja lopuksi saat palautteen.</p>
         <div class="trial-round-label" id="trialRoundLabel">Kierros 1 / 3</div>
         <div class="trial-chat" id="trialChat"></div>
         <div class="trial-input-area" id="trialInputArea">
-          <textarea id="trialInput" placeholder="Esitä kantasi ja perustelusi..."></textarea>
-          <button class="trial-submit" id="trialSubmitBtn" onclick="submitTrialArgument()">⚖️ Esitä argumenttisi</button>
+          <textarea id="trialInput" placeholder="Kerro mitä tekisit ja miksi..."></textarea>
+          <button class="trial-submit" id="trialSubmitBtn" onclick="submitTrialArgument()">💬 Lähetä vastauksesi</button>
         </div>
         <div class="trial-ruling" id="trialRuling">
-          <h4>Tuomio</h4>
+          <h4>Arvio</h4>
           <div class="verdict" id="trialVerdict"></div>
           <p id="trialRulingText"></p>
           <div class="teams-share" style="margin-top:1.25rem; background:rgba(255,255,255,0.06); border-color:rgba(255,255,255,0.12);">
-            <p style="color:rgba(255,255,255,0.5);">💬 <strong style="color:rgba(255,255,255,0.7);">Tiimikeskustelu:</strong> Olitko samaa mieltä tuomion kanssa?</p>
+            <p style="color:rgba(255,255,255,0.5);">💬 <strong style="color:rgba(255,255,255,0.7);">Tiimikeskustelu:</strong> Mikä oli yllättävintä?</p>
             <button class="copy-btn" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.6);" onclick="copyTrialResult()">Kopioi tulos</button>
           </div>
         </div>
@@ -2803,16 +2803,16 @@ initAnon();
 // ══════════════════════════════════════════════════════════════
 const trialCases = [
   {
-    title: 'Rekrytointiyritys ja hakijoiden profilointi',
-    desc: 'Rekrytointiyritys "TalentAI" syötti 500 työnhakijan CV:t, hakemukset ja LinkedIn-profiilit ChatGPT:hen luodakseen "sopivuusarviot" asiakasyrityksilleen. Hakijoilta ei kysytty lupaa. Yksi hakija sai tietää ja teki kantelun tietosuojavaltuutetulle.'
+    title: 'Työnhakija ja työsopimus',
+    desc: 'Sait uuden työtarjouksen ja liitit koko työsopimuksen ChatGPT:hen kysyttäväksi "onko tämä normaali sopimus?". Sopimuksessa näkyi nimesi, palkkasi, työnantajan nimi ja salassapitoehdot. Oliko tämä ok vai pitikö toimia toisin?'
   },
   {
-    title: 'Opettaja ja oppilaiden esseet',
-    desc: 'Lukion opettaja syötti 30 oppilaan esseet ChatGPT:hen tarkistettaviksi. Esseet sisälsivät oppilaiden nimet ja henkilökohtaisia kokemuksia. Opettaja säästi 15 tuntia työtä, mutta oppilaiden vanhemmat saivat tietää ja vaativat selvitystä.'
+    title: 'Kaveri pyytää apua Kela-hakemukseen',
+    desc: 'Kaverisi pyytää sinua auttamaan Kela-hakemuksen kanssa. Hän ehdottaa: "Liitetään koko hakemus ChatGPT:hen, niin se tarkistaa onko kaikki oikein." Hakemuksessa on kaverin henkilötunnus, osoite, tulotiedot ja terveystietoja. Mitä neuvot kaverillesi?'
   },
   {
-    title: 'Startup ja asiakaspalautteet',
-    desc: 'SaaS-startup "DataFlow" kopioi 2000 asiakaspalautetta (sisältäen käyttäjien nimiä, sähköposteja ja yritysnimiä) Claude-tekoälyyn analysoidakseen asiakastyytyväisyyttä. Palautteissa mainittiin myös kilpailijoiden luottamuksellisia hintatietoja. Asiakas löysi oman nimensä AI:n vastauksesta.'
+    title: 'LinkedIn-profiilin päivitys AI:lla',
+    desc: 'Haluat päivittää LinkedIn-profiilisi. Kirjoitat ChatGPT:lle: "Olen Matti, 35v, työskentelen Firma Oy:ssä myyntipäällikkönä. Palkkani on 4500€/kk. Kirjoita minulle parempi LinkedIn-esittely." Onko tässä ongelmaa vai onko kaikki ok?'
   }
 ];
 
@@ -2852,11 +2852,12 @@ async function submitTrialArgument() {
   const isLastRound = trialRound >= trialMaxRounds;
 
   const systemPrompt = isLastRound
-    ? `Olet GDPR-tuomari tietosuojaoikeudenkäynnissä. Tapaus: "${tCase.title}: ${tCase.desc}". 
-Tämä on viimeinen kierros. Anna ensin lyhyt vastaväite (1-2 lausetta), sitten anna TUOMIO.
-Vastaa JSON: {"counter": "vastaväite", "ruling": "SYYLLINEN|SYYTÖN|OSITTAIN SYYLLINEN", "reasoning": "tuomion perustelut 2-3 lauseella", "gdpr_articles": "olennaiset GDPR-artiklat"}`
-    : `Olet GDPR-asiantuntija joka esittää vastaväitteitä tietosuojaoikeudenkäynnissä. Tapaus: "${tCase.title}: ${tCase.desc}".
-Esitä vahva, perusteltu vastaväite opiskelijan argumenttiin. Käytä GDPR-artikloja. Vastaa suomeksi, 2-3 lauseella. Ole haastava mutta reilu.`;
+    ? `Olet tietosuojakouluttaja. Tilanne: "${tCase.title}: ${tCase.desc}". 
+Tämä on viimeinen kierros. Anna lyhyt kommentti (1-2 lausetta), sitten anna ARVIO.
+Vastaa JSON: {"counter": "lyhyt kommentti", "ruling": "OIKEIN TOIMITTU|VÄÄRIN TOIMITTU|OSITTAIN OIKEIN", "reasoning": "selkeä yhteenveto 2-3 lauseella: mitä olisi pitänyt tehdä toisin ja miksi", "gdpr_articles": "käytännön vinkki"}
+Ole rohkaiseva ja käytännönläheinen. Selitä yksinkertaisesti, ei lakikieltä. Tämä on työnhakijoille suunnattu kurssi.`
+    : `Olet tietosuojakouluttaja joka auttaa opiskelijaa pohtimaan tilannetta. Tilanne: "${tCase.title}: ${tCase.desc}".
+Kysy tarkentava kysymys tai esitä vastanäkökulma 1-2 lauseella. Ole ystävällinen ja rohkaiseva. Älä käytä lakikieltä — puhu arkikielellä kuten opettaisit kaveria. Vastaa suomeksi.`;
 
   try {
     const messages = isLastRound
@@ -2898,24 +2899,24 @@ Esitä vahva, perusteltu vastaväite opiskelijan argumenttiin. Käytä GDPR-arti
 
       const verdictStr = (parsed.ruling || '').toUpperCase();
       const verdictEl = document.getElementById('trialVerdict');
-      if (verdictStr.includes('SYYTÖN')) {
-        verdictEl.textContent = 'SYYTÖN';
+      if (verdictStr.includes('OIKEIN TOIMITTU')) {
+        verdictEl.textContent = 'OIKEIN TOIMITTU \u2714';
         verdictEl.className = 'verdict innocent';
       } else if (verdictStr.includes('OSITTAIN')) {
-        verdictEl.textContent = 'OSITTAIN SYYLLINEN';
+        verdictEl.textContent = 'OSITTAIN OIKEIN';
         verdictEl.className = 'verdict partial';
       } else {
-        verdictEl.textContent = 'SYYLLINEN';
+        verdictEl.textContent = 'KANNATTAA TOIMIA TOISIN';
         verdictEl.className = 'verdict guilty';
       }
 
       let rulingHtml = parsed.reasoning || '';
       if (parsed.gdpr_articles) {
-        rulingHtml += `<br><br><strong>Olennaiset GDPR-artiklat:</strong> ${parsed.gdpr_articles}`;
+        rulingHtml += `<br><br><strong>Käytännön vinkki:</strong> ${parsed.gdpr_articles}`;
       }
       document.getElementById('trialRulingText').innerHTML = rulingHtml;
 
-      trialResultText = `Tietosuoja-oikeudenkäynti: "${tCase.title}" — Tuomio: ${verdictEl.textContent}. ${parsed.reasoning || ''}`;
+      trialResultText = `Tietosuojaharjoitus: "${tCase.title}" — Arvio: ${verdictEl.textContent}. ${parsed.reasoning || ''}`;
       ruling.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } else {
       const aiMsg = document.createElement('div');
