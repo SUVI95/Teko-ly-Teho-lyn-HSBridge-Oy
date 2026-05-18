@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../database/db');
+const { ensureUserSchema } = require('../database/ensure-user-schema');
 const {
   getKuopioDemoDisplayName,
   normalizeEmail,
@@ -12,6 +13,7 @@ const router = express.Router();
 
 async function applyKuopioDemoProfile(user) {
   if (!user || !shouldAutoApproveStudent(user.email)) return user;
+  await ensureUserSchema();
   const displayName = getKuopioDemoDisplayName();
   await pool.query(
     'UPDATE users SET is_approved = TRUE, name = $1 WHERE id = $2',
@@ -25,6 +27,7 @@ async function applyKuopioDemoProfile(user) {
 // Register new user
 router.post('/register', async (req, res) => {
   try {
+    await ensureUserSchema();
     const { email: rawEmail, password, name } = req.body;
     const email = normalizeEmail(rawEmail);
     
@@ -42,9 +45,6 @@ router.post('/register', async (req, res) => {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
     
-    // Ensure is_approved column exists
-    try { await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE'); } catch(e) {}
-
     const autoApprove = shouldAutoApproveStudent(email);
     const displayName = autoApprove ? getKuopioDemoDisplayName() : (name || null);
 
@@ -93,6 +93,7 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   try {
+    await ensureUserSchema();
     const { email: rawEmail, password } = req.body;
     const email = normalizeEmail(rawEmail);
     
@@ -108,6 +109,10 @@ router.post('/login', async (req, res) => {
     }
     
     const user = result.rows[0];
+
+    if (!user.password_hash) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
     
     // Verify password
     const validPassword = await bcrypt.compare(password, user.password_hash);
@@ -150,8 +155,11 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
+    console.error('Login error:', error.message || error);
+    res.status(500).json({
+      error: 'Login failed',
+      detail: process.env.NODE_ENV === 'production' ? undefined : (error.message || String(error))
+    });
   }
 });
 
@@ -175,6 +183,7 @@ router.post('/logout', async (req, res) => {
 // Get current user
 router.get('/me', async (req, res) => {
   try {
+    await ensureUserSchema();
     const token = req.cookies.session_token || req.headers.authorization?.split(' ')[1];
     
     if (!token) {

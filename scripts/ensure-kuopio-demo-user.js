@@ -14,6 +14,9 @@ const {
 const DEMO_PASSWORD = 'Kuopio2026!';
 
 async function main() {
+  await pool.query(
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE'
+  );
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
   const existing = await pool.query(
     'SELECT id FROM users WHERE LOWER(TRIM(email)) = $1',
