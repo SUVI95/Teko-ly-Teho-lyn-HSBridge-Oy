@@ -81,7 +81,8 @@ router.post('/register', async (req, res) => {
         id: user.id,
         email: user.email,
         name: user.name,
-        is_approved: user.is_approved === true
+        is_approved: user.is_approved === true,
+        kuopio_demo: shouldAutoApproveStudent(email)
       }
     });
   } catch (error) {
@@ -145,13 +146,15 @@ router.post('/login', async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
     
+    const demoActive = shouldAutoApproveStudent(email);
     res.json({
       success: true,
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        is_approved: user.is_approved === true || shouldAutoApproveStudent(email)
+        is_approved: user.is_approved === true || demoActive,
+        kuopio_demo: demoActive
       }
     });
   } catch (error) {
@@ -203,8 +206,20 @@ router.get('/me', async (req, res) => {
     if (shouldAutoApproveStudent(user.email)) {
       user = await applyKuopioDemoProfile(user);
     }
-    
-    res.json({ user });
+
+    const demoActive = shouldAutoApproveStudent(user.email);
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        created_at: user.created_at,
+        last_login: user.last_login,
+        is_admin: user.is_admin === true,
+        is_approved: user.is_approved === true || demoActive,
+        kuopio_demo: demoActive
+      }
+    });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to get user' });
