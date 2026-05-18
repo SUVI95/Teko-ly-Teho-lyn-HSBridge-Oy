@@ -822,24 +822,24 @@ h1.hero-title em { font-style: italic; color: #a8c4e8; }
       </div>
     </div>
 
-    <!-- INTERVIEW PREP -->
+    <!-- AI IMPACT ON YOUR FIELD -->
     <div class="field-explorer" style="margin-top:2.5rem;">
-      <div class="field-explorer-label">Haastatteluvalmistautuminen</div>
-      <h3>Miten vastaat: "Osaatko käyttää tekoälyä?"</h3>
-      <p>Yhä useampi työnantaja kysyy tätä. Anna AI:n luoda sinulle valmis vastaus jonka voit muokata omaksesi.</p>
+      <div class="field-explorer-label">Oma alasi</div>
+      <h3>Miten tekoäly muuttaa sinun alaasi?</h3>
+      <p>Kerro alasi tai työsi — AI kertoo mitä tehtäviä se voi helpottaa, mitä se ei korvaa, ja miksi sinun osaamisesi on arvokasta.</p>
       <div class="field-row">
-        <input class="field-input" id="futureRolesInput" type="text" placeholder="Mitä työtä haet? (esim: markkinointiassistentti, hoitaja, varastotyö)" />
-        <button class="field-btn" id="futureRolesBtn" onclick="exploreFutureRoles()">💬 Luo haastatteluvastaus</button>
+        <input class="field-input" id="futureRolesInput" type="text" placeholder="Alasi tai työsi (esim: asiakaspalvelu, hoitoala, varastotyö, myynti)" />
+        <button class="field-btn" id="futureRolesBtn" onclick="exploreFutureRoles()">🔍 Selvitä vaikutus</button>
       </div>
       <div class="field-result" id="futureRolesResult">
         <div class="field-result-head">
-          <div class="field-badge">Vastaus</div>
-          <h4 id="futureRolesTitle">Haastatteluvinkki</h4>
+          <div class="field-badge">Analyysi</div>
+          <h4 id="futureRolesTitle">AI ja sinun alasi</h4>
         </div>
         <div class="field-result-body" id="futureRolesBody">Luodaan...</div>
       </div>
       <div class="teams-share" id="futureRolesShare" style="display:none;">
-        <p>💬 <strong>Harjoittele:</strong> Sano tämä ääneen parin kanssa — tuntuuko luonnolliselta?</p>
+        <p>💬 <strong>Tiimikeskustelu:</strong> Oliko jotain yllättävää? Oletko samaa mieltä?</p>
         <button class="copy-btn" id="copyFutureRolesBtn" onclick="copyFutureRoles()">Kopioi leikepöydälle</button>
       </div>
     </div>
@@ -1533,17 +1533,17 @@ function copySkillsGap() {
   });
 }
 
-// ── INTERVIEW PREP ─────────────────
+// ── AI IMPACT ON YOUR FIELD ─────────────────────
 let futureRolesText = '';
 async function exploreFutureRoles() {
   const input = document.getElementById('futureRolesInput').value.trim();
-  if (!input) { alert('Kirjoita mitä työtä haet.'); return; }
+  if (!input) { alert('Kerro alasi tai työsi.'); return; }
   const btn = document.getElementById('futureRolesBtn');
   const result = document.getElementById('futureRolesResult');
   const body = document.getElementById('futureRolesBody');
   btn.disabled = true;
-  document.getElementById('futureRolesTitle').textContent = 'Haastatteluvastaus';
-  body.textContent = 'Luodaan vastausta...';
+  document.getElementById('futureRolesTitle').textContent = 'AI ja sinun alasi';
+  body.textContent = 'Analysoidaan...';
   result.style.display = 'block';
   document.getElementById('futureRolesShare').style.display = 'none';
   result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1553,14 +1553,20 @@ async function exploreFutureRoles() {
       credentials: 'include',
       body: JSON.stringify({
         model: 'gpt-4o-mini',
-        max_tokens: 600,
-        system: 'Olet suomalainen haastatteluvalmentaja. Luo luonnollinen ja itsevarma vastaus haastattelukysymykseen "Osaatko käyttää tekoälyä työssäsi?". Vastaus pitää olla rehellinen: henkilö on JUURI oppinut käyttämään AI:ta kurssilla. Tee vastauksesta itsevarma mutta nöyrä — ei tarvitse olla asiantuntija, riittää että osaa perusasiat. Anna 1 valmis vastaus (2-3 lausetta) ja 1 lisävinkki miten voi jatkaa. Vastaa suomeksi, puhekieliseen sävyyn.',
-        messages: [{ role: 'user', content: `Haen työtä: "${input}". Olen juuri oppinut AI-koulutuksessa käyttämään ChatGPT:tä ja muita AI-työkaluja. Miten vastaan haastattelussa vakuuttavasti kysymykseen AI-osaamisesta?` }]
+        max_tokens: 700,
+        system: `Olet työelämän AI-asiantuntija. Käyttäjä kertoo alansa. Luo lyhyt, selkeä analyysi:
+
+✅ MITÄ AI VOI HELPOTTAA (3 konkreettista tehtävää tällä alalla)
+💪 MITÄ AI EI KORVAA (2-3 ihmistaitoa jotka pysyvät tärkeinä)
+💡 MITEN PÄÄSET ALKUUN (1-2 käytännön vinkkiä juuri tälle alalle)
+
+Ole rohkaiseva ja realistinen. Tämä on työnhakijoille suunnattu kurssi — painota että AI on työkalu joka AUTTAA heitä, ei korvaa. Vastaa suomeksi, selkeällä arkikielellä.`,
+        messages: [{ role: 'user', content: `Alani/työni: "${input}". Miten tekoäly vaikuttaa tähän alaan? Mitä se voi helpottaa ja mitä se ei korvaa?` }]
       })
     });
     const data = await res.json();
     const responseText = data.text || '';
-    futureRolesText = `Haastatteluvastaus (${input}):\n\n${responseText}`;
+    futureRolesText = `AI ja alasi (${input}):\n\n${responseText}`;
     body.innerHTML = responseText.replace(/\n/g, '<br>');
     document.getElementById('futureRolesShare').style.display = 'flex';
   } catch(e) {
