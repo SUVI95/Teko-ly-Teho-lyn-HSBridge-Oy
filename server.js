@@ -324,6 +324,7 @@ const ADMIN_ONLY_MODULE_IDS = new Set(['moduuli-ai-verkkosivustotyokalut']);
 app.get('/module/:moduleId', async (req, res) => {
   const moduleId = req.params.moduleId;
   const token = req.cookies && req.cookies.session_token;
+  let viewerIsAdmin = false;
   if (token) {
     try {
       const sessionResult = await pool.query(
@@ -335,10 +336,8 @@ app.get('/module/:moduleId', async (req, res) => {
       if (sessionResult.rows.length > 0) {
         const u = sessionResult.rows[0];
         const isAdmin = u.is_admin === true;
+        viewerIsAdmin = isAdmin;
         const approved = u.is_approved === true;
-        if (ADMIN_ONLY_MODULE_IDS.has(moduleId) && !isAdmin) {
-          return res.redirect(302, '/');
-        }
         if (!isAdmin && approved) {
           await onboardingRoutes.ensureUserOnboardingTable();
           const ob = await pool.query('SELECT id FROM user_onboarding WHERE user_id = $1', [u.id]);
@@ -350,6 +349,9 @@ app.get('/module/:moduleId', async (req, res) => {
     } catch (e) {
       console.error('Module onboarding gate:', e);
     }
+  }
+  if (ADMIN_ONLY_MODULE_IDS.has(moduleId) && !viewerIsAdmin) {
+    return res.redirect(302, '/');
   }
 
   // Try multiple paths (Vercel may use different cwd).
