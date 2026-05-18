@@ -3,721 +3,1128 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rakenna oma sovellus — Base44 | HS Bridge Oy</title>
+<title>Rakenna ratkaisu — Base44 | HS Bridge Oy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#1a1a2e;--ink2:#2d2d44;--paper:#f5f3ef;--paper2:#eeeae3;--warm:#e8e0d4;--accent:#7c3aed;--accent2:#c75b3a;--accent3:#2563a8;--text:#1a1a2e;--muted:#6b6880;--border:rgba(26,26,46,0.12);--shadow:0 2px 20px rgba(26,26,46,0.08);--shadow-md:0 8px 40px rgba(26,26,46,0.12);}
-*{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;overflow-x:hidden;line-height:1.7;}
-#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:200;transition:width 0.4s ease;width:0%;}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;background:rgba(245,243,239,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2.5rem;justify-content:space-between;}
-.nav-left{display:flex;align-items:center;gap:1rem;}
-.nav-module{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.22);padding:4px 12px;border-radius:4px;}
-.nav-title{font-size:0.85rem;font-weight:500;color:var(--muted);}
-.nav-steps{display:flex;gap:5px;align-items:center;}
-.step-pip{width:28px;height:4px;border-radius:2px;background:var(--warm);transition:background 0.4s;cursor:pointer;border:none;padding:0;font:inherit;}
-.step-pip.active{background:var(--accent);}
-.step-pip.done{background:var(--accent3);}
-.section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:96px 2rem 5rem;position:relative;}
-.section-inner{max-width:820px;width:100%;}
-.section-alt{background:var(--paper2);}
-.section-label{font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:500;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1rem;}
-h2.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4.5vw,3.5rem);font-weight:400;line-height:1.1;color:var(--ink);margin-bottom:1.5rem;letter-spacing:-0.01em;}
-h2.section-h2 em{font-style:italic;color:var(--accent);}
-.lead{font-size:1.1rem;color:var(--muted);max-width:600px;line-height:1.8;margin-bottom:2rem;font-weight:300;}
-.divider{width:48px;height:2px;background:var(--accent);margin-bottom:2rem;border-radius:1px;}
-.prose{font-size:1.05rem;line-height:1.85;color:var(--text);}
-.prose p{margin-bottom:1.25rem;}
-.prose strong{font-weight:600;}
-.fade-up{opacity:1;transform:translateY(0);transition:opacity 0.65s ease,transform 0.65s ease;}
-.fade-up.in{opacity:1;transform:translateY(0);}
-
-#hero{background:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:96px 2rem 5rem;position:relative;overflow:hidden;}
-#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 60%,rgba(124,58,237,0.18) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 80% 20%,rgba(199,91,58,0.10) 0%,transparent 60%);}
-.hero-inner{max-width:820px;width:100%;position:relative;z-index:1;}
-.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;margin-bottom:2.5rem;}
-.eyebrow-num{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;}
-.eyebrow-line{width:40px;height:1px;background:rgba(124,58,237,0.5);}
-.eyebrow-label{font-family:'DM Mono',monospace;font-size:0.72rem;color:rgba(255,255,255,0.35);letter-spacing:0.1em;text-transform:uppercase;}
-h1.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.2rem,5vw,4rem);font-weight:400;line-height:1.05;color:#fff;margin-bottom:1.75rem;letter-spacing:-0.01em;}
-h1.hero-title em{font-style:italic;color:#a78bfa;}
-.hero-sub{font-size:1.15rem;color:rgba(255,255,255,0.55);max-width:520px;line-height:1.75;margin-bottom:3rem;font-weight:300;}
-.hero-cta{display:inline-flex;align-items:center;gap:12px;background:var(--accent);color:#fff;padding:16px 36px;border-radius:6px;font-weight:600;font-size:0.95rem;cursor:pointer;text-decoration:none;transition:all 0.25s;}
-.hero-cta:hover{background:#6d28d9;transform:translateY(-2px);box-shadow:0 8px 24px rgba(124,58,237,0.35);}
-
-.chat-container{max-height:420px;overflow-y:auto;padding:1rem 0;display:flex;flex-direction:column;gap:0.75rem;}
-.chat-msg{display:flex;width:100%;}
-.chat-msg.user{justify-content:flex-end;}
-.chat-msg.ai{justify-content:flex-start;}
-.chat-bubble{max-width:85%;padding:0.85rem 1.1rem;border-radius:12px;font-size:0.9rem;line-height:1.6;}
-.chat-msg.user .chat-bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px;}
-.chat-msg.ai .chat-bubble{background:#fff;border:1px solid var(--border);border-bottom-left-radius:4px;}
-.b44-chat-wrap{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-top:1.25rem;}
-.b44-input-row{display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap;align-items:center;}
-.b44-input-row input[type="text"]{flex:1;min-width:200px;padding:0.75rem 1rem;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.92rem;}
-.b44-idea-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;margin-top:1.25rem;}
-#b44IdeaCards{display:none;}
-.b44-idea-card{background:#fff;border:2px solid var(--border);border-radius:12px;padding:1.25rem;cursor:default;transition:border-color 0.25s,box-shadow 0.25s,transform 0.25s;}
-.b44-idea-card:hover{border-color:rgba(124,58,237,0.45);box-shadow:0 10px 28px rgba(124,58,237,0.18);transform:translateY(-4px);}
-.b44-idea-card.selected{border-color:var(--accent);box-shadow:0 4px 20px rgba(124,58,237,0.15);transform:translateY(0);}
-.b44-idea-heading-wrap{margin:1.5rem 0 1rem;opacity:0;animation:b44FadeInUp 0.7s ease forwards;}
-.b44-idea-heading-wrap.b44-fade-in{opacity:0;animation:b44FadeInUp 0.7s ease forwards;}
-.b44-idea-heading-main{font-family:'DM Serif Display',serif;font-size:clamp(1.15rem,2.5vw,1.45rem);font-weight:400;color:var(--ink);margin:0 0 0.5rem;line-height:1.25;}
-.b44-idea-heading-sub{font-size:0.9rem;color:var(--muted);margin:0;line-height:1.5;}
-.b44-idea-pick-celebrate{display:none;margin-top:1rem;font-size:0.95rem;font-weight:600;color:var(--accent);}
-.b44-chat-empty{text-align:center;font-size:0.9rem;color:var(--muted);padding:1.25rem 1rem;margin-bottom:0.5rem;border:1px dashed var(--border);border-radius:10px;background:var(--paper2);}
-.b44-chat-typing{display:none;font-size:0.85rem;color:var(--accent);font-weight:500;padding:0.35rem 0 0.5rem;font-style:italic;}
-@keyframes b44FadeInUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-.b44-prompt-loading{display:none;font-size:0.88rem;color:var(--accent);font-weight:500;margin:0 0 0.5rem;min-height:1.4em;}
-.b44-prompt-ready-banner{display:none;font-size:0.9rem;font-weight:600;color:#15803d;margin:0 0 0.5rem;}
-.b44-prompt-out-flash{animation:b44PromptFlash 1s ease;}
-@keyframes b44PromptFlash{0%{box-shadow:0 0 0 3px #22c55e,inset 0 0 0 1px rgba(34,197,94,0.5);}100%{box-shadow:var(--shadow);}}
-.b44-url-celebration{display:none;margin:1.5rem 0 0;padding:2rem 1.5rem;border-radius:14px;text-align:center;background:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(34,197,94,0.1));border:2px solid rgba(124,58,237,0.35);}
-.b44-url-celebration-title{font-family:'DM Serif Display',serif;font-size:clamp(1.5rem,3.5vw,2rem);color:var(--ink);margin:0 0 1rem;}
-.b44-url-celebration-link{display:inline-block;word-break:break-all;font-size:clamp(0.95rem,2.2vw,1.15rem);font-weight:600;color:var(--accent);text-decoration:underline;margin-bottom:0.75rem;}
-.b44-url-celebration-sub{font-size:0.92rem;color:var(--muted);line-height:1.6;margin:0;}
-.b44-finale-stats{display:flex;justify-content:center;gap:clamp(1rem,4vw,2.5rem);flex-wrap:wrap;margin:2rem 0 1.5rem;position:relative;z-index:1;}
-.b44-finale-stat{text-align:center;min-width:100px;}
-.b44-finale-stat-num{font-family:'DM Serif Display',serif;font-size:clamp(2rem,5vw,3rem);font-weight:400;color:#fff;line-height:1;}
-.b44-finale-stat-label{font-size:0.78rem;color:rgba(255,255,255,0.45);margin-top:0.35rem;text-transform:uppercase;letter-spacing:0.06em;}
-.b44-idea-badge{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;}
-.b44-idea-name{font-size:1.05rem;margin:0.5rem 0 0.35rem;font-family:'DM Serif Display',serif;color:var(--ink);}
-.b44-idea-does,.b44-idea-saves{font-size:0.85rem;color:var(--muted);margin:0.25rem 0;line-height:1.5;}
-.b44-chip-row{display:flex;flex-wrap:wrap;gap:0.5rem;margin:1rem 0;}
-.b44-chip{padding:0.5rem 1rem;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:0.85rem;cursor:pointer;font-family:inherit;color:var(--text);}
-.b44-chip.active{background:rgba(124,58,237,0.12);border-color:var(--accent);font-weight:600;}
-.b44-selected-box{display:none;margin-top:1rem;padding:1rem 1.25rem;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.25);border-radius:10px;font-size:0.9rem;line-height:1.65;}
-.b44-prompt-out{background:var(--ink);color:rgba(255,255,255,0.88);border-radius:10px;padding:1.25rem;font-size:0.8rem;line-height:1.65;white-space:pre-wrap;max-height:340px;overflow:auto;font-family:'DM Mono',monospace;margin-top:0.75rem;}
-.b44-copy-row{margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;}
-.b44-orange-card{background:linear-gradient(135deg,rgba(199,91,58,0.12),rgba(124,58,237,0.08));border:1px solid rgba(199,91,58,0.25);border-radius:12px;padding:1.5rem;margin-top:1.5rem;}
-.b44-orange-card h4{font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--accent2);margin-bottom:0.75rem;font-weight:400;}
-.b44-flow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0.5rem 1rem;margin:1.5rem 0;font-size:0.85rem;color:var(--muted);}
-.b44-flow-node{background:#fff;border:1px solid var(--border);padding:0.45rem 0.9rem;border-radius:8px;color:var(--text);}
-.b44-flow-arrow{color:var(--muted);font-family:'DM Mono',monospace;}
-.b44-step-list{counter-reset:b44;list-style:none;margin:1rem 0;}
-.b44-step-list li{counter-increment:b44;position:relative;padding-left:2.5rem;margin-bottom:1rem;font-size:0.92rem;line-height:1.65;}
-.b44-step-list li::before{content:counter(b44);position:absolute;left:0;top:0;width:1.75rem;height:1.75rem;border-radius:50%;background:var(--accent);color:#fff;font-size:0.8rem;display:flex;align-items:center;justify-content:center;font-weight:600;}
-.copy-fix{cursor:pointer;border:1px dashed var(--border);padding:0.6rem 0.85rem;border-radius:8px;font-size:0.78rem;margin:0.4rem 0;transition:border-color 0.2s;font-family:'DM Mono',monospace;line-height:1.5;background:var(--paper2);}
-.copy-fix:hover{border-color:var(--accent);}
-.ok-msg{display:none;margin-top:0.75rem;font-size:0.85rem;color:var(--accent3);font-weight:500;}
-.celebration-link{display:inline-block;margin-top:0.75rem;color:#a78bfa;word-break:break-all;font-size:0.95rem;}
-.challenge-box{margin-top:1.5rem;padding:1rem 1.25rem;background:rgba(255,255,255,0.06);border-radius:10px;border:1px solid rgba(255,255,255,0.12);}
-.challenge-box label{display:flex;align-items:flex-start;gap:0.6rem;font-size:0.88rem;cursor:pointer;color:rgba(255,255,255,0.75);}
-#b44ChallengeMsg{display:none;margin-top:0.75rem;font-size:0.88rem;color:#a78bfa;line-height:1.6;}
-
-.b44-s3-steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0;}
-@media(max-width:768px){.b44-s3-steps-grid{grid-template-columns:1fr;}}
-.b44-s3-step{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.1rem;box-shadow:var(--shadow);}
-.b44-s3-step-icon{font-size:1.75rem;line-height:1;margin-bottom:0.65rem;}
-.b44-s3-step-title{font-family:'DM Serif Display',serif;font-size:1.05rem;font-weight:400;color:var(--ink);margin:0 0 0.5rem;line-height:1.25;}
-.b44-s3-step-body{font-size:0.85rem;color:var(--muted);line-height:1.6;margin:0;}
-.b44-s3-idea-wrap{margin:1.75rem 0;}
-.b44-s3-empty{display:block;text-align:center;padding:2rem 1.25rem;border:2px dashed rgba(124,58,237,0.35);border-radius:12px;background:rgba(124,58,237,0.04);}
-.b44-s3-empty p{color:var(--muted);margin-bottom:1rem;line-height:1.65;}
-.b44-s3-idea-card{display:none;background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(37,99,168,0.06));border:1px solid rgba(124,58,237,0.28);border-radius:12px;padding:1.5rem 1.75rem;}
-.b44-s3-idea-label{display:block;font-size:0.72rem;font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;}
-.b44-s3-idea-name{font-family:'DM Serif Display',serif;font-size:clamp(1.35rem,3vw,1.75rem);font-weight:400;color:var(--ink);line-height:1.2;margin:0 0 0.65rem;}
-.b44-s3-idea-desc{font-size:0.95rem;color:var(--text);line-height:1.65;margin:0 0 0.75rem;}
-.b44-s3-idea-saves{font-size:0.92rem;color:#15803d;font-weight:500;line-height:1.55;margin:0;}
-.b44-field-helper{font-size:0.8rem;color:var(--muted);line-height:1.5;margin:-0.35rem 0 0.65rem;}
-.b44-btn-hint{font-size:0.8rem;color:var(--muted);margin-top:0.65rem;line-height:1.5;}
-.b44-prompt-postgen{display:none;font-size:0.88rem;color:var(--text);line-height:1.65;margin:0 0 0.75rem;padding:1rem 1.15rem;background:var(--paper2);border:1px solid var(--border);border-radius:10px;}
-.b44-chatgpt-details{margin-top:1.75rem;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden;box-shadow:var(--shadow);}
-.b44-chatgpt-details summary{cursor:pointer;list-style:none;padding:1rem 1.25rem;font-weight:600;font-size:0.92rem;color:var(--ink);background:var(--paper2);display:flex;align-items:center;justify-content:space-between;gap:0.75rem;}
-.b44-chatgpt-details summary::-webkit-details-marker{display:none;}
-.b44-chatgpt-details summary::after{content:'▸';font-size:0.85rem;color:var(--muted);transition:transform 0.2s;}
-.b44-chatgpt-details[open] summary::after{transform:rotate(90deg);}
-.b44-chatgpt-body{padding:1.25rem 1.25rem 1.5rem;}
-.b44-chatgpt-body .framing-box{margin-top:0;}
-.b44-template-box{font-size:0.82rem;line-height:1.6;color:var(--text);white-space:pre-wrap;word-break:break-word;}
-.b44-cta-build{margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);text-align:center;}
-.b44-cta-build .practice-btn{padding:14px 32px;font-size:0.95rem;}
-.b44-cta-sub{font-size:0.8rem;color:var(--muted);margin-top:0.75rem;line-height:1.5;}
-
-.b44-wow-banner{margin:1.5rem 0 2rem;padding:1.25rem 1.35rem;border-radius:12px;background:linear-gradient(135deg,rgba(124,58,237,0.14),rgba(37,99,168,0.1));border:1px solid rgba(124,58,237,0.25);}
-.b44-wow-banner-inner{display:flex;gap:1rem;align-items:flex-start;font-size:0.9rem;line-height:1.65;color:var(--text);}
-.b44-wow-icon{font-size:1.75rem;line-height:1;flex-shrink:0;}
-.b44-build-step-card{display:flex;gap:1.15rem;margin-bottom:1.25rem;padding:1.35rem 1.25rem;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);}
-.b44-build-step-num{flex-shrink:0;width:2.25rem;height:2.25rem;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:0.95rem;display:flex;align-items:center;justify-content:center;}
-.b44-build-step-body{flex:1;min-width:0;}
-.b44-build-step-title{font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;margin:0 0 0.5rem;color:var(--ink);}
-.b44-checklist{list-style:none;margin:0;padding:0;}
-.b44-checklist li{margin-bottom:0.55rem;font-size:0.88rem;line-height:1.5;}
-.b44-checklist label{cursor:pointer;display:flex;align-items:flex-start;gap:0.5rem;}
-.b44-checklist input{margin-top:3px;}
-.b44-fix-pre{background:var(--paper2);border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem;font-size:0.82rem;line-height:1.55;white-space:pre-wrap;margin:0 0 0.35rem;font-family:'DM Sans',sans-serif;color:var(--text);}
-.b44-elossa-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.1rem;margin:1.75rem 0;}
-@media(max-width:680px){.b44-elossa-grid{grid-template-columns:1fr;}}
-.b44-elossa-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.25rem;box-shadow:var(--shadow);}
-.b44-elossa-icon{font-size:1.5rem;margin-bottom:0.5rem;}
-.b44-elossa-title{font-size:0.98rem;font-weight:600;margin:0 0 0.5rem;color:var(--ink);}
-.b44-elossa-text{font-size:0.85rem;color:var(--muted);line-height:1.6;margin:0;}
-.b44-challenge-week-card{margin-top:1.5rem;padding:1.5rem 1.35rem;border-radius:12px;border:2px solid var(--accent);background:rgba(124,58,237,0.06);}
-.b44-challenge-week-title{font-family:'DM Serif Display',serif;font-size:1.2rem;margin:0 0 0.75rem;color:var(--ink);}
-.b44-week-label{display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;font-weight:600;cursor:pointer;margin-top:0.5rem;}
-.b44-week-msg{display:none;margin-top:0.75rem;font-size:0.88rem;color:#a78bfa;font-weight:500;}
-
-.b44-milestone-card{text-align:center;padding:2.75rem 2rem 2.5rem;margin-bottom:2.5rem;border-radius:16px;background:linear-gradient(145deg,#4c1d95 0%,#6d28d9 45%,#1e1b4b 100%);border:1px solid rgba(255,255,255,0.12);box-shadow:0 12px 40px rgba(76,29,149,0.35);}
-.b44-milestone-title{font-family:'DM Serif Display',serif;font-size:clamp(1.75rem,4vw,2.5rem);font-weight:400;color:#fff;margin:0 0 1.25rem;line-height:1.15;}
-.b44-milestone-linkbtn{display:inline-flex;align-items:center;justify-content:center;max-width:100%;word-break:break-all;padding:14px 28px;border-radius:10px;background:#fff;color:#4c1d95;font-weight:600;font-size:clamp(0.85rem,2.5vw,1rem);text-decoration:none;transition:transform 0.2s,box-shadow 0.2s;}
-.b44-milestone-linkbtn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.2);}
-.b44-milestone-chips{display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin:1.5rem 0 1rem;}
-.b44-milestone-chip{font-size:0.78rem;padding:0.4rem 0.75rem;border-radius:999px;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9);border:1px solid rgba(255,255,255,0.2);}
-.b44-milestone-tagline{font-size:0.92rem;color:rgba(255,255,255,0.75);line-height:1.65;max-width:520px;margin:0 auto;}
-.b44-refl-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:1.25rem 1.35rem;margin:1.25rem 0;}
-.b44-refl-card-title{font-size:1.05rem;font-weight:600;color:#fff;margin:0 0 0.35rem;}
-.b44-refl-card-hint{font-size:0.8rem;color:rgba(255,255,255,0.45);margin:0 0 0.75rem;line-height:1.5;}
-.b44-share-action-card{margin-top:1.75rem;padding:1.5rem 1.35rem;border-radius:12px;background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.35);}
-.b44-share-action-title{font-size:1.05rem;font-weight:600;color:#fff;margin:0 0 0.65rem;}
-.b44-share-action-body{font-size:0.88rem;color:rgba(255,255,255,0.72);line-height:1.65;margin:0;}
-.b44-share-input{width:100%;margin-top:0.5rem;padding:0.85rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;font-size:0.92rem;font-family:'DM Sans',sans-serif;}
-.b44-share-input::placeholder{color:rgba(255,255,255,0.35);}
-.b44-share-cb-label{display:flex;align-items:center;gap:0.5rem;margin-top:1rem;font-size:0.88rem;color:rgba(255,255,255,0.85);cursor:pointer;}
-.b44-share-done-msg{display:none;margin-top:0.75rem;font-size:0.88rem;color:#a78bfa;line-height:1.55;}
-
-.framing-box{background:#fff;border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:1.25rem 1.5rem;margin:2rem 0;box-shadow:var(--shadow);font-size:0.92rem;line-height:1.7;color:var(--text);}
-.path-steps-flow{display:flex;gap:0.85rem;margin:2rem 0;overflow-x:auto;padding-bottom:0.35rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
-.path-steps-flow::-webkit-scrollbar{height:6px;}
-.path-steps-flow::-webkit-scrollbar-thumb{background:var(--warm);border-radius:3px;}
-.path-step-card{flex:0 0 min(200px,calc(100vw - 4rem));scroll-snap-align:start;background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.2rem 1rem;box-shadow:var(--shadow);text-align:left;}
-.path-step-num{font-family:'DM Mono',monospace;font-size:0.68rem;font-weight:600;color:var(--accent);letter-spacing:0.06em;margin-bottom:0.45rem;}
-.path-step-title{font-family:'DM Serif Display',serif;font-size:1.05rem;font-weight:400;color:var(--ink);margin:0 0 0.5rem;line-height:1.2;}
-.path-step-desc{font-size:0.82rem;color:var(--muted);line-height:1.55;margin:0;}
-@media(min-width:1100px){
-  .path-steps-flow{flex-wrap:nowrap;justify-content:space-between;overflow-x:visible;}
-  .path-step-card{flex:1 1 0;min-width:0;}
+:root{
+  --ink:#0d0c0b;--ink2:#1a1917;--paper:#f6f3ec;--paper2:#edeadf;
+  --ember:#c95c2a;--ember2:#e07a4f;--pine:#2a5240;--pine2:#3a7059;
+  --gold:#b89850;--cream:#faf8f2;
+  --text:#1a1917;--muted:#6b6660;--muted2:#9a958f;
+  --border:rgba(13,12,11,.1);--border2:rgba(13,12,11,.06);
+  --shadow:0 2px 16px rgba(13,12,11,.07);--shadow-md:0 8px 36px rgba(13,12,11,.11);
+  --r:10px;--r-lg:16px;
 }
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;font-size:16px;}
+body{background:var(--paper);color:var(--text);font-family:'Instrument Sans',sans-serif;overflow-x:hidden;line-height:1.65;}
 
-.stats-box{background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(37,99,168,0.06));border:1px solid rgba(124,58,237,0.2);border-radius:12px;padding:2rem;margin:2rem 0;}
-.stats-box h4{font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:1rem;}
-.stats-box ul{list-style:none;}
-.stats-box li{font-size:0.9rem;color:var(--text);line-height:1.7;margin-bottom:0.6rem;padding-left:1.25rem;position:relative;}
-.stats-box li::before{content:'→';position:absolute;left:0;color:var(--accent);font-weight:600;}
-.impl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin:2rem 0;}
-@media(max-width:680px){.impl-grid{grid-template-columns:1fr;}}
-.impl-card{background:#fff;border-radius:12px;padding:1.75rem;border:1px solid var(--border);box-shadow:var(--shadow);}
-.impl-card h4{font-size:0.95rem;font-weight:600;color:var(--ink);margin-bottom:0.5rem;}
-.impl-card p{font-size:0.88rem;color:var(--muted);line-height:1.6;}
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--ember),var(--gold));z-index:300;transition:width .35s ease;width:0;}
 
-.tool-card{background:#fff;border-radius:12px;padding:2rem;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:1.5rem;}
-.tool-card-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;}
-.tool-card h4{font-size:1.1rem;font-weight:600;color:var(--ink);margin:0;}
-.tool-card .badge{font-size:0.65rem;font-weight:600;color:var(--accent);background:rgba(124,58,237,0.1);padding:3px 8px;border-radius:4px;}
-.tool-card .price{font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--muted);}
-.tool-card p{font-size:0.9rem;color:var(--text);line-height:1.65;margin-bottom:0.75rem;}
-.tool-card .limit{font-size:0.82rem;color:var(--accent2);font-style:italic;margin-top:0.75rem;}
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:60px;background:rgba(246,243,236,.96);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2rem;justify-content:space-between;gap:1rem;}
+.nav-left{display:flex;align-items:center;gap:.75rem;min-width:0;}
+.nav-badge{font-family:'DM Mono',monospace;font-size:.66rem;color:var(--ember);letter-spacing:.12em;text-transform:uppercase;background:rgba(201,92,42,.1);border:1px solid rgba(201,92,42,.22);padding:3px 10px;border-radius:4px;white-space:nowrap;}
+.nav-title{font-size:.82rem;font-weight:500;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nav-link{display:flex;align-items:center;gap:.35rem;font-size:.82rem;font-weight:500;color:var(--muted);text-decoration:none;transition:color .2s;}
+.nav-link:hover{color:var(--ember);}
+.nav-steps{display:flex;gap:4px;flex-shrink:0;}
+.step-pip{width:22px;height:4px;border-radius:2px;background:rgba(13,12,11,.12);border:none;cursor:pointer;transition:background .3s;padding:0;}
+.step-pip.active{background:var(--ember);}
+.step-pip.done{background:var(--pine);}
 
-.tool-table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border);}
-.tool-table th,.tool-table td{padding:1rem 1.25rem;text-align:left;border-bottom:1px solid var(--border);}
-.tool-table th{background:var(--paper2);font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:600;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
-.tool-table tr:last-child td{border-bottom:none;}
-.tool-table td{font-size:0.9rem;}
-.tool-table td:nth-child(2){color:var(--accent);font-weight:500;}
-.tool-table-wrap{overflow-x:auto;margin-top:2rem;-webkit-overflow-scrolling:touch;}
+.section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 1.5rem 5rem;}
+.section-alt{background:var(--paper2);}
+.section-dark{background:var(--ink);}
+.inner{max-width:800px;width:100%;}
 
-.warning-box{background:rgba(199,91,58,0.08);border:1px solid rgba(199,91,58,0.25);border-radius:12px;padding:1.5rem;margin:2rem 0;}
-.warning-box strong{color:var(--accent2);}
+.label{font-family:'DM Mono',monospace;font-size:.66rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem;display:block;}
+.section-dark .label{color:rgba(255,255,255,.28);}
 
-.practice-wrap{background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-md);border:1px solid var(--border);margin-top:2.5rem;}
-.practice-header{background:var(--ink);padding:1.75rem 2rem;display:flex;align-items:center;gap:14px;}
-.practice-header-icon{width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.3);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
-.practice-header-text h3{font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;color:#fff;margin-bottom:0.2rem;}
-.practice-header-text p{font-size:0.82rem;color:rgba(255,255,255,0.45);font-weight:300;}
-.practice-body{padding:2rem;}
-.practice-label{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.65rem;}
-.practice-textarea{width:100%;background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:0.9rem 1.1rem;font-size:0.92rem;font-family:'DM Sans',sans-serif;color:var(--text);resize:vertical;min-height:60px;outline:none;line-height:1.6;}
-.practice-textarea:focus{border-color:rgba(124,58,237,0.4);}
-.practice-btn{margin-top:0.75rem;padding:12px 28px;border-radius:6px;font-size:0.9rem;font-weight:600;cursor:pointer;border:none;background:var(--ink);color:#fff;transition:all 0.25s;font-family:'DM Sans',sans-serif;}
-.practice-btn:hover{background:var(--ink2);}
-.practice-btn:disabled{opacity:0.45;cursor:default;}
-.practice-response{display:none;margin-top:1.5rem;background:var(--paper);border:1px solid var(--border);border-radius:10px;padding:1.5rem;}
-.practice-response-text{font-size:0.9rem;line-height:1.8;color:var(--text);white-space:pre-wrap;}
-.loading-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--muted);margin:0 2px;animation:ldot 1.2s infinite;}
-.loading-dots span:nth-child(2){animation-delay:0.2s;}
-.loading-dots span:nth-child(3){animation-delay:0.4s;}
-@keyframes ldot{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
+h1.hero-h1{font-family:'Fraunces',serif;font-size:clamp(2.2rem,5.5vw,3.8rem);font-weight:700;line-height:1.06;color:#fff;margin-bottom:1.1rem;letter-spacing:-.02em;}
+h1.hero-h1 em{font-style:italic;font-weight:400;color:var(--ember2);}
+h2.sh2{font-family:'Fraunces',serif;font-size:clamp(1.7rem,4vw,2.6rem);font-weight:600;line-height:1.1;color:var(--ink);margin-bottom:1rem;letter-spacing:-.015em;}
+h2.sh2 em{font-style:italic;font-weight:300;color:var(--ember);}
+.section-dark h2.sh2{color:#fff;}
+.section-dark h2.sh2 em{color:var(--ember2);}
+.divider{width:36px;height:2px;background:var(--ember);border-radius:1px;margin-bottom:1.5rem;}
+.lead{font-size:1.02rem;color:var(--muted);line-height:1.82;margin-bottom:1.75rem;max-width:580px;}
+.section-dark .lead{color:rgba(255,255,255,.45);}
 
-.reflection-card{background:var(--ink);border-radius:16px;padding:3rem;color:#fff;position:relative;overflow:hidden;}
-.reflection-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 80% 20%,rgba(124,58,237,0.18) 0%,transparent 60%);pointer-events:none;}
-.reflection-label{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:1.25rem;}
-.reflection-card h3{font-family:'DM Serif Display',serif;font-size:clamp(1.4rem,3vw,2rem);font-weight:400;color:#fff;margin-bottom:0.75rem;position:relative;z-index:1;}
-.reflection-card p{font-size:0.95rem;color:rgba(255,255,255,0.5);margin-bottom:1.75rem;line-height:1.75;font-weight:300;position:relative;z-index:1;}
-.reflection-textarea{width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:1rem 1.25rem;color:#fff;font-size:0.95rem;font-family:'DM Sans',sans-serif;resize:none;outline:none;line-height:1.65;min-height:100px;position:relative;z-index:1;}
-.reflection-save{padding:10px 24px;border-radius:6px;font-size:0.88rem;font-weight:600;cursor:pointer;border:none;background:var(--accent);color:#fff;transition:all 0.25s;font-family:'DM Sans',sans-serif;margin-top:1rem;}
-.reflection-save:hover{background:#6d28d9;}
-.finale-card{background:var(--ink);border-radius:16px;padding:4rem 3rem;text-align:center;position:relative;overflow:hidden;}
-.finale-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 70% at 50% 50%,rgba(124,58,237,0.1) 0%,transparent 65%);}
-.finale-icon{font-size:4rem;margin-bottom:1.5rem;display:block;position:relative;z-index:1;}
-.finale-card h2{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:400;color:#fff;margin-bottom:1rem;line-height:1.2;position:relative;z-index:1;}
-.finale-card h2 em{font-style:italic;color:#a78bfa;}
-.finale-card p{font-size:1rem;color:rgba(255,255,255,0.5);max-width:480px;margin:0 auto 2.5rem;line-height:1.75;font-weight:300;position:relative;z-index:1;}
-.btn-next{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#fff;padding:15px 36px;border-radius:6px;font-weight:600;font-size:0.95rem;text-decoration:none;transition:all 0.25s;font-family:'DM Sans',sans-serif;}
-.btn-next:hover{background:#6d28d9;transform:translateY(-2px);}
-.btn-back{display:inline-flex;align-items:center;gap:8px;background:transparent;color:rgba(255,255,255,0.45);padding:15px 24px;border-radius:6px;font-weight:500;font-size:0.95rem;border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.25s;}
-.btn-back:hover{color:#fff;border-color:rgba(255,255,255,0.3);}
-.finale-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;}
-.celebration-banner{background:linear-gradient(135deg,var(--ink),#2d2d44);border-radius:16px;padding:3rem 2rem;text-align:center;margin-bottom:2rem;position:relative;overflow:hidden;}
-.celebration-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 30% 20%,rgba(124,58,237,0.2) 0%,transparent 55%);pointer-events:none;}
-.celebration-tagline{font-family:'DM Serif Display',serif;font-size:clamp(1.5rem,4vw,2.5rem);color:#fff;margin-bottom:1rem;position:relative;z-index:1;}
-@media(max-width:768px){nav{padding:0 1.25rem;}.section{padding:80px 1.25rem 4rem;}}
+#hero{background:var(--ink);position:relative;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 70% 55% at 10% 75%,rgba(201,92,42,.17) 0%,transparent 55%),radial-gradient(ellipse 50% 60% at 90% 10%,rgba(42,82,64,.14) 0%,transparent 55%);pointer-events:none;}
+.hero-inner{max-width:800px;width:100%;position:relative;z-index:1;}
+.hero-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:2rem;}
+.e-chip{font-family:'DM Mono',monospace;font-size:.66rem;color:var(--ember2);letter-spacing:.14em;text-transform:uppercase;border:1px solid rgba(201,92,42,.35);padding:4px 10px;border-radius:4px;}
+.e-div{width:32px;height:1px;background:rgba(201,92,42,.38);}
+.e-note{font-family:'DM Mono',monospace;font-size:.66rem;color:rgba(255,255,255,.22);letter-spacing:.08em;}
+.hero-sub{font-size:1.05rem;color:rgba(255,255,255,.45);max-width:500px;line-height:1.8;margin-bottom:2rem;}
+.hero-promises{display:flex;flex-direction:column;gap:.6rem;margin-bottom:2.5rem;}
+.hero-promise{display:flex;align-items:flex-start;gap:.75rem;font-size:.92rem;color:rgba(255,255,255,.65);}
+.pdot{width:6px;height:6px;border-radius:50%;background:var(--ember);flex-shrink:0;margin-top:.52em;}
+.hero-cta{display:inline-flex;align-items:center;gap:10px;background:var(--ember);color:#fff;padding:14px 32px;border-radius:7px;font-weight:600;font-size:.95rem;cursor:pointer;text-decoration:none;border:none;font-family:'Instrument Sans',sans-serif;transition:all .2s;}
+.hero-cta:hover{background:var(--ember2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(201,92,42,.3);}
+.hero-time{margin-top:.85rem;font-size:.78rem;color:rgba(255,255,255,.2);}
+
+.stats-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:var(--r);overflow:hidden;margin:2rem 0;box-shadow:var(--shadow);}
+.stat-cell{background:#fff;padding:1.25rem 1rem;text-align:center;}
+.stat-num{font-family:'Fraunces',serif;font-size:clamp(1.8rem,4vw,2.6rem);font-weight:700;color:var(--ember);line-height:1;margin-bottom:.35rem;}
+.stat-label{font-size:.8rem;color:var(--muted);line-height:1.45;}
+
+.framing{background:#fff;border-left:3px solid var(--ember);border-radius:0 var(--r) var(--r) 0;padding:1.1rem 1.4rem;margin:1.5rem 0;font-size:.9rem;line-height:1.78;color:var(--text);box-shadow:var(--shadow);}
+.framing strong{color:var(--ink);}
+.framing-pine{border-color:var(--pine);background:rgba(42,82,64,.04);}
+
+.card{background:#fff;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);padding:1.5rem;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 24px;border-radius:7px;font-size:.9rem;font-weight:600;cursor:pointer;border:none;font-family:'Instrument Sans',sans-serif;transition:all .2s;text-decoration:none;line-height:1;}
+.btn-ink{background:var(--ink);color:#fff;}
+.btn-ink:hover{background:var(--ink2);transform:translateY(-1px);}
+.btn-ember{background:var(--ember);color:#fff;}
+.btn-ember:hover{background:var(--ember2);transform:translateY(-1px);}
+.btn-pine{background:var(--pine);color:#fff;}
+.btn-pine:hover{background:var(--pine2);}
+.btn-outline{background:transparent;color:var(--text);border:1.5px solid var(--border);}
+.btn-outline:hover{border-color:var(--ember);color:var(--ember);}
+.btn-ghost{background:transparent;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.15);}
+.btn-ghost:hover{color:#fff;border-color:rgba(255,255,255,.35);}
+.btn:disabled,.btn[disabled]{opacity:.4;cursor:not-allowed;transform:none!important;}
+.btn-sm{padding:8px 16px;font-size:.82rem;}
+.btn-lg{padding:14px 36px;font-size:1rem;}
+
+.field-label{font-family:'DM Mono',monospace;font-size:.66rem;font-weight:500;color:var(--ember);letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:.5rem;}
+.field-hint{font-size:.8rem;color:var(--muted);margin-bottom:.65rem;line-height:1.5;}
+textarea.fld,input.fld{width:100%;background:var(--paper);border:1.5px solid var(--border);border-radius:8px;padding:.85rem 1rem;font-size:.92rem;font-family:'Instrument Sans',sans-serif;color:var(--text);resize:vertical;outline:none;line-height:1.6;transition:border-color .2s,background .2s;}
+textarea.fld:focus,input.fld:focus{border-color:rgba(201,92,42,.45);background:#fff;}
+input.fld{resize:none;min-height:auto;}
+
+.market-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin:1.75rem 0;}
+@media(max-width:580px){.market-cards{grid-template-columns:1fr;}}
+.market-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:1.25rem;cursor:pointer;transition:all .22s;user-select:none;position:relative;}
+.market-card:hover{border-color:rgba(201,92,42,.4);transform:translateY(-3px);box-shadow:var(--shadow-md);}
+.market-card.picked{border-color:var(--ember);background:rgba(201,92,42,.04);box-shadow:0 0 0 3px rgba(201,92,42,.12);}
+.mc-badge{position:absolute;top:.75rem;right:.75rem;width:22px;height:22px;border-radius:50%;background:var(--ember);color:#fff;font-size:.72rem;display:none;align-items:center;justify-content:center;font-weight:700;}
+.market-card.picked .mc-badge{display:flex;}
+.mc-icon{font-size:1.75rem;margin-bottom:.6rem;}
+.mc-title{font-weight:600;font-size:.95rem;color:var(--ink);margin-bottom:.3rem;}
+.mc-desc{font-size:.82rem;color:var(--muted);line-height:1.55;}
+
+.app-name-wrap{display:flex;align-items:center;gap:.75rem;margin-top:1.25rem;}
+.app-name-prefix{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);white-space:nowrap;}
+input.app-name-fld{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;color:var(--ember);border:none;border-bottom:2.5px solid var(--border);background:transparent;outline:none;flex:1;padding:.4rem 0;transition:border-color .25s;}
+input.app-name-fld:focus{border-color:var(--ember);}
+input.app-name-fld::placeholder{color:var(--muted2);font-weight:300;}
+.name-preview{margin-top:1rem;padding:.85rem 1.25rem;border-radius:8px;background:var(--ink);display:none;animation:fadeUp .3s ease;}
+.name-preview-inner{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;color:#fff;}
+.name-preview-inner em{color:var(--ember2);font-style:italic;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+.interview-wrap{background:#fff;border-radius:var(--r-lg);border:1px solid var(--border);box-shadow:var(--shadow-md);overflow:hidden;}
+.interview-header{background:var(--ink);padding:1.25rem 1.5rem;display:flex;align-items:center;gap:.85rem;}
+.int-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--ember),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.int-header-text h4{font-family:'Fraunces',serif;font-size:1rem;font-weight:600;color:#fff;margin-bottom:.1rem;}
+.int-header-text p{font-size:.78rem;color:rgba(255,255,255,.38);}
+.int-progress{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:.4rem;}
+.int-step-label{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.3);letter-spacing:.1em;}
+.int-dots{display:flex;gap:4px;}
+.int-dot{width:18px;height:3px;border-radius:2px;background:rgba(255,255,255,.15);transition:background .3s;}
+.int-dot.done{background:var(--ember);}
+.int-dot.active{background:var(--ember2);}
+.chat-body{padding:1.25rem 1.5rem;min-height:260px;display:flex;flex-direction:column;gap:.75rem;max-height:420px;overflow-y:auto;}
+.chat-msg{display:flex;gap:.65rem;align-items:flex-start;animation:msgIn .35s ease both;}
+.chat-msg.user{flex-direction:row-reverse;}
+.msg-avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.85rem;}
+.msg-avatar.ai-av{background:linear-gradient(135deg,var(--ember),var(--gold));}
+.msg-avatar.user-av{background:var(--ink);color:#fff;font-size:.75rem;font-weight:700;}
+.bubble{max-width:85%;padding:.85rem 1.1rem;border-radius:12px;font-size:.9rem;line-height:1.65;}
+.bubble.ai{background:var(--paper);border:1px solid var(--border);border-bottom-left-radius:4px;color:var(--text);}
+.bubble.user{background:var(--ember);color:#fff;border-bottom-right-radius:4px;}
+.typing-bubble{background:var(--paper);border:1px solid var(--border);border-radius:12px;border-bottom-left-radius:4px;padding:.85rem 1.1rem;display:flex;gap:4px;align-items:center;}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--muted2);animation:tdot 1.3s infinite;}
+.typing-dot:nth-child(2){animation-delay:.2s;}
+.typing-dot:nth-child(3){animation-delay:.4s;}
+@keyframes tdot{0%,80%,100%{transform:scale(.6);opacity:.4;}40%{transform:scale(1);opacity:1;}}
+.chat-input-row{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.65rem;background:#fff;}
+.chat-input-row textarea{flex:1;background:var(--paper);border:1.5px solid var(--border);border-radius:8px;padding:.75rem 1rem;font-size:.9rem;font-family:'Instrument Sans',sans-serif;color:var(--text);resize:none;outline:none;line-height:1.55;min-height:44px;max-height:140px;overflow-y:auto;transition:border-color .2s;}
+.chat-input-row textarea:focus{border-color:rgba(201,92,42,.4);background:#fff;}
+.int-empty{text-align:center;color:var(--muted);font-size:.88rem;padding:2rem 1rem;line-height:1.7;}
+
+.prompt-generating{padding:2rem;text-align:center;}
+.prompt-spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--ember);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 1rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.prompt-generating p{font-size:.9rem;color:var(--muted);line-height:1.65;}
+.pgen-step{font-size:.82rem;color:var(--ember);font-weight:600;margin-top:.5rem;min-height:1.4em;}
+
+.prompt-quality-bar{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.1rem;}
+.pq-chip{font-size:.73rem;font-weight:600;padding:4px 9px;border-radius:999px;border:1px solid;}
+.pq-chip.green{color:var(--pine);border-color:rgba(42,82,64,.3);background:rgba(42,82,64,.06);}
+.pq-chip.amber{color:var(--gold);border-color:rgba(184,152,80,.35);background:rgba(184,152,80,.07);}
+pre.prompt-pre{background:var(--ink);color:rgba(255,255,255,.85);border-radius:var(--r);padding:1.5rem;font-size:.77rem;line-height:1.7;white-space:pre-wrap;max-height:440px;overflow-y:auto;font-family:'DM Mono',monospace;}
+
+.build-steps{display:flex;flex-direction:column;gap:1rem;margin:1.75rem 0;}
+.build-step{display:flex;gap:1.1rem;background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:1.35rem;box-shadow:var(--shadow);}
+.bs-num{flex-shrink:0;width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;font-weight:700;font-size:.9rem;display:flex;align-items:center;justify-content:center;}
+.bs-num.done-n{background:var(--pine);}
+.bs-body{flex:1;min-width:0;}
+.bs-title{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;color:var(--ink);margin-bottom:.45rem;}
+.bs-text{font-size:.88rem;color:var(--muted);line-height:1.65;}
+.bs-text a{color:var(--ember);font-weight:600;}
+.checklist{list-style:none;margin:.75rem 0 0;}
+.checklist li{display:flex;align-items:flex-start;gap:.55rem;margin-bottom:.55rem;font-size:.87rem;line-height:1.5;}
+.checklist li input{margin-top:.2em;accent-color:var(--pine);cursor:pointer;}
+.fix-box{background:var(--ink);color:rgba(255,255,255,.8);border-radius:8px;padding:1rem 1.25rem;font-size:.77rem;line-height:1.7;white-space:pre-wrap;font-family:'DM Mono',monospace;margin:.5rem 0;cursor:pointer;transition:background .2s;border:1px solid rgba(255,255,255,.08);}
+.fix-box:hover{background:#1f2d25;}
+.fix-label{font-size:.75rem;color:var(--muted);margin-bottom:.3rem;font-style:italic;}
+
+.defence-intro{background:linear-gradient(135deg,var(--ink),var(--ink2));border-radius:var(--r-lg);padding:2rem 1.75rem;margin-bottom:2rem;position:relative;overflow:hidden;}
+.defence-intro::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 55% at 80% 20%,rgba(201,92,42,.13) 0%,transparent 55%);pointer-events:none;}
+.defence-inner{position:relative;z-index:1;}
+.defence-intro h3{font-family:'Fraunces',serif;font-size:clamp(1.15rem,2.5vw,1.55rem);font-weight:600;color:#fff;margin-bottom:.6rem;}
+.defence-intro p{font-size:.9rem;color:rgba(255,255,255,.45);line-height:1.7;max-width:520px;}
+.defence-why{font-size:.8rem;color:rgba(255,255,255,.25);margin-top:.75rem;font-style:italic;}
+.defence-q{background:#fff;border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);padding:1.35rem;margin-bottom:1rem;}
+.defence-q-num{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--ember);letter-spacing:.14em;text-transform:uppercase;margin-bottom:.35rem;}
+.defence-q-title{font-weight:600;font-size:.95rem;color:var(--ink);margin-bottom:.3rem;}
+.defence-q-hint{font-size:.8rem;color:var(--muted);margin-bottom:.75rem;line-height:1.5;}
+
+.portfolio-card{background:var(--ink);border-radius:var(--r-lg);padding:2.5rem 2rem;position:relative;overflow:hidden;}
+.portfolio-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 65% 55% at 85% 10%,rgba(201,92,42,.15) 0%,transparent 55%),radial-gradient(ellipse 40% 40% at 10% 80%,rgba(42,82,64,.12) 0%,transparent 55%);pointer-events:none;}
+.pc-inner{position:relative;z-index:1;}
+.pc-label{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.28);letter-spacing:.16em;text-transform:uppercase;margin-bottom:.35rem;}
+.pc-appname{font-family:'Fraunces',serif;font-size:clamp(1.6rem,4vw,2.4rem);font-weight:700;color:#fff;margin-bottom:.35rem;}
+.pc-appname em{font-style:italic;color:var(--ember2);font-weight:400;}
+.pc-problem{font-size:.95rem;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:1.5rem;max-width:520px;}
+.pc-sections{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.25rem;}
+@media(max-width:560px){.pc-sections{grid-template-columns:1fr;}}
+.pc-section{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:1.1rem;}
+.pc-section-title{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.38);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.45rem;}
+.pc-section-text{font-size:.87rem;color:rgba(255,255,255,.75);line-height:1.6;}
+.pc-skills{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1.25rem;}
+.pc-skill{font-size:.74rem;font-weight:600;padding:4px 10px;border-radius:999px;background:rgba(201,92,42,.15);border:1px solid rgba(201,92,42,.3);color:var(--ember2);}
+.pc-footer{margin-top:1.75rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;}
+.pc-footer-label{font-size:.8rem;color:rgba(255,255,255,.28);}
+.pc-link{font-size:.87rem;font-weight:600;color:var(--ember2);word-break:break-all;}
+.pc-copy-note{font-size:.82rem;color:var(--muted);text-align:center;line-height:1.55;margin-top:1rem;}
+
+.final-card{background:var(--ink);border-radius:var(--r-lg);padding:4rem 2.5rem;text-align:center;position:relative;overflow:hidden;}
+.final-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 75% 65% at 50% 50%,rgba(201,92,42,.09) 0%,transparent 60%);pointer-events:none;}
+.final-inner{position:relative;z-index:1;}
+.final-icon{font-size:3.5rem;margin-bottom:1.25rem;display:block;}
+.final-card h2{font-family:'Fraunces',serif;font-size:clamp(1.7rem,4vw,2.8rem);font-weight:600;color:#fff;margin-bottom:.85rem;line-height:1.15;}
+.final-card h2 em{font-style:italic;color:var(--ember2);font-weight:300;}
+.final-card p{font-size:.95rem;color:rgba(255,255,255,.42);max-width:480px;margin:0 auto 2.5rem;line-height:1.8;}
+.final-stats{display:flex;justify-content:center;gap:clamp(1.5rem,5vw,3.5rem);flex-wrap:wrap;margin-bottom:2.5rem;}
+.fstat{text-align:center;}
+.fstat-num{font-family:'Fraunces',serif;font-size:clamp(2rem,5vw,3rem);font-weight:700;color:#fff;line-height:1;}
+.fstat-label{font-size:.74rem;color:rgba(255,255,255,.3);margin-top:.3rem;text-transform:uppercase;letter-spacing:.06em;}
+.final-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+
+.ok-flash{font-size:.82rem;color:var(--pine);font-weight:600;display:none;}
+.hidden{display:none!important;}
+.mt-1{margin-top:.5rem;}.mt-2{margin-top:1rem;}.mt-3{margin-top:1.5rem;}.mt-4{margin-top:2rem;}
+.mb-1{margin-bottom:.5rem;}.mb-2{margin-bottom:1rem;}.mb-3{margin-bottom:1.5rem;}
+.right{text-align:right;}.center{text-align:center;}
+
+.fade-up{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease;}
+.fade-up.visible{opacity:1;transform:translateY(0);}
+
+@media(max-width:640px){
+  nav{padding:0 1rem;}
+  .section{padding:80px 1rem 4rem;}
+  .stats-strip{grid-template-columns:1fr;}
+  .pc-footer{flex-direction:column;align-items:flex-start;}
+  .final-card{padding:3rem 1.5rem;}
+}
 </style>
 </head>
 <body>
+
 <div id="progress-bar"></div>
+
 <nav>
   <div class="nav-left">
-    <a href="/" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:var(--muted);margin-right:1.5rem;" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--muted)'">
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-      <span style="font-size:0.85rem;font-weight:500;">Etusivu</span>
+    <a href="/" class="nav-link">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Etusivu
     </a>
-    <a href="/module/moduuli-ai-verkkosivustotyokalut" style="display:flex;align-items:center;gap:0.5rem;text-decoration:none;color:var(--muted);margin-right:1rem;font-size:0.85rem;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-      <span>Edellinen</span>
-    </a>
-    <a href="/module/moduuli-ai-simulation-lab" style="display:flex;align-items:center;gap:0.5rem;text-decoration:none;color:var(--muted);margin-right:1rem;font-size:0.85rem;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">
-      <span>Seuraava</span>
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-    </a>
-    <span class="nav-module">Base44</span>
-    <span class="nav-title">Oma sovellus</span>
+    <span class="nav-badge">Base44</span>
+    <span class="nav-title">Rakenna ratkaisu</span>
   </div>
   <div class="nav-steps" id="navSteps"></div>
 </nav>
 
-<section class="section" id="hero" data-index="0">
+<!-- ═══ S0 HERO ═══ -->
+<section class="section section-dark" id="s0-hero" data-index="0">
+  <div class="hero-bg"></div>
   <div class="hero-inner">
     <div class="hero-eyebrow">
-      <span class="eyebrow-num">Base44</span>
-      <span class="eyebrow-line"></span>
-      <span class="eyebrow-label">Oma sovellus</span>
+      <span class="e-chip">Base44</span>
+      <span class="e-div"></span>
+      <span class="e-note">Oma sovellus · Oikea ongelma · Oikea lopputulos</span>
     </div>
-    <h1 class="hero-title">Rakenna oma sovellus — <em>Base44</em></h1>
-    <p class="hero-sub">Tunnin päästä sinulla on oikea toimiva sovellus. Linkki. Tietokanta. Painikkeet. Kaikki. Ja sinä rakensit sen.</p>
-    <a href="#b44-teoria" class="hero-cta">Aloita <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></a>
+    <h1 class="hero-h1">Sinulla on idea.<br>Nyt <em>rakennat sen.</em></h1>
+    <p class="hero-sub">Et katso tutoriaalia. Et harjoittele leikkiprojektilla. Rakennat oikean sovelluksen — Suomen työmarkkinoiden todelliseen ongelmaan.</p>
+    <div class="hero-promises">
+      <div class="hero-promise"><span class="pdot"></span><span>Tunnistat oikean ongelman ja annat sille nimi</span></div>
+      <div class="hero-promise"><span class="pdot"></span><span>Claude haastattelee sinut — 5 kysymystä, ei enempää</span></div>
+      <div class="hero-promise"><span class="pdot"></span><span>Saat ammattimaisen sovelluspromtin — animaatiot, värit, data, kaikki</span></div>
+      <div class="hero-promise"><span class="pdot"></span><span>Lopputulos: toimiva sovellus + portfolio-teksti jonka voit liittää CV:hen</span></div>
+    </div>
+    <a href="#s1-market" class="hero-cta">
+      Aloita — löydä ongelma
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+    </a>
+    <p class="hero-time">Arviolta 60–90 minuuttia · Tarvitset: Base44-tilin (ilmainen) + internetyhteys</p>
   </div>
 </section>
 
-<section class="section" id="b44-teoria" data-index="1">
-  <div class="section-inner fade-up">
-    <div class="section-label">Osa 1 — Johdanto</div>
-    <h2 class="section-h2">Sinun arjestasi — <em>oikea sovellus</em></h2>
+<!-- ═══ S1 MARKET ═══ -->
+<section class="section section-alt" id="s1-market" data-index="1">
+  <div class="inner fade-up">
+    <span class="label">Osa 1 — Tilanne</span>
+    <h2 class="sh2">Suomen työmarkkina<br>nyt — <em>totuus numeroina</em></h2>
     <div class="divider"></div>
-    <div class="prose">
-      <p>Tiedätkö mikä tuntuu hyvältä?</p>
-      <p>Kun näyttää jotain itse tehtyä jollekin ja sanoo: tein tämän tänään. Tunnissa. Ilman koodia.</p>
-      <p>Tässä moduulissa tapahtuu juuri se. Claude haastattelee sinut — ei kuivia kysymyksiä vaan oikea keskustelu arjestasi. Vastauksista syntyy 7 sovellusideaa jotka on räätälöity juuri sinulle. Valitset yhden josta sytyt. Rakennat sen. Saat linkin.</p>
-      <p>Se on siinä.</p>
-    </div>
-    <div class="path-steps-flow" role="list" aria-label="Moduulin vaiheet">
-      <div class="path-step-card" role="listitem">
-        <div class="path-step-num">Vaihe 1</div>
-        <h3 class="path-step-title">Haastattelu</h3>
-        <p class="path-step-desc">Claude kysyy sinulta enintään 10 kysymystä arjestasi</p>
+    <p class="lead">Ennen kuin rakennat jotain — täytyy ymmärtää mihin maailmaan rakennat. Nämä ovat oikeita lukuja vuodelta 2024–2025.</p>
+
+    <div class="stats-strip">
+      <div class="stat-cell">
+        <div class="stat-num">11,2%</div>
+        <div class="stat-label">Nuorisotyöttömyys Suomessa (2024)</div>
       </div>
-      <div class="path-step-card" role="listitem">
-        <div class="path-step-num">Vaihe 2</div>
-        <h3 class="path-step-title">Valinta</h3>
-        <p class="path-step-desc">Saat 7 ideaa — valitset yhden josta innostut</p>
+      <div class="stat-cell">
+        <div class="stat-num">1 / 3</div>
+        <div class="stat-label">Työnhakijaa ei saa vastausta hakemukseensa</div>
       </div>
-      <div class="path-step-card" role="listitem">
-        <div class="path-step-num">Vaihe 3</div>
-        <h3 class="path-step-title">Prompti</h3>
-        <p class="path-step-desc">Rakennat teknisen ohjeen — tarkennat sen ChatGPT:ssä</p>
-      </div>
-      <div class="path-step-card" role="listitem">
-        <div class="path-step-num">Vaihe 4</div>
-        <h3 class="path-step-title">Rakennus</h3>
-        <p class="path-step-desc">Liität ohjeen Base44:ään — sovellus syntyy</p>
-      </div>
-      <div class="path-step-card" role="listitem">
-        <div class="path-step-num">Vaihe 5</div>
-        <h3 class="path-step-title">Reflektio</h3>
-        <p class="path-step-desc">Tallennat linkin ja kolme ajatusta</p>
+      <div class="stat-cell">
+        <div class="stat-num">73%</div>
+        <div class="stat-label">Rekrytoijista käyttää AI-seulontaa (2025)</div>
       </div>
     </div>
-    <div class="framing-box">
-      Lopputulos on konkreettinen: toimiva sovellus joka ratkaisee tutun ongelman omassa elämässäsi — ja linkki jonka voit avata huomenna töissä.
+
+    <div class="framing">
+      <strong>Mitä tämä tarkoittaa sinulle?</strong> Työnhaku on muuttunut radikaalisti. Perinteinen tapa hakea töitä ei enää toimi yhtä hyvin — mutta samaan aikaan ne jotka osaavat käyttää tekoälyä ja rakentaa omia ratkaisuja ovat merkittävässä etulyöntiasemassa. Tänään opit molempia.
+    </div>
+
+    <p style="font-size:.95rem;color:var(--text);line-height:1.8;margin-bottom:1.5rem;">Alla on neljä todellista ongelmaa jotka vaivat suomalaisia työnhakijoita, työnantajia ja työvoimatoimistoja tänä päivänä. <strong>Lue ne rauhassa.</strong> Mieti onko jokin näistä tuttu — sinulle henkilökohtaisesti tai jollekin jonka tunnet.</p>
+
+    <div class="market-cards" id="marketCards">
+      <div class="market-card" onclick="pickMarket(this,'hakija')">
+        <div class="mc-badge">✓</div>
+        <div class="mc-icon">🔍</div>
+        <div class="mc-title">Työnhakija eksyy viidakkoon</div>
+        <div class="mc-desc">Satoja avoimia paikkoja, ei tiedä mistä aloittaa. CV lähtee mutta vastauksia ei tule. Ei palautetta, ei suuntaa, ei tukea.</div>
+      </div>
+      <div class="market-card" onclick="pickMarket(this,'osaaminen')">
+        <div class="mc-badge">✓</div>
+        <div class="mc-icon">🧩</div>
+        <div class="mc-title">Osaaminen ei kohtaa tarvetta</div>
+        <div class="mc-desc">Henkilöllä on taitoja — mutta ei osaa sanoittaa niitä. Työnantaja ei löydä sopivaa henkilöä vaikka etsii aktiivisesti.</div>
+      </div>
+      <div class="market-card" onclick="pickMarket(this,'mahanmuuttaja')">
+        <div class="mc-badge">✓</div>
+        <div class="mc-icon">🌍</div>
+        <div class="mc-title">Maahanmuuttajan polku on pimeä</div>
+        <div class="mc-desc">Kieltä opitaan, mutta suomalainen työelämä on mysteeri. Verkostot puuttuvat. Odotukset ovat epäselviä. Ovet eivät avaudu.</div>
+      </div>
+      <div class="market-card" onclick="pickMarket(this,'nuori')">
+        <div class="mc-badge">✓</div>
+        <div class="mc-icon">🎓</div>
+        <div class="mc-title">Nuori vastavalmistunut jumissa</div>
+        <div class="mc-desc">Tutkinto taskussa mutta ei työkokemusta. Jokainen paikka vaatii kokemusta — mutta mistä sen saa jos kukaan ei palkkaa ilman sitä?</div>
+      </div>
+    </div>
+
+    <div id="marketPickNote" class="framing hidden">
+      <strong>Hyvä valinta.</strong> Muista tämä ongelma-alue — se on koko sovelluksesi pohja. Seuraavaksi muotoilet ongelman omin sanoin ja annat sovelluksellesi nimen.
+    </div>
+
+    <div class="mt-4 right">
+      <button class="btn btn-ink" id="toStep2Btn" onclick="goToStep2()" disabled>Jatka — nimeä ongelma →</button>
     </div>
   </div>
 </section>
 
-<section class="section section-alt" id="b44-haastattelu" data-index="2">
-  <div class="section-inner fade-up">
-    <div class="section-label">Osa 2 — Claude-haastattelu</div>
-    <h2 class="section-h2">Löydä oma <em>rakennettava ideasi</em></h2>
+<!-- ═══ S2 PROBLEM NAMING ═══ -->
+<section class="section" id="s2-problem" data-index="2">
+  <div class="inner fade-up">
+    <span class="label">Osa 2 — Ongelma ja nimi</span>
+    <h2 class="sh2">Sinä nimeät<br><em>ongelman ja sovelluksen</em></h2>
     <div class="divider"></div>
-    <p class="lead">Paina aloitusta — ja keskustelu käynnistyy. Ei oikein tai väärin: vain sinä ja Claude, ja lopussa seitsemän ideaa jotka kuulostavat sinulta.</p>
-    <button type="button" class="practice-btn" id="b44StartInterviewBtn" onclick="b44StartInterview()">Aloita haastattelu</button>
-    <div class="b44-chat-wrap">
-      <p id="b44ChatEmpty" class="b44-chat-empty">Aloita kirjoittamalla — Claude odottaa 👆</p>
-      <p id="b44ChatTyping" class="b44-chat-typing">Claude miettii...</p>
-      <div class="chat-container" id="b44Chat" aria-live="polite"></div>
-      <div class="b44-input-row">
-        <input type="text" id="b44Input" placeholder="Kirjoita vastauksesi…" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();b44SendChat();}">
-        <button type="button" class="practice-btn" id="b44SendBtn" onclick="b44SendChat()" disabled>Lähetä</button>
+
+    <div class="framing mb-3">
+      Tässä ei ole oikeaa tai väärää vastausta. Kirjoita omin sanoin — ei hienoja sanoja, ei muodollista kieltä. Mitä oikeasti tapahtuu? Kenelle? Miksi juuri tämä on ongelma?
+    </div>
+
+    <div class="card mb-3">
+      <span class="field-label">Ongelma omin sanoin</span>
+      <p class="field-hint">Kirjoita vapaasti: mitä tapahtuu, kuka kärsii, miksi se on ongelma, miksi sitä ei ole vielä ratkaistu. Ei tarvitse olla täydellinen — kirjoita ensimmäinen rehellinen ajatuksesi.</p>
+      <textarea class="fld" id="problemDesc" rows="4" placeholder="Esim: Maahanmuuttajat Suomessa eivät tiedä mitä työnantajat oikeasti odottavat haastattelussa. Suomalainen työkulttuuri on erilainen kuin mistä he tulevat, eikä ole paikkaa missä sitä voisi turvallisesti harjoitella ennen oikeaa tilannetta..." oninput="checkStep2()"></textarea>
+
+      <span class="field-label" style="margin-top:1.25rem;">Ongelma yhdellä lauseella — terävänä</span>
+      <p class="field-hint">Tee siitä napakka. Yksi lause. Kuvittele sanovat sen ääneen huoneessa täynnä ihmisiä — pitääkö se pysähtyä kuuntelemaan?</p>
+      <input class="fld" id="problemOneliner" type="text" placeholder="Esim: Työnhakijat harjoittelevat haastattelua oikeassa haastattelussa — ja se on liian myöhäistä." oninput="checkStep2()">
+    </div>
+
+    <div class="card mb-3">
+      <span class="field-label">Sovelluksen nimi</span>
+      <p class="field-hint">Rohkea nimi on parempi kuin tylsä. Se voi olla suomeksi, englanniksi tai yhdistelmä. Anna nimen kertoa jotain siitä mitä sovellus lupaa.</p>
+      <div class="app-name-wrap">
+        <span class="app-name-prefix">📱</span>
+        <input class="app-name-fld" id="appName" type="text" placeholder="HaastatteluAI, JobBridge, DuuniValmennus, Työtutka..." oninput="updateNamePreview()">
+      </div>
+      <div class="name-preview" id="namePreview">
+        <div class="name-preview-inner" id="namePreviewInner"></div>
       </div>
     </div>
-    <p class="prose" id="b44IdeaInstr" style="display:none;margin-top:1.25rem;"><strong>Valitse yksi idea</strong> — sitten rakennamme sen yhdessä (Osa 3).</p>
-    <div id="b44IdeaHeadingWrap" class="b44-idea-heading-wrap" style="display:none;">
-      <h3 class="b44-idea-heading-main">✨ Tässä ovat sinun 7 ideaasi — rakennettu sen perusteella mitä kerroit</h3>
-      <p class="b44-idea-heading-sub">Älä valitse "paras" idea. Valitse se josta sytyt.</p>
+
+    <div class="framing framing-pine hidden" id="step2ReadyBox">
+      <strong style="color:var(--pine);">✓ Hyvä.</strong> Sinulla on nyt ongelma josta välität, terävä lause joka tiivistää sen, ja nimi joka tekee siitä sinun. Seuraavaksi Claude haastattelee sinut — 5 kysymystä — ja rakentaa täydellisen sovelluspromtin.
     </div>
-    <div class="b44-idea-grid" id="b44IdeaCards"></div>
-    <p id="b44IdeaPickCelebrate" class="b44-idea-pick-celebrate">Hyvä valinta. Tämä rakentuu seuraavaksi.</p>
-    <div id="b44SelectedIdeaBox" class="b44-selected-box"></div>
-    <button type="button" class="practice-btn" id="b44ContinueBtn" style="margin-top:1.25rem;" onclick="b44ContinueToPrompt()" disabled>Jatka rakennusohjeeseen →</button>
+
+    <div class="mt-4 right">
+      <button class="btn btn-ember" id="toStep3Btn" onclick="goToStep3()" disabled>Jatka haastatteluun →</button>
+    </div>
   </div>
 </section>
 
-<section class="section" id="s3-prompt" data-index="3">
-  <div class="section-inner fade-up">
-    <div class="section-label">Osa 3 — Rakennusohje</div>
-    <h2 class="section-h2">Kolme vaihetta — <em>sitten Base44 rakentaa</em></h2>
+<!-- ═══ S3 INTERVIEW ═══ -->
+<section class="section section-alt" id="s3-interview" data-index="3">
+  <div class="inner fade-up">
+    <span class="label">Osa 3 — Haastattelu</span>
+    <h2 class="sh2">Claude haastattelee<br><em>sinut — 5 kysymystä</em></h2>
     <div class="divider"></div>
-    <p class="lead">Tässä ei tarvita koodaustaitoja. Tarvitaan vain tarkat vastaukset neljään kysymykseen. Sivusto muuttaa ne automaattisesti ohjeeksi jota Base44 ymmärtää.</p>
+    <p class="lead">Claude tuntee jo ongelmasi. Nyt se haluaa ymmärtää syvemmälle — kuka käyttää sovellusta, miltä käyttö näyttää oikeassa elämässä, mikä tekee siitä oikeasti hyödyllisen. Vastaa rehellisesti ja omilla sanoillasi.</p>
 
-    <div class="b44-s3-steps-grid" aria-label="Mitä tässä osiossa tapahtuu">
-      <div class="b44-s3-step">
-        <div class="b44-s3-step-icon" aria-hidden="true">📝</div>
-        <h3 class="b44-s3-step-title">Täydennät 4 kenttää</h3>
-        <p class="b44-s3-step-body">Tarkennat ideaasi — mitä sovellus tekee, kenelle ja mikä on tärkein ominaisuus</p>
-      </div>
-      <div class="b44-s3-step">
-        <div class="b44-s3-step-icon" aria-hidden="true">⚡</div>
-        <h3 class="b44-s3-step-title">Sivusto luo ohjeen</h3>
-        <p class="b44-s3-step-body">OpenAI yhdistää haastattelusi ja kenttävastauksesi yhdeksi valmiiksi rakennusohjeeksi englanniksi</p>
-      </div>
-      <div class="b44-s3-step">
-        <div class="b44-s3-step-icon" aria-hidden="true">🏗️</div>
-        <h3 class="b44-s3-step-title">Viet Base44:ään</h3>
-        <p class="b44-s3-step-body">Kopioit ohjeen ja liität sen Base44:ään — sovellus rakentuu automaattisesti</p>
-      </div>
-    </div>
-
-    <div class="framing-box">Miksi englanniksi? Base44 ja muut rakennustyökalut toimivat parhaiten englanninkielisillä ohjeilla. Sinä täytät kentät suomeksi — sivusto kääntää automaattisesti.</div>
-
-    <div class="b44-s3-idea-wrap">
-      <div id="b44S3IdeaEmpty" class="b44-s3-empty">
-        <p>Valitse ensin jokin idea josta sytyt Osa 2:ssa — sitten palaat tänne ja täytät neljä kenttää.</p>
-        <a href="#b44-haastattelu" class="practice-btn" style="display:inline-flex;text-decoration:none;">← Takaisin haastatteluun</a>
-      </div>
-      <div id="b44S3IdeaCard" class="b44-s3-idea-card">
-        <span class="b44-s3-idea-label">Valitsemasi idea:</span>
-        <h3 id="b44S3IdeaName" class="b44-s3-idea-name"></h3>
-        <p id="b44S3IdeaDesc" class="b44-s3-idea-desc"></p>
-        <p id="b44S3IdeaSaves" class="b44-s3-idea-saves"></p>
-      </div>
-    </div>
-
-    <div class="tool-card">
-      <p class="prose" style="margin-bottom:1.25rem;font-size:1rem;">Vastaa näihin neljään kysymykseen omasta ideastasi. Älä mieti liikaa — kirjoita ensimmäinen rehellinen vastaus.</p>
-
-      <p class="practice-label">Mitä tietoa sovellus tallentaa tai käsittelee?</p>
-      <textarea class="practice-textarea" id="b44InData" rows="3" placeholder="Esim: Päivittäiset kotitehtävät, kellonajat ja onko tehty vai ei"></textarea>
-
-      <p class="practice-label">Mitä teet sovelluksella — lista konkreettisista toiminnoista</p>
-      <textarea class="practice-textarea" id="b44InActions" rows="3" placeholder="Esim: Lisään tehtävän, merkitsen tehdyksi, saan muistutuksen puhelimeen, näen mitä on tekemättä"></textarea>
-
-      <p class="practice-label">Kenelle sovellus on?</p>
-      <textarea class="practice-textarea" id="b44InWho" rows="2" placeholder="Esim: Vain minulle — henkilökohtainen käyttö joka päivä"></textarea>
-
-      <p class="practice-label">Yksi asia jota ilman sovellus ei toimi — pakollinen ominaisuus</p>
-      <textarea class="practice-textarea" id="b44InMust" rows="2" placeholder="Esim: Muistutukset tiettyyn kellonaikaan — ilman niitä en avaa sovellusta"></textarea>
-
-      <p class="practice-label">Millä laitteella käytät sovellusta eniten?</p>
-      <div class="b44-chip-row">
-        <button type="button" class="b44-chip active" data-dev="Molemmat" onclick="b44SetDevice('Molemmat')">Molemmat</button>
-        <button type="button" class="b44-chip" data-dev="Puhelin ensisijainen" onclick="b44SetDevice('Puhelin ensisijainen')">Puhelin ensisijainen</button>
-        <button type="button" class="b44-chip" data-dev="Tietokone ensisijainen" onclick="b44SetDevice('Tietokone ensisijainen')">Tietokone ensisijainen</button>
-      </div>
-
-      <button type="button" class="practice-btn" onclick="b44BuildPrompt()">⚡ Luo rakennusohje — tämä kestää 10 sekuntia</button>
-      <p class="b44-btn-hint">Hetken päästä sinulla on englanninkielinen ohje jota voit liittää suoraan Base44:ään.</p>
-    </div>
-
-    <p class="practice-label" style="margin-top:1.75rem;">Valmis rakennusohje — lue läpi ennen kopioimista</p>
-    <p id="b44PromptLoading" class="b44-prompt-loading" aria-live="polite"></p>
-    <p id="b44PromptReadyBanner" class="b44-prompt-ready-banner">✅ Ohje valmis — lue läpi ja kopioi</p>
-    <p id="b44PromptPostGen" class="b44-prompt-postgen" role="status">Tämä on ohje jonka Base44 saa. Lue se läpi — tarkista että se kuvaa ideaasi oikein. Jos jokin puuttuu tai on väärin, voit muokata kenttiä ja luoda uudelleen.</p>
-    <pre class="b44-prompt-out" id="b44PromptOut">Ohje ilmestyy tähän kun painat nappia ⚡</pre>
-    <div class="b44-copy-row">
-      <button type="button" class="practice-btn" id="b44CopyPromptBtn" onclick="b44CopyPrompt(this)">📋 Kopioi rakennusohje</button>
-    </div>
-
-    <details class="b44-chatgpt-details">
-      <summary>⚡ Valinnainen: paranna ohjetta ChatGPT:ssä ennen rakentamista — suositeltu</summary>
-      <div class="b44-chatgpt-body">
-        <div class="framing-box" style="margin-bottom:1.25rem;">
-          <strong style="display:block;margin-bottom:0.5rem;color:var(--ink);">Miksi tämä kannattaa?</strong>
-          OpenAI:n luoma ohje on hyvä lähtökohta. ChatGPT voi tehdä siitä vielä paremman — tiukentaa epämääräisiä kohtia, lisätä puuttuvia yksityiskohtia ja varmistaa että kaikki toiminnallisuudet on kuvattu selkeästi. Tämä vie 3 minuuttia ja tekee sovelluksesta merkittävästi paremman.
+    <div class="interview-wrap">
+      <div class="interview-header">
+        <div class="int-avatar">🤖</div>
+        <div class="int-header-text">
+          <h4>Claude — sovelluskehittäjäsi</h4>
+          <p>Syvähaastattelu · max 5 kysymystä</p>
         </div>
-        <p class="practice-label">Kopioi tämä ChatGPT:hen ensin:</p>
-        <div class="copy-fix b44-template-box" tabindex="0" role="button" onclick="b44CopyChatgptTemplate(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();b44CopyChatgptTemplate(this);}">Parannat Base44-rakennusohjetta. Tehtäväsi: tiukenna epämääräiset kohdat, varmista että kaikki toiminnallisuudet on kuvattu konkreettisesti, säilytä tekninen checklist kokonaan, älä lyhennä teknisiä vaatimuksia. Paranna tämä ohje:
-[liitä rakennusohje tähän]</div>
-        <p class="b44-field-helper" style="margin-top:0.5rem;">Klikkaa laatikkoa kopioidaksesi mallin leikepöydälle — liitä sitten rakennusohje viestin loppuun ChatGPT:ssä.</p>
-        <ol class="prose" style="margin:1rem 0 1.25rem 1.1rem;font-size:0.9rem;line-height:1.7;">
-          <li>Kopioi yllä oleva viesti ChatGPT:hen</li>
-          <li>Liitä rakennusohjeesi sen perään</li>
-          <li>Lue ChatGPT:n parannettu versio läpi</li>
-          <li>Jos se on parempi — käytä sitä Base44:ssä</li>
-          <li>Jos alkuperäinen on parempi — käytä alkuperäistä</li>
-        </ol>
-        <p class="practice-label">Liitä parannettu versio tähän (valinnainen — tallentuu seuraavaan osioon)</p>
-        <textarea class="practice-textarea" id="b44RefinedPrompt" rows="8" placeholder="Liitä ChatGPT:n parannettu versio tähän jos käytit sitä…" style="background:var(--paper);color:var(--text);"></textarea>
-        <button type="button" class="practice-btn" style="margin-top:0.75rem;background:var(--accent2);" onclick="b44SaveRefined()">Tallenna parannettu ohje</button>
-        <p class="ok-msg" id="b44RefinedOk">Tallennettu — voit palata tähän myöhemmin samalta laitteelta.</p>
+        <div class="int-progress">
+          <span class="int-step-label" id="intStepLabel">0 / 5</span>
+          <div class="int-dots">
+            <div class="int-dot" id="d0"></div>
+            <div class="int-dot" id="d1"></div>
+            <div class="int-dot" id="d2"></div>
+            <div class="int-dot" id="d3"></div>
+            <div class="int-dot" id="d4"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-body" id="chatBody">
+        <div class="int-empty" id="chatEmpty">
+          Paina alla olevaa nappia aloittaaksesi haastattelu.<br>
+          <span style="font-size:.82rem;color:var(--muted2);">Claude lukee jo nyt ongelmasi ja valmistautuu kysymyksiin.</span>
+        </div>
+      </div>
+
+      <div class="chat-input-row" id="chatInputRow" style="display:none;">
+        <textarea id="chatInput" placeholder="Kirjoita vastauksesi…" rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,140)+'px';"></textarea>
+        <button class="btn btn-ink" id="chatSendBtn" onclick="sendChat()">Lähetä</button>
+      </div>
+    </div>
+
+    <div class="mt-4 center">
+      <button class="btn btn-ember btn-lg" id="startInterviewBtn" onclick="startInterview()">Aloita haastattelu →</button>
+      <button class="btn btn-pine btn-lg hidden" id="toPromptBtn" onclick="goToPrompt()">Luo sovelluspromti →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S4 PROMPT ═══ -->
+<section class="section" id="s4-prompt" data-index="4">
+  <div class="inner fade-up">
+    <span class="label">Osa 4 — Sovelluspromti</span>
+    <h2 class="sh2">Claude rakentaa<br><em>ammattitason ohjeen</em></h2>
+    <div class="divider"></div>
+    <p class="lead">Tämä ohje menee suoraan Base44:ään. Claude on lisännyt kaiken mitä aloittelija yleensä unohtaa — animaatiot, väripaletti, esimerkkidata, käyttöliittymälogiikka. Lue läpi ennen kuin kopioit.</p>
+
+    <div class="card">
+      <div id="promptGenerating" style="display:none;padding:2rem;text-align:center;">
+        <div class="prompt-spinner"></div>
+        <p style="color:var(--muted);font-size:.9rem;line-height:1.7;">Claude lukee haastatteluasi ja rakentaa täydellistä sovelluspromtia.<br>Tämä kestää 20–40 sekuntia.</p>
+        <p class="pgen-step" id="pgenStep">Analysoidaan ongelmaa...</p>
+      </div>
+
+      <div id="promptOutWrap" style="display:none;">
+        <div class="prompt-quality-bar" id="promptQualityBar"></div>
+        <pre class="prompt-pre" id="promptPre"></pre>
+        <div style="display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;margin-top:.85rem;">
+          <button class="btn btn-ember" onclick="copyPrompt()">📋 Kopioi koko ohje</button>
+          <button class="btn btn-outline btn-sm" onclick="regeneratePrompt()">↩ Luo uudelleen</button>
+          <span class="ok-flash" id="copyConfirm" style="color:var(--pine);">✓ Kopioitu leikepöydälle</span>
+        </div>
+      </div>
+
+      <div id="promptIdle" style="text-align:center;padding:2rem;">
+        <p style="color:var(--muted);font-size:.9rem;">Haastattelu täytyy tehdä ensin — palaa Osaan 3.</p>
+        <a href="#s3-interview" class="btn btn-outline btn-sm" style="margin-top:.75rem;display:inline-flex;">← Takaisin haastatteluun</a>
+      </div>
+    </div>
+
+    <details style="margin-top:1.25rem;background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;">
+      <summary style="padding:1rem 1.25rem;cursor:pointer;font-weight:600;font-size:.9rem;background:var(--paper2);list-style:none;display:flex;justify-content:space-between;align-items:center;">⚡ Valinnainen: paranna promptia ChatGPT:ssä ennen Base44:ää <span style="color:var(--muted);font-size:.82rem;">▸</span></summary>
+      <div style="padding:1.25rem 1.5rem;">
+        <div class="framing mb-2">Vie Claude-promtisi ChatGPT:hen ja kirjoita: <em>"Tarkenna tätä Base44-promptia — lisää puuttuvat toiminnot, varmista että animaatiot ja esimerkkidata on kuvattu yksityiskohtaisesti. Älä lyhennä mitään."</em> Jos parannettu versio on parempi — käytä sitä.</div>
+        <span class="field-label">Liitä parannettu versio tähän (valinnainen)</span>
+        <textarea class="fld" id="refinedPrompt" rows="5" placeholder="Liitä ChatGPT:n versio tähän jos se oli selvästi parempi..."></textarea>
+        <div style="display:flex;align-items:center;gap:.75rem;margin-top:.75rem;">
+          <button class="btn btn-ink btn-sm" onclick="saveRefined()">Tallenna parannettu versio</button>
+          <span class="ok-flash" id="refinedOk">✓ Tallennettu</span>
+        </div>
       </div>
     </details>
 
-    <div class="b44-cta-build">
-      <button type="button" class="practice-btn" onclick="b44GoToBuild()">Jatka rakentamiseen →</button>
-      <p class="b44-cta-sub">Vie rakennusohje Base44:ään — seuraavassa osiossa ohjataan askel askeleelta</p>
+    <div class="mt-4 right">
+      <button class="btn btn-pine btn-lg" id="toBuildBtn" onclick="goToBuild()">Jatka rakentamiseen →</button>
     </div>
   </div>
 </section>
 
-<section class="section section-alt" id="b44-rakennus" data-index="4">
-  <div class="section-inner fade-up">
-    <div class="section-label">Osa 4 — Base44</div>
-    <h2 class="section-h2">Nyt tapahtuu <em>se hauska osa</em></h2>
+<!-- ═══ S5 BUILD ═══ -->
+<section class="section section-alt" id="s5-build" data-index="5">
+  <div class="inner fade-up">
+    <span class="label">Osa 5 — Rakennus</span>
+    <h2 class="sh2">Nyt tapahtuu<br><em>se oikea juttu</em></h2>
     <div class="divider"></div>
-    <p class="lead">Kopioit ohjeen. Avaat Base44:n. Liität. Painat enter. Odota 60 sekuntia.<br>Sitten sinulla on toimiva sovellus jossa on oikea tietokanta, oikeat painikkeet ja julkinen linkki. Tehty. Tunnissa.</p>
+    <p class="lead">Kopioit ohjeen. Avaat Base44:n. Liität. Painat enter. Odota 60 sekuntia. Sitten sinulla on toimiva sovellus — oikea tietokanta, animaatiot, painikkeet, julkinen linkki.</p>
 
-    <div class="b44-wow-banner">
-      <div class="b44-wow-banner-inner">
-        <span class="b44-wow-icon" aria-hidden="true">✨</span>
-        <div>
-          <strong>Mitä odottaa?</strong> Base44 näyttää usein <em>esikatselun</em> tai jaetun näkymän: toisella puolella syntyvää rakennetta, toisella miltä sovellus näyttää. Etsi <strong>Preview</strong>, <strong>Share</strong> tai vastaava kun generointi päättyy — silloin näet konkreettisesti mitä sait aikaan.
+    <div class="build-steps">
+      <div class="build-step">
+        <div class="bs-num">1</div>
+        <div class="bs-body">
+          <div class="bs-title">Avaa Base44 ja kirjaudu</div>
+          <div class="bs-text">Mene <a href="https://base44.com" target="_blank" rel="noopener">base44.com</a> uudessa välilehdessä. Luo ilmainen tili. Vahvista sähköposti jos vaaditaan. Ilmainen tili riittää täysin.</div>
+        </div>
+      </div>
+      <div class="build-step">
+        <div class="bs-num">2</div>
+        <div class="bs-body">
+          <div class="bs-title">Luo uusi projekti</div>
+          <div class="bs-text">Paina <strong>New App</strong>. Anna sille nimeksi sovelluksesi nimi jonka valitsit Osassa 2. Näet tyhjän projektin ja suuren tekstikentän.</div>
+        </div>
+      </div>
+      <div class="build-step">
+        <div class="bs-num">3</div>
+        <div class="bs-body">
+          <div class="bs-title">Liitä promti ja rakenna</div>
+          <div class="bs-text">Kopioi rakennusohjeesi Osasta 4 — käytä ChatGPT:n parantamaa versiota jos teit sen. Liitä se Base44:n tekstikenttään. Paina <strong>Enter</strong> tai <strong>Build</strong>. <strong>Älä sulje välilehteä</strong> — odota 30–90 sekuntia. Näet koodia generoituvan reaaliajassa — tämä on normaalia.</div>
+        </div>
+      </div>
+      <div class="build-step">
+        <div class="bs-num">4</div>
+        <div class="bs-body">
+          <div class="bs-title">Testaa — tarkista nämä ennen kuin jatkat</div>
+          <ul class="checklist">
+            <li><label><input type="checkbox"> Latautuuko sovellus ilman virheilmoitusta?</label></li>
+            <li><label><input type="checkbox"> Lisää yksi testidata — tallentuuko se?</label></li>
+            <li><label><input type="checkbox"> Avaa puhelimella — toimiiko mobiili?</label></li>
+            <li><label><input type="checkbox"> Näkyvätkö animaatiot ja siirtymät?</label></li>
+            <li><label><input type="checkbox"> Näyttääkö ammattimaiselta — olisitko ylpeä näyttämään tämän?</label></li>
+          </ul>
+        </div>
+      </div>
+      <div class="build-step">
+        <div class="bs-num">5</div>
+        <div class="bs-body">
+          <div class="bs-title">Korjaa jos jokin ei toimi</div>
+          <div class="bs-text mb-2" style="margin-bottom:.75rem;">Kopioi korjausohje suoraan Base44:n kenttään — ei tarvitse aloittaa alusta. Klikkaa kopioidaksesi:</div>
+          <p class="fix-label">Jos lataus näyttää tyhjää tai virheen:</p>
+          <div class="fix-box" onclick="copyFix(this,'fix1')"><span id="fix1">Fix loading states: add a spinner to all data fetching actions. Show a friendly empty state message when lists are empty instead of a blank screen. Make sure errors show human-readable messages not technical codes.</span></div>
+          <p class="fix-label" style="margin-top:.75rem;">Jos lomake ei tallenna:</p>
+          <div class="fix-box" onclick="copyFix(this,'fix2')"><span id="fix2">Fix the form validation: prevent submission if required fields are empty, show inline error messages below each field. After successful save show a green success toast notification that fades after 3 seconds.</span></div>
+          <p class="fix-label" style="margin-top:.75rem;">Jos mobiili on rikki tai ulkoasu sekava:</p>
+          <div class="fix-box" onclick="copyFix(this,'fix3')"><span id="fix3">Fix the mobile layout: all content must fit on screen without horizontal scrolling. Navigation should be a bottom tab bar on mobile. All buttons at least 44px tall for touch. Add smooth page transition animations between all views.</span></div>
+        </div>
+      </div>
+      <div class="build-step">
+        <div class="bs-num done-n">6</div>
+        <div class="bs-body">
+          <div class="bs-title">Tallenna julkinen linkki</div>
+          <div class="bs-text" style="margin-bottom:.85rem;">Kun sovellus toimii — etsi Base44:ssä <strong>Publish</strong>, <strong>Share</strong> tai <strong>Deploy</strong>. Kopioi julkinen URL alle.</div>
+          <span class="field-label">Sovelluksen julkinen URL</span>
+          <input class="fld" id="appUrl" type="url" placeholder="https://..." oninput="checkAppUrl()">
+          <div style="display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;margin-top:.75rem;">
+            <button class="btn btn-pine" onclick="saveAppUrl()">Tallenna URL</button>
+            <span class="ok-flash" id="urlOk">✓ Linkki tallennettu — sovelluksesi on olemassa</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="b44-build-step-card">
-      <div class="b44-build-step-num">1</div>
-      <div class="b44-build-step-body">
-        <h3 class="b44-build-step-title">Avaa Base44 ja kirjaudu sisään</h3>
-        <p class="prose" style="font-size:0.92rem;margin-bottom:0.75rem;">Mene <a href="https://base44.com" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600;">base44.com</a> uudessa välilehdessä. Luo ilmainen tili jos sinulla ei vielä ole. Vahvista sähköposti jos vaaditaan.</p>
-        <div class="framing-box" style="margin:0;font-size:0.88rem;">Base44:n ilmainen tili riittää täysin — sinulla ei tarvitse olla maksullista tilausta.</div>
-      </div>
-    </div>
-
-    <div class="b44-build-step-card">
-      <div class="b44-build-step-num">2</div>
-      <div class="b44-build-step-body">
-        <h3 class="b44-build-step-title">Luo uusi projekti</h3>
-        <p class="prose" style="font-size:0.92rem;margin:0;">Kirjautuneena: paina <strong>New App</strong> tai <strong>Create project</strong>. Anna projektille nimi — voit käyttää sovelluksesi nimeä. Näet tyhjän projektin ja suuren tekstikentän.</p>
-      </div>
-    </div>
-
-    <div class="b44-build-step-card">
-      <div class="b44-build-step-num">3</div>
-      <div class="b44-build-step-body">
-        <h3 class="b44-build-step-title">Liitä prompti ja rakenna</h3>
-        <p class="prose" style="font-size:0.92rem;margin-bottom:0.75rem;">Kopioi tallennettu rakennusohjeesi — käytä ChatGPT:n parantamaa versiota jos teit sen, muuten käytä alkuperäistä. Liitä se Base44:n tekstikenttään. Paina <strong>Enter</strong> tai <strong>Build</strong>. Odota 30–90 sekuntia — <strong>älä sulje välilehteä</strong>.</p>
-        <div class="framing-box" style="margin:0;font-size:0.88rem;">Kun Base44 rakentaa: sivulla näkyy koodia generoituvan reaaliajassa. Tämä on normaalia — anna sen lopettaa ennen kuin teet mitään.</div>
-      </div>
-    </div>
-
-    <div class="b44-build-step-card">
-      <div class="b44-build-step-num">4</div>
-      <div class="b44-build-step-body">
-        <h3 class="b44-build-step-title">Testaa ennen kuin tallennat linkin</h3>
-        <p class="prose" style="font-size:0.92rem;margin-bottom:0.75rem;">Kun sovellus on valmis — testaa nämä asiat ennen kuin jatkat:</p>
-        <ul class="b44-checklist">
-          <li><label><input type="checkbox"> Avaa sovellus — latautuuko se ilman virhettä?</label></li>
-          <li><label><input type="checkbox"> Lisää yksi testi-kohde lomakkeella — tallentuuko se?</label></li>
-          <li><label><input type="checkbox"> Avaa sovellus puhelimella — toimiiko se?</label></li>
-          <li><label><input type="checkbox"> Tyhjennä lista tai poista kohde — toimiiko se?</label></li>
-          <li><label><input type="checkbox"> Näyttääkö se ammattimaiselta — vai tarvitseeko korjata?</label></li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="b44-build-step-card">
-      <div class="b44-build-step-num">5</div>
-      <div class="b44-build-step-body">
-        <h3 class="b44-build-step-title">Korjaa jos jokin ei toimi</h3>
-        <p class="prose" style="font-size:0.92rem;margin:0;">Jos jokin ei toimi, kirjoita korjaus suoraan Base44:n tekstikenttään — ei tarvitse aloittaa alusta. Käytä yllä olevia korjauskehotuksia tai kuvaile ongelma omin sanoin englanniksi.</p>
-      </div>
-    </div>
-
-    <div class="b44-build-step-card">
-      <div class="b44-build-step-num">6</div>
-      <div class="b44-build-step-body">
-        <h3 class="b44-build-step-title">Tallenna julkinen linkki</h3>
-        <p class="prose" style="font-size:0.92rem;margin:0;">Kun sovellus toimii: etsi Base44:ssä <strong>Publish</strong>, <strong>Share</strong> tai <strong>Deploy</strong> -painike. Kopioi julkinen URL. Liitä se alla olevaan kenttään.</p>
-      </div>
-    </div>
-
-    <div class="tool-card" style="margin-top:2rem;">
-      <h4 style="margin-bottom:1rem;font-size:1rem;">Korjauskehotukset (kopioi Base44:ään)</h4>
-      <p class="b44-field-helper" style="margin-bottom:0.35rem;">Jos lataus näkyy tyhjänä tai virheenä:</p>
-      <pre class="b44-fix-pre" id="b44FixPre1">Lisää latausspinnerit kaikkiin toimintoihin jotka hakevat dataa. Näytä ystävällinen tyhjätila-viesti kun lista on tyhjä — älä näytä virheilmoitusta.</pre>
-      <button type="button" class="practice-btn" style="margin-bottom:1.25rem;padding:8px 18px;font-size:0.85rem;" data-label="📋 Kopioi" onclick="b44CopyFixPre(this,'b44FixPre1')">📋 Kopioi</button>
-
-      <p class="b44-field-helper" style="margin-bottom:0.35rem;">Jos lomakkeen tallennus ei toimi:</p>
-      <pre class="b44-fix-pre" id="b44FixPre2">Lisää lomakevalidointi — estä tallennus jos pakollinen kenttä on tyhjä. Näytä selkeä virheilmoitus kentän alla jos kenttä puuttuu.</pre>
-      <button type="button" class="practice-btn" style="margin-bottom:1.25rem;padding:8px 18px;font-size:0.85rem;" data-label="📋 Kopioi" onclick="b44CopyFixPre(this,'b44FixPre2')">📋 Kopioi</button>
-
-      <p class="b44-field-helper" style="margin-bottom:0.35rem;">Jos ulkoasu näyttää sekavalta tai mobiili on rikki:</p>
-      <pre class="b44-fix-pre" id="b44FixPre3">Korjaa ulkoasu: tumma sivupalkki ja vaalea sisältöalue. Lisää pehmeä sivusiirtymäanimaatio kun navigoi sivujen välillä. Varmista että mobiililla kaikki mahtuu ruudulle ilman vaakasuuntaista scrollausta.</pre>
-      <button type="button" class="practice-btn" style="padding:8px 18px;font-size:0.85rem;" data-label="📋 Kopioi" onclick="b44CopyFixPre(this,'b44FixPre3')">📋 Kopioi</button>
-    </div>
-
-    <div class="tool-card">
-      <p class="practice-label">Sovelluksen julkinen URL</p>
-      <input type="text" class="practice-textarea" id="b44AppUrl" placeholder="Liitä Base44-linkki tähän kun sovellus on valmis" style="min-height:auto;">
-      <button type="button" class="practice-btn" onclick="b44SaveAppUrl()">Tallenna URL (näkyy juhlaosion linkissä)</button>
-      <p class="ok-msg" id="b44UrlOk" style="display:none;">🔗 Linkki tallennettu — sovelluksesi on olemassa</p>
-      <div id="b44UrlCelebration" class="b44-url-celebration">
-        <div class="b44-url-celebration-title">🎉 Se on elossa.</div>
-        <a id="b44UrlCelebrationLink" class="b44-url-celebration-link" href="#" target="_blank" rel="noopener"></a>
-        <p class="b44-url-celebration-sub">Lähetä tämä linkki jollekin tänään. Katso heidän reaktionsa. Se on paras osa.</p>
-      </div>
+    <div class="mt-4 right">
+      <button class="btn btn-ember btn-lg" id="toDefenceBtn" onclick="goToDefence()" disabled>Jatka — puolusta ideaasi →</button>
     </div>
   </div>
 </section>
 
-<section class="section" id="b44-elossa" data-index="5">
-  <div class="section-inner fade-up">
-    <div class="section-label">Jatkuvuus</div>
-    <h2 class="section-h2">Miten käytät tätä <em>oikeasti</em></h2>
+<!-- ═══ S6 DEFENCE + PORTFOLIO ═══ -->
+<section class="section" id="s6-defence" data-index="6">
+  <div class="inner fade-up">
+    <span class="label">Osa 6 — Puolustus ja portfolio</span>
+    <h2 class="sh2">Puolusta ideaasi —<br><em>kuin oikealle työnantajalle</em></h2>
     <div class="divider"></div>
-    <p class="lead">Sovellus jota ei käytetä on turhake. Sovellus jota käytetään kasvaa.</p>
-    <div class="b44-elossa-grid">
-      <div class="b44-elossa-card">
-        <div class="b44-elossa-icon" aria-hidden="true">📅</div>
-        <h3 class="b44-elossa-title">Avaa se huomenna</h3>
-        <p class="b44-elossa-text">Lisää sovelluksesi linkki selaimen kirjanmerkkeihin nyt. Avaa se huomenna töissä tai kotona ja lisää oikeaa dataa ensimmäistä kertaa.</p>
-      </div>
-      <div class="b44-elossa-card">
-        <div class="b44-elossa-icon" aria-hidden="true">🛠️</div>
-        <h3 class="b44-elossa-title">Paranna kun ärsyttää</h3>
-        <p class="b44-elossa-text">Kun jokin puuttuu tai ärsyttää — avaa Base44 ja kirjoita korjaus. Jokainen parannus vie 2 minuuttia.</p>
-      </div>
-      <div class="b44-elossa-card">
-        <div class="b44-elossa-icon" aria-hidden="true">💡</div>
-        <h3 class="b44-elossa-title">Rakenna seuraava kun idea syntyy</h3>
-        <p class="b44-elossa-text">Kirjoita seuraava idea muistiin heti kun se syntyy. Paras aika rakentaa on kun ongelma on tuore ja ärsyttävä.</p>
-      </div>
-      <div class="b44-elossa-card">
-        <div class="b44-elossa-icon" aria-hidden="true">🤝</div>
-        <h3 class="b44-elossa-title">Jaa jos se auttaa muita</h3>
-        <p class="b44-elossa-text">Jos sovelluksesi ratkaisee ongelman — todennäköisesti kollegallasi on sama ongelma. Lähetä linkki.</p>
+
+    <div class="defence-intro">
+      <div class="defence-inner">
+        <h3>Miksi tämä on tärkeintä</h3>
+        <p>Kuka tahansa voi liittää promptin ja katsoa mitä syntyy. Mutta sinä tiedät miksi tämä sovellus on olemassa. Sinä tiedät kenet se auttaa. Sinä tiedät mikä ongelma se ratkaisee — ja miten. Se on ajattelua jota ei voi ulkoistaa tekoälylle. Juuri sen työnantaja haluaa kuulla.</p>
+        <p class="defence-why">Vastauksesi muuttuvat automaattisesti portfolio-tekstiksi jonka voit liittää CV:hen, LinkedIn-profiiliin tai ottaa mukaan haastatteluun.</p>
       </div>
     </div>
-    <div class="b44-challenge-week-card">
-      <h3 class="b44-challenge-week-title">🎨 Haaste ensi viikolle</h3>
-      <p class="prose" style="font-size:0.92rem;color:var(--text);margin-bottom:1rem;line-height:1.65;">Etsi yksi asia arjessasi tai töissäsi joka tuntuu turhalta. Kirjoita se ylös. Tule Base44:ään. Rakenna sille ratkaisu. Jaa linkki jollekin. Luovuus ei ole lahjakkuutta — se on harjoitus. Teit tänään ensimmäisen toiston.</p>
-      <label class="b44-week-label"><input type="checkbox" id="b44WeekChallengeCb" onchange="b44WeekChallengeCheck()"> Otan haasteen vastaan ✓</label>
-      <p id="b44WeekChallengeMsg" class="b44-week-msg" style="display:none;">Hyvä. Nähdään ensi viikolla.</p>
+
+    <div class="defence-q">
+      <div class="defence-q-num">Kysymys 1 / 4</div>
+      <div class="defence-q-title">Mikä ongelma ratkaistu — ja kuka hyötyy?</div>
+      <div class="defence-q-hint">Ole konkreettinen. Älä sano "työnhakijat". Sano kuka tarkalleen — ikä, tilanne, mitä he yrittävät tehdä ja miksi se on vaikea.</div>
+      <textarea class="fld" id="dq1" rows="3" placeholder="Sovellukseni ratkaisee..." oninput="checkDefence()"></textarea>
+    </div>
+
+    <div class="defence-q">
+      <div class="defence-q-num">Kysymys 2 / 4</div>
+      <div class="defence-q-title">Miten sovellus toimii — kolme konkreettista asiaa mitä käyttäjä tekee siinä?</div>
+      <div class="defence-q-hint">Ei teknistä kieltä. Kuvaa kuin kertoisit kaverille kahvipöydässä.</div>
+      <textarea class="fld" id="dq2" rows="3" placeholder="Käyttäjä avaa sovelluksen ja..." oninput="checkDefence()"></textarea>
+    </div>
+
+    <div class="defence-q">
+      <div class="defence-q-num">Kysymys 3 / 4</div>
+      <div class="defence-q-title">Mitä SINÄ teit — ja mitä AI teki? Missä oli sinun ajattelusi?</div>
+      <div class="defence-q-hint">Tämä on tärkein kysymys. Työnantaja haluaa tietää että ymmärrät eron: ihmisen visio ja luovuus vs. tekoälyn toteutus.</div>
+      <textarea class="fld" id="dq3" rows="3" placeholder="Minä valitsin ongelman koska... Minä nimesin sovelluksen koska... AI toteutti..." oninput="checkDefence()"></textarea>
+    </div>
+
+    <div class="defence-q">
+      <div class="defence-q-num">Kysymys 4 / 4</div>
+      <div class="defence-q-title">Jos jatkaisit kehittämistä — mikä olisi seuraava ominaisuus ja miksi juuri se?</div>
+      <div class="defence-q-hint">Tämä osoittaa että osaat ajatella tuotekehittäjänä — ei vain käyttäjänä tai rakentajana.</div>
+      <textarea class="fld" id="dq4" rows="3" placeholder="Seuraavaksi lisäisin... koska käyttäjä tarvitsee..." oninput="checkDefence()"></textarea>
+    </div>
+
+    <div class="mt-4 center">
+      <button class="btn btn-ember btn-lg" id="buildPortfolioBtn" onclick="buildPortfolio()" disabled>Luo portfolio-kortti →</button>
+      <p style="font-size:.8rem;color:var(--muted);margin-top:.65rem;">Automaattisesti muotoiltu — valmis kopioitavaksi CV:hen tai LinkedIniin</p>
+    </div>
+
+    <div id="portfolioCard" style="display:none;margin-top:2.5rem;">
+      <div class="portfolio-card">
+        <div class="pc-inner">
+          <div class="pc-label">Projekti · HS Bridge AI-koulutus 2025</div>
+          <div class="pc-appname" id="pcAppName"></div>
+          <div class="pc-problem" id="pcProblem"></div>
+          <div class="pc-sections">
+            <div class="pc-section">
+              <div class="pc-section-title">Mitä se tekee</div>
+              <div class="pc-section-text" id="pcWhat"></div>
+            </div>
+            <div class="pc-section">
+              <div class="pc-section-title">Minun panokseni</div>
+              <div class="pc-section-text" id="pcOwn"></div>
+            </div>
+            <div class="pc-section">
+              <div class="pc-section-title">Seuraava kehitysaskel</div>
+              <div class="pc-section-text" id="pcNext"></div>
+            </div>
+            <div class="pc-section">
+              <div class="pc-section-title">Teknologiat</div>
+              <div class="pc-section-text">Base44 (AI app builder) · Claude AI · Prompt engineering · Tuotekehitysajattelu</div>
+            </div>
+          </div>
+          <div class="pc-skills">
+            <span class="pc-skill">AI-työkalut</span>
+            <span class="pc-skill">Prompt engineering</span>
+            <span class="pc-skill">Sovelluskehitys</span>
+            <span class="pc-skill">Ongelmanratkaisu</span>
+            <span class="pc-skill">Tuotekehitysajattelu</span>
+          </div>
+          <div class="pc-footer">
+            <span class="pc-footer-label" id="pcBuiltDate"></span>
+            <span class="pc-link" id="pcLink"></span>
+          </div>
+        </div>
+      </div>
+      <p class="pc-copy-note">☝️ Kopioi tämä LinkedIn-profiiliisi kohtaan <strong>Projektit</strong> tai lisää CV:si lisätietoihin. Se osoittaa konkreettisesti — ei pelkillä sanoilla — että osaat käyttää tekoälyä rakentamiseen.</p>
+      <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
+        <button class="btn btn-ink" onclick="copyPortfolioText()">📋 Kopioi portfolio-teksti</button>
+        <span class="ok-flash" id="pcCopyOk" style="color:var(--pine);">✓ Kopioitu</span>
+      </div>
+    </div>
+
+    <div class="mt-4 right">
+      <button class="btn btn-pine btn-lg" onclick="document.getElementById('s7-final').scrollIntoView({behavior:'smooth'})">Valmis →</button>
     </div>
   </div>
 </section>
 
-<section class="section section-alt" id="b44-lopetus" data-index="6">
-  <div class="section-inner fade-up">
-    <div id="b44MilestoneCard" class="b44-milestone-card" style="display:none;">
-      <h2 class="b44-milestone-title">🎉 Se on elossa.</h2>
-      <a id="b44CelebrateLink" class="b44-milestone-linkbtn" href="#" target="_blank" rel="noopener"></a>
-      <div class="b44-milestone-chips">
-        <span class="b44-milestone-chip">🌐 Toimii kaikilla laitteilla</span>
-        <span class="b44-milestone-chip">📱 Voit jakaa linkin kenelle tahansa</span>
-        <span class="b44-milestone-chip">🔧 Voit parantaa sitä milloin tahansa</span>
-      </div>
-      <p class="b44-milestone-tagline">Lähetä tämä linkki jollekin tänään. Katso heidän reaktionsa. Se on paras osa.</p>
-    </div>
-
-    <div class="reflection-card">
-      <div class="reflection-label">Reflektio</div>
-      <h3>Kolme kysymystä — kirjoita rehellisesti</h3>
-      <p style="font-size:0.92rem;">Nämä eivät ole pakollisia. Mutta ne jäävät tallenteeseen — ja ne ovat hauskaa luettavaa kuuden kuukauden päästä kun katsot kuinka pitkälle olet tullut.</p>
-
-      <div class="b44-refl-card">
-        <h4 class="b44-refl-card-title">Mikä yllätti sinut eniten tänään?</h4>
-        <p class="b44-refl-card-hint">Prosessissa, ideoissa tai Base44:ssä — mikä oli yllättävintä?</p>
-        <textarea class="reflection-textarea" id="b44Refl1" placeholder="Esim: En uskonut että sovellus oikeasti toimisi ensimmäisellä yrityksellä..."></textarea>
-      </div>
-      <div class="b44-refl-card">
-        <h4 class="b44-refl-card-title">Minkä ongelman ratkaisit — ja kuinka paljon aikaa säästät viikossa?</h4>
-        <p class="b44-refl-card-hint">Ole konkreettinen — älä kirjoita yleisesti vaan arvioi oikeasti</p>
-        <textarea class="reflection-textarea" id="b44Refl2" placeholder="Esim: Käytin aiemmin 20 minuuttia viikossa muistuttaessani itselleni kotitehtävistä. Tämä hoitaa sen automaattisesti."></textarea>
-      </div>
-      <div class="b44-refl-card">
-        <h4 class="b44-refl-card-title">Jos rakentaisit toisen sovelluksen huomenna — mitä se olisi?</h4>
-        <p class="b44-refl-card-hint">Kirjoita vaikka vain nimi. Hulluimmat ideat ovat usein parhaita.</p>
-        <textarea class="reflection-textarea" id="b44Refl3" placeholder="Kirjoita idea vapaasti — tarkka kuvaus tai vain nimi riittää..."></textarea>
-      </div>
-
-      <div class="b44-share-action-card">
-        <h4 class="b44-share-action-title">Tee tämä ennen huomista — se on tärkein askel</h4>
-        <p class="b44-share-action-body">Lähetä sovelluksesi linkki yhdelle ihmiselle tänään. Kollega, perheenjäsen tai ystävä. Kirjoita lyhyt viesti: <em>Rakensin tämän sovelluksen AI:n avulla tunnissa — mitä mieltä olet?</em> Palautteen saaminen tekee sovelluksesta paremman. Jakaminen tekee sinusta rohkeamman.</p>
-        <p class="practice-label" style="color:rgba(255,255,255,0.65);margin-top:1rem;">Kenelle lähetät? (nimi riittää)</p>
-        <input type="text" class="b44-share-input" id="b44ShareTo" placeholder="Esim: Lähetän Jounille töistä" autocomplete="name">
-        <label class="b44-share-cb-label"><input type="checkbox" id="b44ShareDoneCb" onchange="b44ShareDoneCheck()"> Lähetin linkin ✓</label>
-        <p id="b44ShareDoneMsg" class="b44-share-done-msg" style="display:none;">Hyvä. Teit enemmän kuin useimmat tekevät. Et vain rakentanut — jaat.</p>
-      </div>
-
-      <textarea id="reflectionText" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" aria-hidden="true" tabindex="-1"></textarea>
-      <button type="button" class="reflection-save" onclick="b44SaveReflections()">Tallenna reflektio</button>
-    </div>
-
-    <div class="finale-card" id="b44FinaleCard" style="margin-top:3rem;">
-      <h2>Moduuli valmis. <em>Sinä rakensit tämän.</em></h2>
-      <p>Et katsonut tutoriaalia. Et harjoitellut leikkiprojektilla. Rakensit oikean sovelluksen oikeaan ongelmaasi.<br><br>Tämä taito ei vanhene. Joka kerta kun arjessasi on ongelma — sinulla on nyt työkalu sen ratkaisemiseen.</p>
-      <div class="b44-finale-stats">
-        <div class="b44-finale-stat">
-          <div class="b44-finale-stat-num" id="b44Stat1">0</div>
-          <div class="b44-finale-stat-label">toimiva sovellus</div>
+<!-- ═══ S7 FINAL ═══ -->
+<section class="section section-dark" id="s7-final" data-index="7">
+  <div class="inner fade-up">
+    <div class="final-card">
+      <div class="final-inner">
+        <span class="final-icon">🔥</span>
+        <h2>Sinä <em>rakensit tämän.</em></h2>
+        <p>Et katsonut tutoriaalia. Et tehnyt harjoitustehtävää. Tunnistit oikean ongelman Suomen työmarkkinoilla — nimeät sen, puolusit ideasi, rakensit sovelluksen ja tiedät kertoa miksi se on olemassa. Se on enemmän kuin useimmat tekevät.</p>
+        <div class="final-stats">
+          <div class="fstat">
+            <div class="fstat-num">1</div>
+            <div class="fstat-label">toimiva sovellus</div>
+          </div>
+          <div class="fstat">
+            <div class="fstat-num">0</div>
+            <div class="fstat-label">riviä koodia kirjoitettu</div>
+          </div>
+          <div class="fstat">
+            <div class="fstat-num">1</div>
+            <div class="fstat-label">portfolio-projekti</div>
+          </div>
         </div>
-        <div class="b44-finale-stat">
-          <div class="b44-finale-stat-num" id="b44Stat2">0</div>
-          <div class="b44-finale-stat-label">minuuttia</div>
+        <div class="final-actions">
+          <a href="/module/moduuli-ai-simulation-lab" class="btn btn-ember btn-lg">Seuraava moduuli →</a>
+          <a href="/module/moduuli-esitykset-tarjoukset-viestinta" class="btn btn-ghost">← Edellinen moduuli</a>
+          <a href="/" class="btn btn-ghost">Etusivu</a>
         </div>
-        <div class="b44-finale-stat">
-          <div class="b44-finale-stat-num" id="b44Stat3">0</div>
-          <div class="b44-finale-stat-label">riviä koodia kirjoitettu</div>
-        </div>
-      </div>
-      <div class="finale-actions">
-        <a href="/module/moduuli-ai-simulation-lab" class="btn-next">Seuraava — AI Simulation Lab →</a>
-        <a href="/module/moduuli-ai-verkkosivustotyokalut" class="btn-back">← Edellinen</a>
-        <a href="/" class="btn-back">Etusivu</a>
       </div>
     </div>
   </div>
 </section>
 
+<script src="/js/ai-helper.js"></script>
 <script>
-const sections = document.querySelectorAll('.section[data-index]');
-const navSteps = document.getElementById('navSteps');
-const progressBar = document.getElementById('progress-bar');
-sections.forEach((s,i) => {
-  const pip = document.createElement('button');
-  pip.type = 'button';
-  pip.className = 'step-pip'+(i===0?' active':'');
-  pip.setAttribute('aria-label','Osio '+(i+1));
-  pip.addEventListener('click', () => s.scrollIntoView({behavior:'smooth'}));
-  navSteps.appendChild(pip);
+if (window.aiClaude) window.aiChat = window.aiClaude;
+
+function getClaudeApiUrl() {
+  var pathname = window.location.pathname || '';
+  var base = pathname.indexOf('/module/') > 0 ? pathname.substring(0, pathname.indexOf('/module/')) : '';
+  return (window.location.origin || '') + base + '/api/ai/claude';
+}
+
+async function claudeApi(system, messages, maxTokens) {
+  var url = getClaudeApiUrl();
+  var resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ system: system, messages: messages, max_tokens: maxTokens || 1000 })
+  });
+  var data = {};
+  try { data = await resp.json(); } catch (e) {}
+  if (!resp.ok) throw new Error(data.error || data.message || 'Claude API -virhe. Tarkista ANTHROPIC_API_KEY.');
+  return data.text || data.reply || '';
+}
+
+// ── STATE ──────────────────────────────────────────────────
+const S = {
+  market: null,
+  problemDesc: '',
+  problemOneliner: '',
+  appName: '',
+  chatHistory: [],
+  questionCount: 0,
+  interviewDone: false,
+  generatedPrompt: '',
+  finalPrompt: '',
+  appUrl: ''
+};
+
+const MARKET_LABELS = {
+  hakija: 'työnhakija joka eksyy hakuprosessissa ja ei saa vastauksia',
+  osaaminen: 'tilanne jossa osaaminen ei kohtaa työtarjontaa — molemmat osapuolet kärsivät',
+  mahanmuuttaja: 'maahanmuuttajan polku suomalaiseen työelämään — kulttuuri ja odotukset epäselviä',
+  nuori: 'vastavalmistuneen nuoren pääsy ensimmäiseen työpaikkaan ilman työkokemusta'
+};
+
+// ── PROGRESS / NAV ────────────────────────────────────────
+const secs = document.querySelectorAll('.section[data-index]');
+const navEl = document.getElementById('navSteps');
+const pbar = document.getElementById('progress-bar');
+secs.forEach((s,i)=>{
+  const p=document.createElement('button');
+  p.className='step-pip'+(i===0?' active':'');
+  p.type='button';
+  p.setAttribute('aria-label','Osio '+(i+1));
+  p.addEventListener('click',()=>s.scrollIntoView({behavior:'smooth'}));
+  navEl.appendChild(p);
 });
-function updateProgress() {
+function updateProgress(){
   const st=window.scrollY,dh=document.documentElement.scrollHeight-window.innerHeight;
-  progressBar.style.width=(dh>0?(st/dh)*100:0)+'%';
+  pbar.style.width=(dh>0?(st/dh)*100:0)+'%';
   let ai=0;
-  sections.forEach((s,i)=>{if(s.getBoundingClientRect().top<=window.innerHeight*0.5)ai=i;});
-  navSteps.querySelectorAll('.step-pip').forEach((p,i)=>{p.classList.remove('active','done');if(i===ai)p.classList.add('active');else if(i<ai)p.classList.add('done');});
+  secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<=window.innerHeight*.5)ai=i;});
+  navEl.querySelectorAll('.step-pip').forEach((p,i)=>{
+    p.classList.remove('active','done');
+    if(i===ai)p.classList.add('active');
+    else if(i<ai)p.classList.add('done');
+  });
 }
 window.addEventListener('scroll',updateProgress,{passive:true});
-const fadeObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');fadeObs.unobserve(e.target);}});},{threshold:0.12});
-document.querySelectorAll('.fade-up').forEach(el=>fadeObs.observe(el));
+
+// ── FADE UP ───────────────────────────────────────────────
+document.querySelectorAll('.fade-up').forEach(el=>{
+  new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
+  },{threshold:.08}).observe(el);
+});
+
+// ── STEP 1 ────────────────────────────────────────────────
+function pickMarket(el,key){
+  document.querySelectorAll('.market-card').forEach(c=>c.classList.remove('picked'));
+  el.classList.add('picked');
+  S.market=key;
+  document.getElementById('marketPickNote').classList.remove('hidden');
+  document.getElementById('toStep2Btn').disabled=false;
+}
+function goToStep2(){document.getElementById('s2-problem').scrollIntoView({behavior:'smooth'});}
+
+// ── STEP 2 ────────────────────────────────────────────────
+function checkStep2(){
+  S.problemDesc=document.getElementById('problemDesc').value.trim();
+  S.problemOneliner=document.getElementById('problemOneliner').value.trim();
+  S.appName=document.getElementById('appName').value.trim();
+  const ok=S.problemDesc.length>30&&S.problemOneliner.length>10&&S.appName.length>1;
+  document.getElementById('toStep3Btn').disabled=!ok;
+  document.getElementById('step2ReadyBox').classList.toggle('hidden',!ok);
+}
+function updateNamePreview(){
+  checkStep2();
+  const v=document.getElementById('appName').value.trim();
+  const pr=document.getElementById('namePreview');
+  document.getElementById('namePreviewInner').innerHTML=v?'📱 <em>'+v+'</em>':'';
+  pr.style.display=v?'block':'none';
+}
+function goToStep3(){document.getElementById('s3-interview').scrollIntoView({behavior:'smooth'});}
+
+// ── STEP 3: INTERVIEW ────────────────────────────────────
+function buildSystem(){
+  return `You are an expert product designer and UX researcher. You are interviewing a Finnish adult learner — likely unemployed or upskilling — who wants to build an app to solve a real Finnish job market problem.
+
+WHAT YOU ALREADY KNOW:
+- Problem area chosen: ${MARKET_LABELS[S.market]||S.market}
+- Their problem description: "${S.problemDesc}"
+- Their one-liner: "${S.problemOneliner}"
+- App name they chose: "${S.appName}"
+
+YOUR TASK:
+Ask EXACTLY 5 questions — one at a time, in sequence. Each must unlock something specific:
+Q1: Who EXACTLY is the user — paint a vivid, specific picture (not "job seekers", but "a 34-year-old Somali woman who has lived in Tampere for 2 years and...")
+Q2: Walk me through one complete use of the app — from opening it to closing it. What happens step by step?
+Q3: What is the single moment that makes the user think "this is worth it"? The "aha" moment.
+Q4: What would make someone abandon this app after 3 days and never return? What must be avoided?
+Q5: If this app had 1000 users in Finland — what would be different in their lives 6 months from now?
+
+RULES:
+- Ask ONE question at a time. Never combine questions.
+- After each answer: one sentence acknowledging what you heard — then next question.
+- Keep a warm, direct tone. No corporate language. In Finnish.
+- After question 5 is answered, reply ONLY with this exact string: "INTERVIEW_COMPLETE — Kiitos! Sinun vastauksesi olivat tarkat ja ajattelevaiset. Paina alla olevaa nappia — rakennan nyt täydellisen sovelluspromtin juuri sinulle."`;
+}
+
+async function startInterview(){
+  document.getElementById('startInterviewBtn').classList.add('hidden');
+  document.getElementById('chatInputRow').style.display='flex';
+  document.getElementById('chatEmpty').style.display='none';
+  S.questionCount=0;
+  S.chatHistory=[];
+  await callClaude(true);
+}
+
+async function sendChat(){
+  const inp=document.getElementById('chatInput');
+  const txt=inp.value.trim();
+  if(!txt)return;
+  inp.value='';inp.style.height='auto';
+  document.getElementById('chatSendBtn').disabled=true;
+  addBubble('user',txt);
+  S.chatHistory.push({role:'user',content:txt});
+  S.questionCount++;
+  updateDots();
+  await callClaude(false);
+  document.getElementById('chatSendBtn').disabled=false;
+}
+
+async function callClaude(isFirst){
+  showTyping();
+  const messages=isFirst
+    ?[{role:'user',content:'Aloita haastattelu — kysy ensimmäinen kysymys.'}]
+    :S.chatHistory;
+  try{
+    const t=await claudeApi(buildSystem(),messages,1000);
+    hideTyping();
+    const display=t.replace('INTERVIEW_COMPLETE — ','');
+    addBubble('ai',display);
+    if(!isFirst)S.chatHistory.push({role:'assistant',content:t});
+    if(t.includes('INTERVIEW_COMPLETE')){
+      S.interviewDone=true;
+      document.getElementById('chatInputRow').style.display='none';
+      document.getElementById('toPromptBtn').classList.remove('hidden');
+      updateDots(true);
+    }
+  }catch(e){
+    hideTyping();
+    addBubble('ai',(e&&e.message)||'Verkkovirhe — tarkista ANTHROPIC_API_KEY ja yritä uudelleen.');
+    document.getElementById('chatSendBtn').disabled=false;
+  }
+}
+
+function addBubble(role,text){
+  const body=document.getElementById('chatBody');
+  const w=document.createElement('div');
+  w.className='chat-msg '+role;
+  const ai=role==='ai';
+  const avTxt=ai?'🤖':(S.appName?S.appName[0].toUpperCase():'M');
+  const avCls=ai?'ai-av':'user-av';
+  const safe=text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  w.innerHTML=`<div class="msg-avatar ${avCls}">${avTxt}</div><div class="bubble ${role}">${safe}</div>`;
+  body.appendChild(w);
+  body.scrollTop=body.scrollHeight;
+}
+
+let typingEl=null;
+function showTyping(){
+  const body=document.getElementById('chatBody');
+  typingEl=document.createElement('div');
+  typingEl.className='chat-msg ai';
+  typingEl.innerHTML='<div class="msg-avatar ai-av">🤖</div><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+  body.appendChild(typingEl);
+  body.scrollTop=body.scrollHeight;
+}
+function hideTyping(){if(typingEl){typingEl.remove();typingEl=null;}}
+
+function updateDots(done=false){
+  for(let i=0;i<5;i++){
+    const d=document.getElementById('d'+i);
+    if(!d)continue;
+    d.classList.remove('done','active');
+    if(done||i<S.questionCount-1)d.classList.add('done');
+    else if(i===S.questionCount-1)d.classList.add('active');
+  }
+  document.getElementById('intStepLabel').textContent=(done?5:Math.min(S.questionCount,5))+' / 5';
+}
+
+function goToPrompt(){
+  document.getElementById('s4-prompt').scrollIntoView({behavior:'smooth'});
+  generatePrompt();
+}
+
+// ── STEP 4: PROMPT GENERATION ────────────────────────────
+const PGEN=[
+  'Analysoidaan ongelmaa ja käyttäjää...',
+  'Suunnitellaan näyttöjä ja navigaatiota...',
+  'Luodaan väripaletti ja visuaalinen tyyli...',
+  'Rakennetaan esimerkkidata ja tietomalli...',
+  'Lisätään animaatiot ja vuorovaikutukset...',
+  'Viimeistellään tekninen spesifikaatio...'
+];
+
+async function generatePrompt(){
+  if(!S.interviewDone)return;
+  document.getElementById('promptIdle').style.display='none';
+  document.getElementById('promptGenerating').style.display='block';
+  document.getElementById('promptOutWrap').style.display='none';
+
+  let si=0;
+  const stepEl=document.getElementById('pgenStep');
+  const iv=setInterval(()=>{stepEl.textContent=PGEN[si%PGEN.length];si++;},3200);
+
+  const convo=S.chatHistory.map(m=>`${m.role==='user'?'USER':'CLAUDE'}: ${m.content}`).join('\n\n');
+
+  const sys=`You are a world-class product manager and senior full-stack engineer. Write a complete, professional app-building prompt for Base44 (an AI app builder that generates full applications from text descriptions). Write in English.
+
+Your prompt must be SO COMPLETE that a beginner gets a stunning, polished, fully functional app on the FIRST try — no missing features, no vague instructions.
+
+MANDATORY SECTIONS — include ALL of them:
+
+1. APP OVERVIEW
+   - Name, purpose, target user (specific person with emotions and context)
+   - Core value proposition in one sentence
+
+2. SCREENS & NAVIGATION
+   - List every screen/page
+   - Navigation structure (tabs, sidebar, back buttons)
+   - What data shows on each screen
+
+3. DETAILED SCREEN SPECS
+   For EACH screen describe:
+   - Layout (header, content area, footer)
+   - Every UI element (cards, lists, forms, buttons, icons)
+   - What actions are possible
+   - What empty state looks like
+
+4. DATA MODEL
+   - Every entity with all fields and types
+   - Relationships between entities
+   - At least 5 realistic, culturally Finnish mock records per main entity
+
+5. VISUAL DESIGN
+   - Color palette: 3-5 exact hex codes with usage (primary, secondary, accent, background, text)
+   - Typography: font style (modern/humanist/geometric), heading vs body contrast
+   - Card styles, border radius, shadow depth
+   - Overall mood: professional/warm/energetic/calm
+
+6. ANIMATIONS & MICRO-INTERACTIONS
+   - Page transition animation (slide, fade, scale)
+   - List item appearance (stagger, slide up)
+   - Button press states
+   - Success animations (confetti, checkmark, pulse)
+   - Loading states (skeleton screens, spinners)
+   - At least 3 "wow" moments — interactions that make user smile
+
+7. MOBILE-FIRST BEHAVIOR
+   - Bottom tab navigation on mobile
+   - Touch-friendly button sizes (min 44px)
+   - Swipe gestures if applicable
+
+8. FEEDBACK & ERRORS
+   - Toast notification style and timing
+   - Inline form validation
+   - Empty state illustrations/messages
+   - Error recovery (what happens when something fails)
+
+9. FINNISH LANGUAGE
+   - All UI text must be in Finnish
+   - Include the actual Finnish strings for: navigation labels, button text, placeholder text, empty states, success messages
+
+The app solves a Finnish job market problem. Make it feel genuinely useful — not a toy. Make the user proud they built this.`;
+
+  const usr=`Build the complete prompt for this app:
+
+APP NAME: ${S.appName}
+PROBLEM AREA: ${MARKET_LABELS[S.market]||S.market}
+PROBLEM: ${S.problemDesc}
+ONE-LINER: "${S.problemOneliner}"
+
+FULL INTERVIEW TRANSCRIPT:
+${convo}
+
+Now write the complete, exhaustive Base44 prompt. This person built this with no coding experience. Make them blow their own mind when they see what gets generated.`;
+
+  try{
+    const t=await claudeApi(sys,[{role:'user',content:usr}],4000);
+    clearInterval(iv);
+    S.generatedPrompt=t;
+    S.finalPrompt=t;
+    showPromptOut(t);
+  }catch(e){
+    clearInterval(iv);
+    document.getElementById('pgenStep').textContent=(e&&e.message)||'Verkkovirhe — tarkista ANTHROPIC_API_KEY.';
+  }
+}
+
+function showPromptOut(text){
+  document.getElementById('promptGenerating').style.display='none';
+  document.getElementById('promptOutWrap').style.display='block';
+  document.getElementById('promptPre').textContent=text;
+  const qbar=document.getElementById('promptQualityBar');
+  qbar.innerHTML='';
+  [
+    ['✓ Animaatiot','green'],['✓ Esimerkkidata','green'],['✓ Väripaletti','green'],
+    ['✓ Kaikki näytöt','green'],['✓ Suomi UI','green'],['⚡ Base44-valmis','amber']
+  ].forEach(([l,c])=>{
+    const s=document.createElement('span');
+    s.className='pq-chip '+c;s.textContent=l;qbar.appendChild(s);
+  });
+}
+
+function copyPrompt(){
+  const txt=document.getElementById('refinedPrompt').value.trim()||S.finalPrompt;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const el=document.getElementById('copyConfirm');
+    el.style.display='inline';
+    setTimeout(()=>el.style.display='none',2500);
+  });
+}
+function regeneratePrompt(){generatePrompt();}
+function saveRefined(){
+  const v=document.getElementById('refinedPrompt').value.trim();
+  if(v)S.finalPrompt=v;
+  const el=document.getElementById('refinedOk');
+  el.style.display='inline';
+  setTimeout(()=>el.style.display='none',2200);
+}
+function goToBuild(){document.getElementById('s5-build').scrollIntoView({behavior:'smooth'});}
+
+// ── STEP 5 ────────────────────────────────────────────────
+function copyFix(el,id){
+  navigator.clipboard.writeText(document.getElementById(id).textContent.trim()).then(()=>{
+    const ob=el.style.background;
+    el.style.background='#1a3a25';
+    setTimeout(()=>el.style.background=ob,1200);
+  });
+}
+function checkAppUrl(){
+  const v=document.getElementById('appUrl').value.trim();
+  document.getElementById('toDefenceBtn').disabled=v.length<8;
+}
+function saveAppUrl(){
+  S.appUrl=document.getElementById('appUrl').value.trim();
+  const el=document.getElementById('urlOk');
+  el.style.display='inline';
+  setTimeout(()=>el.style.display='none',2500);
+  document.getElementById('toDefenceBtn').disabled=false;
+}
+function goToDefence(){document.getElementById('s6-defence').scrollIntoView({behavior:'smooth'});}
+
+// ── STEP 6: DEFENCE + PORTFOLIO ──────────────────────────
+function checkDefence(){
+  const ok=['dq1','dq2','dq3','dq4'].every(id=>document.getElementById(id).value.trim().length>20);
+  document.getElementById('buildPortfolioBtn').disabled=!ok;
+}
+
+function buildPortfolio(){
+  const q1=document.getElementById('dq1').value.trim();
+  const q2=document.getElementById('dq2').value.trim();
+  const q3=document.getElementById('dq3').value.trim();
+  const q4=document.getElementById('dq4').value.trim();
+  document.getElementById('pcAppName').innerHTML='📱 <em>'+S.appName+'</em>';
+  document.getElementById('pcProblem').textContent=S.problemOneliner;
+  document.getElementById('pcWhat').textContent=q2;
+  document.getElementById('pcOwn').textContent=q3;
+  document.getElementById('pcNext').textContent=q4;
+  document.getElementById('pcBuiltDate').textContent='Rakennettu '+new Date().toLocaleDateString('fi-FI',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('pcLink').textContent=S.appUrl||'[linkki Base44-sovellukseen]';
+  document.getElementById('portfolioCard').style.display='block';
+  setTimeout(()=>document.getElementById('portfolioCard').scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+}
+
+function copyPortfolioText(){
+  const q1=document.getElementById('dq1').value.trim();
+  const q2=document.getElementById('dq2').value.trim();
+  const q3=document.getElementById('dq3').value.trim();
+  const q4=document.getElementById('dq4').value.trim();
+  const date=new Date().toLocaleDateString('fi-FI',{year:'numeric',month:'long'});
+  const txt=`📱 ${S.appName} — AI-sovellusprojekti | HS Bridge AI-koulutus | ${date}
+
+Ongelma: ${S.problemOneliner}
+
+Kenelle ja miksi: ${q1}
+
+Mitä sovellus tekee: ${q2}
+
+Minun panokseni — mitä minä tein, mitä AI teki: ${q3}
+
+Seuraava kehitysaskel: ${q4}
+
+Teknologiat: Base44 (AI app builder) · Claude AI · Prompt engineering · Tuotekehitysajattelu${S.appUrl?'\n\nSovellus: '+S.appUrl:''}
+
+Tämä projekti rakennettiin HS Bridge Oy:n AI-koulutuksessa. Tunnistin oikean ongelman Suomen työmarkkinoilta, muotoilin sovelluksen vision, haastattelin idean AI:n avulla, rakensin toimivan sovelluksen ilman koodia ja osaan perustella jokaisen suunnittelupäätöksen.`;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const el=document.getElementById('pcCopyOk');
+    el.style.display='inline';
+    setTimeout(()=>el.style.display='none',2500);
+  });
+}
 </script>
-<script src="/js/reflections.js"></script>
-<script src="/js/feedback.js"></script>
-<script src="/js/base44-module.js?v=b44-7"></script>
 <script>
-fetch('/ai-chat-widget.html').then(r=>r.text()).then(html=>{document.body.insertAdjacentHTML('beforeend',html);}).catch(()=>{});
+fetch('/ai-chat-widget.html').then(function(r){return r.text();}).then(function(h){
+  document.body.insertAdjacentHTML('beforeend',h);
+  window.MODULE_USE_CLAUDE=true;
+}).catch(function(){});
 </script>
 </body>
 </html>
