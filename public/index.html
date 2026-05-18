@@ -1492,11 +1492,7 @@
         const isStudentHidden = (m) => {
           if (viewerIsAdmin) return false;
           if (isKuopioDemoStudent()) {
-            if (m.isOnboarding) return true;
-            if (adminOnlyModuleIds.has(m.id) || m.adminOnly === true) return true;
-            // Näytä kurssipäivän lukitut + alamoduulit (🔒), ei piilota
-            if (temporarilyLockedModuleIds.has(m.id) || m.part === 3) return false;
-            return false;
+            return !kuopioDemoVisibleModuleIds.has(m.id);
           }
           return temporarilyLockedModuleIds.has(m.id) || adminOnlyModuleIds.has(m.id) || m.adminOnly === true;
         };
@@ -1518,11 +1514,11 @@
         // Quick jump nav — näytetään vain osiot joilla on näkyviä moduuleja tälle käyttäjälle
         const sectionIds = [
           { id: 'section-day1', label: 'AI-taidot työelämään', show: part1RenderList.length > 0 },
-          { id: 'section-bridge', label: 'Käytännön AI-taidot', show: true },
+          { id: 'section-bridge', label: 'Käytännön AI-taidot', show: day1_5Modules.length > 0 || (!isKuopioDemoStudent() && !!loppumoduuliModule) },
           { id: 'section-day2', label: 'DAY 2', show: day2Modules.length > 0 },
           { id: 'section-day3', label: 'DAY 3', show: day3Modules.length > 0 },
           { id: 'section-day4', label: 'DAY 4', show: day4Modules.length > 0 },
-          { id: 'section-loppu', label: 'Tekoäly ja minä', show: !!loppumoduuliModule },
+          { id: 'section-loppu', label: 'Tekoäly ja minä', show: !!loppumoduuliModule && !isStudentHidden(loppumoduuliModule) },
           { id: 'section-day5', label: 'DAY 5', show: part3RenderList.length > 0 }
         ].filter(s => s.show);
         html += '<div class="section-jump-nav" style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:2rem;padding:1rem;background:var(--paper2);border-radius:12px;">';
@@ -1542,6 +1538,7 @@
         
         // Render bridge section — between DAY 1 and DAY 2 (Loppumoduuli heti Alanavaihtajan kartta -kortin jälkeen)
         function renderFinalCluster(idxBase) {
+          if (isKuopioDemoStudent()) return '';
           let out = '';
           out += '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
           if (loppumoduuliModule) {
@@ -1650,6 +1647,30 @@
     /** Videokuvaus-demo: vain nämä session-lukitut moduulit ovat klikattavia (muut näkyvät 🔒). */
     const kuopioDemoOpenModuleIds = new Set([
       'moduuli-visibility-growth-automation'
+    ]);
+
+    /** Videokuvaus-demo: vain nämä kortit näkyvät etusivulla (ei hallusinaatioita, ulkoisia, loppuosiota, DAY 2–4). */
+    const kuopioDemoVisibleModuleIds = new Set([
+      'moduuli1-tietosuoja',
+      'moduuli2-tekoaly-uhka-vai-mahdollisuus',
+      'moduuli3-master-prompt',
+      'moduuli-ai-tyokalut-tutuksi',
+      'moduuli5-ai-creation-sprint',
+      'moduuli7-ai-tyonhaussa',
+      'moduuli-esitykset-tarjoukset-viestinta',
+      'moduuli-visibility-growth-automation',
+      'moduuli-perplexity-notebooklm',
+      'moduuli-ideasta-tuotteeksi',
+      'moduuli-ai-maisema',
+      'moduuli-alanavaihtajan-kartta',
+      'moduuli5-ai-myynnissa-ja-markkinoinnissa',
+      'moduuli6-ai-taloushallinnossa',
+      'moduuli-hoitoala',
+      'moduuli-rakennusala',
+      'moduuli-markkinointi',
+      'moduuli-ravintola',
+      'moduuli-logistiikka',
+      'moduuli-it'
     ]);
 
     /** Moduulit jotka on piilotettu tältä kurssipäivältä (poista id listalta kun avaat). Admin näkee silti kaiken. */
