@@ -1491,9 +1491,13 @@
         const viewerIsAdmin = isAdminUser();
         const isStudentHidden = (m) => {
           if (viewerIsAdmin) return false;
-          // Videokuvaus: ei tarvekarttaa; alamoduulit näkyvät mutta eivät avaudu klikkauksesta
-          if (isKuopioDemoStudent() && m.isOnboarding) return true;
-          if (isKuopioDemoStudent() && m.part === 3) return false;
+          if (isKuopioDemoStudent()) {
+            if (m.isOnboarding) return true;
+            if (adminOnlyModuleIds.has(m.id) || m.adminOnly === true) return true;
+            // Näytä kurssipäivän lukitut + alamoduulit (🔒), ei piilota
+            if (temporarilyLockedModuleIds.has(m.id) || m.part === 3) return false;
+            return false;
+          }
           return temporarilyLockedModuleIds.has(m.id) || adminOnlyModuleIds.has(m.id) || m.adminOnly === true;
         };
         const hideLockedForStudent = (list) => list.filter(m => !isStudentHidden(m));
@@ -1643,6 +1647,11 @@
       'moduuli-ai-verkkosivustotyokalut'
     ]);
 
+    /** Videokuvaus-demo: vain nämä session-lukitut moduulit ovat klikattavia (muut näkyvät 🔒). */
+    const kuopioDemoOpenModuleIds = new Set([
+      'moduuli-visibility-growth-automation'
+    ]);
+
     /** Moduulit jotka on piilotettu tältä kurssipäivältä (poista id listalta kun avaat). Admin näkee silti kaiken. */
     const temporarilyLockedModuleIds = new Set([
       // Bridge modules
@@ -1701,11 +1710,10 @@
       return module && module.part === 3;
     }
 
-    /** Session-lukko: admin aina; demo avaa bridge-moduulit, ei alakohtaisia (osa 3). */
+    /** Session-lukko: admin aina; demo vain allowlist (Base44), muut bridge/alat 🔒. */
     function canOpenSessionLockedModule(module) {
       if (isAdminUser()) return true;
-      if (isKuopioDemoStudent() && isIndustryModule(module)) return false;
-      if (isKuopioDemoStudent()) return true;
+      if (isKuopioDemoStudent()) return kuopioDemoOpenModuleIds.has(module.id);
       return false;
     }
     
