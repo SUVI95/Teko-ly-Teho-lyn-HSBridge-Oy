@@ -585,7 +585,41 @@ h1.hero-title em{font-style:italic;color:#e8c870;}
     <div id="portfolioReadiness" style="margin:1rem 0;"></div>
 
     <div class="info-card">
-      <h3>1. Viimeistele portfolion sisältö</h3>
+      <h3>1. Valitse portfolion tyyli</h3>
+      <p>Kolme erilaista ulkoasua — valitse sinulle sopivin:</p>
+      <div id="templatePicker" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.5rem 0;">
+
+        <div class="tpl-opt" data-tpl="classic" onclick="pickTemplate('classic')" style="cursor:pointer;border:2px solid var(--border);border-radius:12px;padding:1rem;text-align:center;transition:all .25s;background:var(--paper);">
+          <div style="height:100px;border-radius:8px;margin-bottom:.75rem;background:linear-gradient(135deg,#2563a8,#1a4b80);display:flex;align-items:center;justify-content:center;">
+            <div style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.25);margin-bottom:4px;"></div>
+          </div>
+          <div style="font-weight:600;font-size:.95rem;">Klassinen</div>
+          <p style="font-size:.75rem;color:var(--muted);margin-top:.25rem;">Selkeä ja perinteinen. Toimii aina.</p>
+        </div>
+
+        <div class="tpl-opt" data-tpl="modern" onclick="pickTemplate('modern')" style="cursor:pointer;border:2px solid var(--border);border-radius:12px;padding:1rem;text-align:center;transition:all .25s;background:var(--paper);">
+          <div style="height:100px;border-radius:8px;margin-bottom:.75rem;background:linear-gradient(135deg,#ede9ff,#dde8fb,#f0ecff);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;">
+            <div style="width:50px;height:6px;border-radius:4px;background:rgba(124,110,242,.3);"></div>
+            <div style="width:35px;height:4px;border-radius:4px;background:rgba(124,110,242,.15);"></div>
+          </div>
+          <div style="font-weight:600;font-size:.95rem;">Moderni</div>
+          <p style="font-size:.75rem;color:var(--muted);margin-top:.25rem;">Glassmorphism, animaatiot, chatbot.</p>
+        </div>
+
+        <div class="tpl-opt" data-tpl="premium" onclick="pickTemplate('premium')" style="cursor:pointer;border:2px solid var(--border);border-radius:12px;padding:1rem;text-align:center;transition:all .25s;background:var(--paper);">
+          <div style="height:100px;border-radius:8px;margin-bottom:.75rem;background:linear-gradient(135deg,#ede9ff,#dde8fb,#f5f9ff);display:flex;align-items:center;justify-content:center;gap:8px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,rgba(124,110,242,.2),rgba(59,130,246,.2));border:1px solid rgba(124,110,242,.2);"></div>
+            <div style="display:flex;flex-direction:column;gap:3px;"><div style="width:40px;height:5px;border-radius:3px;background:rgba(124,110,242,.25);"></div><div style="width:28px;height:3px;border-radius:3px;background:rgba(124,110,242,.12);"></div></div>
+          </div>
+          <div style="font-weight:600;font-size:.95rem;">Premium</div>
+          <p style="font-size:.75rem;color:var(--muted);margin-top:.25rem;">Kuva, Lucide-ikonit, efektit.</p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3>2. Viimeistele portfolion sisältö</h3>
       <p>Perustietosi (nimi, yhteystiedot, koulutus) tulevat automaattisesti Askeleesta 1. Tässä lisäät portfolion esittelyn:</p>
       <div class="form-group">
         <label class="form-label">Tagline — yksi lause joka kuvaa sinua</label>
@@ -600,7 +634,7 @@ h1.hero-title em{font-style:italic;color:#e8c870;}
     </div>
 
     <div class="info-card">
-      <h3>2. Valitse brändiväri</h3>
+      <h3>3. Valitse brändiväri</h3>
       <p>Portfolion pääväri — valitse itsellesi sopiva:</p>
       <div id="colorPicker" style="display:flex;flex-wrap:wrap;gap:.75rem;margin:1rem 0;">
         <button class="color-opt" onclick="pickColor('#2563a8')" style="width:48px;height:48px;border-radius:12px;background:#2563a8;border:3px solid transparent;cursor:pointer;" data-color="#2563a8"></button>
@@ -614,7 +648,7 @@ h1.hero-title em{font-style:italic;color:#e8c870;}
     </div>
 
     <div class="info-card">
-      <h3>3. Lisää kuva</h3>
+      <h3>4. Lisää kuva</h3>
       <p>Ammattimainen valokuva tekee vaikutuksen. Voit lisätä myöhemminkin.</p>
       <div style="display:flex;align-items:center;gap:1.5rem;margin:1rem 0;">
         <div id="photoPreviewWrap" style="width:100px;height:100px;border-radius:50%;background:var(--paper2);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
@@ -1438,7 +1472,19 @@ async function threeSecondTest() {
 
 /* ── PORTFOLIO BUILDER ─────────────────────────── */
 var portfolioColor = '#2563a8';
+var portfolioTemplate = 'modern';
 var portfolioPhotoFile = null;
+
+function pickTemplate(tpl) {
+  portfolioTemplate = tpl;
+  saveCvField('portfolioTemplate', tpl);
+  document.querySelectorAll('.tpl-opt').forEach(function(el) {
+    var selected = el.getAttribute('data-tpl') === tpl;
+    el.style.borderColor = selected ? 'var(--blue)' : 'var(--border)';
+    el.style.background = selected ? 'rgba(37,99,168,.06)' : 'var(--paper)';
+    el.style.boxShadow = selected ? '0 0 0 1px var(--blue)' : 'none';
+  });
+}
 
 function pickColor(hex) {
   portfolioColor = hex;
@@ -1640,6 +1686,7 @@ async function buildAndPublishPortfolio() {
       brand_color: portfolioColor,
       brand_accent: '#c75b3a',
       brand_bg: '#f5f3ef',
+      template: portfolioTemplate,
       career_summary: cvData.careerSummary || '',
       hidden_strengths: cvData.hiddenStrengths || ''
     };
@@ -1715,6 +1762,11 @@ function updateSlugPreview(name) {
 }
 
 function restorePortfolioFields() {
+  // Restore template selection (default to modern)
+  var savedTpl = cvData.portfolioTemplate || 'modern';
+  pickTemplate(savedTpl);
+  // Restore color selection
+  pickColor(portfolioColor);
   // Update slug preview from name
   if (cvData.name) updateSlugPreview(cvData.name);
   // Show existing portfolio link
