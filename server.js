@@ -307,23 +307,12 @@ app.get('/portfolio/:slug', async (req, res) => {
   try {
     const pool = require('./database/db');
     const r = await pool.query('SELECT template FROM student_portfolios WHERE slug=$1 AND published=TRUE', [req.params.slug]);
-    const tpl = r.rows.length ? (r.rows[0].template || 'classic') : 'classic';
-    const tplMap = {
-      'modern':  'portfolio-tpl-modern.html',
-      'premium': 'portfolio-tpl-premium.html',
-      'classic': 'portfolio-template.html'
-    };
-    const fileName = tplMap[tpl] || 'portfolio-template.html';
-    const templatePath = path.join(__dirname, 'public', fileName);
-    if (!fs.existsSync(templatePath)) {
-      const fallback = path.join(__dirname, 'public', 'portfolio-template.html');
-      if (!fs.existsSync(fallback)) return res.status(404).send('Portfolio-sivua ei löydy.');
-      return res.set('Cache-Control', 'public, max-age=60').sendFile(fallback);
-    }
+    const templatePath = path.join(__dirname, 'public', 'portfolio-tpl-premium.html');
+    if (!fs.existsSync(templatePath)) return res.status(404).send('Portfolio-sivua ei löydy.');
     res.set('Cache-Control', 'public, max-age=60');
     res.sendFile(templatePath);
   } catch (e) {
-    const fallback = path.join(__dirname, 'public', 'portfolio-template.html');
+    const fallback = path.join(__dirname, 'public', 'portfolio-tpl-premium.html');
     if (fs.existsSync(fallback)) return res.set('Cache-Control', 'public, max-age=60').sendFile(fallback);
     res.status(500).send('Virhe');
   }

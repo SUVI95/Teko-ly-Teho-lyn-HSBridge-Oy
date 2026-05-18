@@ -153,7 +153,7 @@ router.get('/view/:slug', async (req, res) => {
       `SELECT slug, full_name, tagline, bio, city, target_role,
        email_public, phone_public, linkedin_url, experience, education, skills,
        achievements, languages, certificates, brand_color, brand_accent, brand_bg,
-       template, photo_mime IS NOT NULL AS has_photo
+       template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo
        FROM student_portfolios WHERE slug=$1 AND published=TRUE`, [req.params.slug]);
     if (!r.rows.length) return res.status(404).json({ error: 'Ei löydy' });
     res.json({ portfolio: r.rows[0] });
