@@ -1089,9 +1089,30 @@ TÄRKEÄÄ: Kaikki harjoitusvastaukset puhuttuna suomena. Max 4 lausetta per vas
           </div>
         </div>
 
+        <div style="margin:1.5rem 0 1.25rem;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;">
+          <div style="background:rgba(255,255,255,0.04);padding:0.75rem 1rem;font-family:'DM Mono',monospace;font-size:0.62rem;color:rgba(255,255,255,0.4);letter-spacing:0.12em;text-transform:uppercase;">Ristiriidat — ajattele ennen kirjoittamista</div>
+          <div style="padding:0.75rem 1rem;font-size:0.82rem;line-height:1.8;color:rgba(255,255,255,0.5);">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.3rem 1.5rem;">
+              <div><strong style="color:rgba(255,255,255,0.7);">Mainitse kokemus</strong> → riski: kuulostaa vanhalta</div>
+              <div><strong style="color:rgba(255,255,255,0.7);">Mainitse oppiminen</strong> → riski: kuulostaa heikolta</div>
+              <div><strong style="color:rgba(255,255,255,0.7);">Lämmin sävy</strong> → riski: ylittää sanarajan</div>
+              <div><strong style="color:rgba(255,255,255,0.7);">Yksityiskohdat</strong> → riski: liian pitkä teksti</div>
+              <div><strong style="color:rgba(255,255,255,0.7);">Tauko pois</strong> → riski: AI keksii jotain</div>
+              <div><strong style="color:rgba(255,255,255,0.7);">Tulevaisuus</strong> → riski: ohittaa menneisyyden</div>
+            </div>
+          </div>
+        </div>
+
         <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:rgba(255,255,255,0.3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.6rem;">Kirjoita prompti joka täyttää kaikki 7</div>
         <textarea class="boss-input" id="bossPrompt" placeholder="Olet... Tilanne: Karim, 52v, 22v painoala, 2v tauko perheestä, nyt projektikoordinaattori... Kirjoita hakemuskapale (max 100 sanaa)... Rajoitteet: ..."></textarea>
-        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:rgba(255,255,255,0.2);margin-top:0.35rem;" id="bossAttempts">Yrityksiä: 0 / Pisteitä: -</div>
+
+        <div style="margin-top:1rem;margin-bottom:1rem;">
+          <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:rgba(255,255,255,0.3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.5rem;">Ennusta ennen testausta</div>
+          <div style="font-size:0.82rem;color:rgba(255,255,255,0.5);margin-bottom:0.5rem;">Mikä vaatimus todennäköisimmin epäonnistuu — ja miksi?</div>
+          <textarea style="width:100%;min-height:45px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:rgba(255,255,255,0.8);padding:0.7rem;font-size:0.85rem;font-family:'DM Sans',sans-serif;resize:vertical;" id="bossPrediction" placeholder="Esim: sanaraja, koska yritän mainita kaikki 7 asiaa 100 sanassa..."></textarea>
+        </div>
+
+        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:rgba(255,255,255,0.2);margin-bottom:0.35rem;" id="bossAttempts">Yrityksiä: 0 / Pisteitä: -</div>
         <button class="boss-run-btn" id="bossBtn" onclick="runBoss()">Testaa — kuinka monta vaatimusta läpäiset?</button>
 
         <div class="boss-result" id="bossResult">
@@ -1103,6 +1124,17 @@ TÄRKEÄÄ: Kaikki harjoitusvastaukset puhuttuna suomena. Max 4 lausetta per vas
           <div class="boss-score-num" id="bossScoreNum">-/7</div>
           <div class="boss-score-label">Vaatimusta täyttyi</div>
           <div class="boss-score-feedback" id="bossScoreFeedback"></div>
+
+          <div id="bossDebug" style="display:none;margin-top:1.25rem;border-top:1px solid rgba(255,255,255,0.08);padding-top:1.25rem;">
+            <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:rgba(255,255,255,0.4);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.6rem;">Diagnosoi epäonnistuminen</div>
+            <div style="font-size:0.82rem;color:rgba(255,255,255,0.5);margin-bottom:0.5rem;">Mikä lause AI:n vastauksessa aiheutti epäonnistuneen vaatimuksen? Miksi?</div>
+            <textarea style="width:100%;min-height:55px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:rgba(255,255,255,0.8);padding:0.7rem;font-size:0.85rem;font-family:'DM Sans',sans-serif;resize:vertical;" id="bossDebugText" placeholder="Esim: lause 'Vaikka digitaidot ovat vielä kehittymässä' rikkoi vaatimuksen 3 koska se kehystää Karimin oppijana eikä osaajana..."></textarea>
+            <div style="font-size:0.82rem;color:rgba(255,255,255,0.5);margin-top:0.75rem;margin-bottom:0.5rem;">Osuiko ennusteesi — epäonnistuiko se vaatimus jonka arvioit?</div>
+            <textarea style="width:100%;min-height:40px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:rgba(255,255,255,0.8);padding:0.7rem;font-size:0.85rem;font-family:'DM Sans',sans-serif;resize:vertical;" id="bossPredReflect" placeholder="Kyllä/ei — ja miksi..."></textarea>
+            <button class="boss-run-btn" style="margin-top:0.75rem;font-size:0.82rem;padding:10px 20px;" onclick="bossAnalyze()">Näytä analyysi →</button>
+            <div id="bossAnalysis" style="display:none;margin-top:1rem;background:rgba(37,99,168,0.1);border-left:3px solid rgba(37,99,168,0.4);border-radius:0 8px 8px 0;padding:1rem;font-size:0.84rem;line-height:1.75;color:rgba(255,255,255,0.8);"></div>
+          </div>
+
           <div id="bossPerfect" style="display:none;margin-top:1rem;font-size:1rem;color:#86efac;font-weight:600;">🎯 Täydellinen! 7/7 — olet valmis käyttämään tätä ammattimaisesti.</div>
           <button class="boss-retry-btn" id="bossRetry" onclick="retryBoss()" style="display:none;">Yritä uudelleen — muuta promptiasi ↑</button>
         </div>
@@ -1369,7 +1401,7 @@ async function labShowFinal(){
 }
 
 /* BOSS CHALLENGE (H7) */
-let bossAttempts=0;
+let bossAttempts=0;let bossLastOutput='';let bossFailedReqs=[];
 async function runBoss(){
   const p=document.getElementById('bossPrompt').value.trim();
   if(!p||p.split(/\s+/).filter(Boolean).length<20){alert('Promptisi on liian lyhyt. Kirjoita kattava prompti.');return;}
@@ -1378,35 +1410,45 @@ async function runBoss(){
   const rText=document.getElementById('bossResultText');
   const score=document.getElementById('bossScore');
   btn.disabled=true;res.style.display='block';score.style.display='none';ld(rText);
+  document.getElementById('bossDebug').style.display='none';
+  document.getElementById('bossAnalysis').style.display='none';
   bossAttempts++;
-  // First get the AI output
   const output=await ai('Vastaa pyyntöön täsmällisesti. Suomeksi.',p,500);
-  rText.textContent=output;
-  // Then grade it
+  rText.textContent=output;bossLastOutput=output;
   const gradeRaw=await ai('Olet tarkistaja. Tarkista täyttääkö tämä teksti seuraavat 7 vaatimusta. Palauta VAIN JSON: {"scores":{"kokemus":true/false,"tauko":true/false,"ika":true/false,"digitaali":true/false,"pituus":true/false,"kieli":true/false,"tulevaisuus":true/false},"feedback":"lyhyt suomenkielinen palaute max 2 lausetta"}',`TEKSTI: ${output}\n\n1. kokemus: 22v kokemus esitetty vahvuutena\n2. tauko: 2v tauko positiivisesti tai ei mainittu\n3. ika: ei positioida vanhana tai täytyy oppia\n4. digitaali: oppimisen into mainittu\n5. pituus: max 100 sanaa\n6. kieli: suomeksi, ammatillinen\n7. tulevaisuus: päättyy eteenpäin katsovaan lauseeseen`,300);
   let grade;
   try{const start=gradeRaw.indexOf('{');const end=gradeRaw.lastIndexOf('}');grade=JSON.parse(gradeRaw.slice(start,end+1));}catch(e){grade={scores:{kokemus:false,tauko:false,ika:false,digitaali:false,pituus:false,kieli:false,tulevaisuus:false},feedback:'Tarkistusvirhe. Yritä uudelleen.'};}
-  // Update requirements display
+  const reqLabels={kokemus:'Kokemus vahvuutena',tauko:'Tauon käsittely',ika:'Ei vanha-kehystä',digitaali:'Oppimisen into',pituus:'Max 100 sanaa',kieli:'Suomi + sävy',tulevaisuus:'Tulevaisuuslause'};
   const reqs=['kokemus','tauko','ika','digitaali','pituus','kieli','tulevaisuus'];
   const items=document.querySelectorAll('.boss-req-item[data-req]');
-  let metCount=0;
+  let metCount=0;bossFailedReqs=[];
   items.forEach(item=>{
     const req=item.getAttribute('data-req');
     const met=grade.scores?.[req]===true;
     item.className='boss-req-item'+(met?' met':' unmet');
-    if(met)metCount++;
+    if(met)metCount++;else bossFailedReqs.push(reqLabels[req]||req);
   });
-  // Show score
   score.style.display='block';
   document.getElementById('bossScoreNum').textContent=metCount+'/7';
   document.getElementById('bossScoreFeedback').textContent=grade.feedback||'';
   document.getElementById('bossAttempts').textContent=`Yrityksiä: ${bossAttempts} / Pisteitä: ${metCount}/7`;
   const perfect=document.getElementById('bossPerfect');
   const retry=document.getElementById('bossRetry');
-  if(metCount===7){perfect.style.display='block';retry.style.display='none';}
-  else{perfect.style.display='none';retry.style.display='inline-flex';}
+  const debug=document.getElementById('bossDebug');
+  if(metCount===7){perfect.style.display='block';retry.style.display='none';debug.style.display='none';}
+  else{perfect.style.display='none';retry.style.display='inline-flex';debug.style.display='block';}
   btn.disabled=false;
   score.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function bossAnalyze(){
+  const diag=document.getElementById('bossDebugText').value.trim();
+  const predReflect=document.getElementById('bossPredReflect').value.trim();
+  if(!diag||diag.length<10){alert('Kirjoita diagnoosisi — mikä lause aiheutti ongelman.');return;}
+  const pred=document.getElementById('bossPrediction').value.trim()||'';
+  const el=document.getElementById('bossAnalysis');
+  el.style.display='block';ld(el);
+  const t=await ai('Olet prompting-opettaja. Opiskelija yritti kirjoittaa promptin joka täyttää 7 vaatimusta. Epäonnistuneet: '+bossFailedReqs.join(', ')+'. Analysoi: 1) Onko opiskelijan diagnoosi oikea — löysikö hän ongelmakohdan? (1 lause), 2) Osuiko ennuste (1 lause), 3) Yksi konkreettinen vinkki seuraavaa yritystä varten (1 lause). Max 80 sanaa. Suomeksi. Rohkaiseva.',`AI:n teksti: ${bossLastOutput}\nOpiskelijan diagnoosi: ${diag}\nOpiskelijan ennuste: ${pred}\nOpiskelijan reflektio: ${predReflect}`,300);
+  el.textContent=t;
 }
 function retryBoss(){document.getElementById('bossPrompt').scrollIntoView({behavior:'smooth',block:'nearest'});}
 
