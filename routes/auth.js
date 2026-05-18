@@ -8,8 +8,22 @@ const {
   normalizeEmail,
   shouldAutoApproveStudent
 } = require('../config/demo-access');
+const { resetKuopioDemoUserData } = require('../lib/reset-kuopio-demo-user-data');
 
 const router = express.Router();
+
+function setKuopioDemoClientCookie(res, active) {
+  const base = {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  };
+  if (active) {
+    res.cookie('kuopio_demo', '1', { ...base, maxAge: 30 * 24 * 60 * 60 * 1000 });
+  } else {
+    res.clearCookie('kuopio_demo', base);
+  }
+}
 
 async function applyKuopioDemoProfile(user) {
   if (!user || !shouldAutoApproveStudent(user.email)) return user;
@@ -121,8 +135,10 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
-    if (shouldAutoApproveStudent(email)) {
+    const demoActive = shouldAutoApproveStudent(email);
+    if (demoActive) {
       user = await applyKuopioDemoProfile(user);
+      await resetKuopioDemoUserData(user.id);
     }
 
     // Update last login
@@ -145,8 +161,8 @@ router.post('/login', async (req, res) => {
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
-    
-    const demoActive = shouldAutoApproveStudent(email);
+    setKuopioDemoClientCookie(res, demoActive);
+
     res.json({
       success: true,
       user: {
@@ -176,10 +192,44 @@ router.post('/logout', async (req, res) => {
     }
     
     res.clearCookie('session_token');
+    setKuopioDemoClientCookie(res, false);
     res.json({ success: true });
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).json({ error: 'Logout failed' });
+  }
+});
+
+// Clear all saved inputs/progress for Kuopio video-shoot demo (fresh take before filming).
+router.post('/demo-reset-data', async (req, res) => {
+  try {
+    await ensureUserSchema();
+    const token = req.cookies.session_token || req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const result = await pool.query(
+      `SELECT u.id, u.email FROM sessions s
+       JOIN users u ON s.user_id = u.id
+       WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE`,
+      [token]
+    );
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid session' });
+    }
+
+    const user = result.rows[0];
+    if (!shouldAutoApproveStudent(user.email)) {
+      return res.status(403).json({ error: 'Not a demo account' });
+    }
+
+    await resetKuopioDemoUserData(user.id);
+    setKuopioDemoClientCookie(res, true);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Demo reset error:', error);
+    res.status(500).json({ error: 'Failed to reset demo data' });
   }
 });
 

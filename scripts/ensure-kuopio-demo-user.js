@@ -10,6 +10,7 @@ const {
   KUOPIO_DEMO_EMAIL,
   KUOPIO_DEMO_DEFAULT_NAME
 } = require('../config/demo-access');
+const { resetKuopioDemoUserData } = require('../lib/reset-kuopio-demo-user-data');
 
 const DEMO_PASSWORD = 'Kuopio2026!';
 
@@ -29,7 +30,9 @@ async function main() {
        is_approved = TRUE, is_active = TRUE, is_admin = FALSE WHERE id = $3`,
       [hash, KUOPIO_DEMO_DEFAULT_NAME, existing.rows[0].id]
     );
+    await resetKuopioDemoUserData(existing.rows[0].id);
     console.log('Updated Kuopio demo user:', KUOPIO_DEMO_EMAIL);
+    console.log('Cleared saved progress, inputs, and test data.');
   } else {
     await pool.query(
       `INSERT INTO users (email, password_hash, name, is_approved, is_active, is_admin)

@@ -16,6 +16,16 @@ require('dotenv').config();
 })();
 
 const pool = require('./database/db');
+const { shouldAutoApproveStudent } = require('./config/demo-access');
+const { resetKuopioDemoUserData } = require('./lib/reset-kuopio-demo-user-data');
+
+const KUOPIO_DEMO_LS_CLEAR = '<script>(function(){try{if(/(?:^|;\\s*)kuopio_demo=1(?:;|$)/.test(document.cookie))localStorage.clear();}catch(e){}})();</script>';
+
+function injectKuopioDemoLocalClear(html) {
+  if (html.includes('<head>')) return html.replace('<head>', '<head>' + KUOPIO_DEMO_LS_CLEAR);
+  return KUOPIO_DEMO_LS_CLEAR + html;
+}
+
 const authRoutes = require('./routes/auth');
 const progressRoutes = require('./routes/progress');
 const aiRoutes = require('./routes/ai');
@@ -325,10 +335,11 @@ app.get('/module/:moduleId', async (req, res) => {
   const moduleId = req.params.moduleId;
   const token = req.cookies && req.cookies.session_token;
   let viewerIsAdmin = false;
+  let viewerIsKuopioDemo = false;
   if (token) {
     try {
       const sessionResult = await pool.query(
-        `SELECT u.id, u.is_admin, COALESCE(u.is_approved, FALSE) AS is_approved
+        `SELECT u.id, u.email, u.is_admin, COALESCE(u.is_approved, FALSE) AS is_approved
          FROM sessions s JOIN users u ON s.user_id = u.id
          WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE`,
         [token]
@@ -337,8 +348,16 @@ app.get('/module/:moduleId', async (req, res) => {
         const u = sessionResult.rows[0];
         const isAdmin = u.is_admin === true;
         viewerIsAdmin = isAdmin;
+        viewerIsKuopioDemo = shouldAutoApproveStudent(u.email);
         const approved = u.is_approved === true;
-        if (!isAdmin && approved) {
+        if (viewerIsKuopioDemo) {
+          try {
+            await resetKuopioDemoUserData(u.id);
+          } catch (resetErr) {
+            console.error('Kuopio demo module reset:', resetErr);
+          }
+        }
+        if (!isAdmin && approved && !viewerIsKuopioDemo) {
           await onboardingRoutes.ensureUserOnboardingTable();
           const ob = await pool.query('SELECT id FROM user_onboarding WHERE user_id = $1', [u.id]);
           if (ob.rows.length === 0) {
@@ -383,6 +402,10 @@ app.get('/module/:moduleId', async (req, res) => {
 
   // Avoid stale module HTML behind CDN/browser cache after deploys
   res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+  if (viewerIsKuopioDemo) {
+    const html = injectKuopioDemoLocalClear(fs.readFileSync(modulePath, 'utf8'));
+    return res.type('html').send(html);
+  }
   res.sendFile(modulePath);
 });
 
