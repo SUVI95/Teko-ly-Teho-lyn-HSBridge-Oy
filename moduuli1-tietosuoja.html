@@ -2738,33 +2738,24 @@ async function checkAnonymization() {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         max_tokens: 800,
-        system: `Olet tietosuoja-auditoija. Vertaa alkuperäistä tekstiä opiskelijan anonymisoituun versioon.
+        system: `Olet tietosuoja-auditoija. Opiskelija on kirjoittanut UUDEN VERSION tekstistä, josta pitää poistaa arkaluonteiset tiedot.
 
-ARKALUONTEISET TIEDOT (PITÄÄ POISTAA):
-- Koko nimi (etunimi + sukunimi)
-- Henkilötunnus (hetu)
-- Osoite
-- Puhelinnumero, sähköposti
-- Pankkitilinumero
-- Tarkka palkka euroissa
-- Terveystiedot ja lääkitys
-- Työnantajan luottamukselliset tiedot (sopimusarvot, irtisanomismäärät, julkaisemattomat tiedot)
+TEHTÄVÄSI: Tarkista VAIN opiskelijan kirjoittama teksti. Jos jokin arkaluonteinen tieto EI ESIINNY opiskelijan tekstissä, se on ONNISTUNEESTI POISTETTU.
 
-TURVALLISTA JAKAA (ÄLÄ merkitse riskeiksi):
-- Ammattinimike (esim. "asiakaspalvelupäällikkö")
-- Yleinen kokemus (esim. "6 vuotta kokemusta")
-- Toimiala (esim. "lentoyhtiö", "kaupan ala")
-- Osaaminen ja taidot (esim. "Excel, projektinhallinta")
-- Ura-tavoitteet (esim. "haluan siirtyä markkinointiin")
-- Koulutustaso
-- Sukupuoli, ikähaarukka
+ARKALUONTEISTA (pitää poistaa alkuperäisestä):
+nimi, henkilötunnus, osoite, puhelin, sähköposti, pankkitili, tarkka palkka euroissa, terveystiedot, lääkitys, työnantajan luottamukselliset tiedot
 
-Vastaa JSON: {"grade": "PASS|PARTIAL|FAIL", "found_pii": ["lista jäljelle jääneistä ARKALUONTEISISTA tiedoista"], "removed_pii": ["lista onnistuneesti poistetuista"], "feedback": "lyhyt positiivinen palaute", "tip": "yksi konkreettinen parannus"}
-PASS = kaikki arkaluonteiset tiedot poistettu. Ammatillinen tieto saa ja PITÄÄ jäädä — se on hyödyllistä.
-PARTIAL = joitakin arkaluonteisia tietoja jäljellä.
-FAIL = useita vakavia puutteita (nimi, hetu, pankkitili tms. jäljellä).
-TÄRKEÄÄ: Ole rohkaiseva. Opiskelija tulee käyttämään AI:ta CV:n parantamiseen — ammatillisen tiedon jakaminen on TURVALLISTA ja TOIVOTTAVAA.`,
-        messages: [{ role: 'user', content: `ALKUPERÄINEN: ${originalPlain}\n\nOPISKELIJAN ANONYMISOITU VERSIO: ${input}\n\nTarkista.` }]
+TURVALLISTA (saa ja pitää jäädä opiskelijan tekstiin):
+ammattinimike, kokemusvuodet, toimiala, osaaminen, ura-tavoitteet, koulutus
+
+ARVIOINTI:
+- Jos opiskelijan teksti EI sisällä mitään arkaluonteista → PASS
+- Jos opiskelijan teksti sisältää joitain arkaluonteisia → PARTIAL
+- Jos opiskelijan teksti sisältää nimen, hetun tai pankkitilin → FAIL
+
+Vastaa JSON: {"grade":"PASS|PARTIAL|FAIL","found_pii":["arkaluonteiset tiedot jotka ESIINTYVÄT opiskelijan tekstissä"],"removed_pii":["arkaluonteiset tiedot jotka opiskelija ONNISTUI poistamaan"],"feedback":"lyhyt rohkaiseva palaute","tip":"yksi parannus tai kehu"}
+Ole ROHKAISEVA. Jos opiskelija poisti arkaluonteiset tiedot ja säilytti ammatillisen sisällön, anna PASS ja kehu!`,
+        messages: [{ role: 'user', content: `ALKUPERÄINEN TEKSTI (sisältää arkaluonteisia tietoja):\n${originalPlain}\n\nOPISKELIJAN UUDELLEENKIRJOITTAMA VERSIO (tarkista VAIN tämä):\n${input}` }]
       })
     });
     const data = await res.json();
