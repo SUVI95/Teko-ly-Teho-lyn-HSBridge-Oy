@@ -105,6 +105,11 @@ input.fld{resize:none;min-height:auto;}
 .market-card.picked{border-color:var(--ember);background:rgba(201,92,42,.04);box-shadow:0 0 0 3px rgba(201,92,42,.12);}
 .mc-badge{position:absolute;top:.75rem;right:.75rem;width:22px;height:22px;border-radius:50%;background:var(--ember);color:#fff;font-size:.72rem;display:none;align-items:center;justify-content:center;font-weight:700;}
 .market-card.picked .mc-badge{display:flex;}
+.market-card-custom{width:100%;margin-top:.25rem;}
+.market-custom-fields{display:none;margin-top:1rem;padding:1.25rem;background:rgba(201,92,42,.04);border:1.5px solid rgba(201,92,42,.25);border-radius:var(--r);}
+.market-custom-fields.show{display:block;}
+.market-custom-fields .field-hint{font-size:.88rem;color:var(--muted);line-height:1.65;margin:.5rem 0 .75rem;}
+.market-divider{text-align:center;margin:1.25rem 0 .5rem;font-size:.82rem;color:var(--muted2);letter-spacing:.06em;text-transform:uppercase;}
 .mc-icon{font-size:1.75rem;margin-bottom:.6rem;}
 .mc-title{font-weight:600;font-size:.95rem;color:var(--ink);margin-bottom:.3rem;}
 .mc-desc{font-size:.82rem;color:var(--muted);line-height:1.55;}
@@ -307,7 +312,7 @@ pre.prompt-pre{background:var(--ink);color:rgba(255,255,255,.85);border-radius:v
       <strong>Mitä tämä tarkoittaa sinulle?</strong> Työnhaku on muuttunut radikaalisti. Perinteinen tapa hakea töitä ei enää toimi yhtä hyvin — mutta samaan aikaan ne jotka osaavat käyttää tekoälyä ja rakentaa omia ratkaisuja ovat merkittävässä etulyöntiasemassa. Tänään opit molempia.
     </div>
 
-    <p style="font-size:.95rem;color:var(--text);line-height:1.8;margin-bottom:1.5rem;">Alla on neljä todellista ongelmaa jotka vaivat suomalaisia työnhakijoita, työnantajia ja työvoimatoimistoja tänä päivänä. <strong>Lue ne rauhassa.</strong> Mieti onko jokin näistä tuttu — sinulle henkilökohtaisesti tai jollekin jonka tunnet.</p>
+    <p style="font-size:.95rem;color:var(--text);line-height:1.8;margin-bottom:1.5rem;">Alla on neljä todellista ongelmaa, jotka vaivaavat suomalaisia työnhakijoita, työnantajia ja työvoimatoimistoja tänä päivänä. Lue ne rauhassa. Mieti, onko jokin näistä tuttu — sinulle henkilökohtaisesti tai jollekin, jonka tunnet. <strong>Valitse yksi</strong>, tai jos mikään ei osu, <strong>kuvaa oma ideasi</strong> alempana.</p>
 
     <div class="market-cards" id="marketCards">
       <div class="market-card" onclick="pickMarket(this,'hakija')">
@@ -336,8 +341,24 @@ pre.prompt-pre{background:var(--ink);color:rgba(255,255,255,.85);border-radius:v
       </div>
     </div>
 
+
+    <p class="market-divider">tai</p>
+
+    <div class="market-card market-card-custom" id="marketCardCustom" onclick="pickCustomIdea()">
+      <div class="mc-badge">✓</div>
+      <div class="mc-icon">💡</div>
+      <div class="mc-title">Oma idea — eri ongelma</div>
+      <div class="mc-desc">Ei mikään yllä olevista? Kuvaile lyhyesti mikä ongelma sinua tai tuttuasi vaivaa. Liittyy työhön, oppimiseen tai arjen palveluihin Suomessa.</div>
+    </div>
+
+    <div class="market-custom-fields" id="marketCustomFields">
+      <span class="field-label">Oma ongelma-alue lyhyesti</span>
+      <p class="field-hint">2–4 lausetta riittää. Kenelle ongelma koskee ja miksi se on tärkeä?</p>
+      <textarea class="fld" id="customMarketBrief" rows="3" placeholder="Esim: Pienyrittäjät eivät ehdi vastata työnhakijoiden yhteydenottoihin ajoissa, koska viestit hajoavat sähköpostiin ja someen..." oninput="checkCustomMarket()"></textarea>
+    </div>
+
     <div id="marketPickNote" class="framing hidden">
-      <strong>Hyvä valinta.</strong> Muista tämä ongelma-alue — se on koko sovelluksesi pohja. Seuraavaksi muotoilet ongelman omin sanoin ja annat sovelluksellesi nimen.
+      <strong>Hyvä valinta.</strong> <span id="marketPickNoteText">Muista tämä ongelma-alue — se on koko sovelluksesi pohja.</span> Seuraavaksi muotoilet ongelman omin sanoin ja annat sovelluksellesi nimen.
     </div>
 
     <div class="mt-4 right">
@@ -722,6 +743,7 @@ async function claudeApi(system, messages, maxTokens) {
 // ── STATE ──────────────────────────────────────────────────
 const S = {
   market: null,
+  customMarketBrief: '',
   problemDesc: '',
   problemOneliner: '',
   appName: '',
@@ -773,14 +795,54 @@ document.querySelectorAll('.fade-up').forEach(el=>{
 });
 
 // ── STEP 1 ────────────────────────────────────────────────
+function marketAreaLabel(){
+  if(S.market==='custom') return S.customMarketBrief || 'oma ongelma-alue (kuvattu opiskelijan toimesta)';
+  return MARKET_LABELS[S.market]||S.market||'';
+}
+function setMarketPickNote(custom){
+  const note=document.getElementById('marketPickNoteText');
+  if(!note) return;
+  note.textContent=custom
+    ? 'Kirjoitit oman ongelma-alueen — se on koko sovelluksesi pohja.'
+    : 'Muista tämä ongelma-alue — se on koko sovelluksesi pohja.';
+}
 function pickMarket(el,key){
-  document.querySelectorAll('.market-card').forEach(c=>c.classList.remove('picked'));
+  document.querySelectorAll('#marketCards .market-card').forEach(c=>c.classList.remove('picked'));
+  document.getElementById('marketCardCustom')?.classList.remove('picked');
   el.classList.add('picked');
   S.market=key;
+  S.customMarketBrief='';
+  const customFields=document.getElementById('marketCustomFields');
+  if(customFields) customFields.classList.remove('show');
+  const brief=document.getElementById('customMarketBrief');
+  if(brief) brief.value='';
   document.getElementById('marketPickNote').classList.remove('hidden');
+  setMarketPickNote(false);
   document.getElementById('toStep2Btn').disabled=false;
 }
-function goToStep2(){document.getElementById('s2-problem').scrollIntoView({behavior:'smooth'});}
+function pickCustomIdea(){
+  document.querySelectorAll('#marketCards .market-card').forEach(c=>c.classList.remove('picked'));
+  const card=document.getElementById('marketCardCustom');
+  card?.classList.add('picked');
+  S.market='custom';
+  const customFields=document.getElementById('marketCustomFields');
+  if(customFields) customFields.classList.add('show');
+  document.getElementById('marketPickNote').classList.remove('hidden');
+  setMarketPickNote(true);
+  checkCustomMarket();
+  document.getElementById('customMarketBrief')?.focus();
+}
+function checkCustomMarket(){
+  if(S.market!=='custom') return;
+  const brief=(document.getElementById('customMarketBrief')?.value||'').trim();
+  S.customMarketBrief=brief;
+  document.getElementById('toStep2Btn').disabled=brief.length<20;
+}
+function goToStep2(){
+  if(S.market==='custom') checkCustomMarket();
+  if(document.getElementById('toStep2Btn').disabled) return;
+  document.getElementById('s2-problem').scrollIntoView({behavior:'smooth'});
+}
 
 // ── STEP 2 ────────────────────────────────────────────────
 function checkStep2(){
@@ -805,7 +867,7 @@ function buildSystem(){
   return `You are an expert product designer and UX researcher. You are interviewing a Finnish adult learner — likely unemployed or upskilling — who wants to build an app to solve a real Finnish job market problem.
 
 WHAT YOU ALREADY KNOW:
-- Problem area chosen: ${MARKET_LABELS[S.market]||S.market}
+- Problem area chosen: ${marketAreaLabel()}
 - Their problem description: "${S.problemDesc}"
 - Their one-liner: "${S.problemOneliner}"
 - App name they chose: "${S.appName}"
@@ -995,7 +1057,7 @@ The app solves a Finnish job market problem. Make it feel genuinely useful — n
   const usr=`Build the complete prompt for this app:
 
 APP NAME: ${S.appName}
-PROBLEM AREA: ${MARKET_LABELS[S.market]||S.market}
+PROBLEM AREA: ${marketAreaLabel()}
 PROBLEM: ${S.problemDesc}
 ONE-LINER: "${S.problemOneliner}"
 
