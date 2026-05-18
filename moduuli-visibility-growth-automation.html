@@ -416,7 +416,7 @@ pre.prompt-pre{background:var(--ink);color:rgba(255,255,255,.85);border-radius:v
     <span class="label">Osa 3 — Haastattelu</span>
     <h2 class="sh2">Claude haastattelee<br><em>sinut — 5 kysymystä</em></h2>
     <div class="divider"></div>
-    <p class="lead">Claude tuntee jo ongelmasi. Nyt se haluaa ymmärtää syvemmälle — kuka käyttää sovellusta, miltä käyttö näyttää oikeassa elämässä, mikä tekee siitä oikeasti hyödyllisen. Vastaa rehellisesti ja omilla sanoillasi.</p>
+    <p class="lead">Claude tuntee jo ongelmasi ja sovelluksesi nimen. Nyt se haluaa kuulla tarinan ihmisestä, jolle rakennat — ei yleisluonteisesti, vaan oikeana ihmisenä. Vastaa rehellisesti, kuin kertoisit tutulle.</p>
 
     <div class="interview-wrap">
       <div class="interview-header">
@@ -863,37 +863,65 @@ function updateNamePreview(){
 function goToStep3(){document.getElementById('s3-interview').scrollIntoView({behavior:'smooth'});}
 
 // ── STEP 3: INTERVIEW ────────────────────────────────────
-function buildSystem(){
-  return `You are an expert product designer and UX researcher. You are interviewing a Finnish adult learner — likely unemployed or upskilling — who wants to build an app to solve a real Finnish job market problem.
+function buildFirstInterviewMessage(){
+  const app=S.appName?` «${S.appName}»`:'';
+  return `Hei! Olen jo lukenut ongelmasi${app?` ja ajatuksesi sovelluksesta ${app}`:''} — kiitos, että jaoit ne.
 
-WHAT YOU ALREADY KNOW:
-- Problem area chosen: ${marketAreaLabel()}
-- Their problem description: "${S.problemDesc}"
-- Their one-liner: "${S.problemOneliner}"
-- App name they chose: "${S.appName}"
+Nyt haluan nähdä silmieni eteen yhden oikean ihmisen — ei statistiikkaa, ei “kohderyhmää”.
 
-YOUR TASK:
-Ask EXACTLY 5 questions — one at a time, in sequence. Each must unlock something specific:
-Q1: Who EXACTLY is the user — paint a vivid, specific picture (not "job seekers", but "a 34-year-old Somali woman who has lived in Tampere for 2 years and...")
-Q2: Walk me through one complete use of the app — from opening it to closing it. What happens step by step?
-Q3: What is the single moment that makes the user think "this is worth it"? The "aha" moment.
-Q4: What would make someone abandon this app after 3 days and never return? What must be avoided?
-Q5: If this app had 1000 users in Finland — what would be different in their lives 6 months from now?
+Kerrothan minulle tarkasti, kuka tämän sovelluksen käyttäjä on? Älä sano vain “vastavalmistunut nuori” tai “työnhakija” — vaan maalaa minulle täydellinen kuva: mikä ikä, mistä kaupungista, mitä on opiskellut tai tehnyt aiemmin, millainen elämäntilanne juuri nyt, mitä hän tekee päivät, ja mitä hän ajattelee illalla sängyssä maatessaan?
 
-RULES:
-- Ask ONE question at a time. Never combine questions.
-- After each answer: one sentence acknowledging what you heard — then next question.
-- Keep a warm, direct tone. No corporate language. In Finnish.
-- After question 5 is answered, reply ONLY with this exact string: "INTERVIEW_COMPLETE — Kiitos! Sinun vastauksesi olivat tarkat ja ajattelevaiset. Paina alla olevaa nappia — rakennan nyt täydellisen sovelluspromtin juuri sinulle."`;
+Ota aikaa — mitä elävämmän kuvan annat, sitä paremman sovelluksen voimme yhdessä suunnitella.`;
 }
 
-async function startInterview(){
+function buildSystem(){
+  const ctx=`CONTEXT (already known — do not re-ask):
+- Problem area: ${marketAreaLabel()}
+- Problem: "${S.problemDesc}"
+- One-liner: "${S.problemOneliner}"
+- App name: "${S.appName}"`;
+
+  if(S.questionCount>=5){
+    return `You are a warm Finnish-speaking product designer. ${ctx}
+
+The user just answered your fifth and final interview question. Reply ONLY with this exact string (nothing else):
+"INTERVIEW_COMPLETE — Kiitos! Sinun vastauksesi olivat tarkat ja ajattelevaiset. Paina alla olevaa nappia — rakennan nyt täydellisen sovelluspromtin juuri sinulle."`;
+  }
+
+  const qGuide={
+    2:'Walk through one real day with the app — from opening the phone to closing the app. What happens step by step? Invite storytelling; use "sinä".',
+    3:'The "aha" moment — when does the user feel "this was worth opening"? Ask for one concrete scene.',
+    4:'What would make them quit after 3 days? What must this app absolutely avoid?',
+    5:'If 1000 people in Finland used this app for 6 months — what would be different in their everyday lives?'
+  };
+  const nextQ=S.questionCount+1;
+
+  return `You are a warm, curious Finnish-speaking product designer helping an adult learner shape their app idea. Tone: friendly, human, like a thoughtful friend — never stiff, corporate, or interrogative.
+
+${ctx}
+
+The FIRST question (user persona) was already asked. The user has answered ${S.questionCount} question(s). Now ask question ${nextQ} of 5 only.
+
+TOPIC FOR THIS MESSAGE: ${qGuide[nextQ]}
+
+STYLE:
+- Start with 1 short warm sentence that echoes something specific from their latest answer.
+- Then ask ONE question in Finnish — vivid and conversational, like talking to a friend (not a form or survey).
+- Never say "Kysymys ${nextQ}" or use bullet lists.
+- No English. No markdown headers.`;
+}
+
+function startInterview(){
   document.getElementById('startInterviewBtn').classList.add('hidden');
   document.getElementById('chatInputRow').style.display='flex';
   document.getElementById('chatEmpty').style.display='none';
   S.questionCount=0;
   S.chatHistory=[];
-  await callClaude(true);
+  S.interviewDone=false;
+  const first=buildFirstInterviewMessage();
+  addBubble('ai',first);
+  S.chatHistory.push({role:'assistant',content:first});
+  updateDots();
 }
 
 async function sendChat(){
@@ -906,21 +934,18 @@ async function sendChat(){
   S.chatHistory.push({role:'user',content:txt});
   S.questionCount++;
   updateDots();
-  await callClaude(false);
+  await callClaude();
   document.getElementById('chatSendBtn').disabled=false;
 }
 
-async function callClaude(isFirst){
+async function callClaude(){
   showTyping();
-  const messages=isFirst
-    ?[{role:'user',content:'Aloita haastattelu — kysy ensimmäinen kysymys.'}]
-    :S.chatHistory;
   try{
-    const t=await claudeApi(buildSystem(),messages,1000);
+    const t=await claudeApi(buildSystem(),S.chatHistory,1000);
     hideTyping();
     const display=t.replace('INTERVIEW_COMPLETE — ','');
     addBubble('ai',display);
-    if(!isFirst)S.chatHistory.push({role:'assistant',content:t});
+    S.chatHistory.push({role:'assistant',content:t});
     if(t.includes('INTERVIEW_COMPLETE')){
       S.interviewDone=true;
       document.getElementById('chatInputRow').style.display='none';
@@ -959,14 +984,15 @@ function showTyping(){
 function hideTyping(){if(typingEl){typingEl.remove();typingEl=null;}}
 
 function updateDots(done=false){
+  const cur=done?5:Math.min(S.questionCount,4);
   for(let i=0;i<5;i++){
     const d=document.getElementById('d'+i);
     if(!d)continue;
     d.classList.remove('done','active');
-    if(done||i<S.questionCount-1)d.classList.add('done');
-    else if(i===S.questionCount-1)d.classList.add('active');
+    if(done||i<cur)d.classList.add('done');
+    else if(i===cur)d.classList.add('active');
   }
-  document.getElementById('intStepLabel').textContent=(done?5:Math.min(S.questionCount,5))+' / 5';
+  document.getElementById('intStepLabel').textContent=(done?5:Math.min(S.questionCount+1,5))+' / 5';
 }
 
 function goToPrompt(){
