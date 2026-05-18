@@ -617,9 +617,9 @@ pre.prompt-pre{background:var(--ink);color:rgba(255,255,255,.85);border-radius:v
 
     <div class="defence-q">
       <div class="defence-q-num">Kysymys 3 / 4</div>
-      <div class="defence-q-title">Mitä SINÄ teit — ja mitä AI teki? Missä oli sinun ajattelusi?</div>
+      <div class="defence-q-title">Mitä SINÄ teit — ja mitä DuuniJobs AI teki? Missä oli sinun ajattelusi?</div>
       <div class="defence-q-hint">Tämä on tärkein kysymys. Työnantaja haluaa tietää että ymmärrät eron: ihmisen visio ja luovuus vs. tekoälyn toteutus.</div>
-      <textarea class="fld" id="dq3" rows="3" placeholder="Minä valitsin ongelman koska... Minä nimesin sovelluksen koska... AI toteutti..." oninput="checkDefence()"></textarea>
+      <textarea class="fld" id="dq3" rows="3" placeholder="Minä valitsin ongelman koska... Minä nimesin sovelluksen koska... DuuniJobs AI toteutti..." oninput="checkDefence()"></textarea>
     </div>
 
     <div class="defence-q">
@@ -718,16 +718,16 @@ pre.prompt-pre{background:var(--ink);color:rgba(255,255,255,.85);border-radius:v
 
 <script src="/js/ai-helper.js"></script>
 <script>
-if (window.aiClaude) window.aiChat = window.aiClaude;
+if (window.duunijobsAI) window.aiChat = window.duunijobsAI;
 
-function getClaudeApiUrl() {
+function getDuunijobsAIApiUrl() {
   var pathname = window.location.pathname || '';
   var base = pathname.indexOf('/module/') > 0 ? pathname.substring(0, pathname.indexOf('/module/')) : '';
-  return (window.location.origin || '') + base + '/api/ai/claude';
+  return (window.location.origin || '') + base + '/api/ai/duunijobs';
 }
 
-async function claudeApi(system, messages, maxTokens) {
-  var url = getClaudeApiUrl();
+async function duunijobsAIApi(system, messages, maxTokens) {
+  var url = getDuunijobsAIApiUrl();
   var resp = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -944,14 +944,14 @@ async function sendChat(){
   S.chatHistory.push({role:'user',content:txt});
   S.questionCount++;
   updateDots();
-  await callClaude();
+  await askDuunijobsAI();
   document.getElementById('chatSendBtn').disabled=false;
 }
 
-async function callClaude(){
+async function askDuunijobsAI(){
   showTyping();
   try{
-    const t=await claudeApi(buildSystem(),S.chatHistory,1000);
+    const t=await duunijobsAIApi(buildSystem(),S.chatHistory,1000);
     hideTyping();
     const display=formatChatDisplay(t.replace('INTERVIEW_COMPLETE — ',''));
     addBubble('ai',display);
@@ -964,7 +964,7 @@ async function callClaude(){
     }
   }catch(e){
     hideTyping();
-    addBubble('ai',(e&&e.message)||'Verkkovirhe — tarkista ANTHROPIC_API_KEY ja yritä uudelleen.');
+    addBubble('ai',(e&&e.message)||'Yhteys katkesi — yritä hetken päästä uudelleen.');
     document.getElementById('chatSendBtn').disabled=false;
   }
 }
@@ -1031,7 +1031,7 @@ async function generatePrompt(){
   const stepEl=document.getElementById('pgenStep');
   const iv=setInterval(()=>{stepEl.textContent=PGEN[si%PGEN.length];si++;},3200);
 
-  const convo=S.chatHistory.map(m=>`${m.role==='user'?'USER':'CLAUDE'}: ${m.content}`).join('\n\n');
+  const convo=S.chatHistory.map(m=>`${m.role==='user'?'USER':'DUUNIJOBS_AI'}: ${m.content}`).join('\n\n');
 
   const sys=`You are a world-class product manager and senior full-stack engineer. Write a complete, professional app-building prompt for Base44 (an AI app builder that generates full applications from text descriptions). Write in English.
 
@@ -1104,14 +1104,14 @@ ${convo}
 Now write the complete, exhaustive Base44 prompt. This person built this with no coding experience. Make them blow their own mind when they see what gets generated.`;
 
   try{
-    const t=await claudeApi(sys,[{role:'user',content:usr}],4000);
+    const t=await duunijobsAIApi(sys,[{role:'user',content:usr}],4000);
     clearInterval(iv);
     S.generatedPrompt=t;
     S.finalPrompt=t;
     showPromptOut(t);
   }catch(e){
     clearInterval(iv);
-    document.getElementById('pgenStep').textContent=(e&&e.message)||'Verkkovirhe — tarkista ANTHROPIC_API_KEY.';
+    document.getElementById('pgenStep').textContent=(e&&e.message)||'DuuniJobs AI ei vastaa juuri nyt — yritä uudelleen.';
   }
 }
 
@@ -1205,13 +1205,13 @@ Kenelle ja miksi: ${q1}
 
 Mitä sovellus tekee: ${q2}
 
-Minun panokseni — mitä minä tein, mitä AI teki: ${q3}
+Minun panokseni — mitä minä tein, mitä DuuniJobs AI teki: ${q3}
 
 Seuraava kehitysaskel: ${q4}
 
 Teknologiat: Base44 (AI app builder) · DuuniJobs AI · Prompt engineering · Tuotekehitysajattelu${S.appUrl?'\n\nSovellus: '+S.appUrl:''}
 
-Tämä projekti rakennettiin HS Bridge Oy:n AI-koulutuksessa. Tunnistin oikean ongelman Suomen työmarkkinoilta, muotoilin sovelluksen vision, haastattelin idean AI:n avulla, rakensin toimivan sovelluksen ilman koodia ja osaan perustella jokaisen suunnittelupäätöksen.`;
+Tämä projekti rakennettiin HS Bridge Oy:n AI-koulutuksessa. Tunnistin oikean ongelman Suomen työmarkkinoilta, muotoilin sovelluksen vision, haastattelin idean DuuniJobs AI:n avulla, rakensin toimivan sovelluksen ilman koodia ja osaan perustella jokaisen suunnittelupäätöksen.`;
   navigator.clipboard.writeText(txt).then(()=>{
     const el=document.getElementById('pcCopyOk');
     el.style.display='inline';
@@ -1222,7 +1222,7 @@ Tämä projekti rakennettiin HS Bridge Oy:n AI-koulutuksessa. Tunnistin oikean o
 <script>
 fetch('/ai-chat-widget.html').then(function(r){return r.text();}).then(function(h){
   document.body.insertAdjacentHTML('beforeend',h);
-  window.MODULE_USE_CLAUDE=true;
+  window.MODULE_USE_DUUNIJOBS_AI=true;
 }).catch(function(){});
 </script>
 </body>

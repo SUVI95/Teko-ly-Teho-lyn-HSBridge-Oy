@@ -111,8 +111,8 @@ async function callOpenAIFallback(messages, system, max_tokens, res) {
   return res.json({ text, usage: data.usage });
 }
 
-// Claude (Anthropic) API endpoint for deep analysis
-router.post('/claude', async (req, res) => {
+// DuuniJobs AI (Anthropic) — deep analysis; /claude kept for older clients
+async function handleDuunijobsAi(req, res) {
   try {
     const { messages, system, max_tokens = 2000 } = req.body;
 
@@ -123,7 +123,7 @@ router.post('/claude', async (req, res) => {
     const anthropicKey = envTrim('ANTHROPIC_API_KEY');
     if (!anthropicKey) {
       console.error('Anthropic API key not configured');
-      return res.status(500).json({ error: 'Claude-palvelu ei ole käytettävissä.' });
+      return res.status(500).json({ error: 'DuuniJobs AI -palvelu ei ole käytettävissä.' });
     }
 
     const body = {
@@ -177,12 +177,12 @@ router.post('/claude', async (req, res) => {
 
       console.error('Anthropic API error:', errorData);
       return res.status(response.status).json({
-        error: 'Claude service error',
+        error: 'DuuniJobs AI service error',
         details: errorData
       });
     }
 
-    console.warn('Claude failed after retries, falling back to OpenAI');
+    console.warn('DuuniJobs AI failed after retries, falling back to OpenAI');
     return callOpenAIFallback(messages, system, max_tokens, res);
   } catch (error) {
     console.error('Error calling Anthropic API, falling back to OpenAI:', error.message);
@@ -196,7 +196,9 @@ router.post('/claude', async (req, res) => {
       });
     }
   }
-});
+}
+router.post('/duunijobs', handleDuunijobsAi);
+router.post('/claude', handleDuunijobsAi);
 
 // OpenAI API endpoint for image generation (DALL-E 3)
 router.post('/image', async (req, res) => {

@@ -69,8 +69,9 @@
 
       return data.text || data.reply || '';
     } catch (err) {
-      console.warn('Claude failed, falling back to OpenAI:', err.message);
+      console.warn('DuuniJobs AI failed, falling back to OpenAI:', err.message);
       return window.aiChat(systemPrompt, userMessage, maxTokens || 2000);
     }
   };
+  window.duunijobsAI = window.aiClaude;
 })();

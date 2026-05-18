@@ -208,13 +208,14 @@ async function sendAIChatMessage() {
   try {
     const systemPrompt = 'Olet auttava tekoälyassistentti, joka auttaa käyttäjiä oppimaan tekoälystä ja sen käytöstä työnhaussa. Vastaa suomeksi, ystävällisesti ja käytännönläheisesti. Pidä vastaukset tiiviinä mutta informatiivisina.';
     let responseText;
-    if (window.MODULE_USE_CLAUDE && window.aiClaude) {
+    var djAi = window.duunijobsAI || window.aiClaude;
+    if ((window.MODULE_USE_DUUNIJOBS_AI || window.MODULE_USE_CLAUDE) && djAi) {
       const historyBlock = aiChatHistory.length
         ? 'Aiemmat viestit:\n' + aiChatHistory.map(function(m) {
             return (m.role === 'user' ? 'Käyttäjä' : 'Assistentti') + ': ' + m.content;
           }).join('\n') + '\n\n'
         : '';
-      responseText = await window.aiClaude(systemPrompt, historyBlock + 'Kysymys: ' + message, 500);
+      responseText = await djAi(systemPrompt, historyBlock + 'Kysymys: ' + message, 500);
     } else {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
