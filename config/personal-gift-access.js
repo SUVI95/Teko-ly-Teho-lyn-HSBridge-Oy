@@ -1,7 +1,7 @@
 /**
  * Personal gift modules (Sonja, Satu, …).
  * Email allowlist + first-name fallback when registration email differs.
- * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL (comma-separated).
+ * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL (comma-separated).
  */
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -40,6 +40,11 @@ const GIFTS = {
     moduleId: 'satu-ai-opas-2025',
     firstName: 'satu',
     emails: parseEmailList(process.env.SATU_GIFT_EMAIL, ['satukvoutilainen@gmail.com'])
+  },
+  soile: {
+    moduleId: 'soile-ai-opas-2025',
+    firstName: 'soile',
+    emails: parseEmailList(process.env.SOILE_GIFT_EMAIL, ['soile.k.niskanen@gmail.com'])
   }
 };
 
@@ -72,8 +77,13 @@ function isSatuGiftRecipient(user) {
   return isGiftRecipient('satu', user);
 }
 
+function isSoileGiftRecipient(user) {
+  return isGiftRecipient('soile', user);
+}
+
 const SONJA_GIFT_MODULE_ID = GIFTS.sonja.moduleId;
 const SATU_GIFT_MODULE_ID = GIFTS.satu.moduleId;
+const SOILE_GIFT_MODULE_ID = GIFTS.soile.moduleId;
 
 /** @deprecated use isSonjaGiftRecipient({ email, name }) */
 function isSonjaGiftEmail(email) {
@@ -90,7 +100,9 @@ module.exports = {
   isGiftRecipient,
   isSonjaGiftRecipient,
   isSatuGiftRecipient,
+  isSoileGiftRecipient,
   isSonjaGiftEmail,
   SONJA_GIFT_MODULE_ID,
-  SATU_GIFT_MODULE_ID
+  SATU_GIFT_MODULE_ID,
+  SOILE_GIFT_MODULE_ID
 };

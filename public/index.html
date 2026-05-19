@@ -1489,6 +1489,18 @@
             satuGiftOnly: true
           },
           {
+            id: 'soile-ai-opas-2025',
+            title: 'Taloushallinnon AI-opas — sinulle',
+            description: 'Henkilökohtainen opas taloushallinnon AI-taitoihin. Avautuu kun olet käynyt läpi muut moduulit.',
+            icon: 'sparkles',
+            part: 2,
+            day: 'bridge',
+            cardBadge: 'Sinulle',
+            statusLine: 'Henkilökohtainen lahja 🎁',
+            personalGiftKey: 'soile',
+            soileGiftOnly: true
+          },
+          {
             id: 'palaute',
             title: 'Kurssipalaute ⭐',
             description: 'Viisi kysymystä, viisi tähteä, 2 minuuttia. Kerro rehellisesti.',
@@ -1585,8 +1597,9 @@
         const tyokalurakentajaModule = modules.find(m => m.id === 'tyokalurakentaja') || null;
         const sonjaGiftModule = modules.find(m => m.id === 'sonja-ai-opas-2025') || null;
         const satuGiftModule = modules.find(m => m.id === 'satu-ai-opas-2025') || null;
+        const soileGiftModule = modules.find(m => m.id === 'soile-ai-opas-2025') || null;
         const palauteModule = modules.find(m => m.id === 'palaute') || null;
-        const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti', 'tuomioistuin', 'tyokalurakentaja', 'sonja-ai-opas-2025', 'satu-ai-opas-2025', 'palaute']);
+        const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti', 'tuomioistuin', 'tyokalurakentaja', 'sonja-ai-opas-2025', 'satu-ai-opas-2025', 'soile-ai-opas-2025', 'palaute']);
 
         // Piilota vain admin-only (ja demo-tilin allowlistin ulkopuolella). Päivän lukitut moduulit näkyvät lukittuna.
         // Kun moduuli avataan opiskelijoille, poista id temporarilyLockedModuleIds-listasta.
@@ -1643,6 +1656,7 @@
             tyokalurakentajaModule,
             sonjaGiftModule,
             satuGiftModule,
+            soileGiftModule,
             palauteModule
           ].filter(function (m) {
             if (!m) return false;
@@ -1810,12 +1824,14 @@
       tyokalurakentaja: ['Työkalun suunnittelu', 'Testaus', 'Julkaisu'],
       palaute: ['Kurssipalaute', 'Reflektio'],
       'sonja-ai-opas-2025': ['Viestinnän AI-opas', 'Prompt-kirjasto', 'LinkedIn & CV', 'Alan asiantuntijuus'],
-      'satu-ai-opas-2025': ['Design & AI', 'Tutkimussynteesi', 'Konseptivariointi', 'Case study & CV']
+      'satu-ai-opas-2025': ['Design & AI', 'Tutkimussynteesi', 'Konseptivariointi', 'Case study & CV'],
+      'soile-ai-opas-2025': ['Taloushallinto & AI', 'Kirjanpito', 'Raportointi', 'Strateginen talous']
     };
 
     const PERSONAL_GIFT_META_IDS = new Set([
       'sonja-ai-opas-2025',
       'satu-ai-opas-2025',
+      'soile-ai-opas-2025',
       'palaute',
       'loppumoduuli-sina-ja-tekoaly',
       'myytinmurtaja',
@@ -1887,6 +1903,7 @@
       if (m.personalGiftKey) return m.personalGiftKey;
       if (m.sonjaGiftOnly || m.id === 'sonja-ai-opas-2025') return 'sonja';
       if (m.satuGiftOnly || m.id === 'satu-ai-opas-2025') return 'satu';
+      if (m.soileGiftOnly || m.id === 'soile-ai-opas-2025') return 'soile';
       return null;
     }
 
@@ -1899,6 +1916,7 @@
       if (!u || !giftKey) return false;
       if (giftKey === 'sonja') return u.sonja_gift === true || u.sonja_gift === 'true';
       if (giftKey === 'satu') return u.satu_gift === true || u.satu_gift === 'true';
+      if (giftKey === 'soile') return u.soile_gift === true || u.soile_gift === 'true';
       return false;
     }
 
@@ -2079,7 +2097,7 @@
       } else if (isAdminOnlyModule && isAdminUser()) {
         progressBlock = '<div class="progress-text">Piilotettu opiskelijoilta · testaus</div>';
       } else if (personalGiftKey && isAdminUser()) {
-        progressBlock = '<div class="progress-text">' + (personalGiftKey === 'satu' ? 'Vain Satulle' : 'Vain Sonjalle') + ' · admin-esikatselu</div>';
+        progressBlock = '<div class="progress-text">Vain ' + ({ sonja: 'Sonjalle', satu: 'Satulle', soile: 'Soilelle' }[personalGiftKey] || '') + ' · admin-esikatselu</div>';
       } else if (personalGiftLocked) {
         progressBlock = '<div class="progress-text">Avautuu kun muut moduulit on tehty</div>';
       } else if (isComingSoon) {
