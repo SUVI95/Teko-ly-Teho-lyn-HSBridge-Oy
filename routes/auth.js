@@ -170,6 +170,7 @@ router.post('/login', async (req, res) => {
         id: user.id,
         email: user.email,
         name: user.name,
+        is_admin: user.is_admin === true,
         is_approved: user.is_approved === true || demoActive,
         kuopio_demo: demoActive,
         sonja_gift: isSonjaGiftEmail(user.email)

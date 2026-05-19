@@ -1629,7 +1629,11 @@
             tyokalurakentajaModule,
             sonjaGiftModule,
             palauteModule
-          ].filter(function (m) { return m && !isStudentHidden(m); });
+          ].filter(function (m) {
+            if (!m) return false;
+            if (m.id === 'sonja-viestinta-opas' && viewerIsAdmin) return true;
+            return !isStudentHidden(m);
+          });
           if (finals.length === 0) return '';
           let out = '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
           finals.forEach(function (m, i) {
@@ -1867,9 +1871,14 @@
       return u.sonja_gift === true || u.sonja_gift === 'true';
     }
 
+    /** Sonja gift module: Sonja (by email) and admins (preview / support). */
+    function shouldShowSonjaGiftModule() {
+      return isAdminUser() || isSonjaGiftRecipient();
+    }
+
     function isModuleHiddenFromStudent(m) {
       if (isAdminUser()) return false;
-      if (m.id === 'sonja-viestinta-opas') return !isSonjaGiftRecipient();
+      if (m.id === 'sonja-viestinta-opas') return !shouldShowSonjaGiftModule();
       if (isKuopioDemoStudent()) return !kuopioDemoVisibleModuleIds.has(m.id);
       return adminOnlyModuleIds.has(m.id) || m.adminOnly === true;
     }
@@ -2036,6 +2045,8 @@
         progressBlock = '<div class="progress-text">Ei käytössä tänään</div>';
       } else if (isAdminOnlyModule && isAdminUser()) {
         progressBlock = '<div class="progress-text">Piilotettu opiskelijoilta · testaus</div>';
+      } else if (module.id === 'sonja-viestinta-opas' && isAdminUser()) {
+        progressBlock = '<div class="progress-text">Vain Sonjalle · admin-esikatselu</div>';
       } else if (sonjaGiftLocked) {
         progressBlock = '<div class="progress-text">Avautuu kun muut moduulit on tehty</div>';
       } else if (isComingSoon) {
