@@ -32,7 +32,7 @@ function nameMatchesFirstName(name, firstName) {
 
 const GIFTS = {
   sonja: {
-    moduleId: 'sonja-viestinta-opas',
+    moduleId: 'sonja-ai-opas-2025',
     firstName: 'sonja',
     emails: parseEmailList(process.env.SONJA_GIFT_EMAIL, ['sonja.karkkainen@outlook.com'])
   },
