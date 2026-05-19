@@ -1857,7 +1857,7 @@
       'tyokalurakentaja'
     ]);
 
-    /** Moduulit lukittu opiskelijoille tänään — näkyvät korttina, ei avattavissa (poista id kun avaat). */
+    /** Piilotettu live-opiskelijoilta (admin näkee). Poista id listasta kun haluat julkaista. */
     const temporarilyLockedModuleIds = new Set([
       // Bridge — avoinna: työnhaussa, esitykset, sovellusstudio, perplexity, ideasta tuotteeksi, ai-maisema, alanavaihtajan kartta
       'moduuli-ai-liidien-hankinta',
@@ -1945,6 +1945,7 @@
       if (isPersonalGiftModule(m)) return !shouldShowPersonalGiftModule(m);
       if (isAdminUser()) return false;
       if (isKuopioDemoStudent()) return !kuopioDemoVisibleModuleIds.has(m.id);
+      if (temporarilyLockedModuleIds.has(m.id)) return true;
       return adminOnlyModuleIds.has(m.id) || m.adminOnly === true;
     }
 
