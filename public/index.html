@@ -1520,7 +1520,8 @@
             part: 2,
             day: 'bridge',
             cardBadge: 'Palaute',
-            statusLine: 'Anna palautetta 🎉'
+            statusLine: 'Anna palautetta 🎉',
+            openWithoutOnboarding: true
           }
         ];
         
@@ -2086,11 +2087,13 @@
       const sessionLockActive = temporarilyLockedModuleIds.has(module.id);
       const sessionLockBlocksStudent = sessionLockActive && !canOpenSessionLockedModule(module);
       
-      // Before onboarding is complete, show it as the first module and lock the rest.
+      // Before onboarding is complete, lock other modules (Kurssipalaute stays open for everyone).
       const shouldLockForOnboarding = window.currentUser &&
         !window.currentUser.is_admin &&
         window.onboardingStatusKnown &&
-        window.onboardingCompleted !== true;
+        window.onboardingCompleted !== true &&
+        module.id !== 'palaute' &&
+        module.openWithoutOnboarding !== true;
       const personalGiftKey = getPersonalGiftKey(module);
       const personalGiftLocked = personalGiftKey &&
         isPersonalGiftRecipient(personalGiftKey) &&
