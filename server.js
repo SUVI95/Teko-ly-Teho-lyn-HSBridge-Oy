@@ -17,7 +17,10 @@ require('dotenv').config();
 
 const pool = require('./database/db');
 const { shouldAutoApproveStudent } = require('./config/demo-access');
-const { SONJA_GIFT_MODULE_ID, isSonjaGiftEmail } = require('./config/sonja-access');
+const {
+  getGiftKeyForModuleId,
+  isGiftRecipient
+} = require('./config/personal-gift-access');
 const { resetKuopioDemoUserData } = require('./lib/reset-kuopio-demo-user-data');
 
 const KUOPIO_DEMO_LS_CLEAR = '<script>(function(){try{if(/(?:^|;\\s*)kuopio_demo=1(?:;|$)/.test(document.cookie))localStorage.clear();}catch(e){}})();</script>';
@@ -379,21 +382,24 @@ app.get('/module/:moduleId', async (req, res) => {
     return res.redirect(302, '/');
   }
 
-  if (moduleId === SONJA_GIFT_MODULE_ID && !viewerIsAdmin) {
-    let email = '';
+  const personalGiftKey = getGiftKeyForModuleId(moduleId);
+  if (personalGiftKey && !viewerIsAdmin) {
+    let giftUser = { email: '', name: '' };
     if (token) {
       try {
         const r = await pool.query(
-          `SELECT u.email FROM sessions s JOIN users u ON s.user_id = u.id
+          `SELECT u.email, u.name FROM sessions s JOIN users u ON s.user_id = u.id
            WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE`,
           [token]
         );
-        if (r.rows.length) email = r.rows[0].email;
+        if (r.rows.length) {
+          giftUser = { email: r.rows[0].email, name: r.rows[0].name };
+        }
       } catch (e) {
-        console.error('Sonja module gate:', e);
+        console.error('Personal gift module gate:', e);
       }
     }
-    if (!isSonjaGiftEmail(email)) {
+    if (!isGiftRecipient(personalGiftKey, giftUser)) {
       return res.redirect(302, '/');
     }
   }
