@@ -1615,26 +1615,19 @@
         // Render bridge section — between DAY 1 and DAY 2 (Loppumoduuli heti Alanavaihtajan kartta -kortin jälkeen)
         function renderFinalCluster(idxBase) {
           if (isKuopioDemoStudent()) return '';
-          let out = '';
-          out += '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
-          if (loppumoduuliModule) {
-            out += renderModuleCard(loppumoduuliModule, idxBase, modules, summary, completedModules, module4Completed, allPart1Completed);
-          }
-          if (myytinmurtajaModule) {
-            out += renderModuleCard(myytinmurtajaModule, idxBase + 1, modules, summary, completedModules, module4Completed, allPart1Completed);
-          }
-          if (rikkinainenPromptiModule) {
-            out += renderModuleCard(rikkinainenPromptiModule, idxBase + 2, modules, summary, completedModules, module4Completed, allPart1Completed);
-          }
-          if (tuomioistuinModule) {
-            out += renderModuleCard(tuomioistuinModule, idxBase + 3, modules, summary, completedModules, module4Completed, allPart1Completed);
-          }
-          if (tyokalurakentajaModule) {
-            out += renderModuleCard(tyokalurakentajaModule, idxBase + 4, modules, summary, completedModules, module4Completed, allPart1Completed);
-          }
-          if (palauteModule) {
-            out += renderModuleCard(palauteModule, idxBase + 5, modules, summary, completedModules, module4Completed, allPart1Completed);
-          }
+          const finals = [
+            loppumoduuliModule,
+            myytinmurtajaModule,
+            rikkinainenPromptiModule,
+            tuomioistuinModule,
+            tyokalurakentajaModule,
+            palauteModule
+          ].filter(function (m) { return m && !isStudentHidden(m); });
+          if (finals.length === 0) return '';
+          let out = '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
+          finals.forEach(function (m, i) {
+            out += renderModuleCard(m, idxBase + i, modules, summary, completedModules, module4Completed, allPart1Completed);
+          });
           return out;
         }
 
@@ -1794,9 +1787,7 @@
 
     /** Moduulit jotka on piilotettu tältä kurssipäivältä (poista id listalta kun avaat). Admin näkee silti kaiken. */
     const temporarilyLockedModuleIds = new Set([
-      // Bridge modules
-      'moduuli7-ai-tyonhaussa',
-      'moduuli-esitykset-tarjoukset-viestinta',
+      // Bridge modules (moduuli 7, esitykset, sovellusstudio avoinna — poista listalta kun avaat lisää)
       'moduuli-perplexity-notebooklm',
       'moduuli-ideasta-tuotteeksi',
       'moduuli-ai-maisema',
@@ -1830,7 +1821,14 @@
       'moduuli6-hallusinaatiot',
       // Ulkoiset Minä meidän osana -harjoitukset
       'external-mina-meidan-osana-unelmatyo',
-      'external-mina-meidan-osana-itseluottamus'
+      'external-mina-meidan-osana-itseluottamus',
+      // Loppuosi — piilotettu kunnes avataan erikseen
+      'loppumoduuli-sina-ja-tekoaly',
+      'myytinmurtaja',
+      'rikkinainen-prompti',
+      'tuomioistuin',
+      'tyokalurakentaja',
+      'palaute'
     ]);
     
     function isAdminUser() {
