@@ -18,6 +18,7 @@ require('dotenv').config();
 const pool = require('./database/db');
 const { shouldAutoApproveStudent } = require('./config/demo-access');
 const {
+  GIFTS,
   getGiftKeyForModuleId,
   isGiftRecipient
 } = require('./config/personal-gift-access');
@@ -339,6 +340,13 @@ app.get('/portfolio/:slug', async (req, res) => {
 
 /** Modules hidden from students; only admins may open (see adminOnlyModuleIds in public/index.html). */
 const ADMIN_ONLY_MODULE_IDS = new Set(['moduuli-ai-verkkosivustotyokalut']);
+
+// Personal gift HTML only via /module/:id (recipient + admin gate)
+Object.values(GIFTS).forEach((gift) => {
+  app.get(`/${gift.moduleId}.html`, (req, res) => {
+    res.redirect(302, `/module/${gift.moduleId}`);
+  });
+});
 
 app.get('/module/:moduleId', async (req, res) => {
   const moduleId = req.params.moduleId;
