@@ -259,6 +259,57 @@
     line-height: 1.7;
     font-size: 0.95rem;
   }
+
+  .module-skills {
+    margin-bottom: 1.25rem;
+  }
+
+  .module-skills-label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 0.55rem;
+  }
+
+  .module-skill-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .module-skill-chip {
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--ink);
+    background: linear-gradient(180deg, #fff 0%, var(--paper2) 100%);
+    border: 1px solid rgba(26, 26, 46, 0.09);
+    border-radius: 999px;
+    padding: 0.32rem 0.7rem;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  }
+
+  .module-card.completed .module-skill-chip {
+    border-color: rgba(34, 197, 94, 0.22);
+    background: linear-gradient(180deg, rgba(34, 197, 94, 0.06) 0%, #fff 100%);
+  }
+
+  .module-card.locked .module-skill-chip {
+    opacity: 0.72;
+  }
+
+  .module-card.completed .module-skill-chip {
+    border-color: rgba(42, 122, 75, 0.22);
+    background: rgba(42, 122, 75, 0.06);
+  }
+
+  .module-card.locked .module-skill-chip {
+    opacity: 0.72;
+  }
   
   .progress-bar {
     width: 100%;
@@ -1693,6 +1744,54 @@
       'moduuli-it'
     ]);
 
+    /** Osaamistaidot moduulikorteilla — näytetään "Opit"-chipseinä kuvauksen sijaan. */
+    const moduleSkillsById = {
+      onboarding: ['Tavoitteiden kirkastus', 'Oma lähtötaso', 'AI-käyttötarpeet', 'Henkilökohtainen polku'],
+      'moduuli1-tietosuoja': ['GDPR AI:ssa', 'Mitä ei jaeta AI:lle', 'Vastuullinen käyttö', 'Turvalliset promptit'],
+      'moduuli2-tekoaly-uhka-vai-mahdollisuus': ['Tekoälyn perusteet', 'Työn muutos', 'Mahdollisuudet vs riskit', 'Kriittinen suhtautuminen'],
+      'moduuli3-master-prompt': ['Promptin rakenne', 'Selkeä ohje AI:lle', 'Tulosten parantaminen', 'Iterointi'],
+      'moduuli-ai-tyokalut-tutuksi': ['ChatGPT', 'Claude', 'Copilot', 'Gemini', 'Työkalujen vertailu'],
+      'moduuli5-ai-creation-sprint': ['Käytännön projektit', 'Tulosten arviointi', 'Työkalun valinta', 'Oppimisen reflektio'],
+      'moduuli6-hallusinaatiot': ['Hallusinaatioiden tunnistus', 'Faktantarkistus', 'Luottamuksen kalibrointi', 'Kriittinen lukeminen'],
+      'moduuli7-ai-tyonhaussa': ['ATS-yhteensopiva CV', 'AI-urahaastattelu', 'Työnhakustrategia', 'LinkedIn-optimointi', 'Prompt-kirjasto'],
+      'moduuli-esitykset-tarjoukset-viestinta': ['Pitch deck -prompt', 'Gamma-esitys', 'Canva-visuaalit', 'AI-iterointi'],
+      'moduuli-visibility-growth-automation': ['Ongelman määrittely', 'AI-haastattelu', 'Sovellusohje (prompt)', 'Portfolio-teksti', 'Tuoteajattelu'],
+      'moduuli-perplexity-notebooklm': ['Lähteiden käyttö', 'Tutkimustyö', 'NotebookLM', 'Faktapohjainen oppiminen'],
+      'moduuli-ideasta-tuotteeksi': ['Ideavalidointi', 'Tutkimus → konsepti', 'MVP-ajattelu', 'Julkaisu Lovablella'],
+      'moduuli-ai-maisema': ['AI-ekosysteemin kartta', 'Työkalujen vertailu', 'Uusien mallien arviointi', 'Strateginen näkemys'],
+      'moduuli-alanavaihtajan-kartta': ['Siirrettävät taidot', 'Urakartta', 'CV Claudeen', 'Visuaalinen tarina'],
+      'moduuli-ai-liidien-hankinta': ['Liidien etsintä', 'B2B-viestintä (GDPR)', 'Ensikontaktiviesti', 'Asiakasanalyysi'],
+      'moduuli-ai-simulation-lab': ['Datan analyysi', 'Päätöksenteko AI:lla', 'Riskien tunnistus', 'Raportointi'],
+      'moduuli-excel-copilot-masterclass': ['Copilot Excelissä', 'Talousanalyysi', 'Ennustaminen', 'Johtoryhmäraportit'],
+      'moduuli-recap-game': ['Kurssin kertaus', 'Nopea päätöksenteko', 'AI-käsitteet käytännössä'],
+      'moduuli-voice-deep-search': ['Äänipromptit', 'Deep Search', 'Haastatteluvalmistelu'],
+      'moduuli10-ai-tyonhakutyokalut': ['Työpaikkojen haku', 'Verkostoituminen', 'Hakemusten seuranta', 'Työmarkkinatori'],
+      'moduuli11-ai-etikka': ['Puolueellisuuden tunnistus', 'Eettinen AI-käyttö', 'Vastuulliset päätökset'],
+      'moduuli10c-freelance': ['Palvelun paketointi', 'Asiakaslöydöt', 'Tarjousten luonti'],
+      'moduuli9d-henkilobrandi': ['Ammatillinen tarina', 'Kokemuksen selkeys', 'Brändi työnhaussa'],
+      'moduuli8-ai-haastattelussa': ['Haastatteluharjoitus', 'STAR-vastaukset', 'Palautteen hyödyntäminen'],
+      'moduuli9b-palkkaneuvottelu': ['Markkinapalkka', 'Neuvotteluviestit', 'Tarjouksen arviointi'],
+      'moduuli9c-hylkays': ['Hylkäyksen käsittely', 'Oppiminen palautteesta', 'Seuraava askel'],
+      'moduuli9-ai-oppimisessa': ['AI-opettaja', 'Oppimissuunnitelma', 'Taidon harjoittelu'],
+      'moduuli10b-digitaaliset-perustaidot': ['Sähköposti AI:lla', 'Videotapaamiset', 'Pilvi & Office'],
+      'moduuli10d-yrittajyys': ['Yritysidean testaus', 'Liiketoimintasuunnitelma', 'Tukien haku'],
+      'moduuli5-ai-myynnissa-ja-markkinoinnissa': ['Myyntiviestit', 'Asiakasanalyysi', 'Tarjousluonnos', 'Palautteen käsittely'],
+      'moduuli6-ai-taloushallinnossa': ['Kulujen kategorisointi', 'Ennusteet', 'Raportit', 'Verovähennysten ideointi'],
+      'moduuli-hoitoala': ['Asiakasdokumentaatio', 'Hoitosuunnitelma', 'Turvallinen viestintä', 'Resurssien ohjaus'],
+      'moduuli-rakennusala': ['Tarjouslaskenta', 'Projektidokumentaatio', 'Aikataulun selkeys'],
+      'moduuli-markkinointi': ['Sisältösuunnittelu', 'Kampanjaideat', 'Kohderyhmän analyysi'],
+      'moduuli-ravintola': ['Ruokalistan suunnittelu', 'Varasto & hävikki', 'Asiakaspalvelun viestit'],
+      'moduuli-logistiikka': ['Reittien optimointi', 'Kysynnän ennuste', 'Varaston hallinta'],
+      'moduuli-it': ['Koodin luonnos', 'Dokumentointi', 'Testaus & debug-ajattelu'],
+      'moduuli-ai-verkkosivustotyokalut': ['Portfolio-brändi', 'CV → verkkosivu', 'Julkaisu'],
+      'loppumoduuli-sina-ja-tekoaly': ['Reflektio', 'Visuaalinen tarina', 'Podcast-analyysi'],
+      myytinmurtaja: ['Kriittinen tutkimus', 'Argumentointi', 'Faktapohja'],
+      'rikkinainen-prompti': ['Promptin arviointi', 'Ennustaminen', 'Korjaaminen'],
+      tuomioistuin: ['Tutkimus', 'Argumentti', 'Päätöksenteko'],
+      tyokalurakentaja: ['Työkalun suunnittelu', 'Testaus', 'Julkaisu'],
+      palaute: ['Kurssipalaute', 'Reflektio']
+    };
+
     /** Moduulit jotka on piilotettu tältä kurssipäivältä (poista id listalta kun avaat). Admin näkee silti kaiken. */
     const temporarilyLockedModuleIds = new Set([
       // Bridge modules
@@ -1757,6 +1856,25 @@
       if (isKuopioDemoStudent()) return kuopioDemoVisibleModuleIds.has(module.id);
       return false;
     }
+
+    function escModuleCardText(text) {
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderModuleCardBody(module) {
+      const skills = module.skills || moduleSkillsById[module.id];
+      if (Array.isArray(skills) && skills.length > 0) {
+        const chips = skills.map(function (s) {
+          return '<span class="module-skill-chip">' + escModuleCardText(s) + '</span>';
+        }).join('');
+        return '<div class="module-skills"><span class="module-skills-label">Opit</span><div class="module-skill-chips">' + chips + '</div></div>';
+      }
+      return '<p>' + escModuleCardText(module.description) + '</p>';
+    }
     
     // Render module card (all modules are accessible)
     function renderModuleCard(module, index, allModules, summary, completedModules, module4Completed, allPart1Completed = true) {
@@ -1766,7 +1884,7 @@
           <div class="module-card" onclick="window.location.href='/homework'">
             <div class="module-icon">${iconSVGs[module.icon]}</div>
             <h2>${module.title}</h2>
-            <p>${module.description}</p>
+            ${renderModuleCardBody(module)}
             <div class="progress-text">Aina saatavilla</div>
           </div>
         `;
@@ -1782,7 +1900,7 @@
             ${onboardingDone ? '<div class="completion-badge">✓</div>' : ''}
             <div class="module-icon">${iconSVGs[module.icon]}</div>
             <h2>${module.title}</h2>
-            <p>${module.description}</p>
+            ${renderModuleCardBody(module)}
             <div class="progress-text">${onboardingDone ? 'Suoritettu ✓' : 'Aloita tästä ennen moduuli 1:tä'}</div>
           </a>
         `;
@@ -1800,7 +1918,7 @@
               <div class="module-icon">${iconSVGs[module.icon]}</div>
               ${module.cardBadge ? `<div class="module-card-tag">${module.cardBadge}</div>` : ''}
               <h2>${module.title}</h2>
-              <p>${module.description}</p>
+              ${renderModuleCardBody(module)}
               <div class="progress-text">Avautuu aloituksen jälkeen</div>
             </div>
           `;
@@ -1812,7 +1930,7 @@
               <div class="module-icon">${iconSVGs[module.icon]}</div>
               ${module.cardBadge ? `<div class="module-card-tag">${module.cardBadge}</div>` : ''}
               <h2>${module.title}</h2>
-              <p>${module.description}</p>
+              ${renderModuleCardBody(module)}
               <p style="font-size:0.88rem;color:var(--muted);margin-top:0.75rem;">Set the Minä meidän osana production origin in <code style="font-size:0.8em;">public/index.html</code>: empty meta <code style="font-size:0.8em;">mina-meidan-osana-origin</code> → fill <code style="font-size:0.8em;">content="https://…"</code> (origin only), or set <code style="font-size:0.8em;">window.MINA_MEIDAN_OSANA_ORIGIN</code> before load. The previous placeholder hostname is not a real Vercel deployment, so Vercel showed DEPLOYMENT_NOT_FOUND.</p>
               <div class="progress-text">Ei linkkiä — lisää tuotanto-osoite</div>
             </div>
@@ -1824,7 +1942,7 @@
             <div class="module-icon">${iconSVGs[module.icon]}</div>
             ${module.cardBadge ? `<div class="module-card-tag">${module.cardBadge}</div>` : ''}
             <h2>${module.title}</h2>
-            <p>${module.description}</p>
+            ${renderModuleCardBody(module)}
             <div class="progress-text">${module.statusLine || 'Ulkoinen sivusto →'}</div>
           </a>
         `;
@@ -1890,7 +2008,7 @@
           <div class="module-icon">${iconSVGs[module.icon]}</div>
           ${module.cardBadge ? `<div class="module-card-tag">${module.cardBadge}</div>` : ''}
           <h2>${module.title}</h2>
-          <p>${module.description}</p>
+          ${renderModuleCardBody(module)}
           ${progressBlock}
         </div>
       `;
