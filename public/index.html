@@ -1465,6 +1465,17 @@
             statusLine: 'Käytännöllinen'
           },
           {
+            id: 'sonja-viestinta-opas',
+            title: 'Viestijän AI-opas — sinulle',
+            description: 'Henkilökohtainen opas viestintäalan AI-taitoihin. Avautuu kun olet käynyt läpi muut moduulit.',
+            icon: 'sparkles',
+            part: 2,
+            day: 'bridge',
+            cardBadge: 'Sinulle',
+            statusLine: 'Henkilökohtainen lahja 🎁',
+            sonjaGiftOnly: true
+          },
+          {
             id: 'palaute',
             title: 'Kurssipalaute ⭐',
             description: 'Viisi kysymystä, viisi tähteä, 2 minuuttia. Kerro rehellisesti.',
@@ -1559,19 +1570,14 @@
         const rikkinainenPromptiModule = modules.find(m => m.id === 'rikkinainen-prompti') || null;
         const tuomioistuinModule = modules.find(m => m.id === 'tuomioistuin') || null;
         const tyokalurakentajaModule = modules.find(m => m.id === 'tyokalurakentaja') || null;
+        const sonjaGiftModule = modules.find(m => m.id === 'sonja-viestinta-opas') || null;
         const palauteModule = modules.find(m => m.id === 'palaute') || null;
-        const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti', 'tuomioistuin', 'tyokalurakentaja', 'palaute']);
+        const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti', 'tuomioistuin', 'tyokalurakentaja', 'sonja-viestinta-opas', 'palaute']);
 
         // Piilota vain admin-only (ja demo-tilin allowlistin ulkopuolella). Päivän lukitut moduulit näkyvät lukittuna.
         // Kun moduuli avataan opiskelijoille, poista id temporarilyLockedModuleIds-listasta.
         const viewerIsAdmin = isAdminUser();
-        const isStudentHidden = (m) => {
-          if (viewerIsAdmin) return false;
-          if (isKuopioDemoStudent()) {
-            return !kuopioDemoVisibleModuleIds.has(m.id);
-          }
-          return adminOnlyModuleIds.has(m.id) || m.adminOnly === true;
-        };
+        const isStudentHidden = (m) => isModuleHiddenFromStudent(m);
         const visibleForStudent = (list) => list.filter(m => !isStudentHidden(m));
 
         // Group Part 2 modules by day (loppuosi injektoidaan Alanavaihtajan kartta -kortin jälkeen)
@@ -1621,6 +1627,7 @@
             rikkinainenPromptiModule,
             tuomioistuinModule,
             tyokalurakentajaModule,
+            sonjaGiftModule,
             palauteModule
           ].filter(function (m) { return m && !isStudentHidden(m); });
           if (finals.length === 0) return '';
@@ -1782,8 +1789,19 @@
       'rikkinainen-prompti': ['Promptin arviointi', 'Ennustaminen', 'Korjaaminen'],
       tuomioistuin: ['Tutkimus', 'Argumentti', 'Päätöksenteko'],
       tyokalurakentaja: ['Työkalun suunnittelu', 'Testaus', 'Julkaisu'],
-      palaute: ['Kurssipalaute', 'Reflektio']
+      palaute: ['Kurssipalaute', 'Reflektio'],
+      'sonja-viestinta-opas': ['Viestinnän AI-opas', 'Prompt-kirjasto', 'LinkedIn & CV', 'Alan asiantuntijuus']
     };
+
+    const SONJA_GIFT_META_IDS = new Set([
+      'sonja-viestinta-opas',
+      'palaute',
+      'loppumoduuli-sina-ja-tekoaly',
+      'myytinmurtaja',
+      'rikkinainen-prompti',
+      'tuomioistuin',
+      'tyokalurakentaja'
+    ]);
 
     /** Moduulit lukittu opiskelijoille tänään — näkyvät korttina, ei avattavissa (poista id kun avaat). */
     const temporarilyLockedModuleIds = new Set([
@@ -1827,8 +1845,7 @@
       'myytinmurtaja',
       'rikkinainen-prompti',
       'tuomioistuin',
-      'tyokalurakentaja',
-      'palaute'
+      'tyokalurakentaja'
     ]);
     
     function isAdminUser() {
@@ -1842,6 +1859,33 @@
       const u = window.currentUser;
       if (!u) return false;
       return u.kuopio_demo === true;
+    }
+
+    function isSonjaGiftRecipient() {
+      const u = window.currentUser;
+      if (!u) return false;
+      return u.sonja_gift === true || u.sonja_gift === 'true';
+    }
+
+    function isModuleHiddenFromStudent(m) {
+      if (isAdminUser()) return false;
+      if (m.id === 'sonja-viestinta-opas') return !isSonjaGiftRecipient();
+      if (isKuopioDemoStudent()) return !kuopioDemoVisibleModuleIds.has(m.id);
+      return adminOnlyModuleIds.has(m.id) || m.adminOnly === true;
+    }
+
+    function sonjaGiftReady(completedModules, allModules) {
+      if (!isSonjaGiftRecipient()) return false;
+      const required = allModules.filter(function (m) {
+        if (m.isHomework || m.isOnboarding || m.isExternal) return false;
+        if (SONJA_GIFT_META_IDS.has(m.id)) return false;
+        if (adminOnlyModuleIds.has(m.id) || m.adminOnly === true) return false;
+        if (isModuleHiddenFromStudent(m)) return false;
+        if (temporarilyLockedModuleIds.has(m.id)) return false;
+        return true;
+      });
+      if (required.length === 0) return false;
+      return required.every(function (m) { return completedModules.has(m.id); });
     }
 
     function isIndustryModule(module) {
@@ -1974,10 +2018,15 @@
         !window.currentUser.is_admin &&
         window.onboardingStatusKnown &&
         window.onboardingCompleted !== true;
-      const isLocked = isComingSoon || shouldLockForOnboarding || sessionLockBlocksStudent;
+      const sonjaGiftLocked = module.id === 'sonja-viestinta-opas' &&
+        isSonjaGiftRecipient() &&
+        !isAdminUser() &&
+        !sonjaGiftReady(completedModules, allModules);
+      const isLocked = isComingSoon || shouldLockForOnboarding || sessionLockBlocksStudent || sonjaGiftLocked;
       
       let lockBadge = '';
       if (isComingSoon) lockBadge = '<div class="locked-badge">🚧 Tulossa pian</div>';
+      else if (sonjaGiftLocked) lockBadge = '<div class="locked-badge">🎁 Avautuu kun muut moduulit on tehty</div>';
       else if (shouldLockForOnboarding) lockBadge = '<div class="locked-badge">🔒 Suorita ensin aloitusmoduuli</div>';
       else if (isAdminOnlyModule && isAdminUser()) lockBadge = '<div class="locked-badge" style="background:rgba(107,70,193,.12);color:#6b46c1;border-color:rgba(107,70,193,.25);">👤 Vain admin</div>';
       else if (sessionLockActive && (isAdminUser() || !canOpenSessionLockedModule(module))) lockBadge = '<div class="locked-badge">🔒 Ei käytössä tänään</div>';
@@ -1987,6 +2036,8 @@
         progressBlock = '<div class="progress-text">Ei käytössä tänään</div>';
       } else if (isAdminOnlyModule && isAdminUser()) {
         progressBlock = '<div class="progress-text">Piilotettu opiskelijoilta · testaus</div>';
+      } else if (sonjaGiftLocked) {
+        progressBlock = '<div class="progress-text">Avautuu kun muut moduulit on tehty</div>';
       } else if (isComingSoon) {
         progressBlock = '<div class="progress-text">Moduuli on kehityksessä</div>';
       } else if (progress > 0) {

@@ -17,6 +17,7 @@ require('dotenv').config();
 
 const pool = require('./database/db');
 const { shouldAutoApproveStudent } = require('./config/demo-access');
+const { SONJA_GIFT_MODULE_ID, isSonjaGiftEmail } = require('./config/sonja-access');
 const { resetKuopioDemoUserData } = require('./lib/reset-kuopio-demo-user-data');
 
 const KUOPIO_DEMO_LS_CLEAR = '<script>(function(){try{if(/(?:^|;\\s*)kuopio_demo=1(?:;|$)/.test(document.cookie))localStorage.clear();}catch(e){}})();</script>';
@@ -376,6 +377,25 @@ app.get('/module/:moduleId', async (req, res) => {
   }
   if (ADMIN_ONLY_MODULE_IDS.has(moduleId) && !viewerIsAdmin) {
     return res.redirect(302, '/');
+  }
+
+  if (moduleId === SONJA_GIFT_MODULE_ID && !viewerIsAdmin) {
+    let email = '';
+    if (token) {
+      try {
+        const r = await pool.query(
+          `SELECT u.email FROM sessions s JOIN users u ON s.user_id = u.id
+           WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE`,
+          [token]
+        );
+        if (r.rows.length) email = r.rows[0].email;
+      } catch (e) {
+        console.error('Sonja module gate:', e);
+      }
+    }
+    if (!isSonjaGiftEmail(email)) {
+      return res.redirect(302, '/');
+    }
   }
 
   // Try multiple paths (Vercel may use different cwd).

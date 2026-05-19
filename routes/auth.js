@@ -9,6 +9,7 @@ const {
   shouldAutoApproveStudent
 } = require('../config/demo-access');
 const { resetKuopioDemoUserData } = require('../lib/reset-kuopio-demo-user-data');
+const { isSonjaGiftEmail } = require('../config/sonja-access');
 
 const router = express.Router();
 
@@ -170,7 +171,8 @@ router.post('/login', async (req, res) => {
         email: user.email,
         name: user.name,
         is_approved: user.is_approved === true || demoActive,
-        kuopio_demo: demoActive
+        kuopio_demo: demoActive,
+        sonja_gift: isSonjaGiftEmail(user.email)
       }
     });
   } catch (error) {
@@ -258,6 +260,7 @@ router.get('/me', async (req, res) => {
     }
 
     const demoActive = shouldAutoApproveStudent(user.email);
+    const sonjaGift = isSonjaGiftEmail(user.email);
     res.json({
       user: {
         id: user.id,
@@ -267,7 +270,8 @@ router.get('/me', async (req, res) => {
         last_login: user.last_login,
         is_admin: user.is_admin === true,
         is_approved: user.is_approved === true || demoActive,
-        kuopio_demo: demoActive
+        kuopio_demo: demoActive,
+        sonja_gift: sonjaGift
       }
     });
   } catch (error) {
