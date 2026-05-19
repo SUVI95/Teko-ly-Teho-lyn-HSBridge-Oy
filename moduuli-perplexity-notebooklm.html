@@ -1227,6 +1227,75 @@
 
   .topic-chosen-banner strong { color: var(--accent); }
 
+  .topic-next-steps {
+    display: none;
+    margin: 0 0 28px;
+    padding: 22px 24px;
+    background: #fff;
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+  }
+
+  .topic-next-steps.visible { display: block; }
+
+  .topic-next-steps h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    color: var(--ink);
+    margin: 0 0 10px;
+  }
+
+  .topic-next-steps > p {
+    font-size: 15px;
+    color: var(--muted);
+    margin: 0 0 14px;
+    line-height: 1.6;
+  }
+
+  .topic-next-steps ol {
+    margin: 0 0 18px;
+    padding-left: 1.25rem;
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.65;
+  }
+
+  .topic-next-steps li { margin-bottom: 8px; }
+
+  .topic-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 22px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: background 0.2s, transform 0.15s;
+  }
+
+  .topic-cta-btn:hover {
+    background: #6d28d9;
+    transform: translateY(-1px);
+  }
+
+  .topic-next-hint {
+    margin: 14px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .module-progress-hint {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0 0 12px;
+    line-height: 1.5;
+  }
+
   /* SKILLS / CV */
   .skills-grid {
     display: grid;
@@ -1440,7 +1509,20 @@
       ✅ Tutkimusaiheesi: <strong id="topic-chosen-text"></strong>
     </div>
 
+    <div class="topic-next-steps" id="topic-next-steps">
+      <h3>Seuraavaksi — tee harjoitukset</h3>
+      <p>Valitsit aiheen. Nyt et enää valitse mitään täällä — <strong>scrollaa alas</strong> (tai paina nappia) ja tee kolme harjoitusta samalla aiheella. Rastaa jokainen tehtävä valmiiksi; edistymispalkki päivittyy automaattisesti.</p>
+      <ol>
+        <li><strong>Harjoitus 1 (~20 min)</strong> — Perplexity: hae Web-, Academic- ja Social-lähteet aiheestasi</li>
+        <li><strong>Harjoitus 2 (~25 min)</strong> — NotebookLM: luo podcast yhdestä lähteestä</li>
+        <li><strong>Harjoitus 3 (~30 min)</strong> — Lisää lähteitä, vertaa ja tee 2 min yhteenveto</li>
+      </ol>
+      <a href="#exercise-1" class="topic-cta-btn" id="topic-cta-ex1">Aloita Harjoitus 1 ↓</a>
+      <p class="topic-next-hint">Välissä voit lukea “Työkalut — pikaopas” -osion; harjoitukset alkavat sen jälkeen.</p>
+    </div>
+
     <div class="module-progress" id="module-progress">
+      <p class="module-progress-hint">0 / 15 = rastit harjoituksissa alempana (ei aihevalintaa). Kun “Aihe valittu” on vihreä, siirry Harjoitukseen 1.</p>
       <div class="module-progress-top">
         <span class="module-progress-label">Edistymisesi</span>
         <span class="module-progress-count" id="progress-count">0 / 15 tehtävää</span>
@@ -1856,11 +1938,18 @@
 
     const reward = document.getElementById('micro-reward');
     if (reward) {
-      if (checked >= 3 && checked < total) reward.classList.add('visible');
-      else if (checked >= total && total > 0) {
+      if (checked >= total && total > 0) {
         reward.textContent = '🎉 Valmis! Juuri teit sen mitä harva osaa — lähdepohjainen tutkimus ja oma podcast.';
         reward.classList.add('visible');
-      } else reward.classList.remove('visible');
+      } else if (checked >= 3) {
+        reward.textContent = '🎉 Hienoa — useimmat eivät koskaan tee näin syvää hakuja. Jatka!';
+        reward.classList.add('visible');
+      } else if (selectedTopic) {
+        reward.textContent = '✅ Aihe valittu! Paina “Aloita Harjoitus 1” tai scrollaa alas harjoituksiin.';
+        reward.classList.add('visible');
+      } else {
+        reward.classList.remove('visible');
+      }
     }
   }
 
@@ -1882,7 +1971,7 @@
       const input = document.getElementById('topic-own-input');
       selectedTopic = input && input.value.trim() ? input.value.trim() : '';
       if (selectedTopic) showTopicBanner('AI ja ' + selectedTopic);
-      else document.getElementById('topic-chosen-banner').classList.remove('visible');
+      else hideTopicNextSteps();
     }
     updateProgress();
   }
@@ -1890,9 +1979,21 @@
   function showTopicBanner(text) {
     const banner = document.getElementById('topic-chosen-banner');
     const textEl = document.getElementById('topic-chosen-text');
+    const nextSteps = document.getElementById('topic-next-steps');
     if (textEl) textEl.textContent = text;
     if (banner) banner.classList.add('visible');
+    if (nextSteps) nextSteps.classList.add('visible');
     try { localStorage.setItem('module7-topic', text); } catch (e) {}
+    const reward = document.getElementById('micro-reward');
+    if (reward) {
+      reward.textContent = '✅ Aihe valittu! Paina “Aloita Harjoitus 1” tai scrollaa alas harjoituksiin.';
+      reward.classList.add('visible');
+    }
+  }
+
+  function hideTopicNextSteps() {
+    document.getElementById('topic-chosen-banner')?.classList.remove('visible');
+    document.getElementById('topic-next-steps')?.classList.remove('visible');
   }
 
   document.querySelectorAll('.topic-card').forEach(card => {
