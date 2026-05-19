@@ -928,8 +928,7 @@
         return false;
       }
 
-      const isKuopioDemo = user.kuopio_demo === true;
-      if (!isAdmin && !isKuopioDemo) {
+      if (!isAdmin) {
         try {
           const obRes = await fetch(`${API_URL}/onboarding/status`, { credentials: 'include' });
           if (obRes.ok) {
@@ -1615,7 +1614,7 @@
         const palauteModule = modules.find(m => m.id === 'palaute') || null;
         const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti', 'tuomioistuin', 'tyokalurakentaja', 'sonja-ai-opas-2025', 'satu-ai-opas-2025', 'soile-ai-opas-2025', 'ville-ai-opas-2025', 'palaute']);
 
-        // Piilota vain admin-only (ja demo-tilin allowlistin ulkopuolella). Päivän lukitut moduulit näkyvät lukittuna.
+        // Piilota admin-only ja temporarilyLockedModuleIds (sama näkymä live-opiskelijoille ja videokuvaus-demolle).
         // Kun moduuli avataan opiskelijoille, poista id temporarilyLockedModuleIds-listasta.
         const viewerIsAdmin = isAdminUser();
         const isStudentHidden = (m) => isModuleHiddenFromStudent(m);
@@ -1637,7 +1636,7 @@
         // Quick jump nav — näytetään vain osiot joilla on näkyviä moduuleja tälle käyttäjälle
         const sectionIds = [
           { id: 'section-day1', label: 'AI-taidot työelämään', show: part1RenderList.length > 0 },
-          { id: 'section-bridge', label: 'Käytännön AI-taidot', show: day1_5Modules.length > 0 || (!isKuopioDemoStudent() && !!loppumoduuliModule) },
+          { id: 'section-bridge', label: 'Käytännön AI-taidot', show: day1_5Modules.length > 0 || (!!loppumoduuliModule && !isStudentHidden(loppumoduuliModule)) },
           { id: 'section-day2', label: 'DAY 2', show: day2Modules.length > 0 },
           { id: 'section-day3', label: 'DAY 3', show: day3Modules.length > 0 },
           { id: 'section-day4', label: 'DAY 4', show: day4Modules.length > 0 },
@@ -1661,7 +1660,6 @@
         
         // Render bridge section — between DAY 1 and DAY 2 (Loppumoduuli heti Alanavaihtajan kartta -kortin jälkeen)
         function renderFinalCluster(idxBase) {
-          if (isKuopioDemoStudent()) return '';
           const finals = [
             loppumoduuliModule,
             myytinmurtajaModule,
@@ -1766,30 +1764,6 @@
     /** Piilotettu opiskelijoilta — vain admin voi nähdä ja avata (poista id kun haluat julkaista). */
     const adminOnlyModuleIds = new Set([
       'moduuli-ai-verkkosivustotyokalut'
-    ]);
-
-    /** Videokuvaus-demo: vain nämä kortit näkyvät etusivulla (ei hallusinaatioita, ulkoisia, loppuosiota, DAY 2–4). */
-    const kuopioDemoVisibleModuleIds = new Set([
-      'moduuli1-tietosuoja',
-      'moduuli2-tekoaly-uhka-vai-mahdollisuus',
-      'moduuli3-master-prompt',
-      'moduuli-ai-tyokalut-tutuksi',
-      'moduuli5-ai-creation-sprint',
-      'moduuli7-ai-tyonhaussa',
-      'moduuli-esitykset-tarjoukset-viestinta',
-      'moduuli-visibility-growth-automation',
-      'moduuli-perplexity-notebooklm',
-      'moduuli-ideasta-tuotteeksi',
-      'moduuli-ai-maisema',
-      'moduuli-alanavaihtajan-kartta',
-      'moduuli5-ai-myynnissa-ja-markkinoinnissa',
-      'moduuli6-ai-taloushallinnossa',
-      'moduuli-hoitoala',
-      'moduuli-rakennusala',
-      'moduuli-markkinointi',
-      'moduuli-ravintola',
-      'moduuli-logistiikka',
-      'moduuli-it'
     ]);
 
     /** Osaamistaidot moduulikorteilla — näytetään "Opit"-chipseinä kuvauksen sijaan. */
@@ -1904,7 +1878,6 @@
       return u.is_admin === true || u.is_admin === 'true' || u.is_admin === 1 || u.is_admin === '1';
     }
 
-    /** Kuopio video-shoot demo — sees all modules despite session-day locks */
     function isKuopioDemoStudent() {
       const u = window.currentUser;
       if (!u) return false;
@@ -1944,7 +1917,6 @@
     function isModuleHiddenFromStudent(m) {
       if (isPersonalGiftModule(m)) return !shouldShowPersonalGiftModule(m);
       if (isAdminUser()) return false;
-      if (isKuopioDemoStudent()) return !kuopioDemoVisibleModuleIds.has(m.id);
       if (temporarilyLockedModuleIds.has(m.id)) return true;
       return adminOnlyModuleIds.has(m.id) || m.adminOnly === true;
     }
@@ -1967,11 +1939,9 @@
       return module && module.part === 3;
     }
 
-    /** Session-lukko: admin ja demo aina; muut oppilaat vain jos moduuli ei ole päivän lukossa. */
+    /** Session-lukko: vain admin voi avata piilotettuja moduuleja. */
     function canOpenSessionLockedModule(module) {
-      if (isAdminUser()) return true;
-      if (isKuopioDemoStudent()) return kuopioDemoVisibleModuleIds.has(module.id);
-      return false;
+      return isAdminUser();
     }
 
     function escModuleCardText(text) {
