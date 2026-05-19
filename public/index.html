@@ -1562,7 +1562,7 @@
         const palauteModule = modules.find(m => m.id === 'palaute') || null;
         const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti', 'tuomioistuin', 'tyokalurakentaja', 'palaute']);
 
-        // Piilota lukitut / admin-only -moduulit opiskelijoilta kokonaan; admin näkee ne edelleen.
+        // Piilota vain admin-only (ja demo-tilin allowlistin ulkopuolella). Päivän lukitut moduulit näkyvät lukittuna.
         // Kun moduuli avataan opiskelijoille, poista id temporarilyLockedModuleIds-listasta.
         const viewerIsAdmin = isAdminUser();
         const isStudentHidden = (m) => {
@@ -1570,20 +1570,20 @@
           if (isKuopioDemoStudent()) {
             return !kuopioDemoVisibleModuleIds.has(m.id);
           }
-          return temporarilyLockedModuleIds.has(m.id) || adminOnlyModuleIds.has(m.id) || m.adminOnly === true;
+          return adminOnlyModuleIds.has(m.id) || m.adminOnly === true;
         };
-        const hideLockedForStudent = (list) => list.filter(m => !isStudentHidden(m));
+        const visibleForStudent = (list) => list.filter(m => !isStudentHidden(m));
 
-        // Group Part 2 modules by day (nämä moduulit piilotetaan täältä — injektoidaan manuaalisesti Alanavaihtajan jälkeen)
-        const day1_5Modules = hideLockedForStudent(part2Modules
+        // Group Part 2 modules by day (loppuosi injektoidaan Alanavaihtajan kartta -kortin jälkeen)
+        const day1_5Modules = visibleForStudent(part2Modules
           .filter(m => m.day === 'bridge' && !injectedIds.has(m.id))
           .sort((a, b) => a.order - b.order));
-        const day2Modules = hideLockedForStudent(part2Modules.filter(m => m.day === 2).sort((a, b) => a.order - b.order));
-        const day3Modules = hideLockedForStudent(part2Modules.filter(m => m.day === 3).sort((a, b) => a.order - b.order));
-        const day4Modules = hideLockedForStudent(part2Modules.filter(m => m.day === 4).sort((a, b) => a.order - b.order));
-        const part1RenderList = hideLockedForStudent(part1ModulesList)
+        const day2Modules = visibleForStudent(part2Modules.filter(m => m.day === 2).sort((a, b) => a.order - b.order));
+        const day3Modules = visibleForStudent(part2Modules.filter(m => m.day === 3).sort((a, b) => a.order - b.order));
+        const day4Modules = visibleForStudent(part2Modules.filter(m => m.day === 4).sort((a, b) => a.order - b.order));
+        const part1RenderList = visibleForStudent(part1ModulesList)
           .sort((a, b) => a.order - b.order);
-        const part3RenderList = hideLockedForStudent(part3Modules);
+        const part3RenderList = visibleForStudent(part3Modules);
         
         let html = '';
         
@@ -1785,9 +1785,9 @@
       palaute: ['Kurssipalaute', 'Reflektio']
     };
 
-    /** Moduulit jotka on piilotettu tältä kurssipäivältä (poista id listalta kun avaat). Admin näkee silti kaiken. */
+    /** Moduulit lukittu opiskelijoille tänään — näkyvät korttina, ei avattavissa (poista id kun avaat). */
     const temporarilyLockedModuleIds = new Set([
-      // Bridge modules (moduuli 7, esitykset, sovellusstudio avoinna — poista listalta kun avaat lisää)
+      // Bridge modules (moduuli 7, esitykset, sovellusstudio avoinna)
       'moduuli-perplexity-notebooklm',
       'moduuli-ideasta-tuotteeksi',
       'moduuli-ai-maisema',
@@ -1822,7 +1822,7 @@
       // Ulkoiset Minä meidän osana -harjoitukset
       'external-mina-meidan-osana-unelmatyo',
       'external-mina-meidan-osana-itseluottamus',
-      // Loppuosi — piilotettu kunnes avataan erikseen
+      // Loppuosi — lukittu kunnes avataan erikseen
       'loppumoduuli-sina-ja-tekoaly',
       'myytinmurtaja',
       'rikkinainen-prompti',
