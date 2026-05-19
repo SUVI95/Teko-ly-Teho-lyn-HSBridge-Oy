@@ -162,6 +162,11 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+/** App builder for Sovellusstudio module — hides external product URL from on-screen copy */
+app.get('/go/sovellusstudio', (req, res) => {
+  res.redirect(302, 'https://base44.com');
+});
+
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
