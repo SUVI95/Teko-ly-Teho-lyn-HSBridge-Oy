@@ -226,7 +226,7 @@ main#mainContent.main-visible{opacity:1;pointer-events:auto;transform:translateY
     <div class="emoji-row">
       <span>🌟</span><span>🚀</span><span>🤖</span><span>💡</span><span>❤️</span>
     </div>
-    <button type="button" class="btn-hero" id="startFeedbackBtn">Aloita palaute →</button>
+    <a href="#mainContent" class="btn-hero">Aloita palaute →</a>
   </div>
 </header>
 
@@ -239,7 +239,7 @@ main#mainContent.main-visible{opacity:1;pointer-events:auto;transform:translateY
   </div>
 </div>
 
-<main id="mainContent" class="main-hidden">
+<main id="mainContent">
   <div class="q-progress">
     <div class="q-progress-text" id="qpt">0 / 5 vastattu</div>
     <div class="q-progress-bar"><div class="q-progress-fill" id="qpf"></div></div>
@@ -444,16 +444,6 @@ main#mainContent.main-visible{opacity:1;pointer-events:auto;transform:translateY
     }, 4000);
   }
 
-  var startBtn = document.getElementById('startFeedbackBtn');
-  if (startBtn){
-    startBtn.addEventListener('click', function(){
-      startBtn.disabled = true;
-      showCourseCompleteCelebration(function(){
-        startBtn.disabled = false;
-      });
-    });
-  }
-
   function showThanks(){
     var avg = QUESTIONS.reduce(function(s,q){ return s + (state[q.id]||0); }, 0) / 5;
     var stars = '';
@@ -508,6 +498,21 @@ main#mainContent.main-visible{opacity:1;pointer-events:auto;transform:translateY
   renderQuestions();
   updateProgress();
   preload();
+
+  if (new URLSearchParams(window.location.search).get('celebrate') === '1') {
+    var main = document.getElementById('mainContent');
+    if (main) {
+      main.classList.add('main-hidden');
+      main.classList.remove('main-visible');
+    }
+    showCourseCompleteCelebration();
+  } else {
+    var mainEl = document.getElementById('mainContent');
+    if (mainEl) {
+      mainEl.classList.remove('main-hidden');
+      mainEl.classList.add('main-visible');
+    }
+  }
 })();
 </script>
 </body>
