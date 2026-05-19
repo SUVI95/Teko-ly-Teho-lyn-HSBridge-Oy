@@ -17,7 +17,9 @@ const SONJA_GIFT_MODULE_ID = 'sonja-viestinta-opas';
 
 function isSonjaGiftEmail(email) {
   if (!SONJA_GIFT_EMAILS.length) return false;
-  return SONJA_GIFT_EMAILS.includes(normalizeEmail(email));
+  const normalized = normalizeEmail(email);
+  if (!normalized) return false;
+  return SONJA_GIFT_EMAILS.includes(normalized);
 }
 
 module.exports = {

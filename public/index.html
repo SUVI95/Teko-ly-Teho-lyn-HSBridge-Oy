@@ -1631,7 +1631,7 @@
             palauteModule
           ].filter(function (m) {
             if (!m) return false;
-            if (m.id === 'sonja-viestinta-opas' && viewerIsAdmin) return true;
+            if (isSonjaGiftModule(m)) return shouldShowSonjaGiftModule();
             return !isStudentHidden(m);
           });
           if (finals.length === 0) return '';
@@ -1876,9 +1876,13 @@
       return isAdminUser() || isSonjaGiftRecipient();
     }
 
+    function isSonjaGiftModule(m) {
+      return m && (m.id === 'sonja-viestinta-opas' || m.sonjaGiftOnly === true);
+    }
+
     function isModuleHiddenFromStudent(m) {
+      if (isSonjaGiftModule(m)) return !shouldShowSonjaGiftModule();
       if (isAdminUser()) return false;
-      if (m.id === 'sonja-viestinta-opas') return !shouldShowSonjaGiftModule();
       if (isKuopioDemoStudent()) return !kuopioDemoVisibleModuleIds.has(m.id);
       return adminOnlyModuleIds.has(m.id) || m.adminOnly === true;
     }
