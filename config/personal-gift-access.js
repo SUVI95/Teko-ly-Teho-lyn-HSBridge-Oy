@@ -1,7 +1,7 @@
 /**
  * Personal gift modules (Sonja, Satu, …).
  * Email allowlist + first-name fallback when registration email differs.
- * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL (comma-separated).
+ * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL / VILLE_GIFT_EMAIL (comma-separated).
  */
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -45,6 +45,11 @@ const GIFTS = {
     moduleId: 'soile-ai-opas-2025',
     firstName: 'soile',
     emails: parseEmailList(process.env.SOILE_GIFT_EMAIL, ['soile.k.niskanen@gmail.com'])
+  },
+  ville: {
+    moduleId: 'ville-ai-opas-2025',
+    firstName: 'ville',
+    emails: parseEmailList(process.env.VILLE_GIFT_EMAIL, ['ville.koponen134@gmail.com'])
   }
 };
 
@@ -81,9 +86,14 @@ function isSoileGiftRecipient(user) {
   return isGiftRecipient('soile', user);
 }
 
+function isVilleGiftRecipient(user) {
+  return isGiftRecipient('ville', user);
+}
+
 const SONJA_GIFT_MODULE_ID = GIFTS.sonja.moduleId;
 const SATU_GIFT_MODULE_ID = GIFTS.satu.moduleId;
 const SOILE_GIFT_MODULE_ID = GIFTS.soile.moduleId;
+const VILLE_GIFT_MODULE_ID = GIFTS.ville.moduleId;
 
 /** @deprecated use isSonjaGiftRecipient({ email, name }) */
 function isSonjaGiftEmail(email) {
@@ -101,8 +111,10 @@ module.exports = {
   isSonjaGiftRecipient,
   isSatuGiftRecipient,
   isSoileGiftRecipient,
+  isVilleGiftRecipient,
   isSonjaGiftEmail,
   SONJA_GIFT_MODULE_ID,
   SATU_GIFT_MODULE_ID,
-  SOILE_GIFT_MODULE_ID
+  SOILE_GIFT_MODULE_ID,
+  VILLE_GIFT_MODULE_ID
 };

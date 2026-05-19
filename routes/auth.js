@@ -9,7 +9,7 @@ const {
   shouldAutoApproveStudent
 } = require('../config/demo-access');
 const { resetKuopioDemoUserData } = require('../lib/reset-kuopio-demo-user-data');
-const { isSonjaGiftRecipient, isSatuGiftRecipient, isSoileGiftRecipient } = require('../config/personal-gift-access');
+const { isSonjaGiftRecipient, isSatuGiftRecipient, isSoileGiftRecipient, isVilleGiftRecipient } = require('../config/personal-gift-access');
 
 const router = express.Router();
 
@@ -175,7 +175,8 @@ router.post('/login', async (req, res) => {
         kuopio_demo: demoActive,
         sonja_gift: isSonjaGiftRecipient(user),
         satu_gift: isSatuGiftRecipient(user),
-        soile_gift: isSoileGiftRecipient(user)
+        soile_gift: isSoileGiftRecipient(user),
+        ville_gift: isVilleGiftRecipient(user)
       }
     });
   } catch (error) {
@@ -275,7 +276,8 @@ router.get('/me', async (req, res) => {
         kuopio_demo: demoActive,
         sonja_gift: isSonjaGiftRecipient(user),
         satu_gift: isSatuGiftRecipient(user),
-        soile_gift: isSoileGiftRecipient(user)
+        soile_gift: isSoileGiftRecipient(user),
+        ville_gift: isVilleGiftRecipient(user)
       }
     });
   } catch (error) {
