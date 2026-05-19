@@ -374,13 +374,7 @@ app.get('/module/:moduleId', async (req, res) => {
             console.error('Kuopio demo module reset:', resetErr);
           }
         }
-        if (!isAdmin && approved && !viewerIsKuopioDemo) {
-          await onboardingRoutes.ensureUserOnboardingTable();
-          const ob = await pool.query('SELECT id FROM user_onboarding WHERE user_id = $1', [u.id]);
-          if (ob.rows.length === 0) {
-            return res.redirect(302, '/onboarding');
-          }
-        }
+        // Onboarding is optional — students can open any visible module without completing it first.
       }
     } catch (e) {
       console.error('Module onboarding gate:', e);

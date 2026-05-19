@@ -2018,28 +2018,12 @@
             <div class="module-icon">${iconSVGs[module.icon]}</div>
             <h2>${module.title}</h2>
             ${renderModuleCardBody(module)}
-            <div class="progress-text">${onboardingDone ? 'Suoritettu ✓' : 'Aloita tästä ennen moduuli 1:tä'}</div>
+            <div class="progress-text">${onboardingDone ? 'Suoritettu ✓' : 'Suositeltu ensimmäiseksi'}</div>
           </a>
         `;
       }
 
       if (module.isExternal) {
-        const shouldLockForOnboarding = window.currentUser &&
-          !window.currentUser.is_admin &&
-          window.onboardingStatusKnown &&
-          window.onboardingCompleted !== true;
-        if (shouldLockForOnboarding) {
-          return `
-            <div class="module-card locked">
-              <div class="locked-badge">🔒 Suorita ensin aloitusmoduuli</div>
-              <div class="module-icon">${iconSVGs[module.icon]}</div>
-              ${module.cardBadge ? `<div class="module-card-tag">${module.cardBadge}</div>` : ''}
-              <h2>${module.title}</h2>
-              ${renderModuleCardBody(module)}
-              <div class="progress-text">Avautuu aloituksen jälkeen</div>
-            </div>
-          `;
-        }
         if (!module.externalUrl) {
           return `
             <div class="module-card locked">
@@ -2088,24 +2072,16 @@
       const sessionLockActive = temporarilyLockedModuleIds.has(module.id);
       const sessionLockBlocksStudent = sessionLockActive && !canOpenSessionLockedModule(module);
       
-      // Before onboarding is complete, lock other modules (Kurssipalaute stays open for everyone).
-      const shouldLockForOnboarding = window.currentUser &&
-        !window.currentUser.is_admin &&
-        window.onboardingStatusKnown &&
-        window.onboardingCompleted !== true &&
-        module.id !== 'palaute' &&
-        module.openWithoutOnboarding !== true;
       const personalGiftKey = getPersonalGiftKey(module);
       const personalGiftLocked = personalGiftKey &&
         isPersonalGiftRecipient(personalGiftKey) &&
         !isAdminUser() &&
         !personalGiftReady(personalGiftKey, completedModules, allModules);
-      const isLocked = isComingSoon || shouldLockForOnboarding || sessionLockBlocksStudent || personalGiftLocked;
+      const isLocked = isComingSoon || sessionLockBlocksStudent || personalGiftLocked;
       
       let lockBadge = '';
       if (isComingSoon) lockBadge = '<div class="locked-badge">🚧 Tulossa pian</div>';
       else if (personalGiftLocked) lockBadge = '<div class="locked-badge">🎁 Avautuu kun muut moduulit on tehty</div>';
-      else if (shouldLockForOnboarding) lockBadge = '<div class="locked-badge">🔒 Suorita ensin aloitusmoduuli</div>';
       else if (isAdminOnlyModule && isAdminUser()) lockBadge = '<div class="locked-badge" style="background:rgba(107,70,193,.12);color:#6b46c1;border-color:rgba(107,70,193,.25);">👤 Vain admin</div>';
       else if (sessionLockActive && (isAdminUser() || !canOpenSessionLockedModule(module))) lockBadge = '<div class="locked-badge">🔒 Ei käytössä tänään</div>';
       
