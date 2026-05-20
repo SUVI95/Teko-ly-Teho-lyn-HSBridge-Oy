@@ -1016,11 +1016,62 @@ window.addEventListener('scroll',function(){
   pips.forEach(function(p,i){p.classList.remove('active','done');if(i===ai)p.classList.add('active');else if(i<ai)p.classList.add('done');});
 },{passive:true});
 
-/* ── LOCAL STORAGE ── */
-function saveLocal(key,val){try{localStorage.setItem('mod_visuals_'+key,val);}catch(e){}}
-function loadLocal(key){try{return localStorage.getItem('mod_visuals_'+key)||'';}catch(e){return '';}}
+/* ── PER-USER WORK (server + scoped cache) ── */
+var VISUALS_MODULE_ID = 'moduuli-esitykset-tarjoukset-viestinta';
+var moduleWorkApi = null;
 
-var modulePath = loadLocal('modulePath') || 'a';
+function saveLocal(key, val) {
+  if (moduleWorkApi) moduleWorkApi.scheduleSave();
+}
+
+function loadLocal(key) {
+  return '';
+}
+
+function collectVisualsWork() {
+  var ids = [
+    'canvaName', 'canvaRole', 'canvaTagline', 'canvaFormat', 'gammaLink', 'modulePath',
+    'pdCompany', 'pdRole', 'pdCompanyKnowledge', 'pdName', 'pdAchievements', 'pdFit',
+    'pdProblem', 'pdValue', 'canvaReflection'
+  ];
+  var o = { pitchPromptData: pitchPromptData || '' };
+  ids.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) o[id] = el.value;
+  });
+  o.modulePath = modulePath || 'a';
+  return o;
+}
+
+function summarizeVisualsWork(d) {
+  if (!d) return '';
+  var parts = [];
+  if (d.pdCompany) parts.push('Aihe: ' + d.pdCompany);
+  if (d.pdRole) parts.push('Ongelma: ' + d.pdRole);
+  if (d.gammaLink) parts.push('Gamma: ' + d.gammaLink);
+  if (d.canvaName) parts.push('Canva: ' + d.canvaName);
+  return parts.join(' · ');
+}
+
+function applyVisualsWork(d) {
+  if (!d) return;
+  Object.keys(d).forEach(function (key) {
+    if (key === 'pitchPromptData') {
+      pitchPromptData = d.pitchPromptData || '';
+      var txt = document.getElementById('pitchPromptText');
+      if (txt && pitchPromptData) {
+        txt.value = pitchPromptData;
+        document.getElementById('pitchPromptResult').classList.add('show');
+      }
+      return;
+    }
+    var el = document.getElementById(key);
+    if (el && d[key] != null) el.value = d[key];
+  });
+  if (d.modulePath) setModulePath(d.modulePath);
+}
+
+var modulePath = 'a';
 
 var PATH_COPY = {
   a: {
@@ -1265,6 +1316,7 @@ async function generatePitchDeck(){
       1200);
     txt.value=pitchPromptData;
     txt.scrollIntoView({behavior:'smooth',block:'nearest'});
+    if(moduleWorkApi) moduleWorkApi.saveNow();
   }catch(e){txt.value=(e&&e.message)||'Yhteysvirhe — tarkista ANTHROPIC_API_KEY.';pitchPromptData='';}
   btn.disabled=false;btn.textContent='✦ Generoi Gamma-prompt';
 }
@@ -1366,18 +1418,24 @@ async function saveReflection(){
 }
 
 /* ── INIT ── */
-document.addEventListener('DOMContentLoaded',function(){
-  // Restore saved fields
-  ['canvaName','canvaRole','canvaTagline','canvaFormat','gammaLink','modulePath',
-   'pdCompany','pdRole','pdCompanyKnowledge','pdName','pdAchievements','pdFit','pdProblem','pdValue'
-  ].forEach(function(id){
-    var saved=loadLocal(id);
-    var el=document.getElementById(id);
-    if(el&&saved){el.value=saved;}
-  });
-  setModulePath(loadLocal('modulePath') || 'a');
-  var cf=document.getElementById('canvaFormat');
-  if(cf&&loadLocal('canvaFormat'))cf.value=loadLocal('canvaFormat');
+document.addEventListener('DOMContentLoaded',async function(){
+  if(window.moduleWork){
+    moduleWorkApi=await window.moduleWork.initModuleWork(VISUALS_MODULE_ID,{
+      legacyPrefix:'mod_visuals_',
+      collect:collectVisualsWork,
+      apply:applyVisualsWork,
+      summarize:summarizeVisualsWork,
+      fieldIds:[
+        'canvaName','canvaRole','canvaTagline','canvaFormat','gammaLink',
+        'pdCompany','pdRole','pdCompanyKnowledge','pdName','pdAchievements',
+        'pdFit','pdProblem','pdValue','canvaReflection'
+      ]
+    });
+    modulePath=(collectVisualsWork().modulePath)||'a';
+  } else {
+    setModulePath('a');
+  }
+  applyPathCopy();
   updateCanvaFormatHint();
   updateMockup();
   updatePdPreview();
@@ -1405,6 +1463,7 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 </script>
 
+<script src="/js/module-work.js"></script>
 <script src="/js/ai-helper.js"></script>
 <script>if(window.aiClaude)window.aiChat=window.aiClaude;</script>
 <script src="/js/reflections.js"></script>

@@ -1582,11 +1582,70 @@ nav {
       `;
     }
 
+    function parseModuleWorkPayload(text) {
+      if (!text) return null;
+      try {
+        const o = JSON.parse(text);
+        if (o && typeof o === 'object' && o.data !== undefined) return o;
+      } catch (e) {}
+      return null;
+    }
+
+    function renderAppBuilderWorkHtml(workRow) {
+      const parsed = parseModuleWorkPayload(workRow && workRow.reflection_text);
+      const d = parsed && parsed.data ? parsed.data : null;
+      if (!d) {
+        return `<div class="content-item-text">${escapeHtml((workRow && workRow.reflection_text) || '—')}</div>`;
+      }
+      const chatSnippet = (d.chatHistory || []).filter(m => m && m.content).slice(-4)
+        .map(m => (m.role === 'user' ? 'Opiskelija: ' : 'AI: ') + m.content).join('\n\n');
+      return `
+        ${parsed.summary ? `<p style="font-weight:600;margin-bottom:0.75rem;">${escapeHtml(parsed.summary)}</p>` : ''}
+        ${d.appName ? `<p><strong>Sovellus:</strong> ${escapeHtml(d.appName)}</p>` : ''}
+        ${d.problemOneliner ? `<p><strong>Ongelma (lause):</strong> ${escapeHtml(d.problemOneliner)}</p>` : ''}
+        ${d.problemDesc ? `<h4 style="margin:1rem 0 0.35rem;font-size:0.95rem;">Ongelma (kuvaus)</h4><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(d.problemDesc)}</div>` : ''}
+        ${d.appUrl ? `<p style="margin-top:0.75rem;"><strong>Julkinen linkki:</strong> <a href="${escapeHtml(d.appUrl.startsWith('http') ? d.appUrl : 'https://' + d.appUrl)}" target="_blank" rel="noopener">${escapeHtml(d.appUrl)}</a></p>` : ''}
+        ${d.defence && (d.defence.q1 || d.defence.q2) ? `
+          <h4 style="margin:1rem 0 0.35rem;font-size:0.95rem;">Puolustus / portfolio</h4>
+          ${d.defence.q1 ? `<p style="margin:0.35rem 0;"><strong>Ongelma & kohderyhmä:</strong></p><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(d.defence.q1)}</div>` : ''}
+          ${d.defence.q2 ? `<p style="margin:0.35rem 0;"><strong>Miten toimii:</strong></p><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(d.defence.q2)}</div>` : ''}
+          ${d.defence.q3 ? `<p style="margin:0.35rem 0;"><strong>Minun vs AI panos:</strong></p><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(d.defence.q3)}</div>` : ''}
+          ${d.defence.q4 ? `<p style="margin:0.35rem 0;"><strong>Seuraava askel:</strong></p><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(d.defence.q4)}</div>` : ''}
+        ` : ''}
+        ${chatSnippet ? `<h4 style="margin:1rem 0 0.35rem;font-size:0.95rem;">Haastattelu (viimeiset viestit)</h4><div class="content-item-text" style="white-space:pre-wrap;max-height:280px;overflow:auto;font-size:0.88rem;">${escapeHtml(chatSnippet)}</div>` : ''}
+        ${d.finalPrompt ? `<h4 style="margin:1rem 0 0.35rem;font-size:0.95rem;">Sovelluspromti (katkelma)</h4><pre style="font-family:'DM Mono',monospace;font-size:0.72rem;background:var(--paper2);padding:0.85rem;border-radius:8px;overflow:auto;max-height:200px;white-space:pre-wrap;">${escapeHtml(String(d.finalPrompt).slice(0, 2500))}${d.finalPrompt.length > 2500 ? '…' : ''}</pre>` : ''}
+      `;
+    }
+
+    function renderVisualsWorkHtml(workRow) {
+      const parsed = parseModuleWorkPayload(workRow && workRow.reflection_text);
+      const d = parsed && parsed.data ? parsed.data : null;
+      if (!d) {
+        return `<div class="content-item-text">${escapeHtml((workRow && workRow.reflection_text) || '—')}</div>`;
+      }
+      return `
+        ${parsed.summary ? `<p style="font-weight:600;margin-bottom:0.75rem;">${escapeHtml(parsed.summary)}</p>` : ''}
+        ${d.pdCompany ? `<p><strong>Aihe:</strong> ${escapeHtml(d.pdCompany)}</p>` : ''}
+        ${d.pdRole ? `<p><strong>Ongelma:</strong> ${escapeHtml(d.pdRole)}</p>` : ''}
+        ${d.pdCompanyKnowledge ? `<h4 style="margin:0.75rem 0 0.35rem;">Kohderyhmä</h4><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(d.pdCompanyKnowledge)}</div>` : ''}
+        ${d.pdAchievements ? `<h4 style="margin:0.75rem 0 0.35rem;">Faktat</h4><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(d.pdAchievements)}</div>` : ''}
+        ${d.pdFit ? `<h4 style="margin:0.75rem 0 0.35rem;">Tilanne</h4><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(d.pdFit)}</div>` : ''}
+        ${d.gammaLink ? `<p style="margin-top:0.75rem;"><strong>Gamma-linkki:</strong> <a href="${escapeHtml(d.gammaLink)}" target="_blank" rel="noopener">${escapeHtml(d.gammaLink)}</a></p>` : ''}
+        ${d.canvaName ? `<p><strong>Canva:</strong> ${escapeHtml(d.canvaName)} — ${escapeHtml(d.canvaRole || '')} ${d.canvaTagline ? '· ' + escapeHtml(d.canvaTagline) : ''}</p>` : ''}
+      `;
+    }
+
     function renderStudentDetail(data) {
       const container = document.getElementById('studentDetailContainer');
       const { user, reflections, feedback, closingActions, progress, checklist, consent, courtSubmission, toolBuilderSubmission } = data;
       const origin = window.location.origin || '';
       const aiModuleTabCount = (courtSubmission ? 1 : 0) + (toolBuilderSubmission ? 1 : 0);
+
+      const moduleWorkReflections = reflections.filter(r => r.module_id && String(r.module_id).endsWith('__work'));
+      const reflectionOnly = reflections.filter(r => !r.module_id || !String(r.module_id).endsWith('__work'));
+      const appBuilderWork = moduleWorkReflections.find(r => r.module_id === 'moduuli-visibility-growth-automation__work');
+      const visualsWork = moduleWorkReflections.find(r => r.module_id === 'moduuli-esitykset-tarjoukset-viestinta__work');
+      const builderVisualTabCount = (appBuilderWork ? 1 : 0) + (visualsWork ? 1 : 0);
 
       function jsonPre(obj) {
         try { return escapeHtml(JSON.stringify(obj, null, 2)); } catch (e) { return escapeHtml(String(obj)); }
@@ -1746,7 +1805,8 @@ nav {
         <!-- Tabs for different content types -->
         <div class="section">
           <div class="tabs">
-            <button class="tab active" onclick="switchTab('reflections', event)">Reflektiot (${reflections.length})</button>
+            <button class="tab active" onclick="switchTab('reflections', event)">Reflektiot (${reflectionOnly.length})</button>
+            <button class="tab" onclick="switchTab('builderVisual', event)">Rakentaja &amp; visuaalit (${builderVisualTabCount})</button>
             <button class="tab" onclick="switchTab('feedback', event)">Palautteet (${feedback.length})</button>
             <button class="tab" onclick="switchTab('aiModules', event)">Tuomioistuin &amp; työkalu (${aiModuleTabCount})</button>
             <button class="tab" onclick="switchTab('closingActions', event)">Sulkemistoimenpiteet (${closingActions.length})</button>
@@ -1756,12 +1816,12 @@ nav {
 
           <!-- Reflections Tab -->
           <div id="tab-reflections" class="tab-content active">
-            ${reflections.length === 0 ? `
+            ${reflectionOnly.length === 0 ? `
               <div class="empty-state">
                 <div class="empty-state-icon">📝</div>
                 <p>Ei reflektioita</p>
               </div>
-            ` : reflections.map(r => `
+            ` : reflectionOnly.map(r => `
               <div class="content-item">
                 <div class="content-item-header">
                   <div>
@@ -1773,6 +1833,45 @@ nav {
                 <div class="content-item-text">${escapeHtml(r.reflection_text || '-')}</div>
               </div>
             `).join('')}
+          </div>
+
+
+          <!-- Builder & Visuals work -->
+          <div id="tab-builderVisual" class="tab-content">
+            ${builderVisualTabCount === 0 ? `
+              <div class="empty-state">
+                <div class="empty-state-icon">🛠️</div>
+                <p>Ei tallennettuja tehtäviä moduuleista <strong>Rakenna ratkaisu</strong> tai <strong>Esitykset &amp; visuaalit</strong>.</p>
+                <p style="font-size:0.9rem;color:var(--muted);margin-top:0.5rem;">Opiskelijan vastaukset tallentuvat automaattisesti kirjautuneena.</p>
+              </div>
+            ` : `
+              ${appBuilderWork ? `
+                <h3 style="margin:0 0 1rem;font-family:'DM Serif Display',serif;color:var(--ink);">Rakenna ratkaisu (Base44)</h3>
+                <div class="content-item">
+                  <div class="content-item-header">
+                    <div>
+                      <span class="module-badge">moduuli-visibility-growth-automation</span>
+                      <span class="content-item-title">Tehtävän vastaukset</span>
+                    </div>
+                    <div class="content-item-date">${formatDate(appBuilderWork.updated_at || appBuilderWork.created_at)}</div>
+                  </div>
+                  ${renderAppBuilderWorkHtml(appBuilderWork)}
+                </div>
+              ` : ''}
+              ${visualsWork ? `
+                <h3 style="margin:${appBuilderWork ? '2rem' : '0'} 0 1rem;font-family:'DM Serif Display',serif;color:var(--ink);">Esitykset &amp; visuaalit (Gamma / Canva)</h3>
+                <div class="content-item">
+                  <div class="content-item-header">
+                    <div>
+                      <span class="module-badge">moduuli-esitykset-tarjoukset-viestinta</span>
+                      <span class="content-item-title">Tehtävän vastaukset</span>
+                    </div>
+                    <div class="content-item-date">${formatDate(visualsWork.updated_at || visualsWork.created_at)}</div>
+                  </div>
+                  ${renderVisualsWorkHtml(visualsWork)}
+                </div>
+              ` : ''}
+            `}
           </div>
 
           <!-- Feedback Tab -->

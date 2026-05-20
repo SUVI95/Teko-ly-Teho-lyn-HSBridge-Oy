@@ -729,6 +729,7 @@ pre.prompt-pre{background:var(--ink);color:rgba(255,255,255,.85);border-radius:v
   </div>
 </section>
 
+<script src="/js/module-work.js"></script>
 <script src="/js/ai-helper.js"></script>
 <script>
 if (window.duunijobsAI) window.aiChat = window.duunijobsAI;
@@ -975,6 +976,7 @@ async function askDuunijobsAI(){
       document.getElementById('toPromptBtn').classList.remove('hidden');
       updateDots(true);
     }
+    appWorkSaveNow();
   }catch(e){
     hideTyping();
     addBubble('ai',(e&&e.message)||'Yhteys katkesi — yritä hetken päästä uudelleen.');
@@ -1122,6 +1124,7 @@ Now write the complete, exhaustive app build prompt. This person built this with
     S.generatedPrompt=t;
     S.finalPrompt=t;
     showPromptOut(t);
+    appWorkSaveNow();
   }catch(e){
     clearInterval(iv);
     document.getElementById('pgenStep').textContent=(e&&e.message)||'DuuniJobs AI ei vastaa juuri nyt — yritä uudelleen.';
@@ -1158,6 +1161,7 @@ function saveRefined(){
   const el=document.getElementById('refinedOk');
   el.style.display='inline';
   setTimeout(()=>el.style.display='none',2200);
+  appWorkSaveNow();
 }
 function goToBuild(){document.getElementById('s5-build').scrollIntoView({behavior:'smooth'});}
 
@@ -1179,6 +1183,7 @@ function saveAppUrl(){
   el.style.display='inline';
   setTimeout(()=>el.style.display='none',2500);
   document.getElementById('toDefenceBtn').disabled=false;
+  appWorkSaveNow();
 }
 function goToDefence(){document.getElementById('s6-defence').scrollIntoView({behavior:'smooth'});}
 
@@ -1202,6 +1207,132 @@ function buildPortfolio(){
   document.getElementById('pcLink').textContent=S.appUrl||'[linkki sovellukseesi]';
   document.getElementById('portfolioCard').style.display='block';
   setTimeout(()=>document.getElementById('portfolioCard').scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+  appWorkSaveNow();
+}
+
+const APP_BUILDER_MODULE_ID = 'moduuli-visibility-growth-automation';
+let appModuleWorkApi = null;
+
+function collectAppBuilderWork() {
+  return {
+    market: S.market,
+    customMarketBrief: S.customMarketBrief,
+    problemDesc: S.problemDesc,
+    problemOneliner: S.problemOneliner,
+    appName: S.appName,
+    chatHistory: S.chatHistory,
+    questionCount: S.questionCount,
+    interviewDone: S.interviewDone,
+    generatedPrompt: S.generatedPrompt,
+    finalPrompt: S.finalPrompt,
+    appUrl: S.appUrl,
+    refinedPrompt: (document.getElementById('refinedPrompt') && document.getElementById('refinedPrompt').value) || '',
+    defence: {
+      q1: (document.getElementById('dq1') && document.getElementById('dq1').value) || '',
+      q2: (document.getElementById('dq2') && document.getElementById('dq2').value) || '',
+      q3: (document.getElementById('dq3') && document.getElementById('dq3').value) || '',
+      q4: (document.getElementById('dq4') && document.getElementById('dq4').value) || ''
+    }
+  };
+}
+
+function summarizeAppBuilderWork(d) {
+  if (!d) return '';
+  var p = [];
+  if (d.appName) p.push('Sovellus: ' + d.appName);
+  if (d.problemOneliner) p.push(d.problemOneliner);
+  if (d.appUrl) p.push('Linkki: ' + d.appUrl);
+  return p.join(' · ');
+}
+
+function restoreInterviewFromWork(d) {
+  if (!d.chatHistory || !d.chatHistory.length) return;
+  document.getElementById('startInterviewBtn').classList.add('hidden');
+  document.getElementById('chatEmpty').style.display = 'none';
+  if (d.interviewDone) {
+    document.getElementById('chatInputRow').style.display = 'none';
+    document.getElementById('toPromptBtn').classList.remove('hidden');
+  } else {
+    document.getElementById('chatInputRow').style.display = 'flex';
+  }
+  var body = document.getElementById('chatBody');
+  body.querySelectorAll('.chat-msg').forEach(function (n) { n.remove(); });
+  d.chatHistory.forEach(function (m) {
+    if (m.role === 'user') addBubble('user', m.content);
+    else addBubble('ai', m.content);
+  });
+  updateDots(!!d.interviewDone);
+}
+
+function applyAppBuilderWork(d) {
+  if (!d) return;
+  S.market = d.market || null;
+  S.customMarketBrief = d.customMarketBrief || '';
+  S.problemDesc = d.problemDesc || '';
+  S.problemOneliner = d.problemOneliner || '';
+  S.appName = d.appName || '';
+  S.chatHistory = d.chatHistory || [];
+  S.questionCount = d.questionCount || 0;
+  S.interviewDone = !!d.interviewDone;
+  S.generatedPrompt = d.generatedPrompt || '';
+  S.finalPrompt = d.finalPrompt || S.generatedPrompt || '';
+  S.appUrl = d.appUrl || '';
+
+  if (d.market === 'custom') {
+    pickCustomIdea();
+    var brief = document.getElementById('customMarketBrief');
+    if (brief) brief.value = d.customMarketBrief || '';
+    checkCustomMarket();
+  } else if (d.market) {
+    var cards = document.querySelectorAll('#marketCards .market-card');
+    for (var ci = 0; ci < cards.length; ci++) {
+      var oc = cards[ci].getAttribute('onclick') || '';
+      if (oc.indexOf("'" + d.market + "'") >= 0) {
+        pickMarket(cards[ci], d.market);
+        break;
+      }
+    }
+  }
+
+  var pd = document.getElementById('problemDesc');
+  var po = document.getElementById('problemOneliner');
+  var an = document.getElementById('appName');
+  if (pd) pd.value = S.problemDesc;
+  if (po) po.value = S.problemOneliner;
+  if (an) an.value = S.appName;
+  checkStep2();
+  updateNamePreview();
+
+  if (S.chatHistory.length) restoreInterviewFromWork(d);
+
+  if (S.finalPrompt) {
+    showPromptOut(S.finalPrompt);
+    document.getElementById('promptIdle').style.display = 'none';
+  }
+
+  if (d.refinedPrompt) {
+    var rp = document.getElementById('refinedPrompt');
+    if (rp) rp.value = d.refinedPrompt;
+  }
+
+  if (S.appUrl) {
+    var au = document.getElementById('appUrl');
+    if (au) au.value = S.appUrl;
+    checkAppUrl();
+  }
+
+  if (d.defence) {
+    ['dq1', 'dq2', 'dq3', 'dq4'].forEach(function (id, i) {
+      var el = document.getElementById(id);
+      if (el && d.defence['q' + (i + 1)]) el.value = d.defence['q' + (i + 1)];
+    });
+    checkDefence();
+  }
+}
+
+function appWorkSaveNow() {
+  if (appModuleWorkApi) return appModuleWorkApi.saveNow();
+  return Promise.resolve();
 }
 
 function copyPortfolioText(){
@@ -1231,6 +1362,19 @@ Tämä projekti rakennettiin HS Bridge Oy:n AI-koulutuksessa. Tunnistin oikean o
     setTimeout(()=>el.style.display='none',2500);
   });
 }
+document.addEventListener('DOMContentLoaded', async function () {
+  if (!window.moduleWork) return;
+  appModuleWorkApi = await window.moduleWork.initModuleWork(APP_BUILDER_MODULE_ID, {
+    collect: collectAppBuilderWork,
+    apply: applyAppBuilderWork,
+    summarize: summarizeAppBuilderWork,
+    debounceMs: 1200,
+    fieldIds: [
+      'problemDesc', 'problemOneliner', 'appName', 'customMarketBrief',
+      'refinedPrompt', 'appUrl', 'dq1', 'dq2', 'dq3', 'dq4'
+    ]
+  });
+});
 </script>
 <script>
 fetch('/ai-chat-widget.html').then(function(r){return r.text();}).then(function(h){
