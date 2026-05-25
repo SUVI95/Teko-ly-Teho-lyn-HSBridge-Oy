@@ -791,6 +791,34 @@ HAKIJAN TAIDOT:
       </div>
     </div>
 
+    <!-- ATS checker (job + CV ilman henkilötietoja) -->
+    <div class="info-card" style="margin-top:1.25rem;">
+      <h3>ATS-check: liitä työ & CV (ilman henkilötietoja)</h3>
+      <p style="font-size:.9rem;color:var(--muted);margin-bottom:1rem;">1) Liitä ilmoitus. 2) Liitä CV-teksti tai täytä datalla. 3) Saat ATS-scoret, puuttuvat avainsanat ja valmiit korjatut bulletit.</p>
+      <div style="display:grid;gap:1rem;">
+        <div>
+          <label class="form-label">Työpaikkailmoitus</label>
+          <textarea class="form-textarea" id="atsJobInput" placeholder="Liitä työpaikkailmoitus tähän..." style="min-height:110px;"></textarea>
+          <button class="tool-link" style="margin-top:.35rem;" onclick="fillAtsJobExample()">Käytä esimerkkityötä</button>
+        </div>
+        <div>
+          <label class="form-label">CV-teksti (ilman osoitetta / syntymäaikaa)</label>
+          <textarea class="form-textarea" id="atsCvInput" placeholder="Liitä CV-tekstisi tai paina 'Täytä CV datalla'" style="min-height:140px;"></textarea>
+          <div style="display:flex;gap:.5rem;margin-top:.4rem;flex-wrap:wrap;">
+            <button class="btn-secondary" onclick="prefillAtsCv()">Täytä CV datalla</button>
+            <button class="btn-primary" onclick="runAtsMatch()">Analysoi ATS-match</button>
+          </div>
+        </div>
+        <div id="atsResultBox" style="display:none;">
+          <div style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.25rem;">ATS-analyysi</div>
+          <div id="atsResult" class="ai-result-text" style="background:#fff;border:1px solid var(--border);padding:1rem;border-radius:10px;white-space:pre-wrap;line-height:1.6;"></div>
+        </div>
+      </div>
+      <div class="prompt-insight" style="margin-top:1rem;">
+        <strong>Vinkki:</strong> Poista osoite/syntymäaika ennen liittämistä. AI ehdottaa valmiit ATS-bulletit ja profiililauseen — kopioi ne suoraan CV:hen.
+      </div>
+    </div>
+
     <div class="takeaway"><span class="takeaway-icon">🎯</span><p>Kun olet analysoinut 5 ilmoitusta, tiedät tarkalleen mitä markkinat haluavat. CV:si avainsanat tulevat suoraan tästä analyysistä.</p></div>
   </div>
 </section>
@@ -1025,6 +1053,50 @@ function checkPortfolioData() {
       if(row) row.style.color = '#fca5a5';
     }
   });
+}
+
+/* ── ATS CHECKER HELPERS ── */
+function fillAtsJobExample(){
+  var ex = 'Asiakaspalvelun tiiminvetäjä\n\nVastaat 6 hengen tiimin päivittäisestä johtamisesta, asiakaskohtaamisten laadusta ja SLA-tasoista. Haemme henkilöä, jolla on kokemusta kontaktoivasta asiakaspalvelusta, KPI-seurannasta ja parannustoimenpiteiden läpiviennistä. Tarvitset sujuvaa suomen ja englannin kielen taitoa sekä hyvät taulukkolaskenta-taidot (Excel/Sheets). Eduksi katsotaan kokemus Zendeskistä tai Freshdeskin kaltaisista järjestelmistä.';
+  var el = document.getElementById('atsJobInput');
+  if(el) el.value = ex;
+}
+
+function prefillAtsCv(){
+  var cv = [];
+  if(cvData.name) cv.push(cvData.name);
+  if(cvData.targetRole) cv.push(cvData.targetRole);
+  if(cvData.careerSummary) cv.push('\nYHTEENVETO:\n'+cvData.careerSummary);
+  if(cvData.skills) cv.push('\nTAIDOT:\n'+cvData.skills);
+  if(cvData.education) cv.push('\nKOULUTUS:\n'+cvData.education);
+  if(cvData.languages) cv.push('\nKIELET:\n'+cvData.languages);
+  if(!cv.length && window.chatHistory){
+    cv.push(window.chatHistory.map(function(m){return (m.role==='user'?'Käyttäjä':'Valmentaja')+': '+m.content;}).join('\n'));
+  }
+  var el = document.getElementById('atsCvInput');
+  if(el) el.value = cv.join('\n');
+}
+
+async function runAtsMatch(){
+  var job = document.getElementById('atsJobInput')?.value || '';
+  var cv = document.getElementById('atsCvInput')?.value || '';
+  var box = document.getElementById('atsResultBox');
+  var out = document.getElementById('atsResult');
+  if(!job || !cv){
+    if(box) box.style.display='block';
+    if(out) out.textContent='Lisää sekä työpaikkailmoitus että CV-teksti.';
+    return;
+  }
+  if(box) box.style.display='block';
+  if(out) out.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>';
+  try{
+    var prompt = 'Olet ATS-analyytikko ja CV-kirjoittaja. Tehtävä: arvioi match ja tee korjaukset.\n\nTOIMITA LYHYESTI (max 220 sanaa):\n1) ATS-SCORE (0-100) ja lyhyt syy\n2) PUUTTUVAT AVAINSANAT (lista)\n3) KORJATUT BULLETIT (3-5), suomeksi, toimintaverbi alussa, jos ei numeroita → [TÄYDENNÄ]\n4) Profiililauseehdotus (1 lause)\n\nÄlä lisää henkilötietoja. Käytä VAIN annettuja tietoja. Vastaa suomeksi.';
+    var msg = 'TYÖILMOITUS:\n'+job+'\n\nCV (ilman henkilötietoja):\n'+cv;
+    var r = await window.aiClaude(prompt, msg, 650);
+    if(out) out.textContent = r;
+  }catch(e){
+    if(out) out.textContent = 'Yhteysvirhe: '+(e.message||e);
+  }
 }
 
 /* ── LOVABLE PROMPT GENERATOR ── */
