@@ -15,6 +15,7 @@
   --shadow:0 2px 20px rgba(26,26,46,0.08);--shadow-md:0 8px 40px rgba(26,26,46,0.12);
   --new-badge:#6b46c1;
 }
+
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
 body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;overflow-x:hidden;line-height:1.7;}
 
@@ -802,6 +803,11 @@ HAKIJAN TAIDOT:
           <button class="tool-link" style="margin-top:.35rem;" onclick="fillAtsJobExample()">Käytä esimerkkityötä</button>
         </div>
         <div>
+          <label class="form-label">Lataa CV (PDF/DOCX) — AI purkaa sisällön</label>
+          <input type="file" accept=".pdf,.doc,.docx,.txt" onchange="handleCvUpload(event)" style="margin-bottom:.35rem;">
+          <div id="cvUploadStatus" style="font-size:.85rem;color:var(--muted);"></div>
+        </div>
+        <div>
           <label class="form-label">CV-teksti (ilman osoitetta / syntymäaikaa)</label>
           <textarea class="form-textarea" id="atsCvInput" placeholder="Liitä CV-tekstisi tai paina 'Täytä CV datalla'" style="min-height:140px;"></textarea>
           <div style="display:flex;gap:.5rem;margin-top:.4rem;flex-wrap:wrap;">
@@ -816,6 +822,29 @@ HAKIJAN TAIDOT:
       </div>
       <div class="prompt-insight" style="margin-top:1rem;">
         <strong>Vinkki:</strong> Poista osoite/syntymäaika ennen liittämistä. AI ehdottaa valmiit ATS-bulletit ja profiililauseen — kopioi ne suoraan CV:hen.
+      </div>
+    </div>
+
+    <!-- Roolipaketti + yhden klikin generointi -->
+    <div class="info-card" style="margin-top:1.25rem;">
+      <h3>Roolipaketti + yhden klikin generointi</h3>
+      <p style="font-size:.9rem;color:var(--muted);margin-bottom:.75rem;">Valitse rooli (tai käytä omaa ilmoitusta yllä), paina Generoi. Saat: ATS-CV bulletit, LinkedIn-otsikko/About, 2 lyhyttä saatetta (email + DM).</p>
+      <div id="rolePackButtons" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;"></div>
+      <button class="btn-primary" id="generateAllBtn" onclick="generateAllJobAssets()" style="width:100%;justify-content:center;font-size:.95rem;">⚡ Generoi kaikki</button>
+      <div id="genStatus" style="margin-top:.6rem;font-size:.88rem;color:var(--muted);"></div>
+      <div id="genResults" style="display:none;margin-top:1rem;">
+        <div class="ai-result" style="background:#fff;border:1px solid var(--border);">
+          <div class="ai-result-label">ATS CV -bulletit</div>
+          <div id="genCv" class="ai-result-text"></div>
+        </div>
+        <div class="ai-result" style="background:#fff;border:1px solid var(--border);">
+          <div class="ai-result-label">LinkedIn (otsikko + About)</div>
+          <div id="genLinkedin" class="ai-result-text"></div>
+        </div>
+        <div class="ai-result" style="background:#fff;border:1px solid var(--border);">
+          <div class="ai-result-label">Saateviestit (email + DM)</div>
+          <div id="genCovers" class="ai-result-text"></div>
+        </div>
       </div>
     </div>
 
@@ -1062,6 +1091,33 @@ function fillAtsJobExample(){
   if(el) el.value = ex;
 }
 
+function handleCvUpload(evt){
+  var file = evt.target.files && evt.target.files[0];
+  if(!file) return;
+  var statusEl = document.getElementById('cvUploadStatus');
+  statusEl.textContent = '⏳ Luetaan CV:tä...';
+  statusEl.style.color = '#fbbf24';
+  var reader = new FileReader();
+  reader.onload = async function(e){
+    var text = e.target.result || '';
+    try{
+      statusEl.textContent = '⏳ AI purkaa sisältöä...';
+      var extracted = await window.aiClaude(
+        'Olet CV-analyytikko. Palauta selkeä teksti ja merkitse puuttuva tieto [TÄYDENNÄ]. Rakenne:\n1) NIMI\n2) TAVOITEROOLI\n3) YHTEYSTIEDOT (email, puhelin, linkedin)\n4) YHTEENVETO (3-4 lausetta)\n5) KOKEMUS (yritys, rooli, ajanjakso, 3-5 bulletia toimintaverbillä)\n6) KOULUTUS\n7) TAIDOT (jaottele: Tekniset / Johtamis- ja yhteistyö / Toimiala)\n8) KIELET\n9) SERTIFIKAATIT\n10) VAHVUUDET (5 ATS-avainta)\nSuomeksi.',
+        text, 1800);
+      saveCvField('cvExtracted', extracted);
+      var cvArea = document.getElementById('atsCvInput');
+      if(cvArea && !cvArea.value) cvArea.value = extracted;
+      statusEl.textContent = '✓ CV purettu — käytä ATS-checkissä';
+      statusEl.style.color = '#22c55e';
+    }catch(err){
+      statusEl.textContent = '⚠️ Virhe: '+(err.message||err);
+      statusEl.style.color = '#e11d48';
+    }
+  };
+  reader.readAsText(file);
+}
+
 function prefillAtsCv(){
   var cv = [];
   if(cvData.name) cv.push(cvData.name);
@@ -1096,6 +1152,75 @@ async function runAtsMatch(){
     if(out) out.textContent = r;
   }catch(e){
     if(out) out.textContent = 'Yhteysvirhe: '+(e.message||e);
+  }
+}
+
+/* ── ROOLIPAKETIT & YHDEN KLIKIN GENEROINTI ── */
+var rolePacks = [
+  { id:'asiakaspalvelu', label:'Asiakaspalvelu', keywords:['asiakaspalvelu','ticketing','SLA','eskalointi','puhelin','sähköposti','Zendesk'], focus:'Palvelukokemus, vasteajat, ratkaisuprosentti' },
+  { id:'myynti', label:'Myynti', keywords:['B2B','myyntiputki','liidit','konversio','CRM','tapaamiset'], focus:'Liidit, tapaamiset, konversio, euromääräiset tulokset' },
+  { id:'koordinaattori', label:'Toimisto/koord.', keywords:['koordinaatio','kalenterointi','projektit','raportointi','hallinto'], focus:'Järjestelmällisyys, prosessit, raportointi' },
+  { id:'logistiikka', label:'Varasto/logistiikka', keywords:['keräily','inventaario','lähetys','vastaanotto','trukki','WMS'], focus:'Täsmällisyys, läpimenoajat, virheettömyys' },
+  { id:'junior_dev', label:'Junior dev', keywords:['JavaScript','React','API','Git','testaus','bugi'], focus:'Pienet featuret, bugikorjaukset, oppiminen' }
+];
+
+function renderRolePacks(){
+  var wrap = document.getElementById('rolePackButtons');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  rolePacks.forEach(function(p){
+    var b = document.createElement('button');
+    b.textContent = p.label;
+    b.className = 'btn-secondary';
+    b.style.fontSize = '.85rem';
+    b.onclick = function(){ saveCvField('selectedRolePack', p.id); highlightRolePack(p.id); };
+    b.id = 'rolePack-'+p.id;
+    wrap.appendChild(b);
+  });
+  if(cvData.selectedRolePack) highlightRolePack(cvData.selectedRolePack);
+}
+
+function highlightRolePack(id){
+  rolePacks.forEach(function(p){
+    var el = document.getElementById('rolePack-'+p.id);
+    if(el) el.style.background = (p.id===id)?'var(--accent3)':'#fff';
+    if(el) el.style.color = (p.id===id)?'#fff':'var(--text)';
+    if(el) el.style.border = (p.id===id)?'1px solid var(--accent3)':'1px solid var(--border)';
+  });
+}
+
+async function generateAllJobAssets(){
+  var status = document.getElementById('genStatus');
+  var box = document.getElementById('genResults');
+  var cvOut = document.getElementById('genCv');
+  var liOut = document.getElementById('genLinkedin');
+  var coverOut = document.getElementById('genCovers');
+  if(box) box.style.display='block';
+  if(status) status.textContent='⏳ Generoidaan...';
+  var job = document.getElementById('atsJobInput')?.value || '';
+  var cv = document.getElementById('atsCvInput')?.value || '';
+  var packId = cvData.selectedRolePack;
+  var pack = rolePacks.find(function(p){return p.id===packId;});
+  var keywords = pack ? pack.keywords.join(', ') : '';
+  try{
+    var cvPrompt = 'Kirjoita ATS-ystävälliset bulletit tähän rooliin. Toimintaverbi alkuun, numerot mukaan jos tiedossa, muuten [TÄYDENNÄ]. Max 6 bulletia. Suomeksi.';
+    var cvMsg = 'ROOLI:\n'+(pack?pack.label:'')+'\nFOCUS:\n'+(pack?pack.focus:'')+'\nKEYWORDS:\n'+keywords+'\n\nTYÖILMOITUS (jos annettu):\n'+job+'\n\nCV/HISTORIA:\n'+cv;
+    var cvRes = await window.aiClaude(cvPrompt, cvMsg, 420);
+    if(cvOut) cvOut.textContent = cvRes;
+
+    var liPrompt = 'Kirjoita 1) LinkedIn-otsikko (<=220 merkkiä) konkreettisesti, 2) About (<=220 sanaa), suomeksi, lämmin ja konkreettinen. Ei kliseitä. Käytä annettuja tietoja. Aloita About vahvalla ensimmäisellä lauseella.';
+    var liMsg = 'ROOLI:\n'+(pack?pack.label:'')+'\nKEYWORDS:\n'+keywords+'\n\nCV/HISTORIA:\n'+cv+'\n\nTYÖILMOITUS:\n'+job;
+    var liRes = await window.aiClaude(liPrompt, liMsg, 520);
+    if(liOut) liOut.textContent = liRes;
+
+    var coverPrompt = 'Kirjoita kaksi lyhyttä viestiä suomeksi: 1) Email-saate (5-7 lausetta) 2) LinkedIn DM (3-4 lausetta). Räätälöi rooliin. Sisällytä koukku, relevantit taidot/luvut, kohtelias call-to-action.';
+    var coverMsg = 'ROOLI:\n'+(pack?pack.label:'')+'\nKEYWORDS:\n'+keywords+'\n\nTYÖILMOITUS:\n'+job+'\n\nCV/HISTORIA:\n'+cv;
+    var coverRes = await window.aiClaude(coverPrompt, coverMsg, 420);
+    if(coverOut) coverOut.textContent = coverRes;
+
+    if(status) status.textContent='✓ Valmis — kopioi suoraan käyttöön';
+  }catch(e){
+    if(status) status.textContent='⚠️ Virhe: '+(e.message||e);
   }
 }
 
