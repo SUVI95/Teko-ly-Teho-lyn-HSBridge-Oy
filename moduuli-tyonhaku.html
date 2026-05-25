@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Työnhaku + AI — AI Polku</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f9f8; --ink:#111918; --ink2:#374140; --ink3:#6b7f7c;
+  --teal:#0d9488; --teal-d:#0f766e; --teal-l:#ccfbf1; --teal-xl:#f0fdfa;
+  --amber:#f59e0b; --amber-l:#fef3c7; --amber-d:#d97706;
+  --green:#16a34a; --green-l:#dcfce7;
+  --red-l:#fef2f2; --red-b:#fecaca;
+  --card:#fff; --border:#e2eeed;
+  --dark1:#0d1f1c; --dark2:#111827; --dark3:#1a140a;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink2);line-height:1.65;min-height:100vh}
+
+/* TOP BAR */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:300;background:var(--ink);display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:52px;box-shadow:0 2px 20px rgba(0,0,0,.3)}
+.tb-brand{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase}
+.tb-track{display:flex;align-items:center;gap:5px}
+.tb-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.13);transition:all .4s}
+.tb-dot.active{background:var(--amber);transform:scale(1.25)}
+.tb-dot.done{background:var(--teal)}
+.tb-line{width:20px;height:2px;background:rgba(255,255,255,.1);border-radius:1px}
+.tb-status{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.28)}
+
+/* HERO */
+.hero{background:linear-gradient(150deg,#071a18 0%,#0c2b25 45%,#0f3830 100%);padding:92px 24px 68px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;width:600px;height:600px;top:-200px;right:-160px;background:radial-gradient(circle,rgba(13,148,136,.1) 0%,transparent 65%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:100px;padding:6px 18px;font-family:'DM Mono',monospace;font-size:10px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;margin-bottom:26px}
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(2.2rem,5.5vw,4rem);color:white;line-height:1.1;margin-bottom:18px;max-width:680px;margin-left:auto;margin-right:auto}
+.hero h1 em{font-style:italic;color:#5eead4}
+.hero h1 span{color:var(--amber)}
+.hero-sub{font-size:1rem;font-weight:300;color:rgba(255,255,255,.5);max-width:500px;margin:0 auto 44px;line-height:1.7}
+.hero-pills{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:100px;font-size:.8rem;font-weight:500}
+.pill-t{background:rgba(13,148,136,.15);color:#5eead4;border:1px solid rgba(13,148,136,.25)}
+.pill-a{background:rgba(245,158,11,.12);color:#fcd34d;border:1px solid rgba(245,158,11,.2)}
+
+/* WRAP */
+.wrap{max-width:780px;margin:0 auto;padding:0 20px 100px}
+
+/* MISSION */
+.mission{margin:32px 0 0;opacity:0;transform:translateY(22px);transition:opacity .5s,transform .5s}
+.mission.vis{opacity:1;transform:translateY(0)}
+.mission.locked .mcontent{filter:blur(3px);opacity:.35;pointer-events:none;user-select:none}
+.mhdr{border-radius:20px 20px 0 0;padding:30px 40px 26px;position:relative;overflow:hidden}
+.mh1{background:var(--dark1)}
+.mh2{background:var(--dark2)}
+.mh3{background:var(--dark3)}
+.mhdr::after{content:'';position:absolute;width:280px;height:280px;top:-80px;right:-50px;border-radius:50%;opacity:.06}
+.mh1::after{background:var(--teal)}
+.mh2::after{background:#818cf8}
+.mh3::after{background:var(--amber)}
+.m-num{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;margin-bottom:11px;display:flex;align-items:center;gap:9px}
+.m-tag{border-radius:6px;padding:3px 10px;font-weight:500;font-size:10px}
+.mh1 .m-tag{background:rgba(13,148,136,.22);color:#5eead4}
+.mh2 .m-tag{background:rgba(129,140,248,.22);color:#a5b4fc}
+.mh3 .m-tag{background:rgba(245,158,11,.22);color:#fcd34d}
+.m-num .sub{color:rgba(255,255,255,.22);font-size:.72rem}
+.mhdr h2{font-family:'DM Serif Display',serif;font-size:clamp(1.5rem,3.5vw,2.1rem);color:white;line-height:1.15;margin-bottom:9px}
+.mhdr p{color:rgba(255,255,255,.5);font-size:.93rem;max-width:540px;line-height:1.6}
+.mcontent{background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 20px 20px;padding:36px 40px}
+.unlock-shell{text-align:center;padding:36px 20px}
+.ush-icon{font-size:2.2rem;margin-bottom:10px}
+.ush-text{font-size:.9rem;color:var(--ink3);font-style:italic}
+
+/* BRIEFING */
+.brief{background:var(--teal-xl);border:1px solid #99f6e4;border-radius:14px;padding:22px 26px;margin-bottom:26px}
+.brief-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.brief-tag::before{content:'◈';font-size:.75rem}
+.brief h3{font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--teal-d);margin-bottom:7px}
+.brief p{font-size:.9rem;color:#1f5c55;line-height:1.6;margin:0}
+
+/* OUTSIDE TASK */
+.outside{background:var(--ink);border-radius:16px;padding:26px 30px;margin-bottom:26px}
+.out-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.out-tag::before{content:'⬡';font-size:.85rem}
+.out-title{font-family:'DM Serif Display',serif;font-size:1.1rem;color:white;margin-bottom:14px}
+.steps{display:flex;flex-direction:column;gap:9px;margin-bottom:18px}
+.step{display:flex;align-items:flex-start;gap:11px;padding:11px 15px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;cursor:pointer;transition:all .2s}
+.step:hover{background:rgba(255,255,255,.08)}
+.step.done{background:rgba(13,148,136,.14);border-color:rgba(13,148,136,.28)}
+.step-cb{width:19px;height:19px;border-radius:5px;border:2px solid rgba(255,255,255,.18);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;transition:all .2s}
+.step.done .step-cb{background:var(--teal);border-color:var(--teal);color:white}
+.step-txt{font-size:.86rem;color:rgba(255,255,255,.6);line-height:1.5;transition:color .2s}
+.step.done .step-txt{color:rgba(255,255,255,.3);text-decoration:line-through}
+.step-link{color:var(--amber);text-decoration:none;font-weight:600}
+.step-link:hover{text-decoration:underline}
+.unlock-msg{font-size:.8rem;color:rgba(255,255,255,.28);text-align:center;font-style:italic;transition:all .3s}
+.unlock-msg.ready{color:rgba(13,148,136,.9);font-style:normal;font-weight:600}
+
+/* FORM */
+.iz{margin-top:0}
+label{display:block;font-size:.75rem;font-weight:600;color:var(--ink);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}
+textarea,input[type="text"]{width:100%;padding:13px 15px;border:2px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--ink2);background:white;resize:vertical;transition:border-color .2s,box-shadow .2s;margin-bottom:6px}
+textarea{min-height:96px}
+textarea:focus,input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(13,148,136,.09)}
+.hint{font-size:.77rem;color:var(--ink3);font-style:italic;margin-bottom:18px;line-height:1.5}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.input-row{grid-template-columns:1fr}}
+.ig{display:flex;flex-direction:column}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:12px;padding:12px 24px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:active{transform:scale(.98)}
+.btn-go{background:var(--teal);color:white}
+.btn-go:hover{background:var(--teal-d)}
+.btn-go:disabled{background:#d1d5db;color:rgba(0,0,0,.35);cursor:not-allowed;transform:none}
+.btn-cp{background:transparent;color:var(--teal-d);border:2px solid var(--teal-l);border-radius:10px;padding:8px 17px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+.btn-cp:hover{background:var(--teal-xl);border-color:var(--teal)}
+.btn-cp.copied{background:var(--green-l);color:var(--green);border-color:#86efac}
+.btn-sm{background:rgba(13,148,136,.09);color:var(--teal-d);border:none;border-radius:8px;padding:7px 13px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-sm:hover{background:rgba(13,148,136,.18)}
+
+/* LOADING */
+.loading{display:none;align-items:center;gap:10px;color:var(--teal);font-size:.86rem;margin-top:13px}
+.loading.show{display:flex}
+.spin{width:17px;height:17px;border:2px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lmsg{animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* RESULT */
+.rbox{display:none;margin-top:20px;animation:fadeUp .4s ease}
+.rbox.show{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.rlabel{font-family:'DM Mono',monospace;font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:.09em;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.rcheck{background:var(--green);color:white;width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+.rcontent{background:#f8fefd;border:1px solid #99f6e4;border-radius:13px;padding:22px;font-size:.92rem;line-height:1.75;color:var(--ink2);white-space:pre-wrap;margin-bottom:13px}
+.ractions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+
+/* REACTION */
+.react-zone{margin-top:22px;background:var(--amber-l);border:1px solid #fde68a;border-radius:13px;padding:20px 22px;display:none}
+.react-zone.show{display:block;animation:fadeUp .3s ease}
+.rz-tag{font-size:.75rem;font-weight:600;color:#92400e;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.rz-q{font-size:.93rem;color:#78350f;margin-bottom:13px;font-weight:500;line-height:1.5}
+.rz-input{width:100%;padding:11px 14px;border:2px solid #fde68a;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.88rem;background:white;resize:vertical;min-height:56px}
+.rz-input:focus{outline:none;border-color:var(--amber)}
+.rz-btn{margin-top:9px;background:var(--amber);color:white;border:none;border-radius:10px;padding:10px 22px;font-family:'DM Sans',sans-serif;font-size:.86rem;font-weight:600;cursor:pointer;transition:background .2s;display:inline-flex;align-items:center;gap:7px}
+.rz-btn:hover{background:var(--amber-d)}
+
+/* CONTEXT CARD */
+.ctx{background:var(--teal-xl);border:1px solid #99f6e4;border-radius:13px;padding:18px 22px;margin-bottom:20px}
+.ctx-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.ctx-body{font-size:.84rem;color:#1f5c55;line-height:1.6;white-space:pre-wrap;max-height:72px;overflow:hidden;position:relative}
+.ctx-body.open{max-height:none}
+.ctx-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:28px;background:linear-gradient(transparent,var(--teal-xl));pointer-events:none}
+.ctx-body.open::after{display:none}
+.ctx-more{font-size:.77rem;color:var(--teal);cursor:pointer;margin-top:5px;font-weight:600;display:inline-block}
+.ctx-more:hover{text-decoration:underline}
+
+/* VINKKI */
+.vink{background:var(--amber-l);border:1px solid #fde68a;border-radius:12px;padding:17px 19px;margin:18px 0;display:flex;gap:11px}
+.vi{font-size:1.2rem;flex-shrink:0;margin-top:1px}
+.vc h4{font-size:.75rem;font-weight:600;color:#92400e;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.vc p{color:#78350f;font-size:.87rem;margin:0;line-height:1.55}
+
+/* ATS EXPLAINER */
+.ats-box{background:var(--ink);border-radius:16px;padding:28px 32px;margin:22px 0}
+.ats-tag{font-family:'DM Mono',monospace;font-size:10px;color:#a5b4fc;text-transform:uppercase;letter-spacing:.11em;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.ats-tag::before{content:'◉';font-size:.8rem}
+.ats-title{font-family:'DM Serif Display',serif;font-size:1.25rem;color:white;margin-bottom:12px}
+.ats-flow{display:flex;align-items:center;gap:0;margin:20px 0;flex-wrap:wrap}
+.ats-node{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;text-align:center;flex:1;min-width:90px}
+.ats-node-label{font-size:.7rem;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.ats-node-val{font-size:.88rem;color:white;font-weight:500}
+.ats-arrow{color:rgba(255,255,255,.2);font-size:1.1rem;padding:0 6px;flex-shrink:0}
+.ats-node.dead{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.25)}
+.ats-node.dead .ats-node-val{color:#fca5a5}
+.ats-node.live{background:rgba(13,148,136,.15);border-color:rgba(13,148,136,.3)}
+.ats-node.live .ats-node-val{color:#5eead4}
+.ats-note{font-size:.82rem;color:rgba(255,255,255,.4);line-height:1.55;margin-top:14px}
+.ats-note strong{color:rgba(255,255,255,.7)}
+
+/* DIVIDER */
+.div{display:flex;align-items:center;gap:12px;margin:26px 0;color:var(--ink3);font-size:.76rem}
+.div::before,.div::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ═══ PROMPT LIBRARY ═══ */
+.promos-section{margin-top:32px;opacity:0;transform:translateY(22px);transition:opacity .5s,transform .5s}
+.promos-section.vis{opacity:1;transform:translateY(0)}
+.promos-hdr{background:linear-gradient(145deg,#0d1f1c,#122b27);border-radius:20px 20px 0 0;padding:32px 40px 28px}
+.promos-hdr h2{font-family:'DM Serif Display',serif;font-size:clamp(1.6rem,3.5vw,2.2rem);color:white;line-height:1.15;margin-bottom:9px}
+.promos-hdr p{color:rgba(255,255,255,.5);font-size:.93rem;max-width:520px;line-height:1.6}
+.promos-body{background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 20px 20px;padding:36px 40px}
+
+.prompt-grid{display:flex;flex-direction:column;gap:16px;margin-bottom:32px}
+.prompt-card{background:#111918;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;transition:border-color .25s}
+.prompt-card:hover{border-color:rgba(13,148,136,.35)}
+.pc-head{padding:18px 22px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.pc-left{display:flex;align-items:flex-start;gap:14px}
+.pc-num{font-family:'DM Mono',monospace;font-size:1.4rem;font-weight:500;color:rgba(255,255,255,.15);flex-shrink:0;line-height:1}
+.pc-info h4{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.95rem;color:white;margin-bottom:4px}
+.pc-info p{font-size:.8rem;color:rgba(255,255,255,.4);line-height:1.45;margin:0}
+.pc-where{font-family:'DM Mono',monospace;font-size:.68rem;padding:3px 9px;border-radius:100px;flex-shrink:0;white-space:nowrap}
+.pw-free{background:rgba(13,148,136,.18);color:#5eead4;border:1px solid rgba(13,148,136,.25)}
+.pc-body{padding:0 22px 20px}
+.pc-prompt{background:#0a1210;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:16px 18px;font-family:'DM Mono',monospace;font-size:.78rem;line-height:1.7;color:rgba(255,255,255,.7);white-space:pre-wrap;margin-bottom:12px}
+.pc-bracket{color:var(--amber);font-weight:500}
+.pc-actions{display:flex;gap:9px;flex-wrap:wrap}
+.btn-pcp{background:rgba(13,148,136,.15);color:#5eead4;border:1px solid rgba(13,148,136,.2);border-radius:9px;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+.btn-pcp:hover{background:rgba(13,148,136,.28)}
+.btn-pcp.copied{background:rgba(22,163,74,.18);color:#86efac;border-color:rgba(22,163,74,.25)}
+
+/* IN-CLASS EXERCISE */
+.inclass{background:linear-gradient(135deg,#fef3c7,#fffbeb);border:2px solid #fde68a;border-radius:18px;padding:30px 34px;margin-top:28px}
+.ic-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--amber-d);text-transform:uppercase;letter-spacing:.11em;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.ic-tag::before{content:'★';font-size:.85rem}
+.inclass h3{font-family:'DM Serif Display',serif;font-size:1.4rem;color:#1c1410;margin-bottom:9px}
+.inclass>p{font-size:.92rem;color:#78350f;margin-bottom:22px;line-height:1.6}
+.ic-steps{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.ic-step{display:flex;gap:12px;align-items:flex-start;padding:12px 15px;background:rgba(255,255,255,.6);border-radius:10px;border:1px solid rgba(245,158,11,.2)}
+.ic-step-n{width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.ic-step-txt{font-size:.87rem;color:#78350f;line-height:1.5}
+.ic-step-txt strong{color:#1c1410}
+.ic-links{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.ic-link{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:10px;font-size:.84rem;font-weight:600;text-decoration:none;transition:all .2s}
+.ic-link-gpt{background:#10a37f;color:white}
+.ic-link-gpt:hover{background:#0d8f6f}
+.ic-link-claude{background:#d97706;color:white}
+.ic-link-claude:hover{background:#b45309}
+
+/* RETURN ZONE */
+.return-zone{background:white;border:2px solid var(--teal-l);border-radius:16px;padding:28px 32px;margin-top:24px}
+.rtz-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.rtz-tag::before{content:'↩'}
+.return-zone h4{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--ink);margin-bottom:8px}
+.return-zone>p{font-size:.9rem;color:var(--ink3);margin-bottom:20px;line-height:1.6}
+.rtz-q{font-size:.82rem;font-weight:600;color:var(--ink);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.rtz-opts{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:16px}
+.rtz-opt{padding:9px 16px;border:2px solid var(--border);border-radius:100px;font-size:.82rem;font-weight:500;color:var(--ink3);cursor:pointer;transition:all .2s;background:white}
+.rtz-opt:hover{border-color:var(--teal);color:var(--teal)}
+.rtz-opt.sel{border-color:var(--teal);background:var(--teal-xl);color:var(--teal-d);font-weight:600}
+
+/* APPLY MISSION */
+.apply-mission{margin-top:28px;background:linear-gradient(145deg,#071a18,#0d2e28);border-radius:18px;padding:30px 34px}
+.am-tag{font-family:'DM Mono',monospace;font-size:10px;color:#5eead4;text-transform:uppercase;letter-spacing:.11em;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.am-tag::before{content:'🚀'}
+.apply-mission h3{font-family:'DM Serif Display',serif;font-size:1.4rem;color:white;margin-bottom:9px}
+.apply-mission>p{font-size:.9rem;color:rgba(255,255,255,.5);margin-bottom:22px;line-height:1.6}
+.am-steps{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.am-step{display:flex;gap:12px;padding:13px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:10px}
+.am-step-n{font-family:'DM Mono',monospace;font-size:.75rem;color:#5eead4;flex-shrink:0;margin-top:2px;width:20px}
+.am-step-txt{font-size:.87rem;color:rgba(255,255,255,.65);line-height:1.5}
+.am-step-txt strong{color:white}
+.am-return{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:22px 24px;margin-top:20px}
+.am-return h5{font-size:.82rem;font-weight:600;color:#5eead4;text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px}
+.am-return-qs{display:flex;flex-direction:column;gap:12px}
+.am-rq{display:flex;flex-direction:column;gap:6px}
+.am-rq-label{font-size:.8rem;color:rgba(255,255,255,.45);font-style:italic}
+.am-rq-input{width:100%;padding:11px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:rgba(255,255,255,.8);resize:vertical;min-height:52px}
+.am-rq-input:focus{outline:none;border-color:rgba(13,148,136,.5)}
+.am-rq-input::placeholder{color:rgba(255,255,255,.25)}
+.am-submit{margin-top:16px;background:var(--teal);color:white;border:none;border-radius:10px;padding:11px 24px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:background .2s;display:inline-flex;align-items:center;gap:7px}
+.am-submit:hover{background:var(--teal-d)}
+.am-done{display:none;margin-top:14px;padding:16px 20px;background:rgba(13,148,136,.15);border:1px solid rgba(13,148,136,.3);border-radius:12px;color:#5eead4;font-size:.9rem;text-align:center}
+.am-done.show{display:block;animation:fadeUp .4s ease}
+
+/* TAKEHOME */
+.takehome{margin-top:32px;background:linear-gradient(145deg,#0a1f1c,#0d2e28);border-radius:22px;padding:44px 40px;display:none}
+.takehome.show{display:block;animation:fadeUp .5s ease}
+.th-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(245,158,11,.13);border:1px solid rgba(245,158,11,.22);border-radius:100px;padding:6px 15px;font-family:'DM Mono',monospace;font-size:10px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px}
+.takehome h2{font-family:'DM Serif Display',serif;font-size:1.9rem;color:white;margin-bottom:7px}
+.takehome>p{color:rgba(255,255,255,.45);font-size:.9rem;margin-bottom:28px}
+.th-items{display:flex;flex-direction:column;gap:13px}
+.th-item{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:20px 22px;transition:all .3s}
+.th-item.filled{background:rgba(13,148,136,.12);border-color:rgba(13,148,136,.22)}
+.th-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.th-title{font-size:.75rem;font-weight:600;color:#5eead4;text-transform:uppercase;letter-spacing:.07em}
+.th-content{font-size:.85rem;line-height:1.6;color:rgba(255,255,255,.7);white-space:pre-wrap;max-height:100px;overflow:hidden}
+.th-empty{color:rgba(255,255,255,.22);font-style:italic;font-size:.85rem}
+.btn-wh{background:rgba(255,255,255,.09);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 13px;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;transition:background .2s;flex-shrink:0}
+.btn-wh:hover{background:rgba(255,255,255,.17)}
+
+@media(max-width:600px){
+  .mhdr,.mcontent,.promos-hdr,.promos-body{padding-left:24px;padding-right:24px}
+  .takehome,.inclass,.apply-mission,.return-zone{padding:26px 22px}
+  .outside{padding:20px 20px}
+  .hero h1{font-size:2rem}
+  .tb-track{display:none}
+  .ats-flow{gap:4px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="tb-brand">AI Polku</span>
+  <div class="tb-track">
+    <div class="tb-dot active" id="td1"></div>
+    <div class="tb-line"></div>
+    <div class="tb-dot" id="td2"></div>
+    <div class="tb-line"></div>
+    <div class="tb-dot" id="td3"></div>
+    <div class="tb-line"></div>
+    <div class="tb-dot" id="td4"></div>
+  </div>
+  <span class="tb-status" id="tbst">Missio 1 / 3</span>
+</div>
+
+<div class="hero">
+  <div class="hero-badge">AI Polku — Työnhakumoduuli</div>
+  <h1>Löydä mitä sinulla on.<br><em>Rakenna</em> sillä.<br><span>Hae töihin.</span></h1>
+  <p class="hero-sub">Kolme missiota. Ei oletuksia. AI:lle kerrot itse kuka olet — ja se auttaa sinua näyttämään sen oikeaan paikkaan.</p>
+  <div class="hero-pills">
+    <div class="pill pill-t">Taitokarttoitus</div>
+    <div class="pill pill-a">ATS-optimointi</div>
+    <div class="pill pill-t">Promptikirjasto kotiin</div>
+    <div class="pill pill-a">Oikea hakemus oikeaan paikkaan</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ═══ MISSIO 1 ═══ -->
+<div class="mission vis" id="m1">
+  <div class="mhdr mh1">
+    <div class="m-num"><span class="m-tag">Missio 01</span><span class="sub">Ennen kuin kirjoitat sanaakaan</span></div>
+    <h2>Mitä sinulla oikeasti on</h2>
+    <p>Ennen hakemusta on tiedettävä mitä haetaan. Kerro taustastasi — työ, opinnot, harrastukset, arki. </p>
+  </div>
+  <div class="mcontent">
+    <div class="brief">
+      <div class="brief-tag">Tehtäväkuvaus</div>
+      <h3>Kerro omin sanoin. </h3>
+      <p>Kirjoita vapaamuotoisesti — työ, harrastukset, arki, mikä tuntuu luontevalta.</p>
+    </div>
+
+<label for="in1">Kerro taustastasi — vapaasti, omin sanoin</label>
+    <textarea id="in1" rows="7" placeholder="Esim: Tein myyntiä useita vuosia ja hoidan pienyritysten kirjanpitoa. Asiakkaat luottavat minuun pitkäjänteisesti. / Käyn salilla säännöllisesti, tein asiakaspalvelua kesällä, pidän siitä että asiat ovat järjestyksessä."></textarea>
+    <p class="hint">Kirjoita ainakin 4–6 lausetta.</p>
+    <button class="btn btn-go" onclick="run1()">Kerro mitä näet minussa <span>→</span></button>
+    <div class="loading" id="l1"><div class="spin"></div><span class="lmsg" id="lm1">Kuunnellaan mitä sanoit...</span></div>
+
+    <div class="rbox" id="r1">
+      <div class="rlabel"><span class="rcheck">✓</span>Taitokarttoituksesi valmis</div>
+      <div class="rcontent" id="r1c"></div>
+      <div class="ractions"><button class="btn-cp" onclick="cp('r1c',this)">📋 Kopioi</button></div>
+      <div class="react-zone show" id="rz1">
+        <div class="rz-tag">Sinun vuorosi</div>
+        <div class="rz-q">Löysikö AI jotain mitä et odottanut? Puuttuuko jotain tärkeää? Kirjoita — tämä menee mukaan seuraavaan missioon.</div>
+        <textarea class="rz-input" id="rza1" placeholder="Esim: Unohdin mainita johtamiskokemus. / Kyllä, tämä kuvaa minua hyvin. / Lisäisin vielä asiakaspalvelun 5v."></textarea>
+        <button class="rz-btn" onclick="unlock(2)">Selvä — jatkan missioon 2 <span>→</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MISSIO 2 ═══ -->
+<div class="mission locked" id="m2">
+  <div class="mhdr mh2">
+    <div class="m-num"><span class="m-tag" style="background:rgba(129,140,248,.2);color:#a5b4fc">Missio 02</span><span class="sub">Järjestelmä jota useimmat eivät tiedä</span></div>
+    <h2>ATS — miksi hyvät hakemukset katoavat</h2>
+    <p>Useimmat hakemukset eivät koskaan päädy ihmiselle luettavaksi. ATS-järjestelmä suodattaa ne automaattisesti. Tässä missiossa opit ohittamaan sen.</p>
+  </div>
+  <div class="mcontent">
+    <div class="unlock-shell" id="us2" style="display:none"><div class="ush-icon">🔒</div><p class="ush-text">Suorita Missio 1 ensin</p></div>
+    <div id="ac2">
+      <div class="ats-box">
+        <div class="ats-tag">Mitä ATS tarkoittaa</div>
+        <div class="ats-title">Applicant Tracking System — hakijaseuranta</div>
+        <p style="color:rgba(255,255,255,.5);font-size:.88rem;margin-bottom:18px;line-height:1.6">Suurin osa työnantajista käyttää ohjelmistoa joka lukee hakemuksesi ennen kuin yksikään ihminen tekee sen. Ohjelma etsii tiettyjä avainsanoja. Jos niitä ei löydy — hakemus hylätään automaattisesti.</p>
+        <div class="ats-flow">
+          <div class="ats-node"><div class="ats-node-label">Lähetät</div><div class="ats-node-val">Hakemuksesi</div></div>
+          <div class="ats-arrow">→</div>
+          <div class="ats-node"><div class="ats-node-label">ATS lukee</div><div class="ats-node-val">Avainsanat?</div></div>
+          <div class="ats-arrow">→</div>
+          <div class="ats-node dead"><div class="ats-node-label">Ei avainsanoja</div><div class="ats-node-val">❌ Roskakoriin</div></div>
+          <div class="ats-arrow" style="color:rgba(13,148,136,.4)">→</div>
+          <div class="ats-node live"><div class="ats-node-label">Avainsanat ok</div><div class="ats-node-val">✓ Ihmiselle</div></div>
+        </div>
+        <p class="ats-note"><strong>Ratkaisu:</strong> Käytä hakemuksessasi samoja sanoja kuin ilmoituksessa. Ei kopiointi — luonteva sisällyttäminen. AI tekee tämän puolestasi.</p>
+      </div>
+
+      <div class="outside">
+        <div class="out-tag">Tehtävä ulkona</div>
+        <div class="out-title">Etsi yksi ilmoitus joka kiinnostaa sinua</div>
+        <div class="steps" id="steps2">
+          <div class="step" onclick="toggleStep(this,2)">
+            <div class="step-cb">✓</div>
+            <div class="step-txt">Avaan <a class="step-link" href="https://www.linkedin.com/jobs/" target="_blank">LinkedIn Jobs</a> tai <a class="step-link" href="https://paikat.te-palvelut.fi" target="_blank">TE-palvelut</a> uuteen välilehteen</div>
+          </div>
+          <div class="step" onclick="toggleStep(this,2)">
+            <div class="step-cb">✓</div>
+            <div class="step-txt">Etsin roolia joka kiinnostaa minua.</div>
+          </div>
+          <div class="step" onclick="toggleStep(this,2)">
+            <div class="step-cb">✓</div>
+            <div class="step-txt">Löydän yhden ilmoituksen joka tuntuu mahdolliselta</div>
+          </div>
+          <div class="step" onclick="toggleStep(this,2)">
+            <div class="step-cb">✓</div>
+            <div class="step-txt">Kopioin ilmoitustekstin ja palaan tähän</div>
+          </div>
+        </div>
+        <p class="unlock-msg" id="um2">Merkitse kaikki tehdyksi →</p>
+      </div>
+
+      <div class="iz" id="iz2" style="display:none">
+        <div class="ctx" id="ctx2" style="display:none">
+          <div class="ctx-tag">📎 Taitosi Missiosta 1</div>
+          <div class="ctx-body" id="ctx2t"></div>
+          <span class="ctx-more" onclick="openCtx('ctx2t',this)">Näytä kaikki ↓</span>
+        </div>
+        <label for="in2">Liitä ilmoitusteksti tähän</label>
+        <textarea id="in2" rows="8" placeholder="Liitä koko ilmoitusteksti tähän."></textarea>
+        <p class="hint">Mitä enemmän tekstiä, sitä tarkemmat avainsanat.</p>
+        <button class="btn btn-go" onclick="run2()">Poimi ATS-avainsanat <span>→</span></button>
+        <div class="loading" id="l2"><div class="spin"></div><span class="lmsg" id="lm2">Etsitään avainsanoja...</span></div>
+
+        <div class="rbox" id="r2">
+          <div class="rlabel"><span class="rcheck">✓</span>ATS-avainsanat poimittu</div>
+          <div class="rcontent" id="r2c"></div>
+          <div class="ractions"><button class="btn-cp" onclick="cp('r2c',this)">📋 Kopioi avainsanat</button></div>
+          <div class="react-zone show" style="margin-top:18px">
+            <div class="rz-tag">Oivallus</div>
+            <div class="rz-q">Oliko joukossa sanoja joita et olisi itse ajatellut laittaa hakemukseen?</div>
+            <textarea class="rz-input" id="rza2" placeholder="Vapaamuotoinen kommentti — tai kirjoita vain 'jatkan'."></textarea>
+            <button class="rz-btn" onclick="unlock(3)">Rakennetaan hakemus <span>→</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MISSIO 3 ═══ -->
+<div class="mission locked" id="m3">
+  <div class="mhdr mh3">
+    <div class="m-num"><span class="m-tag">Missio 03</span><span class="sub">Kirjoita kerran — kirjoita oikein</span></div>
+    <h2>ATS-hakemusteksti — sinun taidoillasi</h2>
+    <p>AI tietää nyt mitä sinulla on ja mitä työnantaja etsii. Se yhdistää ne hakemustekstiksi joka läpäisee ATS:n ja puhuttelee ihmistä.</p>
+  </div>
+  <div class="mcontent">
+    <div class="unlock-shell" id="us3" style="display:none"><div class="ush-icon">🔒</div><p class="ush-text">Suorita Missio 2 ensin</p></div>
+    <div id="ac3">
+      <div class="ctx" id="ctx3a" style="display:none">
+        <div class="ctx-tag">📎 Taitosi</div>
+        <div class="ctx-body" id="ctx3at"></div>
+        <span class="ctx-more" onclick="openCtx('ctx3at',this)">Näytä kaikki ↓</span>
+      </div>
+      <div class="ctx" id="ctx3b" style="display:none;margin-top:12px">
+        <div class="ctx-tag">📎 ATS-avainsanat</div>
+        <div class="ctx-body" id="ctx3bt"></div>
+        <span class="ctx-more" onclick="openCtx('ctx3bt',this)">Näytä kaikki ↓</span>
+      </div>
+
+      <div style="margin-top:22px">
+        <button class="btn btn-go" id="b3" onclick="run3()">Rakenna ATS-hakemustekstini <span>→</span></button>
+        <div class="loading" id="l3"><div class="spin"></div><span class="lmsg" id="lm3">Rakennetaan hakemustasi...</span></div>
+      </div>
+
+      <div class="rbox" id="r3">
+        <div class="rlabel"><span class="rcheck">✓</span>ATS-hakemustekstisi valmis</div>
+        <div class="rcontent" id="r3c"></div>
+        <div class="ractions" style="margin-bottom:18px"><button class="btn-cp" onclick="cp('r3c',this)">📋 Kopioi kaikki</button></div>
+
+        <div class="div">muokkaa</div>
+        <div class="vink"><div class="vi">✏️</div><div class="vc"><h4>Tee siitä sinun</h4><p>Pyydä yksi muutos. AI tekee — sinä päätät onko se parempi.</p></div></div>
+        <input type="text" id="edit3" placeholder="Esim: Tee avauksesta lyhyempi ja rohkeampi. / Lisää esimerkki asiakastyöstä. / Korosta ATS-sanaa X enemmän.">
+        <div style="display:flex;gap:9px;margin-top:4px;flex-wrap:wrap">
+          <button class="btn btn-go" style="font-size:.83rem;padding:10px 20px" onclick="refine()">Muokkaa →</button>
+          <button class="btn-sm" onclick="qe('Tee avauksesta rohkeampi ja suorempi')">Rohkeampi avaus</button>
+          <button class="btn-sm" onclick="qe('Lyhennä puoleen')">Tiivistä</button>
+          <button class="btn-sm" onclick="qe('Lisää konkreettinen esimerkki tai luku')">Lisää esimerkki</button>
+        </div>
+        <div class="loading" id="l3r"><div class="spin"></div><span>Muokataan...</span></div>
+        <div class="rbox" id="r3r">
+          <div class="rlabel" style="margin-top:16px"><span class="rcheck">✓</span>Muokattu versio</div>
+          <div class="rcontent" id="r3rc"></div>
+          <div class="ractions"><button class="btn-cp" onclick="cp('r3rc',this)">📋 Kopioi muokattu</button></div>
+        </div>
+
+        <div style="margin-top:24px;text-align:center;display:none" id="m3done">
+          <div style="font-size:2.5rem;margin-bottom:10px">✅</div>
+          <p style="font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--teal-d);margin-bottom:6px">Kolme missiota suoritettu.</p>
+          <p style="font-size:.88rem;color:var(--ink3);margin-bottom:18px">Nyt tulee tärkein osa — promptikirjasto kotiin ja oikea hakemus oikeaan paikkaan.</p>
+          <button class="btn btn-go" onclick="showPrompts()">Jatka promptikirjastoon →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROMPTIKIRJASTO ═══ -->
+<div class="promos-section" id="ps" style="display:none">
+  <div class="promos-hdr">
+    <div class="m-num" style="margin-bottom:14px"><span class="m-tag" style="background:rgba(245,158,11,.18);color:#fcd34d">Kotiin vieminen</span></div>
+    <h2>Promptikirjasto — 5 työkalua jotka toimivat huomenna</h2>
+    <p>Nämä eivät vanhene. Avaat ChatGPT:n tai Clauden, kopioit promptin, täytät hakasulkeet — ja AI tekee työn. Mukaasi kurssista riippumatta.</p>
+  </div>
+  <div class="promos-body">
+
+    <div class="prompt-grid">
+
+      <!-- P1 -->
+      <div class="prompt-card">
+        <div class="pc-head">
+          <div class="pc-left">
+            <div class="pc-num">01</div>
+            <div class="pc-info">
+              <h4>Taitokarttoitus</h4>
+              <p>Kerrot taustastasi — AI kertoo mitä taitoja siinä on. Käytä aina kun aloitat uuden hakuprosessin.</p>
+            </div>
+          </div>
+          <span class="pc-where pw-free">ChatGPT tai Claude — ilmainen</span>
+        </div>
+        <div class="pc-body">
+          <div class="pc-prompt" id="pp1">Olet uravalmentaja. Kerron taustastani — työ, opinnot, harrastukset, arki. Kerro minulle takaisin:
+1. Taidot jotka kuulet suoraan
+2. Taidot jotka kuulet rivien välistä
+3. Kolme vahvuutta jotka erottuvat
+4. Millaisia rooleja tai töitä nämä tukevat
+
+Minun taustani: <span class="pc-bracket">[kirjoita 4–6 lausetta — työ, harrastukset, mitä teet hyvin]</span></div>
+          <div class="pc-actions">
+            <button class="btn-pcp" onclick="copyPrompt('pp1',this)">📋 Kopioi prompt</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- P2 -->
+      <div class="prompt-card">
+        <div class="pc-head">
+          <div class="pc-left">
+            <div class="pc-num">02</div>
+            <div class="pc-info">
+              <h4>ATS-avainsanat ilmoituksesta</h4>
+              <p>Liität ilmoituksen — AI kaivaa avainsanat joita hakemuksessasi täytyy olla.</p>
+            </div>
+          </div>
+          <span class="pc-where pw-free">ChatGPT tai Claude — ilmainen</span>
+        </div>
+        <div class="pc-body">
+          <div class="pc-prompt" id="pp2">Analysoi tämä työpaikkailmoitus ATS-optimoinnin näkökulmasta.
+
+Anna:
+1. Top 10 avainsanaa joiden pitää esiintyä hakemuksessani
+2. Toistuvat fraasit (ATS painottaa toistoja)
+3. Pehmeät taidot joita odotetaan mutta ei aina sanota ääneen
+4. Yksi asia jota useimmat hakijat eivät huomaa tässä ilmoituksessa
+
+Ilmoitus: <span class="pc-bracket">[liitä koko ilmoitusteksti]</span></div>
+          <div class="pc-actions">
+            <button class="btn-pcp" onclick="copyPrompt('pp2',this)">📋 Kopioi prompt</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- P3 -->
+      <div class="prompt-card">
+        <div class="pc-head">
+          <div class="pc-left">
+            <div class="pc-num">03</div>
+            <div class="pc-info">
+              <h4>ATS-hakemusparagraafi</h4>
+              <p>Taidot + avainsanat = yksi vahva kappale joka läpäisee robotin ja puhuttelee ihmistä.</p>
+            </div>
+          </div>
+          <span class="pc-where pw-free">ChatGPT tai Claude — ilmainen</span>
+        </div>
+        <div class="pc-body">
+          <div class="pc-prompt" id="pp3">Kirjoita minulle yksi vahva hakemusparagraafi.
+
+Minun taustani: <span class="pc-bracket">[2–3 lausetta vahvuuksistasi]</span>
+ATS-avainsanat joita käytetään: <span class="pc-bracket">[liitä avainsanat promptista 02]</span>
+Rooli: <span class="pc-bracket">[työnimike]</span>
+
+Säännöt: ensimmäinen persoona, ei kliseitä, max 4 lausetta, avainsanat sisällytetty luontevasti.</div>
+          <div class="pc-actions">
+            <button class="btn-pcp" onclick="copyPrompt('pp3',this)">📋 Kopioi prompt</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- P4 -->
+      <div class="prompt-card">
+        <div class="pc-head">
+          <div class="pc-left">
+            <div class="pc-num">04</div>
+            <div class="pc-info">
+              <h4>Haastatteluvalmistautuminen</h4>
+              <p>Tiedät mihin haet — AI valmistaa sinut haastatteluun. Käytä päivää ennen.</p>
+            </div>
+          </div>
+          <span class="pc-where pw-free">ChatGPT tai Claude — ilmainen</span>
+        </div>
+        <div class="pc-body">
+          <div class="pc-prompt" id="pp4">Olet kokenut HR-johtaja. Valmistele minut haastatteluun tähän rooliin.
+
+Anna:
+1. Viisi todennäköisintä kysymystä juuri tähän rooliin
+2. Miksi he oikeasti kysyvät jokaisen (mitä he etsivät vastauksesta)
+3. Mitä hyvä vastaus sisältää — rakenne, ei valmis teksti
+
+Rooli: <span class="pc-bracket">[työnimike ja yritys]</span>
+Taustani lyhyesti: <span class="pc-bracket">[2–3 lausetta]</span></div>
+          <div class="pc-actions">
+            <button class="btn-pcp" onclick="copyPrompt('pp4',this)">📋 Kopioi prompt</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- P5 -->
+      <div class="prompt-card">
+        <div class="pc-head">
+          <div class="pc-left">
+            <div class="pc-num">05</div>
+            <div class="pc-info">
+              <h4>LinkedIn About -osio</h4>
+              <p>Ensimmäinen asia rekrytoija lukee. Kirjoita se kerran — käytä joka haussa.</p>
+            </div>
+          </div>
+          <span class="pc-where pw-free">ChatGPT tai Claude — ilmainen</span>
+        </div>
+        <div class="pc-body">
+          <div class="pc-prompt" id="pp5">Kirjoita LinkedIn About -osioni. Max 200 sanaa.
+
+Taustani: <span class="pc-bracket">[3–4 lausetta työkokemuksesta, osaamisesta, mitä haet]</span>
+Haen: <span class="pc-bracket">[millaisia töitä tai kontakteja]</span>
+Tyyli: ammatillinen mutta inhimillinen — ei yrityskliseitä, ei "intohimoinen ammattilainen"
+
+Aloita lauseella joka saa ihmisen jatkamaan lukemista. Älä aloita nimellä tai "Olen".</div>
+          <div class="pc-actions">
+            <button class="btn-pcp" onclick="copyPrompt('pp5',this)">📋 Kopioi prompt</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /prompt-grid -->
+
+    <!-- IN-CLASS EXERCISE -->
+    <div class="inclass">
+      <div class="ic-tag">Kokeile nyt — tässä luokassa</div>
+      <h3>Valitse yksi prompt. Kokeile heti.</h3>
+      <p>Avaat ChatGPT:n tai Clauden, kopioit yhden promptin, täytät hakasulkeet omilla tiedoillasi. Tulet takaisin tähän ja kerrot miten meni.</p>
+      <div class="ic-steps">
+        <div class="ic-step">
+          <div class="ic-step-n">1</div>
+          <div class="ic-step-txt">Valitse prompt yllä olevista — suositus: <strong>Prompt 01 (Taitokarttoitus)</strong> jos et ole kokeillut, tai <strong>Prompt 02</strong> jos sinulla on ilmoitus valmiina</div>
+        </div>
+        <div class="ic-step">
+          <div class="ic-step-n">2</div>
+          <div class="ic-step-txt">Kopioi prompt <strong>"Kopioi prompt"</strong> -napilla</div>
+        </div>
+        <div class="ic-step">
+          <div class="ic-step-n">3</div>
+          <div class="ic-step-txt">Avaa ChatGPT tai Claude alla olevasta linkistä</div>
+        </div>
+        <div class="ic-step">
+          <div class="ic-step-n">4</div>
+          <div class="ic-step-txt">Liitä prompt, <strong>täytä hakasulkeet</strong> omilla tiedoillasi, lähetä</div>
+        </div>
+        <div class="ic-step">
+          <div class="ic-step-n">5</div>
+          <div class="ic-step-txt">Tule takaisin tähän ja kerro mitä tapahtui ↓</div>
+        </div>
+      </div>
+      <div class="ic-links">
+        <a class="ic-link ic-link-gpt" href="https://chat.openai.com" target="_blank">↗ Avaa ChatGPT (ilmainen)</a>
+        <a class="ic-link ic-link-claude" href="https://claude.ai" target="_blank">↗ Avaa Claude (ilmainen)</a>
+      </div>
+
+      <div class="return-zone">
+        <div class="rtz-tag">Palasit takaisin</div>
+        <h4>Mitä tapahtui?</h4>
+        <p>Kerro vapaasti. Ei oikeaa eikä väärää vastausta.</p>
+        <div class="rtz-q">Miten se meni?</div>
+        <div class="rtz-opts">
+          <div class="rtz-opt" onclick="toggleOpt(this)">Se toimi paremmin kuin odotin</div>
+          <div class="rtz-opt" onclick="toggleOpt(this)">Tulos oli ok mutta muokkaisin</div>
+          <div class="rtz-opt" onclick="toggleOpt(this)">En ymmärtänyt miten täyttää</div>
+          <div class="rtz-opt" onclick="toggleOpt(this)">Halusin eri tuloksen</div>
+        </div>
+        <label for="ic-return" style="margin-top:4px">Mitä AI sanoi? Yllätti se sinut?</label>
+        <textarea id="ic-return" style="min-height:72px" placeholder="Kirjoita vapaasti — mitä AI palautti, mikä oli yllättävää, mitä muuttaisit..."></textarea>
+        <button class="rz-btn" onclick="icDone()">Merkitty tehtyä ✓</button>
+        <div id="ic-confirm" style="display:none;margin-top:12px;padding:14px 18px;background:var(--green-l);border-radius:10px;font-size:.88rem;color:var(--green);font-weight:500">
+          ✓ Hienoa. Tiesit jo miten se toimii — nyt tiedät myös miten käyttää sitä.
+        </div>
+      </div>
+    </div>
+
+    <!-- APPLY MISSION -->
+    <div class="apply-mission">
+      <div class="am-tag">Oikea hakemus — oikeaan paikkaan</div>
+      <h3>Nyt käytät kaiken mitä teit tänään</h3>
+      <p>Tämä on kotitehtävä tai tehdään tunnilla heti kun hakemus on valmis. Otat Missio 3:ssa kirjoitetun hakemustekstin, lähetät oikean hakemuksen — ja tulet kertomaan miten meni.</p>
+      <div class="am-steps">
+        <div class="am-step"><div class="am-step-n">01</div><div class="am-step-txt">Kopioi Missio 3:ssa tehty hakemustekstisi</div></div>
+        <div class="am-step"><div class="am-step-n">02</div><div class="am-step-txt">Avaa se LinkedIn:ssä tai TE-palveluissa se ilmoitus jonka löysit Missiossa 2</div></div>
+        <div class="am-step"><div class="am-step-n">03</div><div class="am-step-txt">Lisää hakemusteksti — muokkaa tarvittaessa, mutta <strong>lähetä</strong></div></div>
+        <div class="am-step"><div class="am-step-n">04</div><div class="am-step-txt">Tule takaisin tähän ja kerro miten meni ↓</div></div>
+      </div>
+      <div class="am-return">
+        <h5>Palautus — kerro kokemuksesi</h5>
+        <div class="am-return-qs">
+          <div class="am-rq">
+            <div class="am-rq-label">Mitä teit — mihin paikkaan hait?</div>
+            <textarea class="am-rq-input" id="amr1" placeholder="Esim: Hain myyntineuvottelijan paikkaan X-yrityksessä. / En vielä lähettänyt mutta kopioin hakemuksen valmiiksi."></textarea>
+          </div>
+          <div class="am-rq">
+            <div class="am-rq-label">Oliko prosessi erilainen kuin ennen AI:ta?</div>
+            <textarea class="am-rq-input" id="amr2" placeholder="Esim: Kyllä, en olisi itse osannut laittaa niitä avainsanoja. / Teksti oli parempaa kuin yleensä."></textarea>
+          </div>
+          <div class="am-rq">
+            <div class="am-rq-label">Mikä auttoi eniten tässä missiossa?</div>
+            <textarea class="am-rq-input" id="amr3" placeholder="Esim: ATS-avainsanat olivat uusi juttu. / Taitokarttoitus näytti jotain mitä en itse olisi osannut sanoa."></textarea>
+          </div>
+        </div>
+        <button class="am-submit" onclick="submitApply()">Lähetä kokemus ✓</button>
+        <div class="am-done" id="am-done">
+          <strong>✓ Kokemus tallennettu.</strong><br>
+          <span style="font-size:.82rem;opacity:.75">Teit tänään jotain konkreettista. Hakemus on matkassa — tai valmis lähetettäväksi. Promptit ovat mukanasi.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TAKEHOME -->
+<div class="takehome" id="th">
+  <div class="th-badge">✓ Kaikki tehty</div>
+  <h2>Tänään teit tämän.</h2>
+  <p>Nämä kolme asiaa ovat sinun — tee niillä mitä haluat.</p>
+  <div class="th-items">
+    <div class="th-item" id="thi1"><div class="th-head"><span class="th-title">Taitokarttoituksesi</span><button class="btn-wh" onclick="thcp('thc1',this)">Kopioi</button></div><div class="th-content th-empty" id="thc1">Suorita Missio 1</div></div>
+    <div class="th-item" id="thi2"><div class="th-head"><span class="th-title">ATS-avainsanat</span><button class="btn-wh" onclick="thcp('thc2',this)">Kopioi</button></div><div class="th-content th-empty" id="thc2">Suorita Missio 2</div></div>
+    <div class="th-item" id="thi3"><div class="th-head"><span class="th-title">ATS-hakemustekstisi</span><button class="btn-wh" onclick="thcp('thc3',this)">Kopioi</button></div><div class="th-content th-empty" id="thc3">Suorita Missio 3</div></div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+const AK='YOUR_CLAUDE_API_KEY_HERE';
+const AU='https://api.anthropic.com/v1/messages';
+const AM='claude-sonnet-4-20250514';
+const S={bg:'',bgNote:'',jobAd:'',skills:'',ats:''};
+
+const LM={
+  1:['Kuunnellaan mitä sanoit...','Etsitään taitoja rivien välistä...','Kartoitetaan vahvuuksia...'],
+  2:['Etsitään avainsanoja...','Analysoidaan ATS-vaatimuksia...','Kaivetaan piilotettuja odotuksia...'],
+  3:['Yhdistetään taidot avainsanoihin...','Kirjoitetaan hakemustasi...','Tarkistetaan ATS-yhteensopivuus...']
+};
+let LT={};
+function startL(n){
+  let i=0,el=document.getElementById('lm'+n);
+  if(!el)return;
+  el.textContent=LM[n][0];
+  LT[n]=setInterval(()=>{i=(i+1)%LM[n].length;el.textContent=LM[n][i];},2200);
+}
+function stopL(n){clearInterval(LT[n]);}
+
+async function ask(sys,usr,max=900){
+  const r=await fetch(AU,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AK,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+  body:JSON.stringify({model:AM,max_tokens:max,system:sys,messages:[{role:'user',content:usr}]})});
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API-virhe');}
+  return (await r.json()).content[0].text;
+}
+
+async function run1(){
+  const v=document.getElementById('in1').value.trim();
+  if(!v){alert('Kirjoita taustastasi ensin.');return;}
+  S.bg=v;
+  setL(1,true);hideR('r1');startL(1);
+  const sys=`Olet uravalmentaja joka löytää ihmisistä taidot joita he eivät itse osaa nimetä.
+
+Anna analyysi tässä muodossa (kirjoita suomeksi):
+
+TAIDOT JOTKA MAINITSIN SUORAAN
+(lista, konkreettisia)
+
+TAIDOT RIVIEN VÄLISTÄ
+(mitä kuulet taustassa vaikkei sanota suoraan — esim. kurinalaisuus, luotettavuus, ihmistuntemus)
+
+KOLME VAHVUUTTA JOTKA EROTTUVAT
+(perustele lyhyesti jokainen)
+
+ROOLIT JOTKA SOPIVAT
+(3–5 esimerkkiä, perustellusti — älä ole geneerinen)
+
+Puhu suoraan toiselle persoonalle. Ei tsemppausta. Ei ylistystä. Faktoja.`;
+  try{
+    const r=await ask(sys,v);
+    S.skills=r;
+    showR('r1',r);setTH(1,r);
+    document.getElementById('ctx2t').textContent=r;
+    document.getElementById('ctx2').style.display='block';
+  }catch(e){showR('r1','⚠️ '+e.message);}
+  finally{setL(1,false);stopL(1);}
+}
+
+async function run2(){
+  const v=document.getElementById('in2').value.trim();
+  if(!v){alert('Liitä ilmoitusteksti ensin.');return;}
+  S.jobAd=v;
+  setL(2,true);hideR('r2');startL(2);
+  const sys=`Olet ATS-optimointiasiantuntija. Analysoi ilmoitus hakijan näkökulmasta.
+
+Anna tässä muodossa (kirjoita suomeksi):
+
+TOP 10 ATS-AVAINSANAA
+(sanat joiden pitää esiintyä hakemuksessa — numeroi ne)
+
+TOISTUVAT FRAASIT
+(työnantaja käyttää näitä toistuvasti — ATS painottaa toistoja)
+
+PIILOTETUT ODOTUKSET
+(mitä ilmoitus odottaa mutta ei sano suoraan)
+
+MITEN KÄYTÄT NÄITÄ
+(3 konkreettista ohjetta miten sisällytät avainsanat luontevasti hakemukseen)
+
+Ole tarkka. Avainsanat ovat täsmälliset sanat ilmoituksesta — ei synonyymejä.`;
+  try{
+    const r=await ask(sys,v);
+    S.ats=r;
+    showR('r2',r);setTH(2,r);
+    document.getElementById('ctx3at').textContent=S.skills+(S.bg?'\n\nHakijan lisäys: '+document.getElementById('rza1').value:'');
+    document.getElementById('ctx3a').style.display='block';
+    document.getElementById('ctx3bt').textContent=r;
+    document.getElementById('ctx3b').style.display='block';
+  }catch(e){showR('r2','⚠️ '+e.message);}
+  finally{setL(2,false);stopL(2);}
+}
+
+async function run3(){
+  document.getElementById('b3').disabled=true;
+  setL(3,true);hideR('r3');startL(3);
+  const sys=`Olet Suomen paras ATS-optimoitujen hakemusten kirjoittaja.
+
+Kirjoita hakemusteksti (3 vahvaa kappaletta) käyttäen:
+- Hakijan taitoja: "${S.skills}"
+- ATS-avainsanoja ilmoituksesta: "${S.ats}"
+- Hakijan omat lisäykset: "${document.getElementById('rza1').value} ${document.getElementById('rza2').value}"
+
+KAPPALE 1 — KOUKKU
+Ei "Haen tätä paikkaa koska". Aloita sillä mikä erottaa tämän hakijan. 2–3 lausetta.
+
+KAPPALE 2 — TODISTEET
+Konkreettisia faktoja. Ei adjektiiveja. ATS-avainsanat sisällytetty luontevasti. 3–4 lausetta.
+
+KAPPALE 3 — SITOUMUS
+Miksi juuri tämä paikka — ei geneeristä. 2 lausetta.
+
+Ensimmäinen persoona. Ei kliseitä. ATS-avainsanat käytössä mutta luonnollisesti.`;
+  try{
+    const r=await ask(sys,'Kirjoita hakemusteksti.',1100);
+    showR('r3',r);setTH(3,r);
+    document.getElementById('m3done').style.display='block';
+  }catch(e){showR('r3','⚠️ '+e.message);}
+  finally{setL(3,false);stopL(3);}
+}
+
+async function refine(){
+  const ed=document.getElementById('edit3').value.trim();
+  const orig=document.getElementById('r3c').textContent;
+  if(!ed||!orig){alert('Kirjoita ensin mitä muutat.');return;}
+  setL('3r',true);hideR('r3r');
+  try{
+    const r=await ask('Olet hakemustekstien muokkaaja. Tee pyydetty muutos. Pidä rakenne. Kirjoita suomeksi.',`Teksti:\n${orig}\n\nMuutos: ${ed}`);
+    showR('r3r',r);setTH(3,r);
+  }catch(e){showR('r3r','⚠️ '+e.message);}
+  finally{setL('3r',false);}
+}
+function qe(t){document.getElementById('edit3').value=t;refine();}
+
+function toggleStep(el,n){
+  el.classList.toggle('done');
+  const all=document.querySelectorAll(`#steps${n} .step`);
+  const done=document.querySelectorAll(`#steps${n} .step.done`).length;
+  const msg=document.getElementById('um'+n);
+  if(done===all.length){
+    msg.textContent='✓ Kaikki tehty — liitä ilmoitus alle';
+    msg.classList.add('ready');
+    const iz=document.getElementById('iz'+n);
+    if(iz){iz.style.display='block';iz.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  } else {
+    msg.textContent=`Merkitse kaikki tehdyksi → (${done}/${all.length})`;
+    msg.classList.remove('ready');
+  }
+}
+
+function unlock(n){
+  const m=document.getElementById('m'+n);
+  m.classList.remove('locked');
+  setTimeout(()=>{
+    m.classList.add('vis');
+    m.scrollIntoView({behavior:'smooth',block:'start'});
+  },80);
+  setTopbar(n);
+}
+
+function showPrompts(){
+  const ps=document.getElementById('ps');
+  ps.style.display='block';
+  setTimeout(()=>{ps.classList.add('vis');ps.scrollIntoView({behavior:'smooth',block:'start'});},50);
+  document.getElementById('th').classList.add('show');
+  setTopbar(4);
+}
+
+function setTopbar(n){
+  ['td1','td2','td3','td4'].forEach((id,i)=>{
+    const d=document.getElementById(id);
+    if(!d)return;
+    d.className='tb-dot'+(i<n-1?' done':i===n-1?' active':'');
+  });
+  const labels={1:'Missio 1 / 3',2:'Missio 2 / 3',3:'Missio 3 / 3',4:'✓ Valmis'};
+  document.getElementById('tbst').textContent=labels[n]||'';
+}
+
+function setL(n,on){const el=document.getElementById('l'+n);if(el)el.classList.toggle('show',on);}
+function showR(id,t){const b=document.getElementById(id),c=document.getElementById(id+'c');if(c)c.textContent=t;if(b)b.classList.add('show');}
+function hideR(id){document.getElementById(id)?.classList.remove('show');}
+function setTH(n,t){const el=document.getElementById('thc'+n);el.textContent=t;el.classList.remove('th-empty');document.getElementById('thi'+n).classList.add('filled');}
+function openCtx(id,btn){const el=document.getElementById(id);el.classList.add('open');btn.style.display='none';}
+
+async function cp(id,btn){
+  try{
+    await navigator.clipboard.writeText(document.getElementById(id).textContent);
+    btn.classList.add('copied');const o=btn.innerHTML;btn.textContent='✓ Kopioitu!';
+    setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML=o;},2200);
+  }catch{alert('Valitse teksti ja kopioi manuaalisesti.');}
+}
+
+async function copyPrompt(id,btn){
+  const el=document.getElementById(id);
+  const text=el.innerText||el.textContent;
+  try{
+    await navigator.clipboard.writeText(text);
+    btn.classList.add('copied');const o=btn.innerHTML;btn.textContent='✓ Kopioitu!';
+    setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML=o;},2200);
+  }catch{alert('Valitse teksti ja kopioi manuaalisesti.');}
+}
+
+async function thcp(id,btn){
+  const el=document.getElementById(id);
+  if(el.classList.contains('th-empty'))return;
+  try{await navigator.clipboard.writeText(el.textContent);btn.textContent='✓';setTimeout(()=>btn.textContent='Kopioi',2000);}
+  catch{alert('Kopioi manuaalisesti.');}
+}
+
+function toggleOpt(el){el.classList.toggle('sel');}
+function icDone(){
+  document.getElementById('ic-confirm').style.display='block';
+  document.getElementById('ic-confirm').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function submitApply(){
+  document.getElementById('am-done').classList.add('show');
+  document.getElementById('am-done').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// scroll reveal
+const obs=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting&&!en.target.classList.contains('locked'))en.target.classList.add('vis');});},{threshold:.06});
+document.querySelectorAll('.mission').forEach(m=>obs.observe(m));
+</script>
+</body>
+</html>
