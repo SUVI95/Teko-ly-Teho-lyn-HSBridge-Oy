@@ -798,6 +798,11 @@ async function getExplanation() {
   respBox.style.display = 'block';
   respBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   const typeNames = {explain:'selitä yksinkertaisesti',quiz:'luo harjoituskysymyksiä',example:'anna käytännön esimerkki'};
+  const explainSystem = type === 'explain'
+    ? 'Olet kokenut opettaja. Selitä yksinkertaisesti ja ymmärrettävästi. Vastaa suomeksi.'
+    : type === 'quiz'
+      ? 'Olet kokenut opettaja. Luo harjoituskysymyksiä ja vastauksia. Vastaa suomeksi.'
+      : 'Olet kokenut opettaja. Anna konkreettinen käytännön esimerkki. Vastaa suomeksi.';
   try {
     const res = await fetch('/api/ai/chat', {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -805,7 +810,7 @@ async function getExplanation() {
       body: JSON.stringify({
         model:'gpt-4o-mini',
         max_tokens:1000,
-        system:`Olet kokenut opettaja. ${type==='explain'?'Selitä yksinkertaisesti ja ymmärrettävästi.':type==='quiz'?'Luo harjoituskysymyksiä ja vastauksia.':type==='example'?'Anna konkreettinen käytännön esimerkki.'} Vastaa suomeksi.`,
+        system: explainSystem,
         messages:[{role:'user', content:`${typeNames[type]}: ${topic}`}]
       })
     });
