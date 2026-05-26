@@ -341,6 +341,12 @@ app.get('/portfolio/:slug', async (req, res) => {
 /** Modules hidden from students; only admins may open (see adminOnlyModuleIds in public/index.html). */
 const ADMIN_ONLY_MODULE_IDS = new Set(['moduuli-ai-verkkosivustotyokalut']);
 
+/** Soft-locked modules: visible on dashboard with lock badge but only admin can open. */
+const STUDENT_LOCKED_MODULE_IDS = new Set([
+  'moduuli7-ai-tyonhaussa',
+  'moduuli-tyonhaku'
+]);
+
 // Personal gift HTML only via /module/:id (recipient + admin gate)
 Object.values(GIFTS).forEach((gift) => {
   app.get(`/${gift.moduleId}.html`, (req, res) => {
@@ -381,6 +387,10 @@ app.get('/module/:moduleId', async (req, res) => {
     }
   }
   if (ADMIN_ONLY_MODULE_IDS.has(moduleId) && !viewerIsAdmin) {
+    return res.redirect(302, '/');
+  }
+
+  if (STUDENT_LOCKED_MODULE_IDS.has(moduleId) && !viewerIsAdmin) {
     return res.redirect(302, '/');
   }
 
