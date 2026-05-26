@@ -942,6 +942,9 @@ Aloita lauseella joka saa lukemaan eteenpäin. Älä aloita nimellä tai "Olen".
 
 </div>
 
+<script>window.__MODULE_ID__ = window.__MODULE_ID__ || 'moduuli7-ai-tyonhaussa';</script>
+<script src="/js/module-work.js"></script>
+<script src="/js/module-autosave.js"></script>
 <script>
 const S={bg:'',skills:'',jobAd:'',ats:'',app:'',appFinal:'',advAnswers:'',scBefore:[0,0,0],scAfter:[0,0,0]};
 const LM={1:['Kuunnellaan...','Etsitään taitoja...','Analysoidaan...'],2:['Analysoidaan ilmoitusta...','Etsitään avainsanoja...','Tunnistetaan odotuksia...'],3:['Rakennetaan hakemusta...','Kirjoitetaan avausta...','Viimeistellään...']};
@@ -1294,6 +1297,35 @@ document.querySelectorAll('.mission,.scorecard,.promos-wrap').forEach(m=>obs.obs
    ═══════════════════════════════════════════════════════════════════════════ */
 const PKEY='aip-tyonhaussa-v1';
 let saveTimer=null;
+const MODULE7_ID='moduuli7-ai-tyonhaussa';
+let module7WorkApi=null;
+
+function loadLocalProgressData(){
+  try{
+    const raw=localStorage.getItem(PKEY);
+    if(!raw)return null;
+    const d=JSON.parse(raw);
+    return d&&d.v===1?d:null;
+  }catch(e){
+    return null;
+  }
+}
+
+function saveLocalProgressData(data){
+  if(!data||data.v!==1)return;
+  try{localStorage.setItem(PKEY,JSON.stringify(data));}catch(e){}
+}
+
+function summarizeProgressData(data){
+  if(!data||typeof data!=='object')return 'Työnhaku + AI työ tallennettu';
+  const unlockedCount=data.unlocked?Object.keys(data.unlocked).length:0;
+  const hasCompass=!!(data.shown&&data.shown.kompassi);
+  const hasDraft=!!(data.r3c&&String(data.r3c).trim());
+  const parts=[`Missiot avattu ${unlockedCount}/4`];
+  if(hasCompass)parts.push('Hakukompassi näkyvissä');
+  if(hasDraft)parts.push('Hakemusluonnos tallessa');
+  return parts.join(' · ');
+}
 function snapshot(){
   const inputs={};
   document.querySelectorAll('input[id],textarea[id]').forEach(el=>{
@@ -1326,9 +1358,14 @@ function snapshot(){
   };
 }
 function saveProgress(){
+  try{
+    if(module7WorkApi&&typeof module7WorkApi.scheduleSave==='function'){
+      module7WorkApi.scheduleSave();
+    }
+  }catch(e){}
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{
-    try{localStorage.setItem(PKEY,JSON.stringify(snapshot()));}catch(e){}
+    try{saveLocalProgressData(snapshot());}catch(e){}
   },500);
 }
 function unlockSilent(n){
@@ -1338,10 +1375,8 @@ function unlockSilent(n){
   const lm=document.getElementById('lm'+n);if(lm)lm.style.display='none';
   const ac=document.getElementById('ac'+n);if(ac)ac.style.display='block';
 }
-function restoreProgress(){
-  let d=null;
-  try{const raw=localStorage.getItem(PKEY);if(!raw)return;d=JSON.parse(raw);}catch(e){return;}
-  if(!d||d.v!==1)return;
+function applyProgressData(d){
+  if(!d||d.v!==1)return false;
   try{Object.assign(S,d.S||{});}catch(e){}
   // Adversarial questions must be restored BEFORE setting their textarea values.
   if(d.advQsHTML){const adv=document.getElementById('adv-qs');if(adv)adv.innerHTML=d.advQsHTML;}
@@ -1377,15 +1412,53 @@ function restoreProgress(){
     keys.forEach(n=>{if(n>=1&&n<=4){unlockSilent(n);if(n>highest)highest=n;}});
     try{setTopbar(highest);}catch(e){}
   }
+  return true;
+}
+
+function restoreProgress(){
+  const d=loadLocalProgressData();
+  if(!d)return;
+  if(!applyProgressData(d))return;
   console.log('[mod7] progress restored from',new Date(d.ts).toLocaleString());
+}
+
+async function initModule7WorkPersistence(){
+  if(!window.moduleWork||typeof window.moduleWork.initModuleWork!=='function')return;
+  try{
+    module7WorkApi=await window.moduleWork.initModuleWork(MODULE7_ID,{
+      collect:snapshot,
+      summarize:summarizeProgressData,
+      debounceMs:800,
+      apply:function(remoteData){
+        if(!remoteData||remoteData.v!==1)return;
+        const localData=loadLocalProgressData();
+        const localTs=localData&&Number(localData.ts||0);
+        const remoteTs=Number(remoteData.ts||0);
+        const newest=(localTs&&localTs>remoteTs)?localData:remoteData;
+        if(applyProgressData(newest)){
+          saveLocalProgressData(newest);
+        }
+      }
+    });
+    if(module7WorkApi&&typeof module7WorkApi.saveNow==='function'){
+      module7WorkApi.saveNow();
+    }
+  }catch(e){
+    console.warn('[mod7] module-work persistence init failed:',e);
+  }
+}
+
+function initAllProgressPersistence(){
+  restoreProgress();
+  initModule7WorkPersistence();
 }
 document.addEventListener('input',saveProgress,true);
 document.addEventListener('change',saveProgress,true);
 document.addEventListener('click',()=>setTimeout(saveProgress,400),true);
 if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(restoreProgress,80));
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(initAllProgressPersistence,80));
 }else{
-  setTimeout(restoreProgress,80);
+  setTimeout(initAllProgressPersistence,80);
 }
 </script>
 </body>
