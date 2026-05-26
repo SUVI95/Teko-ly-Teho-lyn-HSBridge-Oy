@@ -343,7 +343,6 @@ const ADMIN_ONLY_MODULE_IDS = new Set(['moduuli-ai-verkkosivustotyokalut']);
 
 /** Soft-locked modules: visible on dashboard with lock badge but only admin can open. */
 const STUDENT_LOCKED_MODULE_IDS = new Set([
-  'moduuli7-ai-tyonhaussa',
   'moduuli-tyonhaku'
 ]);
 
