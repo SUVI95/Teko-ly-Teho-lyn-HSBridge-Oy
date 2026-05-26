@@ -949,31 +949,51 @@ let LT={};
 function startL(n){let i=0,el=document.getElementById('lm'+n+'t');if(!el)return;el.textContent=LM[n]?LM[n][0]:'...';LT[n]=setInterval(()=>{if(!LM[n])return;i=(i+1)%LM[n].length;el.textContent=LM[n][i];},2200);}
 function stopL(n){clearInterval(LT[n]);}
 
+function reqSignal(ms){
+  if(typeof AbortSignal!=='undefined'&&typeof AbortSignal.timeout==='function'){
+    return AbortSignal.timeout(ms);
+  }
+  const c=new AbortController();
+  setTimeout(()=>c.abort(),ms);
+  return c.signal;
+}
 async function ask(sys,usr,max=900){
   if(window.aiClaude){
     return await window.aiClaude(sys,usr,max);
   }
-  const r=await fetch('/api/ai/claude',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    credentials:'include',
-    body:JSON.stringify({system:sys,max_tokens:max,messages:[{role:'user',content:usr}]})
-  });
-  let d={};
-  try{d=await r.json();}catch(e){}
-  if(!r.ok){
+  const payload={system:sys,max_tokens:max,messages:[{role:'user',content:usr}]};
+  const fbPayload={model:'gpt-4o-mini',system:sys,max_tokens:max,messages:[{role:'user',content:usr}]};
+  let primaryErr='';
+  try{
+    const r=await fetch('/api/ai/claude',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      signal:reqSignal(20000),
+      body:JSON.stringify(payload)
+    });
+    let d={};
+    try{d=await r.json();}catch(e){}
+    if(r.ok) return d.text||d.reply||'';
+    primaryErr=d.error||d.message||('Virhe '+r.status);
+  }catch(e){
+    primaryErr='Yhteys DuuniJobs AI -palveluun katkesi.';
+  }
+  try{
     const fb=await fetch('/api/ai/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       credentials:'include',
-      body:JSON.stringify({model:'gpt-4o-mini',system:sys,max_tokens:max,messages:[{role:'user',content:usr}]})
+      signal:reqSignal(20000),
+      body:JSON.stringify(fbPayload)
     });
     let dd={};
     try{dd=await fb.json();}catch(e){}
-    if(!fb.ok)throw new Error(dd.error||d.error||'AI-palvelu ei vastaa juuri nyt. Yritä uudelleen.');
+    if(!fb.ok) throw new Error(dd.error||dd.message||('Virhe '+fb.status));
     return dd.text||dd.reply||'';
+  }catch(e){
+    throw new Error(primaryErr||e.message||'AI-palvelu ei vastaa juuri nyt. Yritä uudelleen.');
   }
-  return d.text||d.reply||'';
 }
 
 // SCORECARD
