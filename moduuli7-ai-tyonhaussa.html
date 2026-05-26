@@ -885,9 +885,6 @@ Aloita lauseella joka saa lukemaan eteenpäin. Älä aloita nimellä tai "Olen".
 </div>
 
 <script>
-const AK='YOUR_CLAUDE_API_KEY_HERE';
-const AU='https://api.anthropic.com/v1/messages';
-const AM='claude-sonnet-4-20250514';
 const S={bg:'',skills:'',jobAd:'',ats:'',app:'',appFinal:'',advAnswers:'',scBefore:[0,0,0],scAfter:[0,0,0]};
 const LM={1:['Kuunnellaan...','Etsitään taitoja...','Analysoidaan...'],2:['Analysoidaan ilmoitusta...','Etsitään avainsanoja...','Tunnistetaan odotuksia...'],3:['Rakennetaan hakemusta...','Kirjoitetaan avausta...','Viimeistellään...']};
 let LT={};
@@ -895,10 +892,30 @@ function startL(n){let i=0,el=document.getElementById('lm'+n+'t');if(!el)return;
 function stopL(n){clearInterval(LT[n]);}
 
 async function ask(sys,usr,max=900){
-  const r=await fetch(AU,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AK,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-  body:JSON.stringify({model:AM,max_tokens:max,system:sys,messages:[{role:'user',content:usr}]})});
-  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API-virhe');}
-  return (await r.json()).content[0].text;
+  if(window.aiClaude){
+    return await window.aiClaude(sys,usr,max);
+  }
+  const r=await fetch('/api/ai/claude',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'include',
+    body:JSON.stringify({system:sys,max_tokens:max,messages:[{role:'user',content:usr}]})
+  });
+  let d={};
+  try{d=await r.json();}catch(e){}
+  if(!r.ok){
+    const fb=await fetch('/api/ai/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body:JSON.stringify({model:'gpt-4o-mini',system:sys,max_tokens:max,messages:[{role:'user',content:usr}]})
+    });
+    let dd={};
+    try{dd=await fb.json();}catch(e){}
+    if(!fb.ok)throw new Error(dd.error||d.error||'AI-palvelu ei vastaa juuri nyt. Yritä uudelleen.');
+    return dd.text||dd.reply||'';
+  }
+  return d.text||d.reply||'';
 }
 
 // SCORECARD
