@@ -72,6 +72,22 @@ router.post('/chat', async (req, res) => {
   }
 });
 
+/** Hard per-attempt timeout so requests can never hang on a slow provider.
+ *  Old client code (already loaded in students' tabs) sits in await ask(...);
+ *  if the request hangs, the mission-unlock flow never runs. Bounded latency
+ *  guarantees the promise always settles. */
+const OPENAI_TIMEOUT_MS = 8000;
+const ANTHROPIC_TIMEOUT_MS = 10000;
+
+function timeoutSignal(ms) {
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(ms);
+  }
+  const c = new AbortController();
+  setTimeout(() => c.abort(), ms);
+  return c.signal;
+}
+
 async function callOpenAIFallback(messages, system, max_tokens, res) {
   const openaiApiKey = envTrim('OPENAI_API_KEY');
   if (!openaiApiKey) {
@@ -84,22 +100,31 @@ async function callOpenAIFallback(messages, system, max_tokens, res) {
   if (system) openaiMessages.push({ role: 'system', content: system });
   openaiMessages.push(...messages);
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${openaiApiKey}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: openaiMessages,
-      max_tokens: max_tokens,
-      temperature: 0.7
-    })
-  });
+  let response;
+  try {
+    response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: openaiMessages,
+        max_tokens: max_tokens,
+        temperature: 0.7
+      }),
+      signal: timeoutSignal(OPENAI_TIMEOUT_MS)
+    });
+  } catch (err) {
+    console.error('OpenAI fallback fetch failed (timeout or network):', err.message);
+    return res.status(503).json({
+      error: 'Tekoälypalvelu ei ole juuri nyt saatavilla. Yritä hetken kuluttua uudelleen.'
+    });
+  }
 
   if (!response.ok) {
-    const errorData = await response.text();
+    const errorData = await response.text().catch(() => '');
     console.error('OpenAI fallback error:', errorData);
     return res.status(503).json({
       error: 'Tekoälypalvelu ei ole juuri nyt saatavilla. Yritä hetken kuluttua uudelleen.'
@@ -133,24 +158,32 @@ async function handleDuunijobsAi(req, res) {
     };
     if (system) body.system = system;
 
-    const maxRetries = 3;
-    let lastError = null;
+    // Bounded retries: 2 attempts max, short backoff, hard per-attempt
+    // timeout — so /api/ai/claude never hangs the calling browser tab.
+    const maxRetries = 2;
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       if (attempt > 0) {
-        const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
-        await new Promise(r => setTimeout(r, delay));
+        await new Promise(r => setTimeout(r, 600));
       }
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify(body)
-      });
+      let response;
+      try {
+        response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify(body),
+          signal: timeoutSignal(ANTHROPIC_TIMEOUT_MS)
+        });
+      } catch (err) {
+        console.warn(`Anthropic fetch failed (attempt ${attempt + 1}/${maxRetries}):`, err.message);
+        if (attempt < maxRetries - 1) continue;
+        break;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -161,17 +194,10 @@ async function handleDuunijobsAi(req, res) {
         });
       }
 
-      const errorData = await response.text();
+      const errorData = await response.text().catch(() => '');
 
-      if (response.status === 529 || response.status === 503) {
-        console.warn(`Anthropic API overloaded (attempt ${attempt + 1}/${maxRetries}):`, errorData);
-        lastError = { status: response.status, data: errorData };
-        continue;
-      }
-
-      if (response.status === 429) {
-        console.warn(`Anthropic API rate limited (attempt ${attempt + 1}/${maxRetries}):`, errorData);
-        lastError = { status: response.status, data: errorData };
+      if (response.status === 529 || response.status === 503 || response.status === 429) {
+        console.warn(`Anthropic API retryable status ${response.status} (attempt ${attempt + 1}/${maxRetries}):`, errorData);
         continue;
       }
 
@@ -182,7 +208,7 @@ async function handleDuunijobsAi(req, res) {
       });
     }
 
-    console.warn('DuuniJobs AI failed after retries, falling back to OpenAI');
+    console.warn('DuuniJobs AI exhausted retries, falling back to OpenAI');
     return callOpenAIFallback(messages, system, max_tokens, res);
   } catch (error) {
     console.error('Error calling Anthropic API, falling back to OpenAI:', error.message);
