@@ -1124,25 +1124,28 @@ async function submitAdv(){
   if(ans.length<2){alert('Vastaa ainakin kahteen kysymykseen.');return;}
   S.advAnswers=ans.join('\n\n');
   const btn=document.querySelector('.adv-submit');
-  btn.disabled=true;btn.textContent='Analysoidaan vastauksiasi...';
-  const sys=`Olet uravalmentaja joka lukee haastatteluvastauksia. Anna lyhyt, rehellinen palaute kolmesta vastauksesta. Mikä oli vahvaa. Mitä voisi vielä terävöittää yhdellä lauseella. Kirjoita suomeksi, max 6 lausetta yhteensä. Lopeta positiivisesti — mutta rehellisesti.`;
-  try{
-    const feedback=await ask(sys,`Hakemusteksti:\n${S.appFinal}\n\nVastaukset rekrytoijalle:\n${S.advAnswers}`);
-    const fb=document.createElement('div');
-    fb.style.cssText='margin-top:16px;padding:16px 20px;background:rgba(13,148,136,.15);border:1px solid rgba(13,148,136,.3);border-radius:12px;color:#5eead4;font-size:.88rem;line-height:1.7';
-    fb.textContent=feedback;
-    document.getElementById('adv').appendChild(fb);
-    setK(4,S.advAnswers+'\n\nValmentajan palaute:\n'+feedback);
-    setTimeout(()=>{
-      document.getElementById('adv').style.opacity='.6';
-      document.getElementById('adv').style.pointerEvents='none';
-      unlock(4);
-    },2000);
-  }catch(e){
-    btn.disabled=false;btn.textContent='Vastasin — jatkan →';
-    setK(4,S.advAnswers);
-    unlock(4);
-  }
+  if(btn){btn.disabled=true;btn.textContent='Avaan Missio 4...';}
+  // GUARANTEE: unlock Mission 4 immediately. Do not wait for AI.
+  try{setK(4,S.advAnswers);}catch(e){console.warn('setK4',e);}
+  unlock(4);
+  try{saveProgress();}catch(e){}
+  // AI feedback as a non-blocking bonus.
+  (async()=>{
+    const sys=`Olet uravalmentaja joka lukee haastatteluvastauksia. Anna lyhyt, rehellinen palaute kolmesta vastauksesta. Mikä oli vahvaa. Mitä voisi vielä terävöittää yhdellä lauseella. Kirjoita suomeksi, max 6 lausetta yhteensä. Lopeta positiivisesti — mutta rehellisesti.`;
+    try{
+      const feedback=await ask(sys,`Hakemusteksti:\n${S.appFinal||''}\n\nVastaukset rekrytoijalle:\n${S.advAnswers}`);
+      const fb=document.createElement('div');
+      fb.style.cssText='margin-top:16px;padding:16px 20px;background:rgba(13,148,136,.15);border:1px solid rgba(13,148,136,.3);border-radius:12px;color:#5eead4;font-size:.88rem;line-height:1.7';
+      fb.textContent=feedback;
+      document.getElementById('adv').appendChild(fb);
+      try{setK(4,S.advAnswers+'\n\nValmentajan palaute:\n'+feedback);}catch(e){}
+      try{saveProgress();}catch(e){}
+    }catch(e){console.warn('Adversarial feedback failed:',e);}
+    finally{
+      const adv=document.getElementById('adv');
+      if(adv){adv.style.opacity='.6';adv.style.pointerEvents='none';}
+    }
+  })();
 }
 
 async function refine3(){
@@ -1234,6 +1237,106 @@ function submitReturn(){document.getElementById('rb-done').classList.add('show')
 
 const obs=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting&&!en.target.classList.contains('locked'))en.target.classList.add('vis');});},{threshold:.05});
 document.querySelectorAll('.mission,.scorecard,.promos-wrap').forEach(m=>obs.observe(m));
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROGRESS PERSISTENCE — save to localStorage so refresh doesn't lose work.
+   Triggered on input, change, and click events (debounced).
+   ═══════════════════════════════════════════════════════════════════════════ */
+const PKEY='aip-tyonhaussa-v1';
+let saveTimer=null;
+function snapshot(){
+  const inputs={};
+  document.querySelectorAll('input[id],textarea[id]').forEach(el=>{
+    if(el.id)inputs[el.id]=el.value;
+  });
+  const unlocked={};
+  [1,2,3,4].forEach(n=>{
+    const m=document.getElementById('m'+n);
+    if(m&&!m.classList.contains('locked'))unlocked[n]=true;
+  });
+  function txt(id){const el=document.getElementById(id);return el?(el.textContent||''):'';}
+  const adv=document.getElementById('adv'),kompassi=document.getElementById('kompassi');
+  return {
+    v:1,ts:Date.now(),
+    S:JSON.parse(JSON.stringify(S)),
+    inputs,
+    scVals:Object.assign({},scVals),
+    ascVals:Object.assign({},ascVals),
+    unlocked,
+    shown:{
+      adv:!!(adv&&adv.classList.contains('show')),
+      kompassi:!!(kompassi&&kompassi.classList.contains('show')),
+      r1:!!(document.getElementById('r1')&&document.getElementById('r1').classList.contains('show')),
+      r2:!!(document.getElementById('r2')&&document.getElementById('r2').classList.contains('show')),
+      r3:!!(document.getElementById('r3')&&document.getElementById('r3').classList.contains('show'))
+    },
+    advQsHTML:(document.getElementById('adv-qs')||{}).innerHTML||'',
+    r1c:txt('r1c'),r2c:txt('r2c'),r3c:txt('r3c'),
+    kc1:txt('kc1'),kc2:txt('kc2'),kc3:txt('kc3'),kc4:txt('kc4')
+  };
+}
+function saveProgress(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    try{localStorage.setItem(PKEY,JSON.stringify(snapshot()));}catch(e){}
+  },500);
+}
+function unlockSilent(n){
+  const m=document.getElementById('m'+n);
+  if(!m)return;
+  m.classList.remove('locked');m.classList.add('vis');
+  const lm=document.getElementById('lm'+n);if(lm)lm.style.display='none';
+  const ac=document.getElementById('ac'+n);if(ac)ac.style.display='block';
+}
+function restoreProgress(){
+  let d=null;
+  try{const raw=localStorage.getItem(PKEY);if(!raw)return;d=JSON.parse(raw);}catch(e){return;}
+  if(!d||d.v!==1)return;
+  try{Object.assign(S,d.S||{});}catch(e){}
+  // Adversarial questions must be restored BEFORE setting their textarea values.
+  if(d.advQsHTML){const adv=document.getElementById('adv-qs');if(adv)adv.innerHTML=d.advQsHTML;}
+  if(d.inputs){
+    Object.keys(d.inputs).forEach(id=>{
+      const el=document.getElementById(id);
+      if(el&&'value' in el)el.value=d.inputs[id];
+    });
+  }
+  if(d.scVals){Object.keys(d.scVals).forEach(q=>{try{scSel(parseInt(q),d.scVals[q]);}catch(e){}});}
+  if(d.ascVals){Object.keys(d.ascVals).forEach(q=>{try{ascSel(parseInt(q),d.ascVals[q]);}catch(e){}});}
+  function setKQuiet(n,t){
+    const el=document.getElementById('kc'+n);if(!el||!t)return;
+    el.textContent=t;el.classList.remove('k-empty');
+    const ks=document.getElementById('ks'+n);if(ks)ks.classList.add('filled');
+  }
+  setKQuiet(1,d.kc1);setKQuiet(2,d.kc2);setKQuiet(3,d.kc3);setKQuiet(4,d.kc4);
+  function showResult(id,text){
+    if(!text)return;
+    const c=document.getElementById(id+'c');if(c)c.textContent=text;
+    const b=document.getElementById(id);if(b)b.classList.add('show');
+  }
+  if(d.shown){
+    if(d.shown.r1)showResult('r1',d.r1c);
+    if(d.shown.r2)showResult('r2',d.r2c);
+    if(d.shown.r3)showResult('r3',d.r3c);
+    if(d.shown.adv){const adv=document.getElementById('adv');if(adv)adv.classList.add('show');}
+    if(d.shown.kompassi){const k=document.getElementById('kompassi');if(k)k.classList.add('show');}
+  }
+  if(d.unlocked){
+    const keys=Object.keys(d.unlocked).map(Number).sort((a,b)=>a-b);
+    let highest=1;
+    keys.forEach(n=>{if(n>=1&&n<=4){unlockSilent(n);if(n>highest)highest=n;}});
+    try{setTopbar(highest);}catch(e){}
+  }
+  console.log('[mod7] progress restored from',new Date(d.ts).toLocaleString());
+}
+document.addEventListener('input',saveProgress,true);
+document.addEventListener('change',saveProgress,true);
+document.addEventListener('click',()=>setTimeout(saveProgress,400),true);
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(restoreProgress,80));
+}else{
+  setTimeout(restoreProgress,80);
+}
 </script>
 </body>
 </html>
