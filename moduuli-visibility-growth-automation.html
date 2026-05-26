@@ -732,25 +732,67 @@ pre.prompt-pre{background:var(--ink);color:rgba(255,255,255,.85);border-radius:v
 <script src="/js/module-work.js"></script>
 <script src="/js/ai-helper.js"></script>
 <script>
-if (window.duunijobsAI) window.aiChat = window.duunijobsAI;
-
 function getDuunijobsAIApiUrl() {
   var pathname = window.location.pathname || '';
   var base = pathname.indexOf('/module/') > 0 ? pathname.substring(0, pathname.indexOf('/module/')) : '';
   return (window.location.origin || '') + base + '/api/ai/duunijobs';
 }
 
-async function duunijobsAIApi(system, messages, maxTokens) {
-  var url = getDuunijobsAIApiUrl();
-  var resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ system: system, messages: messages, max_tokens: maxTokens || 1000 })
-  });
+function getOpenAIChatUrl() {
+  var pathname = window.location.pathname || '';
+  var base = pathname.indexOf('/module/') > 0 ? pathname.substring(0, pathname.indexOf('/module/')) : '';
+  return (window.location.origin || '') + base + '/api/ai/chat';
+}
+
+function requestTimeoutSignal(ms) {
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(ms);
+  }
+  var ctrl = new AbortController();
+  setTimeout(function () { ctrl.abort(); }, ms);
+  return ctrl.signal;
+}
+
+async function postAIJson(url, payload, timeoutMs) {
+  var resp;
+  try {
+    resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+      signal: requestTimeoutSignal(timeoutMs || 35000)
+    });
+  } catch (err) {
+    throw new Error('Yhteys tekoälypalveluun katkesi. Vastaukset on tallennettu, yritä uudelleen.');
+  }
   var data = {};
   try { data = await resp.json(); } catch (e) {}
-  if (!resp.ok) throw new Error(data.error || data.message || 'DuuniJobs AI -yhteysvirhe. Yritä hetken päästä uudelleen.');
+  if (!resp.ok) {
+    throw new Error(data.error || data.message || 'Tekoälypalvelu ei ole juuri nyt saatavilla. Vastaukset on tallennettu.');
+  }
+  return data;
+}
+
+async function duunijobsAIApi(system, messages, maxTokens) {
+  var data;
+  try {
+    data = await postAIJson(getDuunijobsAIApiUrl(), {
+      system: system,
+      messages: messages,
+      max_tokens: maxTokens || 1000
+    }, 35000);
+    return data.text || data.reply || '';
+  } catch (primaryErr) {
+    console.warn('DuuniJobs AI endpoint failed, trying OpenAI chat endpoint:', primaryErr && primaryErr.message);
+  }
+
+  data = await postAIJson(getOpenAIChatUrl(), {
+    model: 'gpt-4o-mini',
+    system: system,
+    messages: messages,
+    max_tokens: maxTokens || 1000
+  }, 35000);
   return data.text || data.reply || '';
 }
 
@@ -835,6 +877,7 @@ function pickMarket(el,key){
   document.getElementById('marketPickNote').classList.remove('hidden');
   setMarketPickNote(false);
   document.getElementById('toStep2Btn').disabled=false;
+  appWorkSaveNow();
 }
 function pickCustomIdea(){
   document.querySelectorAll('#marketCards .market-card').forEach(c=>c.classList.remove('picked'));
@@ -847,6 +890,7 @@ function pickCustomIdea(){
   setMarketPickNote(true);
   checkCustomMarket();
   document.getElementById('customMarketBrief')?.focus();
+  appWorkSaveNow();
 }
 function checkCustomMarket(){
   if(S.market!=='custom') return;
@@ -946,6 +990,7 @@ function startInterview(){
   addBubble('ai',first);
   S.chatHistory.push({role:'assistant',content:first});
   updateDots();
+  appWorkSaveNow();
 }
 
 async function sendChat(){
@@ -958,8 +1003,22 @@ async function sendChat(){
   S.chatHistory.push({role:'user',content:txt});
   S.questionCount++;
   updateDots();
+  appWorkSaveNow();
   await askDuunijobsAI();
   document.getElementById('chatSendBtn').disabled=false;
+}
+
+function buildOfflineInterviewFollowup() {
+  if (S.questionCount >= 5) {
+    return 'INTERVIEW_COMPLETE — Kiitos! Vastauksesi riittävät. Paina nappia — varaprompti voidaan luoda tallennetuista vastauksistasi heti.';
+  }
+  var promptsByStep = {
+    1: 'Hyva aloitus. Seuraavaksi kuvaa yksi tavallinen paiva kayttajan kanssa: milloin ongelma osuu, mita han yrittää tehda, ja mihin kohtaan nykyinen ratkaisu kaatuu?',
+    2: 'Tarkennetaan "aha-hetki": mika yksi hetki saisi kayttajan ajattelemaan "tama kannatti avata"? Kuvaa se mahdollisimman konkreettisesti.',
+    3: 'Mika saisi kayttajan lopettamaan sovelluksen kayton 3 paivassa? Nimea 1-2 asiaa, jotka sovelluksen on pakko valttaa.',
+    4: 'Kuvitellaan 1000 kayttajaa Suomessa 6 kuukauden paahan. Mita konkreettista muuttuu arjessa, jos sovellus onnistuu?',
+  };
+  return promptsByStep[S.questionCount] || 'Jatka yhdella konkreettisella esimerkillä kayttajan arjesta.';
 }
 
 async function askDuunijobsAI(){
@@ -979,7 +1038,17 @@ async function askDuunijobsAI(){
     appWorkSaveNow();
   }catch(e){
     hideTyping();
-    addBubble('ai',(e&&e.message)||'Yhteys katkesi — yritä hetken päästä uudelleen.');
+    const fallbackRaw = buildOfflineInterviewFollowup();
+    const fallbackDisplay = formatChatDisplay(fallbackRaw.replace('INTERVIEW_COMPLETE — ', '')) + '\n\n(Varatila kaytossa: AI-yhteys katkesi, mutta vastaukset tallentuivat.)';
+    addBubble('ai', fallbackDisplay);
+    S.chatHistory.push({ role: 'assistant', content: fallbackRaw });
+    if (fallbackRaw.includes('INTERVIEW_COMPLETE')) {
+      S.interviewDone = true;
+      document.getElementById('chatInputRow').style.display = 'none';
+      document.getElementById('toPromptBtn').classList.remove('hidden');
+      updateDots(true);
+    }
+    appWorkSaveNow();
     document.getElementById('chatSendBtn').disabled=false;
   }
 }
@@ -1036,8 +1105,66 @@ const PGEN=[
   'Viimeistellään tekninen spesifikaatio...'
 ];
 
+function buildOfflinePromptDraft() {
+  var convo = S.chatHistory.map(function (m) {
+    return (m.role === 'user' ? 'USER' : 'AI') + ': ' + m.content;
+  }).join('\n\n');
+  return [
+    'APP NAME: ' + (S.appName || 'Tyonimi'),
+    '',
+    'APP OVERVIEW',
+    '- Purpose: Solve this Finnish job-market problem: ' + (S.problemOneliner || S.problemDesc || 'No problem description provided'),
+    '- Target user: ' + marketAreaLabel(),
+    '- Core value proposition: Give users one practical next action in under 60 seconds.',
+    '',
+    'SCREENS & NAVIGATION',
+    '- Mobile-first app with bottom tabs: Etusivu, Tehtavat, Edistyminen, Profiili.',
+    '- Home: today\'s priority, status cards, and one CTA.',
+    '- Tasks: actionable checklist with completion states.',
+    '- Progress: trend view, streaks, and milestones.',
+    '- Profile: user settings and local data export/import.',
+    '',
+    'DETAILED SCREEN SPECS',
+    '- Every screen has empty state, loading state, and error recovery state.',
+    '- Buttons are touch-friendly (minimum 44px).',
+    '- Forms include inline validation and helper text.',
+    '',
+    'DATA MODEL',
+    '- User { id, name, city, goal, createdAt }',
+    '- Task { id, userId, title, status, dueDate, category }',
+    '- ActivityLog { id, userId, action, createdAt, context }',
+    '- Store data in browser local storage with clear key names.',
+    '',
+    'VISUAL DESIGN',
+    '- Palette: #0B1020 (ink), #2563A8 (primary), #2A7A4B (success), #F5F3EF (background), #1A1A2E (text).',
+    '- Typography: clean sans-serif, strong heading contrast, generous line-height.',
+    '- Card radius 12px, subtle shadows, calm professional look.',
+    '',
+    'ANIMATIONS & MICRO-INTERACTIONS',
+    '- Smooth page fade/slide transitions.',
+    '- Staggered list item reveals.',
+    '- Button press feedback and success pulse.',
+    '- Celebrate key milestones with lightweight confetti.',
+    '',
+    'FEEDBACK & ERRORS',
+    '- Toasts for save success and action confirmations.',
+    '- Recovery actions on errors (retry button + short explanation).',
+    '',
+    'FINNISH UI TEXT',
+    '- All labels, buttons, and helper text must be in Finnish.',
+    '- Keep language practical and plain.',
+    '',
+    'CONTEXT FROM INTERVIEW (use this to tailor UX and copy)',
+    convo || '(No transcript available)',
+    '',
+    'FINAL NOTE',
+    'Build a production-looking MVP that a beginner can demo today without setup.'
+  ].join('\n');
+}
+
 async function generatePrompt(){
   if(!S.interviewDone)return;
+  appWorkSaveNow();
   document.getElementById('promptIdle').style.display='none';
   document.getElementById('promptGenerating').style.display='block';
   document.getElementById('promptOutWrap').style.display='none';
@@ -1127,7 +1254,12 @@ Now write the complete, exhaustive app build prompt. This person built this with
     appWorkSaveNow();
   }catch(e){
     clearInterval(iv);
-    document.getElementById('pgenStep').textContent=(e&&e.message)||'DuuniJobs AI ei vastaa juuri nyt — yritä uudelleen.';
+    const backupPrompt = buildOfflinePromptDraft();
+    S.generatedPrompt = backupPrompt;
+    S.finalPrompt = backupPrompt;
+    showPromptOut(backupPrompt);
+    document.getElementById('pgenStep').textContent = (e && e.message) || 'DuuniJobs AI ei vastaa juuri nyt — loimme varapromptin tallennetuista vastauksistasi.';
+    appWorkSaveNow();
   }
 }
 

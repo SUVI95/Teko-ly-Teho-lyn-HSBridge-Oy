@@ -36,6 +36,10 @@
 
     return data.text || data.reply || '';
   };
+  // Keep a stable reference for Claude -> OpenAI fallback.
+  // Some modules intentionally remap window.aiChat after this file loads.
+  // Without this, fallback may recurse back into Claude instead of OpenAI.
+  var openAiFallbackChat = window.aiChat;
 
   function getClaudeUrl() {
     var origin = window.location.origin || '';
@@ -70,7 +74,7 @@
       return data.text || data.reply || '';
     } catch (err) {
       console.warn('DuuniJobs AI failed, falling back to OpenAI:', err.message);
-      return window.aiChat(systemPrompt, userMessage, maxTokens || 2000);
+      return openAiFallbackChat(systemPrompt, userMessage, maxTokens || 2000);
     }
   };
   window.duunijobsAI = window.aiClaude;

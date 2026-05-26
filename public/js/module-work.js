@@ -32,16 +32,25 @@
   }
 
   async function saveModuleWork(moduleId, data, summary) {
-    await getUserId();
     var payload = JSON.stringify({
       v: 1,
       data: data,
       summary: summary || '',
       savedAt: new Date().toISOString()
     });
+    var initialKey = localStorageKey(moduleId);
     try {
-      localStorage.setItem(localStorageKey(moduleId), payload);
+      localStorage.setItem(initialKey, payload);
     } catch (e) {}
+    try {
+      await getUserId();
+      var resolvedKey = localStorageKey(moduleId);
+      if (resolvedKey !== initialKey) {
+        try {
+          localStorage.setItem(resolvedKey, payload);
+        } catch (e2) {}
+      }
+    } catch (e3) {}
     try {
       await fetch('/api/reflections/save', {
         method: 'POST',
@@ -112,16 +121,34 @@
 
     var debounceMs = options.debounceMs == null ? 900 : options.debounceMs;
     var timer = null;
+    var dirty = false;
+
+    function persistNow() {
+      if (typeof options.collect !== 'function') return Promise.resolve();
+      var collected = options.collect();
+      var summary = typeof options.summarize === 'function' ? options.summarize(collected) : '';
+      dirty = false;
+      return saveModuleWork(moduleId, collected, summary);
+    }
 
     function scheduleSave() {
       if (typeof options.collect !== 'function') return;
+      dirty = true;
       if (timer) clearTimeout(timer);
       timer = setTimeout(function () {
         timer = null;
-        var collected = options.collect();
-        var summary = typeof options.summarize === 'function' ? options.summarize(collected) : '';
-        saveModuleWork(moduleId, collected, summary);
+        persistNow();
       }, debounceMs);
+    }
+
+    function flushPendingSave() {
+      if (!dirty && !timer) return;
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      // Fire-and-forget: localStorage is written synchronously first.
+      persistNow();
     }
 
     if (options.fieldIds && options.fieldIds.length) {
@@ -133,13 +160,20 @@
       });
     }
 
+    window.addEventListener('pagehide', flushPendingSave);
+    window.addEventListener('beforeunload', flushPendingSave);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') flushPendingSave();
+    });
+
     return {
       data: data,
       saveNow: function () {
-        if (typeof options.collect !== 'function') return Promise.resolve();
-        var collected = options.collect();
-        var summary = typeof options.summarize === 'function' ? options.summarize(collected) : '';
-        return saveModuleWork(moduleId, collected, summary);
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        return persistNow();
       },
       scheduleSave: scheduleSave
     };

@@ -31,6 +31,19 @@ function injectKuopioDemoLocalClear(html) {
   return KUOPIO_DEMO_LS_CLEAR + html;
 }
 
+function injectModulePersistenceScripts(html, moduleId) {
+  if (!html || typeof html !== 'string') return html;
+  const bootScript = `<script>window.__MODULE_ID__=${JSON.stringify(String(moduleId || ''))};</script>`;
+  const needsModuleWork = !html.includes('/js/module-work.js');
+  const needsAutoSave = !html.includes('/js/module-autosave.js');
+  const tags = [bootScript];
+  if (needsModuleWork) tags.push('<script src="/js/module-work.js"></script>');
+  if (needsAutoSave) tags.push('<script src="/js/module-autosave.js"></script>');
+  const inject = tags.join('');
+  if (html.includes('</body>')) return html.replace('</body>', inject + '</body>');
+  return html + inject;
+}
+
 const authRoutes = require('./routes/auth');
 const progressRoutes = require('./routes/progress');
 const aiRoutes = require('./routes/ai');
@@ -444,11 +457,12 @@ app.get('/module/:moduleId', async (req, res) => {
 
   // Avoid stale module HTML behind CDN/browser cache after deploys
   res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+  let html = fs.readFileSync(modulePath, 'utf8');
+  html = injectModulePersistenceScripts(html, moduleId);
   if (viewerIsKuopioDemo) {
-    const html = injectKuopioDemoLocalClear(fs.readFileSync(modulePath, 'utf8'));
-    return res.type('html').send(html);
+    html = injectKuopioDemoLocalClear(html);
   }
-  res.sendFile(modulePath);
+  return res.type('html').send(html);
 });
 
 // Only start server if not in Vercel environment

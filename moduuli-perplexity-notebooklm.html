@@ -2221,8 +2221,101 @@
   </div>
 </section>
 
+<script src="/js/module-work.js"></script>
 <script>
   let selectedTopic = '';
+  const PERPLEXITY_MODULE_ID = 'moduuli-perplexity-notebooklm';
+  const PERPLEXITY_FALLBACK_KEY = 'moduuli-perplexity-notebooklm-work';
+  let perplexityModuleWorkApi = null;
+  let applyingPerplexityWork = false;
+
+  function collectPerplexityWork() {
+    const selectedCard = document.querySelector('.topic-card.selected');
+    const ownInput = document.getElementById('topic-own-input');
+    return {
+      selectedTopic: selectedTopic || '',
+      selectedTopicCard: selectedCard ? selectedCard.dataset.topic : '',
+      ownTopicInput: ownInput ? ownInput.value : '',
+      checkedBoxes: Array.from(document.querySelectorAll('.check-box')).map(function (b) {
+        return b.classList.contains('checked');
+      })
+    };
+  }
+
+  function summarizePerplexityWork(d) {
+    if (!d) return '';
+    var done = Array.isArray(d.checkedBoxes) ? d.checkedBoxes.filter(Boolean).length : 0;
+    var total = Array.isArray(d.checkedBoxes) ? d.checkedBoxes.length : 0;
+    var parts = [];
+    if (d.selectedTopic) parts.push('Aihe: ' + d.selectedTopic);
+    if (total > 0) parts.push('Checklist: ' + done + '/' + total);
+    return parts.join(' · ');
+  }
+
+  function applyPerplexityWork(d) {
+    if (!d) return;
+    applyingPerplexityWork = true;
+    try {
+      const ownInput = document.getElementById('topic-own-input');
+      if (ownInput && typeof d.ownTopicInput === 'string') ownInput.value = d.ownTopicInput;
+
+      document.querySelectorAll('.topic-card').forEach(function (card) {
+        card.classList.remove('selected');
+      });
+      if (d.selectedTopicCard) {
+        const selected = document.querySelector('.topic-card[data-topic="' + d.selectedTopicCard + '"]');
+        if (selected) selected.classList.add('selected');
+        const ownField = document.getElementById('topic-own-field');
+        if (ownField) ownField.classList.toggle('visible', d.selectedTopicCard === 'own');
+      }
+
+      if (Array.isArray(d.checkedBoxes)) {
+        document.querySelectorAll('.check-box').forEach(function (box, idx) {
+          box.classList.toggle('checked', !!d.checkedBoxes[idx]);
+        });
+      }
+
+      selectedTopic = d.selectedTopic || '';
+      if (selectedTopic) showTopicBanner(selectedTopic);
+      else hideTopicNextSteps();
+    } finally {
+      applyingPerplexityWork = false;
+      updateProgress();
+    }
+  }
+
+  function savePerplexityFallback() {
+    try {
+      localStorage.setItem(PERPLEXITY_FALLBACK_KEY, JSON.stringify(collectPerplexityWork()));
+    } catch (e) {}
+  }
+
+  function schedulePerplexitySave() {
+    if (applyingPerplexityWork) return;
+    if (perplexityModuleWorkApi) {
+      perplexityModuleWorkApi.scheduleSave();
+      return;
+    }
+    savePerplexityFallback();
+  }
+
+  async function initPerplexityModuleWork() {
+    if (window.moduleWork) {
+      perplexityModuleWorkApi = await window.moduleWork.initModuleWork(PERPLEXITY_MODULE_ID, {
+        collect: collectPerplexityWork,
+        apply: applyPerplexityWork,
+        summarize: summarizePerplexityWork,
+        fieldIds: ['topic-own-input']
+      });
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(PERPLEXITY_FALLBACK_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      applyPerplexityWork(parsed);
+    } catch (e) {}
+  }
 
   window.addEventListener('scroll', () => {
     const scrollTop = window.scrollY;
@@ -2252,6 +2345,7 @@
   function toggleCheck(el) {
     el.classList.toggle('checked');
     updateProgress();
+    schedulePerplexitySave();
   }
 
   function updateProgress() {
@@ -2316,6 +2410,7 @@
       else hideTopicNextSteps();
     }
     updateProgress();
+    schedulePerplexitySave();
   }
 
   function showTopicBanner(text) {
@@ -2327,7 +2422,7 @@
     if (after) after.classList.add('visible');
     try { localStorage.setItem('module7-topic', text); } catch (e) {}
     const reward = document.getElementById('micro-reward');
-
+    schedulePerplexitySave();
   }
 
   function hideTopicNextSteps() {
@@ -2347,6 +2442,7 @@
         selectedTopic = ownInput.value.trim();
         if (selectedTopic) showTopicBanner('AI ja ' + selectedTopic + ' — oma näkökulmasi');
         updateProgress();
+        schedulePerplexitySave();
       }
     });
   }
@@ -2359,6 +2455,7 @@
     }
   } catch (e) {}
 
+  initPerplexityModuleWork();
   document.querySelectorAll('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
       const href = a.getAttribute('href');
