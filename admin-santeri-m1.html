@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Santeri Moduuli 1</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0f172a;--sand:#f8fafc;--border:#e2e8f0;--muted:#64748b;--teal:#0d9488;--white:#fff;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;}
+.top{background:var(--ink);color:#fff;padding:22px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.top h1{font-family:'Fraunces',serif;font-size:22px;}
+.top a{color:rgba(255,255,255,.75);text-decoration:none;font-size:13px;border:1px solid rgba(255,255,255,.2);padding:7px 12px;border-radius:6px;}
+.wrap{max-width:960px;margin:0 auto;padding:28px 24px;}
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:16px;}
+.who{font-weight:700;font-size:16px;}
+.email{font-size:13px;color:var(--muted);margin-bottom:4px;}
+.when{font-size:11px;color:var(--muted);font-family:monospace;margin-bottom:14px;}
+.sec{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.sec h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);margin-bottom:8px;}
+.row{margin-bottom:8px;}
+.row strong{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:2px;}
+.row p{font-size:14px;white-space:pre-wrap;}
+.ai{background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:12px;margin-top:8px;font-size:13px;white-space:pre-wrap;}
+.url a{color:var(--teal);word-break:break-all;}
+.empty{text-align:center;padding:48px;color:var(--muted);}
+.loading{text-align:center;padding:40px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>🚀 Santeri — Moduuli 1 vastaukset</h1>
+  <a href="/admin">← Admin</a>
+</div>
+<div class="wrap" id="root"><div class="loading">Ladataan...</div></div>
+<script>
+const LABELS={
+  's1-why-not':'Miksi kukaan ei ole tehnyt tätä jo?',
+  's1-forget':'Unohtaa sovelluksen?',
+  's1-competitors':'Kilpailijat',
+  's4-worked':'Toimi paremmin',
+  's4-missing':'Jäi puuttumaan',
+  's4-redo':'Tekisi uudelleen',
+  's5-pay':'Maksaisiko joku?',
+  's5-users':'Kuinka monta tarvitsee',
+  's5-next':'Seuraava rakentaminen',
+  studentName:'Nimi',
+  lovableUrl:'Lovable URL',
+  base44Url:'Base44 URL'
+};
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function row(k,v){
+  if(!v) return '';
+  const label=LABELS[k]||k;
+  if(k.includes('Url')) return `<div class="row url"><strong>${esc(label)}</strong><p><a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a></p></div>`;
+  return `<div class="row"><strong>${esc(label)}</strong><p>${esc(v)}</p></div>`;
+}
+async function load(){
+  const root=document.getElementById('root');
+  try{
+    const r=await fetch('/api/admin/santeri-m1-submissions',{credentials:'include'});
+    if(!r.ok) throw new Error(r.status);
+    const d=await r.json();
+    const list=d.submissions||[];
+    if(!list.length){root.innerHTML='<div class="empty">Ei vielä tallennuksia.</div>';return;}
+    root.innerHTML=list.map(s=>{
+      const data=s.data||{};
+      const idea=['s1-why-not','s1-forget','s1-competitors'].map(k=>row(k,data[k])).join('');
+      const refl=['s4-worked','s4-missing','s4-redo'].map(k=>row(k,data[k])).join('');
+      const biz=['s5-pay','s5-users','s5-next'].map(k=>row(k,data[k])).join('');
+      const urls=['studentName','lovableUrl','base44Url'].map(k=>row(k,data[k])).join('');
+      return `<article class="card">
+        <div class="who">${esc(s.name||'Nimetön')}</div>
+        <div class="email">${esc(s.email||'')}</div>
+        <div class="when">${s.updated_at?new Date(s.updated_at).toLocaleString('fi-FI'):''}</div>
+        ${idea?`<div class="sec"><h3>Haasta ideasi</h3>${idea}${data.ideaAiFeedback?`<div class="ai"><strong>AI-arvio</strong><br>${esc(data.ideaAiFeedback)}</div>`:''}</div>`:''}
+        ${refl?`<div class="sec"><h3>Rakennusreflektio</h3>${refl}</div>`:''}
+        ${biz?`<div class="sec"><h3>Bisnes-testi</h3>${biz}${data.bizAiFeedback?`<div class="ai"><strong>AI-bisnesanalyysi</strong><br>${esc(data.bizAiFeedback)}</div>`:''}</div>`:''}
+        ${urls?`<div class="sec"><h3>Linkit</h3>${urls}</div>`:''}
+      </article>`;
+    }).join('');
+  }catch(e){
+    root.innerHTML='<div class="empty">Virhe: '+esc(String(e.message))+'</div>';
+  }
+}
+load();
+</script>
+</body>
+</html>

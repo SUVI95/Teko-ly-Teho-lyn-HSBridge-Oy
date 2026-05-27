@@ -697,4 +697,37 @@ router.get('/download/consent', authenticateToken, requireAdmin, async (req, res
   }
 });
 
+// Santeri Moduuli 1 — idea challenge, reflection, business analysis
+router.get('/santeri-m1-submissions', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT r.reflection_text, r.created_at, r.updated_at,
+             u.id AS user_id, u.email, u.name
+      FROM reflections r
+      JOIN users u ON r.user_id = u.id
+      WHERE r.module_id = 'santeri-m1-rakenna__submissions'
+      ORDER BY r.updated_at DESC NULLS LAST, r.created_at DESC
+    `);
+    const submissions = result.rows.map((row) => {
+      let data = {};
+      try {
+        data = JSON.parse(row.reflection_text || '{}');
+      } catch (e) {
+        data = { raw: row.reflection_text };
+      }
+      return {
+        user_id: row.user_id,
+        email: row.email,
+        name: row.name,
+        updated_at: row.updated_at || row.created_at,
+        data
+      };
+    });
+    res.json({ submissions });
+  } catch (error) {
+    console.error('santeri-m1-submissions:', error);
+    res.status(500).json({ error: 'Failed to load Santeri M1 submissions' });
+  }
+});
+
 module.exports = router;

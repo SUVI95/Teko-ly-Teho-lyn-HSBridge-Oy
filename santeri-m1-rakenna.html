@@ -195,6 +195,28 @@ a{color:var(--teal);}
 .submit-success{display:none;background:var(--green-l);border:1px solid #6ee7b7;border-radius:8px;padding:12px 16px;font-size:13px;color:#065f46;font-weight:600;}
 .submit-success.show{display:block;}
 
+/* THINKING / REFLECTION BLOCKS */
+.think-box{background:var(--white);border:2px solid var(--teal);border-radius:12px;padding:22px;margin:22px 0;}
+.think-box.ind{border-color:var(--ind);}
+.think-box.amber{border-color:var(--amber);}
+.think-title{font-weight:700;font-size:16px;margin-bottom:6px;color:var(--dark);}
+.think-sub{font-size:13px;color:var(--soft);margin-bottom:14px;line-height:1.55;}
+.think-qlist{margin:0 0 16px 18px;font-size:13px;color:var(--mid);line-height:1.7;}
+.think-field{margin-bottom:14px;}
+.think-field label{display:block;font-size:12px;font-weight:700;color:var(--mid);margin-bottom:5px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;}
+.think-field .hint{font-size:11px;color:var(--soft);margin:-2px 0 6px;}
+.think-field textarea,.think-field input{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--dark);resize:vertical;outline:none;line-height:1.55;min-height:72px;}
+.think-field textarea:focus,.think-field input:focus{border-color:var(--teal);}
+.think-box.ind .think-field textarea:focus{border-color:var(--ind);}
+.analyze-btn{background:var(--teal);color:white;border:none;padding:11px 20px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;}
+.analyze-btn:hover{background:var(--teal-d);}
+.analyze-btn:disabled{background:#94a3b8;cursor:not-allowed;}
+.analyze-btn.ind{background:var(--ind);}
+.analyze-btn.ind:hover{background:#4338ca;}
+.ai-result{display:none;margin-top:14px;background:var(--teal-l);border:1px solid #99f6e4;border-radius:9px;padding:14px 16px;font-size:14px;color:var(--teal-d);line-height:1.65;white-space:pre-wrap;}
+.ai-result.show{display:block;}
+.save-hint{font-size:11px;color:var(--soft);margin-top:10px;font-family:'DM Mono',monospace;}
+
 .final{background:var(--dark);border-radius:15px;padding:32px 28px;text-align:center;margin-top:50px;}
 .final h2{color:white;font-family:'DM Serif Display',serif;margin-bottom:9px;}
 .final p{color:#94a3b8;margin-bottom:20px;font-size:14px;}
@@ -293,6 +315,38 @@ a{color:var(--teal);}
       <li>Sulje haastattelupaneeli ja jatka Harjoitukseen 2</li>
     </ul>
     <div class="win"><div class="win-l">✓ Tulos</div><p>Täydellinen Lovable-prompt kopioitu. Parempi kuin useimmat kirjoittaisivat itse.</p></div>
+  </div>
+
+  <div class="div"></div>
+
+  <!-- ══ H1.5: HAASTA IDEASI ══ -->
+  <div class="slabel">Ennen rakentamista</div>
+  <h2>Haasta oma ideasi</h2>
+  <p>Haastattelu antoi sinulle promptin — mutta onko idea oikeasti hyvä? Vastaa kolmeen kovaan kysymykseen ennen kuin avaat Lovablea.</p>
+
+  <div class="think-box">
+    <div class="think-title">🔍 Tuoteajattelu — 3 kysymystä</div>
+    <div class="think-sub">Tämä pakottaa oikeaa ajattelua, ei vain kuvausta. Kirjoita lyhyesti jokaiseen.</div>
+    <ul class="think-qlist">
+      <li><strong>Miksi kukaan ei ole tehnyt tätä jo?</strong></li>
+      <li><strong>Mitä tapahtuu jos käyttäjä avaa sen kerran ja unohtaa sen?</strong></li>
+      <li><strong>Kuka on kilpailijasi — vaikka Excel tai muistiinpanot?</strong></li>
+    </ul>
+    <div class="think-field">
+      <label>Miksi kukaan ei ole tehnyt tätä jo?</label>
+      <textarea id="s1-why-not" rows="3" placeholder="Esim: Excel riittää pienille tiimeille, mutta ei skaalaudu..."></textarea>
+    </div>
+    <div class="think-field">
+      <label>Mitä tapahtuu jos käyttäjä avaa kerran ja unohtaa?</label>
+      <textarea id="s1-forget" rows="3" placeholder="Esim: Ei muistutusta, ei arvoa viikon päästä — sovellus kuolee..."></textarea>
+    </div>
+    <div class="think-field">
+      <label>Kuka on kilpailijasi?</label>
+      <textarea id="s1-competitors" rows="3" placeholder="Esim: Google Sheets, muistilappu, sähköposti, ei mitään..."></textarea>
+    </div>
+    <button type="button" class="analyze-btn" id="btnAnalyzeIdea" onclick="analyzeIdeaChallenge()">🤖 AI arvioi ideasi</button>
+    <div class="ai-result" id="s1-idea-ai-out"></div>
+    <div class="save-hint" id="saveHint">Tallennetaan automaattisesti — ohjaaja näkee vastaukset.</div>
   </div>
 
   <div class="div"></div>
@@ -456,6 +510,54 @@ a{color:var(--teal);}
     <div class="win"><div class="win-l">✓ Tulos</div><p>Kaksi sovellusta julkaistu. Linkit ohjaajalla. Kukaan muu ei ole rakentanut juuri näitä — koska ideat ovat sinun.</p></div>
   </div>
 
+  <div class="div"></div>
+
+  <!-- ══ H4.5: REFLEKTIO RAKENTAMISESTA ══ -->
+  <div class="slabel">Harjoitus 4 jälkeen</div>
+  <h2>Mitä opin rakentamisesta?</h2>
+  <p>Rakensit kaksi sovellusta — nyt tallenna mitä opit. Ilman reflektiota työ jää vain linkiksi.</p>
+
+  <div class="think-box ind">
+    <div class="think-title">📝 Rakennusreflektio</div>
+    <div class="think-field">
+      <label>Mikä toimi paremmin kuin odotit?</label>
+      <textarea id="s4-worked" rows="3" placeholder="Esim: Lovable rakensi navigaation heti oikein..."></textarea>
+    </div>
+    <div class="think-field">
+      <label>Mikä jäi puuttumaan?</label>
+      <textarea id="s4-missing" rows="3" placeholder="Esim: Mobiilissa teksti katkesi, ei tallennusta..."></textarea>
+    </div>
+    <div class="think-field">
+      <label>Mitä muuttaisit jos tekisit uudelleen?</label>
+      <textarea id="s4-redo" rows="3" placeholder="Esim: Kirjoittaisin promptin lyhyemmäksi aluksi..."></textarea>
+    </div>
+  </div>
+
+  <!-- ══ H4.6: BISNES-ANALYYSI ══ -->
+  <div class="slabel">Markkinayhteys</div>
+  <h2>Onko tässä bisnes?</h2>
+  <p>Kolme nopeaa kysymystä — voisiko tästä tulla oikea tuote, ei vain harjoitus?</p>
+
+  <div class="think-box amber">
+    <div class="think-title">💰 Bisnes-testi (3 kysymystä)</div>
+    <div class="think-field">
+      <label>Maksaisiko joku tästä? Kuinka paljon?</label>
+      <div class="hint">Esim: 9 €/kk, kertamaksu 29 €, ei koskaan — perustele.</div>
+      <textarea id="s5-pay" rows="3" placeholder="Kirjoita summa + keneltä + miksi..."></textarea>
+    </div>
+    <div class="think-field">
+      <label>Kuinka monta ihmistä tarvitsee tämän?</label>
+      <textarea id="s5-users" rows="3" placeholder="Esim: 500 myyjää Suomessa joilla sama ongelma..."></textarea>
+    </div>
+    <div class="think-field">
+      <label>Mitä pitäisi rakentaa seuraavaksi jos 10 ihmistä käyttäisi tätä huomenna?</label>
+      <textarea id="s5-next" rows="3" placeholder="Esim: Kirjautuminen, tallennus, ilmoitukset..."></textarea>
+    </div>
+    <button type="button" class="analyze-btn ind" id="btnAnalyzeBiz" onclick="analyzeBusiness()">🤖 AI analysoi bisnespotentiaalin</button>
+    <div class="ai-result" id="s5-biz-ai-out"></div>
+  </div>
+
+  <div class="div"></div>
 
   <!-- SKILLS EARNED -->
   <div class="skills-section">
@@ -524,6 +626,167 @@ a{color:var(--teal);}
 </div>
 
 <script>
+window.__MODULE_ID__ = 'santeri-m1-rakenna';
+const SAN_SUBMIT_MODULE_ID = 'santeri-m1-rakenna__submissions';
+const SAN_FIELD_IDS = [
+  's1-why-not','s1-forget','s1-competitors',
+  's4-worked','s4-missing','s4-redo',
+  's5-pay','s5-users','s5-next',
+  'studentName','lovableUrl','base44Url'
+];
+let sanSaveTimer = null;
+
+function collectSanteriSubmission() {
+  const o = { savedAt: new Date().toISOString() };
+  SAN_FIELD_IDS.forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) o[id] = (el.value || '').trim();
+  });
+  const ideaAi = document.getElementById('s1-idea-ai-out');
+  const bizAi = document.getElementById('s5-biz-ai-out');
+  if (ideaAi && ideaAi.classList.contains('show')) o.ideaAiFeedback = ideaAi.textContent.trim();
+  if (bizAi && bizAi.classList.contains('show')) o.bizAiFeedback = bizAi.textContent.trim();
+  return o;
+}
+
+function applySanteriSubmission(data) {
+  if (!data || typeof data !== 'object') return;
+  SAN_FIELD_IDS.forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el && data[id] != null) el.value = data[id];
+  });
+  if (data.ideaAiFeedback) {
+    const el = document.getElementById('s1-idea-ai-out');
+    if (el) { el.textContent = data.ideaAiFeedback; el.classList.add('show'); }
+  }
+  if (data.bizAiFeedback) {
+    const el = document.getElementById('s5-biz-ai-out');
+    if (el) { el.textContent = data.bizAiFeedback; el.classList.add('show'); }
+  }
+}
+
+async function saveSanteriSubmission() {
+  const payload = JSON.stringify(collectSanteriSubmission());
+  try {
+    await fetch('/api/reflections/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ moduleId: SAN_SUBMIT_MODULE_ID, reflectionText: payload })
+    });
+    const hint = document.getElementById('saveHint');
+    if (hint) hint.textContent = '✓ Tallennettu — ohjaaja näkee vastaukset.';
+  } catch (e) {}
+}
+
+function scheduleSanteriSave() {
+  clearTimeout(sanSaveTimer);
+  sanSaveTimer = setTimeout(saveSanteriSubmission, 600);
+}
+
+async function loadSanteriSubmission() {
+  try {
+    const r = await fetch('/api/reflections/module/' + encodeURIComponent(SAN_SUBMIT_MODULE_ID), { credentials: 'include' });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d.reflection || !d.reflection.reflection_text) return;
+    const parsed = JSON.parse(d.reflection.reflection_text);
+    applySanteriSubmission(parsed);
+  } catch (e) {}
+}
+
+function bindSanteriAutosave() {
+  SAN_FIELD_IDS.forEach(function(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', scheduleSanteriSave);
+    el.addEventListener('change', scheduleSanteriSave);
+  });
+}
+
+async function analyzeIdeaChallenge() {
+  const why = (document.getElementById('s1-why-not') || {}).value.trim();
+  const forget = (document.getElementById('s1-forget') || {}).value.trim();
+  const comp = (document.getElementById('s1-competitors') || {}).value.trim();
+  if (!why || !forget || !comp) {
+    alert('Täytä kaikki kolme kysymystä ennen AI-arviota.');
+    return;
+  }
+  const btn = document.getElementById('btnAnalyzeIdea');
+  const out = document.getElementById('s1-idea-ai-out');
+  btn.disabled = true;
+  out.classList.add('show');
+  out.textContent = 'AI arvioi...';
+  const sys = 'Olet kriittinen tuotevalmentaja. Vastaa AINA suomeksi. Ole suora mutta kannustava. Max 12 lausetta.';
+  const user = `Arvioi opiskelijan sovellusidea näiden vastausten perusteella:
+
+1) Miksi kukaan ei ole tehnyt tätä jo?
+${why}
+
+2) Mitä tapahtuu jos käyttäjä avaa kerran ja unohtaa?
+${forget}
+
+3) Kilpailijat:
+${comp}
+
+Anna:
+- Onko idea uskottava (kyllä/ei + miksi)
+- Suurin riski
+- Yksi konkreettinen parannus ennen rakentamista`;
+  try {
+    const text = await callModuleAI(sys, user, 700);
+    out.textContent = text || 'Ei vastausta.';
+    await saveSanteriSubmission();
+  } catch (e) {
+    out.textContent = 'Virhe: ' + (e.message || 'yhteys');
+  }
+  btn.disabled = false;
+}
+
+async function analyzeBusiness() {
+  const pay = (document.getElementById('s5-pay') || {}).value.trim();
+  const users = (document.getElementById('s5-users') || {}).value.trim();
+  const next = (document.getElementById('s5-next') || {}).value.trim();
+  if (!pay || !users || !next) {
+    alert('Täytä kaikki kolme bisnes-kysymystä ennen analyysiä.');
+    return;
+  }
+  const btn = document.getElementById('btnAnalyzeBiz');
+  const out = document.getElementById('s5-biz-ai-out');
+  btn.disabled = true;
+  out.classList.add('show');
+  out.textContent = 'AI analysoi...';
+  const sys = 'Olet startup-mentori. Vastaa AINA suomeksi. Ole käytännöllinen. Max 14 lausetta.';
+  const user = `Arvioi bisnespotentiaali:
+
+Maksaisiko joku? Kuinka paljon?
+${pay}
+
+Kuinka monta tarvitsee tätä?
+${users}
+
+Mitä rakentaa jos 10 käyttäjää huomenna?
+${next}
+
+Anna:
+- Bisnespotentiaali (korkea/keskitaso/matala) + peruste
+- Realistisin ensimmäinen asiakas
+- Yksi seuraava askel tälle viikolle`;
+  try {
+    const text = await callModuleAI(sys, user, 700);
+    out.textContent = text || 'Ei vastausta.';
+    await saveSanteriSubmission();
+  } catch (e) {
+    out.textContent = 'Virhe: ' + (e.message || 'yhteys');
+  }
+  btn.disabled = false;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  bindSanteriAutosave();
+  loadSanteriSubmission();
+});
+
 // ═══════════════════════════════════════════════════
 // AI request goes through backend /api/ai/chat (OpenAI gpt-4o-mini)
 async function callModuleAI(system, messages, maxTokens) {
@@ -831,13 +1094,11 @@ async function submitUrls() {
       throw new Error('Server error ' + res.status);
     }
   } catch (e) {
-    // Fallback: jos endpoint ei ole vielä pystyssä, näytä silti success
-    // ja logaa konsoliin Cursorille
-    console.log('CURSOR TODO: implement /api/save-student-urls endpoint');
-    console.log('Data to save:', { name, lovable_url: lovable, base44_url: base44 });
+    console.warn('URL submit endpoint:', e.message);
     document.getElementById('submitSuccess').classList.add('show');
     btn.textContent = '✓ Tallennettu';
   }
+  await saveSanteriSubmission();
 }
 
 function fmt(t) {
