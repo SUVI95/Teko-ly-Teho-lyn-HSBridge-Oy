@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moduuli B — Rakenna ja esitä</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FAFAF8;
+  --bg2:#F4F1EC;
+  --bg3:#EDE9E2;
+  --white:#FFFFFF;
+  --ink:#1A1612;
+  --ink2:#2E2820;
+  --text:#2A2420;
+  --muted:#7A6E62;
+  --border:#DDD8D0;
+  --border2:#CCC6BC;
+
+  /* TOOL COLORS */
+  --gamma:#6C3CE1;--gamma-pale:#F0ECFD;--gamma-mid:#E0D5FA;
+  --canva:#00C4CC;--canva-pale:#E5FAFB;--canva-mid:#C0F2F4;
+  --gpt:#10A37F;--gpt-pale:#E6F7F3;--gpt-mid:#C0EDE4;
+  --copilot:#0078D4;--copilot-pale:#E8F3FC;--copilot-mid:#BDD9F4;
+  --gemini:#EA4335;--gemini-pale:#FEF0EE;--gemini-mid:#FAC8C3;
+  --sim:#7C3AED;--sim-pale:#F5F0FF;--sim-mid:#DDD0FA;
+  --lib:#B54E28;--lib-pale:#FBF0EA;--lib-mid:#F5D5C4;
+
+  --success:#2D5C4A;--success-bg:#E6F0EC;
+  --forest:#2D5C4A;--forest-pale:#E6F0EC;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.75;}
+
+/* HERO */
+.hero{background:var(--white);border-bottom:1px solid var(--border);padding:72px 56px 56px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--gamma),var(--canva),var(--gpt),var(--copilot),var(--gemini));}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:24px;}
+.hero h1{font-family:'Fraunces',serif;font-size:clamp(38px,5vw,68px);font-weight:900;color:var(--ink);line-height:1.05;margin-bottom:16px;}
+.hero h1 em{color:var(--gamma);font-style:italic;}
+.hero-sub{font-size:17px;color:var(--muted);max-width:560px;line-height:1.7;margin-bottom:48px;}
+.tool-row{display:flex;flex-wrap:wrap;gap:10px;}
+.tool-chip{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--text);}
+.tool-chip .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.outputs-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:40px;}
+.out-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+.out-card .oc-num{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.out-card .oc-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.out-card .oc-desc{font-size:12px;color:var(--muted);line-height:1.4;}
+
+/* STICKY PROGRESS */
+.sticky{position:sticky;top:0;z-index:200;background:var(--white);border-bottom:1px solid var(--border);padding:12px 56px;display:flex;align-items:center;gap:16px;}
+.prog-lbl{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+.prog-track{flex:1;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--gamma),var(--gemini));width:0%;transition:width .5s;}
+.prog-num{font-size:12px;font-weight:700;color:var(--gamma);white-space:nowrap;}
+.dots{display:flex;gap:5px;margin-left:8px;}
+.dot-nav{width:8px;height:8px;border-radius:50%;background:var(--bg3);border:none;cursor:pointer;padding:0;transition:all .2s;}
+.dot-nav.done{background:var(--success);}
+.dot-nav.active{transform:scale(1.4);}
+
+/* WRAP */
+.wrap{max-width:840px;margin:0 auto;padding:64px 56px;}
+
+/* EXERCISE */
+.exercise{opacity:.25;pointer-events:none;transition:opacity .4s;}
+.exercise.unlocked{opacity:1;pointer-events:all;}
+.connector{height:40px;margin-left:32px;}
+.conn-line{width:2px;height:100%;background:var(--border);transition:background .6s;}
+.conn-line.lit{background:linear-gradient(180deg,var(--gamma),transparent);}
+
+/* CARD */
+.card{background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,0.04);}
+.card-head{padding:26px 34px 22px;border-bottom:1px solid var(--bg3);display:flex;align-items:flex-start;gap:18px;}
+.badge{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:19px;font-weight:900;color:var(--white);flex-shrink:0;}
+.badge.done-b{font-size:16px;}
+.tool-tag{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+.ex-title{font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:4px;}
+.ex-time{font-size:12px;color:var(--muted);}
+
+/* SECTIONS */
+.sec{padding:28px 34px;border-bottom:1px solid var(--bg3);}
+.sec:last-child{border-bottom:none;}
+.sec-lbl{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sec-lbl::before{content:'';width:16px;height:2px;background:currentColor;border-radius:1px;}
+.sec-lbl.t{color:var(--ink2);}
+.sec-lbl.s{color:var(--success);}
+.sec-lbl.e{color:#B8860B;}
+.sec-lbl.h{color:var(--lib);}
+
+/* TEORIA */
+.tbox{background:var(--ink);border-radius:12px;padding:26px 30px;}
+.tbox h3{font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--white);margin-bottom:10px;}
+.tbox p{color:rgba(255,255,255,0.72);font-size:15px;line-height:1.8;margin-bottom:10px;}
+.tbox p:last-child{margin-bottom:0;}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.cmp{background:rgba(255,255,255,0.05);border-radius:8px;padding:12px 14px;}
+.cmp .ch{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+.cmp.bad .ch{color:#F87171;} .cmp.good .ch{color:#4ADE80;}
+.cmp p{font-size:13px;color:rgba(255,255,255,0.58);line-height:1.55;}
+
+/* STEPS */
+.steps{list-style:none;counter-reset:st;}
+.steps li{counter-increment:st;display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--bg3);}
+.steps li:last-child{border-bottom:none;padding-bottom:0;}
+.steps li::before{content:counter(st);width:26px;height:26px;border-radius:7px;background:var(--forest-pale);color:var(--forest);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.sh{font-weight:600;color:var(--ink);margin-bottom:3px;font-size:15px;display:block;}
+.sb{font-size:14px;color:var(--muted);line-height:1.6;}
+.sa{display:inline-flex;align-items:center;gap:5px;margin-top:7px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--text);text-decoration:none;transition:background .15s;}
+.sa:hover{background:var(--bg3);}
+
+/* EXAMPLE */
+.eg{background:#FBF8F0;border:1px solid rgba(184,134,11,0.18);border-radius:12px;padding:20px 24px;}
+.eg-lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#B8860B;margin-bottom:10px;}
+.eg-cnt{font-size:14px;line-height:1.75;color:var(--text);}
+.eg-cnt strong{color:var(--ink);font-weight:600;}
+
+/* EDITABLE PROMPT */
+.eprompt-wrap{margin:14px 0;}
+.eprompt-lbl{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--lib);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.editable-p{width:100%;background:var(--bg2);border:2px solid var(--border);border-radius:10px;padding:16px 18px;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.8;color:var(--text);min-height:110px;resize:vertical;outline:none;transition:border-color .2s;}
+.editable-p:focus{border-color:var(--lib);}
+.p-actions{display:flex;align-items:center;gap:10px;margin-top:8px;}
+.p-hint{font-size:12px;color:var(--muted);flex:1;}
+.p-hint.ok{color:var(--success);font-weight:600;}
+.copy-locked{background:var(--bg3);color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:9px 18px;font-size:12px;font-weight:700;cursor:not-allowed;font-family:'DM Sans',sans-serif;}
+.copy-ready{background:var(--lib);color:var(--white);border:none;border-radius:7px;padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;}
+.copy-ready:hover{background:#D4693F;}
+.copy-ready.ok{background:var(--forest);}
+
+/* SIMPLE COPY */
+.sprompt{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:17px 20px;margin:12px 0;position:relative;}
+.sp-lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.sp-txt{font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap;font-family:'DM Sans',sans-serif;padding-right:76px;}
+.sp-btn{position:absolute;top:14px;right:14px;background:var(--ink);color:var(--white);border:none;border-radius:6px;padding:6px 13px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;}
+.sp-btn:hover{background:var(--lib);}
+.sp-btn.ok{background:var(--forest);}
+
+/* GO OUT */
+.goout{border:1px dashed var(--border2);border-radius:12px;padding:20px 24px;background:var(--bg2);margin:12px 0;}
+.go-lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.goout h4{font-family:'Fraunces',serif;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.goout p{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:12px;}
+.go-a{display:inline-flex;align-items:center;gap:6px;color:var(--white);text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;transition:all .15s;margin:3px 5px 3px 0;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.go-a:hover{transform:translateY(-1px);opacity:.9;}
+
+/* SAVE */
+.sv{margin:12px 0;}
+.sv label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.sv textarea,.sv input[type=text]{width:100%;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:11px 15px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:vertical;transition:border-color .2s;}
+.sv textarea{min-height:85px;}
+.sv textarea:focus,.sv input:focus{border-color:var(--lib);}
+
+/* TASKS */
+.tasks{list-style:none;margin:12px 0;}
+.tasks li{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid var(--bg3);cursor:pointer;}
+.tasks li:last-child{border-bottom:none;}
+.tasks li.done .tt{text-decoration:line-through;color:var(--muted);}
+.ck{width:21px;height:21px;border:2px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;transition:all .2s;margin-top:2px;}
+.tasks li.done .ck{background:var(--forest);border-color:var(--forest);color:var(--white);}
+
+/* DONE BTN */
+.done-btn{width:100%;color:var(--white);border:none;border-radius:12px;padding:16px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:16px;transition:all .2s;letter-spacing:.3px;}
+.done-btn:disabled{background:var(--success)!important;cursor:default;}
+
+/* SCENARIO CARDS */
+.scene-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
+.scene-card{background:var(--white);border:2px solid var(--border);border-radius:12px;padding:20px;cursor:pointer;transition:all .2s;}
+.scene-card:hover{border-color:var(--gpt);box-shadow:0 4px 16px rgba(16,163,127,0.1);}
+.scene-card.active{border-color:var(--gpt);background:var(--gpt-pale);}
+.sc-field{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gpt);margin-bottom:6px;}
+.sc-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.sc-desc{font-size:13px;color:var(--muted);line-height:1.4;}
+.scene-content{display:none;margin-top:16px;animation:fadeIn .25s ease;}
+.scene-content.vis{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+
+/* COMPARE TOOLS */
+.tool-compare{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:14px 0;}
+.tc{border-radius:10px;padding:16px;text-align:center;}
+.tc .tc-name{font-size:12px;font-weight:700;margin-bottom:6px;}
+.tc p{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* SIMULATOR */
+.chatbox{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin:12px 0;}
+.ch-head{padding:13px 18px;display:flex;align-items:center;gap:10px;}
+.ch-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.ch-name{font-size:13px;font-weight:700;color:var(--ink);}
+.ch-role{font-size:11px;color:var(--muted);}
+.online{margin-left:auto;font-size:11px;font-weight:600;}
+.msgs{padding:18px;min-height:150px;max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;background:var(--bg);}
+.bbl{max-width:83%;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.6;animation:fadeIn .2s ease;}
+.bbl.bot{background:var(--white);border:1px solid var(--border);color:var(--ink);align-self:flex-start;border-bottom-left-radius:3px;}
+.bbl.user{color:var(--white);align-self:flex-end;border-bottom-right-radius:3px;}
+.bbl.load{background:var(--white);border:1px solid var(--border);color:var(--muted);font-style:italic;align-self:flex-start;}
+.ch-row{padding:11px 14px;border-top:1px solid var(--border);display:flex;gap:10px;background:var(--white);}
+.ci{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:none;min-height:40px;max-height:90px;transition:border-color .2s;color:var(--text);}
+.ci:focus{border-color:var(--sim);}
+.cs{width:40px;height:40px;border:none;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;color:var(--white);}
+.cs:hover{opacity:.85;}
+.cs:disabled{opacity:.35;cursor:not-allowed;}
+.scene-btns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.scbtn{padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.scbtn.active{border-color:var(--sim);background:var(--sim-pale);color:var(--sim);}
+
+/* PROMPT LIBRARY */
+.lib-grid{display:grid;gap:12px;margin:14px 0;}
+.lib-card{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.lib-card-head{padding:14px 18px;display:flex;align-items:center;gap:10px;}
+.lib-card-head .lc-icon{font-size:18px;}
+.lib-card-head .lc-tool{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;}
+.lib-card-head .lc-title{font-size:14px;font-weight:700;color:var(--ink);}
+.lib-card .lc-body{padding:0 18px 16px;}
+.lib-card .lc-prompt{background:var(--bg2);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--text);line-height:1.7;white-space:pre-wrap;font-family:'DM Sans',sans-serif;position:relative;}
+.lib-card .lc-copy{position:absolute;top:8px;right:8px;background:var(--ink);color:var(--white);border:none;border-radius:5px;padding:4px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.lib-card .lc-copy.ok{background:var(--forest);}
+
+/* GAMMA BUILDER */
+.gamma-builder{border:1px solid var(--gamma-mid);border-radius:14px;overflow:hidden;margin:14px 0;}
+.gb-head{background:var(--gamma-pale);padding:20px 24px;border-bottom:1px solid var(--gamma-mid);}
+.gb-head h3{font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--gamma);margin-bottom:4px;}
+.gb-head p{font-size:13px;color:var(--muted);line-height:1.5;}
+.gb-body{padding:20px 24px;background:var(--white);}
+.gb-field{margin-bottom:16px;}
+.gb-field label{display:block;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.gb-field textarea,.gb-field input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;resize:vertical;transition:border-color .2s;}
+.gb-field textarea{min-height:70px;}
+.gb-field textarea:focus,.gb-field input:focus{border-color:var(--gamma);}
+.gen-btn{width:100%;background:var(--gamma);color:var(--white);border:none;border-radius:10px;padding:15px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;margin-top:4px;}
+.gen-btn:hover{background:#5A2EBD;}
+.gen-btn:disabled{opacity:.5;cursor:not-allowed;}
+.gb-result{padding:0 24px 22px;background:var(--white);display:none;}
+.gb-res-lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.gb-out{width:100%;background:var(--gamma-pale);border:1px solid var(--gamma-mid);border-radius:8px;padding:14px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);line-height:1.75;min-height:100px;resize:none;outline:none;}
+.gb-actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;}
+.gb-copy{background:var(--gamma);color:var(--white);border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;}
+.gb-copy:hover{background:#5A2EBD;}
+.gb-copy.ok{background:var(--forest);}
+
+/* SKILLS END */
+.skills-end{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:48px;margin-top:72px;box-shadow:0 2px 20px rgba(0,0,0,0.04);}
+.skills-end h2{font-family:'Fraunces',serif;font-size:36px;font-weight:900;color:var(--ink);margin-bottom:6px;}
+.skills-end .se-lead{font-size:17px;color:var(--muted);margin-bottom:36px;line-height:1.6;}
+.skills-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:32px;}
+.sk{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+.sk .sk-icon{font-size:22px;margin-bottom:8px;}
+.sk h4{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:5px;}
+.sk p{font-size:13px;color:var(--muted);line-height:1.55;}
+.sk .when{margin-top:8px;font-size:12px;font-weight:600;color:var(--lib);}
+.cv-line-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:24px;}
+.cv-line-box .cv-lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.cv-line-box p{font-size:15px;color:var(--ink);line-height:1.7;}
+.reflect-area{width:100%;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.7;color:var(--text);resize:vertical;min-height:100px;outline:none;transition:border-color .2s;margin-top:8px;}
+.reflect-area:focus{border-color:var(--lib);}
+.save-r{margin-top:10px;background:var(--forest);color:var(--white);border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* COMPARISON TABLE */
+.cmp-table{width:100%;border-collapse:collapse;font-size:14px;margin:14px 0;}
+.cmp-table th{background:var(--bg3);padding:10px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.cmp-table td{padding:10px 14px;border-bottom:1px solid var(--bg3);color:var(--text);vertical-align:top;line-height:1.5;}
+.cmp-table tr:last-child td{border-bottom:none;}
+.cmp-table .best{font-weight:700;color:var(--forest);}
+
+@media(max-width:680px){
+  .hero{padding:48px 24px 40px;}
+  .wrap{padding:40px 24px;}
+  .sticky{padding:12px 24px;}
+  .sec{padding:22px 20px;}
+  .card-head{padding:18px 20px;}
+  .compare,.scene-grid,.tool-compare,.skills-grid{grid-template-columns:1fr;}
+  .outputs-row{grid-template-columns:1fr 1fr;}
+  .gb-body,.gb-result{padding:18px 20px;}
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="eyebrow">Moduuli B · 7 harjoitusta · ~100 min</div>
+  <h1>Rakenna ja <em>esitä</em></h1>
+  <p class="hero-sub">Rakennat ammatillisen esityksen Gammalla, ammattimaisen kuvan Canvalla, harjoittelet työtilanteet ChatGPT:llä — ja löydät mitä Copilot ja Gemini tekevät eri tavalla.</p>
+  <div class="tool-row">
+    <span class="tool-chip"><span class="dot" style="background:var(--gamma)"></span>Gamma</span>
+    <span class="tool-chip"><span class="dot" style="background:var(--canva)"></span>Canva</span>
+    <span class="tool-chip"><span class="dot" style="background:var(--gpt)"></span>ChatGPT</span>
+    <span class="tool-chip"><span class="dot" style="background:var(--copilot)"></span>Microsoft Copilot</span>
+    <span class="tool-chip"><span class="dot" style="background:var(--gemini)"></span>Google Gemini</span>
+  </div>
+  <div class="outputs-row">
+    <div class="out-card"><div class="oc-num">Harjoitus 1</div><div class="oc-name">Gamma-esitys</div><div class="oc-desc">Jaettava linkki</div></div>
+    <div class="out-card"><div class="oc-num">Harjoitus 2</div><div class="oc-name">Canva-banneri</div><div class="oc-desc">PNG tiedosto</div></div>
+    <div class="out-card"><div class="oc-num">Harjoitukset 3–5</div><div class="oc-name">3 työkalua vertailtu</div><div class="oc-desc">ChatGPT, Copilot, Gemini</div></div>
+    <div class="out-card"><div class="oc-num">Harjoitus 7</div><div class="oc-name">Prompt-kirjasto</div><div class="oc-desc">Valmis tiedosto töihin</div></div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="sticky">
+  <span class="prog-lbl">Edistyminen</span>
+  <div class="prog-track"><div class="prog-bar" id="pb"></div></div>
+  <span class="prog-num" id="pn">0/7</span>
+  <div class="dots" id="dotrow">
+    <button class="dot-nav active" onclick="goTo(0)" style="background:var(--gamma)"></button>
+    <button class="dot-nav" onclick="goTo(1)"></button>
+    <button class="dot-nav" onclick="goTo(2)"></button>
+    <button class="dot-nav" onclick="goTo(3)"></button>
+    <button class="dot-nav" onclick="goTo(4)"></button>
+    <button class="dot-nav" onclick="goTo(5)"></button>
+    <button class="dot-nav" onclick="goTo(6)"></button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ═══════ H1 — GAMMA ═══════ -->
+<div class="exercise unlocked" id="e0">
+<div class="card">
+  <div class="card-head">
+    <div class="badge" id="b0" style="background:var(--gamma)">1</div>
+    <div>
+      <div class="tool-tag" style="color:var(--gamma)">✦ Gamma.app — esitykset AI:lla</div>
+      <div class="ex-title">Tee ammatillinen esitys omasta osaamisestasi</div>
+      <div class="ex-time">⏱ ~25 min · Gamma rakentaa — sinä viimeistelet</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl t">Teoria — mikä Gamma on ja miksi se ei ole PowerPoint</div>
+    <div class="tbox">
+      <h3>Gamma rakentaa 10 dian esityksen tekstistäsi automaattisesti</h3>
+      <p>PowerPointissa rakennat jokaisen dian käsin. Gammassa kirjoitat mitä haluat sanoa — Gamma päättää miten se näyttää. Tuloksena on ammattimainen esitys jolla on jaettava linkki. Ei latausta, ei tiedostoa, ei PowerPoint-taitoja.</p>
+      <p><strong style="color:#fff">Tärkein sääntö:</strong> AI:n ensimmäinen versio on aina luonnos. Lue jokainen dia ääneen. Jos jokin lause kuulostaa robotilta — muuta se. Gamma:ssa on AI-chat sivupalkissa jolla voi muokata yhtä diaa kerrallaan.</p>
+      <div class="compare">
+        <div class="cmp bad"><div class="ch">❌ Kopioi sellaisenaan</div><p>Esitys kuulostaa kaikille muillekin. Rekrytoija on nähnyt sen.</p></div>
+        <div class="cmp good"><div class="ch">✅ Iteroi omaksi</div><p>Lisäät omat luvut, oman esimerkin. Se näyttää sinun esitykseltäsi.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl s">Askeleet</div>
+    <ol class="steps">
+      <li><div><span class="sh">Täytä alla oleva lomake — käytä Moduulin A tietojasi</span><span class="sb">Lomake rakentaa sinulle täydellisen Gamma-promptin. Mitä enemmän omia tietoja annat, sitä parempi esitys.</span></div></li>
+      <li><div><span class="sh">Klikkaa "Generoi Gamma-prompt" — kopioi tulos</span><span class="sb">Saat valmiin promptin jonka kopioit suoraan Gammaan.</span></div></li>
+      <li><div><span class="sh">Mene gamma.app → New → Generate → liitä prompt</span><span class="sb">Tärkeää: valitse "Generate" — ei tyhjä pohja. Gamma näyttää "outline"-esikatselun ennen rakentamista — voit muokata otsikot siellä.</span><a href="https://gamma.app" target="_blank" class="sa">Avaa Gamma ↗</a></div></li>
+      <li><div><span class="sh">Valitse tumma teema — lue kaikki diat ääneen</span><span class="sb">Tummat teemat näyttävät ammattimaisemmilta. Muuta vähintään 3 lausetta niin että ne kuulostavat sinulta.</span></div></li>
+      <li><div><span class="sh">Tallenna jaettava linkki alle</span><span class="sb">Klikkaa "Share" → kopioi linkki. Tämä on sinun esityksesi URL.</span></div></li>
+    </ol>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl e">Esimerkki — miltä hyvä Gamma-esitys näyttää</div>
+    <div class="eg">
+      <div class="eg-lbl">Esimerkki diajärjestyksestä</div>
+      <div class="eg-cnt">
+        <strong>Dia 1:</strong> Nimesi + rooli + yksi lause siitä mitä tuot mukanasi<br>
+        <strong>Dia 2–3:</strong> Taustasi konkreettisesti — ei titteleitä vaan tekoja ja lukuja<br>
+        <strong>Dia 4–5:</strong> Mitä osaat jota muilla ei ole — myynti + taloushallinto -yhdistelmä<br>
+        <strong>Dia 6–7:</strong> AI-taidot joita olet kehittänyt — konkreettiset työkalut<br>
+        <strong>Dia 8–9:</strong> Mihin tähtäät — millaisiin rooleihin ja miksi<br>
+        <strong>Dia 10:</strong> Kutsuvaihe — ota yhteyttä, katso portfoliosivu
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl h">Harjoitus — täytä ja generoi</div>
+    <div class="gamma-builder">
+      <div class="gb-head">
+        <h3>✦ Gamma-promptin rakentaja</h3>
+        <p>Täytä kentät → klikkaa generoi → kopioi prompti → vie Gammaan</p>
+      </div>
+      <div class="gb-body">
+        <div class="gb-field">
+          <label>Nimesi ja nykyinen tai viimeisin rooli</label>
+          <input type="text" id="g-name" placeholder="Esim: Minna Tilles · Myynti- ja taloushallinnon ammattilainen" oninput="ls('g-name')">
+        </div>
+        <div class="gb-field">
+          <label>Kokemuksesi — luvuilla (kopioi Moduulin A analyysistä)</label>
+          <textarea id="g-exp" placeholder="Esim: 15 vuotta kokemusta. Myynnissä: asiakkuuksien hallinta, B2B-myynti. Taloushallinnossa: laskutus, kuukausiraportointi, prosessien kehittäminen." oninput="ls('g-exp')"></textarea>
+        </div>
+        <div class="gb-field">
+          <label>Isoin saavutuksesi (konkreettinen, numero jos mahdollista)</label>
+          <textarea id="g-win" placeholder="Esim: Kehitin laskutusprosessin joka vähensi virheitä 40%. Tai: Kasvatin asiakasportfolion 12 uudella asiakkuudella." oninput="ls('g-win')"></textarea>
+        </div>
+        <div class="gb-field">
+          <label>AI-taidot joita olet oppinut (luettele)</label>
+          <input type="text" id="g-ai" placeholder="Esim: Perplexity, NotebookLM, Claude, Napkin.ai, Lovable — portfolio osoitteessa..." oninput="ls('g-ai')">
+        </div>
+        <div class="gb-field">
+          <label>Mitä etsit seuraavaksi</label>
+          <input type="text" id="g-seek" placeholder="Esim: Rooli jossa yhdistyvät asiakastyö ja taloushallinto kasvavassa yrityksessä" oninput="ls('g-seek')">
+        </div>
+        <button class="gen-btn" id="genBtn" onclick="generateGamma()">✦ Generoi Gamma-prompt</button>
+      </div>
+      <div class="gb-result" id="gbResult">
+        <div class="gb-res-lbl">Valmis Gamma-prompt — kopioi tämä Gammaan (New → Generate → liitä)</div>
+        <textarea class="gb-out" id="gbOut" readonly></textarea>
+        <div class="gb-actions">
+          <button class="gb-copy" id="gbCopyBtn" onclick="copyGamma()">Kopioi prompt</button>
+          <a href="https://gamma.app" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:var(--gamma);color:white;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;">Avaa Gamma ↗</a>
+        </div>
+        <div style="margin-top:14px;padding:12px 14px;background:var(--gamma-pale);border-radius:8px;font-size:13px;color:var(--muted);line-height:1.65;">
+          <strong style="color:var(--gamma)">Kun esitys on valmis Gammassa:</strong> Lue kaikki diat ääneen. Muuta vähintään 3 lausetta. Käytä Gamma AI-chattiä sivupalkissa: kirjoita "Muuta tämä dia kuulostamaan luonnollisemmalta" tai "Lisää konkreettinen esimerkki tähän."
+        </div>
+      </div>
+    </div>
+
+    <div class="sv">
+      <label>Gamma-esityksesi linkki (tallenna kun valmis)</label>
+      <input type="text" id="e1-link" placeholder="https://gamma.app/docs/..." oninput="ls('e1-link')">
+    </div>
+    <ul class="tasks">
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Generoin Gamma-promptin ja kopioin sen</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Rakensin esityksen Gammassa</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Muutin vähintään 3 lausetta omaan ääneeni</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Tallensin jaettavan linkin yllä olevaan kenttään</span></li>
+    </ul>
+    <button class="done-btn" style="background:var(--gamma)" onclick="done(0)">Harjoitus 1 valmis →</button>
+  </div>
+</div>
+<div class="connector"><div class="conn-line" id="cl0"></div></div>
+</div>
+
+<!-- ═══════ H2 — CANVA ═══════ -->
+<div class="exercise" id="e1">
+<div class="card">
+  <div class="card-head">
+    <div class="badge" id="b1" style="background:var(--canva)">2</div>
+    <div>
+      <div class="tool-tag" style="color:var(--canva)">🎨 Canva — ammatillinen banneri</div>
+      <div class="ex-title">Tee ammatillinen banneri josta olet ylpeä</div>
+      <div class="ex-time">⏱ ~20 min · Tiedät jo Canvan — tänään tehdään jotain uutta</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl t">Teoria — uusi tehtävä tutulla työkalulla</div>
+    <div class="tbox">
+      <h3>Tiedät jo Canvan. Nyt tehdään ammatillinen banneri joka edustaa sinua.</h3>
+      <p>Tänään et tee mitä tahansa kuvaa — teet bannerin jota voit käyttää sähköpostisi allekirjoituksessa, työnhakuviestissä tai ammatillisessa profiilissa. Se on 600×200 pikselin kuva jossa on nimesi, roolisi, ja yksi vahvuuslause.</p>
+      <p><strong style="color:#fff">5 sekunnin sääntö:</strong> Katso valmista kuvaa 5 sekuntia. Käännä katse pois. Muistitko nimesi ja roolisi? Jos kyllä — banneri toimii.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl s">Askeleet</div>
+    <ol class="steps">
+      <li><div><span class="sh">Pyydä ensin Claude tai ChatGPT suunnittelemaan banneri</span><span class="sb">Käytä alla olevaa promptia. Saat värisuositukset, fonttisuositukset ja tekstiehdotuksen.</span></div></li>
+      <li><div><span class="sh">Mene canva.com → Luo uusi → hae "Email signature banner"</span><span class="sb">Tai hae "LinkedIn banner" — koko on valmiina oikein.</span><a href="https://canva.com" target="_blank" class="sa">Avaa Canva ↗</a></div></li>
+      <li><div><span class="sh">Vaihda värit — kopioi hex-koodi suoraan AI:n suunnitelmasta</span><span class="sb">Klikkaa taustaväriä → värilaatikko ylävasemmalla → kirjoita hex-koodi → Enter.</span></div></li>
+      <li><div><span class="sh">Lisää teksti: nimi, rooli, yksi vahvuuslause</span><span class="sb">Kolme riviä riittää. Fontti: Montserrat tai Lato. Teksti tumma taustalle = valkoinen. Vaalea tausta = tumma teksti.</span></div></li>
+      <li><div><span class="sh">Tarkista 5 sekunnin säännöllä — lataa PNG</span><span class="sb">Jaa → Lataa → PNG. Tallenna nimellä "ammatillinen-banneri.png".</span></div></li>
+    </ol>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl h">Harjoitus</div>
+    <div class="eprompt-wrap">
+      <div class="eprompt-lbl">✏️ Muokkaa — täytä omat tietosi ennen kopiointia</div>
+      <textarea class="editable-p" id="canva-p" oninput="checkEdit('canva-p','ch2','cb2','co2')">Suunnittele minulle ammatillinen banneri (600×200px) Canvaa varten.
+
+Nimeni: [kirjoita nimesi tähän]
+Roolini: [kirjoita roolisi tai tittelisi]
+Vahvuuslauseeni: [yksi lause joka kertoo mitä tuot mukanasi — esim. "Yhdistän myynin ja taloushallinnon osaamisen"]
+
+Anna minulle:
+1. Taustaväri (hex-koodi) — ammatillinen, tumma tai neutraali
+2. Tekstiväri (hex-koodi) — hyvä kontrasti
+3. Korostusväri (hex-koodi) — yhdelle elementille
+4. Fontti jota suosittelet (Canvassa saatavilla oleva)
+5. Tekstin asettelu — mitä kirjoitetaan isolla, mitä pienellä
+
+Pidä se yksinkertaisena — vahva väri + selkeä teksti voittaa aina monimutkaisen.</textarea>
+      <div class="p-actions">
+        <span class="p-hint" id="ch2">✏️ Täytä nimesi, roolisi ja vahvuuslauseesi ensin</span>
+        <button class="copy-locked" id="cb2" disabled>Kopioi</button>
+      </div>
+    </div>
+    <input type="hidden" id="co2" value="">
+    <ul class="tasks">
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Sain bannerisuunnitelman Claude/ChatGPT:ltä</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Rakensin bannerin Canvassa</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">5 sekunnin testi läpäistty — nimeni ja roolini muistuu</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Latasin PNG:n koneelleni</span></li>
+    </ul>
+    <button class="done-btn" style="background:var(--canva)" onclick="done(1)">Harjoitus 2 valmis →</button>
+  </div>
+</div>
+<div class="connector"><div class="conn-line" id="cl1"></div></div>
+</div>
+
+<!-- ═══════ H3 — CHATGPT ═══════ -->
+<div class="exercise" id="e2">
+<div class="card">
+  <div class="card-head">
+    <div class="badge" id="b2" style="background:var(--gpt)">3</div>
+    <div>
+      <div class="tool-tag" style="color:var(--gpt)">💬 ChatGPT — sinä kirjoitat ensin, AI parantaa</div>
+      <div class="ex-title">Kirjoita itse — anna AI:lle parannettavaksi — valitse paras</div>
+      <div class="ex-time">⏱ ~25 min · Sinä olet ajattelija, AI on muokkaaja</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl t">Teoria — miksi sinä kirjoitat ensin</div>
+    <div class="tbox">
+      <h3>AI parantaa ajatuksesi — mutta ajatuksen täytyy olla sinun</h3>
+      <p>Yleisin virhe on antaa AI:lle tyhjä pohja ja odottaa ihmettä. Tulos on geneerinen — koska panos oli geneerinen. Mutta kun sinulla on oma versio — vaikka epätäydellinen — AI:lla on jotain oikeaa parannettavana.</p>
+      <p>Tässä harjoituksessa teet kolme asiaa järjestyksessä: <strong style="color:#fff">1) kirjoitat viestin itse</strong>, <strong style="color:#fff">2) annat sen ChatGPT:lle parannettavaksi kolmella eri sävyllä</strong>, <strong style="color:#fff">3) luet kaikki kolme ja päätät kumpi on parempi — ja miksi.</strong></p>
+      <p>Se kolmas vaihe on koko harjoituksen ydin. Kun osaat sanoa "tämä versio on parempi koska..." — olet oppinut jotain pysyvää.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl s">Askeleet</div>
+    <ol class="steps">
+      <li><div><span class="sh">Valitse tilanne alla — se joka tuntuu tutulta</span><span class="sb">Valitse se jossa sinulla on oikea esimerkki mielessä. Keksitty esimerkki toimii myös.</span></div></li>
+      <li><div><span class="sh">Kirjoita viesti itse ensin — alla olevaan kenttään</span><span class="sb">Älä yritä olla täydellinen. Kirjoita niin kuin oikeasti kirjoittaisit. Epätäydellinen oma versio on paljon arvokkaampi kuin tyhjä kenttä.</span></div></li>
+      <li><div><span class="sh">Lähetä oma tekstisi ChatGPT:hen parannettavaksi — kolme sävyä</span><span class="sb">Käytä alla olevaa parannuspromptia. ChatGPT antaa sinulle kolme versiota: lämpimämpi, varmempi, lyhyempi. Kopioi kaikki kolme.</span><a href="https://chat.openai.com" target="_blank" class="sa">Avaa ChatGPT ↗</a></div></li>
+      <li><div><span class="sh">Lue kaikki neljä versiota — alkuperäinen + kolme parannusta</span><span class="sb">Kumpi kuulostaa sinulta? Mikä versio lähetettäisiin oikeasti? Muokkaa lopullinen versio — voit yhdistellä eri versioista.</span></div></li>
+      <li><div><span class="sh">Vastaa reflektiokysymykseen</span><span class="sb">Yksi lause siitä mitä AI parantaa omassa versiossasi — ja mitä se ei voinut parantaa koska se oli jo hyvä.</span></div></li>
+    </ol>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl e">Esimerkki — mitä "parempi versio" tarkoittaa</div>
+    <div class="eg">
+      <div class="eg-lbl">Ennen ja jälkeen — sama viesti, eri sävy</div>
+      <div class="eg-cnt">
+        <strong>Oma versio (hyvä pohja):</strong><br>
+        "Hei, soitetaan huomenna klo 14 niin jatketaan siitä missä jäimme. Minulla on pari ideaa miten voisimme ratkaista sen budjettikysymyksen."<br><br>
+        <strong>ChatGPT — lämpimämpi versio:</strong><br>
+        "Hei! Kiitos tänään käydystä keskustelusta — oli hyvä kuulla missä olette menossa. Ehdottaisin puhelua huomenna klo 14 jatkamaan siitä — minulla on jo muutama ajatus budjettikysymyksen ratkaisemiseksi."<br><br>
+        <strong>Huomio:</strong> alkuperäisessä oli kaikki olennainen. AI lisäsi vain lämmön ja rakenteen. <em>Idea oli sinun.</em>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl h">Harjoitus — valitse tilanne, kirjoita ensin</div>
+
+    <div class="scene-grid">
+      <div class="scene-card" onclick="selectScene('follow',this)">
+        <div class="sc-field">Myynti</div>
+        <div class="sc-title">Follow-up tapaamisen jälkeen</div>
+        <div class="sc-desc">Henkilökohtainen viesti joka osoittaa että kuuntelit</div>
+      </div>
+      <div class="scene-card" onclick="selectScene('objection',this)">
+        <div class="sc-field">Myynti</div>
+        <div class="sc-title">Hintavastalauseen käsittely</div>
+        <div class="sc-desc">"Liian kallis" — vastaat ilman puolustautumista</div>
+      </div>
+      <div class="scene-card" onclick="selectScene('report',this)">
+        <div class="sc-field">Taloushallinto</div>
+        <div class="sc-title">Raportin selitys myyntitiimille</div>
+        <div class="sc-desc">Muutat numerot selkokieleksi</div>
+      </div>
+      <div class="scene-card" onclick="selectScene('invoice',this)">
+        <div class="sc-field">Taloushallinto</div>
+        <div class="sc-title">Myöhästyneen laskun muistutus</div>
+        <div class="sc-desc">Ystävällinen mutta selkeä — suhde säilyy</div>
+      </div>
+    </div>
+
+    <!-- STEP 1: Write yourself -->
+    <div id="sc-follow" class="scene-content">
+      <div style="background:var(--gpt-pale);border:1px solid var(--gpt-mid);border-radius:10px;padding:16px 20px;margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gpt);margin-bottom:8px;">Vaihe 1 — kirjoita oma versio ensin (älä katso promptia vielä)</div>
+        <textarea class="editable-p" id="own-follow" placeholder="Kirjoita follow-up sähköposti omasta tilanteestasi. Kuvittele oikea asiakas ja tapaaminen. Kirjoita niin kuin oikeasti kirjoittaisit — 3–5 lausetta riittää." style="border-color:var(--gpt-mid);min-height:90px" oninput="ls('own-follow');checkWritten('own-follow','step2-follow')"></textarea>
+      </div>
+      <div id="step2-follow" style="display:none">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gpt);margin-bottom:8px;margin-top:4px;">Vaihe 2 — lähetä ChatGPT:hen parannettavaksi</div>
+        <div class="sprompt" style="margin-top:0">
+          <div class="sp-lbl">Kopioi tämä ChatGPT:hen — lisää oma tekstisi loppuun</div>
+          <div class="sp-txt" id="improve-follow">Minulla on tämä follow-up viesti. Paranna se kolmella eri tavalla ja numeroi ne:
+1. Lämpimämpi versio — lisää henkilökohtainen sävy säilyttäen kaikki faktat
+2. Varmempi versio — kuulostaa itsevarmalta ammattilaiselta
+3. Lyhyempi versio — sama asia puolessa tilassa
+
+Älä muuta faktoja. Älä lisää kliseitä. Jokainen versio max 150 sanaa.
+
+Minun tekstini:
+[LIITÄ OMA VERSIOSI TÄHÄN]</div>
+          <button class="sp-btn" onclick="scp(this)">Kopioi</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="sc-objection" class="scene-content">
+      <div style="background:var(--gpt-pale);border:1px solid var(--gpt-mid);border-radius:10px;padding:16px 20px;margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gpt);margin-bottom:8px;">Vaihe 1 — kirjoita oma versio ensin</div>
+        <textarea class="editable-p" id="own-objection" placeholder="Asiakas sanoi 'liian kallis'. Kirjoita oma vastauksesi — miten sinä oikeasti vastaisit? Älä yritä olla täydellinen." style="border-color:var(--gpt-mid);min-height:90px" oninput="ls('own-objection');checkWritten('own-objection','step2-objection')"></textarea>
+      </div>
+      <div id="step2-objection" style="display:none">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gpt);margin-bottom:8px;margin-top:4px;">Vaihe 2 — lähetä ChatGPT:hen</div>
+        <div class="sprompt" style="margin-top:0">
+          <div class="sp-lbl">Kopioi ChatGPT:hen — lisää oma tekstisi loppuun</div>
+          <div class="sp-txt">Minulla on tämä vastaus hintavastalauseeseen. Paranna se kolmella tavalla:
+1. Ei-puolustava versio — siirtää fokuksen arvoon hinnan sijaan
+2. Empaattinen versio — kuuntelee huolen ennen ratkaisua
+3. Suora versio — lyhyt, luottavainen, ei pitkittele
+
+Älä muuta ydinviestiä. Max 120 sanaa per versio.
+
+Minun tekstini:
+[LIITÄ OMA VERSIOSI TÄHÄN]</div>
+          <button class="sp-btn" onclick="scp(this)">Kopioi</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="sc-report" class="scene-content">
+      <div style="background:var(--gpt-pale);border:1px solid var(--gpt-mid);border-radius:10px;padding:16px 20px;margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gpt);margin-bottom:8px;">Vaihe 1 — kirjoita oma versio ensin</div>
+        <textarea class="editable-p" id="own-report" placeholder="Keksi tai käytä oikeita (anonymisoituja) lukuja. Selitä ne myyntitiimille omin sanoin — niin kuin kertoisit kollegalle kahvitauolla." style="border-color:var(--gpt-mid);min-height:90px" oninput="ls('own-report');checkWritten('own-report','step2-report')"></textarea>
+      </div>
+      <div id="step2-report" style="display:none">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gpt);margin-bottom:8px;margin-top:4px;">Vaihe 2 — lähetä ChatGPT:hen</div>
+        <div class="sprompt" style="margin-top:0">
+          <div class="sp-lbl">Kopioi ChatGPT:hen — lisää oma tekstisi loppuun</div>
+          <div class="sp-txt">Minulla on tämä raportin selitys. Paranna se kolmella tavalla:
+1. Selkeämpi versio — ei jargonia, myyntitiimi ymmärtää heti
+2. Toimintakeskeinen versio — päättyy selkeään seuraavaan askeleeseen
+3. Positiivisempi versio — nostaa mahdollisuuden haasteen rinnalle
+
+Älä muuta lukuja. Max 150 sanaa per versio.
+
+Minun tekstini:
+[LIITÄ OMA VERSIOSI TÄHÄN]</div>
+          <button class="sp-btn" onclick="scp(this)">Kopioi</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="sc-invoice" class="scene-content">
+      <div style="background:var(--gpt-pale);border:1px solid var(--gpt-mid);border-radius:10px;padding:16px 20px;margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gpt);margin-bottom:8px;">Vaihe 1 — kirjoita oma versio ensin</div>
+        <textarea class="editable-p" id="own-invoice" placeholder="Kirjoita maksumuistutus niin kuin sen lähettäisit oikeasti. Ei tarvitse olla täydellinen — rehellinen versio on parempi." style="border-color:var(--gpt-mid);min-height:90px" oninput="ls('own-invoice');checkWritten('own-invoice','step2-invoice')"></textarea>
+      </div>
+      <div id="step2-invoice" style="display:none">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gpt);margin-bottom:8px;margin-top:4px;">Vaihe 2 — lähetä ChatGPT:hen</div>
+        <div class="sprompt" style="margin-top:0">
+          <div class="sp-lbl">Kopioi ChatGPT:hen — lisää oma tekstisi loppuun</div>
+          <div class="sp-txt">Minulla on tämä maksumuistutus. Paranna se kolmella tavalla:
+1. Ystävällisempi versio — asiakassuhde säilyy, mutta viesti on selkeä
+2. Suorempi versio — ystävällinen mutta ei jätä epäselvyyttä
+3. Toimintakeskeinen versio — helpottaa asiakkaan toimia konkreettisilla ohjeilla
+
+Max 130 sanaa per versio. Ei uhkaavia sanavalintoja.
+
+Minun tekstini:
+[LIITÄ OMA VERSIOSI TÄHÄN]</div>
+          <button class="sp-btn" onclick="scp(this)">Kopioi</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Compare and reflect -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-top:16px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Vaihe 3 — lue kaikki versiot ja vastaa</div>
+      <div class="sv" style="margin:0 0 12px">
+        <label>Mikä versioista on parempi kuin oma alkuperäinen — ja miksi?</label>
+        <textarea id="e3-better" placeholder="Esim: Versio 1 on parempi koska se kuulostaa ihmiseltä eikä robotilta. Versio 2 on liian muodollinen — en puhuisi niin." oninput="ls('e3-better')"></textarea>
+      </div>
+      <div class="sv" style="margin:0">
+        <label>Mikä alkuperäisessä omassa versiossasi oli jo hyvää — mitä AI ei muuttanut tai ei olisi pitänyt muuttaa?</label>
+        <textarea id="e3-mine" placeholder="Esim: Ydinidea oli minun. AI vain parantaa lauserakenteen. Tai: Alkuperäinen oli jo hyvä — AI:n versio on liian pitkä." oninput="ls('e3-mine')"></textarea>
+      </div>
+    </div>
+
+    <ul class="tasks" style="margin-top:14px">
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Kirjoitin oman version ensin — ennen kuin katso parannuspromptia</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Lähetin sen ChatGPT:hen ja sain kolme eri sävyä</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Luin kaikki neljä versioa ja kirjasin mikä oli parempi ja miksi</span></li>
+    </ul>
+    <button class="done-btn" style="background:var(--gpt)" onclick="done(2)">Harjoitus 3 valmis →</button>
+  </div>
+</div>
+<div class="connector"><div class="conn-line" id="cl2"></div></div>
+</div>
+
+<!-- ═══════ H4 — COPILOT ═══════ -->
+<div class="exercise" id="e3">
+<div class="card">
+  <div class="card-head">
+    <div class="badge" id="b3" style="background:var(--copilot)">4</div>
+    <div>
+      <div class="tool-tag" style="color:var(--copilot)">🔷 Microsoft Copilot — ratkaise ongelma itse, sitten Copilotilla</div>
+      <div class="ex-title">Mitä Copilot lisää — mitä se ei voi korvata?</div>
+      <div class="ex-time">⏱ ~20 min · Sinä ensin, Copilot toiseksi, sinä viimeistelet</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl t">Teoria — Copilotin oikea rooli</div>
+    <div class="tbox">
+      <h3>Copilot ei korvaa sinua — se nopeuttaa sinut</h3>
+      <p>Copilot on Microsoft 365:een integroitu AI — se lukee sähköpostisi, kokouksesi ja dokumenttisi. Mutta sen todellinen arvo ei ole siinä että se tekee asioita puolestasi. Se on siinä että se tekee nopeasti sen mitä sinä jo osaisit — niin sinulle jää aikaa ajatteluun.</p>
+      <p>Tänään testaat tätä käytännössä. Sinulle annetaan ongelma. Ratkaiset sen ensin itse. Sitten Copilot. Sitten vertaat: <strong style="color:#fff">mitä Copilot teki nopeammin? Mitä sinä teit paremmin?</strong> Se kysymys tekee sinusta paremman Copilot-käyttäjän kuin mikään opas.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl s">Askeleet</div>
+    <ol class="steps">
+      <li><div><span class="sh">Lue alla oleva työtilanne</span><span class="sb">Tilanne on realistinen myynti- tai taloustilanne. Sinulla on 3 minuuttia ratkaista se — kirjoita vastauksesi alla olevaan kenttään.</span></div></li>
+      <li><div><span class="sh">Kirjoita oma ratkaisusi ensin — 3 minuuttia maksimissaan</span><span class="sb">Älä mieti liikaa. Kirjoita niin kuin ratkaisisi sen töissä. Ei tarvitse olla täydellinen.</span></div></li>
+      <li><div><span class="sh">Avaa Copilot ja anna sille sama ongelma</span><span class="sb">Käytä alla olevaa promptia. Kopioi Copilotin vastaus viereiseen kenttään.</span><a href="https://copilot.microsoft.com" target="_blank" class="sa">Avaa Copilot ↗</a></div></li>
+      <li><div><span class="sh">Vertaa molempia — vastaa kolmeen kysymykseen</span><span class="sb">Kolme kysymystä jotka tekevät vertailusta oppimisen, ei vain toteamisen.</span></div></li>
+    </ol>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl e">Tilanne — ratkaise tämä</div>
+    <div class="eg" style="background:var(--copilot-pale);border-color:var(--copilot-mid)">
+      <div class="eg-lbl" style="color:var(--copilot)">Työtilanne — myyntitiimin raportti</div>
+      <div class="eg-cnt">
+        <strong>Tilanne:</strong> Myyntijohtajasi lähetti sinulle sähköpostin tiistaina klo 16.47:<br><br>
+        <em>"Hei, tarvitsen huomenna aamukokoukseen (klo 8.30) lyhyen yhteenvedon siitä miten Q3 meni verrattuna Q2:een. Erityisesti: uudet asiakkaat, menetetyt asiakkaat, ja mikä selittää eron. Muistisitko myös se iso sopimus joka kaatui — pitäisi saada selitys sille. Ei tarvitse olla pitkä — 1 sivu riittää."</em><br><br>
+        <strong>Sinulla on tiedot:</strong> Q3 liikevaihto +12% vs Q2. 8 uutta asiakasta. 3 asiakasta lähti kilpailijalle. Iso sopimus (150k€) kaatui koska asiakkaalla tuli organisaatiomuutos.
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl h">Harjoitus</div>
+
+    <div style="background:var(--copilot-pale);border:1px solid var(--copilot-mid);border-radius:10px;padding:16px 20px;margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--copilot);margin-bottom:8px;">Vaihe 1 — kirjoita oma yhteenveto (3 min maksimi)</div>
+      <textarea class="editable-p" id="own-copilot" style="border-color:var(--copilot-mid);min-height:120px" placeholder="Kirjoita Q3-yhteenveto myyntijohtajalle — tiedot yllä, muoto sinun. 3 minuuttia, sitten siirryt Vaiheeseen 2." oninput="ls('own-copilot');checkWritten('own-copilot','step2-copilot')"></textarea>
+    </div>
+
+    <div id="step2-copilot" style="display:none">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--copilot);margin-bottom:8px;margin-top:4px;">Vaihe 2 — anna sama ongelma Copilotille</div>
+      <div class="sprompt" style="margin-top:0">
+        <div class="sp-lbl">Kopioi Copilotiin</div>
+        <div class="sp-txt">Kirjoita lyhyt myyntiyhteenveto Q3 vs Q2 aamukokoukseen (1 sivu, klo 8.30 huomenna).
+
+Tiedot:
+- Q3 liikevaihto +12% verrattuna Q2:een
+- 8 uutta asiakasta hankittu Q3:lla
+- 3 asiakasta siirtyi kilpailijalle
+- Iso sopimus (150 000€) kaatui: asiakkaalla tuli organisaatiomuutos juuri ennen allekirjoitusta
+
+Rakenne: lyhyt tiivistelmä → uudet asiakkaat → menetetyt asiakkaat → iso kaattunut sopimus → johtopäätös. Ammatillinen sävy. Max 250 sanaa.</div>
+        <button class="sp-btn" onclick="scp(this)">Kopioi</button>
+      </div>
+
+      <div class="sv" style="margin-top:14px">
+        <label>Copilotin versio — liitä tähän</label>
+        <textarea id="copilot-version" placeholder="Liitä Copilotin kirjoittama yhteenveto tähän..." oninput="ls('copilot-version')"></textarea>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-top:12px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">Vaihe 3 — vertaa ja vastaa</div>
+        <div class="sv" style="margin-bottom:12px">
+          <label>Mitä Copilot teki nopeammin tai paremmin kuin sinä?</label>
+          <textarea id="cop-q1" placeholder="Esim: Copilot rakensi yhteenvedon selkeämmin. Tai: Se löysi paremman tavan esittää prosenttiluvut..." oninput="ls('cop-q1')" style="min-height:70px"></textarea>
+        </div>
+        <div class="sv" style="margin-bottom:12px">
+          <label>Mitä sinun versiossasi oli parempaa — mitä Copilot ei osannut lisätä?</label>
+          <textarea id="cop-q2" placeholder="Esim: Minun versiossa on se konteksti jonka vain minä tiedän. Copilot ei tiennyt että iso asiakas oli henkilökohtainen suhde..." oninput="ls('cop-q2')" style="min-height:70px"></textarea>
+        </div>
+        <div class="sv" style="margin:0">
+          <label>Miten käyttäisit Copilotia tähän tilanteeseen jatkossa — mitä tekisit eri tavalla?</label>
+          <textarea id="cop-q3" placeholder="Esim: Antaisin sille enemmän taustatietoa. Tai: Käyttäisin sitä ensimmäiseen luonnokseen ja viimeistelen itse..." oninput="ls('cop-q3')" style="min-height:70px"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <ul class="tasks" style="margin-top:14px">
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Kirjoitin oman version ensin — alle 3 minuutissa</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Annoin saman ongelman Copilotille ja kopioin vastauksen</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Vastasin kaikkiin kolmeen vertailukysymykseen</span></li>
+    </ul>
+    <button class="done-btn" style="background:var(--copilot)" onclick="done(3)">Harjoitus 4 valmis →</button>
+  </div>
+</div>
+<div class="connector"><div class="conn-line" id="cl3"></div></div>
+</div>
+
+<!-- ═══════ H5 — GEMINI ═══════ -->
+<div class="exercise" id="e4">
+<div class="card">
+  <div class="card-head">
+    <div class="badge" id="b4" style="background:var(--gemini)">5</div>
+    <div>
+      <div class="tool-tag" style="color:var(--gemini)">◆ Google Gemini — Googlen AI</div>
+      <div class="ex-title">Tutustu Geminiin — mitä se tekee eri tavalla</div>
+      <div class="ex-time">⏱ ~15 min · Uusi työkalu tuttuun tehtävään</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl t">Teoria — miksi on hyvä tietää useammasta AI:sta</div>
+    <div class="tbox">
+      <h3>Eri AI:t ovat hyviä eri asioissa</h3>
+      <p>ChatGPT on nopea kirjoittaja. Copilot on integroitu toimistoon. Gemini on yhdistetty Googleen — se hakee reaaliaikaista tietoa ja toimii hyvin kun tarvitset tuoretta dataa tai haluat yhdistää Google-palveluja.</p>
+      <p>Ammattilainen tietää mitä työkalua käyttää mihinkin. Tänään tutustut Geminiin tekemällä sillä saman tehtävän kuin teit ChatGPT:llä — ja vertaat tulokset.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl e">Vertailu — milloin käytät mitäkin</div>
+    <table class="cmp-table">
+      <thead>
+        <tr><th>Tilanne</th><th>Paras työkalu</th><th>Miksi</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Nopea sähköposti tai teksti</td><td class="best">ChatGPT</td><td>Nopein kirjoittaja, helppo käyttö</td></tr>
+        <tr><td>Outlook / Teams / Word</td><td class="best">Copilot</td><td>Integroitu suoraan — ei copy-paste</td></tr>
+        <tr><td>Tuore tieto, uutiset, faktat</td><td class="best">Gemini / Perplexity</td><td>Hakee reaaliajassa</td></tr>
+        <tr><td>Syvä analyysi, pitkät tekstit</td><td class="best">Claude</td><td>Paras pitkissä konteksteissa</td></tr>
+        <tr><td>Esitykset</td><td class="best">Gamma</td><td>Rakennettu esityksiin</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl h">Harjoitus — kokeile Geminillä</div>
+    <div class="sprompt">
+      <div class="sp-lbl">Sama tehtävä Geminissä — eri näkökulma</div>
+      <div class="sp-txt">Olen myynti- ja taloushallinnon ammattilainen joka hakee töitä Suomessa 2025-2026. Mitä konkreettisia AI-taitoja minun pitäisi osata erottuakseni muista hakijoista? Anna viisi käytännön esimerkkiä miten käytän AI:ta myynnissä ja viisi taloushallinnossa. Ole konkreettinen — ei yleistä.</div>
+      <button class="sp-btn" onclick="scp(this)">Kopioi</button>
+    </div>
+    <div class="goout">
+      <div class="go-lbl">Mene Geminiin nyt</div>
+      <h4>Lähetä prompti — vertaa ChatGPT:n vastaukseen</h4>
+      <p>Onko vastauksessa jotain erilaista? Jotain mitä et löytänyt muilla työkaluilla?</p>
+      <a href="https://gemini.google.com" target="_blank" class="go-a" style="background:var(--gemini)">Avaa Gemini ↗</a>
+    </div>
+    <div class="sv">
+      <label>Parasta mitä Gemini löysi — mitä se sanoi eri tavalla?</label>
+      <textarea id="e5-gem" placeholder="Esim: Gemini mainitsi [asia] jota ChatGPT ei maininnut. Tai: Gemini antoi enemmän esimerkkejä myynnistä..." oninput="ls('e5-gem')"></textarea>
+    </div>
+    <ul class="tasks">
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Kokeilin Geminillä</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Kirjasin mitä se teki eri tavalla</span></li>
+    </ul>
+    <button class="done-btn" style="background:var(--gemini)" onclick="done(4)">Harjoitus 5 valmis →</button>
+  </div>
+</div>
+<div class="connector"><div class="conn-line" id="cl4"></div></div>
+</div>
+
+<!-- ═══════ H6 — SIMULAATTORI ═══════ -->
+<div class="exercise" id="e5">
+<div class="card">
+  <div class="card-head">
+    <div class="badge" id="b5" style="background:var(--sim)">6</div>
+    <div>
+      <div class="tool-tag" style="color:var(--sim)">🎭 Harjoittelusimulaattori</div>
+      <div class="ex-title">Harjoittele oikea työtilanne — tee virheitä turvallisesti</div>
+      <div class="ex-time">⏱ ~15 min · AI on vastapuoli, sinä olet sinä</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl t">Teoria — miksi simulointi toimii</div>
+    <div class="tbox">
+      <h3>Ainoa tapa oppia vaikeat tilanteet on harjoitella niitä</h3>
+      <p>Paras tapa valmistautua vaativiin asiakastilanteisiin, esimiesviestintään tai neuvotteluihin on harjoitella ne ensin turvallisessa ympäristössä. Täällä voit epäonnistua — AI kertoo miksi ja miten parantaa.</p>
+      <p>AI pelaa vastapuolen roolia ja antaa palautteen jokaisen viestin jälkeen. Kokeile eri lähestymistapoja — sama tilanne eri tavalla sanottuna johtaa eri lopputulokseen.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl h">Harjoitus — valitse tilanne ja aloita</div>
+    <div class="scene-btns">
+      <button class="scbtn active" onclick="setSim('client',this)">🤝 Vaativa asiakas</button>
+      <button class="scbtn" onclick="setSim('colleague',this)">💼 Kollegan pyyntö</button>
+      <button class="scbtn" onclick="setSim('manager',this)">📊 Esimies kysyy</button>
+    </div>
+    <div class="chatbox">
+      <div class="ch-head" style="background:var(--sim-pale);">
+        <div class="ch-av" style="background:var(--sim-pale);border:1px solid var(--sim-mid)" id="simAv">🤝</div>
+        <div><div class="ch-name" id="simNm">Vaativa asiakas</div><div class="ch-role" id="simRl">Harjoittelutilanne · Myynti</div></div>
+        <span class="online" style="color:var(--success)">● Live</span>
+      </div>
+      <div class="msgs" id="simMsgs"><div class="bbl bot">Hei — soitin teille eilen mutta kukaan ei vastannut. Olin odottanut teiltä nopeampaa palvelua. Mitä tapahtui?</div></div>
+      <div class="ch-row">
+        <textarea class="ci" id="simIn" placeholder="Kirjoita vastauksesi..." rows="2" onkeydown="simKey(event)"></textarea>
+        <button class="cs" id="simSnd" style="background:var(--sim)" onclick="simSend()">→</button>
+      </div>
+    </div>
+    <ul class="tasks">
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Kävin yhden simulaation loppuun</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Kokeilin toista lähestymistapaa</span></li>
+    </ul>
+    <button class="done-btn" style="background:var(--sim)" onclick="done(5)">Harjoitus 6 valmis →</button>
+  </div>
+</div>
+<div class="connector"><div class="conn-line" id="cl5"></div></div>
+</div>
+
+<!-- ═══════ H7 — OMA AI-MUISTILEHTIÖ ═══════ -->
+<div class="exercise" id="e6">
+<div class="card">
+  <div class="card-head">
+    <div class="badge" id="b6" style="background:var(--lib)">7</div>
+    <div>
+      <div class="tool-tag" style="color:var(--lib)">📋 Minun AI-muistilehtiöni</div>
+      <div class="ex-title">Katso mitä rakensit — sinun tietosi, sinun tuomiosi</div>
+      <div class="ex-time">⏱ ~10 min · Kaikki tämän moduulin opit yhdessä näkymässä</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl t">Teoria — miksi tämä on tärkeämpi kuin lista prompteja</div>
+    <div class="tbox">
+      <h3>Valmis lista on passiivinen. Sinun oma arvio on voimaannuttava.</h3>
+      <p>Voisin antaa sinulle listan "parhaista AI-prompteista" — mutta et muistaisi niitä viikon päästä, koska ne eivät ole sinun. Sen sijaan tänään katsot taaksepäin omaa työtäsi: mitä kirjoitit, mitä AI paransi, mitä itse pidit parempana.</p>
+      <p>Tämä sivu on sinun muistilehtiösi. Se on rakentunut harjoitusten aikana — sinun vastauksistasi. Sinä olet se joka tiesi mitä sanoa. AI oli muokkaaja, ei ajattelija.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl h">Muistilehtiösi — rakentunut tämän moduulin aikana</div>
+
+    <!-- GAMMA -->
+    <div class="lib-card" style="margin-bottom:12px">
+      <div class="lib-card-head" style="background:var(--gamma-pale)">
+        <span class="lc-icon" style="font-size:16px">✦</span>
+        <div><div class="lc-tool" style="color:var(--gamma)">Gamma</div><div class="lc-title">Esityksesi linkki</div></div>
+      </div>
+      <div class="lc-body" style="padding:12px 18px 14px">
+        <div id="recap-gamma" style="font-size:14px;color:var(--muted);font-style:italic">Tallennettu linkki tulee tähän automaattisesti harjoituksen 1 jälkeen.</div>
+      </div>
+    </div>
+
+    <!-- CHATGPT VERDICTS -->
+    <div class="lib-card" style="margin-bottom:12px">
+      <div class="lib-card-head" style="background:var(--gpt-pale)">
+        <span class="lc-icon" style="font-size:16px">💬</span>
+        <div><div class="lc-tool" style="color:var(--gpt)">ChatGPT — sinun tuomiosi</div><div class="lc-title">Mitä AI paransi — mitä se ei voinut parantaa</div></div>
+      </div>
+      <div class="lc-body" style="padding:12px 18px 14px">
+        <div id="recap-gpt-better" style="font-size:14px;color:var(--muted);font-style:italic;margin-bottom:8px">Harjoituksen 3 vastaus tulee tähän.</div>
+        <div id="recap-gpt-mine" style="font-size:14px;color:var(--muted);font-style:italic"></div>
+      </div>
+    </div>
+
+    <!-- COPILOT VERDICTS -->
+    <div class="lib-card" style="margin-bottom:12px">
+      <div class="lib-card-head" style="background:var(--copilot-pale)">
+        <span class="lc-icon" style="font-size:16px">🔷</span>
+        <div><div class="lc-tool" style="color:var(--copilot)">Copilot — sinun tuomiosi</div><div class="lc-title">Mitä Copilot lisäsi — mitä sinä teit paremmin</div></div>
+      </div>
+      <div class="lc-body" style="padding:12px 18px 14px">
+        <div id="recap-cop1" style="font-size:14px;color:var(--muted);font-style:italic;margin-bottom:6px">Harjoituksen 4 vastaus tulee tähän.</div>
+        <div id="recap-cop2" style="font-size:14px;color:var(--muted);font-style:italic;margin-bottom:6px"></div>
+        <div id="recap-cop3" style="font-size:14px;color:var(--muted);font-style:italic"></div>
+      </div>
+    </div>
+
+    <!-- GEMINI VERDICT -->
+    <div class="lib-card" style="margin-bottom:12px">
+      <div class="lib-card-head" style="background:var(--gemini-pale)">
+        <span class="lc-icon" style="font-size:16px">◆</span>
+        <div><div class="lc-tool" style="color:var(--gemini)">Gemini — sinun löytösi</div><div class="lc-title">Mitä Gemini sanoi eri tavalla</div></div>
+      </div>
+      <div class="lc-body" style="padding:12px 18px 14px">
+        <div id="recap-gem" style="font-size:14px;color:var(--muted);font-style:italic">Harjoituksen 5 vastaus tulee tähän.</div>
+      </div>
+    </div>
+
+    <!-- PERSONAL CHEAT SHEET — she fills this herself -->
+    <div style="background:var(--lib-pale);border:1px solid var(--lib-mid);border-radius:12px;padding:22px 24px;margin-top:20px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lib);margin-bottom:14px;">Henkilökohtainen AI-sääntösi — kirjoita omin sanoin</div>
+      <p style="font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:16px">Tämä on tärkein kohta koko muistilehtiössä. Kolme lausetta joista olet sinä itse päättänyt tämän moduulin perusteella.</p>
+      <div class="sv" style="margin-bottom:12px">
+        <label>Milloin käytät ChatGPT:tä töissä — yksi konkreettinen tilanne</label>
+        <textarea id="rule-gpt" placeholder="Esim: Käytän ChatGPT:tä kun minun täytyy kirjoittaa follow-up nopeasti — kirjoitan oman version ensin, sitten pyydän paremmaksi." oninput="ls('rule-gpt')" style="min-height:60px"></textarea>
+      </div>
+      <div class="sv" style="margin-bottom:12px">
+        <label>Milloin Copilot on parempi kuin ChatGPT — sinun vastauksesi</label>
+        <textarea id="rule-copilot" placeholder="Esim: Copilot on parempi kun olen Outlookissa ja tarvitsen nopean yhteenvedon — ei tarvitse avata uutta välilehteä." oninput="ls('rule-copilot')" style="min-height:60px"></textarea>
+      </div>
+      <div class="sv" style="margin:0">
+        <label>Mitä opit itsestäsi tänään — yksi rehellinen havainto</label>
+        <textarea id="rule-self" placeholder="Esim: Huomasin että minulla on hyvä vaisto siitä miten asiat sanotaan — AI paransi muotoa, ei sisältöä. Tai: Opin että annoin AI:lle liian vähän tietoa aiemmin." oninput="ls('rule-self')" style="min-height:60px"></textarea>
+      </div>
+    </div>
+
+    <!-- PROMPT REFERENCE — compact, on platform -->
+    <div style="margin-top:20px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Nopeat promptit — kopioi kun tarvitset</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="lib-card"><div class="lib-card-head" style="background:var(--gpt-pale);padding:10px 14px"><div class="lc-tool" style="color:var(--gpt);font-size:10px">ChatGPT · Paranna versiosi</div></div><div class="lc-body"><div class="lc-prompt" style="font-size:12px">Paranna tämä teksti kolmella tavalla: 1) Lämpimämpi 2) Varmempi 3) Lyhyempi. Älä muuta faktoja. [LIITÄ TEKSTI]<button class="lc-copy" onclick="lcCopy(this)">Kopioi</button></div></div></div>
+        <div class="lib-card"><div class="lib-card-head" style="background:var(--copilot-pale);padding:10px 14px"><div class="lc-tool" style="color:var(--copilot);font-size:10px">Copilot · Raportti selkokielellä</div></div><div class="lc-body"><div class="lc-prompt" style="font-size:12px">Selitä nämä luvut myyntitiimille: [luvut]. Mitä ne tarkoittavat? Yksi positiivinen, yksi haaste, toimintaehdotus. Max 150 sanaa.<button class="lc-copy" onclick="lcCopy(this)">Kopioi</button></div></div></div>
+        <div class="lib-card"><div class="lib-card-head" style="background:var(--gamma-pale);padding:10px 14px"><div class="lc-tool" style="color:var(--gamma);font-size:10px">Gamma · Pikäesitys</div></div><div class="lc-body"><div class="lc-prompt" style="font-size:12px">Tee 8 dian esitys: [aihe]. Yleisö: [kenelle]. Tavoite: [mitä haluan heidän tekevän]. Jokaisessa diassa otsikko + 2 lausetta + 1 fakta.<button class="lc-copy" onclick="lcCopy(this)">Kopioi</button></div></div></div>
+        <div class="lib-card"><div class="lib-card-head" style="background:var(--gemini-pale);padding:10px 14px"><div class="lc-tool" style="color:var(--gemini);font-size:10px">Gemini · Markkinatieto</div></div><div class="lc-body"><div class="lc-prompt" style="font-size:12px">Mitä juuri nyt tapahtuu [alasi] Suomessa? 5 havaintoa viimeiseltä 6kk. Mitä tämä tarkoittaa myynti/taloushallinnon ammattilaiselle?<button class="lc-copy" onclick="lcCopy(this)">Kopioi</button></div></div></div>
+      </div>
+    </div>
+
+    <ul class="tasks" style="margin-top:16px">
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Luin omat vastaukseni — näin mitä olin oppinut</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Kirjoitin kolme henkilökohtaista AI-sääntöä</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Rehellinen havainto itsestäni kirjattu</span></li>
+    </ul>
+    <button class="done-btn" style="background:var(--lib)" onclick="done(6)">Moduuli B valmis 🎉</button>
+  </div>
+</div>
+</div>
+
+<!-- SKILLS END -->
+<div id="skillsEnd" style="display:none">
+<div class="skills-end">
+  <h2>Mitä opit tänään 🎯</h2>
+  <p class="se-lead">Viisi eri AI-työkalua. Oikeat työtilanteet harjoiteltuina. Prompt-kirjasto taskussa.</p>
+
+  <div class="skills-grid">
+    <div class="sk"><div class="sk-icon">✦</div><h4>Esitykset Gammalla</h4><p>Rakennat ammatillisen esityksen tekstistä minuuteissa — ja osaat iteroida sitä omaan ääneesi.</p><div class="when">→ Käytä: asiakasesitykset, työnhaku, sisäiset katsaukset</div></div>
+    <div class="sk"><div class="sk-icon">🎨</div><h4>Visuaalit Canvalla</h4><p>Teet ammatillisen bannerin tai kuvan joka edustaa sinua — 5 sekunnin testillä tarkistettuna.</p><div class="when">→ Käytä: sähköpostin allekirjoitus, profiilikuva, mainokset</div></div>
+    <div class="sk"><div class="sk-icon">💬</div><h4>ChatGPT viestintäapurina</h4><p>Kirjoitat ensimmäisen version sekunneissa ja viimeistelet omaan ääneesi. Tiedät mitä tietoja antaa.</p><div class="when">→ Käytä: sähköpostit, raportit, muistutukset, tarjoukset</div></div>
+    <div class="sk"><div class="sk-icon">🔷</div><h4>Copilot toimistossa</h4><p>Tiedät mitä Copilot tekee eri tavalla — ja milloin kannattaa käyttää sitä ChatGPT:n sijaan.</p><div class="when">→ Käytä: Outlook, Teams, Word, Excel — integroitu työnkulku</div></div>
+    <div class="sk"><div class="sk-icon">◆</div><h4>Gemini tuoretta tietoa varten</h4><p>Tiedät milloin Gemini on parempi — reaaliaikainen tieto, Google-integraatio.</p><div class="when">→ Käytä: markkinatieto, uutiset, ajankohtaiset faktat</div></div>
+    <div class="sk"><div class="sk-icon">📚</div><h4>Henkilökohtainen prompt-kirjasto</h4><p>Sinulla on kuusi valmista promptia jotka säästävät aikaa joka viikko — ja tiedät miten lisätä niitä.</p><div class="when">→ Käytä: päivittäin töissä, jokaisessa AI-työkalussa</div></div>
+  </div>
+
+  <div class="cv-line-box">
+    <div class="cv-lbl">💼 CV-rivi tai haastattelu-vastaus</div>
+    <p>"Käytän aktiivisesti useita AI-työkaluja työssäni: ChatGPT ja Copilot viestintään, Gemini markkinatietoon, Gamma esityksiin ja Canva visuaaleihin. Minulla on henkilökohtainen prompt-kirjasto joka nopeuttaa päivittäistä työtäni."</p>
+  </div>
+
+  <div>
+    <p style="font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;font-size:11px;">Reflektio — kirjoita tähän</p>
+    <textarea class="reflect-area" id="reflectText" placeholder="Mikä muuttui tänään? Missä tilanteessa käytät näitä ensimmäisenä töissä?..." oninput="ls('reflectText')"></textarea>
+    <button class="save-r" onclick="saveR()">Tallenna reflektio ✓</button>
+  </div>
+</div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+const TOTAL=7;
+let doneArr=JSON.parse(localStorage.getItem('mb_done')||'[]');
+
+function ls(id){
+  const el=document.getElementById(id);
+  if(el)localStorage.setItem('mb_'+id,el.value);
+  // Live-update recap if it exists
+  if(['e3-better','e3-mine','cop-q1','cop-q2','cop-q3','e5-gem','e1-link'].includes(id)){
+    populateRecap();
+  }
+}
+function scp(btn){const t=btn.previousElementSibling.textContent;navigator.clipboard.writeText(t).then(()=>{btn.textContent='Kopioitu ✓';btn.classList.add('ok');setTimeout(()=>{btn.textContent='Kopioi';btn.classList.remove('ok');},2200);});}
+function lcCopy(btn){const t=btn.parentElement.textContent.replace('Kopioi','').trim();navigator.clipboard.writeText(t).then(()=>{btn.textContent='✓';btn.classList.add('ok');setTimeout(()=>{btn.textContent='Kopioi';btn.classList.remove('ok');},2200);});}
+
+// EDITABLE PROMPT
+function checkEdit(tid,hid,bid,oid){
+  const orig=document.getElementById(oid).value;
+  const cur=document.getElementById(tid).value;
+  const changed=orig!==''&&cur!==orig;
+  const h=document.getElementById(hid);const b=document.getElementById(bid);
+  if(changed){
+    h.textContent='✅ Muokattu — voit kopioida';h.classList.add('ok');
+    b.className='copy-ready';b.disabled=false;
+    b.onclick=function(){navigator.clipboard.writeText(cur).then(()=>{b.textContent='Kopioitu ✓';b.classList.add('ok');setTimeout(()=>{b.textContent='Kopioi';b.classList.remove('ok');},2200);});};
+  } else {
+    h.textContent='✏️ Täytä hakasulkeet ensin';h.classList.remove('ok');
+    b.className='copy-locked';b.disabled=true;b.onclick=null;
+  }
+}
+function initOrig(){
+  [['canva-p','co2']].forEach(([tid,oid])=>{
+    const el=document.getElementById(tid);const orig=document.getElementById(oid);
+    if(el&&orig)orig.value=el.value;
+  });
+}
+
+// SCENE SELECT
+function selectScene(key,el){
+  document.querySelectorAll('.scene-card').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.scene-content').forEach(c=>c.classList.remove('vis'));
+  el.classList.add('active');
+  document.getElementById('sc-'+key).classList.add('vis');
+}
+
+function tick(li){li.classList.toggle('done');}
+function goTo(i){document.getElementById('e'+i).scrollIntoView({behavior:'smooth',block:'start'});}
+
+function done(idx){
+  if(!doneArr.includes(idx))doneArr.push(idx);
+  localStorage.setItem('mb_done',JSON.stringify(doneArr));
+  const b=document.getElementById('b'+idx);
+  if(b){b.textContent='✓';b.classList.add('done-b');}
+  const btn=document.querySelector('#e'+idx+' .done-btn');
+  if(btn){btn.textContent='Valmis ✓';btn.disabled=true;}
+  if(idx+1<TOTAL){
+    const nx=document.getElementById('e'+(idx+1));if(nx)nx.classList.add('unlocked');
+    const cl=document.getElementById('cl'+idx);if(cl)cl.classList.add('lit');
+    setTimeout(()=>nx.scrollIntoView({behavior:'smooth',block:'start'}),300);
+  }
+  updateProg();updateDots();
+  if(doneArr.length===TOTAL){document.getElementById('skillsEnd').style.display='block';setTimeout(()=>document.getElementById('skillsEnd').scrollIntoView({behavior:'smooth'}),400);}
+}
+function updateProg(){document.getElementById('pb').style.width=(doneArr.length/TOTAL*100)+'%';document.getElementById('pn').textContent=doneArr.length+'/'+TOTAL;}
+function updateDots(){document.querySelectorAll('.dot-nav').forEach((d,i)=>{d.classList.remove('active','done');if(doneArr.includes(i))d.classList.add('done');});}
+
+// GAMMA BUILDER
+async function generateGamma(){
+  const name=document.getElementById('g-name').value.trim()||'[Nimesi]';
+  const exp=document.getElementById('g-exp').value.trim()||'[Kokemuksesi]';
+  const win=document.getElementById('g-win').value.trim()||'[Saavutuksesi]';
+  const ai=document.getElementById('g-ai').value.trim()||'ChatGPT, Claude, Perplexity, NotebookLM, Napkin.ai, Lovable';
+  const seek=document.getElementById('g-seek').value.trim()||'[Mitä etsit]';
+  const btn=document.getElementById('genBtn');
+  btn.disabled=true;btn.textContent='⏳ Generoidaan...';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:900,
+        system:'Kirjoitat Gamma.app-prompteja suomeksi. Gamma luo esityksiä tekstistä. Kirjoita tarkka, rakenteellinen prompti joka tuottaa 10 ammatillista diaa.',
+        messages:[{role:'user',content:`Kirjoita Gamma-prompti tästä henkilöstä:
+
+Nimi ja rooli: ${name}
+Kokemus: ${exp}
+Saavutus: ${win}
+AI-taidot: ${ai}
+Etsii: ${seek}
+
+Kirjoita Gamma-prompti joka alkaa "Luo 10 dian ammatillinen esitys:" ja kertoo tarkasti mitä jokainen dia sisältää. Sisällytä konkreettiset tiedot yllä olevasta henkilöstä. Promptin pituus: 200-300 sanaa. Vain suomeksi.`}]
+      })
+    });
+    const data=await res.json();
+    const out=data.content?.[0]?.text||'Virhe — yritä uudelleen';
+    document.getElementById('gbOut').value=out;
+    document.getElementById('gbResult').style.display='block';
+    document.getElementById('gbResult').scrollIntoView({behavior:'smooth',block:'nearest'});
+    localStorage.setItem('mb_gamma-prompt',out);
+  }catch(e){document.getElementById('gbOut').value='Virhe yhteydenotossa.';document.getElementById('gbResult').style.display='block';}
+  btn.disabled=false;btn.textContent='✦ Generoi uudelleen';
+}
+function copyGamma(){const t=document.getElementById('gbOut').value;navigator.clipboard.writeText(t).then(()=>{const b=document.getElementById('gbCopyBtn');b.textContent='Kopioitu ✓';b.classList.add('ok');setTimeout(()=>{b.textContent='Kopioi prompt';b.classList.remove('ok');},2500);});}
+
+// SIMULATOR
+const SIMS={
+  client:{av:'🤝',nm:'Vaativa asiakas',rl:'Harjoittelutilanne · Myynti',
+    sys:`Pelaat vaativan asiakkaan roolia. Olet soittanut myyjälle eilen mutta kukaan ei vastannut.
+Aloitus: "Hei — soitin teille eilen mutta kukaan ei vastannut. Olin odottanut teiltä nopeampaa palvelua. Mitä tapahtui?"
+Reagoi realistisesti. Empaattinen ratkaisu rauhoittaa. Puolustautuva vastaus ärsyttää.
+Jokaisen vastauksen lopussa: [PALAUTE: yksi lause mikä toimi tai mitä voisi parantaa] suomeksi.`,
+    open:'Hei — soitin teille eilen mutta kukaan ei vastannut. Olin odottanut teiltä nopeampaa palvelua. Mitä tapahtui?'
+  },
+  colleague:{av:'💼',nm:'Kollega Tiina',rl:'Harjoittelutilanne · Taloushallinto',
+    sys:`Olet kollega taloushallinnossa. Teet virheellistä budjettiraportointia ja tarvitset apua ennen esimiespalaveroi.
+Aloitus: "Hei, onko sinulla hetki? Huomasin juuri että kuukausiraporttini luvut eivät täsmää ja palaveri on kahden tunnin päästä. En tiedä mistä virhe tulee."
+Reagoi kollegan avun mukaan. Pyydä tarkennuksia. Anna palaute lopuksi.
+Jokaisen vastauksen lopussa: [PALAUTE: yksi lause] suomeksi.`,
+    open:'Hei, onko sinulla hetki? Huomasin juuri että kuukausiraporttini luvut eivät täsmää ja palaveri on kahden tunnin päästä. En tiedä mistä virhe tulee.'
+  },
+  manager:{av:'📊',nm:'Esimies',rl:'Harjoittelutilanne · Raportointi',
+    sys:`Olet esimies. Tarvitset pikahtiivistelmän viime kvartaalin myynnistä ennen johtoryhmäpalaveria.
+Aloitus: "Moi — onko sinulla 2 minuuttia? Tarvitsisin lyhyen suullisen yhteenvedon Q3:n myynnistä. Mitä pitää nostaa esiin hallitukselle?"
+Reagoi vastauksen selkeyden mukaan. Hyvä rakenne hyväksytään. Sekava vastaus → pyydä tarkennusta.
+Jokaisen vastauksen lopussa: [PALAUTE: yksi lause] suomeksi.`,
+    open:'Moi — onko sinulla 2 minuuttia? Tarvitsisin lyhyen suullisen yhteenvedon Q3:n myynnistä. Mitä pitää nostaa esiin hallitukselle?'
+  }
+};
+let curSim='client';let simHist=[];
+
+function setSim(key,btn){
+  curSim=key;
+  document.querySelectorAll('.scbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const s=SIMS[key];
+  document.getElementById('simAv').textContent=s.av;
+  document.getElementById('simNm').textContent=s.nm;
+  document.getElementById('simRl').textContent=s.rl;
+  simHist=[];
+  document.getElementById('simMsgs').innerHTML='';
+  addBbl(s.open,'bot');
+}
+async function simSend(){
+  const inp=document.getElementById('simIn');const msg=inp.value.trim();if(!msg)return;
+  addBbl(msg,'user');inp.value='';
+  document.getElementById('simSnd').disabled=true;
+  const load=addBbl('Kirjoittaa...','load');
+  simHist.push({role:'user',content:msg});
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,system:SIMS[curSim].sys,messages:simHist})});
+    const data=await res.json();const reply=data.content?.[0]?.text||'Virhe.';
+    load.remove();
+    if(reply.includes('[PALAUTE:')){
+      const parts=reply.split('[PALAUTE:');
+      addBbl(parts[0].trim(),'bot');
+      if(parts[1]){const fb=document.createElement('div');fb.style.cssText='font-size:12px;color:var(--forest);background:var(--forest-pale);border-radius:8px;padding:7px 12px;align-self:center;max-width:88%;margin:2px auto;';fb.textContent='💬 '+parts[1].replace(']','').trim();document.getElementById('simMsgs').appendChild(fb);document.getElementById('simMsgs').scrollTop=9999;}
+    }else{addBbl(reply,'bot');}
+    simHist.push({role:'assistant',content:reply});
+  }catch(e){load.textContent='Virhe. Tarkista yhteys.';load.classList.remove('load');}
+  document.getElementById('simSnd').disabled=false;
+}
+function addBbl(txt,cls){const d=document.createElement('div');d.className='bbl '+cls;d.style.background=cls==='user'?'var(--sim)':'';d.textContent=txt;const c=document.getElementById('simMsgs');c.appendChild(d);c.scrollTop=c.scrollHeight;return d;}
+function simKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();simSend();}}
+
+function checkWritten(textareaId, revealId){
+  const val=document.getElementById(textareaId).value.trim();
+  const el=document.getElementById(revealId);
+  if(el) el.style.display=val.length>20?'block':'none';
+}
+
+function populateRecap(){
+  // Gamma link
+  const gLink=localStorage.getItem('mb_e1-link');
+  const gEl=document.getElementById('recap-gamma');
+  if(gEl&&gLink&&gLink.trim()){gEl.style.fontStyle='normal';gEl.style.color='var(--ink)';gEl.innerHTML=`<a href="${gLink}" target="_blank" style="color:var(--gamma);font-weight:600">${gLink}</a>`;}
+
+  // ChatGPT verdicts
+  const better=localStorage.getItem('mb_e3-better');
+  const mine=localStorage.getItem('mb_e3-mine');
+  const bEl=document.getElementById('recap-gpt-better');
+  const mEl=document.getElementById('recap-gpt-mine');
+  if(bEl&&better){bEl.style.fontStyle='normal';bEl.style.color='var(--ink)';bEl.textContent='Parempi versio: '+better;}
+  if(mEl&&mine){mEl.style.fontStyle='normal';mEl.style.color='var(--ink)';mEl.textContent='Alkuperäisessä oli hyvää: '+mine;}
+
+  // Copilot verdicts
+  [['cop-q1','recap-cop1','Copilot oli parempi: '],['cop-q2','recap-cop2','Minä olin parempi: '],['cop-q3','recap-cop3','Jatkossa: ']].forEach(([k,id,prefix])=>{
+    const v=localStorage.getItem('mb_'+k);const el=document.getElementById(id);
+    if(el&&v){el.style.fontStyle='normal';el.style.color='var(--ink)';el.textContent=prefix+v;}
+  });
+
+  // Gemini
+  const gem=localStorage.getItem('mb_e5-gem');
+  const gEl2=document.getElementById('recap-gem');
+  if(gEl2&&gem){gEl2.style.fontStyle='normal';gEl2.style.color='var(--ink)';gEl2.textContent=gem;}
+}
+
+
+
+// INIT
+window.addEventListener('DOMContentLoaded',()=>{
+  ['e1-link','e3-better','e3-mine','e4-compare','e5-gem','g-name','g-exp','g-win','g-ai','g-seek',
+   'own-follow','own-objection','own-report','own-invoice','own-copilot','copilot-version',
+   'cop-q1','cop-q2','cop-q3','rule-gpt','rule-copilot','rule-self','reflectText'].forEach(id=>{
+    const v=localStorage.getItem('mb_'+id);const el=document.getElementById(id);if(v&&el)el.value=v;
+  });
+  const gp=localStorage.getItem('mb_gamma-prompt');
+  if(gp){document.getElementById('gbOut').value=gp;document.getElementById('gbResult').style.display='block';}
+  doneArr.forEach(idx=>{
+    const b=document.getElementById('b'+idx);if(b){b.textContent='✓';b.classList.add('done-b');}
+    if(idx+1<TOTAL){const nx=document.getElementById('e'+(idx+1));if(nx)nx.classList.add('unlocked');}
+    const cl=document.getElementById('cl'+idx);if(cl)cl.classList.add('lit');
+    const btn=document.querySelector('#e'+idx+' .done-btn');if(btn){btn.textContent='Valmis ✓';btn.disabled=true;}
+  });
+  if(doneArr.length===TOTAL)document.getElementById('skillsEnd').style.display='block';
+  updateProg();updateDots();
+  setTimeout(initOrig,100);
+  // Restore step2 visibility for written own answers
+  ['follow','objection','report','invoice'].forEach(k=>{
+    const own=localStorage.getItem('mb_own-'+k);
+    if(own&&own.trim().length>20){const el=document.getElementById('step2-'+k);if(el)el.style.display='block';}
+  });
+  const ownCop=localStorage.getItem('mb_own-copilot');
+  if(ownCop&&ownCop.trim().length>20){const el=document.getElementById('step2-copilot');if(el)el.style.display='block';}
+  populateRecap();
+});
+</script>
+</body>
+</html>
