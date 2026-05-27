@@ -1239,7 +1239,7 @@ async function callModuleAI(system, user, maxTokens){
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(payload),
-    signal: timeoutSignal(15000)
+    signal: timeoutSignal(90000)
   });
   let d = {};
   try { d = await r.json(); } catch (e) {}
@@ -1541,8 +1541,10 @@ Write the complete Lovable prompt now, starting with: "Build me a professional p
     document.getElementById('cvb-result').scrollIntoView({behavior:'smooth',block:'nearest'});
     localStorage.setItem('ma_lovable-prompt',prompt);
   }catch(e){
-    document.getElementById('lovable-out').value='Virhe yhteydenotossa. Tarkista internet-yhteys.';
+    const reason=(e&&e.message)?e.message:'tuntematon virhe';
+    document.getElementById('lovable-out').value='AI-promptin generointi epäonnistui: '+reason+'\n\nKokeile uudelleen muutaman sekunnin kuluttua. Jos virhe jatkuu, pyydä apua opettajalta.';
     document.getElementById('cvb-result').style.display='block';
+    document.getElementById('cvb-result').scrollIntoView({behavior:'smooth',block:'nearest'});
   }
   btn.disabled=false;btn.textContent='✨ Rakenna Lovable-prompt uudelleen';
 }
