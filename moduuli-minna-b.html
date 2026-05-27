@@ -271,6 +271,41 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .cmp-table tr:last-child td{border-bottom:none;}
 .cmp-table .best{font-weight:700;color:var(--forest);}
 
+/* BANNER UPLOAD + PREVIEW */
+.banner-step{background:var(--white);border:1px solid var(--canva-mid);border-radius:12px;padding:18px 22px;margin:12px 0;}
+.banner-step-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--canva);color:var(--white);font-size:12px;font-weight:700;margin-right:10px;}
+.banner-step h4{display:inline;font-size:15px;font-weight:700;color:var(--ink);}
+.banner-step p{margin:10px 0 0 36px;font-size:13px;color:var(--muted);line-height:1.6;}
+.template-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0 36px;}
+.template-row a{display:inline-flex;align-items:center;gap:6px;background:var(--canva);color:var(--white);text-decoration:none;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;transition:all .15s;}
+.template-row a:hover{opacity:.88;transform:translateY(-1px);}
+.template-row a.ghost{background:transparent;color:var(--canva);border:2px solid var(--canva);}
+.template-row a.ghost:hover{background:var(--canva-pale);}
+.banner-edit-list{margin:10px 0 0 36px;list-style:none;padding:0;}
+.banner-edit-list li{display:flex;gap:8px;font-size:13px;color:var(--text);padding:5px 0;}
+.banner-edit-list li::before{content:'·';color:var(--canva);font-weight:700;}
+.upload-zone{margin:10px 0 0 36px;border:2px dashed var(--canva-mid);border-radius:10px;padding:24px 18px;text-align:center;background:var(--canva-pale);cursor:pointer;transition:all .2s;}
+.upload-zone:hover{border-color:var(--canva);background:#D4F6F7;}
+.upload-zone p{font-size:14px;font-weight:600;color:var(--canva);margin:0;}
+.upload-zone small{display:block;margin-top:6px;color:var(--muted);font-weight:400;font-size:12px;}
+.banner-preview-card{margin:10px 0 0 36px;background:var(--white);border:1px solid var(--canva-mid);border-radius:10px;padding:14px;display:flex;gap:14px;align-items:center;}
+.banner-preview-thumb{width:160px;height:54px;background:var(--bg2);border-radius:6px;overflow:hidden;cursor:zoom-in;flex-shrink:0;border:1px solid var(--border);}
+.banner-preview-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.banner-preview-meta{flex:1;font-size:12px;color:var(--muted);line-height:1.5;min-width:0;}
+.banner-preview-meta strong{color:var(--ink);display:block;font-size:13px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.banner-preview-actions{display:flex;flex-direction:column;gap:6px;}
+.banner-preview-actions button{background:var(--ink);color:var(--white);border:none;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.banner-preview-actions button.ghost{background:var(--white);color:var(--ink);border:1px solid var(--border);}
+.banner-modal{position:fixed;inset:0;background:rgba(20,20,20,0.85);z-index:9999;display:none;align-items:center;justify-content:center;padding:24px;}
+.banner-modal.show{display:flex;}
+.banner-modal-inner{max-width:1100px;max-height:90vh;background:var(--white);border-radius:14px;padding:18px;position:relative;display:flex;flex-direction:column;gap:12px;}
+.banner-modal-inner img{max-width:100%;max-height:78vh;object-fit:contain;border-radius:8px;}
+.banner-modal-close{position:absolute;top:10px;right:10px;background:var(--ink);color:var(--white);border:none;border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.criteria-list{margin:10px 0 0 36px;list-style:none;padding:0;}
+.criteria-list li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text);padding:6px 0;}
+.criteria-list li input[type=checkbox]{width:18px;height:18px;accent-color:var(--canva);cursor:pointer;}
+.criteria-list li.auto{color:var(--forest);font-weight:600;}
+
 @media(max-width:680px){
   .hero{padding:48px 24px 40px;}
   .home-link{top:14px;right:16px;padding:7px 12px;font-size:11px;}
@@ -281,6 +316,14 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
   .compare,.scene-grid,.tool-compare,.skills-grid{grid-template-columns:1fr;}
   .outputs-row{grid-template-columns:1fr 1fr;}
   .gb-body,.gb-result{padding:18px 20px;}
+  .banner-preview-card{flex-direction:column;align-items:stretch;}
+  .banner-preview-thumb{width:100%;height:90px;}
+  .template-row{margin-left:0;}
+  .banner-edit-list{margin-left:0;}
+  .upload-zone{margin-left:0;}
+  .banner-preview-card{margin-left:0;}
+  .criteria-list{margin-left:0;}
+  .banner-step p{margin-left:0;}
 }
 </style>
 </head>
@@ -508,65 +551,119 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
     <div class="badge" id="b1" style="background:var(--canva)">2</div>
     <div>
       <div class="tool-tag" style="color:var(--canva)">🎨 Canva — ammatillinen banneri</div>
-      <div class="ex-title">Tee ammatillinen banneri josta olet ylpeä</div>
-      <div class="ex-time">⏱ ~20 min · Tiedät jo Canvan — tänään tehdään jotain uutta</div>
+      <div class="ex-title">Tee ja lataa banneri (8–12 min)</div>
+      <div class="ex-time">⏱ Valmis pohja → muokkaa 4 asiaa → lataa PNG → upload</div>
     </div>
   </div>
 
   <div class="sec">
-    <div class="sec-lbl t">Teoria — uusi tehtävä tutulla työkalulla</div>
-    <div class="tbox">
-      <h3>Tiedät jo Canvan. Nyt tehdään ammatillinen banneri joka edustaa sinua.</h3>
-      <p>Tänään et tee mitä tahansa kuvaa — teet bannerin jota voit käyttää sähköpostisi allekirjoituksessa, työnhakuviestissä tai ammatillisessa profiilissa. Se on 600×200 pikselin kuva jossa on nimesi, roolisi, ja yksi vahvuuslause.</p>
-      <p><strong style="color:#fff">5 sekunnin sääntö:</strong> Katso valmista kuvaa 5 sekuntia. Käännä katse pois. Muistitko nimesi ja roolisi? Jos kyllä — banneri toimii.</p>
+    <div class="sec-lbl e">Tavoite (8–12 min)</div>
+    <div class="info">
+      <div>🎯</div>
+      <div>
+        Tee yksi ammatillinen banneri ja lataa se tänne todisteeksi.<br>
+        <strong>Sääntö:</strong> aloita valmiista pohjasta, älä tyhjästä. Muokkaa vain 4 asiaa.
+      </div>
     </div>
   </div>
 
   <div class="sec">
-    <div class="sec-lbl s">Askeleet</div>
-    <ol class="steps">
-      <li><div><span class="sh">Pyydä ensin Claude tai ChatGPT suunnittelemaan banneri</span><span class="sb">Käytä alla olevaa promptia. Saat värisuositukset, fonttisuositukset ja tekstiehdotuksen.</span></div></li>
-      <li><div><span class="sh">Mene canva.com → Luo uusi → hae "Email signature banner"</span><span class="sb">Tai hae "LinkedIn banner" — koko on valmiina oikein.</span><a href="https://canva.com" target="_blank" class="sa">Avaa Canva ↗</a></div></li>
-      <li><div><span class="sh">Vaihda värit — kopioi hex-koodi suoraan AI:n suunnitelmasta</span><span class="sb">Klikkaa taustaväriä → värilaatikko ylävasemmalla → kirjoita hex-koodi → Enter.</span></div></li>
-      <li><div><span class="sh">Lisää teksti: nimi, rooli, yksi vahvuuslause</span><span class="sb">Kolme riviä riittää. Fontti: Montserrat tai Lato. Teksti tumma taustalle = valkoinen. Vaalea tausta = tumma teksti.</span></div></li>
-      <li><div><span class="sh">Tarkista 5 sekunnin säännöllä — lataa PNG</span><span class="sb">Jaa → Lataa → PNG. Tallenna nimellä "ammatillinen-banneri.png".</span></div></li>
-    </ol>
-  </div>
+    <div class="sec-lbl s">Tee tässä järjestyksessä</div>
 
-  <div class="sec">
-    <div class="sec-lbl h">Harjoitus</div>
-    <div class="eprompt-wrap">
-      <div class="eprompt-lbl">✏️ Muokkaa — täytä omat tietosi ennen kopiointia</div>
-      <textarea class="editable-p" id="canva-p" oninput="checkEdit('canva-p','ch2','cb2','co2')">Suunnittele minulle ammatillinen banneri (600×200px) Canvaa varten.
+    <div class="banner-step">
+      <div><span class="banner-step-num">1</span><h4>Valitse valmis pohja Canvassa</h4></div>
+      <p>Älä aloita tyhjästä. Valitse Canvan ammatillinen banneripohja ja muokkaa sitä.</p>
+      <div class="template-row">
+        <a href="https://www.canva.com/search?q=email%20signature%20banner&category=tACFalfdiSI" target="_blank">Email signature -pohjat ↗</a>
+        <a href="https://www.canva.com/search?q=linkedin%20banner&category=tACFalfdiSI" target="_blank" class="ghost">LinkedIn-pohjat ↗</a>
+      </div>
+    </div>
+
+    <div class="banner-step">
+      <div><span class="banner-step-num">2</span><h4>Muokkaa vain 4 asiaa (max 10 min)</h4></div>
+      <p>Muu pysyy ennallaan. Tämä poistaa suunnittelutuskan.</p>
+      <ul class="banner-edit-list">
+        <li>Nimi</li>
+        <li>Rooli</li>
+        <li>Yksi vahvuuslause (max 8 sanaa)</li>
+        <li>Yksi väri (valinnainen)</li>
+      </ul>
+    </div>
+
+    <div class="banner-step">
+      <div><span class="banner-step-num">3</span><h4>Lataa PNG koneelle</h4></div>
+      <p>Canva: Share → Download → PNG. Tallenna nimellä esim. <em>banner.png</em>.</p>
+    </div>
+
+    <div class="banner-step">
+      <div><span class="banner-step-num">4</span><h4>Lataa banneri tänne</h4></div>
+      <div class="upload-zone" id="bannerUploadZone" onclick="document.getElementById('bannerFile').click()">
+        <input type="file" id="bannerFile" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="handleBannerUpload(event)">
+        <p>📁 Klikkaa ladataksesi banneri</p>
+        <small>PNG, JPG tai WebP · alle 4 MB</small>
+      </div>
+      <div id="bannerPreviewCard" class="banner-preview-card" style="display:none">
+        <div class="banner-preview-thumb" onclick="openBannerModal()"><img id="bannerThumb" alt="Banneri"></div>
+        <div class="banner-preview-meta">
+          <strong id="bannerName">banner.png</strong>
+          <span id="bannerInfo">Ladattu nyt</span>
+        </div>
+        <div class="banner-preview-actions">
+          <button onclick="openBannerModal()">Näytä isona</button>
+          <button class="ghost" onclick="document.getElementById('bannerFile').click()">Vaihda kuva</button>
+        </div>
+      </div>
+      <div id="bannerError" style="display:none;margin:10px 0 0 36px;font-size:13px;color:#B91C1C;font-weight:600;"></div>
+    </div>
+
+    <div class="banner-step">
+      <div><span class="banner-step-num">5</span><h4>Tarkista onnistuminen</h4></div>
+      <p>Avaa esikatselu ja varmista että nämä toteutuvat:</p>
+      <ul class="criteria-list">
+        <li><input type="checkbox" id="bc-name" onchange="lsCheck('bc-name', this)"><label for="bc-name">Nimi näkyy</label></li>
+        <li><input type="checkbox" id="bc-role" onchange="lsCheck('bc-role', this)"><label for="bc-role">Rooli luettavissa</label></li>
+        <li><input type="checkbox" id="bc-strength" onchange="lsCheck('bc-strength', this)"><label for="bc-strength">Yksi vahvuuslause mukana</label></li>
+        <li><input type="checkbox" id="bc-uploaded" disabled><label for="bc-uploaded">Banneri ladattu (auto)</label></li>
+        <li><input type="checkbox" id="bc-approved" onchange="lsCheck('bc-approved', this)"><label for="bc-approved">Esikatselu hyväksytty</label></li>
+      </ul>
+    </div>
+
+    <details style="margin-top:14px;background:var(--bg2);border-radius:8px;padding:10px 14px;">
+      <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--ink);">Vapaaehtoinen: pyydä AI:lta värisuositukset</summary>
+      <div class="eprompt-wrap" style="margin-top:10px">
+        <div class="eprompt-lbl">✏️ Muokkaa — täytä omat tietosi ennen kopiointia</div>
+        <textarea class="editable-p" id="canva-p" oninput="checkEdit('canva-p','ch2','cb2','co2')">Suunnittele minulle ammatillinen banneri (600×200px) Canvaa varten.
 
 Nimeni: [kirjoita nimesi tähän]
 Roolini: [kirjoita roolisi tai tittelisi]
-Vahvuuslauseeni: [yksi lause joka kertoo mitä tuot mukanasi — esim. "Yhdistän myynin ja taloushallinnon osaamisen"]
+Vahvuuslauseeni: [yksi lause max 8 sanaa]
 
 Anna minulle:
-1. Taustaväri (hex-koodi) — ammatillinen, tumma tai neutraali
-2. Tekstiväri (hex-koodi) — hyvä kontrasti
-3. Korostusväri (hex-koodi) — yhdelle elementille
-4. Fontti jota suosittelet (Canvassa saatavilla oleva)
-5. Tekstin asettelu — mitä kirjoitetaan isolla, mitä pienellä
-
-Pidä se yksinkertaisena — vahva väri + selkeä teksti voittaa aina monimutkaisen.</textarea>
-      <div class="p-actions">
-        <span class="p-hint" id="ch2">✏️ Täytä nimesi, roolisi ja vahvuuslauseesi ensin</span>
-        <button class="copy-locked" id="cb2" disabled>Kopioi</button>
+1. Taustaväri (hex)
+2. Tekstiväri (hex)
+3. Yksi korostusväri (hex)
+4. Fontti jota suosittelet</textarea>
+        <div class="p-actions">
+          <span class="p-hint" id="ch2">✏️ Täytä nimesi, roolisi ja vahvuuslauseesi ensin</span>
+          <button class="copy-locked" id="cb2" disabled>Kopioi</button>
+        </div>
       </div>
-    </div>
-    <input type="hidden" id="co2" value="">
-    <ul class="tasks">
-      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Sain bannerisuunnitelman Claude/ChatGPT:ltä</span></li>
-      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Rakensin bannerin Canvassa</span></li>
-      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">5 sekunnin testi läpäistty — nimeni ja roolini muistuu</span></li>
-      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Latasin PNG:n koneelleni</span></li>
-    </ul>
+      <input type="hidden" id="co2" value="">
+    </details>
+
     <button class="done-btn" style="background:var(--canva)" onclick="done(1)">Harjoitus 2 valmis →</button>
   </div>
 </div>
 <div class="connector"><div class="conn-line" id="cl1"></div></div>
+</div>
+
+<!-- BANNER MODAL -->
+<div class="banner-modal" id="bannerModal" onclick="if(event.target.id==='bannerModal')closeBannerModal()">
+  <div class="banner-modal-inner">
+    <button class="banner-modal-close" onclick="closeBannerModal()" aria-label="Sulje">×</button>
+    <img id="bannerModalImg" alt="Banneri suurena">
+    <div style="font-size:12px;color:var(--muted);text-align:center;">Tältä tämä näyttää muille — sähköpostissa, LinkedInissä, työnhaussa.</div>
+  </div>
 </div>
 
 <!-- ═══════ H3 — CHATGPT ═══════ -->
@@ -1242,6 +1339,72 @@ Kirjoita Gamma-prompti joka alkaa "Luo 10 dian ammatillinen esitys:" ja kertoo t
 }
 function copyGamma(){const t=document.getElementById('gbOut').value;navigator.clipboard.writeText(t).then(()=>{const b=document.getElementById('gbCopyBtn');b.textContent='Kopioitu ✓';b.classList.add('ok');setTimeout(()=>{b.textContent='Kopioi prompt';b.classList.remove('ok');},2500);});}
 
+// CHECKBOX SAVE
+function lsCheck(id, el){
+  if(!el)el=document.getElementById(id);
+  if(!el)return;
+  localStorage.setItem('mb_'+id, el.checked?'true':'false');
+  if(el.checked)el.parentElement.classList.add('auto');
+  else el.parentElement.classList.remove('auto');
+}
+
+// BANNER UPLOAD
+const BANNER_MAX_BYTES=4*1024*1024;
+function handleBannerUpload(ev){
+  const file=ev.target.files&&ev.target.files[0];
+  const err=document.getElementById('bannerError');
+  if(!file){return;}
+  if(file.size>BANNER_MAX_BYTES){
+    err.textContent='Tiedosto on liian iso ('+(file.size/1024/1024).toFixed(1)+' MB). Maksimi on 4 MB.';
+    err.style.display='block';
+    return;
+  }
+  err.style.display='none';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const dataUrl=e.target.result;
+    try{
+      localStorage.setItem('mb_e2-banner',dataUrl);
+      localStorage.setItem('mb_e2-banner-name',file.name);
+      localStorage.setItem('mb_e2-banner-time',String(Date.now()));
+      localStorage.setItem('mb_e2-banner-size',String(file.size));
+      showBannerPreview();
+    }catch(storageErr){
+      err.textContent='Tallennus epäonnistui: kuva on liian iso paikalliseen tallennukseen. Kokeile pienempää PNG:tä.';
+      err.style.display='block';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+function showBannerPreview(){
+  const dataUrl=localStorage.getItem('mb_e2-banner');
+  if(!dataUrl)return;
+  const name=localStorage.getItem('mb_e2-banner-name')||'banner.png';
+  const time=Number(localStorage.getItem('mb_e2-banner-time')||0);
+  const size=Number(localStorage.getItem('mb_e2-banner-size')||0);
+  document.getElementById('bannerThumb').src=dataUrl;
+  document.getElementById('bannerName').textContent=name;
+  const sizeKb=size?(' · '+Math.round(size/1024)+' KB'):'';
+  const when=time?new Date(time).toLocaleString('fi-FI'):'nyt';
+  document.getElementById('bannerInfo').textContent='Ladattu '+when+sizeKb;
+  document.getElementById('bannerPreviewCard').style.display='flex';
+  document.getElementById('bannerUploadZone').style.display='none';
+  const auto=document.getElementById('bc-uploaded');
+  if(auto){auto.checked=true;auto.parentElement.classList.add('auto');}
+}
+function openBannerModal(){
+  const dataUrl=localStorage.getItem('mb_e2-banner');
+  if(!dataUrl)return;
+  document.getElementById('bannerModalImg').src=dataUrl;
+  document.getElementById('bannerModal').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function closeBannerModal(){
+  document.getElementById('bannerModal').classList.remove('show');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBannerModal();});
+
 // SIMULATOR
 const SIMS={
   client:{av:'🤝',nm:'Vaativa asiakas',rl:'Harjoittelutilanne · Myynti',
@@ -1342,6 +1505,11 @@ window.addEventListener('DOMContentLoaded',()=>{
    'cop-q1','cop-q2','cop-q3','rule-gpt','rule-copilot','rule-self','reflectText'].forEach(id=>{
     const v=localStorage.getItem('mb_'+id);const el=document.getElementById(id);if(v&&el)el.value=v;
   });
+  ['bc-name','bc-role','bc-strength','bc-approved'].forEach(id=>{
+    const v=localStorage.getItem('mb_'+id);const el=document.getElementById(id);
+    if(el&&v==='true'){el.checked=true;el.parentElement.classList.add('auto');}
+  });
+  if(localStorage.getItem('mb_e2-banner'))showBannerPreview();
   const gp=localStorage.getItem('mb_gamma-prompt');
   if(gp){document.getElementById('gbOut').value=gp;document.getElementById('gbResult').style.display='block';}
   doneArr.forEach(idx=>{
