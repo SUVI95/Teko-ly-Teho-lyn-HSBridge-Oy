@@ -9,7 +9,7 @@ const {
   shouldAutoApproveStudent
 } = require('../config/demo-access');
 const { resetKuopioDemoUserData } = require('../lib/reset-kuopio-demo-user-data');
-const { isSonjaGiftRecipient, isSatuGiftRecipient, isSoileGiftRecipient, isVilleGiftRecipient } = require('../config/personal-gift-access');
+const { isGiftRecipient, isSonjaGiftRecipient, isSatuGiftRecipient, isSoileGiftRecipient, isVilleGiftRecipient } = require('../config/personal-gift-access');
 
 const router = express.Router();
 
@@ -176,7 +176,9 @@ router.post('/login', async (req, res) => {
         sonja_gift: isSonjaGiftRecipient(user),
         satu_gift: isSatuGiftRecipient(user),
         soile_gift: isSoileGiftRecipient(user),
-        ville_gift: isVilleGiftRecipient(user)
+        ville_gift: isVilleGiftRecipient(user),
+        minna_a_gift: isGiftRecipient('minna_a', user),
+        minna_b_gift: isGiftRecipient('minna_b', user)
       }
     });
   } catch (error) {
@@ -277,7 +279,9 @@ router.get('/me', async (req, res) => {
         sonja_gift: isSonjaGiftRecipient(user),
         satu_gift: isSatuGiftRecipient(user),
         soile_gift: isSoileGiftRecipient(user),
-        ville_gift: isVilleGiftRecipient(user)
+        ville_gift: isVilleGiftRecipient(user),
+        minna_a_gift: isGiftRecipient('minna_a', user),
+        minna_b_gift: isGiftRecipient('minna_b', user)
       }
     });
   } catch (error) {
