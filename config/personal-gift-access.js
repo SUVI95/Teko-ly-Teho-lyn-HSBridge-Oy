@@ -46,6 +46,16 @@ const GIFTS = {
     firstName: 'soile',
     emails: parseEmailList(process.env.SOILE_GIFT_EMAIL, ['soile.k.niskanen@gmail.com'])
   },
+  minna_a: {
+    moduleId: 'moduuli-minna-a',
+    firstName: 'minna',
+    emails: parseEmailList(process.env.MINNA_GIFT_EMAIL, ['minna1.tilles@gmail.com'])
+  },
+  minna_b: {
+    moduleId: 'moduuli-minna-b',
+    firstName: 'minna',
+    emails: parseEmailList(process.env.MINNA_GIFT_EMAIL, ['minna1.tilles@gmail.com'])
+  },
   ville: {
     moduleId: 'ville-ai-opas-2025',
     firstName: 'ville',
