@@ -175,6 +175,8 @@ body{background:var(--sand);color:var(--text);font-family:'DM Sans',sans-serif;f
 .done-btn{width:100%;background:var(--rust);color:var(--white);border:none;border-radius:12px;padding:17px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:18px;transition:all .2s;letter-spacing:.3px;}
 .done-btn:hover{background:var(--rust-l);}
 .done-btn:disabled{background:var(--forest);cursor:default;}
+.save-btn{background:var(--ink);color:var(--white);border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;}
+.save-btn:hover{background:var(--rust);}
 
 /* AI CHAT */
 .chatbox{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin:14px 0;}
@@ -662,7 +664,7 @@ Lopuksi kysy minulta tämä pakollinen kysymys:
       <textarea id="e3-portfolio-line" placeholder="Kirjoita yksi valmis lause portfolioon." oninput="ls('e3-portfolio-line')"></textarea>
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
-      <button class="sp-btn" onclick="saveExercise3Notes()">Tallenna luonnos nyt</button>
+      <button class="save-btn" onclick="saveExercise3Notes()">Tallenna luonnos nyt</button>
       <span id="e3-save-ok" style="display:none;font-size:13px;color:var(--forest);font-weight:700;">✓ Tallennettu</span>
     </div>
     <ul class="tasks">
@@ -686,51 +688,148 @@ Lopuksi kysy minulta tämä pakollinen kysymys:
     <div class="badge" id="bg3">4</div>
     <div>
       <div class="tool-tag">🤖 Claude.ai — sama chat kuin H3</div>
-      <div class="ex-title">Missä minä istun tässä markkinassa 2026?</div>
-      <div class="ex-time">⏱ ~15 min · Yhdistät tutkimuksen ja osaamisesi</div>
+      <div class="ex-title">Rakenna oma markkina-asemasi 2026</div>
+      <div class="ex-time">⏱ ~18 min · Strateginen ajattelu, ei motivaatioteksti</div>
     </div>
   </div>
 
   <div class="sec">
-    <div class="sec-lbl t">Teoria — miksi sama Claude-chat, ei uusi</div>
+    <div class="sec-lbl t">Miksi tämä harjoitus on tärkeä?</div>
     <div class="tbox">
       <h3>Claude muistaa mitä kerroit — hyödynnetään se</h3>
-      <p>Harjoituksessa 3 kerroit Claudelle taustasi ja vahvuutesi. Claude pitää sen muistissa koko keskustelun ajan. Jos avaat uuden chatin, se unohtaa kaiken.</p>
-      <p><strong style="color:#fff">Jatka samaa Claude-chatiä.</strong> Nyt lisäät mukaan markkinatutkimuksesi — ja Claude yhdistää molemmat. Tulos on henkilökohtainen analyysi jota ei voida tehdä yleisellä tasolla.</p>
+      <p>Tässä kohtaa et enää kerää vain tietoa, vaan rakennat oman asemasi markkinassa.</p>
+      <p><strong style="color:#fff">Jatka samaa Claude-chatiä.</strong> Claude yhdistää Harjoituksen 3 näytöt ja markkinahavainnot yhdeksi urastrategiaksi.</p>
     </div>
   </div>
 
   <div class="sec">
-    <div class="sec-lbl h">Harjoitus — muokkaa ja lähetä samaan chattiin</div>
+    <div class="sec-lbl e">Syötä nämä (pakollinen)</div>
+    <div class="sv">
+      <label>Markkinahavainto 1</label>
+      <textarea id="e4-market-1" placeholder="Esim. AI-osaaminen näkyy nyt lähes jokaisessa työpaikkailmoituksessa." oninput="ls('e4-market-1')"></textarea>
+    </div>
+    <div class="sv">
+      <label>Markkinahavainto 2</label>
+      <textarea id="e4-market-2" placeholder="Esim. Rutiinityö vähenee, mutta asiakasymmärrys ja päätöksenteko korostuvat." oninput="ls('e4-market-2')"></textarea>
+    </div>
+    <div class="sv">
+      <label>Markkinahavainto 3</label>
+      <textarea id="e4-market-3" placeholder="Esim. Dataa osaavat myynnin ja taloushallinnon tekijät ovat arvokkaampia kuin aiemmin." oninput="ls('e4-market-3')"></textarea>
+    </div>
+    <div class="sv">
+      <label>Yksi asia joka muuttui ajattelussani</label>
+      <textarea id="e4-shift" placeholder="Esim. Ymmärsin, että minun pitää näyttää näyttöä, ei vain sanoa että osaan." oninput="ls('e4-shift')"></textarea>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl h">Harjoitus — täytä prompti ja lähetä samaan chattiin</div>
+    <div class="info">
+      <div>🎯</div>
+      <div><strong>Tavoite:</strong> Claude tuottaa sinulle markkina-fit analyysin, jossa jokainen väite sidotaan konkreettiseen näyttöön.</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin:10px 0 16px;">
+      <button class="save-btn" onclick="fillPrompt4FromInputs()">Täytä prompti syötteistä</button>
+      <span style="font-size:12px;color:var(--muted);">Täyttää alla olevaan promptiin markkinahavainnot automaattisesti.</span>
+    </div>
 
     <div class="prompt-wrap">
-      <div class="prompt-lbl">✏️ Muokkaa — liitä markkinatutkimuksesi hakasulkeiden kohdalle</div>
-      <textarea class="editable-prompt" id="prompt4" oninput="checkEdit('prompt4','hint4','copybtn4','orig4')">Jatketaan siitä mihin jäimme. Nyt haluan yhdistää osaamiseni markkinatietoon.
+      <div class="prompt-lbl">✏️ Muokkaa tarvittaessa, kopioi ja lähetä Claudeen</div>
+      <textarea class="editable-prompt" id="prompt4" oninput="checkEdit('prompt4','hint4','copybtn4','orig4')">Jatketaan samaa chattiä. Tee minulle strateginen markkina-asema-analyysi vuodelle 2026.
 
-Tässä on mitä löysin markkinasta tutkiessani Perplexityllä:
-[LIITÄ TÄHÄN HARJOITUKSEN 1 LÖYDÖT — kirjoita 3-4 lausetta tärkeimmistä havainnoistasi]
+Käytä näitä syötteitä:
+- Markkinahavainto 1: [MARKKINAHAVAINTO_1]
+- Markkinahavainto 2: [MARKKINAHAVAINTO_2]
+- Markkinahavainto 3: [MARKKINAHAVAINTO_3]
+- Muutos ajattelussa: [AJATTELUN_MUUTOS]
 
-Kirjoita minulle markkina-analyysi kolmessa kappaleessa:
-1. "Vahvuuteni 2026 markkinalla" — mitä minulla on mitä muilla ei (perustuen siihen mitä tiedät minusta)
-2. "Mitä kehitän seuraavaksi" — realistinen ja konkreettinen, ei yleinen
-3. "Minne tähtään" — millaisiin rooleihin minun kannattaa hakea ja miksi
+Pakolliset säännöt:
+1) Jokaiselle väitteelle anna yksi konkreettinen esimerkki aikaisemmasta kokemuksestani.
+2) Älä kirjoita geneeristä motivaatiotekstiä.
+3) Älä käytä näitä sanoja: intohimoinen, motivoitunut, monipuolinen, dynaaminen, erinomainen viestijä.
+4) Korvaa adjektiivit konkreettisella käyttäytymisellä ja näytöllä.
 
-Ensimmäinen persoona, konkreettinen, max 250 sanaa.</textarea>
+Anna vastaus täsmälleen tällä rakenteella:
+
+SECTION A — Markkina-fit taulukko
+Muoto:
+Markkina tarvitsee | Minulla on | Todiste
+(vähintään 5 riviä)
+
+SECTION B — Tavoiteroolit ja fit-score
+- Revenue Operations → X/10 fit + lyhyt perustelu
+- Sales Operations → X/10 fit + lyhyt perustelu
+- Finance Analyst → X/10 fit + lyhyt perustelu
+
+SECTION C — Risk analysis (12 kk)
+Jos en kehity seuraavan 12 kk aikana:
+1) Riski
+2) Riski
+3) Riski
+
+SECTION D — Portfolio extraction
+1) Headline (max 8 sanaa)
+2) About me -kappale (max 80 sanaa)
+3) Top 3 vahvuutta bullet-listana
+
+SECTION E — Kehityssuunta
+Mitä teen seuraavan 14 päivän aikana (1 konkreettinen teko, mitattava).</textarea>
       <div class="prompt-actions">
-        <span class="edit-hint" id="hint4">✏️ Liitä markkinatutkimuksesi hakasulkeiden kohdalle — sitten kopiointipainike aktivoituu</span>
+        <span class="edit-hint" id="hint4">✏️ Täytä hakasulkeet tai käytä "Täytä prompti syötteistä" -painiketta</span>
         <button class="copy-locked" id="copybtn4" disabled>Kopioi</button>
       </div>
     </div>
     <input type="hidden" id="orig4" value="">
 
     <div class="sv">
-      <label>Markkina-analyysisi — liitä ja muokkaa tähän</label>
-      <textarea id="e4-market" placeholder="Liitä Clauden kirjoittama markkina-analyysi. Muokkaa jos jokin ei kuulosta sinulta." oninput="ls('e4-market')"></textarea>
+      <label>Liitä Clauden koko vastaus tähän</label>
+      <textarea id="e4-market" placeholder="Liitä tähän Clauden SECTION A-E vastaus." oninput="ls('e4-market')"></textarea>
+    </div>
+
+    <div class="sec-lbl s" style="margin-top:16px;">Loppureflektio (pakollinen)</div>
+    <div class="sv">
+      <label>Mikä vahvuus yllätti minut?</label>
+      <textarea id="e4-ref-surprise" placeholder="Kirjoita 1-2 lausetta." oninput="ls('e4-ref-surprise')"></textarea>
+    </div>
+    <div class="sv">
+      <label>Mikä kohta tuntui epätodelta?</label>
+      <textarea id="e4-ref-unreal" placeholder="Mikä väite ei tuntunut aidolta ja miksi?" oninput="ls('e4-ref-unreal')"></textarea>
+    </div>
+    <div class="sv">
+      <label>Mitä teen seuraavan 14 päivän aikana?</label>
+      <textarea id="e4-ref-14d" placeholder="Yksi konkreettinen teko + milloin teet sen." oninput="ls('e4-ref-14d')"></textarea>
+    </div>
+
+    <div class="sec-lbl s" style="margin-top:16px;">SAVE THIS — käytetään portfoliosivulla</div>
+    <div class="info">
+      <div>💾</div>
+      <div><strong>Kopioi talteen:</strong> Headline, Top 3 vahvuutta, tavoiteroolit, kehityssuunta.</div>
+    </div>
+    <div class="sv">
+      <label>Headline (max 8 sanaa)</label>
+      <input type="text" id="e4-save-headline" placeholder="Esim. Dataohjattu myynnin ja talouden tekijä" oninput="ls('e4-save-headline')">
+    </div>
+    <div class="sv">
+      <label>Top 3 vahvuutta</label>
+      <textarea id="e4-save-strengths" placeholder="Kirjoita 3 vahvuutta bullet-muodossa." oninput="ls('e4-save-strengths')"></textarea>
+    </div>
+    <div class="sv">
+      <label>Tavoiteroolit (+ fit-score)</label>
+      <textarea id="e4-save-roles" placeholder="Esim. Sales Operations 9/10, Revenue Operations 8/10, Finance Analyst 6/10." oninput="ls('e4-save-roles')"></textarea>
+    </div>
+    <div class="sv">
+      <label>Kehityssuunta (14 pv)</label>
+      <textarea id="e4-save-direction" placeholder="Mitä konkreettisesti teet seuraavien 14 päivän aikana?" oninput="ls('e4-save-direction')"></textarea>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+      <button class="save-btn" onclick="saveExercise4Notes()">Tallenna luonnos nyt</button>
+      <span id="e4-save-ok" style="display:none;font-size:13px;color:var(--forest);font-weight:700;">✓ Tallennettu</span>
     </div>
     <ul class="tasks">
       <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Jatkoin samaa Claude-chatiä (ei uutta)</span></li>
-      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Liitäin markkinatutkimukseni promptiin</span></li>
-      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Sain markkina-analyysin ja tallensin sen</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Täytin 3 markkinahavaintoa + ajattelun muutoksen</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Sain Markkina tarvitsee | Minulla on | Todiste -taulukon</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Tallensin headline + top 3 + tavoiteroolit + kehityssuunnan</span></li>
     </ul>
     <button class="done-btn" onclick="complete(3)">Harjoitus 4 valmis — jatka →</button>
   </div>
@@ -790,7 +889,11 @@ Otsikko: Minun polkuni
 Kolme vaihetta: Nyt → 3 kuukautta → 6 kuukautta
 Jokaisessa yksi konkreettinen askel
 
-Käytä markkina-analyysiani pohjana: [LIITÄ TÄHÄN HARJOITUKSEN 4 ANALYYSISI]
+Käytä Harjoituksen 4 SAVE-kohdat pohjana:
+- Headline: [LIITÄ HEADLINE]
+- Top 3 vahvuutta: [LIITÄ TOP 3]
+- Tavoiteroolit: [LIITÄ TAVOITEROOLIT + FIT-SCORET]
+- Kehityssuunta 14 pv: [LIITÄ KEHITYSSUUNTA]
 
 Pidä lyhyenä — Napkin toimii parhaiten tiiviillä tekstillä.</textarea>
       <div class="prompt-actions">
@@ -1101,6 +1204,35 @@ function saveExercise3Notes(){
   }
 }
 
+function fillPrompt4FromInputs(){
+  const m1=(document.getElementById('e4-market-1')?.value||'').trim()||'[kirjoita markkinahavainto 1]';
+  const m2=(document.getElementById('e4-market-2')?.value||'').trim()||'[kirjoita markkinahavainto 2]';
+  const m3=(document.getElementById('e4-market-3')?.value||'').trim()||'[kirjoita markkinahavainto 3]';
+  const shift=(document.getElementById('e4-shift')?.value||'').trim()||'[kirjoita ajattelun muutos]';
+  const prompt=document.getElementById('prompt4');
+  const orig=document.getElementById('orig4');
+  if(!prompt)return;
+  const base=(orig&&orig.value)?orig.value:prompt.value;
+  prompt.value=base
+    .replace('[MARKKINAHAVAINTO_1]',m1)
+    .replace('[MARKKINAHAVAINTO_2]',m2)
+    .replace('[MARKKINAHAVAINTO_3]',m3)
+    .replace('[AJATTELUN_MUUTOS]',shift);
+  checkEdit('prompt4','hint4','copybtn4','orig4');
+}
+
+function saveExercise4Notes(){
+  [
+    'e4-market','e4-ref-surprise','e4-ref-unreal','e4-ref-14d',
+    'e4-save-headline','e4-save-strengths','e4-save-roles','e4-save-direction'
+  ].forEach(ls);
+  const ok=document.getElementById('e4-save-ok');
+  if(ok){
+    ok.style.display='inline';
+    setTimeout(()=>{ok.style.display='none';},1800);
+  }
+}
+
 // CV UPLOAD
 async function handleCVUpload(event){
   const file=event.target.files[0];
@@ -1259,7 +1391,7 @@ function copyLovable(){
 // INIT
 window.addEventListener('DOMContentLoaded',()=>{
   // Restore saved values
-  ['e1-find','e1-law','e1-links','e2-wow','e3-analysis','e3-ref-surprise','e3-ref-strong','e3-ref-next','e3-ref-portfolio','e3-top5','e3-top3','e3-portfolio-line','e4-market','e6-url','cv-name','cv-role','cv-exp','cv-achieve','cv-ai','cv-seek'].forEach(id=>{
+  ['e1-find','e1-law','e1-links','e2-wow','e3-analysis','e3-ref-surprise','e3-ref-strong','e3-ref-next','e3-ref-portfolio','e3-top5','e3-top3','e3-portfolio-line','e4-market-1','e4-market-2','e4-market-3','e4-shift','e4-market','e4-ref-surprise','e4-ref-unreal','e4-ref-14d','e4-save-headline','e4-save-strengths','e4-save-roles','e4-save-direction','e6-url','cv-name','cv-role','cv-exp','cv-achieve','cv-ai','cv-seek'].forEach(id=>{
     const v=localStorage.getItem('ma_'+id);
     const el=document.getElementById(id);
     if(v&&el)el.value=v;
