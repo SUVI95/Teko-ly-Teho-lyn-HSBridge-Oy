@@ -1,7 +1,7 @@
 /**
  * Personal gift modules (Sonja, Satu, …).
  * Email allowlist + first-name fallback when registration email differs.
- * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL / VILLE_GIFT_EMAIL / MINNA_GIFT_EMAIL (comma-separated).
+ * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL / VILLE_GIFT_EMAIL / MINNA_GIFT_EMAIL / SANTERI_GIFT_EMAIL (comma-separated).
  */
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -55,6 +55,26 @@ const GIFTS = {
     moduleId: 'moduuli-minna-b',
     firstName: 'minna',
     emails: parseEmailList(process.env.MINNA_GIFT_EMAIL, ['minna1.tilles@gmail.com'])
+  },
+  santeri_m1: {
+    moduleId: 'santeri-m1-rakenna',
+    firstName: 'santeri',
+    emails: parseEmailList(process.env.SANTERI_GIFT_EMAIL, ['santeri.kekarainen@gmail.com'])
+  },
+  santeri_m2: {
+    moduleId: 'santeri-m2-tutki',
+    firstName: 'santeri',
+    emails: parseEmailList(process.env.SANTERI_GIFT_EMAIL, ['santeri.kekarainen@gmail.com'])
+  },
+  santeri_m3: {
+    moduleId: 'santeri-m3-video',
+    firstName: 'santeri',
+    emails: parseEmailList(process.env.SANTERI_GIFT_EMAIL, ['santeri.kekarainen@gmail.com'])
+  },
+  santeri_interview: {
+    moduleId: 'santeri-ai-haastattelu',
+    firstName: 'santeri',
+    emails: parseEmailList(process.env.SANTERI_GIFT_EMAIL, ['santeri.kekarainen@gmail.com'])
   },
   ville: {
     moduleId: 'ville-ai-opas-2025',

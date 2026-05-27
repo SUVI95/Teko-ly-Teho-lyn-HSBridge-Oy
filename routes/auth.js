@@ -178,7 +178,11 @@ router.post('/login', async (req, res) => {
         soile_gift: isSoileGiftRecipient(user),
         ville_gift: isVilleGiftRecipient(user),
         minna_a_gift: isGiftRecipient('minna_a', user),
-        minna_b_gift: isGiftRecipient('minna_b', user)
+        minna_b_gift: isGiftRecipient('minna_b', user),
+        santeri_m1_gift: isGiftRecipient('santeri_m1', user),
+        santeri_m2_gift: isGiftRecipient('santeri_m2', user),
+        santeri_m3_gift: isGiftRecipient('santeri_m3', user),
+        santeri_interview_gift: isGiftRecipient('santeri_interview', user)
       }
     });
   } catch (error) {
@@ -281,7 +285,11 @@ router.get('/me', async (req, res) => {
         soile_gift: isSoileGiftRecipient(user),
         ville_gift: isVilleGiftRecipient(user),
         minna_a_gift: isGiftRecipient('minna_a', user),
-        minna_b_gift: isGiftRecipient('minna_b', user)
+        minna_b_gift: isGiftRecipient('minna_b', user),
+        santeri_m1_gift: isGiftRecipient('santeri_m1', user),
+        santeri_m2_gift: isGiftRecipient('santeri_m2', user),
+        santeri_m3_gift: isGiftRecipient('santeri_m3', user),
+        santeri_interview_gift: isGiftRecipient('santeri_interview', user)
       }
     });
   } catch (error) {

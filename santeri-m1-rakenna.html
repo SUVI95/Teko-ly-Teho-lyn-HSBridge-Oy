@@ -20,6 +20,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--dark);lin
 
 .hero{background:var(--dark);padding:58px 24px 50px;text-align:center;position:relative;overflow:hidden;}
 .hero::before{content:'';position:absolute;top:-80px;right:-80px;width:340px;height:340px;background:radial-gradient(circle,rgba(13,148,136,.18) 0%,transparent 68%);pointer-events:none;}
+.home-link{
+  position:absolute;top:18px;right:22px;z-index:2;
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);
+  color:#e2e8f0;text-decoration:none;border-radius:999px;
+  padding:7px 12px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+}
+.home-link:hover{background:rgba(255,255,255,.14);}
 .tag{display:inline-block;background:var(--teal);color:white;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;padding:4px 13px;border-radius:20px;margin-bottom:20px;text-transform:uppercase;}
 .hero h1{font-family:'DM Serif Display',serif;font-size:clamp(28px,5vw,46px);line-height:1.15;color:white;margin-bottom:14px;}
 .hero h1 em{color:#5eead4;font-style:normal;}
@@ -72,10 +80,26 @@ a{color:var(--teal);}
 .big-cta{background:linear-gradient(135deg,#0f172a,#134e4a);border-radius:15px;padding:32px 28px;text-align:center;margin:24px 0;}
 .big-cta h3{color:white;font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:8px;}
 .big-cta p{color:#94a3b8;font-size:13px;margin-bottom:18px;}
-.big-btn{display:inline-flex;align-items:center;gap:9px;background:var(--teal);color:white;text-decoration:none;padding:13px 28px;border-radius:11px;font-size:15px;font-weight:700;transition:background .2s,transform .1s;}
+.big-btn{display:inline-flex;align-items:center;gap:9px;background:var(--teal);color:white;text-decoration:none;padding:13px 28px;border-radius:11px;font-size:15px;font-weight:700;transition:background .2s,transform .1s;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .big-btn:hover{background:var(--teal-d);transform:translateY(-1px);}
 .big-btn.ind{background:var(--ind);}
 .big-btn.ind:hover{background:#4338ca;}
+.inline-int-wrap{display:none;margin-top:16px;text-align:left;}
+.inline-int-wrap.show{display:block;}
+.inline-int-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:#0b1224;border:1px solid #1e293b;border-bottom:none;
+  border-radius:12px 12px 0 0;padding:12px 14px;
+}
+.inline-int-title{font-size:12px;font-weight:700;color:#cbd5e1;letter-spacing:.04em;text-transform:uppercase;}
+.inline-int-close{
+  border:1px solid #334155;background:#1e293b;color:#e2e8f0;border-radius:8px;
+  padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;
+}
+.inline-int-close:hover{background:#334155;}
+.inline-int-frame{display:block;width:100%;height:760px;border:1px solid #1e293b;border-radius:0 0 12px 12px;background:#f8fafc;}
+.inline-int-note{font-size:12px;color:#94a3b8;margin-top:8px;}
+.inline-int-note a{color:#5eead4;}
 
 /* TOPIC CARDS */
 .topic-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:18px 0;}
@@ -205,6 +229,7 @@ a{color:var(--teal);}
 <body>
 
 <div class="hero">
+  <a class="home-link" href="/">← Etusivulle</a>
   <div class="tag">Moduuli 1 — Santerin polku</div>
   <h1>Kerro ideasi —<br><em>AI rakentaa sen</em></h1>
   <p class="hero-sub">Ei koodia. Ei kokemusta. Tänään sinulla on kaksi julkaistua sovellusta oikeilla URL-osoitteilla.</p>
@@ -242,17 +267,25 @@ a{color:var(--teal);}
 
   <div class="big-cta">
     <h3>🤖 Aloita AI-haastattelu</h3>
-    <p>Aukeaa uudessa välilehdessä. Vastaa rehellisesti — mitä enemmän kerrot, sitä parempi sovellus.</p>
-    <a href="santeri-ai-haastattelu.html" target="_blank" class="big-btn">Avaa haastattelu →</a>
+    <p>Haastattelu avautuu suoraan tähän moduuliin. Vastaa rehellisesti — mitä enemmän kerrot, sitä parempi sovellus.</p>
+    <button type="button" class="big-btn" onclick="openH1Interview()">Avaa haastattelu tässä →</button>
+    <div class="inline-int-wrap" id="h1InterviewWrap">
+      <div class="inline-int-head">
+        <div class="inline-int-title">AI-haastattelu käynnissä</div>
+        <button type="button" class="inline-int-close" onclick="closeH1Interview()">Sulje ja jatka harjoituksia</button>
+      </div>
+      <iframe class="inline-int-frame" id="h1InterviewFrame" title="Santeri AI-haastattelu" loading="lazy"></iframe>
+      <div class="inline-int-note">Jos upotus ei toimi, avaa haastattelu erikseen: <a href="/module/santeri-ai-haastattelu" target="_blank" rel="noopener">avaa uudessa välilehdessä</a>.</div>
+    </div>
   </div>
 
   <div class="ex">
     <div class="ex-head"><div class="ex-num">1</div><div><div class="ex-title">Vastaa — kopioi prompti</div><div class="ex-time">⏱ 10–15 min</div></div></div>
     <ul class="steps">
-      <li>Klikkaa "Avaa haastattelu" — aukeaa uuteen ikkunaan</li>
+      <li>Klikkaa "Avaa haastattelu tässä" — haastattelu näkyy suoraan tämän kohdan alla</li>
       <li>Vastaa kaikkiin 5 kysymykseen rauhassa</li>
       <li>Kun prompti ilmestyy, klikkaa <strong>Kopioi prompti</strong></li>
-      <li>Tule takaisin tähän sivulle</li>
+      <li>Sulje haastattelupaneeli ja jatka Harjoitukseen 2</li>
     </ul>
     <div class="win"><div class="win-l">✓ Tulos</div><p>Täydellinen Lovable-prompt kopioitu. Parempi kuin useimmat kirjoittaisivat itse.</p></div>
   </div>
@@ -511,6 +544,25 @@ let intHistory = [];
 let intQCount = 0;
 let intDone = false;
 let intBusy = false;
+let h1InterviewLoaded = false;
+
+function openH1Interview(){
+  const wrap = document.getElementById('h1InterviewWrap');
+  const frame = document.getElementById('h1InterviewFrame');
+  if (!wrap || !frame) return;
+  if (!h1InterviewLoaded) {
+    frame.src = '/module/santeri-ai-haastattelu';
+    h1InterviewLoaded = true;
+  }
+  wrap.classList.add('show');
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeH1Interview(){
+  const wrap = document.getElementById('h1InterviewWrap');
+  if (!wrap) return;
+  wrap.classList.remove('show');
+}
 
 const INT_SYSTEM = `Olet tuotesuunnittelija joka haastattelee käyttäjää saadakseen tiedon hyvän sovelluksen rakentamiseen.
 
