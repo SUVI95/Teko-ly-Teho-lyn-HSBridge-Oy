@@ -113,20 +113,38 @@ async function callModuleAI(system, messages, maxTokens) {
   if (safeMessages.length === 0) {
     safeMessages.push({ role: 'user', content: 'Aloita haastattelu ensimmäisellä kysymyksellä.' });
   }
-  const r = await fetch('/api/ai/claude', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({
-      system: system || undefined,
-      max_tokens: maxTokens || 1200,
-      messages: safeMessages
-    })
-  });
-  let d = {};
-  try { d = await r.json(); } catch (e) {}
-  if (!r.ok) throw new Error((d && d.error) || 'AI-palvelu ei ole juuri nyt saatavilla.');
-  return (d && (d.text || d.reply)) || '';
+  const payload = {
+    system: system || undefined,
+    max_tokens: maxTokens || 1200,
+    messages: safeMessages
+  };
+  function timeoutSignal(ms){
+    if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+      return AbortSignal.timeout(ms);
+    }
+    const c = new AbortController();
+    setTimeout(() => c.abort(), ms);
+    return c.signal;
+  }
+  async function request(url, body){
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(body),
+      signal: timeoutSignal(15000)
+    });
+    let d = {};
+    try { d = await r.json(); } catch (e) {}
+    if (!r.ok) throw new Error((d && d.error) || ('Virhe ' + r.status));
+    return (d && (d.text || d.reply)) || '';
+  }
+  try {
+    return await request('/api/ai/claude', payload);
+  } catch (claudeErr) {
+    console.warn('Claude route failed in module, trying OpenAI route:', claudeErr.message);
+    return request('/api/ai/chat', Object.assign({ model: 'gpt-4o-mini' }, payload));
+  }
 }
 // ═══════════════════════════════════════════════════════════
 

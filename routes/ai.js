@@ -147,8 +147,8 @@ async function handleDuunijobsAi(req, res) {
 
     const anthropicKey = envTrim('ANTHROPIC_API_KEY');
     if (!anthropicKey) {
-      console.error('Anthropic API key not configured');
-      return res.status(500).json({ error: 'DuuniJobs AI -palvelu ei ole käytettävissä.' });
+      console.warn('Anthropic API key not configured, using OpenAI fallback');
+      return callOpenAIFallback(messages, system, max_tokens, res);
     }
 
     const body = {
@@ -201,11 +201,8 @@ async function handleDuunijobsAi(req, res) {
         continue;
       }
 
-      console.error('Anthropic API error:', errorData);
-      return res.status(response.status).json({
-        error: 'DuuniJobs AI service error',
-        details: errorData
-      });
+      console.warn(`Anthropic API non-retryable status ${response.status}, using OpenAI fallback:`, errorData);
+      return callOpenAIFallback(messages, system, max_tokens, res);
     }
 
     console.warn('DuuniJobs AI exhausted retries, falling back to OpenAI');
