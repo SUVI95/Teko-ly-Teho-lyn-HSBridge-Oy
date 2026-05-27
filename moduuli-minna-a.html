@@ -697,7 +697,7 @@ SECTION E — One next action in next 30 days (konkreettinen ja mitattava)</text
     <div class="info">
       <div>💾</div>
       <div>
-        <strong>Nämä siirtyvät Harjoitukseen 4:</strong> TOP 5 taidot, TOP 3 kilpailuetua, 1 portfoliosentence.
+        <strong>Poimi Clauden SECTION A–E vastauksesta.</strong> Sama Claude-chat muistaa nämä Harjoituksessa 4 — mutta Harjoitus 4 SAVE-kentät täyttyvät erikseen Clauden <em>uudesta</em> vastauksesta (SECTION B–D).
       </div>
     </div>
     <div class="sv">
@@ -885,14 +885,24 @@ Mitä teen seuraavan 14 päivän aikana (1 konkreettinen teko, mitattava).</text
     <p style="font-size:14px;color:var(--muted);margin:-6px 0 12px;">Kun Claude on vastannut, kopioi <strong>koko vastaus</strong> (SECTION A–D) tähän. Tämä on eri kenttä kuin markkinahavainnot yllä.</p>
     <div class="sv">
       <label>Clauden vastaus — liitä tähän</label>
-      <textarea id="e4-market" placeholder="Liitä tähän Clauden SECTION A–D vastaus (markkina-fit taulukko, roolit, headline jne.)." oninput="ls('e4-market')"></textarea>
+      <textarea id="e4-market" placeholder="Liitä tähän Clauden SECTION A–D vastaus (markkina-fit taulukko, roolit, headline jne.)." oninput="ls('e4-market');fillSave4FromClaude(true)"></textarea>
     </div>
     </div>
 
-    <div class="sec-lbl s" style="margin-top:16px;">VAIHE 4 — SAVE (kopioi Clauden vastauksesta)</div>
-    <div class="info">
-      <div>💾</div>
-      <div><strong>Poimi Clauden vastauksesta</strong> (VAIHE 3) ja kirjoita näihin kenttiin: Headline, Top 3 vahvuutta, tavoiteroolit, kehityssuunta. Näitä käytetään portfoliosivulla.</div>
+    <div class="sec-lbl s" style="margin-top:16px;">VAIHE 4 — SAVE (menee Napkiniin ja portfoliosivulle)</div>
+    <div class="info" style="background:var(--gold-pale);border-color:rgba(184,134,11,.25);">
+      <div>🔗</div>
+      <div>
+        <strong>Mistä nämä tulevat?</strong> Vain Clauden vastauksesta yllä (VAIHE 3), kohdista SECTION B–D.<br><br>
+        <strong>Ei täyty automaattisesti</strong> Harjoituksen 3 SAVE-kentistä (TOP 5 / TOP 3) — ne ovat eri harjoitus, eri tarkoitus.<br>
+        <strong>Ei täyty</strong> VAIHE 1 markkinahavainnoista — ne menivät jo Claude-promptiin.<br><br>
+        Kun olet liittänyt VAIHE 3 -vastauksen, paina alla → kentät täyttyvät. Tarkista ja muokkaa tarvittaessa.
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin:12px 0 16px;flex-wrap:wrap;">
+      <button class="save-btn" onclick="fillSave4FromClaude(false)">② Täytä SAVE-kentät VAIHE 3 -vastauksesta</button>
+      <span id="e4-save-fill-ok" style="display:none;font-size:13px;color:var(--forest);font-weight:700;">✓ Kentät täytetty — tarkista alla</span>
+      <span style="font-size:12px;color:var(--muted);">Headline + Top 3 + roolit + kehityssuunta SECTION B–D:stä</span>
     </div>
     <div class="sv">
       <label>Headline (max 8 sanaa)</label>
@@ -918,7 +928,7 @@ Mitä teen seuraavan 14 päivän aikana (1 konkreettinen teko, mitattava).</text
       <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Jatkoin samaa Claude-chatiä (ei uutta)</span></li>
       <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Täytin 3 markkinahavaintoa + ajattelun muutoksen</span></li>
       <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Sain Markkina tarvitsee | Minulla on | Todiste -taulukon</span></li>
-      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Tallensin headline + top 3 + tavoiteroolit + kehityssuunnan</span></li>
+      <li onclick="tick(this)"><span class="ck">✓</span><span class="tt">Täytin SAVE-kentät VAIHE 3 -vastauksesta (②-nappi) ja tarkistin</span></li>
     </ul>
     <button class="done-btn" onclick="complete(3)">Harjoitus 4 valmis — jatka →</button>
   </div>
@@ -1396,6 +1406,56 @@ function syncPrompt3FromBg(){
   }
 }
 
+function parseEx4ClaudeResponse(raw){
+  const text=(raw||'').replace(/\r\n/g,'\n').trim();
+  if(!text||text.length<80)return null;
+  const sec=(letter)=>{
+    const m=text.match(new RegExp('SECTION\\s+'+letter+'[^\\n]*\\n([\\s\\S]*?)(?=\\nSECTION\\s+[A-D]|$)','i'));
+    return m?m[1].trim():'';
+  };
+  const c=sec('C'), b=sec('B'), d=sec('D');
+  let headline='';
+  for(const p of [/1\)\s*Headline[^\n]*\n\s*([^\n]+)/i,/Headline[^\n]*\n\s*([^\n]+)/i,/Headline[:\s]+([^\n]+)/i]){
+    const m=c.match(p);
+    if(m&&m[1].trim()){headline=m[1].replace(/^[-•*]\s*/,'').trim();break;}
+  }
+  let strengths='';
+  const m3=c.match(/3\)\s*Top\s*3[^\n]*\n([\s\S]*)/i)||c.match(/Top\s*3[^\n]*\n([\s\S]*)/i);
+  if(m3){
+    strengths=m3[1].split(/\n(?=\d\)\s)|\nSECTION\s/i)[0].trim();
+  }
+  const roles=b.trim();
+  let direction=d.replace(/^Mitä teen[^\n]*\n?/i,'').trim()||d.trim();
+  if(!headline&&!strengths&&!roles&&!direction)return null;
+  return {headline,strengths,roles,direction};
+}
+
+function fillSave4FromClaude(onlyEmpty){
+  const raw=document.getElementById('e4-market')?.value||'';
+  const parsed=parseEx4ClaudeResponse(raw);
+  if(!parsed){
+    if(!onlyEmpty)alert('Liitä ensin Clauden vastaus VAIHE 3 -kenttään (SECTION A–D). Varmista että vastaus sisältää otsikot SECTION B, C ja D.');
+    return false;
+  }
+  const set=(id,val)=>{
+    const el=document.getElementById(id);
+    if(!el||!val)return;
+    if(onlyEmpty&&el.value.trim())return;
+    el.value=val;
+    ls(id);
+  };
+  set('e4-save-headline',parsed.headline);
+  set('e4-save-strengths',parsed.strengths);
+  set('e4-save-roles',parsed.roles);
+  set('e4-save-direction',parsed.direction);
+  syncPrompt5FromSave();
+  if(!onlyEmpty){
+    const ok=document.getElementById('e4-save-fill-ok');
+    if(ok){ok.style.display='inline';setTimeout(()=>{ok.style.display='none';},2800);}
+  }
+  return true;
+}
+
 function formatNapkinPasteText(headline,strengths,direction){
   const bullets=strengths.split('\n').map(l=>{
     const t=l.trim();
@@ -1686,6 +1746,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   initPrompts();
   syncPrompt3FromBg();
   syncPrompt5FromSave();
+  if((document.getElementById('e4-market')?.value||'').trim())fillSave4FromClaude(true);
 });
 </script>
 </body>
