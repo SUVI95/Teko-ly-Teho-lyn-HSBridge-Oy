@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Santeri Moduuli 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0f172a;--sand:#f8fafc;--border:#e2e8f0;--muted:#64748b;--ind:#4f46e5;--white:#fff;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;}
+.top{background:var(--ink);color:#fff;padding:22px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.top h1{font-family:'Fraunces',serif;font-size:22px;}
+.top a{color:rgba(255,255,255,.75);text-decoration:none;font-size:13px;border:1px solid rgba(255,255,255,.2);padding:7px 12px;border-radius:6px;}
+.wrap{max-width:960px;margin:0 auto;padding:28px 24px;}
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:16px;}
+.who{font-weight:700;font-size:16px;}
+.email{font-size:13px;color:var(--muted);}
+.when{font-size:11px;color:var(--muted);font-family:monospace;margin-bottom:14px;}
+.sec{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.sec h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ind);margin-bottom:8px;}
+.row{margin-bottom:8px;}
+.row strong{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:2px;}
+.row p{font-size:14px;white-space:pre-wrap;}
+.url a{color:var(--ind);word-break:break-all;}
+.empty,.loading{text-align:center;padding:40px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>📊 Santeri — Moduuli 2 vastaukset</h1>
+  <a href="/admin">← Admin</a>
+</div>
+<div class="wrap" id="root"><div class="loading">Ladataan...</div></div>
+<script>
+const L={
+  'm2-perp-decide':'Perplexity — yllätys + merkitys',
+  'm2-perp-trend':'Perplexity — trendit',
+  'm2-perp-academic':'Perplexity — academic',
+  'urlListInput':'Linkkilista',
+  'm2-nb-decide':'NotebookLM — käytän / jätän pois',
+  'm2-nb-surprise':'NotebookLM — yllätys',
+  'notebookSummary':'NotebookLM yhteenveto',
+  'gammaMessage':'Gamma viesti',
+  'm2-gamma-decide':'Gamma — muistettava lause',
+  'gammaUrl':'Gamma URL',
+  'napkinChartType':'Napkin kuviotyyppi',
+  'm2-napkin-why':'Napkin perustelu',
+  'm2-linkedin':'LinkedIn-postaus'
+};
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function row(k,v){
+  if(!v) return '';
+  const label=L[k]||k;
+  if(k==='gammaUrl') return `<div class="row url"><strong>${esc(label)}</strong><p><a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a></p></div>`;
+  return `<div class="row"><strong>${esc(label)}</strong><p>${esc(v)}</p></div>`;
+}
+const KEYS=['m2-perp-decide','m2-perp-trend','m2-perp-academic','urlListInput','m2-nb-decide','m2-nb-surprise','notebookSummary','m2-gamma-decide','gammaUrl','m2-napkin-why','m2-linkedin'];
+async function load(){
+  const root=document.getElementById('root');
+  try{
+    const r=await fetch('/api/admin/santeri-m2-submissions',{credentials:'include'});
+    if(!r.ok) throw new Error(r.status);
+    const list=(await r.json()).submissions||[];
+    if(!list.length){root.innerHTML='<div class="empty">Ei vielä tallennuksia.</div>';return;}
+    root.innerHTML=list.map(s=>{
+      const d=s.data||{};
+      const body=KEYS.map(k=>row(k,d[k])).join('');
+      const chart=d.napkinChartType?row('napkinChartType',d.napkinChartType):'';
+      return `<article class="card"><div class="who">${esc(s.name||'Nimetön')}</div><div class="email">${esc(s.email||'')}</div><div class="when">${s.updated_at?new Date(s.updated_at).toLocaleString('fi-FI'):''}</div><div class="sec">${body}${chart}</div></article>`;
+    }).join('');
+  }catch(e){root.innerHTML='<div class="empty">Virhe: '+esc(e.message)+'</div>';}
+}
+load();
+</script>
+</body>
+</html>

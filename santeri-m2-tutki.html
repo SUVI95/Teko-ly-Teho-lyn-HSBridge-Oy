@@ -134,6 +134,30 @@ a{color:var(--ind);}
 .rb-ta.purple:focus{border-color:var(--purple);}
 .rb-ta.pink:focus{border-color:var(--pink);}
 
+/* STOP AND DECIDE */
+.decide-box{background:var(--amber-l);border:2px solid #fbbf24;border-radius:12px;padding:18px 20px;margin:20px 0;}
+.decide-box.sky{background:var(--sky-l);border-color:var(--sky);}
+.decide-box.emerald{background:var(--emerald-l);border-color:var(--emerald);}
+.decide-box.purple{background:var(--purple-l);border-color:var(--purple);}
+.decide-box.pink{border-color:var(--pink);}
+.decide-badge{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#b45309;margin-bottom:8px;}
+.decide-box.sky .decide-badge{color:#0369a1;}
+.decide-box.emerald .decide-badge{color:#047857;}
+.decide-box.purple .decide-badge{color:#6d28d9;}
+.decide-title{font-weight:700;font-size:15px;color:var(--dark);margin-bottom:6px;}
+.decide-sub{font-size:13px;color:var(--mid);margin-bottom:10px;line-height:1.55;}
+.chart-pick{display:flex;flex-direction:column;gap:8px;margin:12px 0;}
+.chart-opt{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--white);border:1.5px solid var(--border);border-radius:9px;cursor:pointer;}
+.chart-opt:has(input:checked){border-color:var(--pink);background:var(--pink-l);}
+.chart-opt input{margin-top:3px;flex-shrink:0;}
+.chart-opt strong{display:block;font-size:14px;}
+.chart-opt span{font-size:12px;color:var(--soft);}
+.linkedin-box{background:linear-gradient(135deg,#0f172a,#1e3a5f);border-radius:14px;padding:26px 24px;margin:28px 0;color:#e2e8f0;}
+.linkedin-box h3{color:#fff;font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:8px;}
+.linkedin-box p{color:#94a3b8;font-size:14px;margin-bottom:14px;}
+.linkedin-box textarea{width:100%;border:1.5px solid #334155;border-radius:9px;padding:12px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:#f1f5f9;background:#0b1224;resize:vertical;min-height:100px;line-height:1.6;}
+.linkedin-hint{font-size:12px;color:#64748b;margin-top:8px;}
+
 /* STEPS */
 .ex-steps{list-style:none;counter-reset:s;margin:14px 0 0;}
 .ex-steps li{counter-increment:s;display:flex;gap:12px;margin-bottom:13px;font-size:14px;color:var(--mid);align-items:flex-start;}
@@ -439,17 +463,24 @@ https://weforum.org/agenda/2025/ai-skills
       </div>
     </div>
 
+    <div class="decide-box sky">
+      <div class="decide-badge">⏸ Pysähdy ja päätä — ennen kuin jatkat</div>
+      <div class="decide-title">Mikä tutkimustulos yllätti sinut — ja miksi se merkitsee sinulle?</div>
+      <div class="decide-sub">Valitse yksi havainto hauista 1–4. Selitä miksi se on tärkeä <strong>sinun aiheellesi</strong> — ei yleinen fakta.</div>
+      <textarea class="rb-ta sky" id="m2-perp-decide" rows="4" placeholder="Esim: Haku 3 yllätti — AI ei korvaa myyjää vaan muuttaa roolia. Tämä on tärkeää koska haen myyntityötä ja..."></textarea>
+    </div>
+
     <!-- REFLECTION -->
     <div style="margin-top:22px;">
       <div class="reflect-box">
         <div class="rb-label">Tärkein asia jonka opin hauista 1–4 (trendit ja taidot)</div>
         <div class="rb-sub">Esim: En tiennyt että... / Yllätyin kun... / Tärkeintä oli...</div>
-        <textarea class="rb-ta sky" rows="3" placeholder="Kirjoita tähän..."></textarea>
+        <textarea class="rb-ta sky" id="m2-perp-trend" rows="3" placeholder="Kirjoita tähän..."></textarea>
       </div>
       <div class="reflect-box">
         <div class="rb-label">Mitä opin Academic-hausta (haku 5)?</div>
         <div class="rb-sub">Mitä tutkimukset sanovat? Erosiko se web-hakujen tuloksista?</div>
-        <textarea class="rb-ta sky" rows="3" placeholder="Kirjoita tähän..."></textarea>
+        <textarea class="rb-ta sky" id="m2-perp-academic" rows="3" placeholder="Kirjoita tähän..."></textarea>
       </div>
       <div class="reflect-box">
         <div class="rb-label">📋 Linkkilista Perplexitystä — liitä tähän (tarvitset seuraavassa harjoituksessa)</div>
@@ -462,6 +493,7 @@ https://weforum.org/agenda/2025/ai-skills
       <div class="ci"><div class="cb" onclick="chk(this)"></div>Tein haut 1–4 (Web-tila, suomeksi)</div>
       <div class="ci"><div class="cb" onclick="chk(this)"></div>Vaihdoin Academic-tilaan ja tein haun 5</div>
       <div class="ci"><div class="cb" onclick="chk(this)"></div>Pyysin linkkilistan (haku 6) ja tallensin sen yllä olevaan kenttään</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Kirjoitin "Pysähdy ja päätä" -vastauksen (yllättävä tulos + merkitys sinulle)</div>
     </div>
     <div class="win"><div class="win-l">✓ Tulos</div><p>Tutkimus tehty. Linkkilista tallennettu. Seuraavassa harjoituksessa laitat linkit NotebookLM:ään — se tekee niistä podcastin.</p></div>
   </div>
@@ -552,11 +584,18 @@ https://weforum.org/agenda/2025/ai-skills
       <p class="vt"><strong>Podcast on yllättävä</strong>Kaksi AI-ääntä juttelee kuin oikeassa podcastissa — aiheestasi, sinun lähteistäsi. Ensimmäisellä kerralla se tuntuu uskomattomalta. Se on kuitenkin 100% totta — ei keksittyä.</p>
     </div>
 
+    <div class="decide-box emerald">
+      <div class="decide-badge">⏸ Pysähdy ja päätä</div>
+      <div class="decide-title">Mitä käytät esityksessä — mitä jätät pois?</div>
+      <div class="decide-sub">NotebookLM antoi paljon. Valitse <strong>yksi</strong> asia jonka viet Gammalle ja yksi jonka jätät pois. Perustele molemmat.</div>
+      <textarea class="rb-ta emerald" id="m2-nb-decide" rows="4" placeholder="Käytän: ... koska ... / Jätän pois: ... koska ..."></textarea>
+    </div>
+
     <div style="margin-top:18px;">
       <div class="reflect-box">
         <div class="rb-label">Mikä yllätti sinut Audio Overviewissä tai Infographicissa?</div>
         <div class="rb-sub">Mitä opit? Mikä näytti hyvältä? Mikä oli erilaista kuin odotit?</div>
-        <textarea class="rb-ta emerald" rows="3" placeholder="Kirjoita tähän..."></textarea>
+        <textarea class="rb-ta emerald" id="m2-nb-surprise" rows="3" placeholder="Kirjoita tähän..."></textarea>
       </div>
       <div class="reflect-box">
         <div class="rb-label">📋 NotebookLM:n yhteenveto — kopioi tähän (tarvitset Gammassa)</div>
@@ -570,6 +609,7 @@ https://weforum.org/agenda/2025/ai-skills
       <div class="ci"><div class="cb" onclick="chk(this)"></div>Kuuntelin Audio Overviewin (vähintään 5 min)</div>
       <div class="ci"><div class="cb" onclick="chk(this)"></div>Tein Video Overview JA Infographic</div>
       <div class="ci"><div class="cb" onclick="chk(this)"></div>Kopioin yhteenvedon yllä olevaan kenttään</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Päätin mitä käytän Gammassa ja mitä jätän pois (perustelu yllä)</div>
     </div>
     <div class="win"><div class="win-l">✓ Tulos</div><p>Podcast kuultu. Yhteenveto tallennettu. Seuraavassa harjoituksessa teet niistä Gamma-esityksen automaattisesti.</p></div>
   </div>
@@ -706,10 +746,17 @@ https://weforum.org/agenda/2025/ai-skills
       <li>Klikkaa <strong>Share → Anyone with link → kopioi URL</strong> → talleta alle</li>
     </ul>
 
+    <div class="decide-box purple">
+      <div class="decide-badge">⏸ Pysähdy ja päätä</div>
+      <div class="decide-title">Mikä yksi lause esityksessä pitää jäädä mieleen?</div>
+      <div class="decide-sub">Älä listaa kaikkea. Valitse <strong>yksi</strong> viesti jonka katsoja muistaa huomenna — ja perustele miksi se on tärkeämpi kuin muut.</div>
+      <textarea class="rb-ta purple" id="m2-gamma-decide" rows="4" placeholder="Muistettava lause: ... / Valitsin sen koska ..."></textarea>
+    </div>
+
     <div style="margin-top:16px;">
       <div class="reflect-box">
         <div class="rb-label">🔗 Gamma-esityksen URL — talleta tähän</div>
-        <div class="rb-sub">Tarvitset tätä Moduulissa 3 kun rakennat portfolio-sivusi.</div>
+        <div class="rb-sub">Tarvitset tätä Moduulissa 3 ja LinkedIn-julkaisussa alla.</div>
         <input type="url" id="gammaUrl" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 13px;font-size:14px;font-family:'DM Mono',monospace;outline:none;transition:border-color .2s;" placeholder="https://gamma.app/docs/..." onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'" />
       </div>
     </div>
@@ -719,6 +766,7 @@ https://weforum.org/agenda/2025/ai-skills
       <div class="ci"><div class="cb" onclick="chk(this)"></div>Liitän promptin Gammaan ja generoin esityksen</div>
       <div class="ci"><div class="cb" onclick="chk(this)"></div>Muokkasin vähintään 3 diaa</div>
       <div class="ci"><div class="cb" onclick="chk(this)"></div>Tallensin Gamma-linkin yllä olevaan kenttään</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Valitsin yhden muistettavan lauseen ja perustelin sen</div>
     </div>
     <div class="win"><div class="win-l">✓ Tulos</div><p>Ammattimainen esitys valmiina. Seuraavaksi visualisoit sen Napkin.ai:lla.</p></div>
   </div>
@@ -767,7 +815,24 @@ https://weforum.org/agenda/2025/ai-skills
       <div><div class="ex-title">Napkin — kuvio → Gamma-esitykseen</div><div class="ex-time">⏱ ~15 min</div></div>
     </div>
 
-    <p style="font-size:14px;color:var(--mid);margin-bottom:12px;">Otat NotebookLM:n yhteenvedon (tai jonkin kappaleen Perplexity-tutkimuksesta), liität Napkiniin ja saat kuvion. Sitten lisäät sen Gamma-esitykseesi.</p>
+    <p style="font-size:14px;color:var(--mid);margin-bottom:12px;">Et valitse "mikä näyttää siistimmältä". Valitset kuviotyypin joka sopii <strong>sisältöösi</strong> — ja perustele valintasi ennen kuin lataat PNG:n.</p>
+
+    <div class="decide-box pink" style="margin-bottom:16px;">
+      <div class="decide-badge">⏸ Valitse kuviotyyppi — perustele ensin</div>
+      <div class="decide-sub" style="margin-bottom:12px;">
+        <strong>Flowchart</strong> sopii kun on prosessi tai vaiheet.<br>
+        <strong>Comparison</strong> sopii kun vertailet kahta asiaa.<br>
+        <strong>Mindmap</strong> sopii kun on monta haaraa tai osa-aluetta.
+      </div>
+      <div class="chart-pick" id="chartPick">
+        <label class="chart-opt"><input type="radio" name="napkinChart" value="flowchart"> <div><strong>➡️ Flowchart</strong><span>Prosessi, järjestys, vaiheet</span></div></label>
+        <label class="chart-opt"><input type="radio" name="napkinChart" value="comparison"> <div><strong>⚖️ Comparison</strong><span>Vertailu kahden asian välillä</span></div></label>
+        <label class="chart-opt"><input type="radio" name="napkinChart" value="mindmap"> <div><strong>🧠 Mindmap</strong><span>Monta haaraa, käsitekartta</span></div></label>
+      </div>
+      <div class="decide-title" style="margin-top:14px;">Mikä sopii sinun sisältöösi — ja miksi?</div>
+      <div class="decide-sub">Kirjoita vähintään 3 lausetta. Vertaa kahta muuta tyyppiä ja selitä miksi ne eivät sopineet yhtä hyvin.</div>
+      <textarea class="rb-ta pink" id="m2-napkin-why" rows="5" placeholder="Valitsin flowchartin koska sisällössäni on selkeä prosessi... Comparison ei sopinut koska..."></textarea>
+    </div>
 
     <div class="query-block">
       <div class="qb-meta"><span style="font-family:'DM Mono',monospace;font-size:10px;color:#f472b6;">NAPKIN ESIMERKKI — flowchart</span></div>
@@ -784,8 +849,8 @@ data-lukutaito, AI-työkalujen hallinta, empatia"
       <li>Avaa <a href="https://napkin.ai" target="_blank">napkin.ai</a> — luo ilmainen tili sähköpostilla tai Google-kirjautumisella</li>
       <li>Kopioi NotebookLM:n yhteenveto tai yksi kappale Perplexity-tutkimuksesta</li>
       <li>Liitä teksti Napkinin tekstikenttään</li>
-      <li>Klikkaa <strong>Visualize</strong> tai iskuanimaatio-kuvake — Napkin ehdottaa muutamaa kuviotyyppiä</li>
-      <li>Selaa vaihtoehdot — klikkaa paras → voit hienosäätää värejä tai elementtejä</li>
+      <li>Klikkaa <strong>Visualize</strong> — valitse <strong>sama tyyppi</strong> jonka perustelit yllä (flowchart / comparison / mindmap)</li>
+      <li>Selaa vaihtoehdot — valitse paras versio → hienosäädä tarvittaessa</li>
       <li>Klikkaa <strong>Download → PNG</strong> — tallentuu tietokoneelle</li>
       <li>Avaa Gamma-esityksesi → klikkaa <strong>+</strong> diojen välissä → <strong>Add card → Image</strong> → lataa PNG</li>
       <li>Lisää dia-teksti: "Visualisoitu Napkin.ai:lla NotebookLM-tutkimuksestani"</li>
@@ -796,35 +861,121 @@ data-lukutaito, AI-työkalujen hallinta, empatia"
       <p class="vt"><strong>Kokeile eri tekstejä</strong>Jos ensimmäinen kuvio ei vakuuta, kokeile eri tekstikappaletta tai eri kuviotyyppiä. Napkin antaa yleensä 3–5 vaihtoehtoa samasta tekstistä — selaa kaikki ennen valintaa.</p>
     </div>
 
-    <div style="margin-top:18px;">
-      <div class="reflect-box">
-        <div class="rb-label">Minkä kuviotyypin valitsit ja miksi?</div>
-        <div class="rb-sub">Flowchart? Mindmap? Comparison? Miksi se sopi parhaiten sisältösi aiheeseen?</div>
-        <textarea class="rb-ta pink" rows="3" placeholder="Kirjoita tähän..."></textarea>
-      </div>
-    </div>
-
     <div class="chain">
       <p><strong>Katso mitä olet tehnyt tänään:</strong><br>Tutkimuksesi <strong>Perplexityllä</strong> → analysoit lähteistä <strong>NotebookLM:llä</strong> (podcast + infograafi) → teit esityksen <strong>Gammalla</strong> → visualisoit kuvion <strong>Napkinilla</strong> → lisäsit sen esitykseen.<br>Tämä on se työnkulku miten ammattilaiset toimivat — ja sinä teit sen yhdessä tunnissa.</p>
     </div>
 
     <div class="checklist">
       <div class="ci"><div class="cb" onclick="chk(this)"></div>Kirjauduin Napkiniin ja liitän tekstin</div>
-      <div class="ci"><div class="cb" onclick="chk(this)"></div>Valitsin kuviotyypin ja latasin PNG</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Valitsin kuviotyypin, perustelin valinnan ja latasin PNG</div>
       <div class="ci"><div class="cb" onclick="chk(this)"></div>Lisäsin kuvion Gamma-esitykseeni uutena diana</div>
     </div>
     <div class="win"><div class="win-l">✓ Tulos</div><p>Gamma-esitys + Napkin-kuvio. Talleta Gamma-linkki — lisäät sen Moduulissa 3 portfolio-sivullesi.</p></div>
   </div>
 
+  <div class="linkedin-box">
+    <h3>📣 Julkaise LinkedInissä — oikea tulos</h3>
+    <p>Tee postaus tutkimuksestasi. Kolme lausetta + liitä Napkin-kuvio + Gamma-linkki kommenttiin tai postaukseen. Nyt sinulla on jotain mitä voit näyttää työnantajalle.</p>
+    <label style="display:block;font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">LinkedIn-postaus (3 lausetta)</label>
+    <textarea id="m2-linkedin" rows="6" placeholder="1) Mitä tutkin ja miksi se kiinnostaa minua.&#10;2) Yksi yllättävä havainto lähteistä.&#10;3) Linkki Gamma-esitykseen + mitä opit tekemällä tämän."></textarea>
+    <p class="linkedin-hint">Muista liittää: Napkin PNG (kuva) + Gamma URL (<span id="linkedinGammaHint">täytä Gamma-linkki harjoituksessa 3</span>). Tallennetaan automaattisesti — ohjaaja näkee postauksen.</p>
+  </div>
+
   <div class="final">
     <h2>Moduuli 2 valmis 🎉</h2>
-    <p>Sinulla on nyt: tutkimus, AI-podcast, Gamma-esitys ja Napkin-kuvio. Seuraavaksi luot kuvia, teet videon ja kokoat kaiken yhteen portfolioksi.</p>
+    <p>Sinulla on nyt: tutkimus, podcast, Gamma-esitys, Napkin-kuvio ja LinkedIn-julkaisu. Seuraavaksi luot kuvia, teet videon ja kokoat kaiken portfolioksi.</p>
     <a href="/module/santeri-m3-video" class="final-btn">Moduuli 3 → Kuvat ja video</a>
   </div>
 
 </div>
 
 <script>
+window.__MODULE_ID__ = 'santeri-m2-tutki';
+const M2_SUBMIT_ID = 'santeri-m2-tutki__submissions';
+const M2_FIELD_IDS = [
+  'm2-perp-decide','m2-perp-trend','m2-perp-academic','urlListInput',
+  'm2-nb-decide','m2-nb-surprise','notebookSummary',
+  'gammaMessage','m2-gamma-decide','gammaUrl',
+  'm2-napkin-why','m2-linkedin'
+];
+let m2SaveTimer = null;
+
+function m2GetChartType() {
+  const r = document.querySelector('input[name="napkinChart"]:checked');
+  return r ? r.value : '';
+}
+
+function m2SetChartType(val) {
+  if (!val) return;
+  const r = document.querySelector('input[name="napkinChart"][value="' + val + '"]');
+  if (r) r.checked = true;
+}
+
+function collectM2Submission() {
+  const o = { savedAt: new Date().toISOString(), napkinChartType: m2GetChartType() };
+  M2_FIELD_IDS.forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) o[id] = (el.value || '').trim();
+  });
+  return o;
+}
+
+function applyM2Submission(data) {
+  if (!data || typeof data !== 'object') return;
+  M2_FIELD_IDS.forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el && data[id] != null) el.value = data[id];
+  });
+  if (data.napkinChartType) m2SetChartType(data.napkinChartType);
+  syncUrlDisplay();
+  updateLinkedinGammaHint();
+}
+
+async function saveM2Submission() {
+  try {
+    await fetch('/api/reflections/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ moduleId: M2_SUBMIT_ID, reflectionText: JSON.stringify(collectM2Submission()) })
+    });
+  } catch (e) {}
+}
+
+function scheduleM2Save() {
+  clearTimeout(m2SaveTimer);
+  m2SaveTimer = setTimeout(saveM2Submission, 600);
+}
+
+async function loadM2Submission() {
+  try {
+    const r = await fetch('/api/reflections/module/' + encodeURIComponent(M2_SUBMIT_ID), { credentials: 'include' });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.reflection && d.reflection.reflection_text) {
+      applyM2Submission(JSON.parse(d.reflection.reflection_text));
+    }
+  } catch (e) {}
+}
+
+function bindM2Autosave() {
+  M2_FIELD_IDS.forEach(function(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', scheduleM2Save);
+    el.addEventListener('change', scheduleM2Save);
+  });
+  document.querySelectorAll('input[name="napkinChart"]').forEach(function(r) {
+    r.addEventListener('change', scheduleM2Save);
+  });
+}
+
+function updateLinkedinGammaHint() {
+  const g = document.getElementById('gammaUrl');
+  const h = document.getElementById('linkedinGammaHint');
+  if (g && h && g.value.trim()) h.textContent = g.value.trim();
+}
+
 let topicFi = '[aiheesi]';
 let topicEn = '[your topic in English]';
 
@@ -886,6 +1037,10 @@ function syncUrlDisplay() {
 document.addEventListener('DOMContentLoaded', () => {
   const src = document.getElementById('urlListInput');
   if (src) src.addEventListener('input', syncUrlDisplay);
+  const gUrl = document.getElementById('gammaUrl');
+  if (gUrl) gUrl.addEventListener('input', updateLinkedinGammaHint);
+  bindM2Autosave();
+  loadM2Submission();
 });
 
 function copyUrlDisplay(el) {
