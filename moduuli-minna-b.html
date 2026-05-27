@@ -607,6 +607,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
         <div class="banner-preview-meta">
           <strong id="bannerName">banner.png</strong>
           <span id="bannerInfo">Ladattu nyt</span>
+          <span id="bannerSyncStatus" style="display:block;margin-top:4px;font-size:11px;color:var(--muted);"></span>
         </div>
         <div class="banner-preview-actions">
           <button onclick="openBannerModal()">Näytä isona</button>
@@ -1368,6 +1369,41 @@ function lsCheck(id, el){
 
 // BANNER UPLOAD
 const BANNER_MAX_BYTES=4*1024*1024;
+function setBannerSyncStatus(msg, ok){
+  const el=document.getElementById('bannerSyncStatus');
+  if(!el)return;
+  el.textContent=msg||'';
+  el.style.color=ok?'var(--forest)':'var(--muted)';
+}
+async function syncBannerToServer(dataUrl, filename){
+  try{
+    setBannerSyncStatus('⏳ Tallennetaan opettajalle...', false);
+    const r=await fetch('/api/artifacts/upload',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body:JSON.stringify({
+        moduleId:'moduuli-minna-b',
+        artifactKey:'canva-banner',
+        filename:filename||'banner.png',
+        dataUrl:dataUrl
+      })
+    });
+    if(r.status===401){
+      setBannerSyncStatus('ℹ️ Kirjautumaton — vain paikallinen kopio tallessa.', false);
+      return;
+    }
+    let d={};
+    try{d=await r.json();}catch(e){}
+    if(!r.ok){
+      setBannerSyncStatus('⚠️ Pilvitallennus epäonnistui: '+(d&&d.error?d.error:('Virhe '+r.status)), false);
+      return;
+    }
+    setBannerSyncStatus('✓ Tallennettu opettajalle', true);
+  }catch(e){
+    setBannerSyncStatus('⚠️ Verkkovirhe pilvitallennuksessa', false);
+  }
+}
 function handleBannerUpload(ev){
   const file=ev.target.files&&ev.target.files[0];
   const err=document.getElementById('bannerError');
@@ -1387,6 +1423,7 @@ function handleBannerUpload(ev){
       localStorage.setItem('mb_e2-banner-time',String(Date.now()));
       localStorage.setItem('mb_e2-banner-size',String(file.size));
       showBannerPreview();
+      syncBannerToServer(dataUrl, file.name);
     }catch(storageErr){
       err.textContent='Tallennus epäonnistui: kuva on liian iso paikalliseen tallennukseen. Kokeile pienempää PNG:tä.';
       err.style.display='block';

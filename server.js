@@ -57,6 +57,7 @@ const { router: finalModuleRoutes } = require('./routes/final');
 const { router: courtRoutes } = require('./routes/tuomioistuin');
 const { router: toolBuilderRoutes } = require('./routes/tyokalurakentaja');
 const { router: portfolioRoutes } = require('./routes/portfolio');
+const artifactsRoutes = require('./routes/artifacts');
 const { authenticateToken, authenticatePage } = require('./middleware/auth');
 
 const app = express();
@@ -69,7 +70,7 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '8mb' }));
 app.use(cookieParser());
 app.use(
   '/uploads',
@@ -92,6 +93,7 @@ app.use('/api/final', finalModuleRoutes);
 app.use('/api/tuomioistuin', courtRoutes);
 app.use('/api/tyokalurakentaja', toolBuilderRoutes);
 app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/artifacts', artifactsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -309,6 +311,19 @@ app.get('/admin/tyokalurakentaja', authenticateToken, (req, res) => {
   const candidates = [
     path.join(__dirname, 'admin-tyokalurakentaja.html'),
     path.join(process.cwd(), 'admin-tyokalurakentaja.html')
+  ];
+  const p = candidates.find(c => fs.existsSync(c));
+  if (p) return res.sendFile(p);
+  res.status(404).send('Ei löytynyt');
+});
+
+app.get('/admin/banners', authenticateToken, (req, res) => {
+  if (!req.user || !req.user.is_admin) {
+    return res.status(403).send('<h1>403 - Pääsy kielletty</h1>');
+  }
+  const candidates = [
+    path.join(__dirname, 'admin-banners.html'),
+    path.join(process.cwd(), 'admin-banners.html')
   ];
   const p = candidates.find(c => fs.existsSync(c));
   if (p) return res.sendFile(p);
