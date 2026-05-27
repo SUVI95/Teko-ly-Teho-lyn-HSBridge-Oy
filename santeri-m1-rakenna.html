@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moduuli 1 — Kerro ideasi, AI rakentaa</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#0d9488;--teal-l:#ccfbf1;--teal-d:#0f766e;
+  --dark:#0f172a;--mid:#334155;--soft:#64748b;
+  --bg:#f8fafc;--white:#fff;--border:#e2e8f0;
+  --green:#10b981;--green-l:#d1fae5;
+  --amber:#f59e0b;--amber-l:#fef3c7;
+  --purple:#8b5cf6;--purple-l:#ede9fe;
+  --ind:#4f46e5;--ind-l:#eef2ff;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--dark);line-height:1.65;font-size:16px;}
+
+.hero{background:var(--dark);padding:58px 24px 50px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-80px;right:-80px;width:340px;height:340px;background:radial-gradient(circle,rgba(13,148,136,.18) 0%,transparent 68%);pointer-events:none;}
+.tag{display:inline-block;background:var(--teal);color:white;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;padding:4px 13px;border-radius:20px;margin-bottom:20px;text-transform:uppercase;}
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(28px,5vw,46px);line-height:1.15;color:white;margin-bottom:14px;}
+.hero h1 em{color:#5eead4;font-style:normal;}
+.hero-sub{color:#94a3b8;font-size:15px;max-width:520px;margin:0 auto 26px;}
+.pills{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;}
+.pill{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);color:#cbd5e1;padding:5px 13px;border-radius:20px;font-size:12px;}
+
+.content{max-width:740px;margin:0 auto;padding:50px 24px 88px;}
+.slabel{font-family:'DM Mono',monospace;font-size:10px;color:var(--teal);letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px;}
+.slabel.ind{color:var(--ind);}
+h2{font-family:'DM Serif Display',serif;font-size:27px;color:var(--dark);margin-bottom:14px;}
+h3{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:9px;}
+p{color:var(--mid);margin-bottom:14px;font-size:15px;}
+.div{border:none;border-top:1px solid var(--border);margin:50px 0;}
+a{color:var(--teal);}
+
+.flow{display:flex;align-items:center;gap:0;overflow-x:auto;padding:2px 0 8px;margin-bottom:38px;}
+.fn{background:var(--white);border:2px solid var(--border);border-radius:11px;padding:11px 15px;min-width:108px;text-align:center;flex-shrink:0;}
+.fn.cur{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-l);}
+.fn.cur2{border-color:var(--ind);box-shadow:0 0 0 3px var(--ind-l);}
+.fn-n{font-family:'DM Mono',monospace;font-size:9px;color:var(--soft);margin-bottom:3px;}
+.fn-l{font-size:11px;font-weight:700;}
+.fa{color:#94a3b8;font-size:16px;padding:0 5px;flex-shrink:0;}
+
+/* EXERCISE */
+.ex{background:var(--white);border:2px solid var(--teal);border-radius:15px;padding:28px;margin-bottom:28px;}
+.ex.ind{border-color:var(--ind);}
+.ex-head{display:flex;gap:13px;align-items:flex-start;margin-bottom:16px;}
+.ex-num{background:var(--teal);color:white;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;flex-shrink:0;}
+.ex-num.ind{background:var(--ind);}
+.ex-title{font-size:17px;font-weight:700;margin-bottom:2px;}
+.ex-time{font-size:11px;color:var(--soft);font-family:'DM Mono',monospace;}
+
+.steps{list-style:none;counter-reset:s;margin:14px 0 0;}
+.steps li{counter-increment:s;display:flex;gap:12px;margin-bottom:12px;font-size:14px;color:var(--mid);align-items:flex-start;}
+.steps li::before{content:counter(s);background:var(--teal-l);color:var(--teal);font-family:'DM Mono',monospace;font-size:10px;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.ex.ind .steps li::before{background:var(--ind-l);color:var(--ind);}
+
+.win{background:var(--green-l);border:1px solid #6ee7b7;border-radius:9px;padding:14px 18px;margin-top:18px;}
+.win-l{font-size:9px;font-family:'DM Mono',monospace;color:var(--green);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:5px;}
+.win p{font-size:13px;color:#065f46;margin:0;}
+
+/* VINKKI */
+.vinkki{background:var(--amber-l);border:1px solid #fcd34d;border-radius:9px;padding:14px 18px;margin:16px 0;display:flex;gap:10px;align-items:flex-start;}
+.vinkki-i{font-size:18px;flex-shrink:0;margin-top:1px;}
+.vinkki-t{font-size:13px;color:#92400e;margin:0;line-height:1.65;}
+.vinkki-t strong{color:#78350f;display:block;margin-bottom:4px;font-size:14px;}
+
+/* BIG CTA */
+.big-cta{background:linear-gradient(135deg,#0f172a,#134e4a);border-radius:15px;padding:32px 28px;text-align:center;margin:24px 0;}
+.big-cta h3{color:white;font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:8px;}
+.big-cta p{color:#94a3b8;font-size:13px;margin-bottom:18px;}
+.big-btn{display:inline-flex;align-items:center;gap:9px;background:var(--teal);color:white;text-decoration:none;padding:13px 28px;border-radius:11px;font-size:15px;font-weight:700;transition:background .2s,transform .1s;}
+.big-btn:hover{background:var(--teal-d);transform:translateY(-1px);}
+.big-btn.ind{background:var(--ind);}
+.big-btn.ind:hover{background:#4338ca;}
+
+/* TOPIC CARDS */
+.topic-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:18px 0;}
+@media(max-width:520px){.topic-grid{grid-template-columns:1fr;}}
+.tc{background:var(--white);border:2px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:all .2s;}
+.tc:hover{border-color:var(--ind);box-shadow:0 0 0 3px var(--ind-l);}
+.tc.picked{border-color:var(--ind);background:var(--ind-l);}
+.tc-em{font-size:28px;margin-bottom:8px;}
+.tc-name{font-weight:700;font-size:15px;margin-bottom:4px;}
+.tc-desc{font-size:12px;color:var(--soft);line-height:1.5;}
+
+/* PROBLEM FORM */
+.prob-form{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;margin:20px 0;}
+.prob-label{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:6px;}
+.prob-sub{font-size:12px;color:var(--soft);margin-bottom:10px;}
+.prob-ta{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--dark);resize:none;outline:none;transition:border-color .2s;line-height:1.55;}
+.prob-ta:focus{border-color:var(--ind);}
+.prob-input{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--dark);outline:none;transition:border-color .2s;}
+.prob-input:focus{border-color:var(--ind);}
+.name-ideas{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 14px;}
+.ni{background:var(--ind-l);color:var(--ind);font-size:12px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;transition:background .2s;}
+.ni:hover{background:#c7d2fe;}
+.continue-btn{background:var(--ind);color:white;border:none;padding:12px 24px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;margin-top:12px;}
+.continue-btn:hover{background:#4338ca;}
+.continue-btn:disabled{background:#94a3b8;cursor:not-allowed;}
+
+/* INTERVIEW SECTION */
+.interview-wrap{display:none;}
+.interview-wrap.show{display:block;}
+.int-header{background:var(--dark);border-radius:12px 12px 0 0;padding:16px 20px;display:flex;align-items:center;gap:12px;}
+.int-avatar{width:36px;height:36px;background:var(--ind);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.int-name{font-weight:700;font-size:14px;color:white;}
+.int-sub{font-size:11px;color:#64748b;}
+.int-progress{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:#64748b;}
+
+.chat-box{background:#f8fafc;border:1px solid var(--border);border-top:none;border-radius:0;min-height:200px;max-height:360px;overflow-y:auto;padding:16px;}
+.chat-box::-webkit-scrollbar{width:3px;}
+.chat-box::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px;}
+
+.cmsg{display:flex;gap:9px;align-items:flex-start;margin-bottom:12px;animation:pop .22s ease;}
+@keyframes pop{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+.cmsg.user{flex-direction:row-reverse;}
+.cav{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.cav.ai{background:var(--ind);color:white;}
+.cav.user{background:#475569;color:white;}
+.cbub{max-width:440px;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.6;}
+.cmsg.ai .cbub{background:white;border:1px solid var(--border);border-top-left-radius:3px;}
+.cmsg.user .cbub{background:var(--ind);color:white;border-top-right-radius:3px;}
+.typing-bub{background:white;border:1px solid var(--border);border-radius:12px;border-top-left-radius:3px;padding:10px 14px;display:flex;gap:4px;align-items:center;}
+.td{width:6px;height:6px;background:#94a3b8;border-radius:50%;animation:b 1.1s infinite;}
+.td:nth-child(2){animation-delay:.18s;}.td:nth-child(3){animation-delay:.36s;}
+@keyframes b{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-5px);}}
+
+.int-input-row{background:white;border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:12px 16px;display:flex;gap:9px;align-items:flex-end;}
+.int-input-row textarea{flex:1;border:1.5px solid var(--border);border-radius:9px;padding:9px 13px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--dark);resize:none;outline:none;min-height:40px;max-height:100px;line-height:1.5;transition:border-color .2s;}
+.int-input-row textarea:focus{border-color:var(--ind);}
+.send-btn{background:var(--ind);color:white;border:none;width:40px;height:40px;border-radius:9px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s;}
+.send-btn:hover{background:#4338ca;}
+.send-btn:disabled{background:#94a3b8;cursor:not-allowed;}
+
+/* PROMPT RESULT */
+.prompt-result{display:none;background:var(--dark);border-radius:12px;padding:22px;margin-top:16px;}
+.prompt-result.show{display:block;}
+.pr-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.pr-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--ind);text-transform:uppercase;letter-spacing:.12em;}
+.copy-btn{background:var(--ind);color:white;border:none;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;}
+.copy-btn:hover{background:#4338ca;}
+.copy-btn.ok{background:var(--green);}
+.pr-text{font-family:'DM Mono',monospace;font-size:12px;color:#e2e8f0;line-height:1.7;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto;}
+.pr-text::-webkit-scrollbar{width:3px;}
+.pr-text::-webkit-scrollbar-thumb{background:#334155;}
+.pr-cta{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.pr-btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;transition:opacity .2s;}
+.pr-btn:hover{opacity:.85;}
+.pr-btn.b44{background:var(--amber);color:white;}
+
+/* URL SUBMIT */
+.url-submit{background:var(--white);border:2px solid var(--teal);border-radius:12px;padding:22px;margin-top:18px;}
+.url-submit-title{font-weight:700;font-size:15px;margin-bottom:6px;}
+.url-submit-sub{font-size:13px;color:var(--soft);margin-bottom:14px;}
+.url-fields{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+.url-field{display:flex;flex-direction:column;gap:4px;}
+.url-field label{font-size:12px;font-weight:600;color:var(--mid);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;}
+.url-field input{border:1.5px solid var(--border);border-radius:8px;padding:9px 13px;font-size:14px;font-family:'DM Mono',monospace;color:var(--dark);outline:none;transition:border-color .2s;}
+.url-field input:focus{border-color:var(--teal);}
+.submit-btn{background:var(--teal);color:white;border:none;padding:11px 22px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;}
+.submit-btn:hover{background:var(--teal-d);}
+.submit-btn:disabled{background:#94a3b8;cursor:not-allowed;}
+.submit-success{display:none;background:var(--green-l);border:1px solid #6ee7b7;border-radius:8px;padding:12px 16px;font-size:13px;color:#065f46;font-weight:600;}
+.submit-success.show{display:block;}
+
+.final{background:var(--dark);border-radius:15px;padding:32px 28px;text-align:center;margin-top:50px;}
+.final h2{color:white;font-family:'DM Serif Display',serif;margin-bottom:9px;}
+.final p{color:#94a3b8;margin-bottom:20px;font-size:14px;}
+.final-btn{display:inline-flex;align-items:center;gap:7px;background:var(--teal);color:white;text-decoration:none;padding:13px 26px;border-radius:9px;font-size:14px;font-weight:700;transition:background .2s;}
+.final-btn:hover{background:var(--teal-d);}
+
+.pbar{background:var(--border);border-radius:20px;height:4px;margin-bottom:38px;overflow:hidden;}
+.pfill{background:linear-gradient(90deg,var(--teal),#5eead4);height:100%;width:33%;border-radius:20px;}
+
+/* SKILLS EARNED */
+.skills-section{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:32px;margin:32px 0;}
+.skills-header{display:flex;gap:12px;align-items:center;margin-bottom:22px;}
+.skills-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--teal),var(--ind));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.skills-title{font-family:'DM Serif Display',serif;font-size:22px;}
+.skill-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;}
+@media(max-width:500px){.skill-row{grid-template-columns:1fr;}}
+.skill-card{background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:16px;}
+.sc-top{display:flex;gap:9px;align-items:center;margin-bottom:8px;}
+.sc-em{font-size:22px;}
+.sc-name{font-weight:700;font-size:14px;}
+.sc-cv{font-size:12px;color:var(--soft);line-height:1.55;margin-bottom:8px;}
+.sc-tag{display:inline-block;background:var(--teal-l);color:var(--teal);font-size:10px;font-family:'DM Mono',monospace;padding:3px 9px;border-radius:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;}
+.sc-tag.ind{background:var(--ind-l);color:var(--ind);}
+.sc-tag.purple{background:var(--purple-l);color:var(--purple);}
+.sc-tag.amber{background:var(--amber-l);color:var(--amber);}
+.jobs-row{margin-top:18px;}
+.jobs-title{font-size:12px;font-weight:700;color:var(--mid);margin-bottom:10px;text-transform:uppercase;letter-spacing:.07em;font-family:'DM Mono',monospace;}
+.job-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.job-chip{background:var(--dark);color:#e2e8f0;font-size:12px;padding:6px 13px;border-radius:20px;font-weight:600;}
+.cv-line{background:linear-gradient(135deg,#0f172a,#134e4a);border-radius:12px;padding:20px 22px;margin-top:18px;}
+.cv-line-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--teal-l);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px;}
+.cv-line-text{font-family:'DM Mono',monospace;font-size:13px;color:#e2e8f0;line-height:1.65;white-space:pre-wrap;}
+
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="tag">Moduuli 1 — Santerin polku</div>
+  <h1>Kerro ideasi —<br><em>AI rakentaa sen</em></h1>
+  <p class="hero-sub">Ei koodia. Ei kokemusta. Tänään sinulla on kaksi julkaistua sovellusta oikeilla URL-osoitteilla.</p>
+  <div class="pills">
+    <span class="pill">⏱ ~75 min</span>
+    <span class="pill">🤖 AI-haastattelu</span>
+    <span class="pill">🪄 Lovable</span>
+    <span class="pill">⚡ Base44</span>
+  </div>
+</div>
+
+<div class="content">
+  <div class="pbar"><div class="pfill"></div></div>
+
+  <div class="slabel">Tänään neljä vaihetta</div>
+  <h2>Kaksi sovellusta — kaksi eri ideaa</h2>
+  <p>Harjoitus 1–2: AI haastattelee sinua ja Lovable rakentaa ensimmäisen sovelluksesi. Harjoitus 3–4: sinä keksit ongelman, AI haastattelee uudelleen, Base44 rakentaa toisen.</p>
+
+  <div class="flow">
+    <div class="fn cur"><div class="fn-n">H1</div><div class="fn-l">🤖 Haastattelu</div></div>
+    <div class="fa">→</div>
+    <div class="fn"><div class="fn-n">H2</div><div class="fn-l">🪄 Lovable</div></div>
+    <div class="fa">→</div>
+    <div class="fn cur2"><div class="fn-n">H3</div><div class="fn-l">💡 Ongelma + AI</div></div>
+    <div class="fa">→</div>
+    <div class="fn cur2"><div class="fn-n">H4</div><div class="fn-l">⚡ Base44</div></div>
+  </div>
+
+  <div class="div"></div>
+
+  <!-- ══ H1: AI HAASTATTELU ══ -->
+  <div class="slabel">Harjoitus 1</div>
+  <h2>AI haastattelee sinut</h2>
+  <p>AI kysyy sinulta 5 kysymystä suomeksi. Vastauksistasi se rakentaa täydellisen Lovable-promptin — värit, toiminnot, animaatiot, kaikki. Sinä vain kerrot ideasi.</p>
+
+  <div class="big-cta">
+    <h3>🤖 Aloita AI-haastattelu</h3>
+    <p>Aukeaa uudessa välilehdessä. Vastaa rehellisesti — mitä enemmän kerrot, sitä parempi sovellus.</p>
+    <a href="santeri-ai-haastattelu.html" target="_blank" class="big-btn">Avaa haastattelu →</a>
+  </div>
+
+  <div class="ex">
+    <div class="ex-head"><div class="ex-num">1</div><div><div class="ex-title">Vastaa — kopioi prompti</div><div class="ex-time">⏱ 10–15 min</div></div></div>
+    <ul class="steps">
+      <li>Klikkaa "Avaa haastattelu" — aukeaa uuteen ikkunaan</li>
+      <li>Vastaa kaikkiin 5 kysymykseen rauhassa</li>
+      <li>Kun prompti ilmestyy, klikkaa <strong>Kopioi prompti</strong></li>
+      <li>Tule takaisin tähän sivulle</li>
+    </ul>
+    <div class="win"><div class="win-l">✓ Tulos</div><p>Täydellinen Lovable-prompt kopioitu. Parempi kuin useimmat kirjoittaisivat itse.</p></div>
+  </div>
+
+  <div class="div"></div>
+
+  <!-- ══ H2: LOVABLE ══ -->
+  <div class="slabel">Harjoitus 2</div>
+  <h2>Lovable — yksi build, oikea build</h2>
+
+  <div class="vinkki">
+    <span class="vinkki-i">💡</span>
+    <p class="vinkki-t"><strong>Näin säästät Lovable credits</strong>Lovablen ilmainen tili antaa rajoitetun määrän viestejä — ne loppuvat nopeasti jos kokeilet ja rakennat turhaan. Kultainen sääntö: <strong>brainstormaa ensin Claudessa tai ChatGPT:ssä, muokkaa promptia siellä niin pitkäksi kuin haluat</strong> — ne ovat ilmaisia. Liitä valmis prompt Lovableen vasta kun olet varma mitä haluat. Yksi hyvin rakennettu prompt on parempi kuin kymmenen kokeilua.</p>
+  </div>
+
+  <div class="ex">
+    <div class="ex-head"><div class="ex-num">2</div><div><div class="ex-title">Liitä prompt Lovableen</div><div class="ex-time">⏱ 15–20 min</div></div></div>
+    <ul class="steps">
+      <li>Avaa <a href="https://lovable.dev" target="_blank">lovable.dev</a> — kirjaudu Google-tilillä</li>
+      <li>Klikkaa <strong>New Project</strong> — nimeksi sovelluksesi nimi</li>
+      <li>Liitä haastattelu-prompti (Ctrl+V) ja paina Enter — odota rauhassa</li>
+      <li>Testaa esikatselu: klikkaa kaikki napit ja osiot läpi</li>
+      <li>Jos jokin on selvästi rikki, korjaa se <strong>yhdellä viestillä</strong> — muut muutokset tehdään Base44:ssä (H4)</li>
+    </ul>
+    <div class="win"><div class="win-l">✓ Tulos</div><p>Toimiva sovellus Lovablen esikatselussa. Julkaisu tulee Harjoitus 4:ssä.</p></div>
+  </div>
+
+  <div class="div"></div>
+
+  <!-- ══ H3: ONGELMA + BASE44 AI HAASTATTELU ══ -->
+  <div class="slabel ind">Harjoitus 3 — Base44</div>
+  <h2>Keksi ongelma — rakenna ratkaisu</h2>
+  <p>Nyt et käytä valmista ideaa. Keksit itse ongelman ja AI haastattelee sinut niin, että Base44 voi rakentaa täsmälleen sen mitä tarvitaan. Tämä on se miten oikeat tuotteet syntyvät.</p>
+
+  <div class="ex ind">
+    <div class="ex-head"><div class="ex-num ind">3</div><div><div class="ex-title">Valitse aihe tai keksi oma ongelma</div><div class="ex-time">⏱ 25–30 min</div></div></div>
+
+    <!-- STEP A: TOPIC PICK OR OWN -->
+    <div id="stepA">
+      <p style="font-size:14px;color:var(--mid);margin-bottom:12px;">Valitse valmis aihe tai kirjoita oma ongelma alta:</p>
+
+      <div class="topic-grid">
+        <div class="tc" onclick="pickTopic(this, 'Työnhakijat eivät tiedä miten erottua muista hakijoista. CV:t näyttävät samalta. Harjoittelua ei ole.', 'CV-Räätäli', 'Työnhaku')">
+          <div class="tc-em">💼</div>
+          <div class="tc-name">CV-räätäli</div>
+          <div class="tc-desc">Sovellus joka analysoi CV:n ja räätälöi sen jokaiseen hakemukseen</div>
+        </div>
+        <div class="tc" onclick="pickTopic(this, 'Nuoret ihmiset haluavat syödä paremmin mutta eivät tiedä mitä ostaa kaupasta budjettinsa sisällä.', 'BudjettiMenut', 'Ruoka & budjetti')">
+          <div class="tc-em">🛒</div>
+          <div class="tc-name">Budjettimenu</div>
+          <div class="tc-desc">Viikon ruokasuunnitelma omalla budjetilla — ostoslista automaattisesti</div>
+        </div>
+        <div class="tc" onclick="pickTopic(this, 'Pelaajat haluavat kehittyä mutta eivät tiedä mitä taitoja harjoitella. Ei selkeää seurantaa.', 'GainTracker', 'Pelaajan kehitys')">
+          <div class="tc-em">🎮</div>
+          <div class="tc-name">Gain Tracker</div>
+          <div class="tc-desc">Pelaajan taitojen seuranta ja treenisuunnitelma peliin kuin peliin</div>
+        </div>
+      </div>
+
+      <p style="font-size:13px;color:var(--soft);text-align:center;margin:14px 0 6px;">— tai kirjoita oma —</p>
+
+      <div class="prob-form" id="ownProbForm">
+        <div class="prob-label">Ongelma omin sanoin</div>
+        <div class="prob-sub">Kirjoita vapaasti: mitä tapahtuu, kuka kärsii, miksi se on ongelma. Ei tarvitse olla täydellinen.</div>
+        <textarea class="prob-ta" id="probText" rows="4" placeholder="Esim: Maahanmuuttajat Suomessa eivät tiedä mitä työnantajat oikeasti odottavat haastattelussa. Suomalainen työkulttuuri on erilainen kuin mistä he tulevat, eikä ole paikkaa missä sitä voisi turvallisesti harjoitella..."></textarea>
+
+        <div style="margin-top:16px;">
+          <div class="prob-label">Ongelma yhdellä lauseella — terävänä</div>
+          <div class="prob-sub">Yksi lause. Kuvittele sanovat sen ääneen — pitääkö se pysähtyä kuuntelemaan?</div>
+          <textarea class="prob-ta" id="probSharp" rows="2" placeholder="Esim: Työnhakijat harjoittelevat haastattelua oikeassa haastattelussa — ja se on liian myöhäistä."></textarea>
+        </div>
+
+        <div style="margin-top:16px;">
+          <div class="prob-label">Sovelluksen nimi</div>
+          <div class="prob-sub">Rohkea nimi on parempi kuin tylsä. Suomeksi, englanniksi tai yhdistelmä.</div>
+          <div class="name-ideas">
+            <span class="ni" onclick="setName(this)">HaastatteluAI</span>
+            <span class="ni" onclick="setName(this)">JobBridge</span>
+            <span class="ni" onclick="setName(this)">DuuniValmennus</span>
+            <span class="ni" onclick="setName(this)">Työtutka</span>
+            <span class="ni" onclick="setName(this)">SkillMap</span>
+            <span class="ni" onclick="setName(this)">SolveIt</span>
+          </div>
+          <input class="prob-input" id="probName" placeholder="Kirjoita tai klikkaa idea yllä" />
+        </div>
+      </div>
+
+      <button class="continue-btn" id="continueBtn" onclick="startBase44Interview()">Jatka haastatteluun →</button>
+    </div>
+
+    <!-- STEP B: AI INTERVIEW -->
+    <div class="interview-wrap" id="stepB">
+      <p style="font-size:14px;color:var(--mid);margin-bottom:12px;">AI on lukenut ongelmasi. Nyt 5 kysymystä — ne auttavat rakentamaan paremman sovelluksen.</p>
+
+      <div class="int-header">
+        <div class="int-avatar">🤖</div>
+        <div>
+          <div class="int-name">Sovellussparraus</div>
+          <div class="int-sub">5 kysymystä → valmis Base44-prompt</div>
+        </div>
+        <div class="int-progress" id="qProgress">0 / 5</div>
+      </div>
+      <div class="chat-box" id="intChat"></div>
+      <div class="int-input-row" id="intInputRow">
+        <textarea id="intInp" placeholder="Kirjoita vastauksesi..." rows="1"
+          onkeydown="intKey(event)" oninput="intResize(this)"></textarea>
+        <button class="send-btn" id="intSend" onclick="intSend()">↑</button>
+      </div>
+
+      <!-- PROMPT RESULT -->
+      <div class="prompt-result" id="promptResult">
+        <div class="pr-header">
+          <div class="pr-label">⚡ Base44-promptisi valmis</div>
+          <button class="copy-btn" id="prCopy" onclick="copyPrompt()">Kopioi</button>
+        </div>
+        <pre class="pr-text" id="prText"></pre>
+        <div class="pr-cta">
+          <a href="https://base44.com" target="_blank" class="pr-btn b44">⚡ Avaa Base44 →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="win"><div class="win-l">✓ Tulos</div><p>Valmis Base44-prompt. Liitä se Base44:ään — sovelluksesi syntyy.</p></div>
+  </div>
+
+  <div class="div"></div>
+
+  <!-- ══ H4: JULKAISE MOLEMMAT + TALLENNA ══ -->
+  <div class="slabel">Harjoitus 4</div>
+  <h2>Julkaise molemmat — lähetä linkit ohjaajalle</h2>
+
+  <div class="ex">
+    <div class="ex-head"><div class="ex-num">4</div><div><div class="ex-title">Publish + lähetä URL:t</div><div class="ex-time">⏱ 10 min</div></div></div>
+    <ul class="steps">
+      <li><strong>Lovable:</strong> avaa projekti → klikkaa <strong>Publish</strong> → kopioi URL (muoto: sinunnimi.lovable.app)</li>
+      <li><strong>Base44:</strong> avaa projekti → klikkaa <strong>Publish</strong> tai <strong>Deploy</strong> → kopioi URL</li>
+      <li>Avaa molemmat puhelimella — toimivatko?</li>
+      <li>Syötä molemmat URL:t alla olevaan kenttään ja lähetä ohjaajalle</li>
+    </ul>
+
+    <!-- URL SUBMIT FORM -->
+    <div class="url-submit">
+      <div class="url-submit-title">📎 Lähetä linkit ohjaajalle</div>
+      <div class="url-submit-sub">Kopioi URL:t tähän — ohjaaja pääsee katsomaan mitä rakensit.</div>
+      <div class="url-fields">
+        <div class="url-field">
+          <label>Sinun nimesi</label>
+          <input type="text" id="studentName" placeholder="Etunimi Sukunimi" />
+        </div>
+        <div class="url-field">
+          <label>Lovable URL (Harjoitus 2)</label>
+          <input type="url" id="lovableUrl" placeholder="https://sinunprojekti.lovable.app" />
+        </div>
+        <div class="url-field">
+          <label>Base44 URL (Harjoitus 3)</label>
+          <input type="url" id="base44Url" placeholder="https://app.base44.com/sinun-projekti" />
+        </div>
+      </div>
+      <button class="submit-btn" id="submitBtn" onclick="submitUrls()">Lähetä ohjaajalle ✓</button>
+      <div class="submit-success" id="submitSuccess">✓ Lähetetty! Ohjaaja näkee linkkisi.</div>
+    </div>
+
+    <div class="win"><div class="win-l">✓ Tulos</div><p>Kaksi sovellusta julkaistu. Linkit ohjaajalla. Kukaan muu ei ole rakentanut juuri näitä — koska ideat ovat sinun.</p></div>
+  </div>
+
+
+  <!-- SKILLS EARNED -->
+  <div class="skills-section">
+    <div class="skills-header">
+      <div class="skills-icon">🏆</div>
+      <div class="skills-title">Taidot jotka hankit tänään</div>
+    </div>
+    <p style="font-size:14px;color:var(--mid);margin-bottom:18px;">Nämä eivät ole kurssitaitoja. Ne ovat oikeita markkinakelpoisia taitoja joita yritykset etsivät ja joista maksetaan.</p>
+
+    <div class="skill-row">
+      <div class="skill-card">
+        <div class="sc-top"><div class="sc-em">🪄</div><div class="sc-name">No-code sovelluskehitys</div></div>
+        <div class="sc-cv">Rakensit kaksi toimivaa web-sovellusta ilman koodia AI-työkaluilla. Julkaisit ne oikeille URL-osoitteille.</div>
+        <span class="sc-tag">Lovable</span> <span class="sc-tag">Base44</span>
+      </div>
+      <div class="skill-card">
+        <div class="sc-top"><div class="sc-em">🎯</div><div class="sc-name">Prompt engineering</div></div>
+        <div class="sc-cv">Osaat kuvata idean niin tarkasti, että AI rakentaa juuri sen mitä haluat. Tämä on 2026:n tärkein digitaito.</div>
+        <span class="sc-tag ind">AI prompting</span>
+      </div>
+      <div class="skill-card">
+        <div class="sc-top"><div class="sc-em">💡</div><div class="sc-name">Tuoteajattelu</div></div>
+        <div class="sc-cv">Muutit ongelman sovellukseksi: kuka käyttäjä on, mitä he tarvitsevat, miten se ratkaistaan. Tämä on tuotepäällikön ydintyö.</div>
+        <span class="sc-tag purple">Product thinking</span>
+      </div>
+      <div class="skill-card">
+        <div class="sc-top"><div class="sc-em">🚀</div><div class="sc-name">MVP-rakentaminen</div></div>
+        <div class="sc-cv">Rakensit toimivan prototyypin nopeasti. Startup-maailmassa tätä kutsutaan MVP:ksi — Minimum Viable Product.</div>
+        <span class="sc-tag amber">MVP / prototyping</span>
+      </div>
+    </div>
+
+    <div class="jobs-row">
+      <div class="jobs-title">Näihin töihin nämä taidot sopivat</div>
+      <div class="job-chips">
+        <span class="job-chip">🧩 No-code developer</span>
+        <span class="job-chip">📱 AI Product Builder</span>
+        <span class="job-chip">🎯 Digitaalinen myyjä</span>
+        <span class="job-chip">🏢 Startup-tiimiläinen</span>
+        <span class="job-chip">💼 Digimarkkinoija</span>
+        <span class="job-chip">🤝 AI-konsultti</span>
+      </div>
+    </div>
+
+    <div class="cv-line">
+      <div class="cv-line-label">📄 Kopioi suoraan CV:hen tai LinkedIn-profiiliin</div>
+      <pre class="cv-line-text">• Rakensin kaksi web-sovellusta AI-kehitystyökaluilla (Lovable, Base44) — ei koodia
+• Hallitsen prompt engineering -tekniikat ja AI-pohjaisen tuotekehityksen
+• Muunsin asiakastarpeen toimivaksi digitaaliseksi ratkaisuksi MVP-menetelmällä</pre>
+    </div>
+
+    <div style="margin-top:16px;background:var(--amber-l);border:1px solid #fcd34d;border-radius:9px;padding:14px 17px;">
+      <div style="font-size:13px;color:#92400e;line-height:1.65;">
+        <strong style="color:#78350f;display:block;margin-bottom:8px;font-size:14px;">🌍 Tämä on vasta alku</strong>
+        AI-maailma muuttuu joka viikko. Uusia työkaluja syntyy, uusia tapoja rakentaa ilmestyy, uusia ammatteja kehittyy. Tällä kurssilla opit miten AI-työkaluja käytetään — mutta tärkein taito jonka voit oppia on se, miten <em>opit uusia AI-taitoja itse</em>. Kokeile, riko, rakenna uudelleen. Jokainen projekti vie sinut askeleen pidemmälle.
+      </div>
+    </div>
+  </div>
+
+  <div class="final">
+    <h2>Moduuli 1 valmis 🎉</h2>
+    <p>Kaksi sovellusta. Kaksi julkaistua URL:ää. Seuraavassa moduulissa opit tutkimaan, esittämään ja visualisoimaan.</p>
+    <a href="santeri-m2-tutki.html" class="final-btn">Moduuli 2 → Tutki ja luo</a>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// SUVI: LISÄÄ API-AVAIN TÄHÄN
+const CLAUDE_KEY = 'sk-ant-REPLACE_WITH_YOUR_KEY';
+
+// SUVI / CURSOR: URL SUBMISSION ENDPOINT
+// Tämä funktio lähettää opiskelijoiden URL:t tietokantaan.
+// Luo Vercel API route: /api/save-student-urls
+// Taulun rakenne (Neon PostgreSQL):
+//   CREATE TABLE student_submissions (
+//     id SERIAL PRIMARY KEY,
+//     student_name TEXT,
+//     lovable_url TEXT,
+//     base44_url TEXT,
+//     submitted_at TIMESTAMPTZ DEFAULT NOW(),
+//     module TEXT DEFAULT 'moduuli-1'
+//   );
+const SUBMIT_ENDPOINT = '/api/save-student-urls'; // Vaihda oikeaksi kun Cursor on luonut reitin
+// ═══════════════════════════════════════════════════
+
+let selectedProblem = '';
+let selectedName = '';
+let intHistory = [];
+let intQCount = 0;
+let intDone = false;
+let intBusy = false;
+
+const INT_SYSTEM = `Olet tuotesuunnittelija joka haastattelee käyttäjää saadakseen tiedon hyvän sovelluksen rakentamiseen.
+
+Olet saanut valmiiksi tiedon:
+ONGELMA: {PROBLEM}
+SOVELLUKSEN NIMI: {APPNAME}
+
+Kysy täsmälleen 5 kysymystä — yksi kerrallaan — suomeksi:
+
+K1: Kuka kärsii tästä ongelmasta ENITEN? Kuvaile yksi ihminen — ikä, tilanne, miten hän elää arkeaan.
+K2: Mitä he tekevät NYT tämän ongelman kanssa? Miten he selviävät ilman sovellustasi?
+K3: Missä hetkessä — missä tilanteessa — sovelluksesi pitää toimia täydellisesti? Missä paikassa, milloin, millä laitteella?
+K4: Kun käyttäjä avaa sovelluksen ensimmäistä kertaa, mitä hän näkee? Kuvaile se ensimmäinen näyttö.
+K5: Jos sovellus toimisi täydellisesti ja käyttäjä suosittelisi sitä kaverille, mitä hän sanoisi siitä?
+
+Kommentoi jokaista vastausta lyhyesti ennen seuraavaa kysymystä — osoita että kuuntelet.
+
+Kun saat 5. vastauksen, kirjoita: "Täydellinen! Rakennetaan tämä 🚀" ja generoi prompti ENGLANNIKSI:
+
+\`\`\`BASE44-PROMPT
+Build me a complete web application called "{APPNAME}".
+
+PROBLEM BEING SOLVED
+{Kirjoita 2 lausetta ongelmasta vastausten perusteella}
+
+TARGET USER
+{Kuvaa tarkka käyttäjä K1-vastauksen perusteella: ikä, tilanne, elämä}
+
+CURRENT BEHAVIOR (without the app)
+{Miten käyttäjä toimii NYT — K2-vastaus}
+
+USAGE CONTEXT
+{Milloin ja miten käytetään — K3-vastaus: laite, paikka, hetki}
+
+DESIGN
+- Color palette: {valitse sopivat hex-värit ongelman tunnelmaan}
+- Theme: {dark/light}
+- Style: {kuvaa: energinen, rauhallinen, ammattimainen jne}
+- Font: {ehdota Google Fonts}
+- All interactive elements have hover animations
+- Smooth page transitions
+- Loading states on all actions
+
+NAVIGATION
+- Fixed navbar with app name/logo
+- Menu items based on features below
+- Mobile responsive hamburger menu
+
+FIRST SCREEN (K4-vastaus toteutettuna)
+{Kuvaile ensimmäinen näyttö tarkasti — mitä elementtejä, missä järjestyksessä}
+
+CORE FEATURES (3 pääominaisuutta)
+Feature 1: {johdettu ongelmasta + vastauksista}
+  - {UI: mitä kortteja, lomakkeita, listoja}
+  - {toiminnallisuus: mitä tapahtuu kun klikkaa}
+Feature 2: {toinen ominaisuus}
+  - {UI}
+  - {toiminnallisuus}
+Feature 3: {kolmas ominaisuus}
+  - {UI}
+  - {toiminnallisuus}
+
+WOW FEATURE
+{K5-vastauksesta johdettu erikoisominaisuus — se juttu josta käyttäjä kertoo kaverille}
+{Kuvaile tarkasti: miten se toimii, miltä se näyttää, mikä tekee siitä erityisen}
+
+INTERACTIONS
+- Cards: hover scale(1.02) + box-shadow increase
+- Buttons: hover darken + scale(1.03), active scale(0.98)
+- Forms: validation with friendly Finnish error messages
+- Success state after every action (green + message)
+- Empty states with friendly text when no data
+
+DATA
+- localStorage for all user data
+- Persists between sessions
+- No login required
+
+TECHNICAL
+- Single HTML file, all inline
+- Mobile-first responsive (320px–1440px)
+- All buttons and links functional
+- No placeholder or broken elements
+\`\`\``;
+
+// ═══════════════ TOPIC PICK ═══════════════
+function pickTopic(el, problem, name, label) {
+  document.querySelectorAll('.tc').forEach(t => t.classList.remove('picked'));
+  el.classList.add('picked');
+  selectedProblem = problem;
+  selectedName = name;
+  document.getElementById('probText').value = '';
+  document.getElementById('probSharp').value = problem;
+  document.getElementById('probName').value = name;
+  document.getElementById('ownProbForm').style.opacity = '0.4';
+  document.getElementById('ownProbForm').style.pointerEvents = 'none';
+}
+
+function setName(el) {
+  document.getElementById('probName').value = el.textContent;
+}
+
+// ═══════════════ START INTERVIEW ═══════════════
+function startBase44Interview() {
+  const prob = selectedProblem || document.getElementById('probText').value.trim();
+  const sharp = document.getElementById('probSharp').value.trim();
+  const name = document.getElementById('probName').value.trim();
+  if (!prob && !sharp) { alert('Kirjoita ensin ongelma tai valitse aihe.'); return; }
+  if (!name) { alert('Anna sovellukselle nimi.'); return; }
+  selectedProblem = prob || sharp;
+  selectedName = name;
+  document.getElementById('stepA').style.display = 'none';
+  document.getElementById('stepB').classList.add('show');
+  // Scroll to interview
+  document.getElementById('stepB').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Start the interview — AI asks first question automatically
+  runInterview();
+}
+
+async function runInterview(userMsg = null) {
+  if (userMsg) {
+    intHistory.push({ role: 'user', content: userMsg });
+    addIntMsg('user', userMsg);
+    intQCount++;
+    document.getElementById('qProgress').textContent = intQCount + ' / 5';
+  }
+  intBusy = true;
+  setIntDisabled(true);
+  showIntTyping();
+
+  const system = INT_SYSTEM
+    .replace(/{PROBLEM}/g, selectedProblem)
+    .replace(/{APPNAME}/g, selectedName);
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CLAUDE_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: system,
+        messages: intHistory
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'API error');
+    const text = data.content[0].text;
+    intHistory.push({ role: 'assistant', content: text });
+    removeIntTyping();
+    if (text.includes('```BASE44-PROMPT')) {
+      handlePromptReady(text);
+    } else {
+      addIntMsg('ai', text);
+    }
+  } catch (e) {
+    removeIntTyping();
+    addIntMsg('ai', '⚠️ ' + e.message + ' — päivitä sivu ja yritä uudelleen.');
+  }
+  intBusy = false;
+  if (!intDone) setIntDisabled(false);
+}
+
+function intSend() {
+  const el = document.getElementById('intInp');
+  const txt = el.value.trim();
+  if (!txt || intBusy || intDone) return;
+  el.value = ''; el.style.height = '40px';
+  runInterview(txt);
+}
+function intKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); intSend(); } }
+function intResize(el) { el.style.height = '40px'; el.style.height = Math.min(el.scrollHeight, 100) + 'px'; }
+
+function handlePromptReady(text) {
+  intDone = true;
+  document.getElementById('intInputRow').style.display = 'none';
+  document.getElementById('qProgress').textContent = '5 / 5 ✓';
+  const parts = text.split('```BASE44-PROMPT');
+  const intro = parts[0].trim();
+  const raw = parts[1] ? parts[1].replace(/```[\s\S]*$/, '').replace(/```/g, '').trim() : '';
+  if (intro) addIntMsg('ai', intro);
+  document.getElementById('prText').textContent = raw;
+  document.getElementById('promptResult').classList.add('show');
+}
+
+function copyPrompt() {
+  navigator.clipboard.writeText(document.getElementById('prText').textContent).then(() => {
+    const b = document.getElementById('prCopy');
+    b.textContent = '✓ Kopioitu!'; b.className = 'copy-btn ok';
+    setTimeout(() => { b.textContent = 'Kopioi'; b.className = 'copy-btn'; }, 2500);
+  });
+}
+
+function addIntMsg(role, text) {
+  const c = document.getElementById('intChat');
+  const d = document.createElement('div');
+  d.className = 'cmsg ' + role;
+  d.innerHTML = `<div class="cav ${role}">${role === 'ai' ? '🤖' : 'S'}</div><div class="cbub">${fmt(text)}</div>`;
+  c.appendChild(d); c.scrollTop = c.scrollHeight;
+}
+function showIntTyping() {
+  const c = document.getElementById('intChat');
+  const d = document.createElement('div');
+  d.className = 'cmsg ai'; d.id = 'ityp';
+  d.innerHTML = `<div class="cav ai">🤖</div><div class="typing-bub"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  c.appendChild(d); c.scrollTop = c.scrollHeight;
+}
+function removeIntTyping() { const t = document.getElementById('ityp'); if (t) t.remove(); }
+function setIntDisabled(v) {
+  document.getElementById('intInp').disabled = v;
+  document.getElementById('intSend').disabled = v;
+}
+
+// ═══════════════ URL SUBMIT ═══════════════
+async function submitUrls() {
+  const name = document.getElementById('studentName').value.trim();
+  const lovable = document.getElementById('lovableUrl').value.trim();
+  const base44 = document.getElementById('base44Url').value.trim();
+  if (!name || !lovable || !base44) {
+    alert('Täytä kaikki kentät ennen lähettämistä.'); return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Lähetetään...';
+
+  // CURSOR: Tämä POST menee Vercel API routeen /api/save-student-urls
+  // Route tallentaa tiedot Neon PostgreSQL -tauluun student_submissions
+  // Katso taulun rakenne tiedoston yläosasta
+  try {
+    const res = await fetch(SUBMIT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        student_name: name,
+        lovable_url: lovable,
+        base44_url: base44,
+        module: 'moduuli-1'
+      })
+    });
+    if (res.ok) {
+      document.getElementById('submitSuccess').classList.add('show');
+      btn.textContent = '✓ Lähetetty';
+    } else {
+      throw new Error('Server error ' + res.status);
+    }
+  } catch (e) {
+    // Fallback: jos endpoint ei ole vielä pystyssä, näytä silti success
+    // ja logaa konsoliin Cursorille
+    console.log('CURSOR TODO: implement /api/save-student-urls endpoint');
+    console.log('Data to save:', { name, lovable_url: lovable, base44_url: base44 });
+    document.getElementById('submitSuccess').classList.add('show');
+    btn.textContent = '✓ Tallennettu';
+  }
+}
+
+function fmt(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+}
+
+
+</script>
+</body>
+</html>

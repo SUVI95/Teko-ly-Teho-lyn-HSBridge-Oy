@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moduuli 3 — Kuvat, video ja valmis portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ora:#ea580c;--ora-l:#fff7ed;--ora-d:#c2410c;
+  --teal:#0d9488;--teal-l:#ccfbf1;--teal-d:#0f766e;
+  --dark:#0f172a;--mid:#334155;--soft:#64748b;
+  --bg:#f8fafc;--white:#fff;--border:#e2e8f0;
+  --green:#10b981;--green-l:#d1fae5;
+  --amber:#f59e0b;--amber-l:#fef3c7;
+  --purple:#8b5cf6;--purple-l:#ede9fe;
+  --ind:#4f46e5;--ind-l:#eef2ff;
+  --sky:#0ea5e9;--sky-l:#e0f2fe;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--dark);line-height:1.65;font-size:16px;}
+
+.hero{background:linear-gradient(135deg,#1c0a00,#0f172a 45%,#0c1a2e);padding:58px 24px 50px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;bottom:-60px;left:-60px;width:280px;height:280px;background:radial-gradient(circle,rgba(234,88,12,.14) 0%,transparent 68%);pointer-events:none;}
+.tag{display:inline-block;background:var(--ora);color:white;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;padding:4px 13px;border-radius:20px;margin-bottom:20px;text-transform:uppercase;}
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(28px,5vw,46px);line-height:1.15;color:white;margin-bottom:14px;}
+.hero h1 em{color:#fb923c;font-style:normal;}
+.hero-sub{color:#94a3b8;font-size:15px;max-width:520px;margin:0 auto 26px;}
+.pills{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;}
+.pill{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);color:#cbd5e1;padding:5px 13px;border-radius:20px;font-size:12px;}
+
+.content{max-width:740px;margin:0 auto;padding:50px 24px 88px;}
+.slabel{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px;color:var(--ora);}
+.slabel.img{color:#10a37f;}
+.slabel.flow{color:#7c3aed;}
+.slabel.career{color:var(--teal);}
+.slabel.port{color:var(--purple);}
+h2{font-family:'DM Serif Display',serif;font-size:27px;color:var(--dark);margin-bottom:14px;}
+h3{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:9px;}
+p{color:var(--mid);margin-bottom:14px;font-size:15px;}
+.div{border:none;border-top:1px solid var(--border);margin:52px 0;}
+a{color:var(--ora);}
+
+.flow-bar{display:flex;align-items:center;gap:0;overflow-x:auto;padding:2px 0 8px;margin-bottom:38px;}
+.fn{background:var(--white);border:2px solid var(--border);border-radius:11px;padding:11px 15px;min-width:108px;text-align:center;flex-shrink:0;}
+.fn.cur{border-color:var(--ora);box-shadow:0 0 0 3px var(--ora-l);}
+.fn-n{font-family:'DM Mono',monospace;font-size:9px;color:var(--soft);margin-bottom:3px;}
+.fn-l{font-size:11px;font-weight:700;}
+.fa{color:#94a3b8;font-size:16px;padding:0 5px;flex-shrink:0;}
+
+/* TOOL CARD */
+.tool-card{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px;}
+.tool-strip{height:5px;}
+.tool-strip.img{background:linear-gradient(90deg,#10a37f,#34d399);}
+.tool-strip.flow{background:linear-gradient(90deg,#7c3aed,#a78bfa);}
+.tool-strip.career{background:linear-gradient(90deg,var(--teal),#5eead4);}
+.tool-strip.port{background:linear-gradient(90deg,var(--purple),#a78bfa);}
+.tool-inner{padding:22px 24px;}
+.tool-top{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;}
+.tool-em{font-size:34px;flex-shrink:0;}
+.tool-name{font-weight:700;font-size:19px;margin-bottom:3px;}
+.tool-tag{font-size:13px;color:var(--soft);font-style:italic;}
+.tool-body{font-size:14px;color:var(--mid);line-height:1.65;}
+.tool-link{display:inline-flex;align-items:center;gap:6px;color:white;text-decoration:none;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:700;transition:opacity .2s;margin-top:10px;}
+.tool-link:hover{opacity:.85;}
+.tool-link.gpt{background:#10a37f;}
+.tool-link.gem{background:#4285f4;margin-left:8px;}
+.tool-link.flow-l{background:#7c3aed;}
+.tool-link.port-l{background:var(--purple);}
+
+/* EXERCISE */
+.ex{background:var(--white);border-radius:15px;padding:26px 28px;margin-bottom:26px;}
+.ex.img{border:2px solid #10a37f;}
+.ex.flow{border:2px solid #7c3aed;}
+.ex.career{border:2px solid var(--teal);}
+.ex.port{border:2px solid var(--purple);}
+.ex-head{display:flex;gap:13px;align-items:flex-start;margin-bottom:16px;}
+.ex-num{color:white;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;flex-shrink:0;}
+.ex-num.img{background:#10a37f;}
+.ex-num.flow{background:#7c3aed;}
+.ex-num.career{background:var(--teal);}
+.ex-num.port{background:var(--purple);}
+.ex-title{font-size:17px;font-weight:700;margin-bottom:2px;}
+.ex-time{font-size:11px;color:var(--soft);font-family:'DM Mono',monospace;}
+
+.steps{list-style:none;counter-reset:s;margin:14px 0 0;}
+.steps li{counter-increment:s;display:flex;gap:12px;margin-bottom:12px;font-size:14px;color:var(--mid);align-items:flex-start;}
+.steps li::before{content:counter(s);font-family:'DM Mono',monospace;font-size:10px;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.ex.img .steps li::before{background:#dcfce7;color:#10a37f;}
+.ex.flow .steps li::before{background:var(--purple-l);color:var(--purple);}
+.ex.career .steps li::before{background:var(--teal-l);color:var(--teal);}
+.ex.port .steps li::before{background:var(--purple-l);color:var(--purple);}
+
+.win{background:var(--green-l);border:1px solid #6ee7b7;border-radius:9px;padding:13px 17px;margin-top:18px;}
+.win-l{font-size:9px;font-family:'DM Mono',monospace;color:var(--green);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:4px;}
+.win p{font-size:13px;color:#065f46;margin:0;}
+
+.vinkki{background:var(--amber-l);border:1px solid #fcd34d;border-radius:9px;padding:13px 17px;margin:14px 0;display:flex;gap:10px;align-items:flex-start;}
+.vi{font-size:17px;flex-shrink:0;}
+.vt{font-size:13px;color:#92400e;margin:0;line-height:1.6;}
+.vt strong{color:#78350f;display:block;margin-bottom:3px;font-size:14px;}
+
+/* TAB SYSTEM */
+.tabs{margin:18px 0;}
+.tab-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.tb{background:var(--bg);border:1.5px solid var(--border);color:var(--mid);padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.tb.on{background:#10a37f;border-color:#10a37f;color:white;}
+.tab-content{display:none;}
+.tab-content.show{display:block;}
+
+/* QUERY BLOCKS */
+.qblock{background:#1e293b;border-radius:10px;padding:16px 18px;margin:11px 0;position:relative;}
+.qb-meta{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.qb-n{font-family:'DM Mono',monospace;font-size:9px;color:#64748b;}
+.qb-badge{font-family:'DM Mono',monospace;font-size:10px;padding:3px 9px;border-radius:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:rgba(16,163,127,.2);color:#34d399;}
+.qb-badge.vid{background:rgba(124,58,237,.2);color:#a78bfa;}
+.qb-badge.career-b{background:rgba(13,148,136,.2);color:#5eead4;}
+.qb-text{font-family:'DM Mono',monospace;font-size:12.5px;color:#e2e8f0;line-height:1.7;white-space:pre-wrap;margin:0;}
+.qb-text .g{color:#34d399;}.qb-text .b{color:#93c5fd;}.qb-text .y{color:#fbbf24;}
+.copy-q{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#cbd5e1;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;margin-top:9px;}
+.copy-q:hover{background:rgba(255,255,255,.14);}
+.copy-q.ok{background:rgba(16,185,129,.2);border-color:#6ee7b7;color:#34d399;}
+
+/* VALUE GRID */
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0;}
+@media(max-width:480px){.vgrid{grid-template-columns:1fr;}}
+.vg{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:13px;}
+.vg-em{font-size:20px;margin-bottom:6px;}
+.vg-title{font-weight:700;font-size:13px;margin-bottom:3px;}
+.vg-text{font-size:12px;color:var(--soft);line-height:1.5;}
+
+/* CAREER CHAT */
+.career-chat-wrap{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:16px 0;}
+.cc-header{background:var(--dark);padding:14px 18px;display:flex;align-items:center;gap:11px;}
+.cc-av{width:32px;height:32px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.cc-name{font-weight:700;font-size:14px;color:white;}
+.cc-sub{font-size:11px;color:#64748b;}
+.cc-prog{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:#64748b;}
+.cc-msgs{background:#f8fafc;min-height:160px;max-height:320px;overflow-y:auto;padding:14px;}
+.cc-msgs::-webkit-scrollbar{width:3px;}
+.cc-msgs::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px;}
+.cmsg{display:flex;gap:9px;align-items:flex-start;margin-bottom:11px;animation:pop .22s ease;}
+@keyframes pop{from{opacity:0;transform:translateY(5px);}to{opacity:1;}}
+.cmsg.user{flex-direction:row-reverse;}
+.cav{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.cav.ai{background:var(--teal);color:white;}
+.cav.user{background:#475569;color:white;}
+.cbub{max-width:420px;padding:9px 13px;border-radius:11px;font-size:14px;line-height:1.6;}
+.cmsg.ai .cbub{background:white;border:1px solid var(--border);border-top-left-radius:3px;}
+.cmsg.user .cbub{background:var(--teal);color:white;border-top-right-radius:3px;}
+.typing-bub{background:white;border:1px solid var(--border);border-radius:11px;border-top-left-radius:3px;padding:9px 13px;display:flex;gap:4px;align-items:center;}
+.td{width:6px;height:6px;background:#94a3b8;border-radius:50%;animation:b 1.1s infinite;}
+.td:nth-child(2){animation-delay:.18s;}.td:nth-child(3){animation-delay:.36s;}
+@keyframes b{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-5px);}}
+.cc-input{background:white;border-top:1px solid var(--border);padding:11px 14px;display:flex;gap:9px;align-items:flex-end;}
+.cc-input textarea{flex:1;border:1.5px solid var(--border);border-radius:9px;padding:8px 12px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--dark);resize:none;outline:none;min-height:38px;max-height:90px;line-height:1.5;transition:border-color .2s;}
+.cc-input textarea:focus{border-color:var(--teal);}
+.cc-send{background:var(--teal);color:white;border:none;width:38px;height:38px;border-radius:9px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s;}
+.cc-send:hover{background:var(--teal-d);}
+.cc-send:disabled{background:#94a3b8;cursor:not-allowed;}
+
+/* CAREER RESULT */
+.career-result{display:none;background:var(--dark);border-radius:11px;padding:20px;margin-top:14px;}
+.career-result.show{display:block;}
+.cr-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
+.cr-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.12em;}
+.cr-copy{background:var(--teal);color:white;border:none;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;}
+.cr-copy:hover{background:var(--teal-d);}
+.cr-copy.ok{background:var(--green);}
+.cr-text{font-family:'DM Mono',monospace;font-size:12px;color:#e2e8f0;line-height:1.7;white-space:pre-wrap;max-height:240px;overflow-y:auto;}
+.cr-text::-webkit-scrollbar{width:3px;}
+.cr-text::-webkit-scrollbar-thumb{background:#334155;}
+
+/* SKILLS */
+.skills-section{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:30px;margin:28px 0;}
+.skills-header{display:flex;gap:12px;align-items:center;margin-bottom:20px;}
+.skills-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--ora),#fb923c);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.skills-title{font-family:'DM Serif Display',serif;font-size:21px;}
+.skill-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:20px;}
+@media(max-width:500px){.skill-grid{grid-template-columns:1fr;}}
+.sk{background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:15px;}
+.sk-top{display:flex;gap:9px;align-items:center;margin-bottom:7px;}
+.sk-em{font-size:20px;}
+.sk-name{font-weight:700;font-size:14px;}
+.sk-desc{font-size:12px;color:var(--soft);line-height:1.55;margin-bottom:8px;}
+.sk-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.sk-chip{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:700;font-family:'DM Mono',monospace;}
+.sk-chip.ora{background:var(--ora-l);color:var(--ora-d);}
+.sk-chip.teal{background:var(--teal-l);color:var(--teal-d);}
+.sk-chip.purple{background:var(--purple-l);color:var(--purple);}
+.sk-chip.green{background:var(--green-l);color:#065f46;}
+.job-row{margin:16px 0;}
+.job-row-title{font-size:11px;font-family:'DM Mono',monospace;color:var(--soft);text-transform:uppercase;letter-spacing:.09em;margin-bottom:9px;}
+.job-chips{display:flex;gap:7px;flex-wrap:wrap;}
+.jc{background:var(--dark);color:#e2e8f0;font-size:12px;padding:6px 13px;border-radius:20px;font-weight:600;}
+.cv-block{background:linear-gradient(135deg,#0f172a,#1c0a00);border-radius:12px;padding:18px 20px;margin-top:16px;}
+.cv-block-label{font-family:'DM Mono',monospace;font-size:9px;color:#fb923c;text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px;}
+.cv-block pre{font-family:'DM Mono',monospace;font-size:12.5px;color:#e2e8f0;line-height:1.7;white-space:pre-wrap;margin:0;}
+.freelance-box{background:var(--amber-l);border:1px solid #fcd34d;border-radius:9px;padding:14px 17px;margin-top:14px;}
+.freelance-box p{font-size:13px;color:#92400e;margin:0;line-height:1.6;}
+.freelance-box strong{color:#78350f;}
+
+/* CHECKLIST */
+.checklist{margin:18px 0 0;}
+.ci{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--mid);}
+.ci:last-child{border-bottom:none;}
+.cb{width:20px;height:20px;border:2px solid var(--border);border-radius:4px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;background:var(--white);font-size:11px;}
+.cb.done{background:var(--green);border-color:var(--green);color:white;}
+
+/* PORTFOLIO CTA */
+.port-prompt{background:var(--ora-l);border:1px solid #fed7aa;border-radius:11px;padding:18px 20px;margin:16px 0;}
+.port-prompt-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--ora);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:10px;}
+.port-prompt pre{font-family:'DM Mono',monospace;font-size:12px;color:#7c2d12;line-height:1.7;white-space:pre-wrap;margin:0;}
+
+/* FINAL */
+.final-wrap{background:linear-gradient(135deg,#1c0a00,#0f172a);border-radius:18px;padding:38px 32px;margin-top:48px;text-align:center;}
+.final-wrap h2{color:white;font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:12px;}
+.fw-sub{color:#94a3b8;font-size:14px;max-width:440px;margin:0 auto 26px;line-height:1.6;}
+.built-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 0 22px;text-align:left;}
+@media(max-width:480px){.built-grid{grid-template-columns:1fr;}}
+.bg-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:12px 14px;}
+.bg-em{font-size:17px;margin-bottom:4px;}
+.bg-name{font-size:13px;font-weight:700;color:white;margin-bottom:1px;}
+.bg-desc{font-size:11px;color:#64748b;}
+
+.pbar{background:var(--border);border-radius:20px;height:4px;margin-bottom:38px;overflow:hidden;}
+.pfill{background:linear-gradient(90deg,var(--ora),#fb923c);height:100%;width:100%;border-radius:20px;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="tag">Moduuli 3 — Viimeinen moduuli</div>
+  <h1>Kuvat, video ja<br><em>sinun uratarina alkaa</em></h1>
+  <p class="hero-sub">Tänään teet kuvia, videon, opit miten puhut uusista taidoistasi — ja rakennat portfolion joka kertoo kaiken.</p>
+  <div class="pills">
+    <span class="pill">⏱ ~70 min</span>
+    <span class="pill">🖼 ChatGPT kuvat</span>
+    <span class="pill">🎬 Google Flow</span>
+    <span class="pill">🎤 Ura-tarina AI:lla</span>
+    <span class="pill">🏆 Gamma portfolio</span>
+  </div>
+</div>
+
+<div class="content">
+  <div class="pbar"><div class="pfill"></div></div>
+
+  <div class="slabel">Neljä harjoitusta</div>
+  <h2>Kuvat → video → ura-tarina → portfolio</h2>
+  <div class="flow-bar">
+    <div class="fn cur"><div class="fn-n">H1</div><div class="fn-l">🖼 Kuvat</div></div>
+    <div class="fa">→</div>
+    <div class="fn"><div class="fn-n">H2</div><div class="fn-l">🎬 Video</div></div>
+    <div class="fa">→</div>
+    <div class="fn"><div class="fn-n">H3</div><div class="fn-l">🎤 Ura-tarina</div></div>
+    <div class="fa">→</div>
+    <div class="fn"><div class="fn-n">H4</div><div class="fn-l">🏆 Portfolio</div></div>
+  </div>
+
+  <!-- ═══ H1: KUVAT ═══ -->
+  <div class="div"></div>
+  <div class="slabel img">Harjoitus 1</div>
+
+  <div class="tool-card">
+    <div class="tool-strip img"></div>
+    <div class="tool-inner">
+      <div class="tool-top">
+        <div class="tool-em">🖼</div>
+        <div>
+          <div class="tool-name">ChatGPT — kuvageneraattori</div>
+          <div class="tool-tag">"Kuvaile mitä näet päässäsi — AI piirtää sen sekunneissa"</div>
+        </div>
+      </div>
+      <div class="tool-body">
+        <p>ChatGPT käyttää DALL-E 3 -mallia kuvien luomiseen. Kirjoitat mitä haluat nähdä — tyyli, värit, valaistus, tunnelma, kuvaajanäkökulma — ja saat ammattimaisen kuvan sekunneissa. Gemini tekee saman ilmaiseksi jos et halua käyttää ChatGPT:tä.</p>
+        <div class="vgrid">
+          <div class="vg"><div class="vg-em">💼</div><div class="vg-title">Markkinointi</div><div class="vg-text">Yrityksillä, somesisällöillä ja projekteilla on jatkuva tarve visuaaliselle sisällölle. Nyt osaat tuottaa sitä.</div></div>
+          <div class="vg"><div class="vg-em">🎨</div><div class="vg-title">Sisältötuotanto</div><div class="vg-text">Instagram, LinkedIn, esitykset — ainutlaatuiset kuvat jotka kukaan muu ei omista.</div></div>
+          <div class="vg"><div class="vg-em">🛒</div><div class="vg-title">Freelance</div><div class="vg-text">Voit tehdä kuvia yrityksille tilauksesta — liiketoimintamalli jota voit aloittaa tänään.</div></div>
+          <div class="vg"><div class="vg-em">🚀</div><div class="vg-title">Portfolio</div><div class="vg-text">Visuaalinen identiteetti omalle sovelluksellesi tai brändillesi ilman graafikkoa.</div></div>
+        </div>
+        <a href="https://chat.openai.com" target="_blank" class="tool-link gpt">→ ChatGPT (DALL-E)</a>
+        <a href="https://gemini.google.com" target="_blank" class="tool-link gem">→ Gemini (ilmainen)</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="ex img">
+    <div class="ex-head">
+      <div class="ex-num img">1</div>
+      <div><div class="ex-title">Luo 4 kuvaa aiheestasi</div><div class="ex-time">⏱ ~15 min</div></div>
+    </div>
+
+    <p style="font-size:14px;color:var(--mid);margin-bottom:12px;">Valitse alta aiheesi. Kaikki neljä kuvapromptia on valmiina — kopioi ja liitä ChatGPT:hen tai Geminiin. Muokkaa rohkeasti.</p>
+
+    <div class="tabs">
+      <div class="tab-row">
+        <button class="tb on" onclick="showImgTab('gaming',this)">🎮 Pelit</button>
+        <button class="tb" onclick="showImgTab('food',this)">🍔 Ruoka</button>
+        <button class="tb" onclick="showImgTab('sports',this)">⚽ Urheilu</button>
+        <button class="tb" onclick="showImgTab('music',this)">🎵 Musiikki</button>
+        <button class="tb" onclick="showImgTab('tech',this)">💻 Teknologia</button>
+      </div>
+
+      <div class="tab-content show" id="img-gaming">
+        <div class="qblock">
+          <div class="qb-meta"><span class="qb-badge">Kuva 1</span><span class="qb-n">Hero-kuva</span></div>
+          <pre class="qb-text">Cinematic photo of a pro gaming setup: ultrawide curved monitor
+glowing with game UI, RGB keyboard and mouse, dark room with
+neon blue and purple lighting. High-end photography, dramatic
+shadows, no people visible. 4K quality.</pre>
+          <button class="copy-q" onclick="cq(this)">Kopioi →</button>
+        </div>
+        <div class="qblock">
+          <div class="qb-meta"><span class="qb-badge">Kuva 2</span><span class="qb-n">Toiminta</span></div>
+          <pre class="qb-text">Top-down aerial view of a competitive esport arena. Rows of
+glowing gaming PCs, players with headsets, dramatic stage
+lighting, crowd visible in background. Photorealistic, wide angle,
+cinematic depth of field.</pre>
+          <button class="copy-q" onclick="cq(this)">Kopioi →</button>
+        </div>
+        <div class="qblock">
+          <div class="qb-meta"><span class="qb-badge">Kuva 3</span><span class="qb-n">Tunnelma</span></div>
+          <pre class="qb-text">Abstract digital art: video game world breaking through a screen.
+Pixels dissolving into reality, holographic game elements floating.
+Deep blue and electric green color palette. Detailed digital art.</pre>
+          <button class="copy-q" onclick="cq(this)">Kopioi →</button>
+        </div>
+        <div class="qblock">
+          <div class="qb-meta"><span class="qb-badge">Kuva 4</span><span class="qb-n">Tulevaisuus</span></div>
+          <pre class="qb-text">Futuristic gaming: person wearing VR headset surrounded by
+holographic game interfaces. Clean minimalist bedroom, soft
+neon glow, floating UI elements. Near-future aesthetic.</pre>
+          <button class="copy-q" onclick="cq(this)">Kopioi →</button>
+        </div>
+      </div>
+
+      <div class="tab-content" id="img-food">
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 1</span></div><pre class="qb-text">Photorealistic overhead shot of a perfectly arranged colorful
+bowl meal: quinoa, roasted vegetables, fresh herbs, wooden surface.
+Natural window light, shallow depth of field, warm tones.
+Food magazine photography style.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 2</span></div><pre class="qb-text">Moody restaurant interior at night. Single candle on dark table,
+steam rising from a beautifully plated dish. Warm amber glow,
+cinematic composition, no people. Fine dining atmosphere.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 3</span></div><pre class="qb-text">Chef hands close-up chopping colorful vegetables on a wooden board.
+Professional kitchen background, slight motion blur on knife.
+Vibrant vegetable colors, natural light. Food photography editorial.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 4</span></div><pre class="qb-text">Flat lay of healthy ingredients arranged neatly: avocado halved,
+cherry tomatoes, eggs, walnuts, herbs. Pure white surface, perfect
+spacing, pastel tones. Clean minimal aesthetic, top-down view.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+      </div>
+
+      <div class="tab-content" id="img-sports">
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 1</span></div><pre class="qb-text">Cinematic sports photo: athlete sprinting full speed at golden hour
+sunset. Motion blur on legs, dramatic backlighting, empty stadium
+in background. High-end sports photography, National Geographic style.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 2</span></div><pre class="qb-text">Close-up of athlete hands gripping sports equipment with chalk dust
+visible. Focused expression, determination and grit. Dark moody tones,
+dramatic single-light source. Sports magazine editorial.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 3</span></div><pre class="qb-text">Abstract sports data visualization: glowing heatmaps, player position
+tracking, performance analytics. Dark background with neon blue accents.
+Futuristic sports technology aesthetic.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 4</span></div><pre class="qb-text">Team huddle silhouettes against stadium floodlights. Low angle shot,
+foggy atmosphere, warm orange and white light. Cinematic, epic scale,
+sense of unity and power.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+      </div>
+
+      <div class="tab-content" id="img-music">
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 1</span></div><pre class="qb-text">Concert stage with dramatic lighting: laser beams cutting through smoke,
+crowd silhouettes, massive LED screen backdrop. Epic wide shot, long
+exposure photography. Deep purple and electric blue palette.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 2</span></div><pre class="qb-text">Professional recording studio: mixing desk with glowing controls, warm
+golden light through acoustic panels. Headphones hanging on wall,
+clean modern interior. Dark wood and brushed metal textures.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 3</span></div><pre class="qb-text">Abstract sound wave visualization as art: neon colors radiating from
+center, dark background. Glowing lines forming complex waveforms.
+Generative digital art style, high detail.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 4</span></div><pre class="qb-text">Person with wireless headphones at night, city lights visible through
+rain-covered window. Their reflection visible in glass. Cinematic,
+moody, teal and orange color grade. Storytelling composition.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+      </div>
+
+      <div class="tab-content" id="img-tech">
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 1</span></div><pre class="qb-text">Minimal tech workspace: MacBook with code on screen, small plant,
+white desk, soft morning light. Clean aesthetic, no clutter.
+Flat lay top-down shot. Muted warm tones.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 2</span></div><pre class="qb-text">Abstract AI neural network visualization: glowing nodes connected by
+light paths, dark background, blue and purple gradient. Data flowing
+between points. Futuristic digital art, high detail.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 3</span></div><pre class="qb-text">Holographic UI interfaces floating in dark space. Clean design panels,
+glowing buttons and charts. Sci-fi product concept art. Teal and
+white color scheme, dark background.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+        <div class="qblock"><div class="qb-meta"><span class="qb-badge">Kuva 4</span></div><pre class="qb-text">Isometric illustration of a city powered by technology: connected
+buildings with data streams, small people using devices. Clean vector
+art style, soft blue and green color palette.</pre><button class="copy-q" onclick="cq(this)">Kopioi →</button></div>
+      </div>
+    </div>
+
+    <div class="vinkki">
+      <span class="vi">🎨</span>
+      <p class="vt"><strong>Muokkaa prompteja — se on opettavaista</strong>Lisää promptin loppuun: "Make it darker", "Change to sunset orange tones", "Add rain reflections", "More minimalist". Jokainen muutos opettaa miten AI reagoi sanoihin.</p>
+    </div>
+    <ul class="steps">
+      <li>Avaa <a href="https://chat.openai.com" target="_blank">ChatGPT</a> tai <a href="https://gemini.google.com" target="_blank">Gemini</a></li>
+      <li>Kopioi yksi kuvaprompt yllä olevista → liitä chattiin → paina Enter</li>
+      <li>Tallenna kuva: <strong>oikealla hiirellä → Tallenna kuva</strong></li>
+      <li>Tee kaikki neljä — jokaista voi muokata lisäämällä ohjeita promptin loppuun</li>
+    </ul>
+    <div class="win"><div class="win-l">✓ Tulos</div><p>4 kuvaa tallennettu. Käytät niitä portfoliossa ja voit jakaa niitä sosiaalisessa mediassa.</p></div>
+  </div>
+
+  <!-- ═══ H2: GOOGLE FLOW ═══ -->
+  <div class="div"></div>
+  <div class="slabel flow">Harjoitus 2</div>
+
+  <div class="tool-card">
+    <div class="tool-strip flow"></div>
+    <div class="tool-inner">
+      <div class="tool-top">
+        <div class="tool-em">🎬</div>
+        <div>
+          <div class="tool-name">Google Flow</div>
+          <div class="tool-tag">"Googlen ilmainen videogeneraattori — tekstistä tai kuvista liikevideoita"</div>
+        </div>
+      </div>
+      <div class="tool-body">
+        <p>Google Flow käyttää Veo 2 -videomallia. Kirjoitat mitä haluat videossa tapahtuvan ja se generoi sen. Ilmaisella tilillä saat <strong>5 sekunnin videoita</strong> — se riittää täydelliseen somesisältöön tai portfolio-kuvaan.</p>
+        <div class="vinkki" style="margin:12px 0;">
+          <span class="vi">⏱</span>
+          <p class="vt"><strong>5 sekuntia on enemmän kuin luulet</strong>Instagram Reels, TikTok ja LinkedIn alkavat 5 sekunnin klipeillä. Yksi 5s loop joka toistuu on tehokkaampi kuin pitkä video. Ammattilaiset tekevät 3–5 sekunnin hero-videoita sivuille — tämä on juuri se.</p>
+        </div>
+        <a href="https://labs.google/fx/tools/flow" target="_blank" class="tool-link flow-l">→ labs.google/fx/tools/flow</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="ex flow">
+    <div class="ex-head">
+      <div class="ex-num flow">2</div>
+      <div><div class="ex-title">Google Flow — tee 5 sekunnin video</div><div class="ex-time">⏱ ~15 min</div></div>
+    </div>
+
+    <p style="font-size:14px;color:var(--mid);margin-bottom:12px;">5 sekunnin video on täydellinen loop — se toistuu saumattomasti. Alla valmiit promptit jokaiseen aiheeseen.</p>
+
+    <div class="qblock">
+      <div class="qb-meta"><span class="qb-badge vid">Flow prompt — Pelit</span></div>
+      <pre class="qb-text">Slow cinematic pan across a glowing gaming setup in dark room.
+RGB lights pulse gently. Monitor screen reflects in desk surface.
+5 second seamless loop. Photorealistic, 4K quality.</pre>
+      <button class="copy-q" onclick="cq(this)">Kopioi →</button>
+    </div>
+    <div class="qblock">
+      <div class="qb-meta"><span class="qb-badge vid">Flow prompt — Ruoka</span></div>
+      <pre class="qb-text">Close-up slow motion: steam rising from a beautiful bowl of food.
+Soft warm light, bokeh background. 5 second seamless loop.
+Cinematic food photography movement.</pre>
+      <button class="copy-q" onclick="cq(this)">Kopioi →</button>
+    </div>
+    <div class="qblock">
+      <div class="qb-meta"><span class="qb-badge vid">Flow prompt — Urheilu</span></div>
+      <pre class="qb-text">Dramatic slow motion of a sports moment: ball in flight, crowd
+blur in background. Golden hour light. 5 second loop.
+High-end sports cinematography.</pre>
+      <button class="copy-q" onclick="cq(this)">Kopioi →</button>
+    </div>
+    <div class="qblock">
+      <div class="qb-meta"><span class="qb-badge vid">Flow prompt — Teknologia / AI</span></div>
+      <pre class="qb-text">Abstract data visualization: glowing particles forming patterns,
+flowing smoothly through dark space. Teal and blue colors.
+5 second seamless loop. Futuristic aesthetic.</pre>
+      <button class="copy-q" onclick="cq(this)">Kopioi →</button>
+    </div>
+
+    <ul class="steps">
+      <li>Avaa <a href="https://labs.google/fx/tools/flow" target="_blank">labs.google/fx/tools/flow</a> — kirjaudu Google-tilillä</li>
+      <li>Lataa yksi Harjoitus 1:n kuvista (valinnainen — voit myös generoida vain tekstistä)</li>
+      <li>Kopioi sopiva prompt yllä → liitä kenttään → klikkaa Generate</li>
+      <li>Odota 3–7 minuuttia — tee seuraava harjoitus samalla</li>
+      <li>Lataa video kun valmis — tallenna tietokoneelle</li>
+    </ul>
+
+    <div class="vinkki">
+      <span class="vi">💡</span>
+      <p class="vt"><strong>Missä voit käyttää tätä</strong>Portfolio-sivun hero-video. Instagram tai TikTok loop. LinkedIn-postauksen liite. Esityksen taustakuva. Kukaan kavereistasi ei tee tätä — siinä on jo arvo.</p>
+    </div>
+    <div class="win"><div class="win-l">✓ Tulos</div><p>5 sekunnin video tallennettu. Tämä oli ennen ammattilaisten työtä.</p></div>
+  </div>
+
+  <!-- ═══ H3: URA-TARINA AI:LLA ═══ -->
+  <div class="div"></div>
+  <div class="slabel career">Harjoitus 3</div>
+
+  <div class="tool-card">
+    <div class="tool-strip career"></div>
+    <div class="tool-inner">
+      <div class="tool-top">
+        <div class="tool-em">🎤</div>
+        <div>
+          <div class="tool-name">Ura-tarina — AI kääntää taidot CV-kielelle</div>
+          <div class="tool-tag">"Kerrot mitä teit — AI kertoo mitä se tarkoittaa työnantajalle"</div>
+        </div>
+      </div>
+      <div class="tool-body">
+        <p>Olet rakentanut sovelluksia, tutkinut alasi, tehnyt esityksiä ja videoita. Mutta osaatko <em>kertoa</em> sen niin, että työnantaja ymmärtää arvon? Se on eri taito — ja AI auttaa sinua löytämään ne sanat.</p>
+        <div class="vgrid">
+          <div class="vg"><div class="vg-em">💼</div><div class="vg-title">CV:hen</div><div class="vg-text">Oikeaa CV-kieltä: "Rakensin AI-pohjaisia web-sovelluksia ei-koodaaville työkaluilla" ei "tein jotain netissä".</div></div>
+          <div class="vg"><div class="vg-em">🔗</div><div class="vg-title">LinkedIniin</div><div class="vg-text">Headline ja About-teksti joka erottaa sinut tuhansista muista 18-vuotiaista työnhakijoista.</div></div>
+          <div class="vg"><div class="vg-em">🗣</div><div class="vg-title">Haastatteluun</div><div class="vg-text">"Kerro itsestäsi" -vastaukseen valmis tarina joka sisältää konkreettiset projektisi.</div></div>
+          <div class="vg"><div class="vg-em">📧</div><div class="vg-title">Työnhakukirjeeseen</div><div class="vg-text">Motivaatiokirjeen kappale joka selittää miksi AI-taidot ovat arvokkaita kyseiselle työnantajalle.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ex career">
+    <div class="ex-head">
+      <div class="ex-num career">3</div>
+      <div><div class="ex-title">AI haastattelee sinut — saat CV-tekstit</div><div class="ex-time">⏱ ~15 min</div></div>
+    </div>
+
+    <p style="font-size:14px;color:var(--mid);margin-bottom:14px;">AI kysyy sinulta 4 kysymystä siitä mitä olet tehnyt tällä kurssilla. Vastauksistasi se rakentaa: CV-kohdan, LinkedIn-headlinen, haastatteluvastauksen ja myyntilauseen.</p>
+
+    <div class="career-chat-wrap">
+      <div class="cc-header">
+        <div class="cc-av">🎤</div>
+        <div>
+          <div class="cc-name">Ura-valmentaja AI</div>
+          <div class="cc-sub">4 kysymystä → CV + LinkedIn + haastatteluvastaus</div>
+        </div>
+        <div class="cc-prog" id="careerProg">0 / 4</div>
+      </div>
+      <div class="cc-msgs" id="careerChat"></div>
+      <div class="cc-input" id="careerInputRow">
+        <textarea id="careerInp" placeholder="Kirjoita vastauksesi..." rows="1"
+          onkeydown="careerKey(event)" oninput="careerResize(this)"></textarea>
+        <button class="cc-send" id="careerSend" onclick="careerSend()">↑</button>
+      </div>
+    </div>
+
+    <div class="career-result" id="careerResult">
+      <div class="cr-header">
+        <div class="cr-label">✨ Sinun ura-tarinasi</div>
+        <button class="cr-copy" id="crCopy" onclick="copyCareer()">Kopioi kaikki</button>
+      </div>
+      <pre class="cr-text" id="crText"></pre>
+    </div>
+
+    <div class="win"><div class="win-l">✓ Tulos</div><p>CV-kohta, LinkedIn-headline ja haastatteluvastaus valmiina. Kopioi ne suoraan käyttöön.</p></div>
+  </div>
+
+  <!-- ═══ H4: PORTFOLIO GAMMALLA ═══ -->
+  <div class="div"></div>
+  <div class="slabel port">Harjoitus 4</div>
+  <h2>Rakenna portfolio Gammalla — kaikki yhdessä</h2>
+  <p>Gamma on ilmainen ja tiedät jo miten se toimii Moduulista 2. Nyt teet sillä portfolion — ei esityksen vaan portfolion jolla on oma URL jonka voit jakaa kenelle tahansa.</p>
+
+  <div class="ex port">
+    <div class="ex-head">
+      <div class="ex-num port">4</div>
+      <div><div class="ex-title">Gamma — portfolio-sivu kaikesta mitä teit</div><div class="ex-time">⏱ ~20 min</div></div>
+    </div>
+
+    <p style="font-size:14px;color:var(--mid);margin-bottom:12px;">Täytä alla oleva prompti omilla tiedoillasi — sitten liitä se Gammaan.</p>
+
+    <div class="port-prompt">
+      <div class="port-prompt-label">→ Kopioi Gammaan (gamma.app → Create New → Presentation → Generate with AI)</div>
+      <pre>Build a personal portfolio page (not a slide deck —
+a webpage style presentation) called "AI Builder — [nimesi]".
+
+ABOUT ME
+Name: [etunimi]
+Background: [1 lause: esim. "18-year-old sales professional learning AI"]
+Tagline: [keksi oma — esim. "I build with AI, not code."]
+
+PROJECT 1 — Web Application
+Title: [sovelluksesi nimi Moduuli 1:stä]
+Built with: Lovable / Base44
+Description: [1-2 lausetta: mitä se tekee, kenelle]
+Link: [URL — lovable.app tai base44]
+Skills shown: prompt engineering, no-code development, product thinking
+
+PROJECT 2 — Research & Presentation
+Title: "[aiheesi] — AI-tutkimus"
+Built with: Perplexity, NotebookLM, Gamma, Napkin.ai
+Description: Researched [aiheesi] using 4 AI tools, created
+AI podcast, infographic, and visual presentation.
+Link: [Gamma-linkki Moduulista 2]
+Skills shown: AI research, information synthesis, visual communication
+
+PROJECT 3 — AI-Generated Visuals
+Title: "Visual storytelling with AI"
+Built with: ChatGPT DALL-E 3, Google Flow
+Description: Created 4 AI images and a 5-second video about [aiheesi].
+Skills shown: visual prompt engineering, creative direction
+
+MY AI TOOLKIT
+Show as a badge grid: Lovable, Base44, Perplexity, NotebookLM,
+Gamma, Napkin.ai, ChatGPT DALL-E, Google Flow, Claude AI
+
+CONTACT
+[lisää sähköpostisi tai LinkedIn-linkki jos haluat]
+
+DESIGN
+Dark professional theme. Bold headings.
+Cards for each project with hover effects.
+Mobile responsive. Clean and modern — not flashy.
+Language: Finnish.</pre>
+      <button class="copy-q" onclick="cq(this)" style="margin-top:10px;">Kopioi prompt →</button>
+    </div>
+
+    <ul class="steps">
+      <li>Avaa <a href="https://gamma.app" target="_blank">gamma.app</a> → <strong>Create New → Presentation → Generate with AI</strong></li>
+      <li>Liitä yllä oleva prompt — täytä <strong>[hakasulut]</strong> omilla tiedoillasi ensin</li>
+      <li>Valitse tyyli: <strong>Dark</strong> tai <strong>Professional</strong></li>
+      <li>Generoi → lisää Harjoitus 1:n kuvat projektikorttiesi kuviksi</li>
+      <li>Klikkaa <strong>Share → Anyone with link → kopioi URL</strong></li>
+      <li>Lähetä URL ohjaajalle alla olevaan kenttään</li>
+    </ul>
+
+    <!-- URL SUBMIT -->
+    <div style="background:var(--white);border:2px solid var(--teal);border-radius:12px;padding:22px;margin-top:20px;">
+      <div style="font-weight:700;font-size:15px;margin-bottom:5px;">📎 Lähetä linkit ohjaajalle</div>
+      <div style="font-size:13px;color:var(--soft);margin-bottom:14px;">Kopioi URL:t tähän — ohjaaja näkee mitä olet rakentanut.</div>
+      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:13px;">
+        <div><label style="font-size:11px;font-weight:600;color:var(--soft);display:block;margin-bottom:4px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">Etunimi</label>
+          <input type="text" id="sName" placeholder="Etunimi" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border)'" /></div>
+        <div><label style="font-size:11px;font-weight:600;color:var(--soft);display:block;margin-bottom:4px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">Gamma Portfolio URL</label>
+          <input type="url" id="portUrl" placeholder="https://gamma.app/docs/..." style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 13px;font-size:14px;font-family:'DM Mono',monospace;outline:none;" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border)'" /></div>
+        <div><label style="font-size:11px;font-weight:600;color:var(--soft);display:block;margin-bottom:4px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">Lovable/Base44 URL (sovelluksesi)</label>
+          <input type="url" id="appUrl" placeholder="https://sovelluksesi.lovable.app" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 13px;font-size:14px;font-family:'DM Mono',monospace;outline:none;" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border)'" /></div>
+      </div>
+      <button onclick="submitM3()" id="submitM3Btn" style="background:var(--teal);color:white;border:none;padding:11px 22px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Lähetä ohjaajalle ✓</button>
+      <div id="submitM3OK" style="display:none;background:var(--green-l);border:1px solid #6ee7b7;border-radius:8px;padding:11px 15px;font-size:13px;color:#065f46;font-weight:600;margin-top:10px;">✓ Lähetetty!</div>
+    </div>
+
+    <div class="checklist">
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Loin Gamma-portfolion oikeilla tiedoilla</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Lisäsin AI-kuvat projektikorttiini</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Julkaisin ja kopioin URL:n</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Lähetin URL:t ohjaajalle</div>
+    </div>
+    <div class="win"><div class="win-l">✓ Tulos</div><p>Julkaistu portfolio jolla on oma URL. Tämä kertoo työnantajalle enemmän kuin mikään CV.</p></div>
+  </div>
+
+  <!-- SKILLS EARNED -->
+  <div class="skills-section">
+    <div class="skills-header">
+      <div class="skills-icon">🏆</div>
+      <div class="skills-title">Kaikki taidot — kolme moduulia</div>
+    </div>
+    <p style="font-size:14px;color:var(--mid);margin-bottom:18px;">Tässä on mitä olet oppinut tällä kurssilla — ja miten se kannattaa sanoa ääneen.</p>
+    <div class="skill-grid">
+      <div class="sk"><div class="sk-top"><div class="sk-em">🪄</div><div class="sk-name">No-code kehitys</div></div><div class="sk-desc">Rakennat web-sovelluksia AI-pohjaisilla työkaluilla ilman koodia — nopeammin kuin useimmat kehittäjät.</div><div class="sk-chips"><span class="sk-chip teal">Lovable</span><span class="sk-chip teal">Base44</span></div></div>
+      <div class="sk"><div class="sk-top"><div class="sk-em">🔍</div><div class="sk-name">AI-tutkimus</div></div><div class="sk-desc">Löydät luotettavaa tietoa nopeasti ja analysoit sen useilla AI-työkaluilla — podcast, infograafi, esitys.</div><div class="sk-chips"><span class="sk-chip ora">Perplexity</span><span class="sk-chip green">NotebookLM</span></div></div>
+      <div class="sk"><div class="sk-top"><div class="sk-em">🎨</div><div class="sk-name">Visuaalinen viestintä</div></div><div class="sk-desc">Muutat idean esitykseksi, kuvioksi, kuvaksi ja videoksi — ilman graafikkoa tai videokuvaajaa.</div><div class="sk-chips"><span class="sk-chip purple">Gamma</span><span class="sk-chip purple">Napkin.ai</span><span class="sk-chip ora">DALL-E</span></div></div>
+      <div class="sk"><div class="sk-top"><div class="sk-em">🎯</div><div class="sk-name">Prompt engineering</div></div><div class="sk-desc">Osaat kuvata idean niin tarkasti, että AI tuottaa täsmälleen mitä haluat — toistettavasti.</div><div class="sk-chips"><span class="sk-chip teal">Claude</span><span class="sk-chip teal">ChatGPT</span></div></div>
+      <div class="sk"><div class="sk-top"><div class="sk-em">💡</div><div class="sk-name">Tuoteajattelu</div></div><div class="sk-desc">Tunnistat ongelman, määrittelet käyttäjän ja rakennat ratkaisun — tämä on tuotepäällikön ydintyö.</div><div class="sk-chips"><span class="sk-chip green">MVP</span><span class="sk-chip green">Product thinking</span></div></div>
+      <div class="sk"><div class="sk-top"><div class="sk-em">🗣</div><div class="sk-name">Oman osaamisen markkinointi</div></div><div class="sk-desc">Osaat kertoa mitä osaat CV-kielellä, LinkedIn-profiilissa ja haastattelussa.</div><div class="sk-chips"><span class="sk-chip ora">CV</span><span class="sk-chip ora">LinkedIn</span></div></div>
+    </div>
+    <div class="job-row">
+      <div class="job-row-title">Missä töissä nämä taidot ovat arvokkaita</div>
+      <div class="job-chips">
+        <span class="jc">🧩 No-code developer</span>
+        <span class="jc">📱 AI Product Builder</span>
+        <span class="jc">🎯 Digimarkkinoija</span>
+        <span class="jc">🏢 Startup-tiimiläinen</span>
+        <span class="jc">💼 Myynti + AI</span>
+        <span class="jc">🤝 AI-konsultti</span>
+        <span class="jc">📊 Sisältötuottaja</span>
+        <span class="jc">🚀 Yrittäjä</span>
+      </div>
+    </div>
+    <div class="cv-block">
+      <div class="cv-block-label">📄 Koko CV-osio — kopioi suoraan</div>
+      <pre>DIGITAALISET TAIDOT — AI & No-code kehitys (2026)
+
+• Rakensin web-sovelluksia AI-kehitystyökaluilla (Lovable, Base44) — ei koodia
+• Hallitsen prompt engineering -tekniikat ja AI-pohjaisen tuotekehityksen
+• Tutkin ja analysoin tietoa AI-tutkimustyökaluilla (Perplexity, NotebookLM)
+• Tuotan visuaalisia esityksiä, infografiikoita ja AI-videoita
+• Muunsin ongelman toimivaksi digitaaliseksi ratkaisuksi MVP-menetelmällä
+• Työkalut: Claude AI, ChatGPT, Lovable, Base44, Gamma, Napkin.ai, Perplexity</pre>
+    </div>
+    <div class="freelance-box">
+      <p style="margin-bottom:12px;"><strong>🌍 Tämä on vasta alku — mitä seuraavaksi?</strong></p>
+      <p style="margin-bottom:10px;font-size:12px;">Tällä kurssilla opit käyttämään AI-työkaluja käytännössä. AI-maailma on valtava — tässä suuntia joihin voit jatkaa:</p>
+      <div style="display:flex;flex-direction:column;gap:9px;">
+        <div style="display:flex;gap:9px;align-items:flex-start;"><span style="font-size:15px;flex-shrink:0;">🧑‍💻</span><div><strong style="font-size:12px;">Opi prompt engineering syvällisemmin</strong><br><span style="font-size:12px;opacity:.85;">Anthropic, OpenAI ja Google julkaisevat ilmaisia kursseja — lyhyitä ja käytännöllisiä.</span></div></div>
+        <div style="display:flex;gap:9px;align-items:flex-start;"><span style="font-size:15px;flex-shrink:0;">🔧</span><div><strong style="font-size:12px;">Tutki automaatiotyökaluja</strong><br><span style="font-size:12px;opacity:.85;">Make.com ja Zapier yhdistävät AI:n ja sovellukset automaattisiksi prosesseiksi — seuraava taso no-code rakentamisessa.</span></div></div>
+        <div style="display:flex;gap:9px;align-items:flex-start;"><span style="font-size:15px;flex-shrink:0;">🎯</span><div><strong style="font-size:12px;">Rakenna oma projekti alusta loppuun</strong><br><span style="font-size:12px;opacity:.85;">Paras oppi tulee tekemisestä. Keksi ongelma joka ärsyttää sinua — ja rakenna siihen ratkaisu.</span></div></div>
+        <div style="display:flex;gap:9px;align-items:flex-start;"><span style="font-size:15px;flex-shrink:0;">📖</span><div><strong style="font-size:12px;">Seuraa mitä tapahtuu</strong><br><span style="font-size:12px;opacity:.85;">The Rundown AI, Lex Fridman ja Lenny's Newsletter — pysyt AI-kehityksen kärryillä ilmaiseksi.</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINAL -->
+  <div class="final-wrap">
+    <h2>Kurssi valmis 🏆</h2>
+    <p class="fw-sub">Kolmessa moduulissa olet rakentanut portfolion, oppinut 8 AI-työkalua ja löytänyt tavat ansaita näillä taidoilla. Tämä ei ole kurssin loppu — tämä on alku.</p>
+    <div class="built-grid">
+      <div class="bg-item"><div class="bg-em">🪄</div><div class="bg-name">Kaksi sovellusta</div><div class="bg-desc">Julkaistu URL, sinun idea</div></div>
+      <div class="bg-item"><div class="bg-em">🔍</div><div class="bg-name">AI-tutkimus</div><div class="bg-desc">Perplexity + NotebookLM + podcast</div></div>
+      <div class="bg-item"><div class="bg-em">🎨</div><div class="bg-name">Gamma-esitys</div><div class="bg-desc">Ammattimainen, jaettava linkki</div></div>
+      <div class="bg-item"><div class="bg-em">🖼</div><div class="bg-name">4 AI-kuvaa</div><div class="bg-desc">ChatGPT DALL-E, sinun promptit</div></div>
+      <div class="bg-item"><div class="bg-em">🎬</div><div class="bg-name">5s video</div><div class="bg-desc">Google Flow, loop-ready</div></div>
+      <div class="bg-item"><div class="bg-em">🏆</div><div class="bg-name">Portfolio</div><div class="bg-desc">Gamma, kaikki yhdessä</div></div>
+      <div class="bg-item"><div class="bg-em">🗣</div><div class="bg-name">CV-teksti</div><div class="bg-desc">Valmis käyttöön heti</div></div>
+      <div class="bg-item"><div class="bg-em">💡</div><div class="bg-name">3 ansaintaideaa</div><div class="bg-desc">Voit aloittaa tänään</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══ SUVI: API KEY ═══
+const CLAUDE_KEY = 'sk-ant-REPLACE_WITH_YOUR_KEY';
+const SUBMIT_ENDPOINT_M3 = '/api/save-student-urls'; // same endpoint, module=moduuli-3
+
+// ═══ CAREER AI ═══
+const CAREER_SYSTEM = `Olet ura-valmentaja joka auttaa nuorta työnhakijaa kertomaan AI-taidoistaan.
+
+Kysy täsmälleen 4 kysymystä — yksi kerrallaan — suomeksi:
+K1: Kerro lyhyesti: mitä sovelluksia tai projekteja rakensit tällä kurssilla?
+K2: Mitä AI-työkaluja opit käyttämään? Lista ne kaikki.
+K3: Mihin töihin tai tilanteisiin haet töitä? Mikä sinua kiinnostaa?
+K4: Jos kuvailisit itseäsi yhdellä lauseella työnhakijana, mitä sanoisit?
+
+Kommentoi lyhyesti jokaista vastausta ennen seuraavaa kysymystä.
+
+Kun saat kaikki 4, kirjoita "Täydellinen! Tässä on sinun ura-tarinasi:" ja generoi SUOMEKSI:
+
+\`\`\`URA-TARINA
+CV-KOHTA (lisää "Digitaaliset taidot" -osioon):
+[3-4 bullet pointia, konkreettiset sanat, ei "olen motivoitunut"]
+
+LINKEDIN HEADLINE:
+[Max 120 merkkiä. Selkeä, erottuva, käytä avainsanoja kuten "AI", "No-code", "rakentaa"]
+
+"KERRO ITSESTÄSI" — HAASTATTELUUN:
+[3-4 lausetta. Aloita konkreettisella saavutuksella: "Rakensin..." tai "Opin..."]
+
+MYYNTILAUSE (30 sekuntia):
+[Lyhyt, itsevarma, konkreettinen. Sopii LinkedIniin tai työnhakuviestiin]
+\`\`\``;
+
+let careerHistory = [];
+let careerQ = 0;
+let careerDone = false;
+let careerBusy = false;
+
+async function careerCallAI(userMsg = null) {
+  if (userMsg) {
+    careerHistory.push({ role: 'user', content: userMsg });
+    addCareerMsg('user', userMsg);
+    careerQ++;
+    document.getElementById('careerProg').textContent = careerQ + ' / 4';
+  }
+  careerBusy = true;
+  setCareerDisabled(true);
+  showCareerTyping();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CLAUDE_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        system: CAREER_SYSTEM,
+        messages: careerHistory
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'API error');
+    const text = data.content[0].text;
+    careerHistory.push({ role: 'assistant', content: text });
+    removeCareerTyping();
+    if (text.includes('```URA-TARINA')) {
+      handleCareerResult(text);
+    } else {
+      addCareerMsg('ai', text);
+    }
+  } catch (e) {
+    removeCareerTyping();
+    addCareerMsg('ai', '⚠️ ' + e.message);
+  }
+  careerBusy = false;
+  if (!careerDone) setCareerDisabled(false);
+}
+
+function careerSend() {
+  const el = document.getElementById('careerInp');
+  const txt = el.value.trim();
+  if (!txt || careerBusy || careerDone) return;
+  el.value = ''; el.style.height = '38px';
+  careerCallAI(txt);
+}
+function careerKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); careerSend(); } }
+function careerResize(el) { el.style.height = '38px'; el.style.height = Math.min(el.scrollHeight, 90) + 'px'; }
+
+function handleCareerResult(text) {
+  careerDone = true;
+  document.getElementById('careerInputRow').style.display = 'none';
+  document.getElementById('careerProg').textContent = '4 / 4 ✓';
+  const parts = text.split('```URA-TARINA');
+  const intro = parts[0].trim();
+  const raw = parts[1] ? parts[1].replace(/```[\s\S]*$/, '').replace(/```/g, '').trim() : '';
+  if (intro) addCareerMsg('ai', intro);
+  document.getElementById('crText').textContent = raw;
+  document.getElementById('careerResult').classList.add('show');
+}
+
+function copyCareer() {
+  navigator.clipboard.writeText(document.getElementById('crText').textContent).then(() => {
+    const b = document.getElementById('crCopy');
+    b.textContent = '✓ Kopioitu!'; b.className = 'cr-copy ok';
+    setTimeout(() => { b.textContent = 'Kopioi kaikki'; b.className = 'cr-copy'; }, 2500);
+  });
+}
+
+function addCareerMsg(role, text) {
+  const c = document.getElementById('careerChat');
+  const d = document.createElement('div');
+  d.className = 'cmsg ' + role;
+  d.innerHTML = `<div class="cav ${role}">${role === 'ai' ? '🎤' : '👤'}</div><div class="cbub">${fmt(text)}</div>`;
+  c.appendChild(d); c.scrollTop = c.scrollHeight;
+}
+function showCareerTyping() {
+  const c = document.getElementById('careerChat');
+  const d = document.createElement('div');
+  d.className = 'cmsg ai'; d.id = 'ctyp';
+  d.innerHTML = `<div class="cav ai">🎤</div><div class="typing-bub"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  c.appendChild(d); c.scrollTop = c.scrollHeight;
+}
+function removeCareerTyping() { const t = document.getElementById('ctyp'); if (t) t.remove(); }
+function setCareerDisabled(v) {
+  document.getElementById('careerInp').disabled = v;
+  document.getElementById('careerSend').disabled = v;
+}
+
+// ═══ IMAGE TABS ═══
+function showImgTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('show'));
+  document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  document.getElementById('img-' + id).classList.add('show');
+  btn.classList.add('on');
+}
+
+// ═══ COPY ═══
+function cq(btn) {
+  const pre = btn.previousElementSibling;
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = '✓ Kopioitu!'; btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'Kopioi →'; btn.classList.remove('ok'); }, 2200);
+  });
+}
+
+// ═══ SUBMIT ═══
+async function submitM3() {
+  const name = document.getElementById('sName').value.trim();
+  const port = document.getElementById('portUrl').value.trim();
+  const app = document.getElementById('appUrl').value.trim();
+  if (!name || !port) { alert('Täytä nimi ja portfolio-URL.'); return; }
+  const btn = document.getElementById('submitM3Btn');
+  btn.disabled = true; btn.textContent = 'Lähetetään...';
+  try {
+    const res = await fetch(SUBMIT_ENDPOINT_M3, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_name: name, portfolio_url: port, app_url: app, module: 'moduuli-3' })
+    });
+    if (res.ok) { document.getElementById('submitM3OK').style.display = 'block'; btn.textContent = '✓ Lähetetty'; }
+    else throw new Error();
+  } catch {
+    // CURSOR: implement /api/save-student-urls with fields: student_name, portfolio_url, app_url, module
+    console.log('CURSOR TODO:', { name, portfolio_url: port, app_url: app });
+    document.getElementById('submitM3OK').style.display = 'block';
+    btn.textContent = '✓ Tallennettu';
+  }
+}
+
+// ═══ CHECKLIST ═══
+function chk(el) {
+  el.classList.toggle('done');
+  el.textContent = el.classList.contains('done') ? '✓' : '';
+}
+
+function fmt(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+}
+
+// Start career AI on load
+careerCallAI();
+</script>
+</body>
+</html>

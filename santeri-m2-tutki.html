@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moduuli 2 — Tutki, luo, esitä</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ind:#4f46e5;--ind-l:#eef2ff;--ind-d:#4338ca;
+  --teal:#0d9488;--teal-l:#ccfbf1;
+  --dark:#0f172a;--mid:#334155;--soft:#64748b;
+  --bg:#f8fafc;--white:#fff;--border:#e2e8f0;
+  --green:#10b981;--green-l:#d1fae5;
+  --amber:#f59e0b;--amber-l:#fef3c7;
+  --purple:#8b5cf6;--purple-l:#ede9fe;
+  --pink:#ec4899;--pink-l:#fce7f3;
+  --sky:#0ea5e9;--sky-l:#e0f2fe;
+  --emerald:#10b981;--emerald-l:#d1fae5;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--dark);line-height:1.65;font-size:16px;}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#1e1b4b,#0f172a 55%,#0c1a2e);padding:58px 24px 50px;text-align:center;}
+.tag{display:inline-block;background:var(--ind);color:white;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;padding:4px 13px;border-radius:20px;margin-bottom:20px;text-transform:uppercase;}
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(28px,5vw,46px);line-height:1.15;color:white;margin-bottom:14px;}
+.hero h1 em{color:#818cf8;font-style:normal;}
+.hero-sub{color:#94a3b8;font-size:15px;max-width:520px;margin:0 auto 26px;}
+.pills{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;}
+.pill{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);color:#cbd5e1;padding:5px 13px;border-radius:20px;font-size:12px;}
+
+/* LAYOUT */
+.content{max-width:740px;margin:0 auto;padding:50px 24px 88px;}
+.slabel{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px;color:var(--ind);}
+.slabel.perp{color:var(--sky);}
+.slabel.note{color:var(--emerald);}
+.slabel.gamm{color:var(--purple);}
+.slabel.napk{color:var(--pink);}
+h2{font-family:'DM Serif Display',serif;font-size:27px;color:var(--dark);margin-bottom:14px;}
+h3{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:9px;}
+p{color:var(--mid);margin-bottom:14px;font-size:15px;}
+.div{border:none;border-top:1px solid var(--border);margin:52px 0;}
+a{color:var(--ind);}
+
+/* FLOW BAR */
+.flow{display:flex;align-items:center;gap:0;overflow-x:auto;padding:2px 0 8px;margin-bottom:38px;}
+.fn{background:var(--white);border:2px solid var(--border);border-radius:11px;padding:11px 15px;min-width:108px;text-align:center;flex-shrink:0;}
+.fn.sky{border-color:var(--sky);box-shadow:0 0 0 3px var(--sky-l);}
+.fn-n{font-family:'DM Mono',monospace;font-size:9px;color:var(--soft);margin-bottom:3px;}
+.fn-l{font-size:11px;font-weight:700;}
+.fa{color:#94a3b8;font-size:16px;padding:0 5px;flex-shrink:0;}
+
+/* TOOL HEADER CARD */
+.tool-card{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px;}
+.tool-strip{height:5px;}
+.tool-strip.perp{background:linear-gradient(90deg,var(--sky),#38bdf8);}
+.tool-strip.note{background:linear-gradient(90deg,var(--emerald),#34d399);}
+.tool-strip.gamm{background:linear-gradient(90deg,var(--purple),#a78bfa);}
+.tool-strip.napk{background:linear-gradient(90deg,var(--pink),#f472b6);}
+.tool-inner{padding:22px 24px;}
+.tool-top{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;}
+.tool-em{font-size:36px;flex-shrink:0;}
+.tool-name{font-weight:700;font-size:20px;margin-bottom:3px;}
+.tool-tag{font-size:13px;color:var(--soft);font-style:italic;}
+.tool-body{font-size:14px;color:var(--mid);line-height:1.65;}
+.tool-body p{margin-bottom:10px;font-size:14px;}
+
+/* COMPARISON */
+.compare-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
+@media(max-width:500px){.compare-row{grid-template-columns:1fr;}}
+.cmp{border-radius:9px;padding:13px 15px;}
+.cmp.bad{background:#fef2f2;border:1px solid #fca5a5;}
+.cmp.good{background:var(--green-l);border:1px solid #6ee7b7;}
+.cmp-label{font-size:10px;font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.09em;margin-bottom:5px;}
+.cmp.bad .cmp-label{color:#ef4444;}
+.cmp.good .cmp-label{color:var(--green);}
+.cmp-text{font-size:13px;color:var(--mid);line-height:1.55;}
+
+/* VALUE EXAMPLES */
+.value-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0;}
+@media(max-width:480px){.value-grid{grid-template-columns:1fr;}}
+.vg{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:13px;}
+.vg-em{font-size:20px;margin-bottom:6px;}
+.vg-title{font-weight:700;font-size:13px;margin-bottom:3px;}
+.vg-text{font-size:12px;color:var(--soft);line-height:1.5;}
+
+/* TOPIC PICKER */
+.topic-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:16px 0;}
+@media(max-width:520px){.topic-row{grid-template-columns:1fr;}}
+.tp{background:var(--white);border:2px solid var(--border);border-radius:11px;padding:16px;cursor:pointer;transition:all .2s;text-align:center;}
+.tp:hover{border-color:var(--sky);box-shadow:0 0 0 3px var(--sky-l);}
+.tp.sel{border-color:var(--sky);background:var(--sky-l);} .tp.sel.purple-sel{border-color:var(--purple);background:var(--purple-l);}
+.tp-em{font-size:26px;margin-bottom:7px;}
+.tp-name{font-weight:700;font-size:14px;margin-bottom:3px;}
+.tp-desc{font-size:12px;color:var(--soft);}
+.topic-own{background:var(--white);border:1.5px dashed var(--border);border-radius:11px;padding:16px;margin-top:10px;}
+.topic-own input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;}
+.topic-own input:focus{border-color:var(--sky);}
+.topic-own label{font-size:12px;font-weight:600;color:var(--soft);display:block;margin-bottom:6px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;}
+.set-topic-btn{background:var(--sky);color:white;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:9px;transition:background .2s;}
+.set-topic-btn:hover{background:#0284c7;}
+
+/* QUERY BLOCK */
+.query-block{background:#1e293b;border-radius:10px;padding:16px 18px;margin:13px 0;position:relative;}
+.qb-meta{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.qb-badge{font-family:'DM Mono',monospace;font-size:10px;padding:3px 9px;border-radius:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.qb-badge.web{background:rgba(14,165,233,.2);color:#38bdf8;}
+.qb-badge.acad{background:rgba(139,92,246,.2);color:#a78bfa;}
+.qb-num{font-family:'DM Mono',monospace;font-size:10px;color:#64748b;}
+.qb-text{font-family:'DM Mono',monospace;font-size:13px;color:#e2e8f0;line-height:1.65;white-space:pre-wrap;margin:0;}
+.qb-text .topic-ph{color:#fbbf24;}
+.copy-wrap{margin-top:10px;}
+.copy-q{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#cbd5e1;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;}
+.copy-q:hover{background:rgba(255,255,255,.14);}
+.copy-q.ok{background:rgba(16,185,129,.2);border-color:#6ee7b7;color:#34d399;}
+
+/* REFLECTION FIELDS */
+.reflect-box{background:var(--white);border:1.5px solid var(--border);border-radius:11px;padding:20px 22px;margin:16px 0;}
+.rb-label{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:5px;}
+.rb-sub{font-size:12px;color:var(--soft);margin-bottom:10px;}
+.rb-ta{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 13px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--dark);resize:none;outline:none;line-height:1.55;transition:border-color .2s;}
+.rb-ta:focus{border-color:var(--ind);}
+.rb-ta.sky:focus{border-color:var(--sky);}
+.rb-ta.emerald:focus{border-color:var(--emerald);}
+.rb-ta.purple:focus{border-color:var(--purple);}
+.rb-ta.pink:focus{border-color:var(--pink);}
+
+/* STEPS */
+.ex-steps{list-style:none;counter-reset:s;margin:14px 0 0;}
+.ex-steps li{counter-increment:s;display:flex;gap:12px;margin-bottom:13px;font-size:14px;color:var(--mid);align-items:flex-start;}
+.ex-steps li::before{content:counter(s);font-family:'DM Mono',monospace;font-size:10px;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.ex-steps.sky li::before{background:var(--sky-l);color:var(--sky);}
+.ex-steps.emerald li::before{background:var(--emerald-l);color:var(--emerald);}
+.ex-steps.purple li::before{background:var(--purple-l);color:var(--purple);}
+.ex-steps.pink li::before{background:var(--pink-l);color:var(--pink);}
+
+/* CHECKBOXES */
+.checklist{margin:18px 0 0;}
+.ci{display:flex;gap:11px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--mid);}
+.ci:last-child{border-bottom:none;}
+.cb{width:20px;height:20px;border:2px solid var(--border);border-radius:4px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;background:var(--white);font-size:11px;}
+.cb.done{background:var(--green);border-color:var(--green);color:white;}
+
+/* VINKKI */
+.vinkki{background:var(--amber-l);border:1px solid #fcd34d;border-radius:9px;padding:14px 18px;margin:14px 0;display:flex;gap:10px;align-items:flex-start;}
+.vi{font-size:18px;flex-shrink:0;}
+.vt{font-size:13px;color:#92400e;margin:0;line-height:1.6;}
+.vt strong{color:#78350f;display:block;margin-bottom:3px;font-size:14px;}
+
+/* WIN */
+.win{background:var(--green-l);border:1px solid #6ee7b7;border-radius:9px;padding:13px 17px;margin-top:18px;}
+.win-l{font-size:9px;font-family:'DM Mono',monospace;color:var(--green);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:4px;}
+.win p{font-size:13px;color:#065f46;margin:0;}
+
+/* EXERCISE CARD */
+.ex{background:var(--white);border-radius:15px;padding:26px 28px;margin-bottom:26px;}
+.ex.sky{border:2px solid var(--sky);}
+.ex.emerald{border:2px solid var(--emerald);}
+.ex.purple{border:2px solid var(--purple);}
+.ex.pink{border:2px solid var(--pink);}
+.ex-head{display:flex;gap:13px;align-items:flex-start;margin-bottom:16px;}
+.ex-num{color:white;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;flex-shrink:0;}
+.ex-num.sky{background:var(--sky);}
+.ex-num.emerald{background:var(--emerald);}
+.ex-num.purple{background:var(--purple);}
+.ex-num.pink{background:var(--pink);}
+.ex-title{font-size:17px;font-weight:700;margin-bottom:2px;}
+.ex-time{font-size:11px;color:var(--soft);font-family:'DM Mono',monospace;}
+
+/* TOPIC DISPLAY */
+.topic-display{background:var(--sky-l);border:1.5px solid var(--sky);border-radius:9px;padding:11px 15px;margin:12px 0;font-size:14px;color:#0369a1;font-weight:600;display:none;}
+.topic-display.show{display:block;}
+
+/* NOTEBOOK STUDIO MAP */
+.studio-map{background:#1e293b;border-radius:12px;padding:20px 22px;margin:16px 0;}
+.sm-title{font-family:'DM Mono',monospace;font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;}
+.sm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+@media(max-width:480px){.sm-grid{grid-template-columns:1fr;}}
+.sm-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px 12px;display:flex;gap:10px;align-items:center;}
+.sm-item.do-this{border-color:var(--emerald);background:rgba(16,185,129,.1);}
+.sm-em{font-size:18px;flex-shrink:0;}
+.sm-name{font-size:13px;font-weight:600;color:#e2e8f0;}
+.sm-sub{font-size:11px;color:#64748b;margin-top:2px;}
+.sm-badge{font-family:'DM Mono',monospace;font-size:9px;background:rgba(16,185,129,.2);color:#34d399;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.08em;margin-left:auto;flex-shrink:0;}
+
+/* GAMMA STEPS VIZ */
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:14px 0;}
+@media(max-width:480px){.g5{grid-template-columns:repeat(2,1fr);}}
+.g5-item{background:var(--white);border:1px solid var(--border);border-radius:9px;padding:13px;text-align:center;}
+.g5-n{font-family:'DM Mono',monospace;font-size:10px;color:var(--purple);font-weight:700;margin-bottom:5px;}
+.g5-em{font-size:20px;margin-bottom:5px;}
+.g5-t{font-size:11px;color:var(--mid);}
+
+/* NAPKIN TYPES */
+.napkin-types{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0;}
+.nt{background:var(--white);border:1px solid var(--border);border-radius:9px;padding:14px;}
+.nt-em{font-size:22px;margin-bottom:7px;}
+.nt-name{font-weight:700;font-size:13px;margin-bottom:3px;}
+.nt-use{font-size:12px;color:var(--soft);}
+.nt-ex{font-size:11px;color:var(--pink);margin-top:4px;font-style:italic;}
+
+/* LINKS */
+.tool-link{display:inline-flex;align-items:center;gap:6px;color:white;text-decoration:none;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:700;transition:opacity .2s;margin-top:12px;}
+.tool-link:hover{opacity:.85;}
+.tool-link.sky{background:var(--sky);}
+.tool-link.emerald{background:var(--emerald);}
+.tool-link.purple{background:var(--purple);}
+.tool-link.pink{background:var(--pink);}
+
+/* DIVIDER LABEL */
+.section-divider{display:flex;align-items:center;gap:14px;margin:50px 0;}
+.sd-line{flex:1;height:1px;background:var(--border);}
+.sd-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--soft);white-space:nowrap;padding:4px 12px;background:var(--bg);border:1px solid var(--border);border-radius:20px;}
+
+/* CHAIN HIGHLIGHT */
+.chain{background:linear-gradient(135deg,#eef2ff,#ede9fe);border:1px solid #c7d2fe;border-radius:11px;padding:18px 20px;margin:22px 0;text-align:center;}
+.chain p{color:#3730a3;font-size:14px;margin:0;line-height:1.7;}
+.chain strong{color:#1e1b4b;}
+
+/* FINAL */
+.final{background:var(--dark);border-radius:15px;padding:32px 28px;text-align:center;margin-top:50px;}
+.final h2{color:white;font-family:'DM Serif Display',serif;margin-bottom:9px;}
+.final p{color:#94a3b8;margin-bottom:20px;font-size:14px;}
+.final-btn{display:inline-flex;align-items:center;gap:7px;background:var(--ind);color:white;text-decoration:none;padding:13px 26px;border-radius:9px;font-size:14px;font-weight:700;transition:background .2s;}
+.final-btn:hover{background:var(--ind-d);}
+
+.pbar{background:var(--border);border-radius:20px;height:4px;margin-bottom:38px;overflow:hidden;}
+.pfill{background:linear-gradient(90deg,var(--ind),#818cf8);height:100%;width:66%;border-radius:20px;}
+
+.gamma-style-btn{background:var(--bg);border:1.5px solid var(--border);color:var(--mid);padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.gamma-style-btn.on{background:var(--purple-l);border-color:var(--purple);color:var(--purple);}
+
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="tag">Moduuli 2 — Santerin polku</div>
+  <h1>Tutki, luo, <em>esitä</em></h1>
+  <p class="hero-sub">Neljä työkalua. Jokainen syöttää seuraavalle. Lopussa sinulla on tutkimus, podcast, esitys ja visuaalinen kuvio.</p>
+  <div class="pills">
+    <span class="pill">⏱ ~70 min</span>
+    <span class="pill">🔍 Perplexity</span>
+    <span class="pill">📓 NotebookLM</span>
+    <span class="pill">🎨 Gamma</span>
+    <span class="pill">🗺 Napkin.ai</span>
+  </div>
+</div>
+
+<div class="content">
+  <div class="pbar"><div class="pfill"></div></div>
+
+  <div class="slabel">Ketju — jokainen harjoitus jatkaa edellisestä</div>
+  <h2>Tutkit → analysoit → esität → visualisoit</h2>
+  <div class="flow">
+    <div class="fn sky"><div class="fn-n">H1</div><div class="fn-l">🔍 Perplexity</div></div>
+    <div class="fa">→</div>
+    <div class="fn"><div class="fn-n">H2</div><div class="fn-l">📓 NotebookLM</div></div>
+    <div class="fa">→</div>
+    <div class="fn"><div class="fn-n">H3</div><div class="fn-l">🎨 Gamma</div></div>
+    <div class="fa">→</div>
+    <div class="fn"><div class="fn-n">H4</div><div class="fn-l">🗺 Napkin.ai</div></div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       HARJOITUS 1 — PERPLEXITY
+  ════════════════════════════════════════ -->
+  <div class="slabel perp">Harjoitus 1</div>
+
+  <div class="tool-card">
+    <div class="tool-strip perp"></div>
+    <div class="tool-inner">
+      <div class="tool-top">
+        <div class="tool-em">🔍</div>
+        <div>
+          <div class="tool-name">Perplexity</div>
+          <div class="tool-tag">"Google joka lukee artikkelit puolestasi — ja kertoo mistä tieto tuli"</div>
+        </div>
+      </div>
+      <div class="tool-body">
+        <p>Perplexity hakee tietoa netistä, lukee sivut ja kirjoittaa sinulle yhteenvedon. Jokainen väite on numeroitu ja linkitetty — klikkaat numeroa, tulet suoraan alkuperäiseen artikkeliin. Ei arvailuja, ei keksittyä tietoa.</p>
+        <div class="compare-row">
+          <div class="cmp bad"><div class="cmp-label">❌ Google</div><div class="cmp-text">Saat 10 linkkiä. Avaat jokaisen. Etsit vastauksen itse. Kestää tunnin.</div></div>
+          <div class="cmp good"><div class="cmp-label">✅ Perplexity</div><div class="cmp-text">Kirjoitat kysymyksen. Saat vastauksen + lähteet. Kestää 30 sekuntia.</div></div>
+        </div>
+        <div style="background:#1e293b;border-radius:11px;padding:18px 20px;margin:14px 0;">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">Kolme hakutilaa — näin vaihdat niiden välillä</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+            <div style="background:rgba(14,165,233,.12);border:1px solid rgba(14,165,233,.3);border-radius:8px;padding:10px;text-align:center;">
+              <div style="font-size:16px;margin-bottom:4px;">🌐</div>
+              <div style="font-size:12px;font-weight:700;color:#38bdf8;margin-bottom:2px;">Web</div>
+              <div style="font-size:11px;color:#64748b;">Blogit, uutiset, verkkosivut</div>
+            </div>
+            <div style="background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);border-radius:8px;padding:10px;text-align:center;">
+              <div style="font-size:16px;margin-bottom:4px;">🎓</div>
+              <div style="font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:2px;">Academic</div>
+              <div style="font-size:11px;color:#64748b;">Tieteelliset artikkelit</div>
+            </div>
+            <div style="background:rgba(236,72,153,.12);border:1px solid rgba(236,72,153,.3);border-radius:8px;padding:10px;text-align:center;">
+              <div style="font-size:16px;margin-bottom:4px;">📱</div>
+              <div style="font-size:12px;font-weight:700;color:#f472b6;margin-bottom:2px;">Social</div>
+              <div style="font-size:11px;color:#64748b;">YouTube ja Reddit</div>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:12px 14px;">
+            <div style="font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:8px;">📍 Miten vaihdat tilan — tarkka ohje:</div>
+            <div style="font-size:12px;color:#94a3b8;line-height:1.7;">
+              1. Kirjoita kysymys tekstikenttään<br>
+              2. Katso tekstikentän sisällä vasemmalla — näet <strong style="color:#38bdf8;">+ -napin</strong><br>
+              3. Klikkaa <strong style="color:#38bdf8;">+</strong> → avautuu lista vaihtoehdoista (Focus)<br>
+              4. Valitse <strong style="color:#a78bfa;">Academic</strong>, <strong style="color:#f472b6;">Social</strong> tai <strong style="color:#38bdf8;">Web</strong><br>
+              5. Voit rastittaa useamman tilan kerralla — saat laajemman haun<br>
+              6. Paina Enter — Perplexity hakee valituista lähteistä
+            </div>
+          </div>
+        </div>
+        <div class="value-grid">
+          <div class="vg"><div class="vg-em">💼</div><div class="vg-title">Työnhaku</div><div class="vg-text">"Mitä työnantajat hakevat myyjältä 2026?" — saat vastauksen tutkimuksiin perustuen.</div></div>
+          <div class="vg"><div class="vg-em">🎮</div><div class="vg-title">Harrastukset</div><div class="vg-text">"Miksi esport on nyt iso bisnes?" — faktat ja tilastot lähteineen.</div></div>
+          <div class="vg"><div class="vg-em">🏢</div><div class="vg-title">Yritysidea</div><div class="vg-text">Tutki kilpailijat, markkina ja trendit ennen kuin teet mitään.</div></div>
+          <div class="vg"><div class="vg-em">📚</div><div class="vg-title">Koulu ja opinnot</div><div class="vg-text">Taustatutkimus esseeseen tai esitykseen — lähteet valmiina.</div></div>
+        </div>
+        <a href="https://perplexity.ai" target="_blank" class="tool-link sky">→ perplexity.ai</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOPIC PICK -->
+  <div class="ex sky">
+    <div class="ex-head">
+      <div class="ex-num sky">1</div>
+      <div><div class="ex-title">Perplexity — valitse aihe ja tee 6 hakua</div><div class="ex-time">⏱ ~20 min</div></div>
+    </div>
+
+    <p style="font-size:14px;color:var(--mid);margin-bottom:12px;">Valitse alta valmis aihe tai kirjoita oma. Kaikki haut on kirjoitettu valmiiksi — muokkaa vain <span style="color:var(--amber);font-weight:700;">[aihe]</span>-kohdat omaksesi.</p>
+
+    <div class="topic-row">
+      <div class="tp" onclick="setTopic(this,'Myynti ja työnhaku 2026','sales and job market 2026')">
+        <div class="tp-em">💼</div>
+        <div class="tp-name">Myynti ja työnhaku</div>
+        <div class="tp-desc">Mitä työnantajat hakevat — miten AI muuttaa kenttää</div>
+      </div>
+      <div class="tp" onclick="setTopic(this,'Urheilu ja esport 2026','esport and sports technology 2026')">
+        <div class="tp-em">🎮</div>
+        <div class="tp-name">Urheilu ja esport</div>
+        <div class="tp-desc">Ammattiurheilija, esport-bisnes, treenidata</div>
+      </div>
+      <div class="tp" onclick="setTopic(this,'Ruoka ja ravitsemus 2026','food nutrition habits and apps 2026')">
+        <div class="tp-em">🍔</div>
+        <div class="tp-name">Ruoka ja ravitsemus</div>
+        <div class="tp-desc">Ruokasovellukset, terveys, ruokatrendit</div>
+      </div>
+    </div>
+    <div class="topic-own">
+      <label>Tai kirjoita oma aihe</label>
+      <input type="text" id="ownTopicFi" placeholder="esim: musiikki ja striimaus, autot ja sähköautot..." />
+      <input type="text" id="ownTopicEn" placeholder="sama englanniksi esim: music streaming and artists..." style="margin-top:8px;" />
+      <button class="set-topic-btn" onclick="setOwnTopic()">Aseta aihe →</button>
+    </div>
+
+    <div class="topic-display" id="topicDisplay">📌 Valittu aihe: <span id="topicLabel">—</span></div>
+
+    <div style="margin-top:22px;">
+      <p style="font-size:13px;color:var(--mid);margin-bottom:4px;"><strong>Järjestys:</strong> Haut 1–4 Web-tilassa suomeksi. Haut 5–6 Academic-tilassa englanniksi (vaihda tila ensin). Haku 6 on linkkilistapyyntö — tee se viimeisenä.</p>
+    </div>
+
+    <!-- QUERIES -->
+    <div class="query-block">
+      <div class="qb-meta"><span class="qb-badge web">Web</span><span class="qb-num">Haku 1 — suomeksi</span></div>
+      <pre class="qb-text" id="q1text">Mitä uutta tapahtuu <span class="topic-ph">[aiheesi]</span> alalla Suomessa 2025–2026?
+Mitkä trendit, muutokset ja uutiset ovat tärkeimpiä?</pre>
+      <div class="copy-wrap"><button class="copy-q" onclick="copyQuery('q1text',this)">Kopioi haku →</button></div>
+    </div>
+
+    <div class="query-block">
+      <div class="qb-meta"><span class="qb-badge web">Web</span><span class="qb-num">Haku 2 — suomeksi</span></div>
+      <pre class="qb-text" id="q2text">Mitkä ovat 5 yllättävää faktaa aiheesta <span class="topic-ph">[aiheesi]</span>?
+Kerro asioita joita useimmat ihmiset eivät tiedä.</pre>
+      <div class="copy-wrap"><button class="copy-q" onclick="copyQuery('q2text',this)">Kopioi haku →</button></div>
+    </div>
+
+    <div class="query-block">
+      <div class="qb-meta"><span class="qb-badge web">Web</span><span class="qb-num">Haku 3 — suomeksi</span></div>
+      <pre class="qb-text" id="q3text">Miten tekoäly muuttaa <span class="topic-ph">[aiheesi]</span> alaa seuraavan 3 vuoden aikana?
+Mitkä ammatit tai tavat toimia muuttuvat eniten?</pre>
+      <div class="copy-wrap"><button class="copy-q" onclick="copyQuery('q3text',this)">Kopioi haku →</button></div>
+    </div>
+
+    <div class="query-block">
+      <div class="qb-meta"><span class="qb-badge web">Web</span><span class="qb-num">Haku 4 — suomeksi</span></div>
+      <pre class="qb-text" id="q4text">Mitä taitoja tarvitaan <span class="topic-ph">[aiheesi]</span> alalla 2026?
+Mitä työnantajat tai alan toimijat etsivät nyt?</pre>
+      <div class="copy-wrap"><button class="copy-q" onclick="copyQuery('q4text',this)">Kopioi haku →</button></div>
+    </div>
+
+    <div class="vinkki" style="margin:14px 0;">
+      <span class="vi">🔄</span>
+      <p class="vt"><strong>Vaihda nyt Academic-tilaan</strong>Klikkaa "Focus" tai "Search" -nappia Perplexityssä → valitse "Academic". Hae englanniksi — tieteelliset tulokset ovat yleensä englanniksi ja paljon tarkempia.</p>
+    </div>
+
+    <div class="query-block">
+      <div class="qb-meta"><span class="qb-badge acad">Academic</span><span class="qb-num">Haku 5 — englanniksi</span></div>
+      <pre class="qb-text" id="q5text">What does recent research say about <span class="topic-ph">[your topic in English]</span>?
+What are the key findings from 2023–2025 studies?</pre>
+      <div class="copy-wrap"><button class="copy-q" onclick="copyQuery('q5text',this)">Kopioi haku →</button></div>
+    </div>
+
+    <div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:11px;padding:18px 20px;margin:18px 0;">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:#78350f;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:10px;">⚠️ Kriittinen askel — tee tämä viimeisenä</div>
+      <p style="font-size:14px;color:#78350f;margin-bottom:12px;line-height:1.65;"><strong>Haku 6 on erikoisprompt</strong> joka pakottaa Perplexityn antamaan vain puhtaat URL-osoitteet — yksi per rivi, ei otsikoita, ei tekstiä, ei numeroita. Näin voit kopioida listan suoraan NotebookLM:ään yhdellä liikkeellä.</p>
+
+      <div class="query-block" style="margin:0 0 12px;">
+        <div class="qb-meta"><span class="qb-badge web">Web</span><span class="qb-num">Haku 6 — linkkilista englanniksi</span></div>
+        <pre class="qb-text" id="q6text">Give me 15 links about <span class="topic-ph">[your topic in English]</span> in 2024–2026.
+Only URLs, one per line. No titles. No descriptions.
+No numbering. Just clean URLs.</pre>
+        <div class="copy-wrap"><button class="copy-q" onclick="copyQuery('q6text',this)">Kopioi haku →</button></div>
+      </div>
+
+      <div style="background:#1e293b;border-radius:9px;padding:14px 16px;margin-top:10px;">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Näin vastauksen pitäisi näyttää:</div>
+        <pre style="font-family:'DM Mono',monospace;font-size:12px;color:#34d399;line-height:1.8;margin:0;">https://hbr.org/2025/03/how-ai-is-reshaping-sales
+https://mckinsey.com/capabilities/growth-marketing/ai
+https://forbes.com/2025/ai-jobs-future
+https://techcrunch.com/2025/ai-workplace
+https://weforum.org/agenda/2025/ai-skills
+...</pre>
+        <div style="font-size:12px;color:#64748b;margin-top:8px;">→ Kopioi koko lista — tarvitset sen NotebookLM-harjoituksessa</div>
+      </div>
+    </div>
+
+    <!-- REFLECTION -->
+    <div style="margin-top:22px;">
+      <div class="reflect-box">
+        <div class="rb-label">Tärkein asia jonka opin hauista 1–4 (trendit ja taidot)</div>
+        <div class="rb-sub">Esim: En tiennyt että... / Yllätyin kun... / Tärkeintä oli...</div>
+        <textarea class="rb-ta sky" rows="3" placeholder="Kirjoita tähän..."></textarea>
+      </div>
+      <div class="reflect-box">
+        <div class="rb-label">Mitä opin Academic-hausta (haku 5)?</div>
+        <div class="rb-sub">Mitä tutkimukset sanovat? Erosiko se web-hakujen tuloksista?</div>
+        <textarea class="rb-ta sky" rows="3" placeholder="Kirjoita tähän..."></textarea>
+      </div>
+      <div class="reflect-box">
+        <div class="rb-label">📋 Linkkilista Perplexitystä — liitä tähän (tarvitset seuraavassa harjoituksessa)</div>
+        <div class="rb-sub">Kopioi Haku 6:n URL-lista tähän. Yksi linkki per rivi.</div>
+        <textarea class="rb-ta sky" id="urlListInput" rows="8" placeholder="https://example.com/article1&#10;https://example.com/article2&#10;..."></textarea>
+      </div>
+    </div>
+
+    <div class="checklist">
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Tein haut 1–4 (Web-tila, suomeksi)</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Vaihdoin Academic-tilaan ja tein haun 5</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Pyysin linkkilistan (haku 6) ja tallensin sen yllä olevaan kenttään</div>
+    </div>
+    <div class="win"><div class="win-l">✓ Tulos</div><p>Tutkimus tehty. Linkkilista tallennettu. Seuraavassa harjoituksessa laitat linkit NotebookLM:ään — se tekee niistä podcastin.</p></div>
+  </div>
+
+  <div class="section-divider"><div class="sd-line"></div><div class="sd-label">Harjoitus 2</div><div class="sd-line"></div></div>
+
+  <!-- ════════════════════════════════════════
+       HARJOITUS 2 — NOTEBOOKLM
+  ════════════════════════════════════════ -->
+  <div class="slabel note">Harjoitus 2</div>
+
+  <div class="tool-card">
+    <div class="tool-strip note"></div>
+    <div class="tool-inner">
+      <div class="tool-top">
+        <div class="tool-em">📓</div>
+        <div>
+          <div class="tool-name">NotebookLM</div>
+          <div class="tool-tag">"Henkilökohtainen tutkimusassistentti — se tietää vain sinun lisäämäsi asiat"</div>
+        </div>
+      </div>
+      <div class="tool-body">
+        <p>Annat NotebookLM:lle linkkejä, PDF:iä tai tekstiä. Se lukee ne ja osaa vastata kysymyksiin viittaamalla tarkasti niihin. Se ei koskaan arvaa tai keksi — jos tieto ei ole sinun lähteissäsi, se sanoo sen suoraan.</p>
+        <div class="compare-row">
+          <div class="cmp bad"><div class="cmp-label">❌ ChatGPT</div><div class="cmp-text">Voi keksiä tietoa jota ei ole olemassa. Et tiedä onko vastaus totta.</div></div>
+          <div class="cmp good"><div class="cmp-label">✅ NotebookLM</div><div class="cmp-text">Vastaa VAIN sinun lähteistäsi. Kertoo mistä kohtaa tieto tuli.</div></div>
+        </div>
+        <p style="font-size:14px;margin-top:10px;"><strong>Studio-paneeli</strong> on oikealla puolella. Sen avulla NotebookLM tekee lähteistäsi automaattisesti podcastin, videon, infografiikin, mind mapin ja paljon muuta — napin painalluksella.</p>
+        <div class="value-grid">
+          <div class="vg"><div class="vg-em">🎧</div><div class="vg-title">Audio Overview</div><div class="vg-text">Kaksi AI-ääntä juttelee sinun lähteistäsi kuin oikeassa podcastissa.</div></div>
+          <div class="vg"><div class="vg-em">📊</div><div class="vg-title">Infographic</div><div class="vg-text">Tekee visuaalisen infografiikin kaikesta sisällöstäsi automaattisesti.</div></div>
+          <div class="vg"><div class="vg-em">🎬</div><div class="vg-title">Video Overview</div><div class="vg-text">Lyhyt selitysvideo aiheestasi — sama kuin podcast mutta visuaalisena.</div></div>
+          <div class="vg"><div class="vg-em">🧠</div><div class="vg-title">Mind Map</div><div class="vg-text">Automaattinen käsitekartta kaikesta mitä lähteesi sisältävät.</div></div>
+        </div>
+        <a href="https://notebooklm.google.com" target="_blank" class="tool-link emerald">→ notebooklm.google.com</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="ex emerald">
+    <div class="ex-head">
+      <div class="ex-num emerald">2</div>
+      <div><div class="ex-title">NotebookLM — podcast, video ja infograafi</div><div class="ex-time">⏱ ~20 min</div></div>
+    </div>
+
+    <div class="studio-map">
+      <div class="sm-title">📍 NotebookLM Studio-valikko — oikealla puolella ruutua</div>
+      <div class="sm-grid">
+        <div class="sm-item do-this"><div class="sm-em">🎧</div><div><div class="sm-name">Audio Overview</div><div class="sm-sub">Podcast sinun lähteistäsi</div></div><span class="sm-badge">TEE 1.</span></div>
+        <div class="sm-item do-this"><div class="sm-em">🎬</div><div><div class="sm-name">Video Overview</div><div class="sm-sub">Selitysvideo</div></div><span class="sm-badge">TEE 2.</span></div>
+        <div class="sm-item do-this"><div class="sm-em">📊</div><div><div class="sm-name">Infographic</div><div class="sm-sub">Visuaalinen tiivistelmä</div></div><span class="sm-badge">TEE 3.</span></div>
+        <div class="sm-item"><div class="sm-em">🧠</div><div><div class="sm-name">Mind Map</div><div class="sm-sub">Käsitekartta</div></div></div>
+        <div class="sm-item"><div class="sm-em">📋</div><div><div class="sm-name">Study Guide</div><div class="sm-sub">Oppimisopas</div></div></div>
+        <div class="sm-item"><div class="sm-em">🃏</div><div><div class="sm-name">Flashcards</div><div class="sm-sub">Muistikortit</div></div></div>
+      </div>
+    </div>
+
+    <!-- DYNAMIC LINK DISPLAY FROM EXERCISE 1 -->
+    <div style="background:var(--emerald-l);border:1.5px solid #6ee7b7;border-radius:11px;padding:18px 20px;margin:0 0 16px;">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--emerald);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:10px;">📋 Nämä ovat linkkisi Harjoituksesta 1</div>
+      <div style="font-size:13px;color:var(--mid);margin-bottom:10px;">Kopioi nämä URL:t NotebookLM:ään — yksi per rivi:</div>
+      <div id="urlDisplayBox" style="background:white;border:1px solid var(--border);border-radius:8px;padding:12px 14px;min-height:60px;font-family:'DM Mono',monospace;font-size:12px;color:var(--mid);line-height:1.8;white-space:pre-wrap;cursor:pointer;" onclick="copyUrlDisplay(this)">
+        <span style="color:#94a3b8;font-style:italic;">Linkit ilmestyvät tähän kun olet täyttänyt Harjoituksen 1 linkkilista-kentän yllä.</span>
+      </div>
+      <button onclick="copyUrlDisplay(document.getElementById('urlDisplayBox'))" style="background:var(--emerald);color:white;border:none;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:9px;transition:background .2s;" id="copyUrlBtn">Kopioi kaikki URL:t →</button>
+      <span id="copyUrlOk" style="font-size:12px;color:var(--emerald);margin-left:9px;display:none;">✓ Kopioitu!</span>
+    </div>
+
+    <p style="font-size:13px;color:var(--mid);margin:14px 0 6px;"><strong>Miten lisäät linkkilistan NotebookLM:ään:</strong></p>
+    <div class="vinkki" style="margin:0 0 14px;">
+      <span class="vi">📋</span>
+      <p class="vt">Klikkaa <strong>+ Add sources</strong> vasemmassa paneelissa → valitse <strong>Websites</strong> (ei Upload files) → liitä kaikki URL:t kerralla kenttään — yksi per rivi → klikkaa <strong>Insert</strong> — odota prosessointi (1–3 min).</p>
+    </div>
+
+    <ul class="ex-steps emerald">
+      <li>Mene <a href="https://notebooklm.google.com" target="_blank">notebooklm.google.com</a> — kirjaudu Google-tilillä</li>
+      <li>Klikkaa <strong>+ Create notebook</strong> — nimeä se aiheesi mukaan (ei "Testi")</li>
+      <li>Klikkaa <strong>+ Add sources → Websites</strong> → liitä linkkilistasi (Harjoitus 1, kenttä yllä) kerralla → klikkaa Insert</li>
+      <li>Odota kun NotebookLM prosessoi lähteet (1–3 min) — näet ne listassa vasemmalla</li>
+      <li>Studio-paneeli oikealla: klikkaa <strong>Audio Overview → Generate</strong> → odota 2–4 min → kuuntele vähintään 5 minuuttia</li>
+      <li>Sama Studio-paneeli: klikkaa <strong>Video Overview → Generate</strong> — katso läpi</li>
+      <li>Sama Studio-paneeli: klikkaa <strong>Infographic → Generate</strong> — katso läpi</li>
+      <li>Kirjoita chat-kenttään (alhaalla): <em>"Mitkä ovat viisi tärkeintä asiaa näistä lähteistä? Tiivistä suomeksi."</em> — kopioi vastaus muistiin</li>
+    </ul>
+
+    <div class="vinkki" style="margin-top:16px;">
+      <span class="vi">🎧</span>
+      <p class="vt"><strong>Podcast on yllättävä</strong>Kaksi AI-ääntä juttelee kuin oikeassa podcastissa — aiheestasi, sinun lähteistäsi. Ensimmäisellä kerralla se tuntuu uskomattomalta. Se on kuitenkin 100% totta — ei keksittyä.</p>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div class="reflect-box">
+        <div class="rb-label">Mikä yllätti sinut Audio Overviewissä tai Infographicissa?</div>
+        <div class="rb-sub">Mitä opit? Mikä näytti hyvältä? Mikä oli erilaista kuin odotit?</div>
+        <textarea class="rb-ta emerald" rows="3" placeholder="Kirjoita tähän..."></textarea>
+      </div>
+      <div class="reflect-box">
+        <div class="rb-label">📋 NotebookLM:n yhteenveto — kopioi tähän (tarvitset Gammassa)</div>
+        <div class="rb-sub">Kopioi chatin vastaus "Mitkä ovat viisi tärkeintä asiaa" -kysymykseen tähän.</div>
+        <textarea class="rb-ta emerald" id="notebookSummary" rows="6" placeholder="Kopioi yhteenveto tähän..."></textarea>
+      </div>
+    </div>
+
+    <div class="checklist">
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Lisäsin linkkilistan NotebookLM:ään</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Kuuntelin Audio Overviewin (vähintään 5 min)</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Tein Video Overview JA Infographic</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Kopioin yhteenvedon yllä olevaan kenttään</div>
+    </div>
+    <div class="win"><div class="win-l">✓ Tulos</div><p>Podcast kuultu. Yhteenveto tallennettu. Seuraavassa harjoituksessa teet niistä Gamma-esityksen automaattisesti.</p></div>
+  </div>
+
+  <div class="section-divider"><div class="sd-line"></div><div class="sd-label">Harjoitus 3</div><div class="sd-line"></div></div>
+
+  <!-- ════════════════════════════════════════
+       HARJOITUS 3 — GAMMA
+  ════════════════════════════════════════ -->
+  <div class="slabel gamm">Harjoitus 3</div>
+
+  <div class="tool-card">
+    <div class="tool-strip gamm"></div>
+    <div class="tool-inner">
+      <div class="tool-top">
+        <div class="tool-em">🎨</div>
+        <div>
+          <div class="tool-name">Gamma</div>
+          <div class="tool-tag">"PowerPoint on vanha. Gamma on se mitä esitykset ovat nyt."</div>
+        </div>
+      </div>
+      <div class="tool-body">
+        <p>Kerrot Gammalle mistä aiheesta haluat esityksen — tai liität tekstiä — ja Gamma rakentaa täydellisen esityksen automaattisesti. Design, värit, kuvat, asettelu, animaatiot — kaikki valmiina. Et tarvitse Photoshopia, Canvaa tai PowerPointia.</p>
+        <div class="compare-row">
+          <div class="cmp bad"><div class="cmp-label">❌ PowerPoint</div><div class="cmp-text">Sinä teet kaiken: kirjoitat, asetat, valitset fontit, etsit kuvia. Kestää tunteja.</div></div>
+          <div class="cmp good"><div class="cmp-label">✅ Gamma</div><div class="cmp-text">Sinä kerrot aiheen. Gamma tekee design, kuvat ja asettelun. Valmis minuuteissa.</div></div>
+        </div>
+        <div class="value-grid" style="margin-top:12px;">
+          <div class="vg"><div class="vg-em">💼</div><div class="vg-title">Työnhakuun</div><div class="vg-text">Esittele itsesi työnantajalle ammattimaisella esityksellä — ei CV:llä.</div></div>
+          <div class="vg"><div class="vg-em">🚀</div><div class="vg-title">Oma projekti</div><div class="vg-text">Rakenna esitys sovelluksestasi tai ideastasi — jaa linkki kenelle vain.</div></div>
+          <div class="vg"><div class="vg-em">📊</div><div class="vg-title">Tutkimus</div><div class="vg-text">Muuta Perplexity-tutkimuksesi siistiksi esitykseksi sekunneissa.</div></div>
+          <div class="vg"><div class="vg-em">🎓</div><div class="vg-title">Koulu</div><div class="vg-text">Ryhmätyöt ja esitykset — joku jakaa linkin, kaikki voivat muokata.</div></div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <p style="font-size:13px;color:var(--mid);margin-bottom:10px;"><strong>Gamman 5 vaihetta:</strong></p>
+          <div class="g5">
+            <div class="g5-item"><div class="g5-n">01</div><div class="g5-em">✍️</div><div class="g5-t">Kirjoita aihe tai liitä teksti</div></div>
+            <div class="g5-item"><div class="g5-n">02</div><div class="g5-em">⚡</div><div class="g5-t">Klikkaa "Generate"</div></div>
+            <div class="g5-item"><div class="g5-n">03</div><div class="g5-em">👁</div><div class="g5-t">Katso esitys</div></div>
+            <div class="g5-item"><div class="g5-n">04</div><div class="g5-em">✏️</div><div class="g5-t">Muokkaa mitä haluat</div></div>
+            <div class="g5-item"><div class="g5-n">05</div><div class="g5-em">🔗</div><div class="g5-t">Jaa linkki</div></div>
+          </div>
+        </div>
+        <a href="https://gamma.app" target="_blank" class="tool-link purple">→ gamma.app</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="ex purple">
+    <div class="ex-head">
+      <div class="ex-num purple">3</div>
+      <div><div class="ex-title">Gamma — brainstormaa ensin, sitten generoi</div><div class="ex-time">⏱ ~15 min</div></div>
+    </div>
+
+
+    <div class="vinkki" style="margin-bottom:18px;">
+      <span class="vi">💡</span>
+      <p class="vt"><strong>Gamma credits ovat rajoitettuja — älä kokeile turhaan</strong>Brainstormaa aihe ensin täällä tai ChatGPT:ssä / Claudessa. Kun prompti on valmis ja hyvä, liitä se Gammaan kerran. Yksi hyvä prompt on parempi kuin kymmenen kokeilua.</p>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <a href="https://gamma.app" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:var(--purple);color:white;text-decoration:none;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:700;transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">🎨 Avaa Gamma kun prompti on valmis →</a>
+    </div>
+
+    <!-- BRAINSTORM SECTION -->
+    <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:22px;margin-bottom:18px;" id="gammaBrainstorm">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--purple);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:14px;">✍️ Brainstormaa aiheesi tässä</div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:700;color:var(--dark);display:block;margin-bottom:5px;">Mistä haluat esityksen?</label>
+        <div style="font-size:12px;color:var(--soft);margin-bottom:8px;">Valitse eri aihe kuin Perplexity-tutkimuksessa — tai kirjoita täysin oma idea. Parempi esitys syntyy aiheesta joka kiinnostaa sinua oikeasti.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px;" id="gammaTpGrid">
+          <div class="tp" style="min-width:0;" onclick="pickGammaTopic(this,'Miten AI muuttaa myyntityötä ja mitä taitoja myyjä tarvitsee 2026','AI and sales skills future 2026')"><div class="tp-em">💼</div><div class="tp-name" style="font-size:13px;">AI ja myynti 2026</div></div>
+          <div class="tp" style="min-width:0;" onclick="pickGammaTopic(this,'Esport ammattiurheiluna — mahdollisuudet, ansiot ja polut huipulle','esport as professional career opportunities 2026')"><div class="tp-em">🎮</div><div class="tp-name" style="font-size:13px;">Esport ammattina</div></div>
+          <div class="tp" style="min-width:0;" onclick="pickGammaTopic(this,'Tekoäly arjessa — miten tavallinen ihminen hyötyy AI-työkaluista 2026','AI tools everyday life benefits 2026')"><div class="tp-em">🤖</div><div class="tp-name" style="font-size:13px;">AI arjessa</div></div>
+          <div class="tp" style="min-width:0;" onclick="pickGammaTopic(this,'Sosiaaliset taidot ja verkostoituminen työnhaussa — miksi ne ratkaisevat','networking and social skills job hunting Finland 2026')"><div class="tp-em">🤝</div><div class="tp-name" style="font-size:13px;">Verkostoituminen</div></div>
+        </div>
+        <div style="border:1.5px dashed var(--border);border-radius:9px;padding:13px;">
+          <label style="font-size:11px;font-weight:600;color:var(--soft);display:block;margin-bottom:5px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">Tai kirjoita oma aihe</label>
+          <input type="text" id="gammaTopicOwn" placeholder="esim: Musiikki striimaus ja artistien ansaintamallit 2026..." style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'" />
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:700;color:var(--dark);display:block;margin-bottom:5px;">Kenelle esitys on?</label>
+        <input type="text" id="gammaAudience" placeholder="esim: 18–25-vuotiaat suomalaiset työnhakijat, tai: työnantajat jotka harkitsevat AI:n käyttöönottoa..." style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 13px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'" />
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:13px;font-weight:700;color:var(--dark);display:block;margin-bottom:5px;">Mikä on tärkein viesti jonka esityksesi pitää välittää?</label>
+        <textarea id="gammaMessage" rows="2" placeholder="esim: Myyjä joka osaa käyttää AI-työkaluja ansaitsee 30% enemmän ja pärjää paremmin kuin muut..." style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 13px;font-size:14px;font-family:'DM Sans',sans-serif;resize:none;outline:none;transition:border-color .2s;line-height:1.5;" onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:13px;font-weight:700;color:var(--dark);display:block;margin-bottom:8px;">Millainen visuaalinen tyyli?</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="gammaStylePicker">
+          <button class="gamma-style-btn on" onclick="pickStyle(this,'dark and energetic, bold neon accents')">🌑 Tumma + räväkkä</button>
+          <button class="gamma-style-btn" onclick="pickStyle(this,'clean and professional, minimal white space')">⬜ Vaalea + ammattimainen</button>
+          <button class="gamma-style-btn" onclick="pickStyle(this,'colorful and playful, vibrant gradients')">🌈 Värikäs + hauska</button>
+          <button class="gamma-style-btn" onclick="pickStyle(this,'minimalist black and white, editorial style')">◼ Minimalistinen</button>
+        </div>
+      </div>
+
+      <button onclick="generateGammaPrompt()" id="genGammaBtn" style="background:var(--purple);color:white;border:none;padding:12px 22px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;width:100%;">🎨 Generoi Gamma-prompti →</button>
+    </div>
+
+    <!-- GENERATED PROMPT -->
+    <div id="gammaPromptResult" style="display:none;">
+      <div style="background:#1e293b;border-radius:11px;padding:20px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:#a78bfa;text-transform:uppercase;letter-spacing:.12em;">✨ Sinun Gamma-promptisi</div>
+          <button onclick="copyGammaPrompt()" id="copyGammaBtn" style="background:var(--purple);color:white;border:none;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Kopioi →</button>
+        </div>
+        <div id="gammaTypingDots" style="display:flex;gap:4px;align-items:center;padding:4px 0;">
+          <div class="td" style="background:#a78bfa;"></div><div class="td" style="background:#a78bfa;animation-delay:.18s;"></div><div class="td" style="background:#a78bfa;animation-delay:.36s;"></div>
+          <span style="font-size:12px;color:#64748b;margin-left:6px;">Generoidaan promptia...</span>
+        </div>
+        <pre id="gammaPromptText" style="font-family:'DM Mono',monospace;font-size:12px;color:#e2e8f0;line-height:1.7;white-space:pre-wrap;display:none;"></pre>
+      </div>
+    </div>
+
+    <div class="vinkki">
+      <span class="vi">💡</span>
+      <p class="vt"><strong>Voit myös brainstormata ChatGPT:ssä tai Claudessa</strong>Avaa chat.openai.com tai claude.ai → kerro aiheesi → pyydä lopuksi: <em>"Tee minulle valmis Gamma-prompt tästä aiheesta. Gamma on AI-esitystyökalu. Promptin pitää sisältää: aihe, osiot, tyyli, yleisö ja pituus."</em> Kopioi tulos Gammaan.</p>
+    </div>
+
+    <ul class="ex-steps purple">
+      <li>Täytä yllä olevat kentät ja klikkaa <strong>Generoi Gamma-prompti</strong></li>
+      <li>Kopioi generoitu prompt</li>
+      <li>Avaa <a href="https://gamma.app" target="_blank">gamma.app</a> → <strong>Create New → Presentation → Generate with AI</strong></li>
+      <li>Liitä prompt → valitse tyyli <strong>Dark</strong> tai <strong>Bold</strong> → klikkaa <strong>Continue → Generate</strong></li>
+      <li>Selaile dioja — klikkaa tekstiä muokataksesi, klikkaa kuvaa vaihtaaksesi</li>
+      <li>Klikkaa <strong>Share → Anyone with link → kopioi URL</strong> → talleta alle</li>
+    </ul>
+
+    <div style="margin-top:16px;">
+      <div class="reflect-box">
+        <div class="rb-label">🔗 Gamma-esityksen URL — talleta tähän</div>
+        <div class="rb-sub">Tarvitset tätä Moduulissa 3 kun rakennat portfolio-sivusi.</div>
+        <input type="url" id="gammaUrl" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 13px;font-size:14px;font-family:'DM Mono',monospace;outline:none;transition:border-color .2s;" placeholder="https://gamma.app/docs/..." onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'" />
+      </div>
+    </div>
+
+    <div class="checklist">
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Täytin brainstorm-kentät ja generoin promptin</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Liitän promptin Gammaan ja generoin esityksen</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Muokkasin vähintään 3 diaa</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Tallensin Gamma-linkin yllä olevaan kenttään</div>
+    </div>
+    <div class="win"><div class="win-l">✓ Tulos</div><p>Ammattimainen esitys valmiina. Seuraavaksi visualisoit sen Napkin.ai:lla.</p></div>
+  </div>
+
+  <div class="section-divider"><div class="sd-line"></div><div class="sd-label">Harjoitus 4</div><div class="sd-line"></div></div>
+
+  <!-- ════════════════════════════════════════
+       HARJOITUS 4 — NAPKIN.AI
+  ════════════════════════════════════════ -->
+  <div class="slabel napk">Harjoitus 4</div>
+
+  <div class="tool-card">
+    <div class="tool-strip napk"></div>
+    <div class="tool-inner">
+      <div class="tool-top">
+        <div class="tool-em">🗺</div>
+        <div>
+          <div class="tool-name">Napkin.ai</div>
+          <div class="tool-tag">"Liitä teksti — saat visuaalisen kuvion sekunneissa"</div>
+        </div>
+      </div>
+      <div class="tool-body">
+        <p>Napkin lukee liittämäsi tekstin ja ehdottaa automaattisesti erilaisia visuaalisia kuvioita. Et piirrä mitään itse — valitset minkä kuviotyypin haluat ja Napkin tekee sen.</p>
+        <div class="compare-row">
+          <div class="cmp bad"><div class="cmp-label">❌ Itse piirtäen</div><div class="cmp-text">Teet kuvion PowerPointissa, Canvassa tai paperilla. Kestää tunnin.</div></div>
+          <div class="cmp good"><div class="cmp-label">✅ Napkin</div><div class="cmp-text">Liität tekstin → valitset tyypin → lataat PNG. Kestää 2 minuuttia.</div></div>
+        </div>
+        <div class="napkin-types">
+          <div class="nt"><div class="nt-em">🧠</div><div class="nt-name">Mindmap</div><div class="nt-use">Kun aiheella on monta haaraa tai osa-aluetta</div><div class="nt-ex">Esim: "AI-työkalut: ChatGPT, Perplexity, Gamma..."</div></div>
+          <div class="nt"><div class="nt-em">⚖️</div><div class="nt-name">Comparison</div><div class="nt-use">Kun vertailet kahta asiaa tai vaihtoehtoa</div><div class="nt-ex">Esim: "Google vs Perplexity: nopeus, tarkkuus, lähteet"</div></div>
+          <div class="nt"><div class="nt-em">➡️</div><div class="nt-name">Flowchart</div><div class="nt-use">Kun on vaiheita, prosessi tai järjestys</div><div class="nt-ex">Esim: "1. Hae → 2. Analysoi → 3. Esitä → 4. Jaa"</div></div>
+          <div class="nt"><div class="nt-em">📅</div><div class="nt-name">Timeline</div><div class="nt-use">Kun on aikajärjestys tai kehityspolku</div><div class="nt-ex">Esim: "AI:n kehitys 2020–2026 tärkeimmät hetket"</div></div>
+        </div>
+        <div class="value-grid" style="margin-top:10px;">
+          <div class="vg"><div class="vg-em">📊</div><div class="vg-title">Esityksiin</div><div class="vg-text">Lisää Napkin-kuvio Gamma-esityksesi diaksi — näyttää ammattimaiselta.</div></div>
+          <div class="vg"><div class="vg-em">💼</div><div class="vg-title">CV:hen tai portfolioon</div><div class="vg-text">Visualisoi osaaminen tai ura-aikajana — erottuu muista hakijoista.</div></div>
+        </div>
+        <a href="https://napkin.ai" target="_blank" class="tool-link pink">→ napkin.ai</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="ex pink">
+    <div class="ex-head">
+      <div class="ex-num pink">4</div>
+      <div><div class="ex-title">Napkin — kuvio → Gamma-esitykseen</div><div class="ex-time">⏱ ~15 min</div></div>
+    </div>
+
+    <p style="font-size:14px;color:var(--mid);margin-bottom:12px;">Otat NotebookLM:n yhteenvedon (tai jonkin kappaleen Perplexity-tutkimuksesta), liität Napkiniin ja saat kuvion. Sitten lisäät sen Gamma-esitykseesi.</p>
+
+    <div class="query-block">
+      <div class="qb-meta"><span style="font-family:'DM Mono',monospace;font-size:10px;color:#f472b6;">NAPKIN ESIMERKKI — flowchart</span></div>
+      <pre class="qb-text">Jos aihe on myynti ja työnhaku:
+"Myyntityön muutos 2026: 1) Liidien hankinta automatisoituu AI:lla
+2) Asiakasviestintä personoituu koneoppimisella 3) Myyjän rooli
+siirtyy neuvontaan ja suhteiden rakentamiseen 4) Tarvittavat taidot:
+data-lukutaito, AI-työkalujen hallinta, empatia"
+
+→ Napkin tekee tästä prosessikaavion automaattisesti.</pre>
+    </div>
+
+    <ul class="ex-steps pink">
+      <li>Avaa <a href="https://napkin.ai" target="_blank">napkin.ai</a> — luo ilmainen tili sähköpostilla tai Google-kirjautumisella</li>
+      <li>Kopioi NotebookLM:n yhteenveto tai yksi kappale Perplexity-tutkimuksesta</li>
+      <li>Liitä teksti Napkinin tekstikenttään</li>
+      <li>Klikkaa <strong>Visualize</strong> tai iskuanimaatio-kuvake — Napkin ehdottaa muutamaa kuviotyyppiä</li>
+      <li>Selaa vaihtoehdot — klikkaa paras → voit hienosäätää värejä tai elementtejä</li>
+      <li>Klikkaa <strong>Download → PNG</strong> — tallentuu tietokoneelle</li>
+      <li>Avaa Gamma-esityksesi → klikkaa <strong>+</strong> diojen välissä → <strong>Add card → Image</strong> → lataa PNG</li>
+      <li>Lisää dia-teksti: "Visualisoitu Napkin.ai:lla NotebookLM-tutkimuksestani"</li>
+    </ul>
+
+    <div class="vinkki">
+      <span class="vi">🔁</span>
+      <p class="vt"><strong>Kokeile eri tekstejä</strong>Jos ensimmäinen kuvio ei vakuuta, kokeile eri tekstikappaletta tai eri kuviotyyppiä. Napkin antaa yleensä 3–5 vaihtoehtoa samasta tekstistä — selaa kaikki ennen valintaa.</p>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div class="reflect-box">
+        <div class="rb-label">Minkä kuviotyypin valitsit ja miksi?</div>
+        <div class="rb-sub">Flowchart? Mindmap? Comparison? Miksi se sopi parhaiten sisältösi aiheeseen?</div>
+        <textarea class="rb-ta pink" rows="3" placeholder="Kirjoita tähän..."></textarea>
+      </div>
+    </div>
+
+    <div class="chain">
+      <p><strong>Katso mitä olet tehnyt tänään:</strong><br>Tutkimuksesi <strong>Perplexityllä</strong> → analysoit lähteistä <strong>NotebookLM:llä</strong> (podcast + infograafi) → teit esityksen <strong>Gammalla</strong> → visualisoit kuvion <strong>Napkinilla</strong> → lisäsit sen esitykseen.<br>Tämä on se työnkulku miten ammattilaiset toimivat — ja sinä teit sen yhdessä tunnissa.</p>
+    </div>
+
+    <div class="checklist">
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Kirjauduin Napkiniin ja liitän tekstin</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Valitsin kuviotyypin ja latasin PNG</div>
+      <div class="ci"><div class="cb" onclick="chk(this)"></div>Lisäsin kuvion Gamma-esitykseeni uutena diana</div>
+    </div>
+    <div class="win"><div class="win-l">✓ Tulos</div><p>Gamma-esitys + Napkin-kuvio. Talleta Gamma-linkki — lisäät sen Moduulissa 3 portfolio-sivullesi.</p></div>
+  </div>
+
+  <div class="final">
+    <h2>Moduuli 2 valmis 🎉</h2>
+    <p>Sinulla on nyt: tutkimus, AI-podcast, Gamma-esitys ja Napkin-kuvio. Seuraavaksi luot kuvia, teet videon ja kokoat kaiken yhteen portfolioksi.</p>
+    <a href="santeri-m3-video.html" class="final-btn">Moduuli 3 → Kuvat ja video</a>
+  </div>
+
+</div>
+
+<script>
+let topicFi = '[aiheesi]';
+let topicEn = '[your topic in English]';
+
+function setTopic(el, fi, en) {
+  document.querySelectorAll('.tp').forEach(t => t.classList.remove('sel'));
+  el.classList.add('sel');
+  topicFi = fi; topicEn = en;
+  applyTopic();
+}
+
+function setOwnTopic() {
+  const fi = document.getElementById('ownTopicFi').value.trim();
+  const en = document.getElementById('ownTopicEn').value.trim();
+  if (!fi) { alert('Kirjoita aihe suomeksi.'); return; }
+  document.querySelectorAll('.tp').forEach(t => t.classList.remove('sel'));
+  topicFi = fi; topicEn = en || fi;
+  applyTopic();
+}
+
+function applyTopic() {
+  document.getElementById('topicLabel').textContent = topicFi;
+  document.getElementById('topicDisplay').classList.add('show');
+  // Update query placeholders
+  const queries = ['q1text','q2text','q3text','q4text','q5text','q6text','gammaPrompt'];
+  queries.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = el.innerHTML
+      .replace(/\[aiheesi\]/g, topicFi)
+      .replace(/\[your topic in English\]/g, topicEn)
+      .replace(/\[your topic in English\]/g, topicEn);
+  });
+}
+
+function copyQuery(id, btn) {
+  const el = document.getElementById(id);
+  const text = el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Kopioitu!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'Kopioi haku →'; btn.classList.remove('ok'); }, 2200);
+  });
+}
+
+function chk(el) {
+  el.classList.toggle('done');
+  el.textContent = el.classList.contains('done') ? '✓' : '';
+}
+
+// ══ URL DISPLAY (sync from Perplexity field) ══
+function syncUrlDisplay() {
+  const src = document.getElementById('urlListInput');
+  const box = document.getElementById('urlDisplayBox');
+  if (!src || !box) return;
+  const val = src.value.trim();
+  box.textContent = val || '';
+  if (!val) box.innerHTML = '<span style="color:#94a3b8;font-style:italic;">Linkit ilmestyvät tähän kun olet täyttänyt Harjoituksen 1 linkkilista-kentän yllä.</span>';
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const src = document.getElementById('urlListInput');
+  if (src) src.addEventListener('input', syncUrlDisplay);
+});
+
+function copyUrlDisplay(el) {
+  const text = el.textContent.trim();
+  if (!text || text.includes('ilmestyvät tähän')) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyUrlBtn');
+    const ok = document.getElementById('copyUrlOk');
+    if (btn) btn.textContent = '✓ Kopioitu!';
+    if (ok) ok.style.display = 'inline';
+    setTimeout(() => {
+      if (btn) btn.textContent = 'Kopioi kaikki URL:t →';
+      if (ok) ok.style.display = 'none';
+    }, 2500);
+  });
+}
+
+// ══ GAMMA BRAINSTORM ══
+const CLAUDE_KEY_M2 = 'sk-ant-REPLACE_WITH_YOUR_KEY';
+let selectedGammaTopic = '';
+let selectedGammaTopicEn = '';
+let selectedGammaStyle = 'dark and energetic, bold neon accents';
+
+function pickGammaTopic(el, fi, en) {
+  document.querySelectorAll('#gammaTpGrid .tp').forEach(t => t.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedGammaTopic = fi;
+  selectedGammaTopicEn = en;
+}
+
+function pickStyle(btn, style) {
+  document.querySelectorAll('.gamma-style-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  selectedGammaStyle = style;
+}
+
+async function generateGammaPrompt() {
+  const ownTopic = document.getElementById('gammaTopicOwn').value.trim();
+  const audience = document.getElementById('gammaAudience').value.trim();
+  const message = document.getElementById('gammaMessage').value.trim();
+  const topic = ownTopic || selectedGammaTopic;
+  if (!topic) { alert('Valitse aihe tai kirjoita oma.'); return; }
+
+  const btn = document.getElementById('genGammaBtn');
+  btn.disabled = true; btn.textContent = '⏳ Generoidaan...';
+  document.getElementById('gammaPromptResult').style.display = 'block';
+  document.getElementById('gammaTypingDots').style.display = 'flex';
+  document.getElementById('gammaPromptText').style.display = 'none';
+
+  const prompt = `Olet Gamma-esitysasiantuntija. Generoi täydellinen Gamma-prompt suomeksi.
+
+Aihe: ${topic}
+Kohderyhmä: ${audience || '18-25-vuotiaat suomalaiset'}
+Tärkein viesti: ${message || 'Aiheen merkitys ja käytännön sovellukset 2026'}
+Visuaalinen tyyli: ${selectedGammaStyle}
+
+Generoi erittäin yksityiskohtainen Gamma-prompt ENGLANNIKSI joka sisältää:
+- Selkeän aiheen ja tarkoituksen
+- 5-7 diasektiota otsikoilla
+- Tyylin kuvauksen (värit, typografia, tunnelma)
+- Kohderyhmän
+- Erityisohjeet animaatioista ja visuaaleista
+- Kieliohje: "Language: Finnish"
+
+Kirjoita VAIN prompti — ei selittelyjä, ei johdantoa. Aloita suoraan "Create a presentation..."-lauseella.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CLAUDE_KEY_M2,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'API error');
+    const text = data.content[0].text.trim();
+    document.getElementById('gammaTypingDots').style.display = 'none';
+    document.getElementById('gammaPromptText').textContent = text;
+    document.getElementById('gammaPromptText').style.display = 'block';
+  } catch (e) {
+    document.getElementById('gammaTypingDots').style.display = 'none';
+    document.getElementById('gammaPromptText').textContent = '⚠️ ' + e.message + ' — tarkista API-avain.';
+    document.getElementById('gammaPromptText').style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = '🎨 Generoi uudelleen →';
+}
+
+function copyGammaPrompt() {
+  const text = document.getElementById('gammaPromptText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const b = document.getElementById('copyGammaBtn');
+    b.textContent = '✓ Kopioitu!';
+    setTimeout(() => b.textContent = 'Kopioi →', 2200);
+  });
+}
+</script>
+</body>
+</html>
