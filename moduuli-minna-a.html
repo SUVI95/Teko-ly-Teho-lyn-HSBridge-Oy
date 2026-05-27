@@ -876,7 +876,7 @@ Pidä lyhyenä — Napkin toimii parhaiten tiiviillä tekstillä.</textarea>
     <p style="font-size:15px;color:var(--white);line-height:1.75">"Olen kehittänyt AI-osaamistani käytännössä — osaan käyttää Perplexityä markkinatutkimukseen, NotebookLM:ää tiedon analysointiin ja oppimiseen, Claudea kirjoittamiseen ja analyysiin, ja rakensin oman portfoliosivun ilman koodaustaitoja."</p>
   </div>
 
-  <a href="moduuli-b.html" class="next-mod">Jatka Moduuliin B — rakenna ja todista →</a>
+  <a href="/module/moduuli-minna-b" class="next-mod">Jatka Moduuliin B — rakenna ja todista →</a>
 </div>
 </div>
 
@@ -885,6 +885,23 @@ Pidä lyhyenä — Napkin toimii parhaiten tiiviillä tekstillä.</textarea>
 <script>
 const TOTAL=6;
 let done=JSON.parse(localStorage.getItem('ma_done')||'[]');
+
+async function callModuleAI(system, user, maxTokens){
+  const r = await fetch('/api/ai/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      system: system || undefined,
+      max_tokens: maxTokens || 1000,
+      messages: [{ role: 'user', content: user }]
+    })
+  });
+  let d = {};
+  try { d = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error((d && d.error) || 'AI-palvelu ei ole juuri nyt saatavilla.');
+  return (d && (d.text || d.reply)) || '';
+}
 
 // LOCALSTORAGE SAVE
 function ls(id){const el=document.getElementById(id);if(el)localStorage.setItem('ma_'+id,el.value);}
@@ -982,15 +999,11 @@ async function handleCVUpload(event){
     const text=e.target.result;
     status.textContent='🤖 AI poimii tiedot CV:stäsi...';
     try{
-      const res=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          model:'claude-sonnet-4-20250514',max_tokens:800,
-          messages:[{role:'user',content:`Poimii tästä CV-tekstistä seuraavat tiedot selkeästi:\n1. Nimi\n2. Viimeisin rooli\n3. Kokemusvuodet ja tärkeimmät roolit (2-3 lausetta)\n4. Isoin saavutus tai vahvuus\n\nCV:\n${text.slice(0,3000)}`}]
-        })
-      });
-      const data=await res.json();
-      const extracted=data.content?.[0]?.text||'';
+      const extracted = await callModuleAI(
+        '',
+        `Poimii tästä CV-tekstistä seuraavat tiedot selkeästi:\n1. Nimi\n2. Viimeisin rooli\n3. Kokemusvuodet ja tärkeimmät roolit (2-3 lausetta)\n4. Isoin saavutus tai vahvuus\n\nCV:\n${text.slice(0,3000)}`,
+        800
+      );
       if(extracted){
         const lines=extracted.split('\n').filter(l=>l.trim());
         lines.forEach(line=>{
@@ -1108,12 +1121,7 @@ TECHNICAL REQUIREMENTS:
 Write the complete Lovable prompt now, starting with: "Build me a professional portfolio website for ${name}." Be specific, detailed, and use their actual data throughout — not placeholders.`;
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:systemMsg,messages:[{role:'user',content:userMsg}]})
-    });
-    const data=await res.json();
-    const prompt=data.content?.[0]?.text||'Virhe. Yritä uudelleen.';
+    const prompt = await callModuleAI(systemMsg, userMsg, 2000);
     document.getElementById('lovable-out').value=prompt;
     document.getElementById('cvb-result').style.display='block';
     document.getElementById('cvb-result').scrollIntoView({behavior:'smooth',block:'nearest'});

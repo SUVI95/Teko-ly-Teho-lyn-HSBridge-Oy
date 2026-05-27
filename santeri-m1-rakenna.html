@@ -513,15 +513,34 @@ a{color:var(--teal);}
   <div class="final">
     <h2>Moduuli 1 valmis 🎉</h2>
     <p>Kaksi sovellusta. Kaksi julkaistua URL:ää. Seuraavassa moduulissa opit tutkimaan, esittämään ja visualisoimaan.</p>
-    <a href="santeri-m2-tutki.html" class="final-btn">Moduuli 2 → Tutki ja luo</a>
+    <a href="/module/santeri-m2-tutki" class="final-btn">Moduuli 2 → Tutki ja luo</a>
   </div>
 
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════
-// SUVI: LISÄÄ API-AVAIN TÄHÄN
-const CLAUDE_KEY = 'sk-ant-REPLACE_WITH_YOUR_KEY';
+// AI request goes through backend (/api/ai/claude -> fallback /api/ai/chat)
+async function callModuleAI(system, messages, maxTokens) {
+  const safeMessages = Array.isArray(messages) ? messages.slice() : [{ role: 'user', content: String(messages || '') }];
+  if (safeMessages.length === 0) {
+    safeMessages.push({ role: 'user', content: 'Aloita haastattelu ensimmäisellä kysymyksellä.' });
+  }
+  const r = await fetch('/api/ai/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      system: system || undefined,
+      max_tokens: maxTokens || 1200,
+      messages: safeMessages
+    })
+  });
+  let d = {};
+  try { d = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error((d && d.error) || 'AI-palvelu ei ole juuri nyt saatavilla.');
+  return (d && (d.text || d.reply)) || '';
+}
 
 // SUVI / CURSOR: URL SUBMISSION ENDPOINT
 // Tämä funktio lähettää opiskelijoiden URL:t tietokantaan.
@@ -698,24 +717,7 @@ async function runInterview(userMsg = null) {
     .replace(/{APPNAME}/g, selectedName);
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: system,
-        messages: intHistory
-      })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || 'API error');
-    const text = data.content[0].text;
+    const text = await callModuleAI(system, intHistory, 2000);
     intHistory.push({ role: 'assistant', content: text });
     removeIntTyping();
     if (text.includes('```BASE44-PROMPT')) {

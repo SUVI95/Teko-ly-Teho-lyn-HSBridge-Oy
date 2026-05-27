@@ -1051,6 +1051,26 @@ Rakenne: lyhyt tiivistelmä → uudet asiakkaat → menetetyt asiakkaat → iso 
 const TOTAL=7;
 let doneArr=JSON.parse(localStorage.getItem('mb_done')||'[]');
 
+async function callModuleAI(system, userOrMessages, maxTokens){
+  const messages = Array.isArray(userOrMessages)
+    ? userOrMessages
+    : [{ role: 'user', content: String(userOrMessages || '') }];
+  const r = await fetch('/api/ai/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      system: system || undefined,
+      max_tokens: maxTokens || 1000,
+      messages: messages
+    })
+  });
+  let d = {};
+  try { d = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error((d && d.error) || 'AI-palvelu ei ole juuri nyt saatavilla.');
+  return (d && (d.text || d.reply)) || '';
+}
+
 function ls(id){
   const el=document.getElementById(id);
   if(el)localStorage.setItem('mb_'+id,el.value);
@@ -1123,12 +1143,9 @@ async function generateGamma(){
   const btn=document.getElementById('genBtn');
   btn.disabled=true;btn.textContent='⏳ Generoidaan...';
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',max_tokens:900,
-        system:'Kirjoitat Gamma.app-prompteja suomeksi. Gamma luo esityksiä tekstistä. Kirjoita tarkka, rakenteellinen prompti joka tuottaa 10 ammatillista diaa.',
-        messages:[{role:'user',content:`Kirjoita Gamma-prompti tästä henkilöstä:
+    const out = await callModuleAI(
+      'Kirjoitat Gamma.app-prompteja suomeksi. Gamma luo esityksiä tekstistä. Kirjoita tarkka, rakenteellinen prompti joka tuottaa 10 ammatillista diaa.',
+      `Kirjoita Gamma-prompti tästä henkilöstä:
 
 Nimi ja rooli: ${name}
 Kokemus: ${exp}
@@ -1136,11 +1153,9 @@ Saavutus: ${win}
 AI-taidot: ${ai}
 Etsii: ${seek}
 
-Kirjoita Gamma-prompti joka alkaa "Luo 10 dian ammatillinen esitys:" ja kertoo tarkasti mitä jokainen dia sisältää. Sisällytä konkreettiset tiedot yllä olevasta henkilöstä. Promptin pituus: 200-300 sanaa. Vain suomeksi.`}]
-      })
-    });
-    const data=await res.json();
-    const out=data.content?.[0]?.text||'Virhe — yritä uudelleen';
+Kirjoita Gamma-prompti joka alkaa "Luo 10 dian ammatillinen esitys:" ja kertoo tarkasti mitä jokainen dia sisältää. Sisällytä konkreettiset tiedot yllä olevasta henkilöstä. Promptin pituus: 200-300 sanaa. Vain suomeksi.`,
+      900
+    );
     document.getElementById('gbOut').value=out;
     document.getElementById('gbResult').style.display='block';
     document.getElementById('gbResult').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -1195,8 +1210,7 @@ async function simSend(){
   const load=addBbl('Kirjoittaa...','load');
   simHist.push({role:'user',content:msg});
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,system:SIMS[curSim].sys,messages:simHist})});
-    const data=await res.json();const reply=data.content?.[0]?.text||'Virhe.';
+    const reply = await callModuleAI(SIMS[curSim].sys, simHist, 500);
     load.remove();
     if(reply.includes('[PALAUTE:')){
       const parts=reply.split('[PALAUTE:');

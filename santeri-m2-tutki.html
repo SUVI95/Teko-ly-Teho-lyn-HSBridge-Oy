@@ -819,7 +819,7 @@ data-lukutaito, AI-työkalujen hallinta, empatia"
   <div class="final">
     <h2>Moduuli 2 valmis 🎉</h2>
     <p>Sinulla on nyt: tutkimus, AI-podcast, Gamma-esitys ja Napkin-kuvio. Seuraavaksi luot kuvia, teet videon ja kokoat kaiken yhteen portfolioksi.</p>
-    <a href="santeri-m3-video.html" class="final-btn">Moduuli 3 → Kuvat ja video</a>
+    <a href="/module/santeri-m3-video" class="final-btn">Moduuli 3 → Kuvat ja video</a>
   </div>
 
 </div>
@@ -904,7 +904,22 @@ function copyUrlDisplay(el) {
 }
 
 // ══ GAMMA BRAINSTORM ══
-const CLAUDE_KEY_M2 = 'sk-ant-REPLACE_WITH_YOUR_KEY';
+async function callModuleAI(system, user, maxTokens) {
+  const r = await fetch('/api/ai/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      system: system || undefined,
+      max_tokens: maxTokens || 1000,
+      messages: [{ role: 'user', content: String(user || '') }]
+    })
+  });
+  let d = {};
+  try { d = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error((d && d.error) || 'AI-palvelu ei ole juuri nyt saatavilla.');
+  return (d && (d.text || d.reply)) || '';
+}
 let selectedGammaTopic = '';
 let selectedGammaTopicEn = '';
 let selectedGammaStyle = 'dark and energetic, bold neon accents';
@@ -953,29 +968,13 @@ Generoi erittäin yksityiskohtainen Gamma-prompt ENGLANNIKSI joka sisältää:
 Kirjoita VAIN prompti — ei selittelyjä, ei johdantoa. Aloita suoraan "Create a presentation..."-lauseella.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_KEY_M2,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || 'API error');
-    const text = data.content[0].text.trim();
+    const text = (await callModuleAI('', prompt, 1000)).trim();
     document.getElementById('gammaTypingDots').style.display = 'none';
     document.getElementById('gammaPromptText').textContent = text;
     document.getElementById('gammaPromptText').style.display = 'block';
   } catch (e) {
     document.getElementById('gammaTypingDots').style.display = 'none';
-    document.getElementById('gammaPromptText').textContent = '⚠️ ' + e.message + ' — tarkista API-avain.';
+    document.getElementById('gammaPromptText').textContent = '⚠️ ' + e.message + ' — yritä hetken kuluttua uudelleen.';
     document.getElementById('gammaPromptText').style.display = 'block';
   }
   btn.disabled = false; btn.textContent = '🎨 Generoi uudelleen →';
