@@ -1069,7 +1069,7 @@ Rakenne: lyhyt tiivistelmä → uudet asiakkaat → menetetyt asiakkaat → iso 
     <div>
       <div class="tool-tag" style="color:var(--sim)">🎭 Harjoittelusimulaattori</div>
       <div class="ex-title">Harjoittele oikea työtilanne — tee virheitä turvallisesti</div>
-      <div class="ex-time">⏱ ~15 min · AI on vastapuoli, sinä olet sinä</div>
+      <div class="ex-time">⏱ ~15 min · Max 5 viestiä per tilanne · AI on vastapuoli</div>
     </div>
   </div>
 
@@ -1078,7 +1078,7 @@ Rakenne: lyhyt tiivistelmä → uudet asiakkaat → menetetyt asiakkaat → iso 
     <div class="tbox">
       <h3>Ainoa tapa oppia vaikeat tilanteet on harjoitella niitä</h3>
       <p>Paras tapa valmistautua vaativiin asiakastilanteisiin, esimiesviestintään tai neuvotteluihin on harjoitella ne ensin turvallisessa ympäristössä. Täällä voit epäonnistua — AI kertoo miksi ja miten parantaa.</p>
-      <p>AI pelaa vastapuolen roolia ja antaa palautteen jokaisen viestin jälkeen. Kokeile eri lähestymistapoja — sama tilanne eri tavalla sanottuna johtaa eri lopputulokseen.</p>
+      <p>AI pelaa vastapuolen roolia ja antaa palautteen jokaisen viestin jälkeen. <strong style="color:#fff">Kirjoita enintään 5 vastausta</strong> — sen jälkeen simulaatio päättyy automaattisesti. Kokeile eri lähestymistapoja toisessa tilanteessa.</p>
     </div>
   </div>
 
@@ -1094,10 +1094,11 @@ Rakenne: lyhyt tiivistelmä → uudet asiakkaat → menetetyt asiakkaat → iso 
         <div class="ch-av" style="background:var(--sim-pale);border:1px solid var(--sim-mid)" id="simAv">🤝</div>
         <div><div class="ch-name" id="simNm">Vaativa asiakas</div><div class="ch-role" id="simRl">Harjoittelutilanne · Myynti</div></div>
         <span class="online" style="color:var(--success)">● Live</span>
+        <span id="simTurnLbl" style="font-size:11px;color:var(--muted);margin-left:auto">Viesti 0/5</span>
       </div>
       <div class="msgs" id="simMsgs"><div class="bbl bot">Hei — soitin teille eilen mutta kukaan ei vastannut. Olin odottanut teiltä nopeampaa palvelua. Mitä tapahtui?</div></div>
       <div class="ch-row">
-        <textarea class="ci" id="simIn" placeholder="Kirjoita vastauksesi..." rows="2" onkeydown="simKey(event)"></textarea>
+        <textarea class="ci" id="simIn" placeholder="Kirjoita vastauksesi (max 5 viestiä)..." rows="2" onkeydown="simKey(event)"></textarea>
         <button class="cs" id="simSnd" style="background:var(--sim)" onclick="simSend()">→</button>
       </div>
     </div>
@@ -1483,30 +1484,51 @@ function closeBannerModal(){
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBannerModal();});
 
 // SIMULATOR
+const SIM_LANG=`KRIITTINEN KIELISÄÄNTÖ: Vastaa AINA suomeksi. Älä koskaan kirjoita englanniksi — vaikka opiskelija kirjoittaisi englanniksi. Kaikki dialogi ja [PALAUTE] ovat suomeksi.\n\n`;
+const MAX_SIM_TURNS=5;
 const SIMS={
   client:{av:'🤝',nm:'Vaativa asiakas',rl:'Harjoittelutilanne · Myynti',
-    sys:`Pelaat vaativan asiakkaan roolia. Olet soittanut myyjälle eilen mutta kukaan ei vastannut.
-Aloitus: "Hei — soitin teille eilen mutta kukaan ei vastannut. Olin odottanut teiltä nopeampaa palvelua. Mitä tapahtui?"
-Reagoi realistisesti. Empaattinen ratkaisu rauhoittaa. Puolustautuva vastaus ärsyttää.
-Jokaisen vastauksen lopussa: [PALAUTE: yksi lause mikä toimi tai mitä voisi parantaa] suomeksi.`,
+    sys:`${SIM_LANG}Pelaat vaativan asiakkaan roolia. Olet soittanut myyjälle eilen mutta kukaan ei vastannut.
+Reagoi realistisesti suomeksi (max 2-4 lausetta per viesti). Empaattinen ratkaisu rauhoittaa. Puolustautuva vastaus ärsyttää.
+Harjoitus päättyy 5 opiskelijan viestin jälkeen — älä jatka loputtomasti.
+Jokaisen vastauksen lopussa: [PALAUTE: yksi lause mikä toimi tai mitä voisi parantaa]`,
     open:'Hei — soitin teille eilen mutta kukaan ei vastannut. Olin odottanut teiltä nopeampaa palvelua. Mitä tapahtui?'
   },
   colleague:{av:'💼',nm:'Kollega Tiina',rl:'Harjoittelutilanne · Taloushallinto',
-    sys:`Olet kollega taloushallinnossa. Teet virheellistä budjettiraportointia ja tarvitset apua ennen esimiespalaveroi.
-Aloitus: "Hei, onko sinulla hetki? Huomasin juuri että kuukausiraporttini luvut eivät täsmää ja palaveri on kahden tunnin päästä. En tiedä mistä virhe tulee."
-Reagoi kollegan avun mukaan. Pyydä tarkennuksia. Anna palaute lopuksi.
-Jokaisen vastauksen lopussa: [PALAUTE: yksi lause] suomeksi.`,
+    sys:`${SIM_LANG}Olet kollega taloushallinnossa. Teet virheellistä budjettiraportointia ja tarvitset apua ennen esimiespalaveria.
+Reagoi suomeksi (max 2-4 lausetta). Pyydä tarkennuksia tarvittaessa.
+Harjoitus päättyy 5 opiskelijan viestin jälkeen.
+Jokaisen vastauksen lopussa: [PALAUTE: yksi lause]`,
     open:'Hei, onko sinulla hetki? Huomasin juuri että kuukausiraporttini luvut eivät täsmää ja palaveri on kahden tunnin päästä. En tiedä mistä virhe tulee.'
   },
   manager:{av:'📊',nm:'Esimies',rl:'Harjoittelutilanne · Raportointi',
-    sys:`Olet esimies. Tarvitset pikahtiivistelmän viime kvartaalin myynnistä ennen johtoryhmäpalaveria.
-Aloitus: "Moi — onko sinulla 2 minuuttia? Tarvitsisin lyhyen suullisen yhteenvedon Q3:n myynnistä. Mitä pitää nostaa esiin hallitukselle?"
-Reagoi vastauksen selkeyden mukaan. Hyvä rakenne hyväksytään. Sekava vastaus → pyydä tarkennusta.
-Jokaisen vastauksen lopussa: [PALAUTE: yksi lause] suomeksi.`,
+    sys:`${SIM_LANG}Olet esimies. Tarvitset pikahtiivistelmän viime kvartaalin myynnistä ennen johtoryhmäpalaveria.
+Reagoi suomeksi (max 2-4 lausetta). Hyvä rakenne hyväksytään. Sekava vastaus → pyydä tarkennusta.
+Harjoitus päättyy 5 opiskelijan viestin jälkeen.
+Jokaisen vastauksen lopussa: [PALAUTE: yksi lause]`,
     open:'Moi — onko sinulla 2 minuuttia? Tarvitsisin lyhyen suullisen yhteenvedon Q3:n myynnistä. Mitä pitää nostaa esiin hallitukselle?'
   }
 };
-let curSim='client';let simHist=[];
+let curSim='client';let simHist=[];let simTurnCount=0;
+
+function updateSimTurnLbl(){
+  const el=document.getElementById('simTurnLbl');
+  if(el)el.textContent='Viesti '+simTurnCount+'/'+MAX_SIM_TURNS;
+}
+function setSimInputEnabled(on){
+  const inp=document.getElementById('simIn');
+  const snd=document.getElementById('simSnd');
+  if(inp){inp.disabled=!on;inp.placeholder=on?'Kirjoita vastauksesi (max 5 viestiä)...':'Simulaatio päättyi — valitse toinen tilanne tai merkitse valmiiksi.';}
+  if(snd)snd.disabled=!on;
+}
+function endSimSession(){
+  setSimInputEnabled(false);
+  const fb=document.createElement('div');
+  fb.style.cssText='font-size:12px;color:var(--forest);background:var(--forest-pale);border:1px solid var(--forest-mid);border-radius:8px;padding:10px 14px;align-self:center;max-width:92%;margin:6px auto;text-align:center;';
+  fb.textContent='✓ Simulaatio valmis (5/5). Riittää — kokeile toista tilannetta ylhäältä tai merkitse harjoitus valmiiksi.';
+  document.getElementById('simMsgs').appendChild(fb);
+  document.getElementById('simMsgs').scrollTop=9999;
+}
 
 function setSim(key,btn){
   curSim=key;
@@ -1517,26 +1539,37 @@ function setSim(key,btn){
   document.getElementById('simNm').textContent=s.nm;
   document.getElementById('simRl').textContent=s.rl;
   simHist=[];
+  simTurnCount=0;
+  updateSimTurnLbl();
+  setSimInputEnabled(true);
   document.getElementById('simMsgs').innerHTML='';
   addBbl(s.open,'bot');
 }
 async function simSend(){
+  if(simTurnCount>=MAX_SIM_TURNS)return;
   const inp=document.getElementById('simIn');const msg=inp.value.trim();if(!msg)return;
   addBbl(msg,'user');inp.value='';
+  simTurnCount++;
+  updateSimTurnLbl();
   document.getElementById('simSnd').disabled=true;
   const load=addBbl('Kirjoittaa...','load');
   simHist.push({role:'user',content:msg});
+  const isLastTurn=simTurnCount>=MAX_SIM_TURNS;
+  const sysExtra=isLastTurn
+    ? '\n\nTämä on viimeinen opiskelijan viesti (5/5). Anna lyhyt lopetus suomeksi + [PALAUTE: yhteenveto mitä opiskelija teki hyvin ja yksi parannus].'
+    : '';
   try{
-    const reply = await callModuleAI(SIMS[curSim].sys, simHist, 500);
+    const reply = await callModuleAI(SIMS[curSim].sys+sysExtra, simHist, 500);
     load.remove();
     if(reply.includes('[PALAUTE:')){
       const parts=reply.split('[PALAUTE:');
       addBbl(parts[0].trim(),'bot');
-      if(parts[1]){const fb=document.createElement('div');fb.style.cssText='font-size:12px;color:var(--forest);background:var(--forest-pale);border-radius:8px;padding:7px 12px;align-self:center;max-width:88%;margin:2px auto;';fb.textContent='💬 '+parts[1].replace(']','').trim();document.getElementById('simMsgs').appendChild(fb);document.getElementById('simMsgs').scrollTop=9999;}
+      if(parts[1]){const fb=document.createElement('div');fb.style.cssText='font-size:12px;color:var(--forest);background:var(--forest-pale);border-radius:8px;padding:7px 12px;align-self:center;max-width:88%;margin:2px auto;';fb.textContent='💬 '+parts[1].replace(/\]+$/,'').trim();document.getElementById('simMsgs').appendChild(fb);document.getElementById('simMsgs').scrollTop=9999;}
     }else{addBbl(reply,'bot');}
     simHist.push({role:'assistant',content:reply});
-  }catch(e){load.textContent='Virhe. Tarkista yhteys.';load.classList.remove('load');}
-  document.getElementById('simSnd').disabled=false;
+    if(isLastTurn)endSimSession();
+    else document.getElementById('simSnd').disabled=false;
+  }catch(e){load.textContent='Virhe. Tarkista yhteys.';load.classList.remove('load');simTurnCount--;updateSimTurnLbl();document.getElementById('simSnd').disabled=false;}
 }
 function addBbl(txt,cls){const d=document.createElement('div');d.className='bbl '+cls;d.style.background=cls==='user'?'var(--sim)':'';d.textContent=txt;const c=document.getElementById('simMsgs');c.appendChild(d);c.scrollTop=c.scrollHeight;return d;}
 function simKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();simSend();}}
@@ -1606,6 +1639,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   const ownCop=localStorage.getItem('mb_own-copilot');
   if(ownCop&&ownCop.trim().length>20){const el=document.getElementById('step2-copilot');if(el)el.style.display='block';}
   populateRecap();
+  updateSimTurnLbl();
 });
 </script>
 </body>
