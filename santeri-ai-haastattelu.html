@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-haastattelu — Kerro ideasi</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal:#0d9488; --teal-light:#ccfbf1; --teal-dark:#0f766e;
+  --dark:#0f172a; --mid:#334155; --soft:#64748b;
+  --bg:#f1f5f9; --white:#fff; --green:#10b981; --border:#e2e8f0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'DM Sans',sans-serif;}
+body{display:flex;flex-direction:column;background:var(--bg);color:var(--dark);}
+
+/* HEADER */
+.header{background:var(--dark);padding:14px 22px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.header-icon{width:36px;height:36px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.header-info{flex:1;}
+.header-title{font-family:'DM Serif Display',serif;font-size:17px;color:white;line-height:1.2;}
+.header-sub{font-size:12px;color:#64748b;margin-top:1px;}
+.dots{display:flex;gap:5px;margin-left:auto;}
+.dot{width:8px;height:8px;border-radius:50%;background:#1e293b;transition:background .3s;}
+.dot.on{background:var(--teal);}
+.dot.done{background:var(--green);}
+
+/* CHAT */
+.chat{flex:1;overflow-y:auto;padding:22px 20px;display:flex;flex-direction:column;gap:14px;background:#f8fafc;}
+.chat::-webkit-scrollbar{width:3px;}
+.chat::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px;}
+
+.msg{display:flex;gap:10px;align-items:flex-start;animation:pop .25s ease;}
+@keyframes pop{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.msg.user{flex-direction:row-reverse;}
+.av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.av.ai{background:var(--teal);color:white;}
+.av.user{background:#475569;color:white;}
+.bubble{max-width:460px;padding:12px 16px;border-radius:14px;font-size:15px;line-height:1.65;}
+.msg.ai .bubble{background:white;border:1px solid var(--border);border-top-left-radius:3px;}
+.msg.user .bubble{background:var(--teal);color:white;border-top-right-radius:3px;}
+
+/* TYPING */
+.typing-wrap{display:flex;gap:10px;align-items:center;}
+.typing-bub{background:white;border:1px solid var(--border);border-radius:14px;border-top-left-radius:3px;padding:12px 16px;display:flex;gap:4px;align-items:center;}
+.td{width:6px;height:6px;background:#94a3b8;border-radius:50%;animation:b 1.1s infinite;}
+.td:nth-child(2){animation-delay:.18s;}
+.td:nth-child(3){animation-delay:.36s;}
+@keyframes b{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-5px);}}
+
+/* PROMPT RESULT */
+.result-box{background:var(--dark);border-radius:14px;padding:22px;margin-top:4px;}
+.result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.result-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.12em;}
+.copy-btn{background:var(--teal);color:white;border:none;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;}
+.copy-btn:hover{background:var(--teal-dark);}
+.copy-btn.ok{background:var(--green);}
+.result-text{font-family:'DM Mono',monospace;font-size:12px;color:#e2e8f0;line-height:1.7;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow-y:auto;}
+.result-text::-webkit-scrollbar{width:3px;}
+.result-text::-webkit-scrollbar-thumb{background:#334155;}
+.cta-row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.cta-btn{display:inline-flex;align-items:center;gap:7px;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:700;transition:opacity .2s;}
+.cta-btn:hover{opacity:.85;}
+.cta-btn.lov{background:#8b5cf6;color:white;}
+.cta-btn.b44{background:#f59e0b;color:white;}
+
+/* INPUT */
+.input-row{background:white;border-top:1px solid var(--border);padding:14px 20px;display:flex;gap:10px;align-items:flex-end;flex-shrink:0;}
+.input-row textarea{flex:1;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--dark);resize:none;outline:none;min-height:44px;max-height:110px;line-height:1.5;transition:border-color .2s;}
+.input-row textarea:focus{border-color:var(--teal);}
+.send{background:var(--teal);color:white;border:none;width:44px;height:44px;border-radius:10px;font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,transform .1s;}
+.send:hover{background:var(--teal-dark);}
+.send:active{transform:scale(.95);}
+.send:disabled{background:#94a3b8;cursor:not-allowed;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🤖</div>
+  <div class="header-info">
+    <div class="header-title">AI-haastattelu</div>
+    <div class="header-sub">Vastaa 5 kysymykseen → saat valmiin Lovable-promptin</div>
+  </div>
+  <div class="dots" id="dots">
+    <div class="dot" id="d1"></div><div class="dot" id="d2"></div>
+    <div class="dot" id="d3"></div><div class="dot" id="d4"></div>
+    <div class="dot" id="d5"></div>
+  </div>
+</div>
+
+<div class="chat" id="chat"></div>
+
+<div class="input-row" id="inputRow">
+  <textarea id="inp" placeholder="Kirjoita vastauksesi..." rows="1"
+    onkeydown="handleKey(event)" oninput="resize(this)"></textarea>
+  <button class="send" id="sendBtn" onclick="send()">↑</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SUVI: LISÄÄ CLAUDE API-AVAIN TÄHÄN ENNEN KUIN JAAT LINKIN
+const KEY = 'sk-ant-REPLACE_WITH_YOUR_KEY';
+// ═══════════════════════════════════════════════════════════
+
+const SYSTEM = `Olet innostava AI-haastattelija. Autat 18-vuotiasta Santeria keksimään idean ensimmäiselle web-sovellukselleen.
+
+SÄÄNNÖT:
+- Kysy täsmälleen 5 kysymystä — yksi kerrallaan
+- Puhu suomeksi, rento ja innostava sävy
+- Kommentoi vastausta lyhyesti ennen seuraavaa kysymystä
+- ÄLÄ kysy kahta kysymystä samalla kertaa
+- Kun saat 5. vastauksen: kirjoita lyhyt innostava viesti SUOMEKSI, sitten generoi prompti
+
+KYSYMYSJÄRJESTYS (ÄLÄ muuta):
+K1: Mikä on suurin kiinnostuksesi juuri nyt? Urheilu, musiikki, pelit, ruoka, autot — tai jotain muuta? Ja miksi?
+K2: Kuka käyttäisi tätä sovellusta? Sinä itse, sinä ja kaverit, vai joku tietty porukka?
+K3: Mitä kolme asiaa sovelluksen pitäisi pystyä tekemään? Voi olla yksinkertaisia.
+K4: Värimaailma ja tunnelma: tykkäätkö tummasta vai vaaleasta? Räväkästä vai rauhallisesta? Onko jokin väri josta pidät?
+K5: Jos yksi juttu toimisi täydellisesti — se yksi toiminto joka saisi sinut sanomaan "jep, tämä on juuri mitä halusin" — mikä se olisi?
+
+PROMPTIN GENEROINTI:
+Kirjoita ensin suomeksi: "Loistava! Tässä on sinun Lovable-promptisi 🚀" ja sitten generoi prompti ENGLANNIKSI tällä muodolla:
+
+\`\`\`PROMPT
+Build me a complete, production-ready web application.
+
+APP CONCEPT
+Name: [keksi hyvä nimi Santeri vastausten perusteella]
+Description: [2 lausetta mitä sovellus tekee ja kenelle]
+
+VISUAL DESIGN
+Color palette:
+  Primary: [hex — valitse vastausten tunnelman perusteella]
+  Secondary: [hex]
+  Background: [hex — tumma tai vaalea vastauksen mukaan]
+  Card background: [hex]
+  Text: [hex]
+  Accent: [hex]
+Mood: [kuvaa tunnelmaa: esim. dark and energetic, minimal and clean, bold and playful]
+Font pairing: [ehdota kaksi Google Fontsia]
+
+LAYOUT & NAVIGATION
+- Fixed top navbar with logo left, nav links right, hamburger on mobile
+- Nav links scroll to sections: Home, [Feature1], [Feature2], [Feature3], About
+- Active link highlighted
+- Smooth scroll behavior
+
+SECTIONS (in order):
+1. Hero — large headline, subline, primary CTA button, animated background element
+2. [Ominaisuus 1 Santeri K3 vastauksesta] — [kuvaile UI: kortit, lomakkeet, listat jne]
+3. [Ominaisuus 2 Santeri K3 vastauksesta] — [kuvaile UI]
+4. [Ominaisuus 3 Santeri K3 vastauksesta] — [kuvaile UI]
+5. [K5 erikoisominaisuus] — [kuvaile tämä tarkasti, tämä on WOW-hetki]
+6. Footer with app name and short tagline
+
+INTERACTIONS & ANIMATIONS
+- All cards: hover scale(1.02) + shadow increase, 200ms transition
+- Buttons: hover darken + scale(1.03), active scale(0.98)
+- Page load: elements fade in with staggered animation-delay
+- Form inputs: focus border color change + subtle glow
+- Success state after any save/submit action (green checkmark + message)
+- Empty state when no data exists (friendly illustration placeholder + prompt text)
+
+DATA & STORAGE
+- All user data saved to localStorage
+- Data persists between browser sessions
+- No login required
+- Clear/reset option available
+
+TECHNICAL
+- Single HTML file with all CSS and JS inline
+- Fully mobile responsive (320px to 1440px)
+- All buttons, links, and interactions functional
+- No broken elements or placeholder buttons
+- Clean, professional code
+\`\`\``;
+
+let history = [];
+let qCount = 0;
+let done = false;
+let busy = false;
+
+async function callAI() {
+  busy = true;
+  setDisabled(true);
+  showTyping();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': KEY,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:2000,
+        system: SYSTEM,
+        messages: history
+      })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error?.message || 'API error');
+    const text = data.content[0].text;
+    history.push({role:'assistant',content:text});
+    removeTyping();
+    if(text.includes('```PROMPT')) {
+      renderResult(text);
+    } else {
+      addMsg('ai', text);
+    }
+  } catch(e) {
+    removeTyping();
+    addMsg('ai', '⚠️ Jokin meni pieleen. Päivitä sivu ja yritä uudelleen.');
+  }
+  busy = false;
+  if(!done) setDisabled(false);
+}
+
+function send() {
+  const el = document.getElementById('inp');
+  const txt = el.value.trim();
+  if(!txt || busy || done) return;
+  el.value=''; el.style.height='44px';
+  history.push({role:'user',content:txt});
+  addMsg('user', txt);
+  qCount++;
+  updateDots();
+  callAI();
+}
+
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+function resize(el){el.style.height='44px';el.style.height=Math.min(el.scrollHeight,110)+'px';}
+
+function addMsg(role, text) {
+  const c = document.getElementById('chat');
+  const d = document.createElement('div');
+  d.className = 'msg '+role;
+  d.innerHTML = `<div class="av ${role}">${role==='ai'?'🤖':'S'}</div><div class="bubble">${fmt(text)}</div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+function showTyping() {
+  const c = document.getElementById('chat');
+  const d = document.createElement('div');
+  d.className='msg ai'; d.id='typ';
+  d.innerHTML=`<div class="av ai">🤖</div><div class="typing-bub"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+
+function removeTyping(){const t=document.getElementById('typ');if(t)t.remove();}
+
+function renderResult(text) {
+  done = true;
+  document.getElementById('inputRow').style.display='none';
+  const parts = text.split('```PROMPT');
+  const intro = parts[0].trim();
+  const raw = parts[1] ? parts[1].replace(/```[\s\S]*$/,'').replace(/```/g,'').trim() : '';
+  if(intro) addMsg('ai', intro);
+  const c = document.getElementById('chat');
+  const d = document.createElement('div');
+  d.innerHTML = `
+    <div class="result-box">
+      <div class="result-header">
+        <div class="result-label">✨ Sinun Lovable-promptisi</div>
+        <button class="copy-btn" id="cpBtn" onclick="copyIt()">Kopioi prompti</button>
+      </div>
+      <pre class="result-text" id="promptTxt">${esc(raw)}</pre>
+      <div class="cta-row">
+        <a href="https://lovable.dev" target="_blank" class="cta-btn lov">🪄 Avaa Lovable</a>
+        <a href="https://base44.com" target="_blank" class="cta-btn b44">⚡ Avaa Base44</a>
+      </div>
+    </div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+  for(let i=1;i<=5;i++){const dot=document.getElementById('d'+i);if(dot){dot.className='dot done';}}
+}
+
+function copyIt() {
+  navigator.clipboard.writeText(document.getElementById('promptTxt').textContent).then(()=>{
+    const b = document.getElementById('cpBtn');
+    b.textContent='✓ Kopioitu!'; b.className='copy-btn ok';
+    setTimeout(()=>{b.textContent='Kopioi prompti';b.className='copy-btn';},2500);
+  });
+}
+
+function updateDots() {
+  for(let i=1;i<=5;i++){
+    const d=document.getElementById('d'+i);
+    if(!d) continue;
+    if(i<qCount) d.className='dot done';
+    else if(i===qCount) d.className='dot on';
+    else d.className='dot';
+  }
+}
+
+function setDisabled(v) {
+  document.getElementById('inp').disabled=v;
+  document.getElementById('sendBtn').disabled=v;
+}
+
+function fmt(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Start immediately
+callAI();
+</script>
+</body>
+</html>
