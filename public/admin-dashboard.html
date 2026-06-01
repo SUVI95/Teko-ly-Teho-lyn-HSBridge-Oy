@@ -1577,6 +1577,10 @@ nav {
                   <div style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--muted);">
                     Aika käytetty: ${timeSpent}
                   </div>
+                  <div style="margin-top:0.65rem;font-size:0.82rem;line-height:1.5;border-top:1px dashed var(--border);padding-top:0.65rem;">
+                    <div>★ Polku: ${tyonhakuProgressLine(s.polku_screen, POLKU_SCREEN_LABELS, s.polku_work_at)}</div>
+                    <div style="margin-top:0.25rem;">★ Haastattelu: ${tyonhakuProgressLine(s.haast_screen, HAAST_SCREEN_LABELS, s.haast_work_at)}</div>
+                  </div>
                 </div>
               </div>
             `;
@@ -1638,6 +1642,61 @@ nav {
       `;
     }
 
+    const POLKU_SCREEN_LABELS = {
+      1: 'Alku', 2: 'Taidot', 3: 'Valitse vahvuudet', 4: 'ATS-teoria', 5: 'Ilmoitus',
+      6: 'Avainsanat', 7: 'Analyysi', 8: 'Claude-testi', 9: 'Hakemus', 10: 'Haastattelu',
+      11: 'Promptit', 12: 'Hakukompassi'
+    };
+    const HAAST_SCREEN_LABELS = {
+      1: 'Aloitus', 2: 'Ymmärrys', 3: 'STAR', 4: 'Decoder', 5: 'Kirjoita',
+      6: 'Vastaväite', 7: 'Spot the flaw', 8: 'Hissipuhe', 9: 'Yritys',
+      10: 'Tilanteet', 11: 'Vaikeat', 12: 'Ansaitse'
+    };
+
+    function formatTyonhakuScreen(screen, labels) {
+      if (screen == null || !Number.isFinite(Number(screen))) return '—';
+      const n = Number(screen);
+      const lbl = labels[n] || ('Vaihe ' + n);
+      return 'Vaihe ' + n + '/12 · ' + lbl + (n >= 12 ? ' ✓' : '');
+    }
+
+    function renderPolkuWorkHtml(workRow) {
+      const parsed = parseModuleWorkPayload(workRow && workRow.reflection_text);
+      const d = parsed && parsed.data ? parsed.data : null;
+      if (!d) return `<div class="content-item-text">${escapeHtml((workRow && workRow.reflection_text) || '—')}</div>`;
+      const skills = Array.isArray(d.skills) ? d.skills.filter(Boolean) : [];
+      const strengths = Array.isArray(d.strengths) ? d.strengths.filter(Boolean) : [];
+      return `
+        <p style="font-weight:600;margin-bottom:0.75rem;">${formatTyonhakuScreen(d.curScreen, POLKU_SCREEN_LABELS)}</p>
+        ${parsed.summary ? `<p style="color:var(--muted);font-size:0.88rem;">${escapeHtml(parsed.summary)}</p>` : ''}
+        ${skills.length ? `<p><strong>Taidot:</strong> ${escapeHtml(skills.join(', '))}</p>` : ''}
+        ${d.story ? `<h4 style="margin:0.75rem 0 0.35rem;">Tarina</h4><div class="content-item-text" style="white-space:pre-wrap;max-height:120px;overflow:auto;">${escapeHtml(String(d.story).slice(0, 600))}${String(d.story).length > 600 ? '…' : ''}</div>` : ''}
+        ${strengths.length ? `<p><strong>Valitut vahvuudet:</strong> ${escapeHtml(strengths.join(', '))}</p>` : ''}
+        ${d.jobPosting ? `<p><strong>Ilmoitus:</strong> ${escapeHtml(String(d.jobPosting).slice(0, 120))}…</p>` : ''}
+        ${d.appText ? `<h4 style="margin:0.75rem 0 0.35rem;">Hakemus (AI)</h4><div class="content-item-text" style="white-space:pre-wrap;max-height:140px;overflow:auto;">${escapeHtml(String(d.appText).slice(0, 800))}</div>` : ''}
+      `;
+    }
+
+    function renderHaastatteluWorkHtml(workRow) {
+      const parsed = parseModuleWorkPayload(workRow && workRow.reflection_text);
+      const d = parsed && parsed.data ? parsed.data : null;
+      if (!d) return `<div class="content-item-text">${escapeHtml((workRow && workRow.reflection_text) || '—')}</div>`;
+      return `
+        <p style="font-weight:600;margin-bottom:0.75rem;">${formatTyonhakuScreen(d.curScreen, HAAST_SCREEN_LABELS)}</p>
+        ${parsed.summary ? `<p style="color:var(--muted);font-size:0.88rem;">${escapeHtml(parsed.summary)}</p>` : ''}
+        ${d.w_s ? `<p><strong>STAR S:</strong> ${escapeHtml(String(d.w_s).slice(0, 200))}</p>` : ''}
+        ${d.companyName ? `<p><strong>Yritys:</strong> ${escapeHtml(d.companyName)}</p>` : ''}
+        ${d.hpBuilt || d.hpFinal ? `<p><strong>Hissipuhe:</strong> ${escapeHtml(String(d.hpFinal || d.hpBuilt).slice(0, 280))}</p>` : ''}
+        ${d.w_weak ? `<h4 style="margin:0.75rem 0 0.35rem;">Heikkous</h4><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(String(d.w_weak).slice(0, 400))}</div>` : ''}
+      `;
+    }
+
+    function tyonhakuProgressLine(screen, labels, updatedAt) {
+      if (screen == null) return '<span style="color:var(--muted);">Ei aloitettu</span>';
+      const extra = updatedAt ? ` <span style="color:var(--muted);font-size:0.78rem;">(${formatDate(updatedAt)})</span>` : '';
+      return `<span style="font-weight:600;">${escapeHtml(formatTyonhakuScreen(screen, labels))}</span>${extra}`;
+    }
+
     function renderStudentDetail(data) {
       const container = document.getElementById('studentDetailContainer');
       const { user, reflections, feedback, closingActions, progress, checklist, consent, courtSubmission, toolBuilderSubmission } = data;
@@ -1648,7 +1707,10 @@ nav {
       const reflectionOnly = reflections.filter(r => !r.module_id || !String(r.module_id).endsWith('__work'));
       const appBuilderWork = moduleWorkReflections.find(r => r.module_id === 'moduuli-visibility-growth-automation__work');
       const visualsWork = moduleWorkReflections.find(r => r.module_id === 'moduuli-esitykset-tarjoukset-viestinta__work');
+      const polkuWork = moduleWorkReflections.find(r => r.module_id === 'moduuli8-ai-polku__work');
+      const haastWork = moduleWorkReflections.find(r => r.module_id === 'moduuli9-haastattelu__work');
       const builderVisualTabCount = (appBuilderWork ? 1 : 0) + (visualsWork ? 1 : 0);
+      const tyonhakuTabCount = (polkuWork ? 1 : 0) + (haastWork ? 1 : 0);
 
       function jsonPre(obj) {
         try { return escapeHtml(JSON.stringify(obj, null, 2)); } catch (e) { return escapeHtml(String(obj)); }
@@ -1810,6 +1872,7 @@ nav {
           <div class="tabs">
             <button class="tab active" onclick="switchTab('reflections', event)">Reflektiot (${reflectionOnly.length})</button>
             <button class="tab" onclick="switchTab('builderVisual', event)">Rakentaja &amp; visuaalit (${builderVisualTabCount})</button>
+            <button class="tab" onclick="switchTab('tyonhaku', event)">★ Työnhaku (${tyonhakuTabCount})</button>
             <button class="tab" onclick="switchTab('feedback', event)">Palautteet (${feedback.length})</button>
             <button class="tab" onclick="switchTab('aiModules', event)">Tuomioistuin &amp; työkalu (${aiModuleTabCount})</button>
             <button class="tab" onclick="switchTab('closingActions', event)">Sulkemistoimenpiteet (${closingActions.length})</button>
@@ -1872,6 +1935,43 @@ nav {
                     <div class="content-item-date">${formatDate(visualsWork.updated_at || visualsWork.created_at)}</div>
                   </div>
                   ${renderVisualsWorkHtml(visualsWork)}
+                </div>
+              ` : ''}
+            `}
+          </div>
+
+          <div id="tab-tyonhaku" class="tab-content">
+            ${tyonhakuTabCount === 0 ? `
+              <div class="empty-state">
+                <div class="empty-state-icon">★</div>
+                <p>Ei tallennettuja vastauksia moduuleista <strong>AI Polku — työnhaku</strong> tai <strong>AI-työkalut — Haastattelu</strong>.</p>
+                <p style="font-size:0.9rem;color:var(--muted);margin-top:0.5rem;">Edistyminen tallentuu automaattisesti kun opiskelija on kirjautunut.</p>
+              </div>
+            ` : `
+              ${polkuWork ? `
+                <h3 style="margin:0 0 1rem;font-family:'DM Serif Display',serif;color:var(--ink);">AI Polku — työnhaku</h3>
+                <div class="content-item">
+                  <div class="content-item-header">
+                    <div>
+                      <span class="module-badge">moduuli8-ai-polku</span>
+                      <span class="content-item-title">Tallennettu työ</span>
+                    </div>
+                    <div class="content-item-date">${formatDate(polkuWork.updated_at || polkuWork.created_at)}</div>
+                  </div>
+                  ${renderPolkuWorkHtml(polkuWork)}
+                </div>
+              ` : ''}
+              ${haastWork ? `
+                <h3 style="margin:${polkuWork ? '2rem' : '0'} 0 1rem;font-family:'DM Serif Display',serif;color:var(--ink);">AI-työkalut — Haastattelu</h3>
+                <div class="content-item">
+                  <div class="content-item-header">
+                    <div>
+                      <span class="module-badge">moduuli9-haastattelu</span>
+                      <span class="content-item-title">Tallennettu työ</span>
+                    </div>
+                    <div class="content-item-date">${formatDate(haastWork.updated_at || haastWork.created_at)}</div>
+                  </div>
+                  ${renderHaastatteluWorkHtml(haastWork)}
                 </div>
               ` : ''}
             `}

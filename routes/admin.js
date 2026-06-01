@@ -142,6 +142,19 @@ router.post('/users/approve-all', authenticateToken, requireAdmin, async (req, r
   }
 });
 
+function curScreenFromModuleWorkRow(row) {
+  if (!row || !row.reflection_text) return null;
+  try {
+    const o = JSON.parse(row.reflection_text);
+    const d = o && o.data;
+    if (!d || typeof d !== 'object') return null;
+    const n = Number(d.curScreen);
+    return Number.isFinite(n) ? n : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // Get student progress summary
 router.get('/students/progress', authenticateToken, requireAdmin, async (req, res) => {
   try {
@@ -166,8 +179,31 @@ router.get('/students/progress', authenticateToken, requireAdmin, async (req, re
       GROUP BY u.id, u.email, u.name, u.created_at, u.last_login, u.is_approved
       ORDER BY u.created_at DESC
     `);
-    
-    res.json({ students: result.rows });
+
+    const workResult = await pool.query(`
+      SELECT user_id, module_id, reflection_text, updated_at
+      FROM reflections
+      WHERE module_id IN ('moduuli8-ai-polku__work', 'moduuli9-haastattelu__work')
+    `);
+    const workByUser = {};
+    for (const row of workResult.rows) {
+      if (!workByUser[row.user_id]) workByUser[row.user_id] = {};
+      workByUser[row.user_id][row.module_id] = row;
+    }
+
+    const students = result.rows.map((s) => {
+      const w8 = workByUser[s.id]?.['moduuli8-ai-polku__work'];
+      const w9 = workByUser[s.id]?.['moduuli9-haastattelu__work'];
+      return {
+        ...s,
+        polku_screen: curScreenFromModuleWorkRow(w8),
+        polku_work_at: w8?.updated_at || null,
+        haast_screen: curScreenFromModuleWorkRow(w9),
+        haast_work_at: w9?.updated_at || null
+      };
+    });
+
+    res.json({ students });
   } catch (error) {
     console.error('Get student progress error:', error);
     res.status(500).json({ error: 'Failed to get student progress' });
