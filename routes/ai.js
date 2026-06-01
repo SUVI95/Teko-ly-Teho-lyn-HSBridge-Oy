@@ -1,6 +1,13 @@
 const express = require('express');
+const multer = require('multer');
 const router = express.Router();
 const { fetch } = require('undici');
+const { extractPdfTextFromBuffer } = require('../lib/pdf-extract');
+
+const cvUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024 }
+});
 
 /** Read env var and trim whitespace/newlines (common copy-paste issue). */
 function envTrim(name) {
@@ -275,6 +282,46 @@ router.post('/image', async (req, res) => {
       error: 'Failed to generate image',
       message: error.message
     });
+  }
+});
+
+/** Extract plain text from CV upload (PDF or .txt) for Minna / portfolio modules. */
+router.post('/cv-extract-text', cvUpload.single('file'), async (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ error: 'Tiedosto puuttuu' });
+    }
+    const name = (req.file.originalname || '').toLowerCase();
+    const mime = (req.file.mimetype || '').toLowerCase();
+    let text = '';
+
+    if (mime === 'text/plain' || name.endsWith('.txt')) {
+      text = req.file.buffer.toString('utf8').trim();
+    } else if (mime === 'application/pdf' || name.endsWith('.pdf')) {
+      text = await extractPdfTextFromBuffer(req.file.buffer);
+    } else if (name.endsWith('.doc') || name.endsWith('.docx')) {
+      return res.status(400).json({
+        error: 'Word-tiedostoa ei voi lukea automaattisesti. Tallenna CV PDF-muodossa tai täytä kentät käsin.'
+      });
+    } else {
+      return res.status(400).json({ error: 'Tuetut tiedostot: PDF ja TXT' });
+    }
+
+    if (!text || text.replace(/\s/g, '').length < 40) {
+      return res.status(422).json({
+        error: 'CV:stä ei löytynyt riittävästi tekstiä. Käytä tekstipohjaista PDF:ää (ei skannattua kuvaa), tai täytä kentät käsin.',
+        text: text || ''
+      });
+    }
+
+    const maxLen = 20000;
+    res.json({
+      text: text.length > maxLen ? text.slice(0, maxLen) + '\n…' : text,
+      chars: text.length
+    });
+  } catch (err) {
+    console.error('cv-extract-text error:', err);
+    res.status(500).json({ error: 'CV:n lukeminen epäonnistui. Täytä kentät käsin.' });
   }
 });
 

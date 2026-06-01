@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Haastattelu — Saa heidät muistamaan sinut</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F8F6F2;--paper:#FFFFFF;--paper2:#FAFAF8;
+  --ink:#18181B;--ink2:#52525B;--ink3:#A1A1AA;
+  --line:rgba(24,24,27,.09);--soft:rgba(24,24,27,.04);
+  --navy:#1B2B4B;--navy-lt:#EEF2F8;
+  --coral:#C85C3C;--coral-lt:#FDF2EE;--coral-dk:#9A3F25;
+  --forest:#2D5A4A;--forest-lt:#EDF4F1;
+  --gold:#9A7B3A;--gold-lt:#FBF6EE;
+  --r6:6px;--r10:10px;--r14:14px;--r20:20px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow:0 4px 12px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg:0 12px 32px rgba(0,0,0,.09),0 4px 8px rgba(0,0,0,.04);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:17px;-webkit-font-smoothing:antialiased}
+
+/* ── NAV ── */
+.top-nav{position:fixed;top:0;left:0;right:0;z-index:900;background:rgba(248,246,242,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);height:50px;padding:0 22px;display:flex;align-items:center;justify-content:space-between}
+.tn-link{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);text-decoration:none;transition:color .2s}
+.tn-link:hover{color:var(--coral)}
+.tn-title{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* ── PROGRESS ── */
+.prog-track{position:fixed;top:50px;left:0;right:0;height:2px;background:rgba(200,92,60,.12);z-index:899}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--coral),var(--navy));transition:width .6s cubic-bezier(.4,0,.2,1);width:0%}
+
+/* ── STEP BAR ── */
+.step-bar{position:fixed;top:52px;left:0;right:0;background:rgba(248,246,242,.97);border-bottom:1px solid var(--line);z-index:850;padding:0 8px}
+.step-bar-inner{max-width:820px;margin:0 auto;display:flex;height:42px;align-items:stretch}
+.sb{flex:1;display:flex;align-items:center;justify-content:center;gap:3px;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:var(--ink3);border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;text-align:center;padding:0 3px;white-space:nowrap}
+.sb:hover{color:var(--ink2)}
+.sb.active{color:var(--coral);border-bottom-color:var(--coral)}
+.sb.done{color:var(--forest);border-bottom-color:var(--forest)}
+@media(max-width:680px){.sb-lbl{display:none}}
+@media(min-width:681px){.sb-lbl{display:inline}}
+
+/* ── SCREENS ── */
+.screen{display:none;padding-top:96px;animation:fadeUp .4s ease}
+.screen.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.wrap{max-width:820px;margin:0 auto;padding:38px 24px 120px}
+@media(max-width:600px){.wrap{padding:24px 16px 100px}}
+
+/* ── TYPE ── */
+.eyebrow{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--coral);margin-bottom:11px;display:block}
+h1{font-family:'Cormorant Garamond',serif;font-size:clamp(38px,5.5vw,64px);font-weight:500;line-height:1.05;color:var(--ink);margin-bottom:16px;letter-spacing:-.01em}
+h1 em{font-style:italic;color:var(--coral)}
+h2{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500;color:var(--ink);margin-bottom:10px;line-height:1.2}
+h2 em{font-style:italic;color:var(--coral)}
+h3{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px}
+p{font-size:16px;color:var(--ink2);line-height:1.85;margin-bottom:14px;font-weight:300}
+p strong{color:var(--ink);font-weight:500}
+p:last-child{margin-bottom:0}
+.big{font-size:19px;color:var(--ink);line-height:1.72;font-weight:400;margin-bottom:18px}
+.rule{height:1px;background:var(--line);margin:30px 0}
+
+/* ── SECTION HEADER ── */
+.mission-hdr{background:var(--navy);border-radius:var(--r20);padding:22px 28px;margin-bottom:28px;position:relative;overflow:hidden}
+.mission-hdr::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--coral),transparent)}
+.mh-eye{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:rgba(200,92,60,.75);margin-bottom:7px;display:block}
+.mh-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;color:#F8F6F2;margin-bottom:5px;line-height:1.3}
+.mh-sub{font-size:15px;color:#fff;line-height:1.65;font-weight:400}
+.mh-goal{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);font-size:14px;color:rgba(255,255,255,.92);line-height:1.65}
+.mh-goal strong{color:#F5C4A8}
+
+/* ── CARDS ── */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r14);padding:20px 24px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.card-coral{border-left:3px solid var(--coral);background:var(--coral-lt);border-radius:0 var(--r14) var(--r14) 0;box-shadow:none}
+.card-forest{border-left:3px solid var(--forest);background:var(--forest-lt);border-radius:0 var(--r14) var(--r14) 0;box-shadow:none}
+.card-navy{border-left:3px solid var(--navy);background:var(--navy-lt);border-radius:0 var(--r14) var(--r14) 0;box-shadow:none}
+.note{padding:13px 16px;border-radius:0 var(--r6) var(--r6) 0;font-size:15px;line-height:1.75;margin:12px 0}
+.note-coral{background:var(--coral-lt);border-left:3px solid var(--coral);color:var(--coral-dk)}
+.note-forest{background:var(--forest-lt);border-left:3px solid var(--forest);color:var(--forest)}
+.note-navy{background:var(--navy-lt);border-left:3px solid var(--navy);color:var(--navy)}
+.note-gold{background:var(--gold-lt);border-left:3px solid var(--gold);color:var(--gold)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14.5px;font-weight:600;padding:12px 22px;border-radius:var(--r10);cursor:pointer;border:none;transition:all .2s;text-decoration:none}
+.btn-coral{background:var(--coral);color:white}.btn-coral:hover{background:var(--coral-dk);transform:translateY(-1px);box-shadow:0 4px 12px rgba(200,92,60,.3)}
+.btn-coral:disabled{opacity:.35;cursor:default;pointer-events:none;transform:none;box-shadow:none}
+.btn-navy{background:var(--navy);color:white}.btn-navy:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1.5px solid var(--line);color:var(--ink3)}.btn-outline:hover{border-color:var(--coral);color:var(--coral)}
+.btn-lg{padding:14px 32px;font-size:15.5px;border-radius:var(--r14);font-weight:600}
+.btn-sm{padding:8px 16px;font-size:13px}
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:36px;padding-top:18px;border-top:1px solid var(--line);gap:12px;flex-wrap:wrap}
+.nav-row.center{justify-content:center;border:none;padding:0;margin-top:24px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.chip{padding:5px 12px;border-radius:100px;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.06em;border:1px solid}
+.chip-coral{background:var(--coral-lt);color:var(--coral);border-color:rgba(200,92,60,.3)}
+.chip-navy{background:var(--navy-lt);color:var(--navy);border-color:rgba(27,43,75,.2)}
+.chip-ink{background:var(--soft);color:var(--ink3);border-color:var(--line)}
+
+/* ── INPUTS ── */
+.lbl{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ink3);margin-bottom:7px;display:block}
+textarea,input[type=text]{width:100%;padding:13px 15px;border:1.5px solid var(--line);border-radius:var(--r10);font-family:'Plus Jakarta Sans',sans-serif;font-size:15.5px;color:var(--ink);background:var(--paper);line-height:1.75;transition:border-color .2s;font-weight:300;resize:vertical}
+textarea{min-height:80px}
+textarea:focus,input[type=text]:focus{outline:none;border-color:var(--coral)}
+textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
+
+/* ── AI FB & dark navy panels (readable white text) ── */
+.ai-fb,.panel-navy{background:var(--navy);color:#fff;border-radius:var(--r14)}
+.ai-fb{padding:20px 24px;margin-top:14px;display:none;font-size:16px;line-height:1.65;font-weight:400}
+.ai-fb.show{display:block;animation:fadeUp .35s ease}
+.ai-fb,#writeFbT,#vastavFbT,#weakFbT,#whyFbT,#palkkaFbT,#companyFbT,#hpFbT,#hpFilterT,.ai-fb span:not(.ai-lbl){color:#fff}
+.ai-fb strong,.ai-fb b,.panel-navy strong{color:#fff;font-weight:600}
+.ai-lbl{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#F5C4A8;margin-bottom:10px;display:block}
+.panel-navy{padding:18px 22px;margin-bottom:18px;border:1px solid rgba(255,255,255,.12)}
+.panel-navy-lbl{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#F5C4A8;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.panel-navy-body{font-size:15px;color:#fff;line-height:1.65;margin-bottom:10px}
+.panel-navy-body strong{color:#fff}
+.panel-navy .ext-btn{margin-top:4px}
+.dots{display:inline-flex;gap:5px;align-items:center}
+.dots span{width:5px;height:5px;border-radius:50%;background:var(--coral);animation:dp 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.6)}40%{opacity:1;transform:scale(1)}}
+
+/* ── REVEAL ── */
+.reveal-block{display:none;animation:fadeUp .4s ease}
+.reveal-block.show{display:block}
+.reveal-divider{display:flex;align-items:center;gap:12px;margin:26px 0 20px}
+.reveal-divider::before,.reveal-divider::after{content:'';flex:1;height:1px;background:var(--line)}
+.reveal-divider span{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);white-space:nowrap}
+
+/* ── TRUE/FALSE ── */
+.tf-item{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r14);padding:20px 24px;margin-bottom:12px;box-shadow:var(--shadow-sm);transition:all .25s}
+.tf-statement{font-size:16.5px;color:var(--ink);font-weight:400;margin-bottom:14px;line-height:1.65;font-family:'Plus Jakarta Sans',sans-serif}
+.tf-btns{display:flex;gap:10px}
+.tf-btn{flex:1;padding:11px 16px;border-radius:var(--r10);border:1.5px solid var(--line);background:var(--paper2);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--ink3)}
+.tf-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.tf-btn.true-btn:hover:not(:disabled){border-color:var(--forest);color:var(--forest);background:var(--forest-lt)}
+.tf-btn.false-btn:hover:not(:disabled){border-color:var(--coral);color:var(--coral);background:var(--coral-lt)}
+.tf-btn.correct{border-color:var(--forest);color:var(--forest);background:var(--forest-lt)}
+.tf-btn.wrong{border-color:var(--coral);color:var(--coral);background:var(--coral-lt);opacity:.4}
+.tf-btn:disabled{cursor:default;transform:none}
+.tf-reveal{display:none;margin-top:14px;padding:13px 16px;background:var(--paper2);border-radius:var(--r10);border-left:3px solid var(--navy);font-size:14.5px;color:var(--ink2);line-height:1.72;font-weight:300}
+.tf-reveal.show{display:block;animation:fadeUp .3s ease}
+.tf-score{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:500;color:var(--coral);line-height:1}
+.tf-score-sub{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* ── STAR CARDS ── */
+.star-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+@media(max-width:560px){.star-grid{grid-template-columns:1fr}}
+.star-card{border-radius:var(--r14);padding:20px 22px;cursor:pointer;transition:all .2s;border:1.5px solid var(--line);background:var(--paper);box-shadow:var(--shadow-sm)}
+.star-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.star-card.expanded{box-shadow:var(--shadow);transform:translateY(-2px)}
+.sc-letter{font-family:'Cormorant Garamond',serif;font-size:60px;font-weight:500;line-height:1;margin-bottom:4px;font-style:italic}
+.sc-s .sc-letter{color:#2B5B8A}.sc-t .sc-letter{color:#6B3FA0}.sc-a .sc-letter{color:var(--forest)}.sc-r .sc-letter{color:var(--coral)}
+.sc-s.expanded{border-color:#2B5B8A;background:#EEF4FB}
+.sc-t.expanded{border-color:#6B3FA0;background:#F5F0FB}
+.sc-a.expanded{border-color:var(--forest);background:var(--forest-lt)}
+.sc-r.expanded{border-color:var(--coral);background:var(--coral-lt)}
+.sc-word{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px}
+.sc-desc{font-size:15px;color:var(--ink2);line-height:1.65;font-weight:300}
+.sc-example{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:14px;font-style:italic;color:var(--ink2);line-height:1.65;font-weight:300}
+.star-card.expanded .sc-example{display:block;animation:fadeUp .25s ease}
+.sc-hint{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-top:9px;display:flex;align-items:center;gap:4px}
+.sc-hint::after{content:'▸';transition:transform .2s}
+.star-card.expanded .sc-hint::after{transform:rotate(90deg)}
+
+/* ── DECODER ── */
+.decoder-answer{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r14);padding:20px 24px;margin:16px 0;box-shadow:var(--shadow-sm)}
+.decoder-sent{display:flex;align-items:flex-start;gap:12px;padding:10px 12px;border-radius:var(--r10);cursor:pointer;transition:background .2s;margin-bottom:4px;border:1.5px solid transparent}
+.decoder-sent:hover:not(.assigned){background:var(--paper2);border-color:var(--line)}
+.decoder-sent.assigned{cursor:default}
+.ds-text{font-size:15.5px;color:var(--ink2);line-height:1.65;flex:1;font-weight:300}
+.ds-badge{min-width:36px;height:28px;border-radius:var(--r6);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;flex-shrink:0;border:1.5px solid var(--line);color:var(--ink3);background:var(--paper2);transition:all .2s}
+.decoder-label-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.decoder-label{padding:8px 16px;border-radius:100px;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;font-style:italic;cursor:pointer;transition:all .2s;border:1.5px solid var(--line);background:var(--paper);color:var(--ink3)}
+.decoder-label:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.decoder-label.selected{box-shadow:var(--shadow-sm)}
+.dl-s{}.dl-s.selected{border-color:#2B5B8A;color:#2B5B8A;background:#EEF4FB}
+.dl-t.selected{border-color:#6B3FA0;color:#6B3FA0;background:#F5F0FB}
+.dl-a.selected{border-color:var(--forest);color:var(--forest);background:var(--forest-lt)}
+.dl-r.selected{border-color:var(--coral);color:var(--coral);background:var(--coral-lt)}
+.badge-s{background:#EEF4FB;color:#2B5B8A;border-color:#2B5B8A}
+.badge-t{background:#F5F0FB;color:#6B3FA0;border-color:#6B3FA0}
+.badge-a{background:var(--forest-lt);color:var(--forest);border-color:var(--forest)}
+.badge-r{background:var(--coral-lt);color:var(--coral);border-color:var(--coral)}
+.badge-wrong{background:var(--coral-lt);color:var(--coral);border-color:var(--coral)}
+
+/* ── STAR SCAFFOLD ── */
+.star-scaffold{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+@media(max-width:540px){.star-scaffold{grid-template-columns:1fr}}
+.ss-field{border-radius:var(--r14);padding:16px 18px;background:var(--paper);box-shadow:var(--shadow-sm)}
+.ss-s{border:1.5px solid rgba(43,91,138,.3)}.ss-t{border:1.5px solid rgba(107,63,160,.3)}
+.ss-a{border:1.5px solid rgba(45,90,74,.3)}.ss-r{border:1.5px solid rgba(200,92,60,.3)}
+.ss-letter{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:500;font-style:italic;margin-bottom:2px}
+.ss-s .ss-letter{color:#2B5B8A}.ss-t .ss-letter{color:#6B3FA0}
+.ss-a .ss-letter{color:var(--forest)}.ss-r .ss-letter{color:var(--coral)}
+.ss-title{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px}
+.ss-field textarea{background:transparent;border:none;border-bottom:1px solid var(--line);border-radius:0;padding:6px 0;font-size:15px;min-height:65px;resize:none;box-shadow:none}
+.ss-field textarea:focus{outline:none;border-bottom-color:var(--coral)}
+
+/* ── A/B ── */
+.ab-progress{display:flex;gap:7px;margin-bottom:22px}
+.ab-dot{width:10px;height:10px;border-radius:50%;background:var(--line);transition:all .3s}
+.ab-dot.done-right{background:var(--forest)}.ab-dot.done-wrong{background:var(--coral)}.ab-dot.current{background:var(--coral);transform:scale(1.3)}
+.ab-question{background:var(--paper);border:1px solid var(--line);border-radius:var(--r20);padding:22px 26px;box-shadow:var(--shadow)}
+.ab-q-num{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--coral);margin-bottom:10px;display:block}
+.ab-context{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--ink2);margin-bottom:16px;line-height:1.55}
+.ab-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.ab-options{grid-template-columns:1fr}}
+.ab-opt{background:var(--paper2);border:1.5px solid var(--line);border-radius:var(--r14);padding:16px 18px;cursor:pointer;transition:all .2s;text-align:left}
+.ab-opt:hover:not(.locked){border-color:var(--coral);background:var(--coral-lt);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.ab-opt.correct{border-color:var(--forest);background:var(--forest-lt)}
+.ab-opt.wrong{border-color:var(--coral);background:var(--coral-lt);opacity:.45}
+.ab-opt.locked{cursor:default;transform:none}
+.ab-opt-label{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:7px}
+.ab-opt.correct .ab-opt-label{color:var(--forest)}.ab-opt.wrong .ab-opt-label{color:var(--coral)}
+.ab-opt-text{font-size:15px;color:var(--ink2);line-height:1.65;font-weight:300}
+.ab-reveal{display:none;margin-top:14px;padding:13px 16px;background:var(--navy);border-radius:var(--r10);border-left:3px solid var(--coral);font-size:15px;color:#fff;line-height:1.65;font-weight:400}
+.ab-reveal.show{display:block;animation:fadeUp .3s ease}
+
+/* ── SCENARIOS ── */
+.scenario-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r20);padding:22px 26px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.sc-num-tag{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--coral);margin-bottom:10px;display:block}
+.sc-situation{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--ink);margin-bottom:16px;line-height:1.4}
+.sc-options{display:flex;flex-direction:column;gap:8px}
+.sc-opt{background:var(--paper2);border:1.5px solid var(--line);border-radius:var(--r10);padding:13px 16px;cursor:pointer;transition:all .2s;font-size:15.5px;color:var(--ink2);line-height:1.55;font-weight:300;text-align:left}
+.sc-opt:hover:not(.locked){border-color:var(--coral);background:var(--coral-lt);color:var(--coral-dk)}
+.sc-opt.best{border-color:var(--forest);background:var(--forest-lt);color:var(--forest)}
+.sc-opt.ok{border-color:var(--gold);background:var(--gold-lt);color:var(--gold)}
+.sc-opt.bad{border-color:var(--coral);background:var(--coral-lt);color:var(--coral);opacity:.5}
+.sc-opt.locked{cursor:default}
+.sc-fb{display:none;margin-top:12px;padding:12px 15px;background:var(--navy);border-radius:var(--r10);border-left:3px solid var(--coral);font-size:15px;color:#fff;line-height:1.65}
+.sc-fb.show{display:block;animation:fadeUp .3s ease}
+
+/* ── EARN / ANSAITSE ── */
+.learn-hero{background:linear-gradient(165deg,var(--navy) 0%,#243a5e 55%,#1a2d4d 100%);border-radius:var(--r20);padding:28px 26px 30px;margin:0 0 28px;color:#fff;box-shadow:0 12px 40px rgba(27,43,75,.22)}
+.learn-hero-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#F5C4A8;background:rgba(200,92,60,.2);border:1px solid rgba(245,196,168,.35);padding:6px 12px;border-radius:999px;margin-bottom:16px}
+.learn-hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(28px,5vw,38px);font-weight:500;color:#fff;line-height:1.2;margin:0 0 12px}
+.learn-hero-title em{font-style:italic;color:#F5C4A8}
+.learn-hero-lead{font-size:16px;color:rgba(255,255,255,.9);line-height:1.65;margin:0 0 22px;max-width:640px;font-weight:300}
+.learn-hero .skill-card{background:var(--paper);border:1px solid rgba(255,255,255,.12);box-shadow:0 4px 20px rgba(0,0,0,.12)}
+.learn-hero .skill-card>div:first-child{border-bottom-color:var(--line)}
+.earn-stack-wrap{margin:32px 0 24px}
+.earn-stack-hdr{margin-bottom:12px}
+.earn-stack-hdr h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--ink);margin:0 0 6px}
+.earn-stack-hdr h3 span{font-size:15px;font-weight:400;color:var(--ink3);font-family:'Plus Jakarta Sans',sans-serif}
+.earn-stack-hdr p{font-size:14px;color:var(--ink3);margin:0;line-height:1.55}
+.earn-stack{display:flex;flex-direction:column;gap:8px}
+.earn-acc{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r14);overflow:hidden;box-shadow:var(--shadow-sm);transition:border-color .2s,box-shadow .2s}
+.earn-acc.open{border-color:rgba(200,92,60,.35);box-shadow:var(--shadow)}
+.earn-acc-hdr{width:100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:14px 16px;background:var(--paper2);border:none;cursor:pointer;text-align:left;font-family:inherit;transition:background .2s}
+.earn-acc-hdr:hover{background:#F3F1EC}
+.earn-acc.open .earn-acc-hdr{background:var(--coral-lt);border-bottom:1px solid rgba(200,92,60,.15)}
+.earn-acc-title{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--coral);flex:1 1 100%}
+.earn-acc-preview{flex:1 1 auto;font-size:13.5px;color:var(--ink3);line-height:1.45;font-weight:300;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 28px)}
+.earn-acc.open .earn-acc-preview{display:none}
+.earn-acc-chevron{flex:0 0 auto;font-size:11px;color:var(--ink3);transition:transform .25s;line-height:1}
+.earn-acc.open .earn-acc-chevron{transform:rotate(180deg);color:var(--coral)}
+.earn-acc-body{display:none;padding:16px 18px 18px}
+.earn-acc.open .earn-acc-body{display:block;animation:fadeUp .3s ease}
+.earn-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;color:var(--ink);line-height:1.75;white-space:pre-wrap;font-weight:300}
+.copy-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;background:var(--coral-lt);border:1px solid rgba(200,92,60,.25);border-radius:var(--r6);font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--coral);cursor:pointer;margin-top:12px;transition:background .2s}
+.copy-btn:hover{background:rgba(200,92,60,.15)}
+.skill-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r14);overflow:hidden;box-shadow:var(--shadow-sm)}
+
+/* ── HERO (S1 ONLY) ── */
+.hero-s1{padding:56px 24px 44px;background:var(--bg);border-bottom:1px solid var(--line)}
+.hero-s1-inner{max-width:820px;margin:0 auto}
+.hero-rule{width:48px;height:3px;background:var(--coral);border-radius:2px;margin-bottom:20px}
+.hero-missions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:28px}
+@media(max-width:540px){.hero-missions{grid-template-columns:1fr}}
+.hm{padding:16px 18px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r14);box-shadow:var(--shadow-sm);transition:box-shadow .2s,transform .2s}
+.hm:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.hm-num{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--coral);margin-bottom:6px}
+.hm-title{font-size:14.5px;font-weight:500;color:var(--ink);line-height:1.35;margin-bottom:3px}
+.hm-desc{font-size:13px;color:var(--ink3);font-weight:300;line-height:1.45}
+
+/* ── SPOT THE FLAW ── */
+.stf-question{background:var(--paper);border:1px solid var(--line);border-radius:var(--r20);padding:22px 26px;box-shadow:var(--shadow)}
+.stf-q-num{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--coral);margin-bottom:8px;display:block}
+.stf-context{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:var(--ink2);margin-bottom:14px;line-height:1.55;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.stf-answer-box{background:var(--paper2);border:1.5px solid var(--line);border-radius:var(--r14);padding:16px 18px;margin-bottom:14px;font-size:15.5px;color:var(--ink);line-height:1.75;font-weight:300;font-style:italic}
+.stf-answer-box::before{content:'❝';font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--coral);opacity:.4;display:block;margin-bottom:4px}
+.stf-write-area{margin-bottom:10px}
+.stf-submit{margin-top:8px}
+.stf-reveal-box{display:none;margin-top:16px;border-radius:var(--r14);overflow:hidden;border:1px solid var(--line)}
+.stf-reveal-box.show{display:block;animation:fadeUp .35s ease}
+.stf-reveal-top{padding:14px 18px;background:var(--coral-lt);border-bottom:1px solid rgba(200,92,60,.15)}
+.stf-reveal-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--coral);margin-bottom:5px;display:block}
+.stf-flaw{font-size:15px;color:var(--coral-dk);line-height:1.7;font-weight:400}
+.stf-reveal-mid{padding:14px 18px;background:var(--forest-lt);border-bottom:1px solid rgba(45,90,74,.12)}
+.stf-reveal-mid-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--forest);margin-bottom:5px;display:block}
+.stf-fixed{font-size:15px;color:var(--forest);line-height:1.7;font-style:italic;font-weight:300}
+.stf-reveal-bot{padding:14px 18px;background:var(--navy)}
+.stf-reveal-bot-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#F5C4A8;margin-bottom:5px;display:block}
+.stf-why{font-size:14.5px;color:#fff;line-height:1.65;font-weight:400}
+.stf-next{margin-top:12px}
+
+
+/* ── VINKKI ── */
+.vinkki{background:#FBF6EE;border:1px solid rgba(154,123,58,.2);border-radius:var(--r10);padding:11px 15px;margin:10px 0;font-size:14.5px;color:#7A5A00;line-height:1.7;display:flex;align-items:flex-start;gap:9px}
+.vinkki-icon{flex-shrink:0;font-size:16px;margin-top:1px}
+.vinkki strong{font-weight:700;color:var(--coral)}
+.context-box{background:var(--paper2);border:1px solid var(--line);border-radius:var(--r10);padding:13px 16px;margin:10px 0;font-size:14.5px;color:var(--ink2);line-height:1.72}
+/* ── COMPANY ── */
+.company-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:14px 0}
+@media(max-width:500px){.company-grid{grid-template-columns:1fr 1fr}}
+.company-btn{padding:11px 14px;border:1.5px solid var(--line);border-radius:var(--r10);background:var(--paper);cursor:pointer;transition:all .2s;text-align:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:500;color:var(--ink2)}
+.company-btn:hover{border-color:var(--coral);color:var(--coral);background:var(--coral-lt)}
+.company-btn.selected{border-color:var(--coral);background:var(--coral-lt);color:var(--coral-dk)}
+.company-name{font-weight:700;display:block;margin-bottom:2px}
+.company-type{font-size:11px;color:var(--ink3);font-family:'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
+
+.check-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r10);cursor:pointer;transition:all .2s;margin-bottom:8px;box-shadow:var(--shadow-sm)}
+.check-item:hover{border-color:var(--coral);background:var(--coral-lt)}
+.check-item.done{border-color:var(--forest);background:var(--forest-lt)}
+.ci-box{width:22px;height:22px;border:2px solid var(--line);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;transition:all .2s}
+.check-item.done .ci-box{border-color:var(--forest);background:var(--forest);color:white}
+.check-item.done .ci-box::after{content:'✓'}
+.ci-text{font-size:15px;color:var(--ink);font-weight:400;line-height:1.45}
+</style>
+</head>
+<body>
+
+<div class="top-nav">
+  <a href="/" class="tn-link">← Kurssille</a>
+  <span class="tn-title" id="navTitle">Haastattelu</span>
+  <a href="/" class="tn-link">Etusivu →</a>
+</div>
+<div class="prog-track"><div class="prog-fill" id="prog"></div></div>
+
+<div class="step-bar">
+  <div class="step-bar-inner">
+    <div class="sb active" id="sb1" onclick="go(1)">↯<span class="sb-lbl"> Aloitus</span></div>
+    <div class="sb" id="sb2" onclick="go(2)">01<span class="sb-lbl"> Ymmärrys</span></div>
+    <div class="sb" id="sb3" onclick="go(3)">02<span class="sb-lbl"> STAR</span></div>
+    <div class="sb" id="sb4" onclick="go(4)">03<span class="sb-lbl"> Decoder</span></div>
+    <div class="sb" id="sb5" onclick="go(5)">04<span class="sb-lbl"> Kirjoita</span></div>
+    <div class="sb" id="sb6" onclick="go(6)">05<span class="sb-lbl"> Vastaväite</span></div>
+    <div class="sb" id="sb7" onclick="go(7)">06<span class="sb-lbl"> Spot flaw</span></div>
+    <div class="sb" id="sb8" onclick="go(8)">07<span class="sb-lbl"> Hissipuhe</span></div>
+    <div class="sb" id="sb9" onclick="go(9)">08<span class="sb-lbl"> Yritys</span></div>
+    <div class="sb" id="sb10" onclick="go(10)">09<span class="sb-lbl"> Tilanteet</span></div>
+    <div class="sb" id="sb11" onclick="go(11)">10<span class="sb-lbl"> Vaikeat</span></div>
+    <div class="sb" id="sb12" onclick="go(12)">🏆<span class="sb-lbl"> Ansaitse</span></div>
+  </div>
+</div>
+
+<!-- ══ S1 ══ -->
+<div class="screen active" id="s1">
+  <div class="hero-s1">
+    <div class="hero-s1-inner">
+      <div class="hero-rule"></div>
+      <span class="eyebrow">// Moduuli 9 — Haastattelu</span>
+      <h1>Saa heidät<br><em>muistamaan sinut.</em></h1>
+      <p class="big" style="max-width:540px;color:var(--ink2)">Haastattelu ei ole tentti. Se on kahden ihmisen keskustelu jossa sinä osoitat — konkreettisella tarinalla — mitä oikeasti osaat.</p>
+      <div class="hero-missions">
+        <div class="hm"><div class="hm-num">01</div><div class="hm-title">Ymmärrys</div><div class="hm-desc">Mitä työnantaja oikeasti katsoo</div></div>
+        <div class="hm"><div class="hm-num">02–03</div><div class="hm-title">STAR-metodi</div><div class="hm-desc">Tarinankerronnan tekniikka — opi kerran, käytä aina</div></div>
+        <div class="hm"><div class="hm-num">04–07</div><div class="hm-title">Harjoittelu</div><div class="hm-desc">Kirjoita, valitse, tunnista — monipuolisesti</div></div>
+        <div class="hm"><div class="hm-num">08</div><div class="hm-title">Vaikeat kysymykset</div><div class="hm-desc">Ne joita pelätään — ja miten niihin vastataan</div></div>
+        <div class="hm"><div class="hm-num">09</div><div class="hm-title">Ansaitse</div><div class="hm-desc">Omat vastaukset kotiin</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="wrap">
+    <h2 style="margin-top:4px">Ennen kuin aloitat —<br><em>yksi rehellinen kysymys.</em></h2>
+    <p>Ei oikeaa vastausta. Ei väärää vastausta.</p>
+
+    <div style="display:flex;flex-direction:column;gap:9px;margin:18px 0" id="startQ">
+      <div class="sc-opt" onclick="startPick(this,'a')">Jännitän haastatteluja — en tiedä mitä sanoa</div>
+      <div class="sc-opt" onclick="startPick(this,'b')">Olen käynyt haastattelussa mutta ei ole mennyt hyvin</div>
+      <div class="sc-opt" onclick="startPick(this,'c')">En ole vielä käynyt haastattelussa — tämä on ensimmäinen kerta</div>
+      <div class="sc-opt" onclick="startPick(this,'d')">Olen ihan ok haastatteluissa — haluan vain olla parempi</div>
+    </div>
+
+    <div class="reveal-block" id="startReveal">
+      <div class="note-coral note" id="startMsg"></div>
+      <div class="chips" style="margin-top:14px">
+        <span class="chip chip-ink">~40 min</span>
+        <span class="chip chip-coral">STAR-metodi</span>
+        <span class="chip chip-navy">AI-palaute</span>
+        <span class="chip chip-coral">Vastaukset kotiin</span>
+      </div>
+      <div class="nav-row center"><button class="btn btn-coral btn-lg" onclick="go(2)">Aloitetaan →</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ S2 YMMÄRRYS ══ -->
+<div class="screen" id="s2">
+<div class="wrap">
+  <div class="mission-hdr">
+    <span class="mh-eye">Osio 01 / 08</span>
+    <div class="mh-title">Mitä työnantaja oikeasti katsoo?</div>
+    <div class="mh-sub">Ensin omat käsityksesi — sitten totuus. Klikkaa Totta tai Tarua jokaisesta väittämästä.</div>
+  </div>
+
+  <div class="context-box"><strong>Miksi aloitamme tällä?</strong> Useimmat hakijat menevät haastatteluun väärillä uskomuksilla — he ajattelevat rekrytoija arvioi CV:tä tai etsii täydellisiä vastauksia. Totuus on erilainen. Tämä harjoitus paljastaa mitä rekrytoija oikeasti katsoo — ennen kuin opettelemme miten vastata.</div>
+<div class="vinkki"><span class="vinkki-icon">💡</span><div><strong>Vinkki:</strong> Vastaa ensimmäisen tuntemuksesi mukaan — älä mieti liikaa. Se paljastaa mitä oikeasti ajattelet. Väärät vastaukset opettavat enemmän kuin oikeat.</div></div>
+<div id="tfItems">
+    <div class="tf-item" data-correct="false">
+      <div class="tf-statement">Työnantaja valitsee aina hakijan jolla on paras CV ja eniten kokemusta.</div>
+      <div class="tf-btns"><button class="tf-btn true-btn" onclick="tfPick(this,'true')">Totta</button><button class="tf-btn false-btn" onclick="tfPick(this,'false')">Tarua</button></div>
+      <div class="tf-reveal">Työnantaja valitsee ihmisen jonka haluaa nähdä joka päivä töissä. Asenne, energia ja sopivuus tiimiin ratkaisevat yhtä paljon kuin kokemus — usein enemmän. Moni kokenut hakija on hävinnyt vähemmän kokeneelle joka vaikutti innostuneemmalta ja luotettavammalta.</div>
+    </div>
+    <div class="tf-item" data-correct="true">
+      <div class="tf-statement">Päätös tehdään usein ensimmäisten 7 minuutin aikana — ennen kuin olet vastannut kaikkiin kysymyksiin.</div>
+      <div class="tf-btns"><button class="tf-btn true-btn" onclick="tfPick(this,'true')">Totta</button><button class="tf-btn false-btn" onclick="tfPick(this,'false')">Tarua</button></div>
+      <div class="tf-reveal">Totta. Ensivaikutelma muodostuu sekunneissa ja vahvistuu ensimmäisten minuuttien aikana. Miten tulet sisään, kättelysi, katseesi, äänesi — kaikki tämä tapahtuu ennen kuin sanot sanaakaan vastauksesta.</div>
+    </div>
+    <div class="tf-item" data-correct="false">
+      <div class="tf-statement">Jos et osaa vastata johonkin kysymykseen, haastattelu on käytännössä ohi.</div>
+      <div class="tf-btns"><button class="tf-btn true-btn" onclick="tfPick(this,'true')">Totta</button><button class="tf-btn false-btn" onclick="tfPick(this,'false')">Tarua</button></div>
+      <div class="tf-reveal">Tarua. Rekrytoija ei odota täydellisiä vastauksia. He haluavat nähdä miten reagoit paineessa. "En tiedä, mutta halusin oppia lisää tästä koska..." on paljon parempi kuin keksitty vastaus. Rehellisyys + uteliaisuus = vahvuus.</div>
+    </div>
+    <div class="tf-item" data-correct="true">
+      <div class="tf-statement">Kehonkieli — katsekontakti, asento, ääni — on yhtä tärkeää kuin mitä sanot.</div>
+      <div class="tf-btns"><button class="tf-btn true-btn" onclick="tfPick(this,'true')">Totta</button><button class="tf-btn false-btn" onclick="tfPick(this,'false')">Tarua</button></div>
+      <div class="tf-reveal">Totta. Viestinnästä noin 55% on kehonkieltä. Voit sanoa täydellisen vastauksen mutta jos katsot lattiaan ja puhut hiljaa — sanoma menee ohi. Hyvä ryhti, katsekontakti ja rauhallinen ääni viestivät itseluottamusta ennen kuin sanat tekevät mitään.</div>
+    </div>
+    <div class="tf-item" data-correct="false">
+      <div class="tf-statement">Työnantajat etsivät täydellisiä ihmisiä joilla ei ole heikkouksia.</div>
+      <div class="tf-btns"><button class="tf-btn true-btn" onclick="tfPick(this,'true')">Totta</button><button class="tf-btn false-btn" onclick="tfPick(this,'false')">Tarua</button></div>
+      <div class="tf-reveal">Tarua. He tietävät ettei kukaan ole täydellinen. He etsivät ihmistä joka haluaa yrittää, oppia ja kasvaa. Hakija joka myöntää heikkouden JA kertoo miten kehittyy on paljon uskottavampi kuin joka väittää olevansa täydellinen.</div>
+    </div>
+  </div>
+
+  <div class="reveal-block" id="tfDoneMsg">
+    <div class="reveal-divider"><span>Viisi väittämää käyty läpi</span></div>
+    <div style="display:flex;align-items:center;gap:22px;background:var(--paper);border-radius:var(--r20);padding:24px 28px;border:1px solid var(--line);box-shadow:var(--shadow)">
+      <div><div class="tf-score" id="tfScoreNum">—</div><div class="tf-score-sub">oikein / 5</div></div>
+      <div style="flex:1"><p style="margin:0;font-size:15.5px" id="tfScoreMsg"></p></div>
+    </div>
+    <div class="note-coral note" style="margin-top:14px"><strong>Tärkein havainto:</strong> Työnantaja ei palkkaa CV:tä. Hän palkkaa ihmisen. Tarina joka osoittaa asennetta, rehellisyyttä ja halua oppia menee pidemmälle kuin lista suorituksia.</div>
+    <div class="nav-row"><button class="btn btn-outline" onclick="go(1)">← Takaisin</button><button class="btn btn-coral btn-lg" onclick="go(3)">STAR-metodi →</button></div>
+  </div>
+  <div id="nav2wait" class="nav-row"><button class="btn btn-outline" onclick="go(1)">← Takaisin</button><span style="font-size:14px;color:var(--ink3)">Vastaa kaikkiin väittämiin</span></div>
+</div>
+</div>
+
+<!-- ══ S3 STAR ══ -->
+<div class="screen" id="s3">
+<div class="wrap">
+  <div class="mission-hdr">
+    <span class="mh-eye">Osio 02 / 08 — STAR-teoria</span>
+    <div class="mh-title">STAR — tarinankerronnan metodi</div>
+    <div class="mh-sub">Yksi tekniikka joka toimii kaikkiin haastattelukysymyksiin. Opi se kerran — käytä lopun elämäsi.</div>
+    <div class="mh-goal"><strong>Miksi STAR?</strong> Ilman rakennetta vastaukset ovat sekavia. Rekrytoija kuulee 20 hakijaa päivässä. Selkeä tarina jää mieleen.</div>
+  </div>
+
+  <h2>Mitä STAR <em>tarkoittaa?</em></h2>
+  <p>Jokainen kirjain on osa tarinaa. Klikkaa jokainen auki — lue esimerkki ennen kuin jatkat.</p>
+
+  <div class="star-grid">
+    <div class="star-card sc-s" id="sc-s" onclick="toggleSC('sc-s')">
+      <div class="sc-letter">S</div>
+      <div class="sc-word">Situation — Tilanne</div>
+      <div class="sc-desc">Missä olit? Milloin? Anna konteksti lyhyesti — 1–2 lausetta.</div>
+      <div class="sc-example">"Olin töissä ruokakaupan kassalla joulukiireiden aikana. Meillä oli pitkä jono ja yksi kollega sairastui juuri ennen vuoron alkua."</div>
+      <div class="sc-hint">Avaa esimerkki</div>
+    </div>
+    <div class="star-card sc-t" id="sc-t" onclick="toggleSC('sc-t')">
+      <div class="sc-letter">T</div>
+      <div class="sc-word">Task — Tehtävä</div>
+      <div class="sc-desc">Mikä oli sinun vastuusi? Mitä sinun piti tehdä?</div>
+      <div class="sc-example">"Minun tehtävänäni oli pitää kassalinja sujuvana ja varmistaa että asiakkaat saavat hyvän palvelun vaikka olimme alimitoitettu."</div>
+      <div class="sc-hint">Avaa esimerkki</div>
+    </div>
+    <div class="star-card sc-a" id="sc-a" onclick="toggleSC('sc-a')">
+      <div class="sc-letter">A</div>
+      <div class="sc-word">Action — Toiminta</div>
+      <div class="sc-desc"><strong>Tärkein osa.</strong> Mitä SINÄ teit? Ei tiimi — sinä. Konkreettisesti.</div>
+      <div class="sc-example">"Pyysin esimiestä heti. Aloitin itse ja pyysin varastosta yhden apulaisen kassalle. Puhuin asiakkaille: 'Pahoittelen odottamista — olemme kohta nopeampia.'"</div>
+      <div class="sc-hint">Avaa esimerkki</div>
+    </div>
+    <div class="star-card sc-r" id="sc-r" onclick="toggleSC('sc-r')">
+      <div class="sc-letter">R</div>
+      <div class="sc-word">Result — Tulos</div>
+      <div class="sc-desc">Mitä tapahtui? Mitä opit? Luku tai konkreettinen tulos.</div>
+      <div class="sc-example">"Jono lyheni 20 minuutissa. Kaksi asiakasta kiitti erikseen. Opin että proaktiivinen viestintä rauhoittaa tilanteen."</div>
+      <div class="sc-hint">Avaa esimerkki</div>
+    </div>
+  </div>
+
+  <div class="note-gold note"><strong>Tärkeä sääntö:</strong> Action-osassa älä koskaan sano "me teimme" tai "tiimimme teki". Rekrytoija haluaa tietää mitä <em>sinä</em> teit. Se on koko metodin ydin.</div>
+
+  <div class="rule"></div>
+  <h2>STAR koottuna — <em>yksi esimerkki</em></h2>
+  <div class="card" style="background:var(--paper2)">
+    <div style="font-size:15.5px;color:var(--ink2);line-height:1.9;font-weight:300">
+      <span style="color:#2B5B8A;font-weight:500">S — </span>"Olin töissä kaupassa. Asiakas tuli valittamaan palautuksesta johon hänellä ei ollut kuittia."<br>
+      <span style="color:#6B3FA0;font-weight:500">T — </span>"Minun tehtävänäni oli ratkaista tilanne niin että asiakas lähtee tyytyväisenä."<br>
+      <span style="color:var(--forest);font-weight:500">A — </span>"Kuuntelin ensin rauhallisesti. Pyysin anteeksi epämukavuutta. Tarjosin kaksi vaihtoehtoa: palautus lahjakorttina tai alennus seuraavaan ostokseen."<br>
+      <span style="color:var(--coral);font-weight:500">R — </span>"Asiakas valitsi lahjakortin ja kiitti erikseen. Tuli takaisin seuraavana viikkona. Esimies käytti tapauksen esimerkkinä tiimipalaverissa."
+    </div>
+  </div>
+  <div class="note-navy note"><strong>Huomaa:</strong> Tarina ei ole pitkä — noin 60–90 sekuntia puhuessa. Selkeä rakenne tekee lyhyestäkin vastauksesta vahvan.</div>
+  <div class="nav-row"><button class="btn btn-outline" onclick="go(2)">← Takaisin</button><button class="btn btn-coral btn-lg" onclick="go(4)">Tunnista STAR itse →</button></div>
+</div>
+</div>
+
+<!-- ══ S4 DECODER ══ -->
+<div class="screen" id="s4">
+<div class="wrap">
+  <div class="mission-hdr">
+    <span class="mh-eye">Osio 03 / 08 — Decoder</span>
+    <div class="mh-title">Tunnista ennen kuin kirjoitat</div>
+    <div class="mh-sub">Valitse kirjain yläpalkista — klikkaa lause johon se kuuluu.</div>
+  </div>
+  <p>Ensin valitset <strong>S / T / A / R</strong> — sitten klikkaat oikean lauseen. Väri kertoo oletko oikeassa.</p>
+
+  <div class="context-box"><strong>Miksi tämä harjoitus ennen kirjoittamista?</strong> Kun osaat tunnistaa S, T, A ja R muiden vastauksissa, alat automaattisesti rakentaa omat vastauksesi oikein. Se on eri taito kuin pelkkä teoria — se on silmäkoulutus joka auttaa haastattelussa.</div>
+<div class="vinkki"><span class="vinkki-icon">💡</span><div><strong>Miten toimia:</strong> Klikkaa ensin kirjain ylhäältä (S / T / A / R) — se aktivoituu. Sitten klikkaa lause johon se kuuluu. Väri kertoo heti oletko oikeassa. Jos meni väärin — lue selitys ja yritä uudelleen.</div></div>
+<div class="decoder-label-row" id="decoderLabels">
+    <button class="decoder-label dl-s" onclick="selectDL('S',this)"><em>S</em> — Tilanne</button>
+    <button class="decoder-label dl-t" onclick="selectDL('T',this)"><em>T</em> — Tehtävä</button>
+    <button class="decoder-label dl-a" onclick="selectDL('A',this)"><em>A</em> — Toiminta</button>
+    <button class="decoder-label dl-r" onclick="selectDL('R',this)"><em>R</em> — Tulos</button>
+  </div>
+
+  <div class="decoder-answer" id="decoderAnswer">
+    <div class="decoder-sent" data-correct="T" onclick="assignDL(this)"><div class="ds-text">"Esimieheni pyysi minua hoitamaan tyytymättömän asiakkaan koska olin ainoa joka puhui hänen kieltään."</div><div class="ds-badge" id="db0">?</div></div>
+    <div class="decoder-sent" data-correct="S" onclick="assignDL(this)"><div class="ds-text">"Olin puhelimessa asiakaspalvelussa ja asiakas soitti kolmatta kertaa saman ongelman kanssa — aiemmat agentit eivät olleet ratkaisseet sitä."</div><div class="ds-badge" id="db1">?</div></div>
+    <div class="decoder-sent" data-correct="A" onclick="assignDL(this)"><div class="ds-text">"Pyysin asiakasta kertomaan alusta asti mitä tapahtui. Kuuntelin ilman keskeyttämistä. Kirjasin kaiken ylös ja soitin tekniselle tuelle — jäin linjalle kunnes ongelma ratkesi."</div><div class="ds-badge" id="db2">?</div></div>
+    <div class="decoder-sent" data-correct="R" onclick="assignDL(this)"><div class="ds-text">"Ongelma ratkesi 15 minuutissa. Asiakas sanoi: 'Sinä olit ensimmäinen joka oikeasti kuunteli.' Esimies merkitsi puhelun laadunvarmistuksen esimerkiksi."</div><div class="ds-badge" id="db3">?</div></div>
+  </div>
+
+  <div id="decoderMsg" style="display:none" class="note-coral note"></div>
+
+  <div class="reveal-block" id="decoderReveal">
+    <div class="reveal-divider"><span>Decoder suoritettu</span></div>
+    <div class="note-forest note">✓ <strong>Huomasitko?</strong> Järjestys ei aina ole S→T→A→R. Tässä T tuli ennen S:ää — se on ok. STAR on rakenne, ei kaava. Tärkeintä on että kaikki neljä osaa löytyvät.</div>
+    <div class="nav-row"><button class="btn btn-outline" onclick="go(3)">← Takaisin</button><button class="btn btn-coral btn-lg" onclick="go(5)">Kirjoita oma →</button></div>
+  </div>
+  <div id="nav4wait" class="nav-row"><button class="btn btn-outline" onclick="go(3)">← Takaisin</button><span style="font-size:14px;color:var(--ink3)">Tunnista kaikki neljä osaa ensin</span></div>
+</div>
+</div>
+
+<!-- ══ S5 KIRJOITA ══ -->
+<div class="screen" id="s5">
+<div class="wrap">
+  <div class="mission-hdr">
+    <span class="mh-eye">Osio 04 / 08 — Kirjoita</span>
+    <div class="mh-title">Yksi vastaus — oikeaan kysymykseen</div>
+    <div class="mh-sub">Tärkein asiakaspalvelun haastattelukysymys. Kirjoita STAR-rakennetta käyttäen — jokaiselle osalle oma kenttä.</div>
+    <div class="mh-goal"><strong>Kysymys:</strong> "Kerro tilanteesta jossa asiakas oli selvästi tyytymätön. Mitä tapahtui ja mitä teit?"</div>
+  </div>
+
+  <p>Käytä omaa oikeaa kokemustasi — kassalta, ravintolasta, puhelimesta, arjesta. Jos ei ole työkokemusta: koulu, harrastus tai kotitilanne kelpaa täysin.</p>
+  <div class="note-gold note" style="margin-bottom:18px"><strong>Ennen kirjoittamista:</strong> Sulje silmät hetki. Muistele — onko koskaan ollut hetkeä jossa joku oli tyytymätön ja sinä ratkaisit sen? Pieni arjen hetki toimii parhaiten.</div>
+
+  <div class="star-scaffold">
+    <div class="ss-field ss-s"><div class="ss-letter">S</div><div class="ss-title">Tilanne — missä ja milloin?</div><textarea id="w_s" placeholder="Olin töissä / koulussa / harrastuksessa..." rows="3" oninput="S.w_s=this.value;checkWrite()"></textarea></div>
+    <div class="ss-field ss-t"><div class="ss-letter">T</div><div class="ss-title">Tehtävä — mikä oli vastuusi?</div><textarea id="w_t" placeholder="Minun piti / vastuullani oli..." rows="3" oninput="S.w_t=this.value;checkWrite()"></textarea></div>
+    <div class="ss-field ss-a"><div class="ss-letter">A</div><div class="ss-title">Toiminta — mitä SINÄ teit?</div><textarea id="w_a" placeholder="Ensin tein... sitten... pyysin..." rows="3" oninput="S.w_a=this.value;checkWrite()"></textarea></div>
+    <div class="ss-field ss-r"><div class="ss-letter">R</div><div class="ss-title">Tulos — mitä tapahtui?</div><textarea id="w_r" placeholder="Tilanne ratkesi kun... Opin..." rows="3" oninput="S.w_r=this.value;checkWrite()"></textarea></div>
+  </div>
+
+  <div class="vinkki"><span class="vinkki-icon">✍️</span><div><strong>Ennen kuin lähetät arviointiin:</strong> Lue vastauksesi läpi kerran. Tarkista: onko Action-osassasi sana "me"? Jos on — muuta se "minä". Rekrytoija haluaa tietää mitä SINÄ teit, ei mitä tiimi teki. Tämä yksi muutos on yleisin parannus jonka AI antaa.</div></div>
+<button class="btn btn-coral btn-lg" id="evalWriteBtn" onclick="evalWrite()" disabled>Arvioi vastaukseni →</button>
+  <div class="ai-fb" id="writeFb"><span class="ai-lbl">Rekrytoijan silmin</span><span id="writeFbT"></span></div>
+  <div class="reveal-block" id="writeReveal">
+    <div class="nav-row"><button class="btn btn-outline" onclick="go(4)">← Takaisin</button><button class="btn btn-coral btn-lg" onclick="go(6)">Puolusta vastaustasi →</button></div>
+  </div>
+  <div class="nav-row" style="margin-top:20px;padding-top:0;border:none"><button class="btn btn-outline" onclick="go(4)">← Takaisin</button></div>
+</div>
+</div>
+
+<!-- ══ S6 VASTAVÄITE ══ -->
+<div class="screen" id="s6">
+<div class="wrap">
+  <div class="mission-hdr">
+    <span class="mh-eye">Osio 05 / 11 — Vastaväite</span>
+    <div class="mh-title">Rekrytoija haluaa tietää lisää</div>
+    <div class="mh-sub">Hän luki vastauksesi. Nyt hän haastaa sinut. Tämä on se hetki jota useimmat eivät osaa odottaa.</div>
+    <div class="mh-goal"><strong>Miksi tämä on vaikea:</strong> Olet valmistellut vastauksesi — mutta et ole valmistautunut puolustamaan sitä. Rekrytoija testaa onko tarina aito.</div>
+  </div>
+
+  <div class="context-box" id="vastaBoxContext">Sinun STAR-vastauksesi ladataan tähän...</div>
+
+  <div class="vinkki"><span class="vinkki-icon">💡</span><div><strong>Miten vastata vastaväitteeseen:</strong> Älä panikoi. Älä muuta vastaustasi. Lisää yksityiskohtia — konkreettinen lause, luku tai tulos joka todistaa mitä sanoit. "Tarkennuksena vielä — sen lisäksi mitä sanoin, tarkoitin nimenomaan..."</div></div>
+
+  <div class="panel-navy" style="margin:16px 0">
+    <span class="panel-navy-lbl">Rekrytoija kysyy</span>
+    <div id="vastaquestion" style="font-family:'Cormorant Garamond',serif;font-size:20px;font-style:italic;color:#fff;line-height:1.5">Ladataan kysymystä...</div>
+  </div>
+
+  <div class="vinkki"><span class="vinkki-icon">⚠</span><div><strong>Huomaa:</strong> Rekrytoija ei epäile sinua — hän haluaa enemmän. "Kerro lisää" on positiivinen merkki, ei hyökkäys.</div></div>
+
+  <span class="lbl">Vastauksesi vastaväitteeseen</span>
+  <textarea id="w_vastav" placeholder="Tarkennuksena vielä — sen lisäksi mitä sanoin... / Tarkoitin nimenomaan sitä että... / Konkreettisesti tapahtui niin että..." rows="5" oninput="S.w_vastav=this.value;checkVastav()"></textarea>
+
+  <button class="btn btn-coral btn-lg" id="evalVastavBtn" onclick="evalVastav()" disabled style="margin-top:12px">Arvioi puolustukseni →</button>
+  <div class="ai-fb" id="vastavFb"><span class="ai-lbl">Rekrytoijan reaktio</span><span id="vastavFbT"></span></div>
+
+  <div class="reveal-block" id="vastavReveal">
+    <div class="note-forest note" style="margin-top:14px"><strong>Hyvin tehty.</strong> Vastaväitteeseen vastaaminen on taito jota harva harjoittelee. Nyt sinulla on kokemus siitä miltä se tuntuu — ennen kuin se tapahtuu oikeasti.</div>
+    <div class="nav-row"><button class="btn btn-outline" onclick="go(5)">← Takaisin</button><button class="btn btn-coral btn-lg" onclick="go(7)">Spot the Flaw →</button></div>
+  </div>
+  <div class="nav-row" style="margin-top:20px;padding-top:0;border:none"><button class="btn btn-outline" onclick="go(5)">← Takaisin</button></div>
+</div>
+</div>
+
+<!-- ══ S7 SPOT THE FLAW ══ -->
+<div class="screen" id="s7">
+<div class="wrap">
+  <div class="mission-hdr">
+    <span class="mh-eye">Osio 06 / 11 — Tunnista vika</span>
+    <div class="mh-title">Mikä tässä vastauksessa on pielessä?</div>
+    <div class="mh-sub">Viisi kierrosta. Yksi vastaus per kierros — näyttää hyvältä mutta ei ole. Kirjoita mikä on vialla, sitten näet korjatun version.</div>
+    <div class="mh-goal"><strong>Miksi tämä on vaikea:</strong> Kaikki vastaukset kuulostavat ihan ok. Vika on hienovaraisempi — juuri sellainen jonka rekrytoija huomaa mutta hakija ei.</div>
+  </div>
+
+  <div class="context-box"><strong>Miksi tämä on arvokkaampi kuin A/B-valinta?</strong> Useimmat haastatteluvalmistelut näyttävät esimerkkejä hyvistä vastauksista. Tämä harjoitus tekee päinvastoin — näyttää vastauksen joka kuulostaa hyvältä mutta ei ole. Kun opit tunnistamaan vian muiden vastauksissa, näet saman vian omissasi ennen kuin rekrytoija näkee sen.</div>
+<div class="vinkki"><span class="vinkki-icon">🔍</span><div><strong>Vinkki:</strong> Lue vastaus kuin rekrytoija — nopeasti, skeptisesti. Kysy itseltäsi: "Todistaisiko tämä jotain konkreettista?" Jos vastaus on pelkästään adjektiiveja ja lupauksia ilman tarinaa tai lukua — siellä on vika.</div></div>
+<div class="ab-progress" id="abProgress">
+    <div class="ab-dot current"></div><div class="ab-dot"></div><div class="ab-dot"></div><div class="ab-dot"></div><div class="ab-dot"></div>
+  </div>
+  <div id="abContainer"></div>
+
+  <div class="reveal-block" id="abDone">
+    <div class="reveal-divider"><span>Viisi kierrosta suoritettu</span></div>
+    <div style="background:var(--paper);border-radius:var(--r20);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px 28px">
+      <h3 style="margin-bottom:8px">Mitä opit tästä harjoituksesta?</h3>
+      <p style="margin:0;font-size:15.5px;color:var(--ink2)">Jokainen vika oli erilainen — mutta yhteinen tekijä: vastaus kuulosti hyvältä pinnalta. Rekrytoija kuulee sata vastausta viikossa. Hän erottaa fraasit oikeista tarinoista välittömästi.</p>
+    </div>
+    <div class="nav-row"><button class="btn btn-outline" onclick="go(6)">← Takaisin</button><button class="btn btn-coral btn-lg" onclick="go(8)">Hissipuhe →</button></div>
+  </div>
+  <div class="nav-row" style="margin-top:20px;padding-top:0;border:none"><button class="btn btn-outline" onclick="go(5)">← Takaisin</button></div>
+</div>
+</div>
+
+<!-- ══ S8 HISSIPUHE ══ -->
+<div class="screen" id="s8">
+<div class="wrap">
+  <div class="mission-hdr">
+    <span class="mh-eye">Osio 07 / 11 — Hissipuhe</span>
+    <div class="mh-title">"Kerro itsestäsi" — ensimmäinen ja tärkein kysymys</div>
+    <div class="mh-sub">Jokainen haastattelu alkaa tällä. Useimmat vastaavat liian pitkästi, liian yleisesti tai liian hiljaa. Rakennetaan sinun vastauksesi — kolmesta palasesta.</div>
+    <div class="mh-goal"><strong>Tavoite:</strong> 45–60 sekuntia. Konkreettinen. Suunnattu juuri tähän rooliin.</div>
+  </div>
+
+  <div class="context-box"><strong>Miksi "Kerro itsestäsi" on niin tärkeä — ja niin vaikea?</strong> Se on ensimmäinen kysymys jokaisessa haastattelussa. Se asettaa ensivaikutelman. Jos vastaus on pitkä, epäselvä tai alkaa CV:n lukemisella — rekrytoija menettää mielenkiinnon heti. Täydellinen hissipuhe kestää 45–60 sekuntia ja vastaa yhteen kysymykseen: <em>miksi sinä, tähän rooliin, juuri nyt?</em></div>
+<div class="vinkki"><span class="vinkki-icon">🎯</span><div><strong>Kolme sudenkuoppaa:</strong> (1) Liian pitkä — yli 90 sekuntia on liikaa, (2) Alkaa "Olen syntynyt..." — kukaan ei kysynyt, (3) Geneerinen — "Olen asiakaspalveluorientoitunut" ei tarkoita mitään. Konkreettinen tausta + yksi taito + suunta = toimii aina.</div></div>
+<h2>Kolme palasta — <em>täytä jokainen</em></h2>
+  <p>Ei tarvitse olla täydellinen ensimmäisellä kerralla. Kirjoita rehellisesti — tekoäly rakentaa siitä puheenvuoron.</p>
+
+  <div style="display:grid;grid-template-columns:1fr;gap:12px;margin:18px 0">
+    <div style="background:var(--paper);border:1.5px solid rgba(43,91,138,.3);border-radius:var(--r14);padding:18px 20px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-style:italic;color:#2B5B8A;margin-bottom:4px">1</div>
+      <span class="lbl">Tausta — kuka olet ja mitä olet tehnyt?</span>
+      <p style="font-size:14px;margin-bottom:8px">Työ, opinnot, arki — missä olet ollut? Yksi konkreettinen asia.</p>
+      <textarea id="hp1" placeholder="Esim: Tein kolme vuotta töitä ruokakaupassa kassalla. Tai: Olen hoitanut lapsia kotona viisi vuotta..." rows="2" oninput="S.hp1=this.value;checkHP()"></textarea>
+    </div>
+    <div style="background:var(--paper);border:1.5px solid rgba(45,90,74,.3);border-radius:var(--r14);padding:18px 20px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-style:italic;color:var(--forest);margin-bottom:4px">2</div>
+      <span class="lbl">Vahvuus — mitä sinä osaat erityisesti?</span>
+      <p style="font-size:14px;margin-bottom:8px">Yksi taito jota olet käyttänyt oikeassa tilanteessa. Ei lista — yksi asia.</p>
+      <textarea id="hp2" placeholder="Esim: Pystyn rauhoittamaan hankalia tilanteita — kerran asiakas... Tai: Opin uudet järjestelmät nopeasti..." rows="2" oninput="S.hp2=this.value;checkHP()"></textarea>
+    </div>
+    <div style="background:var(--paper);border:1.5px solid rgba(200,92,60,.3);border-radius:var(--r14);padding:18px 20px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-style:italic;color:var(--coral);margin-bottom:4px">3</div>
+      <span class="lbl">Suunta — mitä haet tällä hakemuksella?</span>
+      <p style="font-size:14px;margin-bottom:8px">Miksi tämä rooli, tässä yrityksessä, juuri nyt? Yksi rehellinen syy.</p>
+      <textarea id="hp3" placeholder="Esim: Haen roolia jossa pääsen kehittymään asiakaspalvelussa isommassa ympäristössä. Tai: Haluan vakaan työn jossa kohtaan ihmisiä päivittäin..." rows="2" oninput="S.hp3=this.value;checkHP()"></textarea>
+    </div>
+  </div>
+
+  <button class="btn btn-coral btn-lg" id="hpBuildBtn" onclick="buildHP()" disabled>Rakenna hissipuheeni →</button>
+
+  <div class="ai-fb" id="hpFb">
+    <span class="ai-lbl">Sinun hissipuheesi</span>
+    <span id="hpFbT"></span>
+  </div>
+
+  <div class="reveal-block" id="hpReveal">
+    <div class="rule"></div>
+    <h2>Nyt: <em>rekrytoijan silmin</em></h2>
+    <p>Tekoäly lukee puheesi uudelleen — tällä kertaa rekrytoijana. Mitä hän kuulee? Mitä hän miettii? Mikä puuttuu?</p>
+
+    <button class="btn btn-outline" id="hpFilterBtn" onclick="filterHP()">Näytä rekrytoijan näkökulma →</button>
+
+    <div class="ai-fb" id="hpFilterFb">
+      <span class="ai-lbl">Rekrytoijan silmin</span>
+      <span id="hpFilterT"></span>
+    </div>
+
+    <div class="reveal-block" id="hpFixReveal">
+      <div class="rule"></div>
+      <h2>Viimeistely — <em>yksi muutos</em></h2>
+      <p>Rekrytoija tunnisti jotain. Muuta yksi asia omassa vastauksessasi — sitten kopioi valmis versio.</p>
+      <span class="lbl">Muokattu versio</span>
+      <textarea id="hpFinal" placeholder="Kopioi yllä oleva hissipuhe ja muuta yksi asia rekrytoijan palautteen perusteella..." rows="6" oninput="S.hpFinal=this.value"></textarea>
+      <button class="copy-btn" onclick="copyHP()" style="margin-top:8px">📋 Kopioi hissipuhe</button>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-outline" onclick="go(7)">← Takaisin</button>
+      <button class="btn btn-coral btn-lg" onclick="go(9)">Yrityshaku →</button>
+    </div>
+  </div>
+  <div class="nav-row" style="margin-top:20px;padding-top:0;border:none">
+    <button class="btn btn-outline" onclick="go(6)">← Takaisin</button>
+  </div>
+</div>
+</div>
+
+
+<!-- ══ S9 YRITYSHAKU ══ -->
+<div class="screen" id="s9">
+<div class="wrap">
+  <div class="mission-hdr">
+    <span class="mh-eye">Osio 08 / 11 — Yrityshaku</span>
+    <div class="mh-title">Tutki ennen kuin menet</div>
+    <div class="mh-sub">Rekrytoija huomaa aina sen joka on tehnyt kotitehtävänsä. Yksi tarkka fakta yrityksen sivuilta vie pidemmälle kuin kymmenen yleistä lausetta.</div>
+    <div class="mh-goal"><strong>Miksi tämä harjoitus on tärkeä:</strong> 90% hakijoista sanoo "olen kiinnostunut yrityksestänne" — ilman mitään konkreettista. Se kuulostaa laiskalta. Yksi rehellinen havainto yrityksen sivulta tekee sinut muistettavaksi. Ei tarvitse olla suuri analyysi — yksi asia riittää.</div>
+    <div class="mh-goal"><strong>Tavoite:</strong> Kirjoita "Miksi tämä yritys" -vastaus joka sisältää yhden oikean asian jonka olet löytänyt heidän sivuiltaan tänään.</div>
+  </div>
+
+  <h2>Valitse yritys — <em>sinun hakusi</em></h2>
+  <p>Valitse se yritys johon hakisit asiakaspalvelutyötä. Tai käytä yritystä johon olet jo hakenut.</p>
+
+  <div class="company-grid" id="companyGrid">
+    <button class="company-btn" onclick="selectCompany(this,'Elisa','Teleoperaattori','https://www.elisa.fi/')"><span class="company-name">Elisa</span><span class="company-type">Teleoperaattori</span></button>
+    <button class="company-btn" onclick="selectCompany(this,'S-ryhmä','Kauppa & palvelut','https://www.s-ryhma.fi/')"><span class="company-name">S-ryhmä</span><span class="company-type">Kauppa &amp; palvelut</span></button>
+    <button class="company-btn" onclick="selectCompany(this,'OP Ryhmä','Pankki & vakuutus','https://www.op.fi/')"><span class="company-name">OP Ryhmä</span><span class="company-type">Pankki &amp; vakuutus</span></button>
+    <button class="company-btn" onclick="selectCompany(this,'DNA','Teleoperaattori','https://www.dna.fi/')"><span class="company-name">DNA</span><span class="company-type">Teleoperaattori</span></button>
+    <button class="company-btn" onclick="selectCompany(this,'Mehiläinen','Terveys & hyvinvointi','https://www.mehilainen.fi/')"><span class="company-name">Mehiläinen</span><span class="company-type">Terveys &amp; hyvinvointi</span></button>
+    <button class="company-btn" onclick="selectCompany(this,'Kesko','Kauppa & palvelut','https://www.kesko.fi/')"><span class="company-name">Kesko</span><span class="company-type">Kauppa &amp; palvelut</span></button>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+    <input type="text" id="customCompany" placeholder="Tai kirjoita oma yritys..." style="flex:1" oninput="">
+    <button class="btn btn-outline btn-sm" onclick="selectCompany(null,document.getElementById('customCompany').value,'','')">Valitse →</button>
+  </div>
+
+  <div class="reveal-block" id="companyReveal">
+    <div class="panel-navy">
+      <div class="panel-navy-lbl">↗ Tehtävä — avaa yrityksen sivu</div>
+      <div class="panel-navy-body" id="companyTaskBody">Avaa <strong id="companyLinkText">yrityksen etusivu</strong> (linkki alla). Valitse valikosta esim. <strong>Tietoa meistä</strong>, <strong>Uutiset</strong> tai <strong>Asiakaspalvelu</strong> — ja etsi <strong>yksi</strong> konkreettinen asia jonka voit mainita haastattelussa.</div>
+      <a id="companyLink" href="#" target="_blank" rel="noopener noreferrer" class="ext-btn btn-coral" style="display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:var(--r6);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;text-decoration:none">↗ Avaa etusivu — <span id="companyLinkName">yritys</span></a>
+    </div>
+
+    <div class="vinkki"><span class="vinkki-icon">💡</span><div><strong>Miten löydät faktan:</strong> Etusivu aukeaa aina — älä syötä pitkiä osoitteita käsin. Käytä ylävalikkoa: <em>Tietoa meistä</em>, <em>Uutiset / Ajankohtaista</em>, <em>Vastuullisuus</em> tai <em>Työpaikat</em>. Valitse yksi kohta ja lue 2–3 minuuttia. Hyvä fakta alkaa: "Luin sivuiltanne että…"</div></div>
+
+    <div class="context-box"><strong>Mitä "konkreettinen asia" tarkoittaa?</strong> Ei "he ovat iso yritys" tai "heillä on hyvä maine". Se on liian yleistä — rekrytoija kuulee sen joka päivä. Konkreettinen: "Luin että heillä on meneillään X hanke / he ovat juuri avanneet Y palvelun / heidän strategiassaan mainitaan Z". Tarkka, spesifi, oikeasti luettu.</div>
+<div class="vinkki"><span class="vinkki-icon">🌐</span><div><strong>Mistä löydät hyvän faktan nopeasti:</strong> Paina Ctrl+F (Cmd+F Mac) yrityksen sivulla ja hae sanoja: "uusi", "2024", "2025", "lanseeraus", "kasvu", "asiakkaat". Tai mene suoraan "Uutiset" tai "Ajankohtaista" -osioon. 2–3 minuuttia riittää.</div></div>
+<span class="lbl">Mitä löysit — yksi konkreettinen asia yrityksen sivulta</span>
+    <textarea id="companyFact" placeholder="Esim: Luin että Elisa on lanseerannut tekoälypohjaisen asiakaspalvelubotin joka hoitaa 40% yhteydenotoista. / S-ryhmä panostaa tänä vuonna erityisesti... / OP:lla on käynnissä hanke jossa..." rows="3" oninput="S.companyFact=this.value;checkCompany()"></textarea>
+
+    <div class="reveal-block" id="company2">
+      <div class="rule"></div>
+      <h2>Kirjoita <em>"Miksi tämä yritys?"</em></h2>
+      <p>Nyt yhdistät: mitä sinulla on + mitä löysit sivulta. Rekrytoija kuulee välittömästi eron hakijaan joka sanoo "olen kiinnostunut yrityksestänne" vs. hakijaan joka viittaa johonkin oikeaan.</p>
+
+      <div class="vinkki"><span class="vinkki-icon">📝</span><div><strong>Rakenne:</strong> "Haen tähän rooliin koska [miksi tämä työ]. Teistä kiinnosti erityisesti [se mitä löysit sivulta]. Uskon että [mitä sinä tuot]."</div></div>
+
+      <span class="lbl">Vastauksesi — "Miksi juuri tämä yritys?"</span>
+      <textarea id="w_company" placeholder='"Haen tähän asiakaspalvelurooliin koska... Teistä kiinnosti erityisesti se että luin sivuiltanne... Uskon että tuon mukanani..."' rows="5" oninput="S.w_company=this.value;checkCompany()"></textarea>
+      <button class="btn btn-coral btn-sm" id="evalCompanyBtn" onclick="evalCompany()" disabled style="margin-top:10px">Arvioi vastaukseni →</button>
+      <div class="ai-fb" id="companyFb"><span class="ai-lbl">Rekrytoijan silmin</span><span id="companyFbT"></span></div>
+
+      <div class="reveal-block" id="companyDone">
+        <div class="nav-row"><button class="btn btn-outline" onclick="go(8)">← Takaisin</button><button class="btn btn-coral btn-lg" onclick="go(10)">Tilannepeli →</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row" style="margin-top:20px;padding-top:0;border:none"><button class="btn btn-outline" onclick="go(8)">← Takaisin</button></div>
+</div>
+</div>
+
+<!-- ══ S10 TILANTEET ══ -->
+<div class="screen" id="s10">
+<div class="wrap">
+  <div class="mission-hdr">
+    <span class="mh-eye">Osio 09 / 11 — Tilannepeli</span>
+    <div class="mh-title">Mitä tekisit tässä tilanteessa?</div>
+    <div class="mh-sub">Neljä oikeaa haastattelutilannetta. Valitse paras vaihtoehto — näet miksi se toimii.</div>
+  </div>
+  <div class="context-box"><strong>Mitä tilannepeli testaa?</strong> Tässä ei ole yhtä oikeaa vastausta — on vastauksia jotka kertovat rekrytoijalle miten ajattelet paineen alla. Nopeat, nopeat, ja miten reagoit kun et tiedä vastausta. Kaikki neljä tilannetta ovat suoraan oikeista suomalaisista haastatteluista.</div>
+<div class="vinkki"><span class="vinkki-icon">💡</span><div><strong>Paras strategia:</strong> Valitse se vaihtoehto joka tuntuu rehellisimmältä — ei se joka kuulostaa "oikealta vastaukselta". Rekrytoija kuulee välittömästi erotuksen. Autenttisuus voittaa aina teatteriesityksen.</div></div>
+<div id="scenContainer"></div>
+  <div class="reveal-block" id="scenDone">
+    <div class="reveal-divider"><span>Kaikki neljä tilannetta käyty</span></div>
+    <div class="note-forest note"><strong>Yhteinen teema:</strong> Kaikissa tilanteissa voittava vastaus on sama — rehellinen, rauhallinen ja ratkaisukeskeinen. Ei teatteri, ei selittely. Vain selkeä toiminta.</div>
+    <div class="nav-row"><button class="btn btn-outline" onclick="go(9)">← Takaisin</button><button class="btn btn-coral btn-lg" onclick="go(11)">Vaikeat kysymykset →</button></div>
+  </div>
+  <div class="nav-row" style="margin-top:20px;padding-top:0;border:none"><button class="btn btn-outline" onclick="go(9)">← Takaisin</button></div>
+</div>
+</div>
+
+<!-- ══ S11 VAIKEAT ══ -->
+<div class="screen" id="s11">
+<div class="wrap">
+  <div class="mission-hdr">
+    <span class="mh-eye">Osio 10 / 11 — Vaikeat kysymykset</span>
+    <div class="mh-title">Ne joita pelätään</div>
+    <div class="mh-sub">Kolme kysymystä jotka tuntuvat vaikeilta — viimeinen on se joita pelätään eniten.</div>
+  </div>
+
+  <h2 style="margin-bottom:8px">Kysymys 1 — <em>"Kerro heikkoudestasi"</em></h2>
+  <p>Tämä ei ole ansa. Se on mahdollisuus osoittaa itsetuntemusta ja kasvuhalua.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+    <div class="card-coral note" style="border-radius:var(--r14);padding:16px 18px">
+      <h3 style="color:var(--coral);margin-bottom:7px">✗ Vältä näitä</h3>
+      <p style="margin:0;font-size:14.5px;color:var(--coral-dk);font-weight:300">"Olen perfektionisti." — Klisee.<br>"En ole huono missään." — Epäuskottavaa.<br>Heikkous ilman kasvua — pelottavaa.</p>
+    </div>
+    <div class="card-forest note" style="border-radius:var(--r14);padding:16px 18px">
+      <h3 style="color:var(--forest);margin-bottom:7px">✓ Rakenne joka toimii</h3>
+      <p style="margin:0;font-size:14.5px;color:var(--forest);font-weight:300">"Aiemmin minulla oli haaste X. Huomasin sen kun Y tapahtui. Nyt teen Z — esimerkiksi..." <br><br>Heikkous + esimerkki + mitä teen nyt.</p>
+    </div>
+  </div>
+
+  <span class="lbl">Harjoittele — kirjoita oma vastauksesi</span>
+  <textarea id="w_weak" placeholder='"Joskus minulla on ollut vaikea pyytää apua ajoissa. Huomasin tämän kun projekti venyi koska en kertonut ongelmasta esimiehelle tarpeeksi aikaisin. Nyt teen niin että jos ongelma jatkuu yli päivän, otan puheeksi heti..."' rows="5" oninput="S.w_weak=this.value;checkWeak()"></textarea>
+  <button class="btn btn-coral btn-sm" id="weakBtn" onclick="evalWeak()" disabled style="margin-top:10px">Arvioi →</button>
+  <div class="ai-fb" id="weakFb"><span class="ai-lbl">Palaute</span><span id="weakFbT"></span></div>
+
+  <div class="rule"></div>
+
+  <h2 style="margin-bottom:8px">Kysymys 2 — <em>"Miksi haluatte tätä työtä?"</em></h2>
+  <p>Paras vastaus yhdistää sinun tarinasi + tämän yrityksen + tämän roolin.</p>
+  <div class="card" style="background:var(--paper2);border-color:rgba(27,43,75,.15);margin-bottom:18px">
+    <h3 style="color:var(--navy);margin-bottom:8px">Rakenne kolmesta osasta</h3>
+    <p style="margin:0;font-size:15px;line-height:1.82;color:var(--ink2)">
+      <strong style="color:var(--ink)">1. Miksi tämä työ?</strong> — Mitä sinussa tässä roolissa resonoi? Konkreettinen.<br>
+      <strong style="color:var(--ink)">2. Miksi tämä yritys?</strong> — Yksi asia jonka olet selvittänyt. Näyttää että olet valmistautunut.<br>
+      <strong style="color:var(--ink)">3. Mitä tuot?</strong> — Yksi taito tai asenne joka sopii juuri tähän.
+    </p>
+  </div>
+  <span class="lbl">Harjoittele — kirjoita oma vastauksesi</span>
+  <textarea id="w_why" placeholder='"Asiakaspalvelu tuntuu luontevalta koska nautin siitä kun ongelma ratkeaa ja asiakas lähtee eri mielentilassa kuin tuli. Olen seurannut tätä yritystä koska X. Tuon mukana kielitaidon ja sen että pysyn rauhallisena myös kiireessä."' rows="5" oninput="S.w_why=this.value;checkWeak()"></textarea>
+  <button class="btn btn-coral btn-sm" id="whyBtn" onclick="evalWhy()" disabled style="margin-top:10px">Arvioi →</button>
+  <div class="ai-fb" id="whyFb"><span class="ai-lbl">Palaute</span><span id="whyFbT"></span></div>
+
+
+
+  <div class="rule"></div>
+  <h2>Kysymys 3 — <em>"Mitä palkkavaatimuksenne on?"</em></h2>
+  <p>Tämä on kysymys jota useimmat pelkäävät eniten. Hiljaisuus, "en tiedä" tai liian alhainen numero — kaikki ovat virheitä. Mutta vastaus on helppo kun tietää miten.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+    <div class="card-coral note" style="border-radius:var(--r14);padding:16px 18px">
+      <h3 style="color:var(--coral);margin-bottom:7px">✗ Älä sano näin</h3>
+      <p style="margin:0;font-size:14.5px;color:var(--coral-dk);font-weight:300">"En osaa sanoa." — Heikkous.<br>"Mitä tarjoatte?" — Ei vastaus.<br>Liian alhainen luku — aliarvioit itsesi.<br>Kieltäytyminen — epäammattimainen.</p>
+    </div>
+    <div class="card-forest note" style="border-radius:var(--r14);padding:16px 18px">
+      <h3 style="color:var(--forest);margin-bottom:7px">✓ Rakenne joka toimii</h3>
+      <p style="margin:0;font-size:15px;color:var(--forest);font-weight:300">Anna vaihteluväli, ei yhtä lukua.<br>Aloita hieman korkeammalta kuin alin hyväksyttävä.<br>"Etsin X–Y€ kokemukseni ja roolin vaatimusten mukaan."</p>
+    </div>
+  </div>
+
+  <div class="card" style="background:var(--paper2);border-color:rgba(27,43,75,.15);margin-bottom:18px">
+    <h3 style="color:var(--navy);margin-bottom:10px">Asiakaspalvelun palkkataso Suomessa 2025</h3>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--paper);border-radius:var(--r6);border:1px solid var(--line)">
+        <span style="font-size:14.5px;color:var(--ink2)">Asiakaspalvelija — aloittaja</span>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--navy);font-weight:500">2 100–2 400 €/kk</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--paper);border-radius:var(--r6);border:1px solid var(--line)">
+        <span style="font-size:14.5px;color:var(--ink2)">Asiakaspalvelija — kokemus 2–4v</span>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--navy);font-weight:500">2 400–2 900 €/kk</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--paper);border-radius:var(--r6);border:1px solid var(--line)">
+        <span style="font-size:14.5px;color:var(--ink2)">Asiakaspalvelupäällikkö</span>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--navy);font-weight:500">3 000–3 800 €/kk</span>
+      </div>
+    </div>
+    <p style="margin-top:10px;margin-bottom:0;font-size:13.5px;color:var(--ink3)">Lähde: Palkkavertailu.fi, Duunitori palkkaopas 2024–2025. Tarkista aina Duunitorista ennen haastattelua — alat ja alueet vaihtelevat.</p>
+  </div>
+
+  <div class="vinkki"><span class="vinkki-icon">💡</span><div><strong>Suomalainen käytäntö:</strong> Suomalaiset rekrytoijat odottavat vaihteluväliä — ei yhtä lukua. Vaihteluvälin alapää on se alin jonka hyväksyt. Yläpää saa olla 10–15% korkeampi. Jos sinulla on erityisosaamista (kielitaito, tekninen taito) — mainitse se ennen lukua.</div></div>
+
+  <div class="vinkki"><span class="vinkki-icon">🔍</span><div><strong>Tutki ennen haastattelua:</strong> Mene Duunitori.fi → haku omalla nimikkeelläsi → katso "Palkkatiedot". Tai Google: "[nimike] palkka Suomi 2025". Tule haastatteluun tietäen realistinen taso.</div></div>
+
+  <span class="lbl">Harjoittele — kirjoita oma palkkavastauksesi</span>
+  <p style="font-size:14px;margin-bottom:8px">Kirjoita se vaihteluväli jonka sanoisit — ja perustele lyhyesti. Käytä yllä olevia lukuja lähtökohtana.</p>
+  <textarea id="w_palkka" placeholder='"Etsin noin X–Y euroa kuukaudessa. Tähän perustuen kokemukseni asiakaspalvelusta sekä kielitaitoni — puhun suomea, englantia ja..."' rows="4" oninput="S.w_palkka=this.value;checkPalkka()"></textarea>
+  <button class="btn btn-coral btn-sm" id="palkkaBtn" onclick="evalPalkka()" disabled style="margin-top:10px">Arvioi →</button>
+  <div class="ai-fb" id="palkkaFb"><span class="ai-lbl">Palaute</span><span id="palkkaFbT"></span></div>
+
+  <div class="reveal-block" id="palkkaDone">
+    <div class="reveal-divider"><span>Kaikki kolme kysymystä harjoiteltu</span></div>
+    <div class="nav-row">
+      <button class="btn btn-outline" onclick="go(10)">← Takaisin</button>
+      <button class="btn btn-coral btn-lg" onclick="go(12)">Ansaitse — vastaukset kotiin →</button>
+    </div>
+  </div>
+  <div class="nav-row" style="margin-top:20px;padding-top:0;border:none"><button class="btn btn-outline" onclick="go(10)">← Takaisin</button></div>
+</div>
+</div>
+
+<!-- ══ S12 ANSAITSE ══ -->
+<div class="screen" id="s12">
+<div class="wrap">
+  <span class="eyebrow">// Ansaitse — Osio 11 / 11</span>
+  <h1>Tänään opit tämän.<br><em>Se pysyy mukanasi.</em></h1>
+  <p style="margin-bottom:0">Alla näet mitä opit ja mihin käytät sitä — sekä valinnaisesti omat vastauksesi kopioitavaksi.</p>
+
+  <!-- ── TAIDOT — YDIN ── -->
+  <section class="learn-hero" style="margin-top:28px">
+    <span class="learn-hero-badge">Tämän moduulin ydin</span>
+    <h2 class="learn-hero-title">Mitä opit tänään —<br><em>ja mihin käytät sitä.</em></h2>
+    <p class="learn-hero-lead">Nämä eivät ole vain haastattelutaitoja. Jokainen taito toimii kolmessa tilanteessa: hakemisessa, työssä ja uralla.</p>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+
+    <div class="skill-card">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--line);background:var(--coral-lt)">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--ink)">STAR-metodi</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--coral);margin-top:2px">Tarinankerronnan rakenne</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
+        <div style="padding:12px 14px;border-right:1px solid var(--line)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Työnhaussa</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Jokainen haastattelukysymys joka alkaa "Kerro tilanteesta..." — vastaa aina STAR-rakenteella</div>
+        </div>
+        <div style="padding:12px 14px;border-right:1px solid var(--line)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Asiakaspalvelussa</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Kirjaat asiakastilanteet raportteihin selkeästi — mikä tapahtui, mitä teit, mikä oli tulos</div>
+        </div>
+        <div style="padding:12px 14px">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Uralla eteenpäin</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Kun haet ylennystä tai uutta roolia — STAR-tarina konkreettisesta onnistumisesta on paras todiste</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="skill-card">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--line);background:var(--forest-lt)">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--ink)">Yrityshaku ennen haastattelua</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--forest);margin-top:2px">Kotitehtävä joka erottaa sinut</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
+        <div style="padding:12px 14px;border-right:1px solid var(--line)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Työnhaussa</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Ennen jokaista haastattelua — 10 min yrityksen sivulla, yksi fakta talteen. Aina.</div>
+        </div>
+        <div style="padding:12px 14px;border-right:1px solid var(--line)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Asiakaspalvelussa</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Kun palvelet VIP-asiakasta tai iso tili — tutustu heihin etukäteen. Sama logiikka, sama tulos.</div>
+        </div>
+        <div style="padding:12px 14px">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Uralla eteenpäin</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Verkostoitumisessa, myyntikohtaamisissa, kumppaneiden kanssa — taustatyö on ammattilaisen merkki</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="skill-card">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--line);background:var(--navy-lt)">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--ink)">Vastaväitteeseen vastaaminen</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);margin-top:2px">Paineen alla selkeänä pysyminen</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
+        <div style="padding:12px 14px;border-right:1px solid var(--line)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Työnhaussa</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Haastattelija kysyy lisää tai haastaa — lisää yksityiskohtia, älä muuta vastaustasi</div>
+        </div>
+        <div style="padding:12px 14px;border-right:1px solid var(--line)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Asiakaspalvelussa</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Aggressiivinen asiakas haastaa sinut — pysyt rauhallisena, lisäät tietoa, et peru kantaasi</div>
+        </div>
+        <div style="padding:12px 14px">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Uralla eteenpäin</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Palavereissa, ehdotuksissa, neuvotteluissa — kyky puolustaa näkemystä selkeästi on johtajuuden taito</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="skill-card">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--line);background:#FBF6EE">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--ink)">Palkkakeskustelu</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-top:2px">Oma arvosi tiedossa</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
+        <div style="padding:12px 14px;border-right:1px solid var(--line)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Työnhaussa</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Anna aina vaihteluväli, perustele osaamisella — ja tarkista aina markkinataso ennen haastattelua</div>
+        </div>
+        <div style="padding:12px 14px;border-right:1px solid var(--line)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Asiakaspalvelussa</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Kun olet ollut vuoden — pyydä palkkakeskustelua. Sama rakenne: vaihteluväli + perustelu suorituksilla</div>
+        </div>
+        <div style="padding:12px 14px">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Uralla eteenpäin</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Jokainen roolinvaihto on neuvottelu. Ihmiset jotka tietävät markkinatasonsa ansaitsevat enemmän — aina.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="skill-card">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--line);background:var(--coral-lt)">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--ink)">Vian tunnistaminen vastauksissa</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--coral);margin-top:2px">Kriittinen silmä omaan viestintään</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
+        <div style="padding:12px 14px;border-right:1px solid var(--line)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Työnhaussa</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Ennen kuin lähetät hakemuksen — lue se läpi kuin rekrytoija. Onko pelkkiä adjektiiveja vai oikeita tarinoita?</div>
+        </div>
+        <div style="padding:12px 14px;border-right:1px solid var(--line)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Asiakaspalvelussa</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Sähköpostiviestit asiakkaille — onko väite konkreettinen vai epämääräinen? Sama periaate, sama vaikutus.</div>
+        </div>
+        <div style="padding:12px 14px">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px">Uralla eteenpäin</div>
+          <div style="font-size:13.5px;color:var(--ink2);line-height:1.6">Esitykset, raportit, ehdotukset — ero hyvän ja heikon ammattilaisen viestinnässä on juuri tämä: konkreettinen vs. yleinen</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  </section>
+
+  <!-- ── VASTAUKSET (valinnainen) ── -->
+  <section class="earn-stack-wrap">
+    <div class="earn-stack-hdr">
+      <h3>Valmiit vastauksesi <span>(valinnainen)</span></h3>
+      <p>Harjoituksissa kirjoittamasi tekstit — avaa vain jos haluat lukea tai kopioida talteen.</p>
+    </div>
+    <div class="earn-stack">
+      <div class="earn-acc" id="earnAccHP">
+        <button type="button" class="earn-acc-hdr" onclick="toggleEarnAcc('earnAccHP')" aria-expanded="false">
+          <span class="earn-acc-title">✦ Hissipuheesi — "Kerro itsestäsi"</span>
+          <span class="earn-acc-preview" id="earnPrevHP">—</span>
+          <span class="earn-acc-chevron" aria-hidden="true">▼</span>
+        </button>
+        <div class="earn-acc-body">
+          <div class="earn-text" id="earnHP">—</div>
+          <button type="button" class="copy-btn" onclick="copyEarn('earnHP',this)">📋 Kopioi</button>
+        </div>
+      </div>
+      <div class="earn-acc" id="earnAccStar">
+        <button type="button" class="earn-acc-hdr" onclick="toggleEarnAcc('earnAccStar')" aria-expanded="false">
+          <span class="earn-acc-title">✦ STAR-vastauksesi — vaikea asiakas</span>
+          <span class="earn-acc-preview" id="earnPrevStar">—</span>
+          <span class="earn-acc-chevron" aria-hidden="true">▼</span>
+        </button>
+        <div class="earn-acc-body">
+          <div class="earn-text" id="earnStar">—</div>
+          <button type="button" class="copy-btn" onclick="copyEarn('earnStar',this)">📋 Kopioi</button>
+        </div>
+      </div>
+      <div class="earn-acc" id="earnAccCompany">
+        <button type="button" class="earn-acc-hdr" onclick="toggleEarnAcc('earnAccCompany')" aria-expanded="false">
+          <span class="earn-acc-title">✦ Miksi tämä yritys</span>
+          <span class="earn-acc-preview" id="earnPrevCompany">—</span>
+          <span class="earn-acc-chevron" aria-hidden="true">▼</span>
+        </button>
+        <div class="earn-acc-body">
+          <div class="earn-text" id="earnCompany">—</div>
+          <button type="button" class="copy-btn" onclick="copyEarn('earnCompany',this)">📋 Kopioi</button>
+        </div>
+      </div>
+      <div class="earn-acc" id="earnAccPalkka">
+        <button type="button" class="earn-acc-hdr" onclick="toggleEarnAcc('earnAccPalkka')" aria-expanded="false">
+          <span class="earn-acc-title">✦ Palkkavastauksesi</span>
+          <span class="earn-acc-preview" id="earnPrevPalkka">—</span>
+          <span class="earn-acc-chevron" aria-hidden="true">▼</span>
+        </button>
+        <div class="earn-acc-body">
+          <div class="earn-text" id="earnPalkka">—</div>
+          <button type="button" class="copy-btn" onclick="copyEarn('earnPalkka',this)">📋 Kopioi</button>
+        </div>
+      </div>
+      <div class="earn-acc" id="earnAccWeak">
+        <button type="button" class="earn-acc-hdr" onclick="toggleEarnAcc('earnAccWeak')" aria-expanded="false">
+          <span class="earn-acc-title">✦ Heikkousvastauksesi</span>
+          <span class="earn-acc-preview" id="earnPrevWeak">—</span>
+          <span class="earn-acc-chevron" aria-hidden="true">▼</span>
+        </button>
+        <div class="earn-acc-body">
+          <div class="earn-text" id="earnWeak">—</div>
+          <button type="button" class="copy-btn" onclick="copyEarn('earnWeak',this)">📋 Kopioi</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <!-- ── MUISTILISTA ── -->
+  <h2>Muistilista ennen <em>seuraavaa haastattelua</em></h2>
+  <p style="font-size:14px;color:var(--ink3);margin-bottom:14px">Käy läpi ennen jokaista haastattelua — ei vain tätä kertaa.</p>
+  <div style="margin-top:8px" id="checkList">
+    <div class="check-item" onclick="checkItem(this)"><div class="ci-box"></div><div class="ci-text">Tutkin yrityksen nettisivun — tiedän yhden konkreettisen asian mitä he tekevät nyt</div></div>
+    <div class="check-item" onclick="checkItem(this)"><div class="ci-box"></div><div class="ci-text">Hissipuheeni on valmis — 45–60 sekuntia, alkaa konkreettisella faktalla</div></div>
+    <div class="check-item" onclick="checkItem(this)"><div class="ci-box"></div><div class="ci-text">Minulla on STAR-tarina valmiina vähintään kolmesta eri tilanteesta</div></div>
+    <div class="check-item" onclick="checkItem(this)"><div class="ci-box"></div><div class="ci-text">Tiedän mitä sanon heikkoudesta — rakenne: heikkous + esimerkki + mitä teen nyt</div></div>
+    <div class="check-item" onclick="checkItem(this)"><div class="ci-box"></div><div class="ci-text">Tiedän palkkavaihteluvälini — tarkistin Duunitorilta ennen haastattelua</div></div>
+    <div class="check-item" onclick="checkItem(this)"><div class="ci-box"></div><div class="ci-text">Minulla on vähintään yksi kysymys heille — "Millainen on tyypillinen päivä 3kk jälkeen?"</div></div>
+    <div class="check-item" onclick="checkItem(this)"><div class="ci-box"></div><div class="ci-text">Olen 10 minuuttia aikaisin — ilmoitan jos myöhästyn</div></div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- ── YKSI ASIA TEHTÄVÄKSI ── -->
+  <h2>Ennen kuin suljet tämän —<br><em>yksi konkreettinen askel.</em></h2>
+  <p>Ei lista. Ei suunnitelma. Yksi asia jonka teet tänään tai huomenna.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:14px 0">
+    <div style="background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r14);padding:16px 18px;cursor:pointer;transition:all .2s;text-align:center" onclick="pickNext(this,'haastattelu')" id="next1">
+      <div style="font-size:24px;margin-bottom:8px">🎯</div>
+      <div style="font-size:14.5px;font-weight:600;color:var(--ink);margin-bottom:5px">Varaan harjoitushaastattelun</div>
+      <div style="font-size:13px;color:var(--ink3)">Pyydän kaveria tai perheenjäsentä haastattelemaan — käytän hissipuheeni ja yhden STAR-tarinan</div>
+    </div>
+    <div style="background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r14);padding:16px 18px;cursor:pointer;transition:all .2s;text-align:center" onclick="pickNext(this,'hakemus')" id="next2">
+      <div style="font-size:24px;margin-bottom:8px">📝</div>
+      <div style="font-size:14.5px;font-weight:600;color:var(--ink);margin-bottom:5px">Päivitän hakemukseni</div>
+      <div style="font-size:13px;color:var(--ink3)">Luen nykyisen hakemukseni ja tarkistan: onko siellä tarinoita vai pelkkiä väitteitä</div>
+    </div>
+    <div style="background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r14);padding:16px 18px;cursor:pointer;transition:all .2s;text-align:center" onclick="pickNext(this,'haku')" id="next3">
+      <div style="font-size:24px;margin-bottom:8px">🔍</div>
+      <div style="font-size:14.5px;font-weight:600;color:var(--ink);margin-bottom:5px">Haen töitä tänään</div>
+      <div style="font-size:13px;color:var(--ink3)">Avaan Duunitorin, löydän yhden ilmoituksen, tutkin yrityksen — ja haen</div>
+    </div>
+  </div>
+  <div class="reveal-block" id="nextReveal">
+    <div class="note-coral note" id="nextMsg"></div>
+  </div>
+
+  <div class="note-forest note" style="margin-top:22px"><strong>Viimeinen muistutus:</strong> Rekrytoija haluaa sinun onnistuvan. He toivovat jokaisen hakijan olevan se oikea — se helpottaa heidän työtään. Sinulla on nyt tarina, rakenne, yrityshaku, palkkavastaus ja kyky puolustaa itseäsi. Se on enemmän kuin useimmilla hakijoilla on. Mene sinne.</div>
+
+  <div style="text-align:center;margin-top:32px">
+    <button class="btn btn-coral btn-lg" onclick="finish()">Moduuli suoritettu ✓</button>
+  </div>
+</div>
+</div>
+
+<script>window.__MODULE_ID__ = window.__MODULE_ID__ || "moduuli9-haastattelu";</script>
+<script src="/js/module-work.js"></script>
+<script src="/js/ai-helper.js"></script>
+<script>
+const S={pre:[],w_s:'',w_t:'',w_a:'',w_r:'',w_weak:'',w_why:'',w_vastav:'',companyName:'',companyUrl:'',companyFact:'',w_company:'',w_palkka:'',abResults:[],hp1:'',hp2:'',hp3:'',hpBuilt:'',hpFinal:'',startKey:'',nextKey:'',scenPicks:{},stfAnswers:[],vastaQuestion:''};
+const COMPANY_HOME_URLS={'Elisa':'https://www.elisa.fi/','S-ryhmä':'https://www.s-ryhma.fi/','OP Ryhmä':'https://www.op.fi/','DNA':'https://www.dna.fi/','Mehiläinen':'https://www.mehilainen.fi/','Kesko':'https://www.kesko.fi/'};
+const TOTAL=12;
+const MODULE9_ID='moduuli9-haastattelu';
+const HA_KEY='aip-haastattelu-v1';
+let curScreen=1;
+let haWorkApi=null;
+let haSaveTimer=null;
+
+function go(n){
+  curScreen=n;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const sc=document.getElementById('s'+n);if(!sc)return;
+  sc.classList.add('active');
+  document.getElementById('prog').style.width=((n-1)/(TOTAL-1)*100)+'%';
+  for(let i=1;i<=TOTAL;i++){const el=document.getElementById('sb'+i);if(!el)continue;el.className='sb'+(i===n?' active':i<n?' done':'');}
+  const activeStep=document.getElementById('sb'+n);
+  if(activeStep){activeStep.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}
+  const T={1:'Haastattelu',2:'Ymmärrys',3:'STAR-metodi',4:'Decoder',5:'Kirjoita',6:'Vastaväite',7:'Spot Flaw',8:'Hissipuhe',9:'Yrityshaku',10:'Tilanteet',11:'Vaikeat',12:'Ansaitse'};
+  document.getElementById('navTitle').textContent=T[n]||'Haastattelu';
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(n===6&&!abBuilt)buildAB();
+  if(n===6)initVastav();
+  if(n===7&&!abBuilt)buildAB();
+  if(n===10&&!scenBuilt)buildScen();
+  if(n===12)buildEarn();
+  try{saveProgress();}catch(e){}
+}
+
+const startMsgs={
+  a:'Jännitys on normaalia — melkein jokainen jännittää. Tämä moduuli antaa sinulle rakenteen joka muuttaa jännityksen varmuudeksi.',
+  b:'Hyvä lähtökohta — tiedät jo mitä kehittää. Tänään opit miksi haastattelut eivät menneet niin kuin toivoit.',
+  c:'Täydellinen hetki aloittaa. Ensimmäinen haastattelu ei tarvitse olla improvisaatiota — tänään saat rakenteen ja valmiit vastaukset.',
+  d:'Hyvä asenne — parantaminen alkaa kun tiedät mikä jo toimii. Tänään viet sen seuraavalle tasolle.'
+};
+function startPick(el,key){
+  document.querySelectorAll('#startQ .sc-opt').forEach(o=>{o.classList.remove('best');o.style.pointerEvents='none';});
+  el.classList.add('best');
+  S.startKey=key;
+  document.getElementById('startMsg').textContent=startMsgs[key];
+  document.getElementById('startReveal').classList.add('show');
+  try{saveProgress();}catch(e){}
+}
+
+let tfDone=0,tfCorrect=0;
+function tfPick(btn,choice){
+  const item=btn.closest('.tf-item');
+  if(item.classList.contains('revealed'))return;
+  item.classList.add('revealed');
+  const correct=item.dataset.correct==='true';
+  const userCorrect=(choice==='true')===correct;
+  if(userCorrect)tfCorrect++;
+  tfDone++;
+  item.dataset.userChoice=choice;
+  item.querySelectorAll('.tf-btn').forEach(b=>{b.disabled=true;const isT=b.classList.contains('true-btn');if((isT&&correct)||(!isT&&!correct))b.classList.add('correct');else if((isT&&!correct&&choice==='true')||(!isT&&correct&&choice==='false'))b.classList.add('wrong');});
+  item.querySelector('.tf-reveal').classList.add('show');
+  if(tfDone>=5){setTimeout(()=>{document.getElementById('tfScoreNum').textContent=tfCorrect;const msgs=['Ei hätää — siksi tämä moduuli on tärkeä.','Hyvä alku — muutama asia yllätti.','Vahva — olet jo edellä useimpia hakijoita.','Erinomainen — tiedät jo miten haastattelu toimii.','Täydellinen — kaikki viisi oikein!'];document.getElementById('tfScoreMsg').textContent=msgs[Math.min(tfCorrect,4)];document.getElementById('tfDoneMsg').classList.add('show');document.getElementById('nav2wait').style.display='none';try{saveProgress();}catch(e){}},400);}
+  else try{saveProgress();}catch(e){}
+}
+
+function toggleSC(id){document.getElementById(id).classList.toggle('expanded');const h=document.querySelector('#'+id+' .sc-hint');if(h)h.textContent=document.getElementById(id).classList.contains('expanded')?'Sulje':'Avaa esimerkki';}
+
+let selectedDL=null,decoderDone=0;
+function selectDL(letter,el){selectedDL=letter;document.querySelectorAll('.decoder-label').forEach(b=>b.classList.remove('selected'));el.classList.add('selected');}
+const badgeClasses={S:'badge-s',T:'badge-t',A:'badge-a',R:'badge-r'};
+function assignDL(sent){
+  if(!selectedDL||sent.classList.contains('assigned'))return;
+  const correct=sent.dataset.correct;
+  const badge=sent.querySelector('.ds-badge');
+  if(selectedDL===correct){
+    sent.classList.add('assigned');badge.textContent=selectedDL;badge.className='ds-badge '+badgeClasses[selectedDL];decoderDone++;
+    document.getElementById('decoderMsg').style.display='none';
+    if(decoderDone>=4){document.getElementById('decoderReveal').classList.add('show');document.getElementById('nav4wait').style.display='none';try{saveProgress();}catch(e){}}
+  }else{
+    const msg=document.getElementById('decoderMsg');msg.style.display='block';
+    msg.textContent=`Ei ihan — tämä lause on ${correct}. Mieti: ${correct==='S'?'missä ja milloin?':correct==='T'?'mikä oli sinun vastuusi?':correct==='A'?'mitä SINÄ teit konkreettisesti?':'mikä oli lopputulos?'}`;
+  }
+  selectedDL=null;document.querySelectorAll('.decoder-label').forEach(b=>b.classList.remove('selected'));
+}
+
+function checkWrite(){document.getElementById('evalWriteBtn').disabled=![S.w_s,S.w_t,S.w_a,S.w_r].every(v=>v.trim().length>10);}
+async function evalWrite(){
+  document.getElementById('evalWriteBtn').disabled=true;load('writeFbT');
+  const sys='Olet kokenut rekrytoija. Arvioit STAR-vastauksen asiakaspalvelun haastatteluun. Arvioi: (1) onko S/T/A/R siellä, (2) onko Action konkreettinen ja henkilökohtainen, (3) yksi parannus. Max 3 lausetta. Suomi. Kannustava mutta rehellinen.';
+  const txt=await ai(`S: ${S.w_s}\nT: ${S.w_t}\nA: ${S.w_a}\nR: ${S.w_r}`,sys,400);
+  document.getElementById('writeFbT').textContent=txt||'Hyvä vastaus.';
+  document.getElementById('writeFb').classList.add('show');
+  S.starAnswer=`S: ${S.w_s}\nT: ${S.w_t}\nA: ${S.w_a}\nR: ${S.w_r}`;
+  document.getElementById('writeReveal').classList.add('show');
+  document.getElementById('evalWriteBtn').disabled=false;
+  try{saveProgress();}catch(e){}
+}
+
+// ── SPOT THE FLAW ──────────────────────────────────
+const stfData=[
+  {
+    context:'Kysymys: "Kerro tilanteesta jossa teit virheen."',
+    answer:'"Kerran unohdin ilmoittaa esimiehelleni tärkeästä asiakasvalituksesta. Se oli minun virheeni ja opin siitä. Nykyään olen paljon huolellisempi ja varmistan aina että viestintä toimii."',
+    flaw:'Vastaus myöntää virheen mutta ei kerro mitä KONKREETTISESTI tapahtui sen jälkeen. "Olen huolellisempi" on lupaus — ei todiste.',
+    fixed:'"Unohdin välittää asiakasvalituksen esimiehelleni ennen viikonloppua. Asiakas joutui odottamaan kolme päivää. Kun huomasin maanantaina, soitin asiakkaalle ensin itse, pyysin anteeksi viivästymistä ja ratkaisin ongelman saman päivän aikana. Sen jälkeen tein itselleni muistilistan jota käyn läpi ennen jokaista vuoron loppua."',
+    why:'Rekrytoija etsii: virheen myöntäminen + konkreettinen korjaus + muutos jota voi todistaa. Pelkkä "opin siitä" on jokaisen hakijan vastaus.'
+  },
+  {
+    context:'Kysymys: "Miksi haluatte tehdä asiakaspalvelutyötä?"',
+    answer:'"Minulla on hyvät sosiaaliset taidot ja tulen hyvin toimeen erilaisten ihmisten kanssa. Asiakaspalvelu on minulle luontevaa ja nautin ihmisten auttamisesta. Uskon että voisin olla hyvä tässä roolissa."',
+    flaw:'Kolme väittämää ilman yhtään todistetta. "Luontevaa", "nautin" ja "uskon" ovat sanoja — ei tarinoita. Kuka ei sanoisi näin?',
+    fixed:'"Tein kaksi vuotta töitä kioskilla. Huomasin että pystyin rauhoittamaan tilanteita joissa muut alkoivat jo hermostua — esimerkiksi kun asiakas syytti meitä virheellisestä hinnasta. Se hetki kun ongelma ratkeaa ja asiakas lähtee eri mielentilassa — se on se miksi haluan tehdä tätä työtä."',
+    why:'Rekrytoija haluaa kuulla MIKSI juuri sinulle — ei mitä kaikki sanovat. Yksi konkreettinen tilanne todistaa enemmän kuin kolme adjektiivia.'
+  },
+  {
+    context:'Kysymys: "Miten toimit tiimissä?"',
+    answer:'"Olen tiimipelaaja ja tulen toimeen kaikkien kanssa. Autan kollegoita kun heillä on kiire ja kommunikoin avoimesti. Pidän tiimityötä tärkeänä ja mielestäni hyvä tiimi tekee töistä paljon paremman kokemuksen."',
+    flaw:'Pelkkiä fraaseja — "tiimipelaaja", "kommunikoin avoimesti", "hyvä tiimi". Nämä ovat hakemuksen kliseitä, ei todistettavia väitteitä.',
+    fixed:'"Viime jouluna meillä oli poissaoloja ja jonot kasvoivat. Huomasin että kassanaapu oli selvästi ylikuormittunut. En odottanut esimiestä — pyysin lyhyen tauon ja autoin häntä purkamaan jonon. Sen jälkeen teimme yhdessä vuorolistan jolla jaoimme ruuhka-ajat tasaisemmin."',
+    why:'"Tiimipelaaja" on tyhjin sana haastattelussa. Kaikki sanovat sen. Yksi tilanne jossa teit jotain tiimin eteen ilman pyytämistä todistaa enemmän kuin kymmenen adjektiivia.'
+  },
+  {
+    context:'Kysymys: "Kertoisitteko heikkoudestanne."',
+    answer:'"Minulla on joskus liikaa perfektionismia — haluan tehdä kaiken täydellisesti ja se voi hidastaa työskentelyäni. Olen kuitenkin oppinut tasapainottamaan tätä ja tiedän milloin riittävän hyvä on tarpeeksi hyvä."',
+    flaw:'"Perfektionismi heikkoutena" on yleisin klisee haastatteluissa — rekrytoijat kuulevat sen joka toiselta hakijalta. Se kuulostaa valmistellulta, ei rehelliseltä.',
+    fixed:'"Minulle on ollut vaikea pyytää apua ajoissa — yritän ensin selvittää ongelmat yksin. Viime vuonna tämä johti siihen että asiakasvalitus viivästyi kun jumiuduin etsimään ratkaisua sen sijaan että olisin heti pyytänyt kokenutta kollegaa. Nyt teen niin: jos en löydä vastausta kahdessa minuutissa, kysyn. Se on nopeampi kaikille."',
+    why:'Rekrytoija haluaa oikean heikkouden — sellaisen joka oikeasti kertoo jotain sinusta. Ja sen täytyy sisältää konkreettinen muutos jonka olet tehnyt, ei vain tunnustus.'
+  },
+  {
+    context:'Kysymys: "Kerro tilanteesta jossa asiakas oli erityisen vaikea."',
+    answer:'"Kerran asiakas tuli myymälään todella kiukkuisena reklamaation kanssa. Pysyin rauhallisena ja kuuntelin mitä hänellä oli sanottavaa. Yritin löytää parhaan mahdollisen ratkaisun ja lopulta asiakas lähti tyytyväisenä. Se oli hyvä kokemus josta opin paljon."',
+    flaw:'Ei yhtään konkreettista tietoa: mitä asiakas sanoi? Mitä sinä teit askel askeleelta? Mikä ratkaisu oli? Tämä voisi olla kenen tahansa vastaus mistä tahansa tilanteesta.',
+    fixed:'"Asiakas tuli reklamoimaan rikkinäisestä tuotteesta — ilman kuittia, viisi viikkoa oston jälkeen. Hän huusi ja sanoi ettei koskaan enää tule. En keskeyttänyt. Kun hän lopetti, sanoin: \'Kuulen että olet todella pettynyt ja se on ymmärrettävää.\' Pyysin häntä näyttämään tuotteen, totesin selkeän valmistusvirheen ja tarjosin vaihtoa uuteen. Hän kiitti ja tuli seuraavana viikkona ostamaan lahjan."',
+    why:'Action-osa on koko STAR-vastauksen ydin. Rekrytoija haluaa kuulla MITÄ TEIT — ei mitä tapahtui yleisesti. Konkreettiset lauseet ja askeleet tekevät vastauksesta uskottavan.'
+  }
+];
+let abBuilt=false,stfCurrent=0,stfDone=0;
+function buildAB(){abBuilt=true;renderSTF();}
+function renderSTF(){
+  const c=document.getElementById('abContainer');
+  if(stfCurrent>=stfData.length){
+    c.innerHTML='';
+    document.getElementById('abDone').classList.add('show');
+    return;
+  }
+  const d=stfData[stfCurrent];
+  document.querySelectorAll('.ab-dot').forEach((dot,i)=>{
+    dot.className='ab-dot'+(i<stfCurrent?' done-right':i===stfCurrent?' current':'');
+  });
+  c.innerHTML=`<div class="stf-question" style="animation:fadeUp .4s ease">
+    <span class="stf-q-num">Kierros ${stfCurrent+1} / 5</span>
+    <div class="stf-context">${d.context}</div>
+    <div class="stf-answer-box">${d.answer}</div>
+    <div class="stf-write-area">
+      <span class="lbl">Mikä tässä vastauksessa on pielessä? Kirjoita yksi lause.</span>
+      <textarea id="stf-ta" placeholder="Vastaus kuulostaa hyvältä mutta..." rows="2" oninput="document.getElementById('stf-sub').disabled=this.value.trim().length<10"></textarea>
+    </div>
+    <button class="btn btn-coral stf-submit" id="stf-sub" onclick="submitSTF(${stfCurrent})" disabled>Näytä vika ja korjaus →</button>
+    <div class="stf-reveal-box" id="stf-reveal">
+      <div class="stf-reveal-top">
+        <span class="stf-reveal-label">Mikä oli vialla</span>
+        <div class="stf-flaw">${d.flaw}</div>
+      </div>
+      <div class="stf-reveal-mid">
+        <span class="stf-reveal-mid-label">Korjattu versio</span>
+        <div class="stf-fixed">${d.fixed}</div>
+      </div>
+      <div class="stf-reveal-bot">
+        <span class="stf-reveal-bot-label">Miksi rekrytoija huomaa tämän</span>
+        <div class="stf-why">${d.why}</div>
+      </div>
+    </div>
+    <button class="btn btn-outline stf-next" id="stf-next" style="display:none;margin-top:14px" onclick="nextSTF()">Seuraava kierros →</button>
+  </div>`;
+}
+function submitSTF(idx){
+  const ta=document.getElementById('stf-ta');
+  if(ta){if(!S.stfAnswers)S.stfAnswers=[];S.stfAnswers[idx]=ta.value;}
+  document.getElementById('stf-sub').disabled=true;
+  document.getElementById('stf-reveal').classList.add('show');
+  document.getElementById('stf-next').style.display='inline-flex';
+  document.querySelector('.ab-dot:nth-child('+(idx+1)+')').className='ab-dot done-right';
+  try{saveProgress();}catch(e){}
+}
+function nextSTF(){stfCurrent++;renderSTF();try{saveProgress();}catch(e){}}
+
+
+const scenData=[
+  {q:'Tulet haastatteluun ja huomaat olevasi 8 minuuttia myöhässä. Mitä teet?',opts:[{t:'Menet sisään hiljaa — toivot etteivät huomaa myöhästymistä',r:'bad',fb:'Rekrytoija huomaa aina. Myöhästyminen + hiljaisuus = epäluotettava.'},{t:'Soitat ennen kuin menet sisään — kerrot olevasi myöhässä ja arvioidun saapumisajan',r:'best',fb:'Tämä on oikein. Proaktiivinen viestintä osoittaa vastuullisuutta — juuri sitä haetaan.'},{t:'Menet sisään ja kerrot heti: "Pahoittelen myöhästymistä, joukkoliikenne viivästyi."',r:'ok',fb:'Hyvä — rehellinen ja napakka. Ei niin proaktiivinen kuin etukäteisilmoitus, mutta asiallinen.'},{t:'Jätät menemättä — koet tilanteen niin nolona',r:'bad',fb:'Ei koskaan. Jokainen haastattelu on harjoitus. Myöhästyminen + ilmoitus on parempi kuin ei näyttäytyminen.'}]},
+  {q:'Haastattelija kysyy jotain mitä et ymmärrä — puolella kuuli, puolella ei.',opts:[{t:'Keksit vastauksen parhaasi mukaan',r:'bad',fb:'Väärä vastaus väärään kysymykseen on pahempi kuin myöntää ettet kuullut.'},{t:'"Anteeksi, enkö kuullut kunnolla — voitko toistaa?"',r:'best',fb:'Täydellinen. Se osoittaa itseluottamusta ja tarkkuutta.'},{t:'"Se on mielenkiintoinen kysymys..." — aloitat puhumaan jotain',r:'bad',fb:'Rekrytoija tietää heti ettet kuullut. Vielä huonompaa.'},{t:'Hymyilet ja vaihdat puheenaiheen',r:'bad',fb:'Rekrytoija odottaa vastausta.'}]},
+  {q:'Haastattelun lopussa rekrytoija sanoo: "Olemme harkitsemassa useita vahvoja hakijoita."',opts:[{t:'"Ymmärrän — kiitos ajastanne."',r:'ok',fb:'Asiallinen mutta laiska. Tässä on mahdollisuus erottua.'},{t:'"Voisin aloittaa heti jos valitaan."',r:'ok',fb:'Innokas — positiivista. Hieman epäammattimainen.'},{t:'"Arvostan sitä. Halusin vielä sanoa miksi uskon sopivani erityisesti tähän — [yksi konkreettinen asia]."',r:'best',fb:'Viimeinen mahdollisuus jättää vahva vaikutelma. Käytä se.'},{t:'Vaiet ja odotat mitä tapahtuu',r:'bad',fb:'Passiivisuus viimeisenä hetkenä on hukattu tilaisuus.'}]},
+  {q:'Rekrytoija kysyy: "Missä olet viiden vuoden päästä?"',opts:[{t:'"En oikein tiedä — elämä on arvaamatonta."',r:'bad',fb:'Rekrytoija tulkitsee: ei tavoitteita, ei motivaatiota.'},{t:'"Johtajana tässä yrityksessä."',r:'ok',fb:'Kunnianhimoinen — voi tuntua epärealistiselta.'},{t:'"Halusin kehittyä asiakaspalveluasiantuntijaksi — tässä roolissa näen mahdollisuuden kasvaa siihen suuntaan."',r:'best',fb:'Realistinen, suunnattu tähän rooliin, osoittaa sitoutumista.'},{t:'"Mahdollisesti jossakin eri tehtävässä."',r:'bad',fb:'Kertoo: en ole sitoutunut tähän rooliin.'}]}
+];
+let scenBuilt=false,scenDone=0;
+function buildScen(){
+  scenBuilt=true;const c=document.getElementById('scenContainer');c.innerHTML='';
+  scenData.forEach((sc,i)=>{const div=document.createElement('div');div.className='scenario-card';div.id='sc'+i;div.innerHTML=`<span class="sc-num-tag">Tilanne ${i+1} / ${scenData.length}</span><div class="sc-situation">${sc.q}</div><div class="sc-options">${sc.opts.map((o,j)=>`<button class="sc-opt" onclick="pickScen(${i},${j},'${o.r}','${o.fb.replace(/'/g,"\\'")}',this)">${o.t}</button>`).join('')}</div><div class="sc-fb" id="scfb${i}"></div>`;c.appendChild(div);});
+}
+function pickScen(si,oi,rating,fb,el){
+  const card=document.getElementById('sc'+si);card.querySelectorAll('.sc-opt').forEach(b=>b.classList.add('locked'));el.classList.remove('locked');el.classList.add(rating);
+  const fbEl=document.getElementById('scfb'+si);fbEl.textContent=fb;fbEl.classList.add('show');
+  if(!S.scenPicks)S.scenPicks={};
+  S.scenPicks[si]={oi,rating,fb};
+  scenDone++;if(scenDone>=scenData.length)setTimeout(()=>{document.getElementById('scenDone').classList.add('show');try{saveProgress();}catch(e){}},400);
+  else try{saveProgress();}catch(e){}
+}
+
+function checkWeak(){
+  document.getElementById('weakBtn').disabled=!S.w_weak||S.w_weak.trim().length<20;
+  document.getElementById('whyBtn').disabled=!S.w_why||S.w_why.trim().length<20;
+}
+function checkHardSectionDone(){
+  const pd=document.getElementById('palkkaDone');if(!pd)return;
+  const ok=['weakFb','whyFb','palkkaFb'].every(id=>document.getElementById(id)?.classList.contains('show'));
+  if(ok)pd.classList.add('show');
+}
+async function evalWeak(){document.getElementById('weakBtn').disabled=true;load('weakFbT');const sys='Arvioit heikkousvastauksen. Rakenne: heikkous + esimerkki + mitä teen nyt. 1-2 lausetta. Suomi.';const txt=await ai(S.w_weak,sys,300);document.getElementById('weakFbT').textContent=txt;document.getElementById('weakFb').classList.add('show');document.getElementById('weakBtn').disabled=false;checkHardSectionDone();try{saveProgress();}catch(e){}}
+async function evalWhy(){document.getElementById('whyBtn').disabled=true;load('whyFbT');const sys='Arvioit "miksi haluat tätä työtä" -vastauksen. Rakenne: miksi rooli + miksi yritys + mitä tuot. 1-2 lausetta. Suomi.';const txt=await ai(S.w_why,sys,300);document.getElementById('whyFbT').textContent=txt;document.getElementById('whyFb').classList.add('show');document.getElementById('whyBtn').disabled=false;checkHardSectionDone();try{saveProgress();}catch(e){}}
+
+function earnPreview(text,max){
+  if(!text||text==='—')return 'Avaa nähdäksesi tai kopioidaksesi';
+  const t=String(text).replace(/\s+/g,' ').trim();
+  return t.length>(max||72)?t.slice(0,max||72)+'…':t;
+}
+function setEarnField(textId,prevId,text){
+  const el=document.getElementById(textId);
+  const prev=document.getElementById(prevId);
+  const val=text||'—';
+  if(el)el.textContent=val;
+  if(prev)prev.textContent=earnPreview(val);
+}
+function buildEarn(){
+  const star=[S.w_s,S.w_t,S.w_a,S.w_r].filter(Boolean);
+  const starTxt=star.length>0?'S: '+S.w_s+'\nT: '+S.w_t+'\nA: '+S.w_a+'\nR: '+S.w_r:'—';
+  setEarnField('earnStar','earnPrevStar',starTxt);
+  setEarnField('earnWeak','earnPrevWeak',S.w_weak);
+  setEarnField('earnCompany','earnPrevCompany',S.w_company);
+  setEarnField('earnPalkka','earnPrevPalkka',S.w_palkka);
+  setEarnField('earnHP','earnPrevHP',S.hpFinal||S.hpBuilt);
+}
+function toggleEarnAcc(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  const open=el.classList.toggle('open');
+  const btn=el.querySelector('.earn-acc-hdr');
+  if(btn)btn.setAttribute('aria-expanded',open?'true':'false');
+}
+function copyEarn(id,btn){navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>{btn.textContent='✓ Kopioitu';setTimeout(()=>{btn.innerHTML='📋 Kopioi'},2000);});}
+function checkItem(el){el.classList.toggle('done');try{saveProgress();}catch(e){}}
+function pickNext(el,key){
+  document.querySelectorAll('#s12 [onclick*="pickNext"]').forEach(function(b){b.style.border='1.5px solid var(--line)';b.style.background='var(--paper)';});
+  el.style.border='1.5px solid var(--coral)';el.style.background='var(--coral-lt)';
+  S.nextKey=key;
+  var msgs={haastattelu:'Harjoitushaastattelu on paras valmistautuminen. Sano ääneen: hissipuhe, STAR-tarina, palkkavastaus. Ensimmäinen kerta tuntuu oudolta — siksi se kannattaa tehdä ennen oikeaa haastattelua.',hakemus:'Lue hakemus kriittisesti: poista kaikki pelkät adjektiivit ilman tarinaa. Jos lause ei todista mitään konkreettista — korvaa STAR-tarinalla.',haku:'Yksi hakemus tänään on parempi kuin kymmenen ensi viikolla. Avaa Duunitori, löydä yksi ilmoitus, tee yrityshaku 10 min — ja lähetä.'};
+  document.getElementById('nextMsg').textContent=msgs[key]||'';
+  document.getElementById('nextReveal').classList.add('show');
+  try{saveProgress();}catch(e){}
+}
+function finish(){const b=document.querySelector('#s12 .btn-coral.btn-lg');if(b){b.textContent='✓ Suoritettu!';b.style.background='#9A3F25';b.disabled=true;}try{saveProgress();}catch(e){}}
+
+// ── HISSIPUHE ──────────────────────────────────────
+function checkHP(){
+  const ok=S.hp1&&S.hp2&&S.hp3&&[S.hp1,S.hp2,S.hp3].every(v=>v.trim().length>10);
+  document.getElementById('hpBuildBtn').disabled=!ok;
+}
+async function buildHP(){
+  document.getElementById('hpBuildBtn').disabled=true;
+  load('hpFbT');
+  const sys='Olet uravalmentaja. Rakennat hakijalle 45-60 sekunnin hissipuheen asiakaspalvelun haastatteluun. Kolme palasta saatu: tausta, vahvuus, suunta. Kirjoita puhe ensimmäisessä persoonassa. Ei kliseitä kuten "tiimipelaaja" tai "intohimoinen". Aloita konkreettisella faktalla tai tilanteella — ei "Olen...". Max 4 lausetta. Kuulostaa ihmiseltä, ei tekoälylta. Suomi.';
+  const txt=await ai(`Tausta: ${S.hp1}\nVahvuus: ${S.hp2}\nSuunta: ${S.hp3}`,sys,300);
+  document.getElementById('hpFbT').textContent=txt||'Hissipuhetta ei voitu rakentaa — tarkista yhteys.';
+  document.getElementById('hpFb').classList.add('show');
+  S.hpBuilt=txt;
+  document.getElementById('hpReveal').classList.add('show');
+  document.getElementById('hpBuildBtn').disabled=false;
+  try{saveProgress();}catch(e){}
+}
+async function filterHP(){
+  document.getElementById('hpFilterBtn').disabled=true;
+  load('hpFilterT');
+  const sys='Olet kokenut rekrytoija suomalaisessa yrityksessä. Kuuntelet hakijan hissipuheen asiakaspalvelurooliin. Kerro: (1) Mitä kuulet — kaksi asiaa jotka rekisteröityvät positiivisesti, (2) Mitä mietit — yksi epäselvä kohta tai puuttuva tieto, (3) Yksi konkreettinen lisäys joka tekisi puheesta vahvemman. Max 3-4 lyhyttä lausetta. Suomi. Ei ylistystä.';
+  const txt=await ai(`Hissipuhe: ${S.hpBuilt||document.getElementById('hpFbT').textContent}`,sys,350);
+  document.getElementById('hpFilterT').textContent=txt||'—';
+  document.getElementById('hpFilterFb').classList.add('show');
+  document.getElementById('hpFixReveal').classList.add('show');
+  document.getElementById('hpFilterBtn').disabled=false;
+  try{saveProgress();}catch(e){}
+}
+function copyHP(){
+  const txt=document.getElementById('hpFinal').value||S.hpBuilt||'';
+  navigator.clipboard.writeText(txt).then(()=>{const b=event.target;b.textContent='✓ Kopioitu';setTimeout(()=>{b.innerHTML='📋 Kopioi hissipuhe'},2000);});
+}
+
+
+
+// ── VASTAVÄITE ────────────────────────────────────
+function initVastav(){
+  const star=S.w_s&&S.w_t&&S.w_a&&S.w_r;
+  const ctx=document.getElementById('vastaBoxContext');
+  if(ctx&&star){ctx.innerHTML='<strong>Vastauksesi STAR:</strong> '+S.w_s.slice(0,80)+'... Toiminta: '+S.w_a.slice(0,80)+'...';}
+  const questions=[
+    '"Sanoit rauhoittaneesi tilanteen — mutta miten tarkalleen? Mitä sait asiakkaan tekemään eri tavalla?"',
+    '"Kerroit toimineesi näin — onko se yrityksen virallinen käytäntö vai oma päätöksesi?"',
+    '"Mitä olisit tehnyt toisin jos sama tilanne tulisi tänään uudelleen?"',
+    '"Ymmärsit asiakkaan tarpeen — miten varmistit että ymmärsit oikein eikä vain luullut ymmärtäväsi?"'
+  ];
+  const q=document.getElementById('vastaquestion');
+  if(!S.vastaQuestion){
+    S.vastaQuestion=questions[Math.floor(Math.random()*questions.length)];
+  }
+  if(q)q.textContent=S.vastaQuestion;
+}
+function checkVastav(){document.getElementById('evalVastavBtn').disabled=!S.w_vastav||S.w_vastav.trim().length<30;}
+async function evalVastav(){
+  document.getElementById('evalVastavBtn').disabled=true;load('vastavFbT');
+  const sys='Olet rekrytoija joka kuulee hakijan puolustavan STAR-vastaustaan. Arvioi: (1) lisäsikö hakija konkreettisia yksityiskohtia vai toistiko saman, (2) kuulostaako vastaus aidolta, (3) yksi asia joka vahvistaisi puolustusta entisestään. Max 3 lausetta. Suomi.';
+  const prompt9='STAR: '+S.w_s+' '+S.w_a+' Puolustus: '+S.w_vastav;
+  const txt=await ai(prompt9,sys,350);
+  document.getElementById('vastavFbT').textContent=txt||'Hyvä puolustus.';
+  document.getElementById('vastavFb').classList.add('show');
+  document.getElementById('vastavReveal').classList.add('show');
+  document.getElementById('evalVastavBtn').disabled=false;
+  try{saveProgress();}catch(e){}
+}
+
+// ── YRITYSHAKU ───────────────────────────────────
+let companyChosen=false;
+function selectCompany(el,name,type,url){
+  if(!name)return;
+  companyChosen=true;
+  S.companyName=name;
+  S.companyUrl=url||COMPANY_HOME_URLS[name]||'';
+  document.querySelectorAll('.company-btn').forEach(b=>b.classList.remove('selected'));
+  if(el)el.classList.add('selected');
+  const link=document.getElementById('companyLink');
+  const linkText=document.getElementById('companyLinkText');
+  const linkName=document.getElementById('companyLinkName');
+  const home=S.companyUrl;
+  if(link){link.href=home||'#';link.style.display=home?'inline-flex':'none';}
+  if(linkText)linkText.textContent=home?name+' — etusivu':name+' — etsi virallinen sivu';
+  if(linkName)linkName.textContent=name;
+  document.getElementById('companyReveal').classList.add('show');
+  try{saveProgress();}catch(e){}
+}
+function checkCompany(){
+  const factOk=S.companyFact&&S.companyFact.trim().length>20;
+  if(factOk)document.getElementById('company2').classList.add('show');
+  const answerOk=S.w_company&&S.w_company.trim().length>40;
+  document.getElementById('evalCompanyBtn').disabled=!answerOk;
+  if(factOk&&answerOk)document.getElementById('evalCompanyBtn').disabled=false;
+}
+async function evalCompany(){
+  document.getElementById('evalCompanyBtn').disabled=true;load('companyFbT');
+  const sys='Olet rekrytoija. Arvioit hakijan "miksi tämä yritys" -vastausta. Tarkista: (1) onko yritystieto konkreettinen ja oikeasti löydetty (ei yleinen), (2) yhdistääkö hakija oman taustansa yritykseen, (3) yksi parannus. Max 3 lausetta. Suomi.';
+  const p3='Yritys: '+S.companyName+' Fakta: '+S.companyFact+' Vastaus: '+S.w_company;
+  const txt=await ai(p3,sys,350);
+  document.getElementById('companyFbT').textContent=txt||'Hyvä vastaus.';
+  document.getElementById('companyFb').classList.add('show');
+  document.getElementById('companyDone').classList.add('show');
+  document.getElementById('evalCompanyBtn').disabled=false;
+  try{saveProgress();}catch(e){}
+}
+
+// ── PALKKA ────────────────────────────────────────
+function checkPalkka(){
+  document.getElementById('palkkaBtn').disabled=!S.w_palkka||S.w_palkka.trim().length<20;
+}
+async function evalPalkka(){
+  document.getElementById('palkkaBtn').disabled=true;load('palkkaFbT');
+  const sys='Arvioit palkkavastauksen suomalaista asiakaspalveluhaastattelua varten. Tarkista: (1) annettiinko vaihteluväli vai yksi luku, (2) onko taso realistinen asiakaspalvelussa (2100-3000e tyypillinen), (3) perusteltiin osaaminen. Max 3 lausetta. Suomi.';
+  const txt=await ai(S.w_palkka,sys,300);
+  document.getElementById('palkkaFbT').textContent=txt||'Hyvä vastaus.';
+  document.getElementById('palkkaFb').classList.add('show');
+  document.getElementById('palkkaBtn').disabled=false;
+  checkHardSectionDone();
+  try{saveProgress();}catch(e){}
+}
+
+function aiReqSignal(ms){
+  if(typeof AbortSignal!=='undefined'&&typeof AbortSignal.timeout==='function')return AbortSignal.timeout(ms);
+  const c=new AbortController();setTimeout(()=>c.abort(),ms);return c.signal;
+}
+async function ai(prompt,sys,tok=400){
+  try{
+    if(window.aiClaude)return await window.aiClaude(sys,prompt,tok);
+    const payload={system:sys,max_tokens:tok,messages:[{role:'user',content:prompt}]};
+    const fbPayload={model:'gpt-4o-mini',system:sys,max_tokens:tok,messages:[{role:'user',content:prompt}]};
+    let primaryErr='';
+    try{
+      const r=await fetch('/api/ai/claude',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',signal:aiReqSignal(20000),body:JSON.stringify(payload)});
+      let d={};try{d=await r.json();}catch(e){}
+      if(r.ok)return d.text||d.reply||'';
+      primaryErr=d.error||d.message||('Virhe '+r.status);
+    }catch(e){primaryErr='Yhteys tekoälypalveluun katkesi.';}
+    const fb=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',signal:aiReqSignal(20000),body:JSON.stringify(fbPayload)});
+    let dd={};try{dd=await fb.json();}catch(e){}
+    if(!fb.ok)throw new Error(dd.error||dd.message||primaryErr||('Virhe '+fb.status));
+    return dd.text||dd.reply||'';
+  }catch(e){console.warn('[haastattelu]',e);return '';}
+}
+function load(id){const el=document.getElementById(id);if(el)el.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';const fb=el?.closest('.ai-fb');if(fb)fb.classList.add('show');}
+
+function syncSFromDom(){
+  ['w_s','w_t','w_a','w_r','w_weak','w_why','w_vastav','w_company','w_palkka','companyFact','hp1','hp2','hp3','hpFinal'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el||!('value' in el))return;
+    if(id in S)S[id]=el.value;
+  });
+}
+function panelShown(id){const el=document.getElementById(id);return !!(el&&el.classList.contains('show'));}
+function haSnapshot(){
+  syncSFromDom();
+  const inputs={};
+  document.querySelectorAll('input[id],textarea[id]').forEach(el=>{if(el.id)inputs[el.id]=el.value;});
+  function txt(id){const el=document.getElementById(id);return el?(el.textContent||''):'';}
+  const tfItems=Array.from(document.querySelectorAll('#tfItems .tf-item')).map(item=>({
+    revealed:item.classList.contains('revealed'),
+    choice:item.dataset.userChoice||null
+  }));
+  tfItems.forEach((_,i)=>{
+    const item=document.querySelectorAll('#tfItems .tf-item')[i];
+    if(item&&item.classList.contains('revealed')){
+      const ch=item.querySelector('.true-btn.correct')?'true':item.querySelector('.false-btn.correct')?'false':item.querySelector('.true-btn.wrong')?'true':item.querySelector('.false-btn.wrong')?'false':null;
+      if(ch)tfItems[i].choice=ch;
+    }
+  });
+  const decoderAssignments=Array.from(document.querySelectorAll('.decoder-sent')).map(sent=>({
+    assigned:sent.classList.contains('assigned'),
+    letter:sent.querySelector('.ds-badge')?.textContent||'?'
+  }));
+  const starExpanded=['sc-s','sc-t','sc-a','sc-r'].filter(id=>document.getElementById(id)?.classList.contains('expanded'));
+  const checkDone=Array.from(document.querySelectorAll('#checkList .check-item')).reduce((acc,el,i)=>{if(el.classList.contains('done'))acc.push(i);return acc;},[]);
+  const stfRoundSubmitted=!!document.getElementById('stf-reveal')?.classList.contains('show');
+  const stfTa=document.getElementById('stf-ta');
+  return{
+    v:1,ts:Date.now(),curScreen,
+    S:JSON.parse(JSON.stringify(S)),
+    inputs,
+    tfDone,tfCorrect,tfItems,
+    decoderDone,decoderAssignments,
+    stfCurrent,abBuilt,stfRoundSubmitted,
+    stfCurrentAnswer:stfTa?stfTa.value:'',
+    companyChosen,
+    scenBuilt,scenDone,
+    starExpanded,checkDone,
+    vastaQuestion:S.vastaQuestion||txt('vastaquestion'),
+    shown:{
+      startReveal:panelShown('startReveal'),
+      tfDoneMsg:panelShown('tfDoneMsg'),
+      decoderReveal:panelShown('decoderReveal'),
+      writeFb:panelShown('writeFb'),
+      writeReveal:panelShown('writeReveal'),
+      vastavFb:panelShown('vastavFb'),
+      vastavReveal:panelShown('vastavReveal'),
+      abDone:panelShown('abDone'),
+      hpFb:panelShown('hpFb'),
+      hpReveal:panelShown('hpReveal'),
+      hpFilterFb:panelShown('hpFilterFb'),
+      hpFixReveal:panelShown('hpFixReveal'),
+      companyReveal:panelShown('companyReveal'),
+      company2:panelShown('company2'),
+      companyFb:panelShown('companyFb'),
+      companyDone:panelShown('companyDone'),
+      scenDone:panelShown('scenDone'),
+      weakFb:panelShown('weakFb'),
+      whyFb:panelShown('whyFb'),
+      palkkaFb:panelShown('palkkaFb'),
+      palkkaDone:panelShown('palkkaDone'),
+      nextReveal:panelShown('nextReveal'),
+      finished:!!(document.querySelector('#s12 .btn-coral.btn-lg')?.disabled)
+    },
+    display:{
+      nav2wait:(document.getElementById('nav2wait')||{}).style.display||'',
+      nav4wait:(document.getElementById('nav4wait')||{}).style.display||''
+    },
+    texts:{
+      startMsg:txt('startMsg'),
+      writeFbT:txt('writeFbT'),
+      vastavFbT:txt('vastavFbT'),
+      weakFbT:txt('weakFbT'),
+      whyFbT:txt('whyFbT'),
+      palkkaFbT:txt('palkkaFbT'),
+      hpFbT:txt('hpFbT'),
+      hpFilterT:txt('hpFilterT'),
+      companyFbT:txt('companyFbT'),
+      nextMsg:txt('nextMsg')
+    }
+  };
+}
+function summarizeHaData(data){
+  if(!data||typeof data!=='object')return 'Haastattelu — tallennettu';
+  const parts=[`Vaihe ${data.curScreen||1}/${TOTAL}`];
+  if(data.S&&data.S.w_s)parts.push('STAR-vastaus');
+  if(data.S&&data.S.hpBuilt)parts.push('Hissipuhe');
+  if(data.shown&&data.shown.finished)parts.push('Suoritettu');
+  return parts.join(' · ');
+}
+function restoreTfItem(item,state){
+  if(!state||!state.revealed||!state.choice)return;
+  item.classList.add('revealed');
+  item.dataset.userChoice=state.choice;
+  const correct=item.dataset.correct==='true';
+  item.querySelectorAll('.tf-btn').forEach(b=>{
+    b.disabled=true;
+    const isT=b.classList.contains('true-btn');
+    if((isT&&correct)||(!isT&&!correct))b.classList.add('correct');
+    else if((isT&&!correct&&state.choice==='true')||(!isT&&correct&&state.choice==='false'))b.classList.add('wrong');
+  });
+  item.querySelector('.tf-reveal')?.classList.add('show');
+}
+function restoreScenPicks(){
+  if(!scenBuilt||!S.scenPicks)return;
+  Object.keys(S.scenPicks).forEach(key=>{
+    const si=Number(key);
+    const pick=S.scenPicks[key];
+    if(!pick||Number.isNaN(si))return;
+    const card=document.getElementById('sc'+si);
+    if(!card)return;
+    const opts=card.querySelectorAll('.sc-opt');
+    const el=opts[pick.oi];
+    if(!el)return;
+    card.querySelectorAll('.sc-opt').forEach(b=>b.classList.add('locked'));
+    el.classList.remove('locked');
+    el.classList.add(pick.rating);
+    const fbEl=document.getElementById('scfb'+si);
+    if(fbEl){fbEl.textContent=pick.fb||'';fbEl.classList.add('show');}
+  });
+}
+function restoreSTF(d){
+  if(!d.abBuilt)return;
+  abBuilt=true;
+  stfCurrent=Number(d.stfCurrent||0);
+  if(stfCurrent>=stfData.length){
+    const c=document.getElementById('abContainer');
+    if(c)c.innerHTML='';
+    document.getElementById('abDone')?.classList.add('show');
+    return;
+  }
+  renderSTF();
+  if(d.stfRoundSubmitted){
+    const ta=document.getElementById('stf-ta');
+    if(ta&&d.stfCurrentAnswer)ta.value=d.stfCurrentAnswer;
+    document.getElementById('stf-reveal')?.classList.add('show');
+    const n=document.getElementById('stf-next');
+    if(n)n.style.display='inline-flex';
+    const sub=document.getElementById('stf-sub');
+    if(sub)sub.disabled=true;
+  } else if(Array.isArray(d.S?.stfAnswers)&&d.S.stfAnswers[stfCurrent]){
+    const ta=document.getElementById('stf-ta');
+    if(ta)ta.value=d.S.stfAnswers[stfCurrent];
+  }
+}
+function applyHaData(d){
+  if(!d||d.v!==1)return false;
+  try{Object.assign(S,d.S||{});}catch(e){}
+  tfDone=Number(d.tfDone||0);
+  tfCorrect=Number(d.tfCorrect||0);
+  decoderDone=Number(d.decoderDone||0);
+  companyChosen=!!d.companyChosen;
+  scenBuilt=!!d.scenBuilt;
+  scenDone=Number(d.scenDone||0);
+  if(d.inputs){
+    Object.keys(d.inputs).forEach(id=>{
+      const el=document.getElementById(id);
+      if(el&&'value' in el)el.value=d.inputs[id];
+    });
+  }
+  if(d.texts){
+    Object.keys(d.texts).forEach(id=>{
+      const el=document.getElementById(id);
+      if(el&&d.texts[id])el.textContent=d.texts[id];
+    });
+  }
+  if(d.vastaQuestion){
+    S.vastaQuestion=d.vastaQuestion;
+    const q=document.getElementById('vastaquestion');
+    if(q)q.textContent=d.vastaQuestion;
+  }
+  if(Array.isArray(d.tfItems)){
+    const items=document.querySelectorAll('#tfItems .tf-item');
+    d.tfItems.forEach((state,i)=>restoreTfItem(items[i],state));
+  }
+  if(Array.isArray(d.decoderAssignments)){
+    const sents=document.querySelectorAll('.decoder-sent');
+    d.decoderAssignments.forEach((a,i)=>{
+      const sent=sents[i];
+      if(!sent||!a.assigned||!a.letter||a.letter==='?')return;
+      sent.classList.add('assigned');
+      const badge=sent.querySelector('.ds-badge');
+      if(badge){badge.textContent=a.letter;badge.className='ds-badge '+(badgeClasses[a.letter]||'');}
+    });
+  }
+  if(Array.isArray(d.starExpanded)){
+    d.starExpanded.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.classList.add('expanded');
+    });
+  }
+  if(d.shown){
+    if(d.shown.finished)finish();
+    const showIds=['startReveal','tfDoneMsg','decoderReveal','writeFb','writeReveal','vastavFb','vastavReveal','abDone','hpFb','hpReveal','hpFilterFb','hpFixReveal','companyReveal','company2','companyFb','companyDone','scenDone','weakFb','whyFb','palkkaFb','palkkaDone','nextReveal'];
+    showIds.forEach(id=>{if(!d.shown[id])return;const el=document.getElementById(id);if(el)el.classList.add('show');});
+    checkHardSectionDone();
+  }
+  if(d.display){
+    ['nav2wait','nav4wait'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el&&d.display[id]!=null)el.style.display=d.display[id];
+    });
+  }
+  if(S.startKey){
+    const keys=['a','b','c','d'];
+    const idx=keys.indexOf(S.startKey);
+    const opts=document.querySelectorAll('#startQ .sc-opt');
+    if(idx>=0&&opts[idx]){
+      opts.forEach(o=>{o.style.pointerEvents='none';});
+      opts[idx].classList.add('best');
+      const msgEl=document.getElementById('startMsg');
+      if(msgEl)msgEl.textContent=(d.texts&&d.texts.startMsg)||startMsgs[S.startKey]||'';
+      document.getElementById('startReveal')?.classList.add('show');
+    }
+  }
+  if(S.companyName&&companyChosen){
+    document.querySelectorAll('.company-btn').forEach(btn=>{
+      if(btn.querySelector('.company-name')?.textContent===S.companyName)btn.classList.add('selected');
+    });
+    const home=S.companyUrl||COMPANY_HOME_URLS[S.companyName]||'';
+    const link=document.getElementById('companyLink');
+    const linkText=document.getElementById('companyLinkText');
+    const linkName=document.getElementById('companyLinkName');
+    if(link){link.href=home||'#';link.style.display=home?'inline-flex':'none';}
+    if(linkText&&S.companyName)linkText.textContent=home?S.companyName+' — etusivu':S.companyName+' — etsi virallinen sivu';
+    if(linkName)linkName.textContent=S.companyName;
+  }
+  if(S.nextKey){
+    const keyMap={haastattelu:0,hakemus:1,haku:2};
+    const btns=document.querySelectorAll('#s12 [onclick*="pickNext"]');
+    const idx=keyMap[S.nextKey];
+    if(idx!=null&&btns[idx]){
+      btns[idx].style.border='1.5px solid var(--coral)';
+      btns[idx].style.background='var(--coral-lt)';
+    }
+  }
+  if(Array.isArray(d.checkDone)){
+    const items=document.querySelectorAll('#checkList .check-item');
+    d.checkDone.forEach(i=>{if(items[i])items[i].classList.add('done');});
+  }
+  restoreSTF(d);
+  if(scenBuilt){
+    if(!document.getElementById('scenContainer')?.children.length)buildScen();
+    restoreScenPicks();
+  }
+  try{checkWrite();}catch(e){}
+  try{checkWeak();}catch(e){}
+  try{checkHP();}catch(e){}
+  try{checkVastav();}catch(e){}
+  try{checkCompany();}catch(e){}
+  try{checkPalkka();}catch(e){}
+  const screen=Math.min(TOTAL,Math.max(1,Number(d.curScreen)||1));
+  go(screen);
+  if(screen===12)buildEarn();
+  return true;
+}
+function loadLocalHaData(){
+  try{
+    const raw=localStorage.getItem(HA_KEY);
+    if(!raw)return null;
+    const d=JSON.parse(raw);
+    return d&&d.v===1?d:null;
+  }catch(e){return null;}
+}
+function saveLocalHaData(data){
+  if(!data||data.v!==1)return;
+  try{localStorage.setItem(HA_KEY,JSON.stringify(data));}catch(e){}
+}
+function saveProgress(){
+  try{if(haWorkApi?.scheduleSave)haWorkApi.scheduleSave();}catch(e){}
+  clearTimeout(haSaveTimer);
+  haSaveTimer=setTimeout(()=>{try{saveLocalHaData(haSnapshot());}catch(e){}},400);
+}
+async function initHaWorkPersistence(){
+  if(!window.moduleWork?.initModuleWork)return;
+  try{
+    haWorkApi=await window.moduleWork.initModuleWork(MODULE9_ID,{
+      collect:haSnapshot,
+      summarize:summarizeHaData,
+      debounceMs:800,
+      apply:function(remoteData){
+        const local=loadLocalHaData();
+        const localTs=local&&Number(local.ts||0);
+        const remoteTs=Number(remoteData?.ts||0);
+        const newest=(localTs&&localTs>remoteTs)?local:remoteData;
+        if(applyHaData(newest))saveLocalHaData(newest);
+      }
+    });
+    if(haWorkApi?.saveNow)haWorkApi.saveNow();
+  }catch(e){console.warn('[haastattelu] module-work init failed:',e);}
+}
+function initHaPersistence(){
+  const local=loadLocalHaData();
+  if(local)applyHaData(local);
+  initHaWorkPersistence();
+}
+document.addEventListener('input',saveProgress,true);
+document.addEventListener('change',saveProgress,true);
+document.addEventListener('click',()=>setTimeout(saveProgress,400),true);
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(initHaPersistence,80));
+}else{
+  setTimeout(initHaPersistence,80);
+}
+</script>
+<script>window.__MODULE_ID__="moduuli9-haastattelu";</script>
+</body>
+</html>
