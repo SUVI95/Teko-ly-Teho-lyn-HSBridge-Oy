@@ -1,0 +1,2450 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moduuli 1b — Syvä sukellus automaatioon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #FAF8F4;
+  --cream2: #F2EFE9;
+  --cream3: #E8E3DA;
+  --ink: #1A1A1A;
+  --ink2: #3D3D3D;
+  --ink3: #6B6B6B;
+  --ink4: #9A9A9A;
+  --orange: #E8570C;
+  --orange-light: rgba(232,87,12,0.08);
+  --orange-mid: rgba(232,87,12,0.15);
+  --green: #2D6A4F;
+  --green-light: rgba(45,106,79,0.08);
+  --blue: #1D4ED8;
+  --blue-light: rgba(29,78,216,0.08);
+  --amber: #B45309;
+  --amber-light: rgba(180,83,9,0.08);
+  --red: #DC2626;
+  --red-light: rgba(220,38,38,0.07);
+  --border: rgba(26,26,26,0.1);
+  --border2: rgba(26,26,26,0.06);
+  --r: 12px;
+  --r-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,0.1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--ink); font-size:16px; line-height:1.7; overflow-x:hidden; }
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--cream2);}
+::-webkit-scrollbar-thumb{background:var(--cream3);border-radius:4px;}
+
+/* ── TOPBAR ── */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(250,248,244,0.93);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;padding:0 32px;}
+.tb-logo{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink4);letter-spacing:.06em;margin-right:40px;white-space:nowrap;}
+.tb-logo b{color:var(--orange);font-weight:500;}
+.tb-nav{display:flex;overflow-x:auto;scrollbar-width:none;flex:1;}
+.tb-nav::-webkit-scrollbar{display:none;}
+.tb-step{display:flex;align-items:center;gap:8px;padding:0 16px;height:54px;font-size:12px;font-weight:500;color:var(--ink4);text-decoration:none;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;}
+.tb-step:hover{color:var(--ink2);}
+.tb-step.active{color:var(--orange);border-bottom-color:var(--orange);}
+.tb-step.done{color:var(--green);}
+.tb-num{width:20px;height:20px;border-radius:50%;background:var(--cream3);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;flex-shrink:0;}
+.tb-step.active .tb-num{background:var(--orange);color:white;}
+.tb-step.done .tb-num{background:var(--green);color:white;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:12px;padding-left:24px;flex-shrink:0;}
+.tb-prog-track{width:72px;height:3px;background:var(--cream3);border-radius:4px;overflow:hidden;}
+.tb-prog-fill{height:100%;background:var(--orange);border-radius:4px;width:0%;transition:width .5s;}
+.tb-prog-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink4);}
+
+/* ── LAYOUT ── */
+.section{max-width:860px;margin:0 auto;padding:80px 32px;}
+@media(max-width:600px){.section{padding:60px 20px;}}
+.sep{max-width:860px;margin:0 auto;border:none;border-top:1px solid var(--border);}
+.section-sep{display:flex;align-items:center;gap:16px;max-width:860px;margin:0 auto;padding:0 32px;}
+.ss-line{flex:1;height:1px;background:var(--border);}
+.ss-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink4);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;}
+
+/* ── TYPOGRAPHY ── */
+.section-rule{width:48px;height:3px;background:var(--orange);border-radius:2px;margin-bottom:16px;}
+.section-rule.green{background:var(--green);}
+.section-rule.blue{background:var(--blue);}
+.section-rule.amber{background:var(--amber);}
+.section-rule.red{background:var(--red);}
+.section-kicker{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.sk-num{color:white;border-radius:5px;padding:2px 7px;font-size:10px;}
+.sk-num.orange{background:var(--orange);}
+.sk-num.green{background:var(--green);}
+.sk-num.blue{background:var(--blue);}
+.sk-num.amber{background:var(--amber);}
+.sk-num.red{background:var(--red);}
+.section h2{font-family:'Playfair Display',serif;font-size:clamp(30px,4vw,48px);font-weight:800;line-height:1.1;letter-spacing:-.02em;color:var(--ink);margin-bottom:20px;}
+.lead{font-size:18px;font-weight:400;color:var(--ink2);max-width:680px;line-height:1.75;margin-bottom:14px;}
+.body{font-size:16px;color:var(--ink2);max-width:680px;line-height:1.8;margin-bottom:14px;}
+.body strong{color:var(--ink);font-weight:600;}
+.body em{font-style:normal;color:var(--orange);font-weight:500;}
+
+/* ── HERO ── */
+.hero{padding:110px 48px 60px;max-width:1100px;margin:0 auto;}
+@media(max-width:700px){.hero{padding:90px 20px 48px;}}
+.hero-kicker{display:inline-flex;align-items:center;gap:10px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:20px;}
+.hero-kicker::before{content:'';display:block;width:20px;height:2px;background:var(--orange);}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(38px,5vw,68px);font-weight:900;line-height:1.04;letter-spacing:-.02em;margin-bottom:20px;}
+.hero h1 em{font-style:italic;color:var(--orange);}
+.hero-sub{font-size:18px;font-weight:300;color:var(--ink2);line-height:1.75;max-width:580px;margin-bottom:32px;}
+.hero-disclaimer{background:white;border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;display:flex;gap:14px;align-items:flex-start;max-width:640px;box-shadow:var(--shadow);}
+.hd-icon{font-size:20px;flex-shrink:0;margin-top:2px;}
+.hd-text{font-size:14px;color:var(--ink2);line-height:1.65;}
+.hd-text strong{color:var(--ink);}
+.hero-meta{display:flex;gap:24px;flex-wrap:wrap;margin-top:28px;}
+.hm-badge{display:flex;align-items:center;gap:8px;background:var(--cream2);border:1px solid var(--border);border-radius:100px;padding:8px 16px;font-size:13px;color:var(--ink2);}
+.hm-badge strong{color:var(--ink);font-weight:600;}
+
+/* ── CALLOUT ── */
+.callout{border-radius:var(--r);padding:20px 24px;margin:22px 0;display:flex;gap:14px;align-items:flex-start;border:1px solid transparent;}
+.callout.orange{background:var(--orange-light);border-color:rgba(232,87,12,.2);}
+.callout.green{background:var(--green-light);border-color:rgba(45,106,79,.2);}
+.callout.blue{background:var(--blue-light);border-color:rgba(29,78,216,.15);}
+.callout.amber{background:var(--amber-light);border-color:rgba(180,83,9,.2);}
+.callout.red{background:var(--red-light);border-color:rgba(220,38,38,.2);}
+.callout.neutral{background:white;border-color:var(--border);box-shadow:var(--shadow);}
+.callout-mark{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:3px 9px;border-radius:6px;flex-shrink:0;margin-top:2px;letter-spacing:.05em;}
+.callout.orange .callout-mark{background:var(--orange);color:white;}
+.callout.green .callout-mark{background:var(--green);color:white;}
+.callout.blue .callout-mark{background:var(--blue);color:white;}
+.callout.amber .callout-mark{background:var(--amber);color:white;}
+.callout.red .callout-mark{background:var(--red);color:white;}
+.callout.neutral .callout-mark{background:var(--ink);color:white;}
+.callout-body h4{font-size:15px;font-weight:600;margin-bottom:4px;color:var(--ink);}
+.callout-body p{font-size:14px;color:var(--ink2);margin:0;line-height:1.7;}
+.callout-body p strong{color:var(--ink);font-weight:600;}
+
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease;}
+.reveal.v{opacity:1;transform:translateY(0);}
+
+/* ══════════════════════════════
+   OSA A: BREAK THE AUTOMATION
+══════════════════════════════ */
+.broken-grid{display:flex;flex-direction:column;gap:24px;margin-top:36px;}
+.broken-card{background:white;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .2s;}
+.broken-card:hover{box-shadow:var(--shadow-lg);}
+.bc-header{padding:20px 24px 16px;border-bottom:1px solid var(--border2);display:flex;gap:16px;align-items:flex-start;}
+.bc-num{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--cream3);flex-shrink:0;line-height:1;}
+.bc-head-right{flex:1;}
+.bc-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px;display:flex;align-items:center;gap:7px;}
+.bc-label-dot{width:6px;height:6px;border-radius:50%;background:var(--red);}
+.bc-title{font-size:17px;font-weight:700;color:var(--ink);line-height:1.3;margin-bottom:4px;}
+.bc-subtitle{font-size:13px;color:var(--ink3);}
+/* Flow viz inside broken card */
+.bc-flow{padding:20px 24px;background:var(--cream2);border-bottom:1px solid var(--border2);overflow-x:auto;}
+.bc-flow-inner{display:flex;align-items:center;gap:0;min-width:560px;}
+.bc-node{background:white;border:1px solid var(--border);border-radius:10px;padding:12px 16px;min-width:120px;flex-shrink:0;position:relative;}
+.bc-node.broken-node{border-color:rgba(220,38,38,.4);background:rgba(220,38,38,.04);}
+.bc-node-type{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+.bc-node.trigger .bc-node-type{color:var(--amber);}
+.bc-node.action .bc-node-type{color:var(--orange);}
+.bc-node.output .bc-node-type{color:var(--green);}
+.bc-node.broken-node .bc-node-type{color:var(--red);}
+.bc-node-text{font-size:12px;color:var(--ink);font-weight:500;line-height:1.4;}
+.bc-node-warn{position:absolute;top:-8px;right:-8px;width:18px;height:18px;border-radius:50%;background:var(--red);color:white;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.bc-arrow{font-size:12px;color:var(--ink4);padding:0 10px;flex-shrink:0;}
+/* Problem reveal */
+.bc-problem{padding:20px 24px;border-bottom:1px solid var(--border2);}
+.bc-problem-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:12px;}
+.bc-problem-text{font-size:14px;color:var(--ink2);line-height:1.7;background:var(--red-light);border:1px solid rgba(220,38,38,.15);border-radius:var(--r-sm);padding:14px 16px;}
+.bc-problem-text strong{color:var(--red);}
+/* Fix exercise */
+.bc-fix{padding:20px 24px;}
+.bc-fix-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:10px;}
+.bc-fix-q{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:10px;line-height:1.5;}
+.bc-textarea{width:100%;min-height:72px;background:var(--cream2);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);resize:vertical;outline:none;transition:border-color .2s;line-height:1.6;}
+.bc-textarea:focus{border-color:var(--orange);}
+.bc-textarea::placeholder{color:var(--ink4);}
+.bc-reveal-btn{margin-top:10px;background:var(--ink);color:white;border:none;border-radius:8px;padding:10px 20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background .15s;display:inline-flex;align-items:center;gap:8px;}
+.bc-reveal-btn:hover{background:#333;}
+.bc-reveal-btn.revealed{background:var(--green);}
+.bc-answer{display:none;margin-top:14px;background:var(--green-light);border:1px solid rgba(45,106,79,.2);border-radius:var(--r-sm);padding:16px;}
+.bc-answer.show{display:block;}
+.bc-answer-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:8px;}
+.bc-answer-text{font-size:13px;color:var(--ink2);line-height:1.7;}
+.bc-answer-text strong{color:var(--ink);}
+
+/* ══════════════════════════════
+   OSA B: GALLERY HUNT
+══════════════════════════════ */
+.mission-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:32px;}
+@media(max-width:620px){.mission-grid{grid-template-columns:1fr;}}
+.mission-card{background:white;border:2px solid var(--border);border-radius:16px;padding:22px;cursor:pointer;transition:all .2s;position:relative;}
+.mission-card:hover{border-color:var(--orange);box-shadow:var(--shadow-lg);}
+.mission-card.selected{border-color:var(--orange);background:var(--orange-light);}
+.mc-letter{font-family:'Playfair Display',serif;font-size:40px;font-weight:700;color:var(--cream3);line-height:1;margin-bottom:10px;}
+.mc-emoji{font-size:24px;margin-bottom:8px;}
+.mc-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.mc-where{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink4);margin-bottom:8px;}
+.mc-task{font-size:13px;color:var(--ink2);line-height:1.6;}
+.mc-check{position:absolute;top:14px;right:14px;width:22px;height:22px;border-radius:50%;background:var(--orange);color:white;display:none;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+.mission-card.selected .mc-check{display:flex;}
+.mission-link{display:inline-flex;align-items:center;gap:6px;background:var(--cream2);border:1px solid var(--border);border-radius:7px;padding:6px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--orange);text-decoration:none;transition:background .15s;margin-top:10px;}
+.mission-link:hover{background:var(--orange-light);}
+
+.gallery-deliverable{background:white;border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-top:24px;box-shadow:var(--shadow);display:none;}
+.gallery-deliverable.show{display:block;}
+.gd-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);margin-bottom:16px;}
+.gd-field{margin-bottom:16px;}
+.gd-field label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.gd-input{width:100%;background:var(--cream2);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;}
+.gd-input:focus{border-color:var(--orange);}
+.gd-input::placeholder{color:var(--ink4);}
+.gd-textarea{min-height:80px;resize:vertical;line-height:1.6;}
+.gd-save{background:var(--ink);color:white;border:none;border-radius:8px;padding:11px 24px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:8px;}
+.gd-save:hover{background:#333;}
+.gd-save.saved{background:var(--green);}
+
+/* ══════════════════════════════
+   OSA C: TOOL LANDSCAPE
+══════════════════════════════ */
+.tool-map{display:flex;flex-direction:column;gap:0;margin-top:36px;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg);}
+.tool-tier{border-bottom:1px solid var(--border);}
+.tool-tier:last-child{border-bottom:none;}
+.tt-header{padding:14px 22px;background:var(--cream2);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:10px;}
+.tt-tier-badge{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:5px;font-weight:500;}
+.tt-tier-badge.starter{background:var(--orange-light);color:var(--orange);}
+.tt-tier-badge.connector{background:var(--blue-light);color:var(--blue);}
+.tt-tier-badge.power{background:rgba(107,114,128,.1);color:#6B7280;}
+.tt-tier-badge.daily{background:var(--green-light);color:var(--green);}
+.tt-tier-badge.quick{background:var(--amber-light);color:var(--amber);}
+.tt-tier-desc{font-size:13px;color:var(--ink3);}
+.tt-tools{padding:16px 22px;display:flex;flex-direction:column;gap:12px;background:white;}
+.tool-row{display:grid;grid-template-columns:140px 1fr auto;gap:16px;align-items:start;padding:12px 16px;background:var(--cream2);border-radius:var(--r-sm);border:1px solid var(--border2);}
+@media(max-width:620px){.tool-row{grid-template-columns:1fr;gap:8px;}}
+.tool-name{font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;}
+.tool-emoji{font-size:16px;}
+.tool-desc{font-size:13px;color:var(--ink2);line-height:1.6;}
+.tool-desc strong{color:var(--ink);}
+.tool-tag{font-family:'DM Mono',monospace;font-size:10px;padding:3px 9px;border-radius:5px;white-space:nowrap;align-self:flex-start;}
+.tool-tag.free{background:var(--green-light);color:var(--green);}
+.tool-tag.freemium{background:var(--amber-light);color:var(--amber);}
+.tool-tag.paid{background:rgba(107,114,128,.1);color:#6B7280;}
+.tool-map-footer{padding:16px 22px;background:var(--cream2);border-top:1px solid var(--border);font-size:13px;color:var(--ink3);line-height:1.65;font-style:italic;}
+.tool-map-footer strong{color:var(--orange);font-style:normal;}
+
+/* ══════════════════════════════
+   OSA D: DRAG ORDER
+══════════════════════════════ */
+.drag-section{margin-top:36px;}
+.drag-flows{display:flex;flex-direction:column;gap:24px;}
+.drag-flow-card{background:white;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);}
+.drag-flow-card.cf-done{opacity:.98;}
+.dfc-header{padding:16px 22px;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.dfc-title{font-size:15px;font-weight:700;color:var(--ink);}
+.dfc-score{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink4);white-space:nowrap;}
+.dfc-score.done{color:var(--green);font-weight:600;}
+.dfc-hint{padding:12px 22px 0;font-size:12px;color:var(--ink3);line-height:1.55;}
+.cf-slots-row{display:flex;align-items:stretch;gap:6px;padding:18px 22px 8px;overflow-x:auto;}
+.cf-slot-wrap{flex:1;min-width:130px;display:flex;flex-direction:column;gap:6px;}
+.cf-slot-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;text-align:center;padding:4px 8px;border-radius:5px;}
+.cf-slot-label.trigger{background:rgba(180,83,9,.12);color:var(--amber);}
+.cf-slot-label.action{background:var(--orange-light);color:var(--orange);}
+.cf-slot-label.ai{background:var(--blue-light);color:var(--blue);}
+.cf-slot-label.output{background:var(--green-light);color:var(--green);}
+.cf-slot{min-height:88px;background:var(--cream2);border:2px dashed var(--border);border-radius:10px;padding:8px;transition:all .2s;display:flex;align-items:stretch;}
+.cf-slot .cf-piece{width:100%;min-height:100%;box-sizing:border-box;}
+.cf-slot.drag-over{border-color:var(--orange);background:var(--orange-light);}
+.cf-slot.cf-slot-correct{border-style:solid;border-color:var(--green);background:var(--green-light);}
+.cf-slot.cf-slot-wrong{border-style:solid;border-color:var(--red);background:var(--red-light);animation:cf-shake .45s;}
+.cf-flow-arrow{align-self:center;font-size:16px;color:var(--ink4);padding-top:22px;flex-shrink:0;}
+@keyframes cf-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.cf-pool-label{padding:8px 22px 6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink4);}
+.cf-pool{padding:0 22px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;min-height:60px;}
+.cf-piece{background:white;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;cursor:grab;transition:all .15s;touch-action:none;user-select:none;display:flex;flex-direction:column;gap:5px;box-shadow:var(--shadow);}
+.cf-piece:hover{border-color:var(--orange);box-shadow:var(--shadow-lg);}
+.cf-piece:active{cursor:grabbing;}
+.cf-piece.cf-selected{outline:3px solid var(--orange-mid);border-color:var(--orange);}
+.cf-piece.cf-dragging{opacity:.45;}
+.cp-emoji{font-size:17px;}
+.cp-text{font-size:12px;font-weight:500;color:var(--ink);line-height:1.45;}
+.cf-actions{padding:0 22px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+.cf-check-btn{background:var(--ink);color:white;border:none;border-radius:8px;padding:11px 22px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s;}
+.cf-check-btn:hover:not(:disabled){background:#333;}
+.cf-check-btn:disabled{opacity:.35;cursor:not-allowed;}
+.cf-check-btn.done{background:var(--green);cursor:default;}
+.cf-result{font-size:13px;color:var(--ink3);line-height:1.55;flex:1;min-width:180px;}
+.cf-result.ok{color:var(--green);font-weight:600;}
+.cf-result.bad{color:var(--red);}
+.dfc-insight{padding:14px 22px;background:var(--cream2);border-top:1px solid var(--border2);font-size:13px;color:var(--ink3);display:none;line-height:1.65;}
+.dfc-insight.show{display:block;}
+.dfc-insight strong{color:var(--ink);}
+.classify-deck-done{margin-top:20px;padding:16px 20px;background:var(--green-light);border:1px solid rgba(45,106,79,.2);border-radius:var(--r);font-size:14px;color:var(--green);font-weight:600;display:none;text-align:center;}
+.classify-deck-done.show{display:block;}
+@media(max-width:720px){
+  .cf-slots-row{flex-wrap:wrap;}
+  .cf-flow-arrow{display:none;}
+  .cf-slot-wrap{min-width:calc(50% - 8px);}
+}
+
+/* ══════════════════════════════
+   OSA E: SALES + ENTREPRENEUR SECTION
+══════════════════════════════ */
+.world-tabs{display:flex;gap:8px;margin-bottom:0;border-bottom:2px solid var(--border);}
+.world-tab{padding:12px 22px;font-size:14px;font-weight:600;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;}
+.world-tab:hover{color:var(--ink2);}
+.world-tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+.world-panel{display:none;padding-top:28px;}
+.world-panel.active{display:block;}
+
+/* Entrepreneur cards */
+.entrepreneur-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:0;}
+@media(max-width:620px){.entrepreneur-grid{grid-template-columns:1fr;}}
+.ent-card{background:white;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);}
+.ent-header{padding:18px 20px;border-bottom:1px solid var(--border2);display:flex;gap:12px;align-items:flex-start;}
+.ent-avatar{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.ent-name{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.ent-role{font-size:12px;color:var(--ink3);}
+.ent-automations{padding:16px 20px;display:flex;flex-direction:column;gap:8px;}
+.ent-auto-row{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;background:var(--cream2);border-radius:var(--r-sm);}
+.ear-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+.ear-text{font-size:13px;color:var(--ink2);line-height:1.5;}
+.ear-text strong{color:var(--ink);font-size:12px;display:block;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.04em;margin-bottom:1px;}
+.ent-result{padding:12px 20px;background:var(--green-light);border-top:1px solid rgba(45,106,79,.15);font-size:13px;color:var(--green);font-weight:500;}
+.ent-result::before{content:'→ ';}
+
+/* Sales worker section */
+.sales-leverage-grid{display:flex;flex-direction:column;gap:0;margin-top:8px;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);}
+.slg-row{display:grid;grid-template-columns:1fr 32px 1fr;gap:0;border-bottom:1px solid var(--border);}
+.slg-row:last-child{border-bottom:none;}
+.slg-before{padding:18px 20px;background:white;}
+.slg-after{padding:18px 20px;background:var(--green-light);}
+.slg-arrow-col{display:flex;align-items:center;justify-content:center;background:var(--cream2);font-size:14px;color:var(--orange);}
+@media(max-width:600px){
+  .slg-row{grid-template-columns:1fr;gap:0;}
+  .slg-arrow-col{padding:8px;font-size:20px;transform:rotate(90deg);}
+}
+.slg-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:4px;display:inline-block;margin-bottom:7px;}
+.slg-tag.before{background:rgba(220,38,38,.08);color:var(--red);}
+.slg-tag.after{background:var(--green-light);color:var(--green);}
+.slg-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+.slg-desc{font-size:13px;color:var(--ink2);line-height:1.6;}
+.slg-tool{font-family:'DM Mono',monospace;font-size:10px;color:var(--orange);margin-top:5px;}
+.sales-ex-wrap{background:white;border:1px solid var(--border);border-radius:var(--r);padding:24px 26px;margin-top:28px;box-shadow:var(--shadow);}
+.sales-ex-head{margin-bottom:20px;}
+.sales-ex-num{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin-bottom:6px;}
+.sales-ex-head h3{font-size:18px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.sales-ex-head p{font-size:14px;color:var(--ink3);line-height:1.65;margin:0;}
+.se-match-list{display:flex;flex-direction:column;gap:12px;}
+.se-match-row{display:grid;grid-template-columns:1fr 160px;gap:14px;align-items:center;padding:14px 16px;background:var(--cream2);border:1px solid var(--border);border-radius:var(--r-sm);}
+@media(max-width:560px){.se-match-row{grid-template-columns:1fr;}}
+.se-match-text{font-size:13px;color:var(--ink2);line-height:1.55;}
+.se-match-text strong{color:var(--ink);display:block;font-size:12px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.se-select{width:100%;background:white;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);outline:none;}
+.se-select:focus{border-color:var(--orange);}
+.se-select.correct{border-color:var(--green);background:var(--green-light);}
+.se-select.wrong{border-color:var(--red);background:var(--red-light);}
+.se-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;align-items:center;}
+.se-check-btn{background:var(--ink);color:white;border:none;border-radius:8px;padding:11px 22px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;}
+.se-check-btn:hover{background:#333;}
+.se-check-btn.done{background:var(--green);}
+.se-feedback{font-size:13px;color:var(--ink3);line-height:1.6;flex:1;min-width:200px;}
+.se-feedback strong{color:var(--ink);}
+.se-pipeline{display:flex;flex-direction:column;gap:12px;margin-top:16px;}
+.se-pipeline label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:5px;}
+.se-pipeline textarea,.se-pipeline input{width:100%;background:var(--cream2);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;resize:vertical;line-height:1.55;}
+.se-pipeline textarea:focus,.se-pipeline input:focus{border-color:var(--orange);}
+.se-picked-banner{padding:12px 16px;background:var(--orange-light);border:1px solid rgba(232,87,12,.2);border-radius:var(--r-sm);font-size:13px;color:var(--ink2);margin-bottom:16px;line-height:1.55;}
+.se-picked-banner strong{color:var(--orange);}
+.sales-ex-primary{border:2px solid var(--orange);margin-top:24px;}
+.sales-ex-build{border:2px solid rgba(45,106,79,.45);margin-top:36px;background:linear-gradient(180deg,rgba(45,106,79,.04) 0%,white 120px);}
+.sales-ex-build .sales-ex-num{color:var(--green);}
+.se-exercise-jump{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;}
+.se-exercise-jump a{font-family:'DM Mono',monospace;font-size:11px;color:var(--orange);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;}
+.se-exercise-jump a:hover{background:var(--orange-light);}
+.ent-hint-details{margin-top:20px;border:1px solid var(--border);border-radius:var(--r);background:var(--cream2);overflow:hidden;}
+.ent-hint-details summary{padding:14px 18px;font-size:14px;font-weight:600;color:var(--ink2);cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;}
+.ent-hint-details summary::-webkit-details-marker{display:none;}
+.ent-hint-details summary::before{content:'▶';font-size:10px;color:var(--ink4);transition:transform .2s;}
+.ent-hint-details[open] summary::before{transform:rotate(90deg);}
+.ent-hint-details .ent-hint-body{padding:0 18px 18px;}
+.e2-case-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0;}
+@media(max-width:560px){.e2-case-grid{grid-template-columns:1fr;}}
+.e2-case-card{text-align:left;padding:16px 18px;border:2px solid var(--border);border-radius:12px;background:white;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;width:100%;}
+.e2-case-card:hover{border-color:var(--orange);box-shadow:var(--shadow);}
+.e2-case-card.selected{border-color:var(--orange);background:var(--orange-light);box-shadow:0 0 0 3px var(--orange-mid);}
+.e2-case-icon{font-size:22px;margin-bottom:6px;}
+.e2-case-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.e2-case-short{font-size:12px;color:var(--ink3);line-height:1.45;}
+.e2-context-panel{background:var(--cream2);border:1px solid var(--border);border-radius:var(--r-sm);padding:18px 20px;margin-bottom:18px;line-height:1.65;}
+.e2-context-panel.has-case{border-color:rgba(232,87,12,.35);background:white;}
+.e2-context-empty{color:var(--ink4);font-size:14px;text-align:center;padding:8px 0;}
+.e2-ctx-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink4);margin-bottom:4px;margin-top:12px;}
+.e2-ctx-label:first-child{margin-top:0;}
+.e2-ctx-text{font-size:13px;color:var(--ink2);}
+.e2-ctx-text strong{color:var(--ink);}
+.e2-ctx-tool{font-family:'DM Mono',monospace;font-size:11px;color:var(--orange);margin-top:10px;}
+.se-pipeline.se-locked{opacity:.5;}
+.se-pipeline.se-locked input,.se-pipeline.se-locked textarea{pointer-events:none;}
+.sales-leverage-header{padding:14px 22px;background:var(--cream2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.slh-left{font-size:14px;font-weight:600;color:var(--ink);}
+.slh-right{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink4);}
+.e-path{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 8px;}
+.e-path-step{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:8px 14px;border-radius:999px;border:1px solid var(--border);color:var(--ink3);background:white;}
+.e-path-step span{color:var(--orange);font-weight:600;}
+.e-part-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin:36px 0 10px;display:flex;align-items:center;gap:10px;}
+.e-part-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.e-part-label.green{color:var(--green);}
+.e-story-intro{background:linear-gradient(135deg,var(--orange-light) 0%,white 100%);border:1px solid rgba(232,87,12,.2);border-radius:var(--r);padding:18px 22px;margin-bottom:20px;line-height:1.65;}
+.e-story-intro p{margin:0;font-size:14px;color:var(--ink2);}
+.e-story-intro strong{color:var(--ink);}
+.e-story-stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
+.e-stat{font-family:'DM Mono',monospace;font-size:11px;background:white;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--ink2);}
+.e-stat em{font-style:normal;color:var(--orange);font-weight:600;}
+.e-theory-bridge{background:var(--cream2);border:1px dashed var(--border);border-radius:var(--r-sm);padding:14px 18px;margin:16px 0 0;font-size:13px;color:var(--ink3);line-height:1.6;}
+.e-theory-bridge strong{color:var(--ink);}
+.slg-row.se-pickable{cursor:pointer;transition:background .15s;}
+.slg-row.se-pickable:hover .slg-after{background:rgba(45,106,79,.12);}
+.slg-row.se-pickable:hover .slg-before{background:var(--cream2);}
+.slg-row.se-selected .slg-after{box-shadow:inset 0 0 0 2px var(--orange);}
+.slg-row.se-selected .slg-before{box-shadow:inset 0 0 0 2px var(--orange-mid);}
+.slg-pick-hint{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink4);margin-top:6px;}
+.e-exercise-gate{background:var(--green-light);border:1px solid rgba(45,106,79,.2);border-radius:var(--r);padding:16px 20px;margin:32px 0 0;display:flex;gap:14px;align-items:flex-start;}
+.e-exercise-gate-icon{font-size:24px;line-height:1;flex-shrink:0;}
+.e-exercise-gate h4{font-size:15px;font-weight:700;color:var(--green);margin:0 0 4px;}
+.e-exercise-gate p{margin:0;font-size:13px;color:var(--ink2);line-height:1.6;}
+
+/* ══════════════════════════════
+   OSA F: TASK MAP + MY AUTOMATION
+══════════════════════════════ */
+.my-task-card{background:white;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-lg);margin-top:32px;}
+.mtc-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;gap:14px;align-items:flex-start;}
+.mtc-badge{background:var(--orange);color:white;border-radius:8px;padding:6px 12px;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;flex-shrink:0;margin-top:2px;}
+.mtc-head-text h3{font-size:17px;font-weight:700;margin-bottom:3px;}
+.mtc-head-text p{font-size:13px;color:var(--ink3);margin:0;}
+.mtc-body{padding:28px 24px;}
+.mtc-field{margin-bottom:18px;}
+.mtc-label{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:5px;display:flex;align-items:center;gap:8px;}
+.mtc-hint{font-size:12px;color:var(--ink3);margin-bottom:7px;line-height:1.6;}
+.mtc-input{width:100%;background:var(--cream2);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;}
+.mtc-input:focus{border-color:var(--orange);}
+.mtc-input::placeholder{color:var(--ink4);}
+.mtc-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239A9A9A' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
+.mtc-ai-output{background:var(--cream2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-top:20px;display:none;}
+.mtc-ai-output.show{display:block;}
+.mao-head{padding:10px 16px;background:white;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.mao-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink4);display:flex;align-items:center;gap:7px;}
+.mao-dot{width:6px;height:6px;border-radius:50%;background:var(--orange);}
+.mao-body{padding:18px;font-size:14px;color:var(--ink2);line-height:1.8;white-space:pre-wrap;}
+.mao-body strong{color:var(--ink);font-weight:600;}
+.mtc-generate-btn{background:var(--ink);color:white;border:none;border-radius:8px;padding:12px 24px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:8px;}
+.mtc-generate-btn:hover{background:#333;}
+.mtc-generate-btn:disabled{opacity:.4;cursor:not-allowed;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.make-hunt-card{background:white;border:2px solid rgba(232,87,12,.35);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-lg);margin-top:28px;display:none;}
+.make-hunt-card.show{display:block;animation:ib-rise .4s ease;}
+.make-search-box{background:linear-gradient(135deg,var(--orange-light) 0%,white 100%);border:1px solid rgba(232,87,12,.2);border-radius:var(--r-sm);padding:18px 20px;margin-bottom:20px;}
+.make-search-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);margin-bottom:8px;}
+.make-search-terms{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:14px;}
+.make-open-btn{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:white;text-decoration:none;border-radius:8px;padding:12px 20px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;transition:background .15s,transform .15s;}
+.make-open-btn:hover{background:#333;transform:translateY(-1px);}
+.make-hunt-steps{font-size:13px;color:var(--ink3);line-height:1.65;margin:0 0 18px;padding-left:0;list-style:none;}
+.make-hunt-steps li{padding:6px 0 6px 28px;position:relative;}
+.make-hunt-steps li::before{content:attr(data-step);position:absolute;left:0;top:6px;width:20px;height:20px;border-radius:50%;background:var(--orange-light);color:var(--orange);font-family:'DM Mono',monospace;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+.make-hunt-note{font-size:12px;color:var(--ink4);margin-top:12px;line-height:1.55;}
+.make-hunt-note strong{color:var(--ink3);}
+.make-ui-guide{background:var(--cream2);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:22px;}
+.make-ui-guide h4{font-size:14px;font-weight:700;color:var(--ink);margin:0 0 6px;}
+.make-ui-guide>p{font-size:13px;color:var(--ink3);line-height:1.6;margin:0 0 14px;}
+.make-ui-shot{width:100%;border-radius:var(--r-sm);border:1px solid var(--border);display:block;background:white;}
+.make-ui-legend{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;}
+@media(max-width:620px){.make-ui-legend{grid-template-columns:1fr;}}
+.make-ui-leg-item{background:white;border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-size:12px;line-height:1.5;color:var(--ink2);}
+.make-ui-leg-item strong{display:block;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;}
+.make-ui-leg-item.trigger strong{color:#DC2626;}
+.make-ui-leg-item.action strong{color:#0D9488;}
+.make-ui-leg-item.output strong{color:#DC2626;}
+.spinner{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;}
+
+/* ══════════════════════════════
+   OSA G: COMPLETION / EXIT CARD
+══════════════════════════════ */
+.exit-section{background:white;border-top:1px solid var(--border);padding:80px 32px;text-align:center;}
+.exit-inner{max-width:720px;margin:0 auto;}
+.exit-check{width:64px;height:64px;border-radius:50%;background:var(--green-light);border:2px solid rgba(45,106,79,.3);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 28px;color:var(--green);}
+.exit-inner h2{font-family:'Playfair Display',serif;font-size:36px;font-weight:800;letter-spacing:-.02em;margin-bottom:12px;}
+.exit-inner p{font-size:16px;color:var(--ink3);margin-bottom:36px;}
+/* Exit commitment card */
+.commitment-card{background:var(--cream2);border:1px solid var(--border);border-radius:var(--r);padding:28px;text-align:left;margin-bottom:32px;}
+.cc-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);margin-bottom:16px;}
+.cc-fields{display:flex;flex-direction:column;gap:12px;}
+.cc-field input,.cc-field textarea{width:100%;background:white;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;resize:vertical;}
+.cc-field input:focus,.cc-field textarea:focus{border-color:var(--orange);}
+.cc-field input::placeholder,.cc-field textarea::placeholder{color:var(--ink4);}
+.cc-field label{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:5px;display:block;}
+.cc-save{background:var(--green);color:white;border:none;border-radius:8px;padding:12px 24px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:8px;margin-top:4px;}
+.cc-save:hover{background:#245a42;}
+.cc-save.done{background:var(--green);}
+.done-grid-exit{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:32px;text-align:left;}
+.done-tile{background:var(--cream2);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.done-check-small{width:22px;height:22px;border-radius:50%;background:var(--green-light);border:1px solid rgba(45,106,79,.25);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--green);margin-bottom:8px;}
+.done-tile h4{font-size:13px;font-weight:700;margin-bottom:3px;}
+.done-tile p{font-size:12px;color:var(--ink3);line-height:1.5;margin:0;}
+.next-btn{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:white;border:none;border-radius:10px;padding:15px 30px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s;text-decoration:none;}
+.next-btn:hover{background:#333;}
+
+/* ICEBERG — interactive peel */
+.iceberg-wrap{background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-top:28px;box-shadow:var(--shadow-lg);}
+.iceberg-surface{padding:32px 28px 24px;text-align:center;background:linear-gradient(180deg,#EEF6FF 0%,#DBEAFE 100%);position:relative;}
+.iceberg-surface::after{content:'';position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,transparent,#60A5FA,#93C5FD,#60A5FA,transparent);}
+.it-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#3B82F6;margin-bottom:10px;}
+.it-visible{font-size:20px;font-weight:700;color:var(--ink);line-height:1.35;}
+.it-sub{font-size:13px;color:var(--ink3);margin-top:8px;}
+.iceberg-water{padding:24px 24px 20px;background:linear-gradient(180deg,#BAE6FD 0%,#7DD3FC 35%,#0EA5E9 100%);min-height:120px;}
+.ib-progress{font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,.85);text-align:center;margin-bottom:14px;letter-spacing:.04em;}
+.ib-layer-stack{display:flex;flex-direction:column;gap:8px;max-width:520px;margin:0 auto;}
+.ib-layer{background:rgba(255,255,255,.15);border:1.5px dashed rgba(255,255,255,.45);border-radius:10px;padding:14px 16px;color:white;transition:all .35s ease;cursor:pointer;text-align:left;}
+.ib-layer.locked{padding:12px 16px;opacity:.85;}
+.ib-layer.locked:hover{background:rgba(255,255,255,.22);border-style:solid;}
+.ib-layer.revealed{background:rgba(255,255,255,.95);border:1px solid rgba(255,255,255,.9);color:#0C4A6E;cursor:default;box-shadow:0 4px 16px rgba(0,0,0,.12);animation:ib-rise .4s ease;}
+.ib-layer.revealed:hover{transform:none;}
+@keyframes ib-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ib-layer-next{outline:2px solid rgba(255,255,255,.7);outline-offset:2px;animation:ib-pulse 1.5s ease infinite;}
+@keyframes ib-pulse{0%,100%{outline-color:rgba(255,255,255,.5)}50%{outline-color:rgba(255,255,255,.95)}}
+.ib-lock-label{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;opacity:.9;display:flex;align-items:center;gap:8px;}
+.ib-lock-label span{opacity:.7;font-size:10px;}
+.ib-layer-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.ib-layer-icon{font-size:20px;line-height:1;}
+.ib-layer-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:#0369A1;}
+.ib-layer-text{font-size:13px;line-height:1.55;color:#0C4A6E;}
+.ib-reveal-btn{display:block;width:100%;max-width:520px;margin:16px auto 0;background:white;color:#0369A1;border:none;border-radius:10px;padding:13px 20px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.15);transition:transform .15s,background .15s;}
+.ib-reveal-btn:hover:not(:disabled){transform:translateY(-1px);background:#F0F9FF;}
+.ib-reveal-btn:disabled{opacity:.55;cursor:default;}
+.ib-reveal-btn.done{background:var(--green-light);color:var(--green);}
+.iceberg-footer{padding:14px 28px;background:var(--cream2);border-top:1px solid var(--border);font-size:13px;color:var(--ink3);line-height:1.65;}
+.iceberg-footer strong{color:var(--orange);}
+.iceberg-footer.complete{color:var(--green);}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-logo">kurssi / <b>m1b</b></div>
+  <nav class="tb-nav">
+    <a class="tb-step active" href="#osa-a"><span class="tb-num">A</span>Riko automaatio</a>
+    <a class="tb-step" href="#osa-b"><span class="tb-num">B</span>Galleria</a>
+    <a class="tb-step" href="#osa-c"><span class="tb-num">C</span>Työkalut</a>
+    <a class="tb-step" href="#osa-d"><span class="tb-num">D</span>Pura osiin</a>
+    <a class="tb-step" href="#osa-e"><span class="tb-num">E</span>Myynti & yrittäjät</a>
+    <a class="tb-step" href="#osa-f"><span class="tb-num">F</span>Minun automaationi</a>
+  </nav>
+  <div class="tb-right">
+    <div class="tb-prog-track"><div class="tb-prog-fill" id="progFill"></div></div>
+    <div class="tb-prog-label" id="progLabel">0 / 6</div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero reveal">
+  <div class="hero-kicker">Moduuli 1b — Syvä sukellus</div>
+  <h1>Sama logiikka.<br><em>Eri maailmat.</em></h1>
+  <p class="hero-sub">Moduulissa A rakensit promptin Pinkfishillä. Tässä moduulissa näet, että sama Trigger → Action → Output -logiikka toimii kaikkialla — ja tutustut muihin automaatiotyökaluihin kuten Makeen ja Zapieriin.</p>
+  <div class="hero-disclaimer">
+    <div class="hd-icon">💡</div>
+    <div class="hd-text"><strong>Miksi tämä moduuli on olemassa:</strong> Moduuli A opetti yhden tapauksen (työnhaku-sähköposti) promptilla. Automaatio on kokonainen kategoria — sama logiikka toimii koulutehtävissä, urheiluseurassa, somessa, budjetissa ja muistutuksissa. Tässä moduulissa tutustut muihin tapoihin rakentaa: <strong>Make, Zapier</strong> tai mikä tahansa muu automaatiotyökalu — ne eivät toimi prompteilla kuten Pinkfish, vaan visuaalisilla workflow-työkaluilla.</div>
+  </div>
+  <div class="hero-meta">
+    <div class="hm-badge">🔨 <strong>8 harjoitusta</strong> — tekemällä oppiminen</div>
+    <div class="hm-badge">🌐 <strong>Galleria</strong> — lähdet ulos kurssialustalta</div>
+    <div class="hm-badge">🧠 <strong>Rakentajan ajattelu</strong> — ei pelkkää lukemista</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     OSA A: BREAK THE AUTOMATION
+══════════════════════════════════════ -->
+<div class="section-sep"><div class="ss-line"></div><div class="ss-label">Osa A — Kriittinen ajattelu</div><div class="ss-line"></div></div>
+<section id="osa-a" class="section">
+  <div class="section-rule red reveal"></div>
+  <div class="section-kicker reveal"><span class="sk-num red">A</span>Riko automaatio — löydä ongelma</div>
+  <h2 class="reveal">Mikä meni pieleen?</h2>
+  <p class="lead reveal">Hyvä rakentaja ei vain rakenna — hän näkee myös mitä voi mennä rikki. Alla on kolme oikeaa automaatiota, joissa on suunnitteluvirhe. Löydä ongelma ja mieti miten korjaisit sen.</p>
+  <p class="body reveal">Tämä harjoitus opettaa sinulle <strong>enemmän kuin mikään onnistunut esimerkki</strong> — koska virheiden kautta ymmärrät miten automaatiot oikeasti toimivat. Ammattilaiset tunnustavat: ensimmäinen versio rikkoutuu lähes aina.</p>
+
+  <div class="callout red reveal">
+    <div class="callout-mark">Muista</div>
+    <div class="callout-body">
+      <h4>Automaatiot voivat epäonnistua — ja se on normaalia</h4>
+      <p>Jokainen rakentaja kohtaa rikkoutuneita automaatioita. Tärkeintä ei ole tehdä täydellinen ensi kerralla — tärkeintä on <strong>osata lukea ongelma ja korjata se</strong>. Tämä harjoitus opettaa juuri sen.</p>
+    </div>
+  </div>
+
+  <div class="broken-grid reveal">
+
+    <!-- BROKEN CASE 1 -->
+    <div class="broken-card">
+      <div class="bc-header">
+        <div class="bc-num">01</div>
+        <div class="bc-head-right">
+          <div class="bc-label"><div class="bc-label-dot"></div>Rikki</div>
+          <div class="bc-title">Työnhaku-sähköposti lähetetään vaikka ei ole uusia ilmoituksia</div>
+          <div class="bc-subtitle">Pinkfish AI — ajastettu hakuautomaatio</div>
+        </div>
+      </div>
+      <div class="bc-flow">
+        <div class="bc-flow-inner">
+          <div class="bc-node trigger">
+            <div class="bc-node-type">Käynnistys</div>
+            <div class="bc-node-text">Joka aamu kello 08:00</div>
+          </div>
+          <div class="bc-arrow">→</div>
+          <div class="bc-node action">
+            <div class="bc-node-type">Toiminto</div>
+            <div class="bc-node-text">Hae uudet ilmoitukset Te.fi:stä</div>
+          </div>
+          <div class="bc-arrow">→</div>
+          <div class="bc-node broken-node">
+            <div class="bc-node-warn">!</div>
+            <div class="bc-node-type" style="color:var(--red)">Ongelma tässä</div>
+            <div class="bc-node-text">Lähetä sähköposti AINA</div>
+          </div>
+        </div>
+      </div>
+      <div class="bc-problem">
+        <div class="bc-problem-label">🔴 Ongelma</div>
+        <div class="bc-problem-text">Jos sinä päivänä ei ole yhtään uutta ilmoitusta hakusanallasi, saat silti sähköpostin: <strong>"Uusia ilmoituksia: 0."</strong> Viikon päästä olet täynnä tyhjä-sähköposteja, lopetat avaamisen — ja unohdat koko automaation. <strong>Automaatio, jota ei luoteta, on hyödytön.</strong></div>
+      </div>
+      <div class="bc-fix">
+        <div class="bc-fix-label">🔧 Korjaa se</div>
+        <div class="bc-fix-q">Miten muuttaisit tätä automaatiota niin, että sähköposti lähetettäisiin vain silloin kun on jotain lähetettävää?</div>
+        <textarea class="bc-textarea" id="fix1" placeholder="Kirjoita vastauksesi — ajattele mitä pitäisi tapahtua ennen sähköpostin lähettämistä..."></textarea>
+        <button class="bc-reveal-btn" onclick="revealFix('fix1','ans1',this)">Näytä oikea vastaus</button>
+        <div class="bc-answer" id="ans1">
+          <div class="bc-answer-label">✓ Ratkaisu</div>
+          <div class="bc-answer-text">Lisää automaation keskelle <strong>ehto (condition/filter)</strong>: "Jos ilmoituksia löytyi enemmän kuin 0 → lähetä sähköposti. Jos löytyi 0 → älä tee mitään." Pinkfishissä tämä on If-node. Make/Zapierissa se on Filter-step. <strong>Ehto on automaatiorakentajan tärkein työkalu</strong> — se tekee automaatiosta älykkään, ei vain mekaanisen.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BROKEN CASE 2 -->
+    <div class="broken-card">
+      <div class="bc-header">
+        <div class="bc-num">02</div>
+        <div class="bc-head-right">
+          <div class="bc-label"><div class="bc-label-dot"></div>Rikki</div>
+          <div class="bc-title">Hakukirje kirjoitetaan — mutta se kuulostaa kaikista samoilta</div>
+          <div class="bc-subtitle">Claude / Pinkfish — kirjeautomaatio</div>
+        </div>
+      </div>
+      <div class="bc-flow">
+        <div class="bc-flow-inner">
+          <div class="bc-node trigger">
+            <div class="bc-node-type">Käynnistys</div>
+            <div class="bc-node-text">Liitä ilmoituksen teksti</div>
+          </div>
+          <div class="bc-arrow">→</div>
+          <div class="bc-node broken-node">
+            <div class="bc-node-warn">!</div>
+            <div class="bc-node-type" style="color:var(--red)">Heikko prompti</div>
+            <div class="bc-node-text">"Kirjoita hakukirje tästä ilmoituksesta"</div>
+          </div>
+          <div class="bc-arrow">→</div>
+          <div class="bc-node output">
+            <div class="bc-node-type">Tulos</div>
+            <div class="bc-node-text">Geneerinen kirje</div>
+          </div>
+        </div>
+      </div>
+      <div class="bc-problem">
+        <div class="bc-problem-label">🔴 Ongelma</div>
+        <div class="bc-problem-text">Prompti ei tiedä kenestä on kyse. Se tuottaa <strong>geneerisen kirjeen, joka voisi olla kenen tahansa kirjoittama.</strong> Rekrytoijat tunnistavat tekoälykirjeet välittömästi, jos ne ovat liian yleisiä — ja ne päätyvät suoraan roskakoriin. Tulos on automaatio joka tekee enemmän haittaa kuin hyvää.</div>
+      </div>
+      <div class="bc-fix">
+        <div class="bc-fix-label">🔧 Korjaa se</div>
+        <div class="bc-fix-q">Mitä tietoa lisäisit promptiin, jotta kirjeestä tulisi aito ja henkilökohtainen juuri sinulle?</div>
+        <textarea class="bc-textarea" id="fix2" placeholder="Ajattele: mitä tietoa sinusta puuttuu tästä promptista?"></textarea>
+        <button class="bc-reveal-btn" onclick="revealFix('fix2','ans2',this)">Näytä oikea vastaus</button>
+        <div class="bc-answer" id="ans2">
+          <div class="bc-answer-label">✓ Ratkaisu</div>
+          <div class="bc-answer-text">Promptiin pitää lisätä <strong>konteksti sinusta itsestäsi:</strong> ikäsi, taustasi, miksi haet juuri tähän yritykseen, mitä erityistä sinulla on tarjota, sävy (reipas vs. muodollinen). Hyvä prompti ei ole "kirjoita kirje" — se on <strong>"kirjoita kirje tähän ilmoitukseen minun puolestani, ja tässä olen minä: [kaikki oleellinen tieto]".</strong> Konteksti on polttoaine — ilman sitä moottori ei toimi.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BROKEN CASE 3 -->
+    <div class="broken-card">
+      <div class="bc-header">
+        <div class="bc-num">03</div>
+        <div class="bc-head-right">
+          <div class="bc-label"><div class="bc-label-dot"></div>Rikki</div>
+          <div class="bc-title">Automaatio lähettää follow-up vaikka yritys on jo vastannut kieltävästi</div>
+          <div class="bc-subtitle">Hakemusten seuranta-automaatio</div>
+        </div>
+      </div>
+      <div class="bc-flow">
+        <div class="bc-flow-inner">
+          <div class="bc-node trigger">
+            <div class="bc-node-type">Käynnistys</div>
+            <div class="bc-node-text">5 päivää hakemuksesta</div>
+          </div>
+          <div class="bc-arrow">→</div>
+          <div class="bc-node action">
+            <div class="bc-node-type">Toiminto</div>
+            <div class="bc-node-text">Tarkista onko vastattu</div>
+          </div>
+          <div class="bc-arrow">→</div>
+          <div class="bc-node broken-node">
+            <div class="bc-node-warn">!</div>
+            <div class="bc-node-type" style="color:var(--red)">Ei lue vastausta</div>
+            <div class="bc-node-text">Lähetä follow-up silti</div>
+          </div>
+        </div>
+      </div>
+      <div class="bc-problem">
+        <div class="bc-problem-label">🔴 Ongelma</div>
+        <div class="bc-problem-text">Automaatio ei osaa tulkita vastauksen sisältöä. Yritys on saattanut vastata "Emme valitettavasti etene hakemuksesi kanssa" — mutta automaatio lähettää silti follow-up viestin: <strong>"Halusin varmistaa oletko saanut hakemukseni?"</strong> Tämä näyttää epäammattimaiselta ja kiusalliselta. <strong>Automaatio ilman kontekstia voi tehdä hallaa.</strong></div>
+      </div>
+      <div class="bc-fix">
+        <div class="bc-fix-label">🔧 Korjaa se</div>
+        <div class="bc-fix-q">Miten rakentaisit tämän paremmin? Mitä automaation pitäisi tarkistaa ennen follow-upin lähettämistä?</div>
+        <textarea class="bc-textarea" id="fix3" placeholder="Mitä automaation pitäisi tehdä ennen kuin se lähettää follow-upin?"></textarea>
+        <button class="bc-reveal-btn" onclick="revealFix('fix3','ans3',this)">Näytä oikea vastaus</button>
+        <div class="bc-answer" id="ans3">
+          <div class="bc-answer-label">✓ Ratkaisu</div>
+          <div class="bc-answer-text"><strong>Kolme parannusta:</strong><br>1. Lisää AI-node joka lukee sähköpostin ja luokittelee: "Myönteinen / Kielteinen / Ei vastausta." <br>2. Lisää ehto: Follow-up lähetetään VAIN jos status = "Ei vastausta."<br>3. <strong>Paras käytäntö:</strong> Automaatio ei lähetä follow-upia suoraan — se lähettää sinulle ehdotuksen, jonka hyväksyt ennen lähetystä. Näin säilytät kontrollin ihmissuhteista. <strong>Herkkiä tilanteita ei pidä täysin automatisoida — vain valmistella.</strong></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="callout green reveal" style="margin-top:28px">
+    <div class="callout-mark">Mitä opit</div>
+    <div class="callout-body">
+      <h4>Rakentajan mindset — kolme sääntöä</h4>
+      <p><strong>1. Lisää aina ehto</strong> ennen toimintoa jolla on seurauksia (sähköpostin lähetys, viestin julkaisu).<br><strong>2. Konteksti on polttoaine</strong> — tekoäly on vain niin hyvä kuin sille annettu tieto.<br><strong>3. Herkissä tilanteissa</strong> automaatio valmistelee, ihminen päättää.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     OSA B: GALLERY HUNT
+══════════════════════════════════════ -->
+<hr class="sep">
+<div class="section-sep"><div class="ss-line"></div><div class="ss-label">Osa B — Galleria</div><div class="ss-line"></div></div>
+<section id="osa-b" class="section">
+  <div class="section-rule blue reveal"></div>
+  <div class="section-kicker reveal"><span class="sk-num blue">B</span>Galleriametsästys — lähde ulos alustalta</div>
+  <h2 class="reveal">Katso mitä ihmiset ovat jo rakentaneet</h2>
+  <p class="lead reveal">Tässä harjoituksessa poistut kurssialustalta ja katsot, mitä automaatioita oikeasti on olemassa. Tämä on tärkein hetki: näet sadoilla ihmisillä on jo sama idea jonka sinä halusit rakentaa — <em>ja se toimii.</em></p>
+  <p class="body reveal">Valitse yksi missio alta — Make, Zapier tai puhelimen automaatiot. Avaa linkki, tutki 10–15 minuuttia, ja palaa vastaamaan alla oleviin kysymyksiin. Tämä ei ole vapaaehtoinen — tämä on harjoituksen ydin.</p>
+
+  <div class="callout orange reveal">
+    <div class="callout-mark">Tärkeää</div>
+    <div class="callout-body">
+      <h4>Mitä etsit: yllätysmomentin</h4>
+      <p>Et etsi "hyvää esimerkkiä" — etsit sen hetken kun ajattelet <strong>"En tiennyt, että tämäkin on mahdollista."</strong> Se on se löydös jonka raportoit takaisin.</p>
+    </div>
+  </div>
+
+  <div class="mission-grid reveal">
+    <div class="mission-card" id="mission-a" onclick="selectMission('a')">
+      <div class="mc-check">✓</div>
+      <div class="mc-letter">A</div>
+      <div class="mc-emoji">🔧</div>
+      <div class="mc-title">Make.com — Template-galleria</div>
+      <div class="mc-where">make.com/en/templates</div>
+      <div class="mc-task">Selaa vapaasti. Etsi yksi template joka yllättää sinut. Nimeä 3 nodeä (solmua) mitä siinä on.</div>
+      <a class="mission-link" href="https://www.make.com/en/templates" target="_blank" rel="noopener" onclick="event.stopPropagation()">Avaa Make.com →</a>
+    </div>
+    <div class="mission-card" id="mission-b" onclick="selectMission('b')">
+      <div class="mc-check">✓</div>
+      <div class="mc-letter">B</div>
+      <div class="mc-emoji">⚡</div>
+      <div class="mc-title">Zapier — Template-haku</div>
+      <div class="mc-where">zapier.com/apps</div>
+      <div class="mc-task">Hae hakusanalla "email" tai "slack" tai "job". Valitse yksi template ja kirjoita omin sanoin: "Jos X, niin Y."</div>
+      <a class="mission-link" href="https://zapier.com/apps" target="_blank" rel="noopener" onclick="event.stopPropagation()">Avaa Zapier →</a>
+    </div>
+    <div class="mission-card" id="mission-d" onclick="selectMission('d')">
+      <div class="mc-check">✓</div>
+      <div class="mc-letter">D</div>
+      <div class="mc-emoji">📱</div>
+      <div class="mc-title">Puhelin — iOS Shortcuts tai Android Routines</div>
+      <div class="mc-where">Puhelimesi asetukset</div>
+      <div class="mc-task">Avaa iOS Shortcuts tai Android Routines. Katso "Gallery" tai "Automations." Mitä löydät jota et tiennyt olevan olemassa?</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--ink4);margin-top:8px;">iPhone: Oikopolut-app / Android: Routines-asetus</div>
+    </div>
+  </div>
+
+  <div class="gallery-deliverable" id="gallery-deliverable">
+    <div class="gd-label">Raportoi löydöksesi — missio <span id="mission-letter">?</span></div>
+    <div class="gd-field">
+      <label>Minkä löysit? (automaation tai templatein nimi tai kuvaus)</label>
+      <input type="text" class="gd-input" id="gallery-find" placeholder="Esim: 'New job listing in LinkedIn → send Slack message'">
+    </div>
+    <div class="gd-field">
+      <label>Miksi juuri tämä yllätti sinut tai herätti kiinnostuksesi?</label>
+      <textarea class="gd-input gd-textarea" id="gallery-why" placeholder="Kirjoita 2–3 lausetta — mitä et tiennyt olevan mahdollista?"></textarea>
+    </div>
+    <div class="gd-field">
+      <label>Voisivatko sinä tai joku tuttu hyötyä tästä? Miten?</label>
+      <textarea class="gd-input gd-textarea" id="gallery-use" placeholder="Mieti konkreettisesti — kuka käyttäisi, missä tilanteessa?"></textarea>
+    </div>
+    <button class="gd-save" id="gallery-save-btn" onclick="saveGallery()">Tallenna löydös</button>
+  </div>
+
+  <div class="callout green reveal" id="gallery-saved-callout" style="display:none;margin-top:20px">
+    <div class="callout-mark">Tallennettu</div>
+    <div class="callout-body">
+      <h4>Löydöksesi on tallennettu</h4>
+      <p>AI-haastattelu myöhemmässä moduulissa viittaa tähän löydökseen ja kysyy sinulta siitä tarkemmin. Mitä tarkemmin kirjoitat, sitä paremman palautteen saat.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     OSA C: TOOL LANDSCAPE
+══════════════════════════════════════ -->
+<hr class="sep">
+<div class="section-sep"><div class="ss-line"></div><div class="ss-label">Osa C — Työkalukartta</div><div class="ss-line"></div></div>
+<section id="osa-c" class="section">
+  <div class="section-rule amber reveal"></div>
+  <div class="section-kicker reveal"><span class="sk-num amber">C</span>Työkalukartta — yksi kartta, kuusi maailmaa</div>
+  <h2 class="reveal">Mitä sähköpostin alla oikeasti tapahtuu?</h2>
+  <p class="lead reveal">Näet vain tuloksen — <strong>📧 "Saan sähköpostin joka aamu"</strong>. Alla on jäävuori: kuusi piilokerrosta. Klikkaa paljastaaksesi yhden kerrallaan.</p>
+  <p class="body reveal"><em>Työkalu ei ratkaise — ajatus ratkaisee.</em> Pinkfishissä kerrokset ovat piilossa, mutta hyvä rakentaja tietää mitä siellä tapahtuu.</p>
+
+  <div class="iceberg-wrap reveal" id="iceberg-interactive">
+    <div class="iceberg-surface">
+      <div class="it-label">Mitä käyttäjä näkee</div>
+      <div class="it-visible">📧 "Saan sähköpostin joka aamu uusista töistä"</div>
+      <div class="it-sub">Jäävuoren huippu — veden alla piiloutuu 6 kerrosta</div>
+    </div>
+    <div class="iceberg-water">
+      <div class="ib-progress"><span id="ib-count">0</span> / 6 kerrosta paljastettu</div>
+      <div class="ib-layer-stack" id="ib-layer-stack">
+        <div class="ib-layer locked" id="ib-layer-0" data-idx="0" onclick="revealIcebergLayer(0)">
+          <div class="ib-lock-label">🧊 Kerros 1 <span>— klikkaa paljastaaksesi</span></div>
+        </div>
+        <div class="ib-layer locked" id="ib-layer-1" data-idx="1" onclick="revealIcebergLayer(1)">
+          <div class="ib-lock-label">🧊 Kerros 2</div>
+        </div>
+        <div class="ib-layer locked" id="ib-layer-2" data-idx="2" onclick="revealIcebergLayer(2)">
+          <div class="ib-lock-label">🧊 Kerros 3</div>
+        </div>
+        <div class="ib-layer locked" id="ib-layer-3" data-idx="3" onclick="revealIcebergLayer(3)">
+          <div class="ib-lock-label">🧊 Kerros 4</div>
+        </div>
+        <div class="ib-layer locked" id="ib-layer-4" data-idx="4" onclick="revealIcebergLayer(4)">
+          <div class="ib-lock-label">🧊 Kerros 5</div>
+        </div>
+        <div class="ib-layer locked" id="ib-layer-5" data-idx="5" onclick="revealIcebergLayer(5)">
+          <div class="ib-lock-label">🧊 Kerros 6</div>
+        </div>
+      </div>
+      <button type="button" class="ib-reveal-btn" id="ib-reveal-btn" onclick="revealIcebergNext()">Paljasta seuraava kerros ↓</button>
+    </div>
+    <div class="iceberg-footer" id="ib-footer">Pinkfishissä kaikki tämä on piilossa — kirjoitat vain mitä haluat. <strong>Sukella ensin — sitten valitset työkalut alempaa.</strong></div>
+  </div>
+
+  <div style="margin-top:40px" class="reveal">
+    <p class="body"><strong>Kuusi kerrosta — kenelle mikäkin sopii</strong></p>
+  </div>
+
+  <div class="tool-map reveal">
+    <div class="tool-tier">
+      <div class="tt-header">
+        <span class="tt-tier-badge starter">Aloittaja — tästä aloitat</span>
+        <span class="tt-tier-desc">Kuvailet mitä haluat → työkalu rakentaa</span>
+      </div>
+      <div class="tt-tools">
+        <div class="tool-row">
+          <div class="tool-name"><span class="tool-emoji">🐟</span>Pinkfish AI</div>
+          <div class="tool-desc"><strong>Kirjoitat suomeksi tai englanniksi mitä haluat tapahtuvan.</strong> Työkalu muodostaa automaation ja näyttää sen solmuina. Paras aloituspiste ilman teknistä taustaa. Ilmainen tili riittää harjoitteluun.</div>
+          <span class="tool-tag free">Ilmainen</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-tier">
+      <div class="tt-header">
+        <span class="tt-tier-badge connector">Yhdistäjät — sovellusten väliset automaatiot</span>
+        <span class="tt-tier-desc">Yhdistät olemassa olevia sovelluksia toisiinsa</span>
+      </div>
+      <div class="tt-tools">
+        <div class="tool-row">
+          <div class="tool-name"><span class="tool-emoji">🔧</span>Make.com</div>
+          <div class="tool-desc"><strong>Visuaalinen vedä-ja-pudota rakentaja.</strong> Yhdistät Gmail, Google Sheets, Slack, LinkedIn ja tuhansia muita sovelluksia. Tuhansia valmiita templateja. Paras kun tiedät mitä sovelluksia haluat yhdistää.</div>
+          <span class="tool-tag freemium">Freemium</span>
+        </div>
+        <div class="tool-row">
+          <div class="tool-name"><span class="tool-emoji">⚡</span>Zapier</div>
+          <div class="tool-desc"><strong>Maailman suurin automaatioalusta.</strong> "If this, then that" -logiikka. Yli 6 000 sovellusta. Erittäin helppo aloittaa templateista — yritykset käyttävät tätä laajasti. Ilmainen taso rajoitettu, mutta riittää kokeiluun.</div>
+          <span class="tool-tag freemium">Freemium</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-tier">
+      <div class="tt-header">
+        <span class="tt-tier-badge power">Tehokäyttäjät — täysi kontrolli</span>
+        <span class="tt-tier-desc">Kun tarvitset enemmän joustavuutta</span>
+      </div>
+      <div class="tt-tools">
+        <div class="tool-row">
+          <div class="tool-name"><span class="tool-emoji">🔩</span>n8n</div>
+          <div class="tool-desc"><strong>Avoimen lähdekoodin vaihtoehto.</strong> Voit ajaa omalla serverillä — täysi yksityisyys. Monimutkaisempi oppia, mutta rajoittamaton. Yritysten it-tiimit ja kehittäjät käyttävät tätä.</div>
+          <span class="tool-tag free">Ilmainen (self-host)</span>
+        </div>
+        <div class="tool-row">
+          <div class="tool-name"><span class="tool-emoji">🏢</span>Power Automate</div>
+          <div class="tool-desc"><strong>Microsoftin ekosysteemi.</strong> Jos työnantajasi käyttää Office 365:tä, tämä on jo käytössäsi. Outlook, Teams, SharePoint, Excel — kaikki yhdistyvät. Työnhakijana: mainitseminen CV:ssä on plussa.</div>
+          <span class="tool-tag freemium">Freemium</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-tier">
+      <div class="tt-header">
+        <span class="tt-tier-badge daily">Arki & puhelin — jo taskussasi</span>
+        <span class="tt-tier-desc">Puhelimen ja kodin automaatiot</span>
+      </div>
+      <div class="tt-tools">
+        <div class="tool-row">
+          <div class="tool-name"><span class="tool-emoji">📱</span>iOS Shortcuts</div>
+          <div class="tool-desc"><strong>iPhonen Oikopolut-sovellus.</strong> Kun saavut kotiin → laita WiFi päälle. Kun herätysaika → avaa kalenteri. Automaatio joka on jo puhelimessasi — useimmat eivät käytä sitä.</div>
+          <span class="tool-tag free">Ilmainen</span>
+        </div>
+        <div class="tool-row">
+          <div class="tool-name"><span class="tool-emoji">🤖</span>IFTTT</div>
+          <div class="tool-desc"><strong>"If This Then That".</strong> Yksinkertaisin mahdollinen automaatio — yksi käynnistys, yksi toiminto. Instagram-kuva → tallentuu Google Driveen. Sää muuttuu → lähetä ilmoitus. Hyvä ymmärtää peruslogiikka.</div>
+          <span class="tool-tag freemium">Freemium</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-tier">
+      <div class="tt-header">
+        <span class="tt-tier-badge quick">Nopeat yksittäiset tehtävät — copy-paste automatisointi</span>
+        <span class="tt-tier-desc">Ei varsinaista automaatiota — mutta sama vaikutus kertatyöhön</span>
+      </div>
+      <div class="tt-tools">
+        <div class="tool-row">
+          <div class="tool-name"><span class="tool-emoji">🧠</span>Claude / ChatGPT</div>
+          <div class="tool-desc"><strong>Toistuvaan kertatyöhön.</strong> Et automatisoi ajoitusta — mutta "tee tämä tehtävä nopeasti" on silti automaation henki. Hakukirje, yhteenveto, kääntäminen — sama tulos, ilman rakentamista.</div>
+          <span class="tool-tag free">Ilmainen</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-map-footer">
+      <strong>Profiilin mukaan: aloita Pinkfishillä tai Make-templatesta.</strong> Tärkeintä on ajatus — ei työkalu. Sama Trigger → Action → Output -logiikka pätee jokaisessa näistä.
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     OSA D: PURA OSIIN
+══════════════════════════════════════ -->
+<hr class="sep">
+<div class="section-sep"><div class="ss-line"></div><div class="ss-label">Osa D — Järjestä</div><div class="ss-line"></div></div>
+<section id="osa-d" class="section">
+  <div class="section-rule green reveal"></div>
+  <div class="section-kicker reveal"><span class="sk-num green">D</span>Pura osiin — neljä erilaista elämää</div>
+  <h2 class="reveal">Sama luuranko — eri konteksti</h2>
+  <p class="lead reveal">Alla on neljä erilaista automaatiota — ei työnhaussa, vaan arjessa, opiskelussa ja vapaa-ajassa. Jokainen laatikko on yksi vaihe, <strong>sekoitettuna alla</strong>. Raahaa (tai napauta + valitse paikka) vaiheet oikeaan järjestykseen: Käynnistys → Toiminto → AI → Tulos.</p>
+  <p class="body reveal">Tavoite: huomaat, että <em>rakenne on täsmälleen sama</em> riippumatta siitä mitä automatisoidaan. Palaute tulee vasta kun kaikki neljä kohtaa on täytetty ja painat <strong>Tarkista järjestys</strong> — väärässä voit yrittää uudelleen.</p>
+
+  <div class="drag-section reveal">
+    <div class="drag-flows">
+
+      <!-- FLOW 1: DISCORD MUISTUTUS -->
+      <div class="drag-flow-card" id="flow-card-0">
+        <div class="dfc-header">
+          <div class="dfc-title">🎮 Discord → "Harjoitusmuistutus"</div>
+          <div class="dfc-score" id="score-0">0 / 4</div>
+        </div>
+        <div class="dfc-hint">Raahaa sekoitetut vaiheet yllä oleviin kohtiin. Mobiililla: napauta vaihetta, sitten kohtaa.</div>
+        <div class="cf-slots-row">
+          <div class="cf-slot-wrap"><div class="cf-slot-label trigger">Käynnistys</div><div class="cf-slot" data-flow="0" data-slot="trigger"></div></div>
+          <div class="cf-flow-arrow">→</div>
+          <div class="cf-slot-wrap"><div class="cf-slot-label action">Toiminto</div><div class="cf-slot" data-flow="0" data-slot="action"></div></div>
+          <div class="cf-flow-arrow">→</div>
+          <div class="cf-slot-wrap"><div class="cf-slot-label ai">AI</div><div class="cf-slot" data-flow="0" data-slot="ai"></div></div>
+          <div class="cf-flow-arrow">→</div>
+          <div class="cf-slot-wrap"><div class="cf-slot-label output">Tulos</div><div class="cf-slot" data-flow="0" data-slot="output"></div></div>
+        </div>
+        <div class="cf-pool-label">Sekoitetut vaiheet</div>
+        <div class="cf-pool" id="flow-pool-0">
+          <div class="cf-piece" draggable="true" data-flow="0" data-answer="trigger" data-piece-id="0-trigger"><div class="cp-emoji">📅</div><div class="cp-text">Joka torstai kello 17:00</div></div>
+          <div class="cf-piece" draggable="true" data-flow="0" data-answer="action" data-piece-id="0-action"><div class="cp-emoji">📊</div><div class="cp-text">Tarkista Discord-kanavalta kuka on merkinnyt läsnä</div></div>
+          <div class="cf-piece" draggable="true" data-flow="0" data-answer="ai" data-piece-id="0-ai"><div class="cp-emoji">🤖</div><div class="cp-text">Luo henkilökohtainen muistutusviesti jokaiselle puuttuvalle</div></div>
+          <div class="cf-piece" draggable="true" data-flow="0" data-answer="output" data-piece-id="0-output"><div class="cp-emoji">💬</div><div class="cp-text">Lähetä yksityisviesti Discordissa</div></div>
+        </div>
+        <div class="cf-actions">
+          <button type="button" class="cf-check-btn" id="cf-check-0" onclick="checkFlowOrder(0)" disabled>Tarkista järjestys</button>
+          <div class="cf-result" id="cf-result-0">Täytä kaikki neljä kohtaa — sitten tarkista.</div>
+        </div>
+        <div class="dfc-insight" id="insight-0"><strong>Täydellinen!</strong> Sama luuranko kuin työnhaku-automaatiossa — mutta nyt Discord-yhteisön hallintaan. Urheiluseurat, opiskelijakerhot, pelisporet — kaikki voivat hyötyä tästä. Rakentaja ei vaihdu, vain konteksti vaihtuu.</div>
+      </div>
+
+      <!-- FLOW 2: FORM → SLACK -->
+      <div class="drag-flow-card" id="flow-card-1">
+        <div class="dfc-header">
+          <div class="dfc-title">📋 Google Form → Slack-ilmoitus</div>
+          <div class="dfc-score" id="score-1">0 / 4</div>
+        </div>
+        <div class="dfc-hint">Raahaa sekoitetut vaiheet yllä oleviin kohtiin. Mobiililla: napauta vaihetta, sitten kohtaa.</div>
+        <div class="cf-slots-row">
+          <div class="cf-slot-wrap"><div class="cf-slot-label trigger">Käynnistys</div><div class="cf-slot" data-flow="1" data-slot="trigger"></div></div>
+          <div class="cf-flow-arrow">→</div>
+          <div class="cf-slot-wrap"><div class="cf-slot-label action">Toiminto</div><div class="cf-slot" data-flow="1" data-slot="action"></div></div>
+          <div class="cf-flow-arrow">→</div>
+          <div class="cf-slot-wrap"><div class="cf-slot-label ai">AI</div><div class="cf-slot" data-flow="1" data-slot="ai"></div></div>
+          <div class="cf-flow-arrow">→</div>
+          <div class="cf-slot-wrap"><div class="cf-slot-label output">Tulos</div><div class="cf-slot" data-flow="1" data-slot="output"></div></div>
+        </div>
+        <div class="cf-pool-label">Sekoitetut vaiheet</div>
+        <div class="cf-pool" id="flow-pool-1">
+          <div class="cf-piece" draggable="true" data-flow="1" data-answer="trigger" data-piece-id="1-trigger"><div class="cp-emoji">📝</div><div class="cp-text">Joku täyttää Google-lomakkeen</div></div>
+          <div class="cf-piece" draggable="true" data-flow="1" data-answer="action" data-piece-id="1-action"><div class="cp-emoji">📊</div><div class="cp-text">Poimi lomakkeen vastaukset</div></div>
+          <div class="cf-piece" draggable="true" data-flow="1" data-answer="ai" data-piece-id="1-ai"><div class="cp-emoji">🤖</div><div class="cp-text">Tiivistä vastaukset yhteen lauseeseen</div></div>
+          <div class="cf-piece" draggable="true" data-flow="1" data-answer="output" data-piece-id="1-output"><div class="cp-emoji">💬</div><div class="cp-text">Lähetä Slack-viesti tiimille</div></div>
+        </div>
+        <div class="cf-actions">
+          <button type="button" class="cf-check-btn" id="cf-check-1" onclick="checkFlowOrder(1)" disabled>Tarkista järjestys</button>
+          <div class="cf-result" id="cf-result-1">Täytä kaikki neljä kohtaa — sitten tarkista.</div>
+        </div>
+        <div class="dfc-insight" id="insight-1"><strong>Juuri näin!</strong> Tätä käyttävät yritykset päivittäin — asiakaspalaute, liidien seuranta, tilaukset. Kun haet töitä ja kerrot osaavasi rakentaa tämän, erotut joukosta. Myyntitiimit rakastavat tätä automaatiota.</div>
+      </div>
+
+      <!-- FLOW 3: KALENTERI → CHECKLIST -->
+      <div class="drag-flow-card" id="flow-card-2">
+        <div class="dfc-header">
+          <div class="dfc-title">📅 Kalenteritapahtuma → Valmistelupaketti</div>
+          <div class="dfc-score" id="score-2">0 / 4</div>
+        </div>
+        <div class="dfc-hint">Raahaa sekoitetut vaiheet yllä oleviin kohtiin. Mobiililla: napauta vaihetta, sitten kohtaa.</div>
+        <div class="cf-slots-row">
+          <div class="cf-slot-wrap"><div class="cf-slot-label trigger">Käynnistys</div><div class="cf-slot" data-flow="2" data-slot="trigger"></div></div>
+          <div class="cf-flow-arrow">→</div>
+          <div class="cf-slot-wrap"><div class="cf-slot-label action">Toiminto</div><div class="cf-slot" data-flow="2" data-slot="action"></div></div>
+          <div class="cf-flow-arrow">→</div>
+          <div class="cf-slot-wrap"><div class="cf-slot-label ai">AI</div><div class="cf-slot" data-flow="2" data-slot="ai"></div></div>
+          <div class="cf-flow-arrow">→</div>
+          <div class="cf-slot-wrap"><div class="cf-slot-label output">Tulos</div><div class="cf-slot" data-flow="2" data-slot="output"></div></div>
+        </div>
+        <div class="cf-pool-label">Sekoitetut vaiheet</div>
+        <div class="cf-pool" id="flow-pool-2">
+          <div class="cf-piece" draggable="true" data-flow="2" data-answer="trigger" data-piece-id="2-trigger"><div class="cp-emoji">🔔</div><div class="cp-text">Kalenterissa on tapaaminen 2 tunnin päässä</div></div>
+          <div class="cf-piece" draggable="true" data-flow="2" data-answer="action" data-piece-id="2-action"><div class="cp-emoji">🏢</div><div class="cp-text">Hae yrityksen nimi kalenterista ja googlaile tiedot</div></div>
+          <div class="cf-piece" draggable="true" data-flow="2" data-answer="ai" data-piece-id="2-ai"><div class="cp-emoji">🤖</div><div class="cp-text">Luo lyhyt tietopaketti: kuka, mitä tekee, mitä mainita</div></div>
+          <div class="cf-piece" draggable="true" data-flow="2" data-answer="output" data-piece-id="2-output"><div class="cp-emoji">📧</div><div class="cp-text">Sähköposti sinulle ennen tapaamista</div></div>
+        </div>
+        <div class="cf-actions">
+          <button type="button" class="cf-check-btn" id="cf-check-2" onclick="checkFlowOrder(2)" disabled>Tarkista järjestys</button>
+          <div class="cf-result" id="cf-result-2">Täytä kaikki neljä kohtaa — sitten tarkista.</div>
+        </div>
+        <div class="dfc-insight" id="insight-2"><strong>Tämä on myyntiammattilaisen salainen ase.</strong> Ennen jokaista asiakaskäyntiä tai haastattelua — saat automaattisesti taustatiedot. Et mene tyhjin käsin. Tätä kutsutaan ammattimaiseksi valmistautumiseksi, ja nyt se tapahtuu automaattisesti.</div>
+      </div>
+
+      <!-- FLOW 4: KUVAKANSIO → VIIKKOYHTEENVETO -->
+      <div class="drag-flow-card" id="flow-card-3">
+        <div class="dfc-header">
+          <div class="dfc-title">📸 Valokuvaviikon yhteenveto</div>
+          <div class="dfc-score" id="score-3">0 / 4</div>
+        </div>
+        <div class="dfc-hint">Raahaa sekoitetut vaiheet yllä oleviin kohtiin. Mobiililla: napauta vaihetta, sitten kohtaa.</div>
+        <div class="cf-slots-row">
+          <div class="cf-slot-wrap"><div class="cf-slot-label trigger">Käynnistys</div><div class="cf-slot" data-flow="3" data-slot="trigger"></div></div>
+          <div class="cf-flow-arrow">→</div>
+          <div class="cf-slot-wrap"><div class="cf-slot-label action">Toiminto</div><div class="cf-slot" data-flow="3" data-slot="action"></div></div>
+          <div class="cf-flow-arrow">→</div>
+          <div class="cf-slot-wrap"><div class="cf-slot-label ai">AI</div><div class="cf-slot" data-flow="3" data-slot="ai"></div></div>
+          <div class="cf-flow-arrow">→</div>
+          <div class="cf-slot-wrap"><div class="cf-slot-label output">Tulos</div><div class="cf-slot" data-flow="3" data-slot="output"></div></div>
+        </div>
+        <div class="cf-pool-label">Sekoitetut vaiheet</div>
+        <div class="cf-pool" id="flow-pool-3">
+          <div class="cf-piece" draggable="true" data-flow="3" data-answer="trigger" data-piece-id="3-trigger"><div class="cp-emoji">📅</div><div class="cp-text">Joka sunnuntai kello 20:00</div></div>
+          <div class="cf-piece" draggable="true" data-flow="3" data-answer="action" data-piece-id="3-action"><div class="cp-emoji">📁</div><div class="cp-text">Hae viikon kuvat Google Photosista tai iCloudista</div></div>
+          <div class="cf-piece" draggable="true" data-flow="3" data-answer="ai" data-piece-id="3-ai"><div class="cp-emoji">🤖</div><div class="cp-text">Luo kuvatekstit ja viikkomuisto automaattisesti</div></div>
+          <div class="cf-piece" draggable="true" data-flow="3" data-answer="output" data-piece-id="3-output"><div class="cp-emoji">💌</div><div class="cp-text">Lähetä viikoittainen "muistosi"-sähköposti itsellesi</div></div>
+        </div>
+        <div class="cf-actions">
+          <button type="button" class="cf-check-btn" id="cf-check-3" onclick="checkFlowOrder(3)" disabled>Tarkista järjestys</button>
+          <div class="cf-result" id="cf-result-3">Täytä kaikki neljä kohtaa — sitten tarkista.</div>
+        </div>
+        <div class="dfc-insight" id="insight-3"><strong>Tämä ei ole työtä — tämä on elämää.</strong> Automaatio ei ole vain tehokkuustyökalu. Se voi tehdä arjestasi merkityksellisemmän — muistuttaa mitä teit, tallentaa hetkiä, säilyttää muistoja. Sama logiikka, täysin eri käyttötarkoitus.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="classify-deck-done reveal" id="classify-all-done">🎯 Kaikki neljä automaatiota purettu oikein — sama luuranko todella toimii kaikkialla.</div>
+
+  <div class="callout green reveal" style="margin-top:28px">
+    <div class="callout-mark">Tärkeä havainto</div>
+    <div class="callout-body">
+      <h4>Trigger → Action → AI → Output — aina sama</h4>
+      <p>Discord, Google Form, kalenteri, kuvat — eri sovellukset, sama rakenne. Kun opit tämän luurangon, voit rakentaa automaation <strong>mihin tahansa kontekstiin</strong> ilman että tarvitset eri kurssin joka kerta.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     OSA E: MYYNTI & YRITTÄJÄT
+══════════════════════════════════════ -->
+<hr class="sep">
+<div class="section-sep"><div class="ss-line"></div><div class="ss-label">Osa E — Myynti & yrittäjät</div><div class="ss-line"></div></div>
+<section id="osa-e" class="section">
+  <div class="section-rule reveal"></div>
+  <div class="section-kicker reveal"><span class="sk-num orange">E</span>Myynti & yrittäjät — miten ammattilaiset käyttävät automaatiota</div>
+  <h2 class="reveal">Myynti ei ole taikuutta — se on toistuvaa työtä, joka voidaan automatisoida</h2>
+  <p class="lead reveal">Neljä tarinaa → testaa tunnistaminen → neljä myyntitilannetta → rakennat oman automaatiosi. Sama Trigger → Action → Output -luuranko kuin Moduulissa A.</p>
+
+  <div class="e-path reveal">
+    <div class="e-path-step"><span>1</span> Tarinat</div>
+    <div class="e-path-step"><span>2</span> Tunnista</div>
+    <div class="e-path-step"><span>3</span> Vertailu</div>
+    <div class="e-path-step"><span>4</span> Rakenna</div>
+  </div>
+
+  <!-- ── OSA 1: TARINAT ── -->
+  <div class="e-part-label reveal" id="e-stories">Osa 1 · Neljä tarinaa</div>
+  <div class="e-story-intro reveal">
+    <p>Nämä eivät ole IT-yrityksiä — pienet suomalaiset firmat ilman teknistä tiimiä. Jokainen rakensi automaatiot itse. <strong>Lue jokainen kortti — sitten testaa heti alla.</strong> Huomaa: sama rakenne (käynnistys → toiminto → tulos), eri liiketoiminta.</p>
+    <div class="e-story-stats">
+      <div class="e-stat"><em>8 h/vk</em> Jarkko säästää prospektointiin</div>
+      <div class="e-stat"><em>200+</em> tilausta/kk Emilia yksin</div>
+      <div class="e-stat"><em>−35%</em> Mikaelin no-show</div>
+      <div class="e-stat"><em>3×</em> Sara vs. kollegat</div>
+    </div>
+  </div>
+
+  <div class="entrepreneur-grid reveal">
+    <div class="ent-card" id="ent-jarkko">
+      <div class="ent-header">
+        <div class="ent-avatar" style="background:var(--orange-light)">🧑‍💼</div>
+        <div>
+          <div class="ent-name">Jarkko, freelancer IT-konsultti</div>
+          <div class="ent-role">Kuopio — myy palveluitaan suoraan yrityksille</div>
+        </div>
+      </div>
+      <div class="ent-automations">
+        <div class="ent-auto-row">
+          <div class="ear-icon">⚡</div>
+          <div class="ear-text"><strong>Liidien haku</strong>Skannaa LinkedIn automaattisesti, poimii yritykset joilla on "IT-projekti" tai "digitalisaatio" statuksessaan</div>
+        </div>
+        <div class="ent-auto-row">
+          <div class="ear-icon">✍️</div>
+          <div class="ear-text"><strong>Ensiyhteydenotto</strong>AI kirjoittaa henkilökohtaisen LinkedIn-viestin jokaiselle — Jarkon tyylillä, ei templatella</div>
+        </div>
+        <div class="ent-auto-row">
+          <div class="ear-icon">📊</div>
+          <div class="ear-text"><strong>Seuranta</strong>Kun joku vastaa, automaatio merkitsee "kiinnostunut" CRM-taulukkoon ja muistuttaa soittamaan 2 päivässä</div>
+        </div>
+      </div>
+      <div class="ent-result">Säästää 8–10 tuntia viikossa prospektointia. Kasvatti myyntiään 40% ensimmäisenä vuonna.</div>
+    </div>
+
+    <div class="ent-card" id="ent-emilia">
+      <div class="ent-header">
+        <div class="ent-avatar" style="background:var(--blue-light)">👩‍💻</div>
+        <div>
+          <div class="ent-name">Emilia, verkkokauppayrittäjä</div>
+          <div class="ent-role">Tampere — myy käsintehtyä sisustusta Instagramissa</div>
+        </div>
+      </div>
+      <div class="ent-automations">
+        <div class="ent-auto-row">
+          <div class="ear-icon">📸</div>
+          <div class="ear-text"><strong>Tuotejulkaisu</strong>Kun lisää kuvan Driveen → automaatio kirjoittaa kuvatekstin, lisää hashtagit, julkaisee Instagramissa oikeaan aikaan</div>
+        </div>
+        <div class="ent-auto-row">
+          <div class="ear-icon">💬</div>
+          <div class="ear-text"><strong>Kommenttivastaukset</strong>AI tunnistaa ostokysymykset kommenteissa ja lähettää automaattisesti hintainfon yksityisviestinä</div>
+        </div>
+        <div class="ent-auto-row">
+          <div class="ear-icon">📦</div>
+          <div class="ear-text"><strong>Tilauksen vahvistus</strong>Kun maksu saapuu → sähköposti asiakkaalle + muistutus Emilialle pakata ja lähettää</div>
+        </div>
+      </div>
+      <div class="ent-result">Pyörittää 200+ tilauksen kuukauden yksin — ilman palkattua apua.</div>
+    </div>
+
+    <div class="ent-card" id="ent-mikael">
+      <div class="ent-header">
+        <div class="ent-avatar" style="background:var(--green-light)">👨‍🍳</div>
+        <div>
+          <div class="ent-name">Mikael, ravintola Kuopiossa</div>
+          <div class="ent-role">20 hengen ravintola — pienet marginaalit, tärkeä tehokkuus</div>
+        </div>
+      </div>
+      <div class="ent-automations">
+        <div class="ent-auto-row">
+          <div class="ear-icon">⭐</div>
+          <div class="ear-text"><strong>Google-arvostelut</strong>Joka uusi arvostelu → AI kirjoittaa vastauksen Mikaelin tyylillä ja lähettää hyväksyttäväksi ennen julkaisua</div>
+        </div>
+        <div class="ent-auto-row">
+          <div class="ear-icon">📅</div>
+          <div class="ear-text"><strong>Varausvahvistus</strong>Varaus Restassa → sähköposti + SMS-muistutus päivää ennen → automaattinen peruutusmahdollisuus</div>
+        </div>
+        <div class="ent-auto-row">
+          <div class="ear-icon">🍽️</div>
+          <div class="ear-text"><strong>Viikoittainen menu</strong>Joka maanantai AI analysoi raaka-aineet ja ehdottaa viikon lounaslistat kustannusten perusteella</div>
+        </div>
+      </div>
+      <div class="ent-result">"No-show" väheni 35% SMS-muistutuksen myötä. Yksi automaatio, konkreettinen taloudellinen vaikutus.</div>
+    </div>
+
+    <div class="ent-card" id="ent-sara">
+      <div class="ent-header">
+        <div class="ent-avatar" style="background:var(--amber-light)">🏘️</div>
+        <div>
+          <div class="ent-name">Sara, kiinteistönvälittäjä</div>
+          <div class="ent-role">Kuopio — myy asuntoja, 100% komissiopohjainen</div>
+        </div>
+      </div>
+      <div class="ent-automations">
+        <div class="ent-auto-row">
+          <div class="ear-icon">🏠</div>
+          <div class="ear-text"><strong>Asiakasprofilointi</strong>Kun asiakas täyttää toivelomakkeen → AI analysoi ja lähettää Saralle: "Tämä asiakas haluaa X, budjetti Y, kiireellisyys Z"</div>
+        </div>
+        <div class="ent-auto-row">
+          <div class="ear-icon">📬</div>
+          <div class="ear-text"><strong>Passiiviset asiakkaat</strong>Jos asiakas ei ole avannut sähköpostia 30 päivään → automaattinen "Onko tilanne muuttunut?" -viesti</div>
+        </div>
+        <div class="ent-auto-row">
+          <div class="ear-icon">📋</div>
+          <div class="ear-text"><strong>Kohderaportti</strong>Kun asiakas pyytää lisätietoja → automaattinen raportti kohteesta: hinta-arvio, alue, koulu, liikenneyhteydet</div>
+        </div>
+      </div>
+      <div class="ent-result">Hoitaa 3x enemmän asiakkaita kuin kollegansa ilman lisätyöntekijöitä.</div>
+    </div>
+  </div>
+
+  <!-- ── OSA 2: HARJOITUS 1 ── -->
+  <div class="e-part-label green reveal" id="e1-block">Osa 2 · Harjoitus 1</div>
+  <div class="sales-ex-wrap reveal sales-ex-primary">
+    <div class="sales-ex-head">
+      <div class="sales-ex-num">Tunnista · Kenen automaatio?</div>
+      <h3>Yhdistä skenaario oikeaan yrittäjään</h3>
+      <p>Luettuasi juuri Jarkon, Emilian, Mikael ja Saran tarinat — kumpi tekisi kunkin automaation? Vihje: scrollaa ylös ja lue korttien automaatiot uudelleen tarvittaessa.</p>
+    </div>
+    <div class="se-match-list">
+      <div class="se-match-row">
+        <div class="se-match-text"><strong>A</strong>Google-arvostelu → AI-vastaus → hyväksyttäväksi</div>
+        <select class="se-select" id="e1m1"><option value="">Valitse…</option><option value="jarkko">Jarkko</option><option value="emilia">Emilia</option><option value="mikael">Mikael</option><option value="sara">Sara</option></select>
+      </div>
+      <div class="se-match-row">
+        <div class="se-match-text"><strong>B</strong>Drive-kuva → kuvateksti + hashtagit → Instagram</div>
+        <select class="se-select" id="e1m2"><option value="">Valitse…</option><option value="jarkko">Jarkko</option><option value="emilia">Emilia</option><option value="mikael">Mikael</option><option value="sara">Sara</option></select>
+      </div>
+      <div class="se-match-row">
+        <div class="se-match-text"><strong>C</strong>LinkedIn-skannaus → henkilökohtainen viesti → CRM</div>
+        <select class="se-select" id="e1m3"><option value="">Valitse…</option><option value="jarkko">Jarkko</option><option value="emilia">Emilia</option><option value="mikael">Mikael</option><option value="sara">Sara</option></select>
+      </div>
+      <div class="se-match-row">
+        <div class="se-match-text"><strong>D</strong>30 pv hiljaista → "Onko tilanne muuttunut?" -viesti</div>
+        <select class="se-select" id="e1m4"><option value="">Valitse…</option><option value="jarkko">Jarkko</option><option value="emilia">Emilia</option><option value="mikael">Mikael</option><option value="sara">Sara</option></select>
+      </div>
+    </div>
+    <div class="se-actions">
+      <button type="button" class="se-check-btn" id="e1-check-btn" onclick="checkE1Matches()">Tarkista</button>
+      <div class="se-feedback" id="e1-feedback">4 valintaa — sitten tarkista.</div>
+    </div>
+  </div>
+
+  <!-- ── OSA 3: VERTAILU ── -->
+  <div class="e-part-label reveal" id="e-theory">Osa 3 · Ilman vs. automaatiolla</div>
+  <p class="body reveal">Nämä neljä tilannetta toistuvat myynnissä <strong>joka viikko</strong> — ensimmäisestä työpäivästä asti. Sama luuranko kuin Osa D:ssä: käynnistys → toiminto → tulos. <em>Klikkaa riviä</em> jos haluat valita sen Harjoitukseen 2:een.</p>
+
+  <div class="sales-leverage-grid reveal">
+    <div class="sales-leverage-header">
+      <div class="slh-left">Sama rooli — eri tehokkuus</div>
+      <div class="slh-right">4 tilannetta</div>
+    </div>
+    <div class="slg-row se-pickable" id="e-theory-0" data-case="0" onclick="selectSalesRowFromTheory(0)" role="button" tabindex="0">
+      <div class="slg-before"><div class="slg-tag before">Ilman</div><div class="slg-title">Asiakastaustatarkistus</div><div class="slg-desc">Googlaat käsin 20 min / asiakas ennen tapaamista.</div></div>
+      <div class="slg-arrow-col">→</div>
+      <div class="slg-after"><div class="slg-tag after">Automaatiolla</div><div class="slg-title">Automaattinen tietopaketti</div><div class="slg-desc">Kalenteri → AI hakee tiedot → sähköposti 30 min ennen tapaamista.</div><div class="slg-tool">⚒ Pinkfish + Google Calendar</div><div class="slg-pick-hint">Klikkaa valitaksesi Harjoitukseen 2</div></div>
+    </div>
+    <div class="slg-row se-pickable" id="e-theory-1" data-case="1" onclick="selectSalesRowFromTheory(1)" role="button" tabindex="0">
+      <div class="slg-before"><div class="slg-tag before">Ilman</div><div class="slg-title">Follow-up muistaminen</div><div class="slg-desc">Post-it, Excel, unohduksia — liidi jää kylmäksi.</div></div>
+      <div class="slg-arrow-col">→</div>
+      <div class="slg-after"><div class="slg-tag after">Automaatiolla</div><div class="slg-title">Muistutus + valmis viesti</div><div class="slg-desc">"Seuraa 5 pv" → muistutus + follow-up-luonnos valmiina.</div><div class="slg-tool">⚒ Notion + Claude</div><div class="slg-pick-hint">Klikkaa valitaksesi Harjoitukseen 2</div></div>
+    </div>
+    <div class="slg-row se-pickable" id="e-theory-2" data-case="2" onclick="selectSalesRowFromTheory(2)" role="button" tabindex="0">
+      <div class="slg-before"><div class="slg-tag before">Ilman</div><div class="slg-title">Tarjouksen kirjoittaminen</div><div class="slg-desc">Tunti per tarjous alusta — sama teksti uudelleen.</div></div>
+      <div class="slg-arrow-col">→</div>
+      <div class="slg-after"><div class="slg-tag after">Automaatiolla</div><div class="slg-title">AI-tarjouspohja</div><div class="slg-desc">Nimi + tarve + budjetti → AI kirjoittaa luonnoksen → tarkistat.</div><div class="slg-tool">⚒ Claude Project</div><div class="slg-pick-hint">Klikkaa valitaksesi Harjoitukseen 2</div></div>
+    </div>
+    <div class="slg-row se-pickable" id="e-theory-3" data-case="3" onclick="selectSalesRowFromTheory(3)" role="button" tabindex="0">
+      <div class="slg-before"><div class="slg-tag before">Ilman</div><div class="slg-title">Viikon myyntiraportti</div><div class="slg-desc">Perjantai-iltapäivä menee Excelin ja CRM:n kaiveluun.</div></div>
+      <div class="slg-arrow-col">→</div>
+      <div class="slg-after"><div class="slg-tag after">Automaatiolla</div><div class="slg-title">Automaattinen viikkokooste</div><div class="slg-desc">Perjantai klo 15 → CRM-data → valmis yhteenveto esimiehelle.</div><div class="slg-tool">⚒ Make.com + Google Sheets</div><div class="slg-pick-hint">Klikkaa valitaksesi Harjoitukseen 2</div></div>
+    </div>
+  </div>
+
+  <div class="callout orange reveal" style="margin-top:24px">
+    <div class="callout-mark">Miksi tämä on tärkeää työnhaussa</div>
+    <div class="callout-body">
+      <p>Rekrytoija ei kysy "osaatko Make.comia" — hän kysyy <strong>"mitä toistuvaa työtä osaat automatisoida?"</strong> Kun osaat kuvata nämä neljä tilannetta Trigger → Action → Output -muodossa, erotut joukosta.</p>
+    </div>
+  </div>
+
+  <div class="e-exercise-gate reveal" id="e-exercises">
+    <div class="e-exercise-gate-icon">✍️</div>
+    <div>
+      <h4>Seuraavaksi rakennat oman automaatiosi</h4>
+      <p>Olet lukenut tarinat, testannut tunnistamisen ja nähnyt neljä myyntitilannetta. Harjoitus 2 on pakollinen: valitse yksi tilanne ja kirjoita Trigger → Action → Output + haastattelulause.</p>
+    </div>
+  </div>
+
+  <div class="e-part-label green reveal" id="e2-section">Osa 4 · Harjoitus 2 (pakollinen)</div>
+  <div class="sales-ex-wrap reveal sales-ex-build">
+    <div class="sales-ex-head">
+      <div class="sales-ex-num">Rakenna · Kirjoita automaatio</div>
+      <h3>Valitse yksi myyntitilanne ja kuvaa se omin sanoin</h3>
+      <p>Valitse jokin Osa 3:n neljästä tilanteesta (tai klikkaa sitä suoraan vertailutaulukosta). Konteksti jää näkyviin — kirjoita <strong>Käynnistys → Toiminto → Tulos</strong> + yksi haastattelulause.</p>
+    </div>
+    <div class="e2-case-grid">
+      <button type="button" class="e2-case-card" data-case="0" onclick="selectE2Case(0)">
+        <div class="e2-case-icon">📅</div>
+        <div class="e2-case-title">Asiakastapaaminen valmiiksi</div>
+        <div class="e2-case-short">Kalenteri → taustatiedot → sähköposti ennen tapaamista</div>
+      </button>
+      <button type="button" class="e2-case-card" data-case="1" onclick="selectE2Case(1)">
+        <div class="e2-case-icon">🔔</div>
+        <div class="e2-case-title">Follow-up ei unohdu</div>
+        <div class="e2-case-short">Merkitset seurattavan → muistutus + viestiluonnos</div>
+      </button>
+      <button type="button" class="e2-case-card" data-case="2" onclick="selectE2Case(2)">
+        <div class="e2-case-icon">✍️</div>
+        <div class="e2-case-title">Tarjous nopeasti</div>
+        <div class="e2-case-short">Asiakastiedot → AI-kirjoittaa tarjouksen → tarkistat</div>
+      </button>
+      <button type="button" class="e2-case-card" data-case="3" onclick="selectE2Case(3)">
+        <div class="e2-case-icon">📊</div>
+        <div class="e2-case-title">Viikon myyntiraportti</div>
+        <div class="e2-case-short">Perjantai → CRM-data → valmis yhteenveto</div>
+      </button>
+    </div>
+    <div class="e2-context-panel" id="e2-context">
+      <div class="e2-context-empty">↑ Valitse tapaus yllä — tai klikkaa riviä Osa 3:ssa. Konteksti ilmestyy tähän.</div>
+    </div>
+    <div class="se-pipeline se-locked" id="e2-pipeline">
+      <div>
+        <label for="e2-trigger">Käynnistys — mikä aloittaa automaation?</label>
+        <input type="text" id="e2-trigger" placeholder="Valitse tapaus ensin…">
+      </div>
+      <div>
+        <label for="e2-action">Toiminto — mitä automaatio tekee?</label>
+        <textarea id="e2-action" rows="2" placeholder="Valitse tapaus ensin…"></textarea>
+      </div>
+      <div>
+        <label for="e2-output">Tulos — mitä sinä saat?</label>
+        <input type="text" id="e2-output" placeholder="Valitse tapaus ensin…">
+      </div>
+      <div>
+        <label for="e2-interview">Haastattelulause — kerro rekrytoijalle yhdellä lauseella</label>
+        <textarea id="e2-interview" rows="2" placeholder="Valitse tapaus ensin…"></textarea>
+      </div>
+    </div>
+    <div class="se-actions">
+      <button type="button" class="se-check-btn" id="e2-save-btn" onclick="saveE2Pipeline()" disabled>Tallenna automaatiosi</button>
+      <div class="se-feedback" id="e2-feedback">Valitse tapaus → lue konteksti → kirjoita neljä kenttää.</div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══════════════════════════════════════
+     OSA F: MINUN AUTOMAATIONI
+══════════════════════════════════════ -->
+<hr class="sep">
+<div class="section-sep"><div class="ss-line"></div><div class="ss-label">Osa F — Minun automaationi</div><div class="ss-line"></div></div>
+<section id="osa-f" class="section">
+  <div class="section-rule reveal"></div>
+  <div class="section-kicker reveal"><span class="sk-num orange">F</span>Minun automaationi — rakentajan aloitus</div>
+  <h2 class="reveal">Kartoita oma toistuva tehtäväsi</h2>
+  <p class="lead reveal">Täytä kentät — AI analysoi automaatiosi. Sen jälkeen etsit vastaavan valmiin templaten <strong>Make.comista</strong> ja raportoit löydöksesi. Tämä on pohja, jonka viet Moduuliin 2.</p>
+  <p class="body reveal">Ei ole vääriä vastauksia. Kirjoita rehellisesti se asia joka toistuu elämässäsi ja joka tuntuu turhalta tehdä joka kerta uudelleen.</p>
+
+  <div class="my-task-card reveal">
+    <div class="mtc-header">
+      <div class="mtc-badge">F1</div>
+      <div class="mtc-head-text">
+        <h3>Kartoita toistuva tehtäväsi</h3>
+        <p>Täytä kaikki kentät — AI rakentaa sinulle henkilökohtaisen ehdotuksen</p>
+      </div>
+    </div>
+    <div class="mtc-body">
+      <div class="callout orange" style="margin-bottom:24px">
+        <div class="callout-mark">Esimerkki</div>
+        <div class="callout-body">
+          <p>"Käyn joka aamu katsomassa onko uusia työ-ilmoituksia Duunitorissa. Se vie 20 minuuttia. Haluaisin, että joku lähettäisi minulle vain parhaat ilmoitukset sähköpostiin aamulla."</p>
+        </div>
+      </div>
+      <div class="mtc-field">
+        <div class="mtc-label">Mitä toistuva tehtäväsi on?</div>
+        <div class="mtc-hint">Kuvaile se konkreettisesti — mitä teet, missä, milloin, kuinka usein.</div>
+        <textarea class="mtc-input" id="mt-task" rows="3" placeholder="Esim: Googlaan joka maanantai uusia työ-ilmoituksia ja käyn läpi sähköpostini hakemuksista..."></textarea>
+      </div>
+      <div class="mtc-field">
+        <div class="mtc-label">Kuinka usein teet tämän?</div>
+        <select class="mtc-input mtc-select" id="mt-freq">
+          <option value="">Valitse tiheys</option>
+          <option value="joka päivä">Joka päivä</option>
+          <option value="muutaman kerran viikossa">Muutaman kerran viikossa</option>
+          <option value="kerran viikossa">Kerran viikossa</option>
+          <option value="kerran kuussa">Kerran kuussa</option>
+          <option value="satunnaisesti mutta toistuvasti">Satunnaisesti mutta toistuvasti</option>
+        </select>
+      </div>
+      <div class="mtc-field">
+        <div class="mtc-label">Miltä "tehty puolestani" näyttäisi?</div>
+        <div class="mtc-hint">Mitä haluaisit saada tai mitä haluaisit tapahtuvan automaattisesti?</div>
+        <textarea class="mtc-input" id="mt-dream" rows="2" placeholder="Esim: Saisin joka aamu sähköpostin jossa on 3 parasta uutta ilmoitusta valmiiksi suodatettuna..."></textarea>
+      </div>
+      <button class="mtc-generate-btn" id="mt-btn" onclick="generateMyTask()">
+        <span id="mt-btn-text">Analysoi automaatiopotentiaali</span>
+      </button>
+      <div class="mtc-ai-output" id="mt-output">
+        <div class="mao-head">
+          <div class="mao-label"><div class="mao-dot"></div>AI-analyysi — sinun automaatiosi</div>
+        </div>
+        <div class="mao-body" id="mt-output-text"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="make-hunt-card reveal" id="f2-make-exercise">
+    <div class="mtc-header">
+      <div class="mtc-badge">F2</div>
+      <div class="mtc-head-text">
+        <h3>Etsi vastaava template Make.comista</h3>
+        <p>AI ehdotti automaatiota — nyt katsotaan, onko joku rakentanut sen jo valmiiksi. Ilmainen Make-tili riittää selaamiseen.</p>
+      </div>
+    </div>
+    <div class="mtc-body">
+      <div class="make-ui-guide">
+        <h4>Tältä Make näyttää — sama rakenne kuin Moduulissa A</h4>
+        <p>Jokainen template on ketju <strong>moduuleja</strong> (pyöreät kuvakkeet). Katso vasemmalta oikealle: käynnistys → käsittely → tulos. Tämä on sama Trigger → Action → Output kuin jäävuoressa ja Pinkfishissä.</p>
+        <img class="make-ui-shot" src="/assets/images/make-ui-example.png" alt="Make.com scenario: Gmail Watch Emails → OpenAI Create Completion → Gmail Reply to Email">
+        <div class="make-ui-legend">
+          <div class="make-ui-leg-item trigger"><strong>① Käynnistys</strong>Gmail · Watch Emails — uusi viesti käynnistää ketjun (kellokuvake = tarkistaa säännöllisesti)</div>
+          <div class="make-ui-leg-item action"><strong>② Toiminto / AI</strong>OpenAI · Create a Completion — AI lukee viestin ja kirjoittaa vastauksen</div>
+          <div class="make-ui-leg-item output"><strong>③ Tulos</strong>Gmail · Reply to an Email — automaatio lähettää vastauksen puolestasi</div>
+        </div>
+      </div>
+      <div class="make-search-box">
+        <div class="make-search-label">Ehdotetut hakusanat (AI + tehtäväsi perusteella)</div>
+        <div class="make-search-terms" id="make-search-terms">—</div>
+        <a class="make-open-btn" id="make-open-link" href="https://www.make.com/en/templates" target="_blank" rel="noopener">Avaa Make.com template-galleria →</a>
+      </div>
+      <ol class="make-hunt-steps">
+        <li data-step="1">Avaa linkki — kirjaudu tai luo ilmainen tili jos Make pyytää</li>
+        <li data-step="2">Hae yllä olevilla sanoilla template-galleriasta</li>
+        <li data-step="3">Valitse lähin template — katso moduulit vasemmalta oikealle (kuten yllä)</li>
+        <li data-step="4">Täytä alla oleva raportti ja tallenna</li>
+      </ol>
+      <div class="gd-field">
+        <label>Mikä template löytyi? (nimi tai lyhyt kuvaus)</label>
+        <input type="text" class="gd-input" id="make-template-name" placeholder="Esim: 'Monitor RSS feed and send email when new item appears'">
+      </div>
+      <div class="gd-field">
+        <label>Miten se vastaa AI:n ehdotusta?</label>
+        <textarea class="gd-input gd-textarea" id="make-match" rows="2" placeholder="Esim: AI ehdotti aamuisähköpostia — tämä template hakee uudet ilmoitukset RSS:stä ja lähettää Gmaililla."></textarea>
+      </div>
+      <div class="gd-field">
+        <label>Trigger → Action → Output (templatesta)</label>
+        <textarea class="gd-input gd-textarea" id="make-pipeline" rows="2" placeholder="Esim: Käynnistys = Gmail Watch Emails · Toiminto = OpenAI Completion · Tulos = Gmail Reply"></textarea>
+      </div>
+      <div class="gd-field">
+        <label>Yksi asia jota et tiennyt Make.comissa olevan mahdollista</label>
+        <input type="text" class="gd-input" id="make-surprise" placeholder="Esim: En tiennyt että Make osaa seurata työpaikkailmoituksia RSS:stä">
+      </div>
+      <button type="button" class="gd-save" id="make-save-btn" onclick="saveMakeHunt()">Tallenna Make-löydös</button>
+      <p class="make-hunt-note"><strong>Vinkki:</strong> Et tarvitse rakentaa mitään vielä — riittää että löydät ja ymmärrät templaten rakenteen. Moduulissa 2 rakennat oikean version.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMPLETION -->
+<div class="exit-section reveal">
+  <div class="exit-inner">
+    <div class="exit-check">✓</div>
+    <h2>Moduuli 1b suoritettu</h2>
+    <p>Olet nyt rakentajan tasolla — et pelkästään käyttäjä. Tiedät mitä voi mennä rikki, missä muilla on jo ratkaisuja, mitä työkaluja on olemassa, miten sama logiikka toimii kaikkialla, ja mitä yrittäjät ja myyntiammattilaiset tekevät.</p>
+
+    <div class="commitment-card">
+      <div class="cc-title">Minun automaatioajatukseni</div>
+      <div class="cc-fields">
+        <div class="cc-field">
+          <label>Yksi automaatio jonka haluaisin kokeilla (Make, Zapier tai muu työkalu):</label>
+          <input type="text" id="commit1" placeholder="Esim: Työ-ilmoitusten seuranta Make.com-templatesta">
+        </div>
+        <div class="cc-field">
+          <label>Yksi työkalu jonka aion tutkia tarkemmin:</label>
+          <input type="text" id="commit2" placeholder="Esim: Zapier — etsin Slack + Gmail -yhdistelmiä">
+        </div>
+        <div class="cc-field">
+          <label>Yksi asia jonka opin galleriametsästyksessä:</label>
+          <input type="text" id="commit3" placeholder="Esim: En tiennyt, että Google Form voi lähettää Slack-ilmoituksia automaattisesti">
+        </div>
+        <button class="cc-save" id="commit-save" onclick="saveCommitments()">Tallenna ajatukseni</button>
+      </div>
+    </div>
+
+    <div class="done-grid-exit">
+      <div class="done-tile"><div class="done-check-small">✓</div><h4>Kriittinen ajattelu</h4><p>3 rikki olevaa automaatiota analysoitu ja korjattu</p></div>
+      <div class="done-tile"><div class="done-check-small">✓</div><h4>Galleria koettu</h4><p>Sait yllätyshetken — näit mitä muut ovat rakentaneet</p></div>
+      <div class="done-tile"><div class="done-check-small">✓</div><h4>Työkalukartta</h4><p>6 eri tasoa — tiedät mitä on olemassa</p></div>
+      <div class="done-tile"><div class="done-check-small">✓</div><h4>Sama rakenne</h4><p>4 erilaista kontekstia — yksi luuranko</p></div>
+      <div class="done-tile"><div class="done-check-small">✓</div><h4>Myynti & yrittäjät</h4><p>Tunnistit yrittäjien automaatiot ja purit oman myyntiesimerkin haastatteluvalmiiksi</p></div>
+      <div class="done-tile"><div class="done-check-small">✓</div><h4>Oma ajatus</h4><p>Kartoitit automaatiosi AI:lla ja etsit vastaavan templaten Make.comista</p></div>
+    </div>
+
+    <a class="next-btn" href="/">Takaisin kurssivalikkoon →</a>
+  </div>
+</div>
+
+<script>window.__MODULE_ID__ = window.__MODULE_ID__ || 'moduuli1b-ai-automaatio';</script>
+<script src="/js/module-work.js"></script>
+<script src="/js/ai-helper.js"></script>
+<script>
+const MODULE_ID = 'moduuli1b-ai-automaatio';
+let m1bWorkApi = null;
+let lastMyTaskReply = '';
+
+function scheduleM1bSave() {
+  if (m1bWorkApi && typeof m1bWorkApi.scheduleSave === 'function') m1bWorkApi.scheduleSave();
+}
+// ── SCROLL REVEAL ──
+const ro = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting) e.target.classList.add('v'); }), { threshold: 0.07 });
+document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
+
+// ── NAV + PROGRESS ──
+const secIds = ['osa-a','osa-b','osa-c','osa-d','osa-e','osa-f'];
+const navEls = document.querySelectorAll('.tb-step');
+window.addEventListener('scroll', () => {
+  let cur = '', count = 0;
+  secIds.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if(el && el.getBoundingClientRect().top < 120) { cur = id; count = i+1; }
+  });
+  navEls.forEach(n => {
+    n.classList.remove('active');
+    if(n.getAttribute('href') === '#'+cur) n.classList.add('active');
+  });
+  document.getElementById('progFill').style.width = Math.min(100, Math.round(count/secIds.length*100)) + '%';
+  document.getElementById('progLabel').textContent = count + ' / ' + secIds.length;
+});
+
+// ── BROKEN AUTOMATION REVEALS ──
+function revealFix(inputId, answerId, btn) {
+  document.getElementById(answerId).classList.add('show');
+  btn.textContent = '✓ Näytetty';
+  btn.classList.add('revealed');
+  btn.disabled = true;
+  scheduleM1bSave();
+}
+['fix1','fix2','fix3'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', scheduleM1bSave);
+});
+
+// ── GALLERY HUNT ──
+let selectedMission = null;
+function selectMission(letter) {
+  ['a','b','d'].forEach(l => {
+    const el = document.getElementById('mission-'+l);
+    if (el) el.classList.toggle('selected', l === letter);
+  });
+  selectedMission = letter;
+  document.getElementById('mission-letter').textContent = letter.toUpperCase();
+  document.getElementById('gallery-deliverable').classList.add('show');
+  document.getElementById('gallery-deliverable').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function saveGallery() {
+  const find = document.getElementById('gallery-find').value.trim();
+  const why = document.getElementById('gallery-why').value.trim();
+  const use = document.getElementById('gallery-use').value.trim();
+  if (!find || !why) { alert('Täytä vähintään kaksi ensimmäistä kenttää.'); return; }
+  const btn = document.getElementById('gallery-save-btn');
+  btn.textContent = '✓ Löydös tallennettu';
+  btn.classList.add('saved');
+  document.getElementById('gallery-saved-callout').style.display = 'flex';
+  scheduleM1bSave();
+}
+
+// ── OSA D: DRAG ORDER PUZZLE ──
+const CF_SLOT_ORDER = ['trigger', 'action', 'ai', 'output'];
+const flowScores = [0, 0, 0, 0];
+const flowDone = [false, false, false, false];
+let cfSelectedPiece = null;
+let cfDragPiece = null;
+
+function shufflePool(pool) {
+  const pieces = Array.from(pool.querySelectorAll('.cf-piece'));
+  for (let i = pieces.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
+  }
+  pieces.forEach(p => pool.appendChild(p));
+}
+
+function getFlowSlots(flowIdx) {
+  return Array.from(document.querySelectorAll('.cf-slot[data-flow="' + flowIdx + '"]'));
+}
+
+function getFlowPool(flowIdx) {
+  return document.getElementById('flow-pool-' + flowIdx);
+}
+
+function pieceInSlot(slot) {
+  return slot.querySelector('.cf-piece');
+}
+
+function updateFlowCheckState(flowIdx) {
+  if (flowDone[flowIdx]) return;
+  const slots = getFlowSlots(flowIdx);
+  const filled = slots.every(s => pieceInSlot(s));
+  const btn = document.getElementById('cf-check-' + flowIdx);
+  if (btn) btn.disabled = !filled;
+}
+
+function clearSlotFeedback(flowIdx) {
+  getFlowSlots(flowIdx).forEach(s => s.classList.remove('cf-slot-correct', 'cf-slot-wrong'));
+}
+
+function placePieceInSlot(piece, slot) {
+  if (!piece || !slot || flowDone[parseInt(piece.dataset.flow, 10)]) return;
+  const flowIdx = parseInt(piece.dataset.flow, 10);
+  const existing = pieceInSlot(slot);
+  if (existing && existing !== piece) {
+    getFlowPool(flowIdx).appendChild(existing);
+  }
+  slot.appendChild(piece);
+  piece.classList.remove('cf-selected');
+  if (cfSelectedPiece === piece) cfSelectedPiece = null;
+  clearSlotFeedback(flowIdx);
+  const res = document.getElementById('cf-result-' + flowIdx);
+  if (res && !flowDone[flowIdx]) {
+    res.className = 'cf-result';
+    res.textContent = 'Kaikki kohdat täynnä? Paina Tarkista järjestys.';
+  }
+  updateFlowCheckState(flowIdx);
+}
+
+function placePieceInPool(piece, pool) {
+  if (!piece || !pool || flowDone[parseInt(piece.dataset.flow, 10)]) return;
+  const flowIdx = parseInt(piece.dataset.flow, 10);
+  pool.appendChild(piece);
+  piece.classList.remove('cf-selected');
+  if (cfSelectedPiece === piece) cfSelectedPiece = null;
+  clearSlotFeedback(flowIdx);
+  updateFlowCheckState(flowIdx);
+}
+
+function onPieceTap(piece) {
+  const flowIdx = parseInt(piece.dataset.flow, 10);
+  if (flowDone[flowIdx]) return;
+  if (cfSelectedPiece === piece) {
+    piece.classList.remove('cf-selected');
+    cfSelectedPiece = null;
+    return;
+  }
+  document.querySelectorAll('.cf-piece.cf-selected').forEach(p => p.classList.remove('cf-selected'));
+  cfSelectedPiece = piece;
+  piece.classList.add('cf-selected');
+}
+
+function onSlotTap(slot) {
+  const flowIdx = parseInt(slot.dataset.flow, 10);
+  if (flowDone[flowIdx] || !cfSelectedPiece) return;
+  if (parseInt(cfSelectedPiece.dataset.flow, 10) !== flowIdx) return;
+  placePieceInSlot(cfSelectedPiece, slot);
+}
+
+function lockFlow(flowIdx) {
+  flowDone[flowIdx] = true;
+  flowScores[flowIdx] = 4;
+  const card = document.getElementById('flow-card-' + flowIdx);
+  if (card) card.classList.add('cf-done');
+  document.querySelectorAll('.cf-piece[data-flow="' + flowIdx + '"]').forEach(p => {
+    p.draggable = false;
+    p.style.cursor = 'default';
+  });
+  const btn = document.getElementById('cf-check-' + flowIdx);
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('done');
+    btn.textContent = '✓ Oikein';
+  }
+  const scoreEl = document.getElementById('score-' + flowIdx);
+  if (scoreEl) {
+    scoreEl.textContent = '4 / 4';
+    scoreEl.classList.add('done');
+  }
+  setTimeout(() => document.getElementById('insight-' + flowIdx)?.classList.add('show'), 300);
+  checkAllClassifyDone();
+  saveFlowOrderState();
+}
+
+function checkFlowOrder(flowIdx) {
+  if (flowDone[flowIdx]) return;
+  const slots = getFlowSlots(flowIdx);
+  let correct = 0;
+  let filled = 0;
+  clearSlotFeedback(flowIdx);
+  slots.forEach(slot => {
+    const piece = pieceInSlot(slot);
+    if (!piece) return;
+    filled++;
+    if (piece.dataset.answer === slot.dataset.slot) {
+      correct++;
+      slot.classList.add('cf-slot-correct');
+    } else {
+      slot.classList.add('cf-slot-wrong');
+    }
+  });
+  const res = document.getElementById('cf-result-' + flowIdx);
+  if (filled < 4) {
+    if (res) {
+      res.className = 'cf-result bad';
+      res.textContent = 'Täytä kaikki neljä kohtaa ennen tarkistusta.';
+    }
+    updateFlowCheckState(flowIdx);
+    return;
+  }
+  if (correct === 4) {
+    if (res) {
+      res.className = 'cf-result ok';
+      res.textContent = '✓ Oikein! Sama rakenne — eri maailma. Katso palaute alla.';
+    }
+    lockFlow(flowIdx);
+    return;
+  }
+  if (res) {
+    res.className = 'cf-result bad';
+    const wrong = 4 - correct;
+    res.textContent = wrong + ' kohtaa väärässä paikassa — järjestä uudelleen ja yritä taas. (Palaute avautuu vasta kun kaikki neljä on oikein.)';
+  }
+}
+
+function checkAllClassifyDone() {
+  if (flowDone.every(Boolean)) {
+    document.getElementById('classify-all-done')?.classList.add('show');
+  }
+}
+
+function collectFlowOrderState() {
+  const state = { done: flowDone.slice(), placements: {} };
+  document.querySelectorAll('.cf-piece').forEach(piece => {
+    const parent = piece.parentElement;
+    const id = piece.dataset.pieceId;
+    if (!id) return;
+    if (parent?.classList.contains('cf-slot')) {
+      state.placements[id] = 'slot:' + parent.dataset.slot;
+    } else if (parent?.classList.contains('cf-pool')) {
+      state.placements[id] = 'pool';
+    }
+  });
+  return state;
+}
+
+function saveFlowOrderState() {
+  scheduleM1bSave();
+}
+
+function restoreFlowOrderState(state) {
+  if (!state) state = { done: [], placements: {} };
+  if (Array.isArray(state.done)) {
+    state.done.forEach((d, i) => {
+      if (!d) return;
+      getFlowSlots(i).forEach(slot => {
+        const want = slot.dataset.slot;
+        const piece = Array.from(document.querySelectorAll('.cf-piece[data-flow="' + i + '"]')).find(p => p.dataset.answer === want);
+        if (piece) placePieceInSlot(piece, slot);
+      });
+      lockFlow(i);
+    });
+    return;
+  }
+  if (state.placements && Object.keys(state.placements).length) {
+    Object.keys(state.placements).forEach(id => {
+      const piece = document.querySelector('.cf-piece[data-piece-id="' + id + '"]');
+      if (!piece) return;
+      const loc = state.placements[id];
+      const flowIdx = parseInt(piece.dataset.flow, 10);
+      if (loc === 'pool') {
+        placePieceInPool(piece, getFlowPool(flowIdx));
+      } else if (loc.indexOf('slot:') === 0) {
+        const slotName = loc.slice(5);
+        const slot = document.querySelector('.cf-slot[data-flow="' + flowIdx + '"][data-slot="' + slotName + '"]');
+        if (slot) placePieceInSlot(piece, slot);
+      }
+    });
+  }
+}
+
+function initFlowDragDrop() {
+  for (let i = 0; i < 4; i++) {
+    const pool = getFlowPool(i);
+    if (pool) shufflePool(pool);
+  }
+
+  document.querySelectorAll('.cf-piece').forEach(piece => {
+    piece.addEventListener('dragstart', e => {
+      const flowIdx = parseInt(piece.dataset.flow, 10);
+      if (flowDone[flowIdx]) { e.preventDefault(); return; }
+      cfDragPiece = piece;
+      piece.classList.add('cf-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', piece.dataset.pieceId || '');
+    });
+    piece.addEventListener('dragend', () => {
+      piece.classList.remove('cf-dragging');
+      cfDragPiece = null;
+    });
+    piece.addEventListener('click', e => {
+      e.stopPropagation();
+      onPieceTap(piece);
+    });
+  });
+
+  document.querySelectorAll('.cf-slot, .cf-pool').forEach(zone => {
+    zone.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (zone.classList.contains('cf-slot')) zone.classList.add('drag-over');
+    });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const id = e.dataTransfer.getData('text/plain');
+      const piece = id
+        ? document.querySelector('.cf-piece[data-piece-id="' + id + '"]')
+        : cfDragPiece;
+      if (!piece) return;
+      const flowIdx = parseInt(piece.dataset.flow, 10);
+      if (flowDone[flowIdx]) return;
+      if (zone.classList.contains('cf-slot')) {
+        if (parseInt(zone.dataset.flow, 10) !== flowIdx) return;
+        placePieceInSlot(piece, zone);
+      } else if (zone.classList.contains('cf-pool')) {
+        if (parseInt(zone.id.replace('flow-pool-', ''), 10) !== flowIdx) return;
+        placePieceInPool(piece, zone);
+      }
+    });
+    if (zone.classList.contains('cf-slot')) {
+      zone.addEventListener('click', e => {
+        e.stopPropagation();
+        onSlotTap(zone);
+      });
+    }
+    if (zone.classList.contains('cf-pool')) {
+      zone.addEventListener('click', e => {
+        e.stopPropagation();
+        const flowIdx = parseInt(zone.id.replace('flow-pool-', ''), 10);
+        if (cfSelectedPiece && parseInt(cfSelectedPiece.dataset.flow, 10) === flowIdx) {
+          placePieceInPool(cfSelectedPiece, zone);
+        }
+      });
+    }
+  });
+
+  document.addEventListener('click', () => {
+    if (cfSelectedPiece) {
+      cfSelectedPiece.classList.remove('cf-selected');
+      cfSelectedPiece = null;
+    }
+  });
+
+  for (let i = 0; i < 4; i++) updateFlowCheckState(i);
+}
+
+initFlowDragDrop();
+
+// ── OSA C: INTERACTIVE ICEBERG ──
+const ICEBERG_LAYERS = [
+  { icon: '⏰', title: 'Ajastin', text: 'Cron-trigger herää tarkalleen kello 08:00 — serverillä, ei puhelimellasi.' },
+  { icon: '🌐', title: 'HTTP-pyyntö', text: 'Automaatio hakee datan sivustolta tai rajapinnasta — sama tapa kuin selain lataa sivun.' },
+  { icon: '🔀', title: 'Suodatin / ehto', text: 'Tarkistaa: onko uusia tuloksia? Jos ei → lopeta. Jos kyllä → jatka.' },
+  { icon: '🤖', title: 'AI-käsittely', text: 'Kielimalli lukee raakadatan, valitsee parhaat ja kirjoittaa yhteenvedon luonnollisella kielellä.' },
+  { icon: '📤', title: 'Sähköpostirajapinta', text: 'Gmail/SMTP-palvelin lähettää viestin — sinä vain näet sen saapuneet-kansiossa.' },
+  { icon: '🛡️', title: 'Virheenkäsittely', text: 'Jos jokin yllä epäonnistuu, automaatio kirjaa virheen ja lähettää sinulle ilmoituksen.' }
+];
+let ibRevealedCount = 0;
+
+function renderIcebergLayerContent(el, idx) {
+  const L = ICEBERG_LAYERS[idx];
+  el.innerHTML =
+    '<div class="ib-layer-head"><span class="ib-layer-icon">' + L.icon + '</span><span class="ib-layer-title">' + L.title + '</span></div>' +
+    '<div class="ib-layer-text">' + L.text + '</div>';
+}
+
+function updateIcebergUI() {
+  document.getElementById('ib-count').textContent = String(ibRevealedCount);
+  document.querySelectorAll('.ib-layer').forEach((el, i) => {
+    el.classList.remove('ib-layer-next');
+    if (i === ibRevealedCount && ibRevealedCount < ICEBERG_LAYERS.length) {
+      el.classList.add('ib-layer-next');
+    }
+  });
+  const btn = document.getElementById('ib-reveal-btn');
+  const footer = document.getElementById('ib-footer');
+  if (ibRevealedCount >= ICEBERG_LAYERS.length) {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '✓ Kaikki 6 kerrosta paljastettu';
+      btn.classList.add('done');
+    }
+    if (footer) {
+      footer.classList.add('complete');
+      footer.innerHTML = '<strong>Jäävuori sukeltu!</strong> Nyt tiedät mitä Moduulin A sähköpostin takana tapahtuu — vaikka Pinkfish piilottaa sen sinulta.';
+    }
+  } else if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Paljasta seuraava kerros ↓ (' + (ibRevealedCount + 1) + '/6)';
+  }
+}
+
+function revealIcebergLayer(idx) {
+  if (idx !== ibRevealedCount || ibRevealedCount >= ICEBERG_LAYERS.length) return;
+  const el = document.getElementById('ib-layer-' + idx);
+  if (!el || el.classList.contains('revealed')) return;
+  el.classList.remove('locked', 'ib-layer-next');
+  el.classList.add('revealed');
+  renderIcebergLayerContent(el, idx);
+  ibRevealedCount++;
+  updateIcebergUI();
+  scheduleM1bSave();
+}
+
+function revealIcebergNext() {
+  revealIcebergLayer(ibRevealedCount);
+}
+
+function restoreIceberg(count) {
+  let n = count;
+  if (n == null) {
+    n = 0;
+  }
+  if (!n || n < 0) {
+    updateIcebergUI();
+    return;
+  }
+  for (let i = 0; i < Math.min(n, ICEBERG_LAYERS.length); i++) {
+    const el = document.getElementById('ib-layer-' + i);
+    if (!el) continue;
+    el.classList.remove('locked', 'ib-layer-next');
+    el.classList.add('revealed');
+    renderIcebergLayerContent(el, i);
+    ibRevealedCount = i + 1;
+  }
+  updateIcebergUI();
+}
+
+updateIcebergUI();
+
+// ── OSA E EXERCISES ──
+const E1_ANSWERS = { e1m1: 'mikael', e1m2: 'emilia', e1m3: 'jarkko', e1m4: 'sara' };
+const SALES_CASES = [
+  {
+    title: 'Asiakastapaaminen valmiiksi',
+    tool: 'Pinkfish AI + Google Calendar',
+    situation: 'Olet myyjänä ensimmäisessä työssäsi. Huomenna asiakastapaaminen — et ehdi googlaamaan 20 minuuttia.',
+    without: 'Googlaat jokaisen asiakkaan käsin ennen tapaamista.',
+    withAuto: 'Kalenteriin tulee tapaaminen → AI hakee yrityksen tiedot ja uutiset → saat sähköpostin 30 min ennen.',
+    writeHint: 'Mieti: mikä kalenteritapahtuma käynnistää ketjun? Mitä AI tekee? Mitä sinä lopulta luet?',
+    ph: { trigger: 'Esim: Google Calendariin ilmestyy uusi asiakastapaaminen', action: 'Esim: Pinkfish hakee yrityksen tiedot, uutiset ja avoimet paikat', output: 'Esim: Sähköposti 30 min ennen tapaamista valmiilla muistiinpanolla' }
+  },
+  {
+    title: 'Follow-up ei unohdu',
+    tool: 'Notion + Claude',
+    situation: 'Soitit asiakkaalle — pitäisi muistaa ottaa yhteyttä viikon päästä. Post-it unohduu.',
+    without: 'Muistat (tai unohdat) seurata liidejä käsin.',
+    withAuto: 'Merkitset CRM:ään "seuraa 5 päivässä" → automaatio muistuttaa ja valmistelee viestiluonnoksen.',
+    writeHint: 'Käynnistys on usein merkintä tai muutos CRM:ssä — ei kalenteri.',
+    ph: { trigger: 'Esim: Merkitsen Notioniin "seuraa 5 päivän päästä"', action: 'Esim: Automaatio luo follow-up-viestiluonnoksen Claudella', output: 'Esim: Saan muistutuksen + valmiin viestin tarkistettavaksi' }
+  },
+  {
+    title: 'Tarjous nopeasti',
+    tool: 'Claude Project',
+    situation: 'Asiakas pyytää tarjousta — jokainen tarjous alusta vie tunnin.',
+    without: 'Kirjoitat hinnan, kuvauksen ja tekstin alusta joka kerta.',
+    withAuto: 'Täytät lyhyen lomakkeen (nimi, tarve, budjetti) → AI kirjoittaa ensimmäisen version → tarkistat ja lähetät.',
+    writeHint: 'Toiminto on usein lomakkeen täyttö + AI-kirjoitus — tulos on valmis luonnos.',
+    ph: { trigger: 'Esim: Saan sähköpostin jossa asiakas pyytää tarjousta', action: 'Esim: Täytän 3 kenttää → Claude Project kirjoittaa tarjousluonnoksen', output: 'Esim: Valmis tarjous PDF/sähköpostina tarkistettavaksi 10 minuutissa' }
+  },
+  {
+    title: 'Viikon myyntiraportti',
+    tool: 'Make.com + Google Sheets',
+    situation: 'Perjantai — esimies haluaa viikon luvut. Keräät Excelistä, CRM:stä, laskemat käsin.',
+    without: 'Perjantai-iltapäivä menee raportin kasaamiseen.',
+    withAuto: 'Joka perjantai automaatio kerää CRM-datan, laskee luvut ja lähettää yhteenvedon.',
+    writeHint: 'Käynnistys on ajastus (perjantai) — toiminto kerää ja laskee — tulos on raportti.',
+    ph: { trigger: 'Esim: Joka perjantai klo 15:00', action: 'Esim: Make.com hakee CRM-datan ja laskee viikon luvut', output: 'Esim: Valmis yhteenveto sähköpostissa esimiehelle' }
+  }
+];
+let selectedSalesRow = null;
+
+function renderE2Context(idx) {
+  const c = SALES_CASES[idx];
+  const panel = document.getElementById('e2-context');
+  if (!panel || !c) return;
+  panel.classList.add('has-case');
+  panel.innerHTML =
+    '<div class="e2-ctx-label">Tilanne</div><div class="e2-ctx-text">' + c.situation + '</div>' +
+    '<div class="e2-ctx-label">Ilman automaatiota</div><div class="e2-ctx-text">' + c.without + '</div>' +
+    '<div class="e2-ctx-label">Automaatiolla</div><div class="e2-ctx-text"><strong>' + c.withAuto + '</strong></div>' +
+    '<div class="e2-ctx-tool">⚒ ' + c.tool + '</div>' +
+    '<div class="e2-ctx-label">Kirjoitusohje</div><div class="e2-ctx-text"><em>' + c.writeHint + '</em></div>';
+}
+
+function highlightTheoryRow(idx) {
+  document.querySelectorAll('.slg-row.se-pickable').forEach((row, i) => {
+    row.classList.toggle('se-selected', i === idx);
+  });
+}
+
+function selectSalesRowFromTheory(idx) {
+  selectE2Case(idx, true);
+  highlightTheoryRow(idx);
+  document.getElementById('e2-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function selectE2Case(idx, skipScroll) {
+  selectedSalesRow = idx;
+  document.querySelectorAll('.e2-case-card').forEach((card, i) => {
+    card.classList.toggle('selected', i === idx);
+  });
+  highlightTheoryRow(idx);
+  renderE2Context(idx);
+  const c = SALES_CASES[idx];
+  const pipeline = document.getElementById('e2-pipeline');
+  const saveBtn = document.getElementById('e2-save-btn');
+  if (pipeline) pipeline.classList.remove('se-locked');
+  if (saveBtn) saveBtn.disabled = false;
+  if (c && c.ph) {
+    document.getElementById('e2-trigger').placeholder = c.ph.trigger;
+    document.getElementById('e2-action').placeholder = c.ph.action;
+    document.getElementById('e2-output').placeholder = c.ph.output;
+    document.getElementById('e2-interview').placeholder = 'Esim: Osaan automatisoida ' + c.title.toLowerCase() + ' — säästän aikaa heti ensimmäisestä työpäivästä.';
+  }
+  document.getElementById('e2-feedback').textContent = 'Konteksti yllä — kirjoita nyt Trigger → Action → Output omin sanoin.';
+  if (!skipScroll) document.getElementById('e2-context')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  scheduleM1bSave();
+}
+
+function selectSalesRow(idx, skipScroll) {
+  selectE2Case(idx, skipScroll);
+}
+
+function checkE1Matches() {
+  let correct = 0;
+  let missing = 0;
+  Object.keys(E1_ANSWERS).forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const val = sel.value;
+    sel.classList.remove('correct', 'wrong');
+    if (!val) { missing++; return; }
+    if (val === E1_ANSWERS[id]) {
+      correct++;
+      sel.classList.add('correct');
+    } else {
+      sel.classList.add('wrong');
+    }
+  });
+  const fb = document.getElementById('e1-feedback');
+  const btn = document.getElementById('e1-check-btn');
+  if (missing) {
+    fb.innerHTML = '<strong>Valitse kaikki neljä</strong> ennen tarkistusta.';
+    return;
+  }
+  if (correct === 4) {
+    fb.innerHTML = '<strong>4/4 oikein!</strong> Tunnistat miten eri yrittäjät käyttävät samaa logiikkaa. Jatka Osa 3:een — neljä myyntitilannetta ennen Harjoitusta 2.';
+    btn.textContent = '✓ Kaikki oikein';
+    btn.classList.add('done');
+  } else {
+    fb.innerHTML = '<strong>' + correct + '/4 oikein.</strong> Väärät punaisina — scrollaa ylös ja lue yrittäjäkortit uudelleen.';
+    btn.classList.remove('done');
+    btn.textContent = 'Tarkista uudelleen';
+  }
+  scheduleM1bSave();
+}
+
+function saveE2Pipeline() {
+  if (selectedSalesRow === null) {
+    alert('Valitse ensin yksi tapaus yllä olevista neljästä kortista.');
+    return;
+  }
+  const trigger = document.getElementById('e2-trigger')?.value.trim();
+  const action = document.getElementById('e2-action')?.value.trim();
+  const output = document.getElementById('e2-output')?.value.trim();
+  const interview = document.getElementById('e2-interview')?.value.trim();
+  if (!trigger || !action || !output || !interview) {
+    alert('Täytä kaikki neljä kenttää ennen tallennusta.');
+    return;
+  }
+  const btn = document.getElementById('e2-save-btn');
+  btn.textContent = '✓ Automaatio tallennettu';
+  btn.classList.add('done');
+  document.getElementById('e2-feedback').innerHTML = '<strong>Tallennettu.</strong> Käytä haastattelulausetta suoraan tai hio sitä Osa F:ssä.';
+  scheduleM1bSave();
+}
+
+function restoreE1E2(data) {
+  const e1 = (data && data.e1) || {};
+  Object.keys(E1_ANSWERS).forEach(id => {
+    const el = document.getElementById(id);
+    if (el && e1[id]) el.value = e1[id];
+  });
+  const pick = data && data.e2pick;
+  if (pick !== null && pick !== undefined && pick !== '') selectE2Case(parseInt(pick, 10), true);
+  const e2 = (data && data.e2) || {};
+  if (e2.row != null && selectedSalesRow === null) selectE2Case(e2.row, true);
+  if (e2.trigger) document.getElementById('e2-trigger').value = e2.trigger;
+  if (e2.action) document.getElementById('e2-action').value = e2.action;
+  if (e2.output) document.getElementById('e2-output').value = e2.output;
+  if (e2.interview) document.getElementById('e2-interview').value = e2.interview;
+  if (e2.trigger) {
+    const btn = document.getElementById('e2-save-btn');
+    if (btn) { btn.textContent = '✓ Automaatio tallennettu'; btn.classList.add('done'); }
+  }
+}
+
+// ── MY TASK AI ──
+const TASK_SYS = `Olet suomenkielinen tekoälyautomaation valmentaja. Opiskelija on 19-vuotias, oppii automaatiota, hakee töitä myynnistä/asiakaspalvelusta Kuopiosta.
+
+Hän kuvaa toistuvan tehtävänsä. Analysoi se ja anna:
+
+1. **Automaatiopotentiaali** (korkea / keskitaso / matala) — yksi lause miksi
+2. **Trigger → Action → Output** — pura se kolmeen kohtaan konkreettisesti heidän kuvauksensa perusteella
+3. **Suositeltu työkalu** — yksi ensisijainen (Pinkfish, Make, Claude Project) ja yksi vaihtoehto — kerro miksi
+4. **Ensimmäinen askel** — yksi konkreettinen toimenpide jonka voi tehdä tänään (max 2 lausetta)
+5. **Varoitus** — yksi asia joka voi mennä rikki tai joka pitää ottaa huomioon
+6. **Make-haku** — yksi rivi muodossa: MAKE_SEARCH: sana1, sana2 (2–3 englanninkielistä hakusanaa Make.com template-galleriaan, esim. gmail, job alert)
+
+Pidä vastaus tiiviinä — max 200 sanaa. Käytä **lihavointia** otsikoille. Puhuttele suoraan: "sinun automaatiosi", "tee ensin". Älä ylistä — ole suora ja käytännöllinen.`;
+
+function extractMakeSearch(reply) {
+  if (!reply) return null;
+  const m = reply.match(/MAKE_SEARCH:\s*(.+)/i);
+  return m ? m[1].trim().replace(/\*\*/g, '') : null;
+}
+
+function formatTaskReply(reply) {
+  const cleaned = (reply || '').replace(/MAKE_SEARCH:\s*.+/i, '').trim();
+  return cleaned.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+}
+
+function guessMakeSearch(task, dream) {
+  const text = ((task || '') + ' ' + (dream || '')).toLowerCase();
+  const keywords = [];
+  if (/sähköpost|email|gmail|posti/.test(text)) keywords.push('gmail');
+  if (/työ|job|duuni|ilmoitu|haku|ur/.test(text)) keywords.push('job alert');
+  if (/slack|tiimi|viesti/.test(text)) keywords.push('slack');
+  if (/kalenter|calendar|tapaamin/.test(text)) keywords.push('google calendar');
+  if (/instagram|some|sosiaali|tiktok/.test(text)) keywords.push('instagram');
+  if (/muistut|remind|heräty/.test(text)) keywords.push('reminder');
+  if (/lomake|form|google sheets|tauluk/.test(text)) keywords.push('google sheets');
+  if (keywords.length) return keywords.slice(0, 3).join(', ');
+  const words = (task || '').split(/\s+/).filter(w => w.length > 4).slice(0, 2);
+  return words.length ? words.join(', ') : 'email automation';
+}
+
+function buildMakeUrl(search) {
+  const q = (search || 'automation').split(',')[0].trim();
+  return 'https://www.make.com/en/templates?search=' + encodeURIComponent(q);
+}
+
+function showMakeExercise(task, dream, reply) {
+  const terms = extractMakeSearch(reply) || guessMakeSearch(task, dream);
+  const termsEl = document.getElementById('make-search-terms');
+  const linkEl = document.getElementById('make-open-link');
+  const card = document.getElementById('f2-make-exercise');
+  if (termsEl) termsEl.textContent = terms;
+  if (linkEl) linkEl.href = buildMakeUrl(terms);
+  if (card) {
+    card.classList.add('show');
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 400);
+  }
+}
+
+function saveMakeHunt() {
+  const template = document.getElementById('make-template-name')?.value.trim();
+  const match = document.getElementById('make-match')?.value.trim();
+  const pipeline = document.getElementById('make-pipeline')?.value.trim();
+  const surprise = document.getElementById('make-surprise')?.value.trim();
+  if (!template || !match || !pipeline) {
+    alert('Täytä vähintään template, vastaavuus ja Trigger → Action → Output ennen tallennusta.');
+    return;
+  }
+  const btn = document.getElementById('make-save-btn');
+  if (btn) { btn.textContent = '✓ Make-löydös tallennettu'; btn.classList.add('saved'); }
+  scheduleM1bSave();
+}
+
+function restoreMakeHunt(data) {
+  if (!data) return;
+  if (data.template) document.getElementById('make-template-name').value = data.template;
+  if (data.match) document.getElementById('make-match').value = data.match;
+  if (data.pipeline) document.getElementById('make-pipeline').value = data.pipeline;
+  if (data.surprise) document.getElementById('make-surprise').value = data.surprise;
+  if (data.template) {
+    const btn = document.getElementById('make-save-btn');
+    if (btn) { btn.textContent = '✓ Make-löydös tallennettu'; btn.classList.add('saved'); }
+  }
+}
+
+function aiReqSignal(ms) {
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(ms);
+  }
+  const c = new AbortController();
+  setTimeout(() => c.abort(), ms);
+  return c.signal;
+}
+
+async function aiTaskRequest(prompt) {
+  const payload = { system: TASK_SYS, max_tokens: 1000, messages: [{ role: 'user', content: prompt }] };
+  const fbPayload = { model: 'gpt-4o-mini', system: TASK_SYS, max_tokens: 1000, messages: [{ role: 'user', content: prompt }] };
+  let primaryErr = '';
+  try {
+    const r = await fetch('/api/ai/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      signal: aiReqSignal(25000),
+      body: JSON.stringify(payload)
+    });
+    let d = {};
+    try { d = await r.json(); } catch (e) {}
+    if (r.ok) return d.text || d.reply || '';
+    primaryErr = d.error || d.message || ('Virhe ' + r.status);
+  } catch (e) {
+    primaryErr = 'Yhteys tekoälypalveluun katkesi.';
+  }
+  try {
+    const fb = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      signal: aiReqSignal(25000),
+      body: JSON.stringify(fbPayload)
+    });
+    let dd = {};
+    try { dd = await fb.json(); } catch (e) {}
+    if (!fb.ok) throw new Error(dd.error || dd.message || primaryErr || ('Virhe ' + fb.status));
+    return dd.text || dd.reply || '';
+  } catch (e) {
+    console.warn('[automaatio-b task]', e);
+    return '';
+  }
+}
+
+async function generateMyTask() {
+  const task = document.getElementById('mt-task').value.trim();
+  const freq = document.getElementById('mt-freq').value;
+  const dream = document.getElementById('mt-dream').value.trim();
+  if(!task || !dream) { alert('Täytä tehtäväkuvaus ja toivekenttä ennen analyysia.'); return; }
+  const btn = document.getElementById('mt-btn');
+  const btnText = document.getElementById('mt-btn-text');
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span> Analysoidaan...';
+  const prompt = `Toistuva tehtäväni: ${task}\nTiheys: ${freq}\nMiltä "tehty puolestani" näyttäisi: ${dream}`;
+  const reply = await aiTaskRequest(prompt);
+  if (reply) {
+    lastMyTaskReply = reply;
+    document.getElementById('mt-output-text').innerHTML = formatTaskReply(reply);
+    document.getElementById('mt-output').classList.add('show');
+    showMakeExercise(task, dream, reply);
+    scheduleM1bSave();
+  } else {
+    document.getElementById('mt-output-text').textContent = 'Tekoäly ei vastannut juuri nyt — yritä hetken päästä uudelleen.';
+    document.getElementById('mt-output').classList.add('show');
+  }
+  btn.disabled = false;
+  btnText.textContent = 'Analysoi uudelleen';
+}
+
+function restoreMyTask(data) {
+  if (!data) return;
+  if (data.task) document.getElementById('mt-task').value = data.task;
+  if (data.freq) document.getElementById('mt-freq').value = data.freq;
+  if (data.dream) document.getElementById('mt-dream').value = data.dream;
+  if (data.reply) {
+    lastMyTaskReply = data.reply;
+    document.getElementById('mt-output-text').innerHTML = formatTaskReply(data.reply);
+    document.getElementById('mt-output').classList.add('show');
+    document.getElementById('mt-btn-text').textContent = 'Analysoi uudelleen';
+    showMakeExercise(data.task, data.dream, data.reply);
+  }
+}
+
+function saveCommitments() {
+  const c1 = document.getElementById('commit1').value.trim();
+  const c2 = document.getElementById('commit2').value.trim();
+  const c3 = document.getElementById('commit3').value.trim();
+  const btn = document.getElementById('commit-save');
+  btn.textContent = '✓ Tallennettu';
+  btn.classList.add('done');
+  scheduleM1bSave();
+}
+
+function m1bSnapshot() {
+  const d = { v: 1 };
+  d.fixes = {};
+  ['fix1', 'fix2', 'fix3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) d.fixes[id] = el.value;
+  });
+  d.gallery = {
+    mission: selectedMission,
+    find: document.getElementById('gallery-find')?.value || '',
+    why: document.getElementById('gallery-why')?.value || '',
+    use: document.getElementById('gallery-use')?.value || ''
+  };
+  d.flowOrder = collectFlowOrderState();
+  d.iceberg = ibRevealedCount;
+  d.e1 = {};
+  Object.keys(E1_ANSWERS).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) d.e1[id] = el.value;
+  });
+  d.e2pick = selectedSalesRow;
+  d.e2 = {
+    row: selectedSalesRow,
+    trigger: document.getElementById('e2-trigger')?.value || '',
+    action: document.getElementById('e2-action')?.value || '',
+    output: document.getElementById('e2-output')?.value || '',
+    interview: document.getElementById('e2-interview')?.value || ''
+  };
+  d.mytask = {
+    task: document.getElementById('mt-task')?.value || '',
+    freq: document.getElementById('mt-freq')?.value || '',
+    dream: document.getElementById('mt-dream')?.value || '',
+    reply: lastMyTaskReply
+  };
+  d.makeHunt = {
+    template: document.getElementById('make-template-name')?.value || '',
+    match: document.getElementById('make-match')?.value || '',
+    pipeline: document.getElementById('make-pipeline')?.value || '',
+    surprise: document.getElementById('make-surprise')?.value || ''
+  };
+  d.commitments = {
+    c1: document.getElementById('commit1')?.value || '',
+    c2: document.getElementById('commit2')?.value || '',
+    c3: document.getElementById('commit3')?.value || ''
+  };
+  return d;
+}
+
+function summarizeM1bData(d) {
+  if (!d || d.v !== 1) return 'Automaatio B — työ kesken';
+  const parts = ['Automaatio B'];
+  if (d.gallery && d.gallery.find) parts.push('Galleria ✓');
+  if (d.flowOrder && Array.isArray(d.flowOrder.done) && d.flowOrder.done.filter(Boolean).length) {
+    parts.push(d.flowOrder.done.filter(Boolean).length + '/4 flow');
+  }
+  if (d.iceberg >= 6) parts.push('Jäävuori ✓');
+  if (d.e2 && d.e2.trigger) parts.push('Myynti ✓');
+  if (d.mytask && d.mytask.reply) parts.push('AI-analyysi ✓');
+  if (d.makeHunt && d.makeHunt.template) parts.push('Make ✓');
+  return parts.join(' · ');
+}
+
+function applyM1bData(d) {
+  if (!d || d.v !== 1) return false;
+  if (d.fixes) {
+    Object.keys(d.fixes).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = d.fixes[id] || '';
+    });
+  }
+  if (d.gallery) {
+    const g = d.gallery;
+    if (g.mission && g.mission !== 'c') selectMission(g.mission);
+    if (g.find) document.getElementById('gallery-find').value = g.find;
+    if (g.why) document.getElementById('gallery-why').value = g.why;
+    if (g.use) document.getElementById('gallery-use').value = g.use;
+    if (g.find) {
+      const btn = document.getElementById('gallery-save-btn');
+      if (btn) { btn.textContent = '✓ Löydös tallennettu'; btn.classList.add('saved'); }
+      document.getElementById('gallery-saved-callout').style.display = 'flex';
+    }
+  }
+  if (d.flowOrder) restoreFlowOrderState(d.flowOrder);
+  if (d.iceberg != null) restoreIceberg(d.iceberg);
+  restoreE1E2(d);
+  restoreMyTask(d.mytask);
+  restoreMakeHunt(d.makeHunt);
+  if (d.commitments) {
+    if (d.commitments.c1) document.getElementById('commit1').value = d.commitments.c1;
+    if (d.commitments.c2) document.getElementById('commit2').value = d.commitments.c2;
+    if (d.commitments.c3) document.getElementById('commit3').value = d.commitments.c3;
+  }
+  return true;
+}
+
+function readLegacyM1b() {
+  try {
+    const d = { v: 1 };
+    let has = false;
+    d.fixes = {};
+    ['fix1', 'fix2', 'fix3'].forEach(id => {
+      const v = localStorage.getItem('m1b_' + id);
+      if (v) { d.fixes[id] = v; has = true; }
+    });
+    const gallery = localStorage.getItem('m1b_gallery');
+    if (gallery) { d.gallery = JSON.parse(gallery); has = true; }
+    const flow = localStorage.getItem('m1b_flow_order');
+    if (flow) { d.flowOrder = JSON.parse(flow); has = true; }
+    const iceberg = localStorage.getItem('m1b_iceberg');
+    if (iceberg) { d.iceberg = parseInt(iceberg, 10); has = true; }
+    const e1 = localStorage.getItem('m1b_e1');
+    if (e1) { d.e1 = JSON.parse(e1); has = true; }
+    const e2pick = localStorage.getItem('m1b_e2pick');
+    if (e2pick !== null && e2pick !== '') { d.e2pick = parseInt(e2pick, 10); has = true; }
+    const e2 = localStorage.getItem('m1b_e2');
+    if (e2) { d.e2 = JSON.parse(e2); has = true; }
+    const mytask = localStorage.getItem('m1b_mytask');
+    if (mytask) { d.mytask = JSON.parse(mytask); has = true; }
+    const makeHunt = localStorage.getItem('m1b_make_hunt');
+    if (makeHunt) { d.makeHunt = JSON.parse(makeHunt); has = true; }
+    const commitments = localStorage.getItem('m1b_commitments');
+    if (commitments) { d.commitments = JSON.parse(commitments); has = true; }
+    return has ? d : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function initM1bPersistence() {
+  if (!window.moduleWork || typeof window.moduleWork.initModuleWork !== 'function') return;
+  const legacy = readLegacyM1b();
+  try {
+    m1bWorkApi = await window.moduleWork.initModuleWork(MODULE_ID, {
+      legacyPrefix: 'm1b_',
+      collect: m1bSnapshot,
+      apply: applyM1bData,
+      summarize: summarizeM1bData,
+      debounceMs: 800,
+      fieldIds: ['fix1','fix2','fix3','gallery-find','gallery-why','gallery-use','e1m1','e1m2','e1m3','e1m4','e2-trigger','e2-action','e2-output','e2-interview','mt-task','mt-freq','mt-dream','make-template-name','make-match','make-pipeline','make-surprise','commit1','commit2','commit3']
+    });
+    if (!m1bWorkApi.data && legacy) {
+      applyM1bData(legacy);
+      await m1bWorkApi.saveNow();
+    }
+  } catch (e) {
+    console.warn('[automaatio-b] persistence init failed:', e);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(initM1bPersistence, 80));
+} else {
+  setTimeout(initM1bPersistence, 80);
+}
+</script>
+</body>
+</html>

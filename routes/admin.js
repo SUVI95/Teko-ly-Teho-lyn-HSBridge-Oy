@@ -183,7 +183,7 @@ router.get('/students/progress', authenticateToken, requireAdmin, async (req, re
     const workResult = await pool.query(`
       SELECT user_id, module_id, reflection_text, updated_at
       FROM reflections
-      WHERE module_id IN ('moduuli1-ai-automaatio__work', 'moduuli8-ai-polku__work', 'moduuli9-haastattelu__work')
+      WHERE module_id IN ('moduuli1-ai-automaatio__work', 'moduuli1b-ai-automaatio__work', 'moduuli8-ai-polku__work', 'moduuli9-haastattelu__work')
     `);
     const workByUser = {};
     for (const row of workResult.rows) {
