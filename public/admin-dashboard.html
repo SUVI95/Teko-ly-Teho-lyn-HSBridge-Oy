@@ -1580,6 +1580,8 @@ nav {
                   <div style="margin-top:0.65rem;font-size:0.82rem;line-height:1.5;border-top:1px dashed var(--border);padding-top:0.65rem;">
                     <div>★ Polku: ${tyonhakuProgressLine(s.polku_screen, POLKU_SCREEN_LABELS, s.polku_work_at)}</div>
                     <div style="margin-top:0.25rem;">★ Haastattelu: ${tyonhakuProgressLine(s.haast_screen, HAAST_SCREEN_LABELS, s.haast_work_at)}</div>
+                    <div style="margin-top:0.25rem;">⚡ Automaatio A: ${automaatioProgressLine(s.automaatio_a_summary, s.automaatio_a_work_at)}</div>
+                    <div style="margin-top:0.25rem;">⚡ Automaatio B: ${automaatioProgressLine(s.automaatio_b_summary, s.automaatio_b_work_at)}</div>
                   </div>
                 </div>
               </div>
@@ -1697,6 +1699,32 @@ nav {
       return `<span style="font-weight:600;">${escapeHtml(formatTyonhakuScreen(screen, labels))}</span>${extra}`;
     }
 
+    function automaatioProgressLine(summary, updatedAt) {
+      if (!summary) return '<span style="color:var(--muted);">Ei aloitettu</span>';
+      const extra = updatedAt ? ` <span style="color:var(--muted);font-size:0.78rem;">(${formatDate(updatedAt)})</span>` : '';
+      return `<span style="font-weight:600;">${escapeHtml(summary)}</span>${extra}`;
+    }
+
+    function renderAutomaatioWorkHtml(workRow) {
+      const parsed = parseModuleWorkPayload(workRow && workRow.reflection_text);
+      const d = parsed && parsed.data ? parsed.data : null;
+      if (!d) return `<div class="content-item-text">${escapeHtml((workRow && workRow.reflection_text) || '—')}</div>`;
+      const bits = [];
+      if (parsed.summary) bits.push(`<p style="color:var(--muted);font-size:0.88rem;margin-bottom:0.75rem;">${escapeHtml(parsed.summary)}</p>`);
+      if (d.gallery && d.gallery.find) bits.push(`<p><strong>Galleria:</strong> ${escapeHtml(String(d.gallery.find).slice(0, 120))}</p>`);
+      if (d.flowOrder && Array.isArray(d.flowOrder.done)) {
+        const n = d.flowOrder.done.filter(Boolean).length;
+        if (n) bits.push(`<p><strong>Flow-puzzle:</strong> ${n}/4 valmis</p>`);
+      }
+      if (d.iceberg != null && d.iceberg >= 6) bits.push('<p><strong>Jäävuori:</strong> ✓ kaikki kerrokset</p>');
+      if (d.e2 && d.e2.trigger) bits.push(`<p><strong>Myynti-automaatio:</strong> ${escapeHtml(String(d.e2.trigger).slice(0, 100))}</p>`);
+      if (d.mytask && d.mytask.reply) bits.push('<p><strong>AI-analyysi:</strong> ✓ tehty</p>');
+      if (d.makeHunt && d.makeHunt.template) bits.push(`<p><strong>Make-template:</strong> ${escapeHtml(String(d.makeHunt.template).slice(0, 120))}</p>`);
+      if (d.prompt && d.prompt.out) bits.push(`<p><strong>Prompti:</strong> ${escapeHtml(String(d.prompt.out).slice(0, 100))}…</p>`);
+      if (d.chat && Array.isArray(d.chat.history) && d.chat.history.length) bits.push(`<p><strong>Haastattelu:</strong> ${d.chat.history.length} viestiä</p>`);
+      return bits.length ? bits.join('') : `<div class="content-item-text">${escapeHtml(parsed.summary || 'Tallennettu')}</div>`;
+    }
+
     function renderStudentDetail(data) {
       const container = document.getElementById('studentDetailContainer');
       const { user, reflections, feedback, closingActions, progress, checklist, consent, courtSubmission, toolBuilderSubmission } = data;
@@ -1709,8 +1737,11 @@ nav {
       const visualsWork = moduleWorkReflections.find(r => r.module_id === 'moduuli-esitykset-tarjoukset-viestinta__work');
       const polkuWork = moduleWorkReflections.find(r => r.module_id === 'moduuli8-ai-polku__work');
       const haastWork = moduleWorkReflections.find(r => r.module_id === 'moduuli9-haastattelu__work');
+      const automaatioAWork = moduleWorkReflections.find(r => r.module_id === 'moduuli1-ai-automaatio__work');
+      const automaatioBWork = moduleWorkReflections.find(r => r.module_id === 'moduuli1b-ai-automaatio__work');
       const builderVisualTabCount = (appBuilderWork ? 1 : 0) + (visualsWork ? 1 : 0);
       const tyonhakuTabCount = (polkuWork ? 1 : 0) + (haastWork ? 1 : 0);
+      const automaatioTabCount = (automaatioAWork ? 1 : 0) + (automaatioBWork ? 1 : 0);
 
       function jsonPre(obj) {
         try { return escapeHtml(JSON.stringify(obj, null, 2)); } catch (e) { return escapeHtml(String(obj)); }
@@ -1873,6 +1904,7 @@ nav {
             <button class="tab active" onclick="switchTab('reflections', event)">Reflektiot (${reflectionOnly.length})</button>
             <button class="tab" onclick="switchTab('builderVisual', event)">Rakentaja &amp; visuaalit (${builderVisualTabCount})</button>
             <button class="tab" onclick="switchTab('tyonhaku', event)">★ Työnhaku (${tyonhakuTabCount})</button>
+            <button class="tab" onclick="switchTab('automaatio', event)">⚡ Automaatio (${automaatioTabCount})</button>
             <button class="tab" onclick="switchTab('feedback', event)">Palautteet (${feedback.length})</button>
             <button class="tab" onclick="switchTab('aiModules', event)">Tuomioistuin &amp; työkalu (${aiModuleTabCount})</button>
             <button class="tab" onclick="switchTab('closingActions', event)">Sulkemistoimenpiteet (${closingActions.length})</button>
@@ -1972,6 +2004,43 @@ nav {
                     <div class="content-item-date">${formatDate(haastWork.updated_at || haastWork.created_at)}</div>
                   </div>
                   ${renderHaastatteluWorkHtml(haastWork)}
+                </div>
+              ` : ''}
+            `}
+          </div>
+
+          <div id="tab-automaatio" class="tab-content">
+            ${automaatioTabCount === 0 ? `
+              <div class="empty-state">
+                <div class="empty-state-icon">⚡</div>
+                <p>Ei tallennettuja vastauksia moduuleista <strong>Automaatio A</strong> tai <strong>Automaatio B</strong>.</p>
+                <p style="font-size:0.9rem;color:var(--muted);margin-top:0.5rem;">Edistyminen tallentuu automaattisesti kun opiskelija on kirjautunut.</p>
+              </div>
+            ` : `
+              ${automaatioAWork ? `
+                <h3 style="margin:0 0 1rem;font-family:'DM Serif Display',serif;color:var(--ink);">Automaatio A — Tekoälyautomaatio käytännössä</h3>
+                <div class="content-item">
+                  <div class="content-item-header">
+                    <div>
+                      <span class="module-badge">moduuli1-ai-automaatio</span>
+                      <span class="content-item-title">Tallennettu työ</span>
+                    </div>
+                    <div class="content-item-date">${formatDate(automaatioAWork.updated_at || automaatioAWork.created_at)}</div>
+                  </div>
+                  ${renderAutomaatioWorkHtml(automaatioAWork)}
+                </div>
+              ` : ''}
+              ${automaatioBWork ? `
+                <h3 style="margin:${automaatioAWork ? '2rem' : '0'} 0 1rem;font-family:'DM Serif Display',serif;color:var(--ink);">Automaatio B — Syvä sukellus automaatioon</h3>
+                <div class="content-item">
+                  <div class="content-item-header">
+                    <div>
+                      <span class="module-badge">moduuli1b-ai-automaatio</span>
+                      <span class="content-item-title">Tallennettu työ</span>
+                    </div>
+                    <div class="content-item-date">${formatDate(automaatioBWork.updated_at || automaatioBWork.created_at)}</div>
+                  </div>
+                  ${renderAutomaatioWorkHtml(automaatioBWork)}
                 </div>
               ` : ''}
             `}

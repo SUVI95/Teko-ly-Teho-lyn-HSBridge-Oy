@@ -155,6 +155,17 @@ function curScreenFromModuleWorkRow(row) {
   }
 }
 
+function summaryFromModuleWorkRow(row) {
+  if (!row || !row.reflection_text) return null;
+  try {
+    const o = JSON.parse(row.reflection_text);
+    if (o && o.summary) return String(o.summary);
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // Get student progress summary
 router.get('/students/progress', authenticateToken, requireAdmin, async (req, res) => {
   try {
@@ -194,12 +205,18 @@ router.get('/students/progress', authenticateToken, requireAdmin, async (req, re
     const students = result.rows.map((s) => {
       const w8 = workByUser[s.id]?.['moduuli8-ai-polku__work'];
       const w9 = workByUser[s.id]?.['moduuli9-haastattelu__work'];
+      const w1a = workByUser[s.id]?.['moduuli1-ai-automaatio__work'];
+      const w1b = workByUser[s.id]?.['moduuli1b-ai-automaatio__work'];
       return {
         ...s,
         polku_screen: curScreenFromModuleWorkRow(w8),
         polku_work_at: w8?.updated_at || null,
         haast_screen: curScreenFromModuleWorkRow(w9),
-        haast_work_at: w9?.updated_at || null
+        haast_work_at: w9?.updated_at || null,
+        automaatio_a_summary: summaryFromModuleWorkRow(w1a),
+        automaatio_a_work_at: w1a?.updated_at || null,
+        automaatio_b_summary: summaryFromModuleWorkRow(w1b),
+        automaatio_b_work_at: w1b?.updated_at || null
       };
     });
 

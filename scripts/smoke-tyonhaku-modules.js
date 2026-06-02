@@ -41,7 +41,7 @@ function fail(msg) {
   if (health.status !== 200 || health.json.status !== 'ok') fail('health');
   else pass('GET /api/health');
 
-  for (const mod of ['moduuli8-ai-polku', 'moduuli9-haastattelu']) {
+  for (const mod of ['moduuli1-ai-automaatio', 'moduuli1b-ai-automaatio', 'moduuli8-ai-polku', 'moduuli9-haastattelu']) {
     const page = await fetch(base + '/module/' + mod);
     const html = await page.text();
     if (page.status !== 200) fail('/module/' + mod + ' HTTP ' + page.status);
@@ -96,6 +96,28 @@ function fail(msg) {
   const t8 = load8.json?.reflection?.reflection_text || '';
   if (load8.status !== 200 || !t8.includes('smoke test')) fail('load moduuli8-ai-polku__work');
   else pass('load moduuli8-ai-polku__work');
+
+  const save1b = await req(
+    'POST',
+    '/api/reflections/save',
+    {
+      moduleId: 'moduuli1b-ai-automaatio__work',
+      reflectionText: JSON.stringify({
+        v: 1,
+        data: { v: 1, iceberg: 2, gallery: { find: 'smoke test template' } },
+        summary: 'Automaatio B · smoke',
+        savedAt: new Date().toISOString()
+      })
+    },
+    cookie
+  );
+  if (save1b.status !== 200 || !save1b.json.success) fail('save moduuli1b-ai-automaatio__work');
+  else pass('save moduuli1b-ai-automaatio__work');
+
+  const load1b = await req('GET', '/api/reflections/module/moduuli1b-ai-automaatio__work', null, cookie);
+  const t1b = load1b.json?.reflection?.reflection_text || '';
+  if (load1b.status !== 200 || !t1b.includes('smoke test')) fail('load moduuli1b-ai-automaatio__work');
+  else pass('load moduuli1b-ai-automaatio__work');
 
   const save9 = await req(
     'POST',
