@@ -476,7 +476,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 0;
-  min-width: 900px;
+  min-width: 1080px;
   position: relative;
 }
 
@@ -504,6 +504,7 @@ body {
 .node-card.n-trigger .nc-stripe { background: var(--amber); }
 .node-card.n-action .nc-stripe { background: var(--orange); }
 .node-card.n-ai .nc-stripe { background: var(--blue); }
+.node-card.n-condition .nc-stripe { background: #7C3AED; }
 .node-card.n-output .nc-stripe { background: var(--green); }
 
 .nc-head {
@@ -519,6 +520,7 @@ body {
 .n-trigger .nc-icon { background: var(--amber-light); }
 .n-action .nc-icon { background: var(--orange-light); }
 .n-ai .nc-icon { background: var(--blue-light); }
+.n-condition .nc-icon { background: rgba(124,58,237,0.12); }
 .n-output .nc-icon { background: var(--green-light); }
 
 .nc-name { font-size:12px; font-weight:600; color:var(--ink); line-height:1.3; }
@@ -530,6 +532,7 @@ body {
 .n-trigger .nc-type-tag { background:var(--amber-light); color:var(--amber); }
 .n-action .nc-type-tag { background:var(--orange-light); color:var(--orange); }
 .n-ai .nc-type-tag { background:var(--blue-light); color:var(--blue); }
+.n-condition .nc-type-tag { background:rgba(124,58,237,0.12); color:#7C3AED; }
 .n-output .nc-type-tag { background:var(--green-light); color:var(--green); }
 
 .nc-body { padding: 10px 14px; }
@@ -566,6 +569,7 @@ body {
 .n-trigger .port-out { border-color:var(--amber); background:var(--amber-light); }
 .n-action .port-out, .n-action .port-in { border-color:var(--orange); background:var(--orange-light); }
 .n-ai .port-out, .n-ai .port-in { border-color:var(--blue); background:var(--blue-light); }
+.n-condition .port-out, .n-condition .port-in { border-color:#7C3AED; background:rgba(124,58,237,0.12); }
 .n-output .port-in { border-color:var(--green); background:var(--green-light); }
 
 /* Edge connector */
@@ -587,6 +591,27 @@ body {
   opacity:0.7;
 }
 .edge-line.flow-green::after { background: var(--green); }
+.edge-line.flow-violet::after { background: #7C3AED; }
+.condition-fork {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10px;
+  text-align: center;
+  max-width: 140px;
+  line-height: 1.4;
+}
+.cf-yes { color: var(--green); font-weight: 600; }
+.cf-no { color: var(--ink4); }
+.canvas-if-note {
+  padding: 12px 32px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--ink2);
+  background: white;
+  line-height: 1.6;
+}
 @keyframes edgeFlow {
   0% { left:-18px; opacity:0; }
   15% { opacity:0.7; }
@@ -1338,8 +1363,8 @@ textarea.form-input { resize:vertical; min-height:88px; line-height:1.65; }
 
   <!-- Node canvas — teoria section -->
   <div style="margin-top:48px" class="reveal">
-    <p class="body" style="margin-bottom:4px"><strong>Automaation rakenne — kolme osaa</strong></p>
-    <p class="body" style="font-size:14px">Jokainen automaatio koostuu näistä kolmesta. Vie hiiri kunkin solmun päälle — saat selityksen mitä se tekee ja miksi.</p>
+    <p class="body" style="margin-bottom:4px"><strong>Automaation rakenne — neljä osaa</strong></p>
+    <p class="body" style="font-size:14px">Kun tapahtuma käynnistää automaation, <strong>ehto (IF)</strong> päättää jatketaanko eteenpäin. Vie hiiri kunkin solmun päälle — saat selityksen mitä se tekee ja miksi.</p>
   </div>
 
   <div class="canvas-wrap reveal">
@@ -1415,6 +1440,32 @@ textarea.form-input { resize:vertical; min-height:88px; line-height:1.65; }
         </div>
 
         <div class="node-edge">
+          <div class="edge-line flow flow-violet"></div>
+          <div class="edge-arrow">▶</div>
+        </div>
+
+        <div class="node-wrap">
+          <div class="node-tip"><strong>Ehto (IF)</strong>Automaatio tarkistaa: onko ehto täyttynyt? Jos kyllä → jatka seuraavaan vaiheeseen. Jos ei → pysäytä automaatio. Tämä estää esimerkiksi tyhjien sähköpostien lähettämisen.</div>
+          <div class="node-card n-condition">
+            <div class="nc-stripe"></div>
+            <div class="port-in"></div>
+            <div class="port-out"></div>
+            <div class="nc-head">
+              <div class="nc-icon">◆</div>
+              <div><div class="nc-name">Ehto / IF</div><span class="nc-type-tag">CONDITION</span></div>
+            </div>
+            <div class="nc-body">
+              <div class="nc-field"><strong>Jos</strong>Tuloksia &gt; 0</div>
+              <div class="nc-field"><strong>Muuten</strong>Lopeta — älä lähetä</div>
+            </div>
+          </div>
+          <div class="condition-fork">
+            <span class="cf-yes">✓ Kyllä → jatka</span>
+            <span class="cf-no">✗ Ei → lopeta</span>
+          </div>
+        </div>
+
+        <div class="node-edge">
           <div class="edge-line flow flow-green"></div>
           <div class="edge-arrow">▶</div>
         </div>
@@ -1441,7 +1492,11 @@ textarea.form-input { resize:vertical; min-height:88px; line-height:1.65; }
       <div class="cl-item"><div class="cl-pip" style="background:var(--amber)"></div>Keltainen = käynnistys</div>
       <div class="cl-item"><div class="cl-pip" style="background:var(--orange)"></div>Oranssi = toiminto</div>
       <div class="cl-item"><div class="cl-pip" style="background:var(--blue)"></div>Sininen = AI-käsittely</div>
+      <div class="cl-item"><div class="cl-pip" style="background:#7C3AED"></div>Violetti = ehto (IF)</div>
       <div class="cl-item"><div class="cl-pip" style="background:var(--green)"></div>Vihreä = tulos</div>
+    </div>
+    <div class="canvas-if-note">
+      <strong>If-then -logiikka:</strong> Jos kello 08:00 → hae ilmoitukset → AI analysoi → <strong>jos löytyi uusia</strong> → lähetä sähköposti. <strong>Jos ei löytynyt</strong> → automaatio pysähtyy, et saa tyhjää viestiä.
     </div>
   </div>
 
