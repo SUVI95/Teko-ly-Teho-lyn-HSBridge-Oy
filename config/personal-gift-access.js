@@ -1,7 +1,7 @@
 /**
  * Personal gift modules (Sonja, Satu, …).
  * Email allowlist + first-name fallback when registration email differs.
- * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL / VILLE_GIFT_EMAIL / MINNA_GIFT_EMAIL / SANTERI_GIFT_EMAIL (comma-separated).
+ * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL / VILLE_GIFT_EMAIL / MINNA_GIFT_EMAIL / SANTERI_GIFT_EMAIL / SANTERI_AUTOMATIO_GIFT_EMAIL (comma-separated).
  */
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -76,6 +76,15 @@ const GIFTS = {
     firstName: 'santeri',
     emails: parseEmailList(process.env.SANTERI_GIFT_EMAIL, ['santeri.kekarainen@gmail.com'])
   },
+  santeri_automaatio: {
+    moduleIds: ['moduuli1-ai-automaatio', 'moduuli1b-ai-automaatio'],
+    firstName: 'santeri',
+    emails: parseEmailList(process.env.SANTERI_AUTOMATIO_GIFT_EMAIL || process.env.SANTERI_GIFT_EMAIL, [
+      'santeri.kekarainen@gmail.com',
+      'testi.opiskelija@example.com',
+      'test.opiskelija@hsbridge.local'
+    ])
+  },
   ville: {
     moduleId: 'ville-ai-opas-2025',
     firstName: 'ville',
@@ -83,9 +92,19 @@ const GIFTS = {
   }
 };
 
-const MODULE_TO_GIFT_KEY = Object.fromEntries(
-  Object.entries(GIFTS).map(([key, g]) => [g.moduleId, key])
-);
+function giftModuleIds(gift) {
+  if (!gift) return [];
+  if (Array.isArray(gift.moduleIds) && gift.moduleIds.length) return gift.moduleIds;
+  if (gift.moduleId) return [gift.moduleId];
+  return [];
+}
+
+const MODULE_TO_GIFT_KEY = {};
+Object.entries(GIFTS).forEach(([key, gift]) => {
+  giftModuleIds(gift).forEach((moduleId) => {
+    MODULE_TO_GIFT_KEY[moduleId] = key;
+  });
+});
 
 function getGiftKeyForModuleId(moduleId) {
   return MODULE_TO_GIFT_KEY[moduleId] || null;
