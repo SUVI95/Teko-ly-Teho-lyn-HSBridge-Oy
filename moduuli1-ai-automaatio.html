@@ -1092,6 +1092,12 @@ body {
   border-radius:5px; padding:2px 7px; color:var(--ink3); font-weight:400;
 }
 .form-hint { font-size:12px; color:var(--ink3); margin-bottom:7px; line-height:1.6; }
+.rules-divider{
+  margin:28px 0 20px;padding-top:22px;border-top:1px solid var(--border);
+}
+.rules-divider h4{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.rules-divider p{font-size:12px;color:var(--ink3);line-height:1.6;margin:0;}
+.form-lbl-tag.designer{background:var(--blue-light);color:var(--blue);border-color:rgba(29,78,216,.15);}
 .form-select, .form-input {
   width:100%;
   background:var(--cream2); border:1.5px solid var(--border);
@@ -1120,7 +1126,12 @@ textarea.form-input { resize:vertical; min-height:88px; line-height:1.65; }
   color:var(--ink4); display:flex; align-items:center; gap:7px;
 }
 .ob-dot { width:6px;height:6px;border-radius:50%;background:var(--green); }
-.ob-copy {
+.ob-badge{
+  display:none;background:var(--orange);color:white;border-radius:5px;
+  padding:2px 8px;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;
+}
+.ob-badge.show{display:inline-block;}
+.ob-copy{
   background:var(--cream2); border:1px solid var(--border);
   border-radius:6px; padding:5px 12px;
   font-family:'DM Mono',monospace; font-size:11px; color:var(--ink3);
@@ -1800,16 +1811,47 @@ textarea.form-input { resize:vertical; min-height:88px; line-height:1.65; }
         <textarea class="form-input" id="pbMe" rows="3" placeholder="Esim: Olen 19-vuotias, haen ensimmäistä osa-aikatyötä myynnistä tai asiakaspalvelusta. Asun Kuopiossa. Ei aiempaa palkkatyötä, mutta olen tottunut asiakaspalveluun urheiluseurassa ja kouluprojekteissa. Olen reipas, aikaisin noussut ja luotettava." oninput="buildPrompt()"></textarea>
       </div>
 
-      <div class="form-block">
-        <div class="form-lbl">Mitä ET hae / rajaukset <span class="form-lbl-tag">Vapaaehtoinen</span></div>
-        <div class="form-hint">Auttaa AI:ta suodattamaan pois väärät ilmoitukset.</div>
-        <input type="text" class="form-input" id="pbExclude" placeholder="Esim: Ei vuorotyötä, ei B-ajokorttia vaativia, ei yli 30 km päässä" oninput="buildPrompt()">
-      </div>
+      <div id="pbRulesFields">
+        <div class="rules-divider">
+          <h4>Automaation säännöt — ajattele kuin järjestelmäsuunnittelija</h4>
+          <p>Nämä eivät ole vain “toiveita” promptissa. Ne ovat ehtoja, prioriteetteja ja varmuusverkkoja — sama logiikka kuin Moduulissa B:n rikkinäisissä automaatioissa.</p>
+        </div>
 
-      <div class="form-block">
-        <div class="form-lbl">Erityistoive automaatiolle <span class="form-lbl-tag">Vapaaehtoinen</span></div>
-        <div class="form-hint">Esim. sähköpostin sävy, montako ilmoitusta max, kieli.</div>
-        <input type="text" class="form-input" id="pbExtra" placeholder="Esim: Max 5 ilmoitusta per päivä, suomenkielinen sähköposti, reipas sävy" oninput="buildPrompt()">
+        <div class="form-block">
+          <div class="form-lbl">Suodatussäännöt <span class="form-lbl-tag designer">Suodatus</span></div>
+          <div class="form-hint">Milloin ilmoitus pääsee läpi? Esim. vain avoimet, ei duplikaatteja, otsikon täytyy vastata hakusanoja.</div>
+          <input type="text" class="form-input" id="pbFilter" placeholder="Esim: Vain avoimet ilmoitukset; ei samaa yritystä kahdesti; otsikko tai kuvaus täsmää haettaviin nimikkeisiin" oninput="buildPrompt()">
+        </div>
+
+        <div class="form-block">
+          <div class="form-lbl">Priorisointi <span class="form-lbl-tag designer">Ranking</span></div>
+          <div class="form-hint">Mikä ilmoitus menee listan kärkeen jos niitä on paljon?</div>
+          <input type="text" class="form-input" id="pbRank" placeholder="Esim: Ensin osa-aika ja aloittelijaystävälliset; sitten alle 30 km; sitten uusimmat" oninput="buildPrompt()">
+        </div>
+
+        <div class="form-block">
+          <div class="form-lbl">Poissulut <span class="form-lbl-tag designer">Exclusion</span></div>
+          <div class="form-hint">Mitä ilmoituksia ei koskaan saa mukaan — kovat rajat.</div>
+          <input type="text" class="form-input" id="pbExclude" placeholder="Esim: Ei vuorotyötä, ei B-ajokorttia vaativia, ei yli 30 km päässä" oninput="buildPrompt()">
+        </div>
+
+        <div class="form-block">
+          <div class="form-lbl">Jos ei löydy mitään <span class="form-lbl-tag designer">Fallback</span></div>
+          <div class="form-hint">Mitä automaatio tekee kun 0 sopivaa ilmoitusta? (vihje: tyhjä sähköposti = rikki automaatio)</div>
+          <input type="text" class="form-input" id="pbFallback" placeholder="Esim: Älä lähetä sähköpostia ollenkaan — lopeta hiljaa sinä päivänä" oninput="buildPrompt()">
+        </div>
+
+        <div class="form-block">
+          <div class="form-lbl">Max tulokset <span class="form-lbl-tag designer">Raja</span></div>
+          <div class="form-hint">Montako ilmoitusta max sähköpostiin — estää tietotulvan.</div>
+          <input type="text" class="form-input" id="pbMax" placeholder="Esim: Max 5 ilmoitusta per päivä" oninput="buildPrompt()">
+        </div>
+
+        <div class="form-block">
+          <div class="form-lbl">Sähköpostin tyyli <span class="form-lbl-tag">Vapaaehtoinen</span></div>
+          <div class="form-hint">Kieli, sävy, muoto — ei suodatuslogiikkaa.</div>
+          <input type="text" class="form-input" id="pbExtra" placeholder="Esim: Suomenkielinen, reipas sävy, lyhyet perustelut" oninput="buildPrompt()">
+        </div>
       </div>
 
       <div class="form-block" id="pbOutputWrap">
@@ -1822,7 +1864,11 @@ textarea.form-input { resize:vertical; min-height:88px; line-height:1.65; }
 
       <div class="output-box">
         <div class="ob-head">
-          <div class="ob-label"><div class="ob-dot"></div>Valmis prompti — kopioi tämä Pinkfish AI:hin</div>
+          <div class="ob-label">
+            <span class="ob-badge" id="obBadge">H1</span>
+            <div class="ob-dot"></div>
+            Valmis prompti — kopioi tämä Pinkfish AI:hin
+          </div>
           <button class="ob-copy" id="obCopy" onclick="copyPrompt()">Kopioi</button>
         </div>
         <div class="ob-text" id="obText">Valitse tehtävä ja täytä kentät — prompti ilmestyy tähän.</div>
@@ -1936,7 +1982,7 @@ window.addEventListener('scroll', () => {
 
 const MODULE_ID = 'moduuli1-ai-automaatio';
 const ARTICLE_IDS = ['a1q1','a1q2','a2q1','a2q2','a3q1','a3q2'];
-const PB_IDS = ['pbTask','pbTitles','pbCity','pbMe','pbExclude','pbExtra','pbOutput'];
+const PB_IDS = ['pbTask','pbTitles','pbCity','pbMe','pbFilter','pbRank','pbExclude','pbFallback','pbMax','pbExtra','pbOutput'];
 let m1WorkApi = null;
 
 // ── RESEARCH SAVE ──
@@ -1979,29 +2025,40 @@ SIJAINTI / ALUE:
 [CITY]
 
 ═══════════════════════════════════
-AI-SUODATUS (AI ACTION)
+PROFILI (AI-SUODATUKSEN KONTEKSTI)
 ═══════════════════════════════════
-Taustani ja profiilini:
+Taustani:
 [PROFIILI]
 
-Poissuljettavaa / rajaukset:
+═══════════════════════════════════
+AUTOMAATION SÄÄNNÖT
+═══════════════════════════════════
+Suodatus — mitä pääsee läpi:
+[FILTER]
+
+Priorisointi — mikä menee kärkeen:
+[RANK]
+
+Poissulut — kovat rajat:
 [EXCLUDE]
 
-— Valitse enintään 5–8 parasta ilmoitusta profiilini perusteella.
-— Jokaisesta ilmoituksesta: tehtävän otsikko, työnantaja, suora linkki ilmoitukseen, lyhyt perustelu (2 lausetta) miksi sopii juuri minulle.
-— Jätä pois ilmoitukset jotka vaativat selvästi enemmän kokemusta kuin minulla on tai eivät vastaa yllä olevia työnimikkeitä.
+Jos ei löydy sopivia ilmoituksia:
+[FALLBACK]
+
+Max tulokset sähköpostiin:
+[MAX]
+
+— Jokaisesta valitusta ilmoituksesta: tehtävän otsikko, työnantaja, suora linkki ilmoitukseen, lyhyt perustelu (2 lausetta) miksi sopii juuri minulle.
 
 ═══════════════════════════════════
 TULOS (OUTPUT)
 ═══════════════════════════════════
 [OUTPUT]
 
-Säännöt:
-— Jos sopivia uusia ilmoituksia EI löydy: älä lähetä tyhjää viestiä — lopeta hiljaa (ei sähköpostia sinä päivänä).
-— Sähköpostin otsikko: "Työnhaku-yhteenveto — [päivämäärä]"
-— Kieli: suomi
-
+Sähköpostin tyyli:
 [EXTRA]
+
+Sähköpostin otsikko: "Työnhaku-yhteenveto — [päivämäärä]"
 
 ═══════════════════════════════════
 TESTIAJO (PAKOLLINEN ENSIN)
@@ -2058,9 +2115,24 @@ Ohjeita:
 function togglePbFields() {
   const task = document.getElementById('pbTask').value;
   const jobFields = document.getElementById('pbJobFields');
+  const rulesFields = document.getElementById('pbRulesFields');
   const outputWrap = document.getElementById('pbOutputWrap');
-  if (jobFields) jobFields.style.display = task === 'paivittainen' ? 'block' : 'none';
-  if (outputWrap) outputWrap.style.display = task === 'paivittainen' ? 'none' : 'block';
+  const isDaily = task === 'paivittainen';
+  if (jobFields) jobFields.style.display = isDaily ? 'block' : 'none';
+  if (rulesFields) rulesFields.style.display = isDaily ? 'block' : 'none';
+  if (outputWrap) outputWrap.style.display = isDaily ? 'none' : 'block';
+}
+
+function setPromptOutputReady(ready) {
+  const el = document.getElementById('obText');
+  const badge = document.getElementById('obBadge');
+  if (ready) {
+    el.classList.add('ready');
+    if (badge) badge.classList.add('show');
+  } else {
+    el.classList.remove('ready');
+    if (badge) badge.classList.remove('show');
+  }
 }
 
 function buildPrompt() {
@@ -2069,14 +2141,23 @@ function buildPrompt() {
   const extra = document.getElementById('pbExtra').value.trim();
   const titles = document.getElementById('pbTitles') ? document.getElementById('pbTitles').value.trim() : '';
   const city = document.getElementById('pbCity') ? document.getElementById('pbCity').value.trim() : '';
+  const filter = document.getElementById('pbFilter') ? document.getElementById('pbFilter').value.trim() : '';
+  const rank = document.getElementById('pbRank') ? document.getElementById('pbRank').value.trim() : '';
   const exclude = document.getElementById('pbExclude') ? document.getElementById('pbExclude').value.trim() : '';
+  const fallback = document.getElementById('pbFallback') ? document.getElementById('pbFallback').value.trim() : '';
+  const maxOut = document.getElementById('pbMax') ? document.getElementById('pbMax').value.trim() : '';
   const out = document.getElementById('pbOutput').value;
   const el = document.getElementById('obText');
   togglePbFields();
-  if(!task) { el.textContent = 'Valitse tehtävä yllä — prompti ilmestyy tähän.'; el.classList.remove('ready'); document.getElementById('obLen').textContent = '0'; return; }
+  if(!task) {
+    el.textContent = 'Valitse tehtävä yllä — prompti ilmestyy tähän.';
+    setPromptOutputReady(false);
+    document.getElementById('obLen').textContent = '0';
+    return;
+  }
   if(task === 'paivittainen' && !titles) {
     el.textContent = 'Täytä haettavat työnimikkeet — ilman niitä Pinkfish ei tiedä mitä etsiä.';
-    el.classList.remove('ready');
+    setPromptOutputReady(false);
     document.getElementById('obLen').textContent = '0';
     return;
   }
@@ -2084,14 +2165,22 @@ function buildPrompt() {
   t = t.replace('[PROFIILI]', me || 'Lisää taustatietosi yllä olevaan kenttään');
   t = t.replace('[TITLES]', titles || '(lisää työnimikkeet yllä)');
   t = t.replace('[CITY]', city || '(lisää kaupunki / alue yllä)');
-  t = t.replace('[EXCLUDE]', exclude || 'Ei erityisiä poissulkuja — käytä maalaisjärkeä profiilini perusteella');
-  t = t.replace('[EXTRA]', extra ? 'Lisätoiveet: ' + extra : '');
+  if (task === 'paivittainen') {
+    t = t.replace('[FILTER]', filter || 'Vain avoimet, voimassa olevat ilmoitukset; ei duplikaatteja; otsikon tai kuvauksen täytyy vastata haettavia työnimikkeitä tai läheistä synonyymiä.');
+    t = t.replace('[RANK]', rank || 'Ensin osa-aikaiset ja aloittelijaystävälliset; sitten etäisyys alle 30 km; sitten uusimmat ilmoitukset.');
+    t = t.replace('[EXCLUDE]', exclude || 'Ei erityisiä poissulkuja — käytä maalaisjärkeä profiilini perusteella.');
+    t = t.replace('[FALLBACK]', fallback || 'Älä lähetä sähköpostia jos 0 sopivaa ilmoitusta — lopeta hiljaa sinä päivänä (ehto ennen lähetystä).');
+    t = t.replace('[MAX]', maxOut || 'Enintään 5 ilmoitusta per päivä.');
+  } else {
+    t = t.replace('[EXCLUDE]', exclude || 'Ei erityisiä poissulkuja — käytä maalaisjärkeä profiilini perusteella.');
+  }
+  t = t.replace('[EXTRA]', extra ? extra : 'Suomenkielinen, selkeä ja reipas sävy.');
   const outputLine = task === 'paivittainen' || out === 'email'
     ? 'Lähetä valmis yhteenveto sähköpostiini (Pinkfish-tilin osoite).'
     : 'Näytä tulos ruudulla kopioitavaksi.';
   t = t.replace('[OUTPUT]', outputLine);
   el.textContent = t;
-  el.classList.add('ready');
+  setPromptOutputReady(true);
   document.getElementById('obLen').textContent = t.length;
   if (m1WorkApi && typeof m1WorkApi.scheduleSave === 'function') m1WorkApi.scheduleSave();
 }
@@ -2116,7 +2205,11 @@ function readLegacyM1() {
       titles: prompt.titles || '',
       city: prompt.city || '',
       me: prompt.me || '',
+      filter: prompt.filter || '',
+      rank: prompt.rank || '',
       exclude: prompt.exclude || '',
+      fallback: prompt.fallback || '',
+      max: prompt.max || '',
       extra: prompt.extra || '',
       out: prompt.out || ''
     },
@@ -2139,7 +2232,11 @@ function m1Snapshot() {
       titles: document.getElementById('pbTitles')?.value || '',
       city: document.getElementById('pbCity')?.value || '',
       me: document.getElementById('pbMe')?.value || '',
+      filter: document.getElementById('pbFilter')?.value || '',
+      rank: document.getElementById('pbRank')?.value || '',
       exclude: document.getElementById('pbExclude')?.value || '',
+      fallback: document.getElementById('pbFallback')?.value || '',
+      max: document.getElementById('pbMax')?.value || '',
       extra: document.getElementById('pbExtra')?.value || '',
       out: document.getElementById('pbOutput')?.value || ''
     },
@@ -2181,7 +2278,11 @@ function applyM1Data(d) {
     if (p.titles && document.getElementById('pbTitles')) document.getElementById('pbTitles').value = p.titles;
     if (p.city && document.getElementById('pbCity')) document.getElementById('pbCity').value = p.city;
     if (p.me && document.getElementById('pbMe')) document.getElementById('pbMe').value = p.me;
+    if (p.filter && document.getElementById('pbFilter')) document.getElementById('pbFilter').value = p.filter;
+    if (p.rank && document.getElementById('pbRank')) document.getElementById('pbRank').value = p.rank;
     if (p.exclude && document.getElementById('pbExclude')) document.getElementById('pbExclude').value = p.exclude;
+    if (p.fallback && document.getElementById('pbFallback')) document.getElementById('pbFallback').value = p.fallback;
+    if (p.max && document.getElementById('pbMax')) document.getElementById('pbMax').value = p.max;
     if (p.extra && document.getElementById('pbExtra')) document.getElementById('pbExtra').value = p.extra;
     if (p.out && document.getElementById('pbOutput')) document.getElementById('pbOutput').value = p.out;
     buildPrompt();
