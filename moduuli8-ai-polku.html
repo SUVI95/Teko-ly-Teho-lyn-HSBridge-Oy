@@ -56,6 +56,21 @@ body{font-family:'Epilogue',sans-serif;background:var(--bg);color:var(--ink);min
   .sb{font-size:12px;padding:10px 12px}
   .sb-lbl{display:none}
 }
+.resume-banner{
+  display:none;position:fixed;top:101px;left:0;right:0;z-index:845;
+  background:linear-gradient(90deg,#1a3d2a,#2d5a47);color:#F5F2EC;
+  border-bottom:1px solid rgba(255,255,255,.12);padding:10px 18px;font-size:14px;font-weight:400;
+}
+.resume-banner.show{display:block}
+.resume-banner-inner{max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.resume-banner-text{line-height:1.45;font-weight:300}
+.resume-banner-text strong{font-weight:600;color:var(--gold)}
+.resume-banner-btn{
+  flex-shrink:0;font-family:'Epilogue',sans-serif;font-size:13px;font-weight:600;
+  padding:8px 16px;border-radius:var(--r10);border:none;cursor:pointer;
+  background:var(--gold);color:#1a1a1a;
+}
+body.has-resume-banner .screen{padding-top:152px}
 
 .screen{display:none;padding-top:110px;animation:fadeUp .4s ease}
 .screen.active{display:block}
@@ -1057,9 +1072,42 @@ const S = {
 const TOTAL=12;
 const MODULE8_ID='moduuli8-ai-polku';
 const POLKU_PKEY='aip-polku-v8';
+const POLKU_STEP_LABELS={
+  1:'Alku',2:'Taidot',3:'Valitse vahvuudet',4:'ATS-teoria',5:'Ilmoitus',
+  6:'Avainsanat',7:'Analyysi',8:'Claude-testi',9:'Hakemus',10:'Haastattelu',
+  11:'Promptit',12:'Hakukompassi'
+};
 let curScreen=1;
 let polkuWorkApi=null;
 let polkuSaveTimer=null;
+
+function formatResumeSavedWhen(ts){
+  if(!ts)return '';
+  try{
+    const d=new Date(ts);
+    const dayStart=dt=>new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()).getTime();
+    const diff=Math.round((dayStart(new Date())-dayStart(d))/86400000);
+    if(diff===0)return 'tänään';
+    if(diff===1)return 'eilen';
+    return d.toLocaleDateString('fi-FI',{day:'numeric',month:'numeric'});
+  }catch(e){return '';}
+}
+
+function showResumeBanner(screen,ts){
+  if(!screen||screen<=1||screen>=TOTAL)return;
+  const banner=document.getElementById('resumeBanner');
+  const text=document.getElementById('resumeBannerText');
+  const btn=document.getElementById('resumeBannerBtn');
+  if(!banner||!text)return;
+  const lbl=POLKU_STEP_LABELS[screen]||('Vaihe '+screen);
+  const when=formatResumeSavedWhen(ts);
+  text.innerHTML='Tallenne tallessa'+(when?' ('+when+')':'')+' — jatka kohdasta <strong>'+screen+'/'+TOTAL+' · '+lbl+'</strong>';
+  banner.classList.add('show');
+  document.body.classList.add('has-resume-banner');
+  if(btn){
+    btn.onclick=function(){go(screen);window.scrollTo({top:0,behavior:'smooth'});};
+  }
+}
 
 function go(n){
   curScreen=n;
@@ -1517,6 +1565,7 @@ function applyPolkuData(d){
   const screen=Math.min(TOTAL,Math.max(1,Number(d.curScreen)||1));
   go(screen);
   if(screen===12) buildCompass();
+  if(screen>1&&!(d.shown&&d.shown.finished)) showResumeBanner(screen,d.ts);
   return true;
 }
 
@@ -1574,10 +1623,14 @@ async function initPolkuWorkPersistence(){
   }
 }
 
-function initPolkuPersistence(){
+async function initPolkuPersistence(){
+  await initPolkuWorkPersistence();
   const local=loadLocalPolkuData();
-  if(local) applyPolkuData(local);
-  initPolkuWorkPersistence();
+  if(local){
+    const remoteTs=polkuWorkApi&&polkuWorkApi.data?Number(polkuWorkApi.data.ts||0):0;
+    const localTs=Number(local.ts||0);
+    if(localTs>remoteTs) applyPolkuData(local);
+  }
 }
 
 document.addEventListener('input',saveProgress,true);

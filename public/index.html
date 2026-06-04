@@ -757,7 +757,7 @@
     <div class="welcome-section">
       <h1>AI Polku — Tekoäly työelämään</h1>
       <p id="userWelcome" style="display:none;font-size:1.15rem;font-weight:600;color:var(--accent2);margin-bottom:0.35rem;"></p>
-      <p>Valitse moduuli ja jatka oppimista siitä mihin jäit</p>
+      <p id="welcomeSubtitle">Valitse moduuli ja jatka oppimista siitä mihin jäit</p>
     </div>
 
     <!-- Statistics Dashboard -->
@@ -1688,6 +1688,8 @@
         // Ensure summary has arrays
         if (!Array.isArray(summary.modules)) summary.modules = [];
         if (!Array.isArray(summary.checklists)) summary.checklists = [];
+        if (!Array.isArray(summary.module_work)) summary.module_work = [];
+        updateResumeWelcome(summary);
         
         // Count total sections completed across all modules
         let totalCompletedSections = 0;
@@ -2113,6 +2115,70 @@
         .replace(/"/g, '&quot;');
     }
 
+    const TYONHAKU_WORK_TOTAL = 12;
+    const TYONHAKU_WORK_LABELS = {
+      'moduuli8-ai-polku': {
+        1: 'Alku', 2: 'Taidot', 3: 'Valitse vahvuudet', 4: 'ATS-teoria', 5: 'Ilmoitus',
+        6: 'Avainsanat', 7: 'Analyysi', 8: 'Claude-testi', 9: 'Hakemus', 10: 'Haastattelu',
+        11: 'Promptit', 12: 'Hakukompassi'
+      },
+      'moduuli9-haastattelu': {
+        1: 'Aloitus', 2: 'Ymmärrys', 3: 'STAR', 4: 'Decoder', 5: 'Kirjoita',
+        6: 'Vastaväite', 7: 'Spot the flaw', 8: 'Hissipuhe', 9: 'Yritys',
+        10: 'Tilanteet', 11: 'Vaikeat', 12: 'Ansaitse'
+      }
+    };
+
+    function formatWorkSavedWhen(iso) {
+      if (!iso) return '';
+      try {
+        const d = new Date(iso);
+        const dayStart = function (dt) {
+          return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()).getTime();
+        };
+        const diffDays = Math.round((dayStart(new Date()) - dayStart(d)) / 86400000);
+        if (diffDays === 0) return 'tänään';
+        if (diffDays === 1) return 'eilen';
+        return d.toLocaleDateString('fi-FI', { day: 'numeric', month: 'numeric' });
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function getModuleWorkEntry(summary, moduleId) {
+      const list = summary && summary.module_work;
+      if (!Array.isArray(list)) return null;
+      return list.find(function (w) { return w.base_module_id === moduleId; }) || null;
+    }
+
+    function formatModuleWorkProgress(moduleId, work) {
+      if (!work) return null;
+      if (work.finished || work.cur_screen >= TYONHAKU_WORK_TOTAL) return 'Suoritettu ✓';
+      if (work.cur_screen <= 1) return null;
+      const labels = TYONHAKU_WORK_LABELS[moduleId] || {};
+      const lbl = labels[work.cur_screen] || ('Vaihe ' + work.cur_screen);
+      const when = formatWorkSavedWhen(work.updated_at);
+      return 'Jatka vaiheesta ' + work.cur_screen + '/' + TYONHAKU_WORK_TOTAL + ' · ' + lbl + (when ? ' · tallennettu ' + when : '');
+    }
+
+    function updateResumeWelcome(summary) {
+      const el = document.getElementById('welcomeSubtitle');
+      if (!el || !summary || !Array.isArray(summary.module_work)) return;
+      const titles = {
+        'moduuli8-ai-polku': '★ AI Polku — työnhaku',
+        'moduuli9-haastattelu': '★ Haastattelu'
+      };
+      const parts = [];
+      summary.module_work.forEach(function (w) {
+        if (!w || w.finished || w.cur_screen <= 1) return;
+        const t = titles[w.base_module_id];
+        if (t) parts.push(t + ' (vaihe ' + w.cur_screen + '/12)');
+      });
+      if (parts.length) {
+        el.innerHTML = 'Tallenne tallessa — jatka: <strong>' + parts.map(escModuleCardText).join('</strong>, <strong>') + '</strong>';
+      }
+    }
+
     function renderModuleCardBody(module) {
       const skills = module.skills || moduleSkillsById[module.id];
       if (Array.isArray(skills) && skills.length > 0) {
@@ -2246,7 +2312,18 @@
             </div>
             <div class="progress-text">${completedSections}/${totalSections} osiota suoritettu${isCompleted ? ' ✓' : ''}</div>`;
       } else {
-        progressBlock = `<div class="progress-text">${module.statusLine || 'Valmis käyttöön'}</div>`;
+        const workEntry = getModuleWorkEntry(summary, module.id);
+        const workLine = formatModuleWorkProgress(module.id, workEntry);
+        if (workLine && workEntry && !isCompleted) {
+          const workPct = Math.min(100, Math.round((workEntry.cur_screen / TYONHAKU_WORK_TOTAL) * 100));
+          progressBlock = `
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${workPct}%"></div>
+            </div>
+            <div class="progress-text">${escModuleCardText(workLine)}</div>`;
+        } else {
+          progressBlock = `<div class="progress-text">${module.statusLine || 'Valmis käyttöön'}</div>`;
+        }
       }
       
       const moduleOpenHref = module.id === 'palaute' ? '/module/palaute?celebrate=1' : '/module/' + module.id;

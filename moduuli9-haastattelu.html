@@ -65,6 +65,21 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   .sb{padding:0 12px}
 }
 @media(min-width:681px){.sb-lbl{display:inline}}
+.resume-banner{
+  display:none;position:fixed;top:96px;left:0;right:0;z-index:845;
+  background:linear-gradient(90deg,var(--navy),#2a3d5c);color:#F8F6F2;
+  border-bottom:1px solid rgba(255,255,255,.1);padding:10px 18px;font-size:14px;
+}
+.resume-banner.show{display:block}
+.resume-banner-inner{max-width:820px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.resume-banner-text{line-height:1.45;font-weight:300}
+.resume-banner-text strong{font-weight:500;color:#F5C4A8}
+.resume-banner-btn{
+  flex-shrink:0;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;
+  padding:8px 16px;border-radius:var(--r10);border:none;cursor:pointer;
+  background:var(--coral);color:#fff;
+}
+body.has-resume-banner .screen{padding-top:138px}
 
 /* ── SCREENS ── */
 .screen{display:none;padding-top:96px;animation:fadeUp .4s ease}
@@ -368,6 +383,13 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
     <div class="sb" id="sb10" onclick="go(10)">09<span class="sb-lbl"> Tilanteet</span></div>
     <div class="sb" id="sb11" onclick="go(11)">10<span class="sb-lbl"> Vaikeat</span></div>
     <div class="sb" id="sb12" onclick="go(12)">🏆<span class="sb-lbl"> Ansaitse</span></div>
+  </div>
+</div>
+
+<div class="resume-banner" id="resumeBanner" role="status" aria-live="polite">
+  <div class="resume-banner-inner">
+    <span class="resume-banner-text" id="resumeBannerText"></span>
+    <button type="button" class="resume-banner-btn" id="resumeBannerBtn">Jatka →</button>
   </div>
 </div>
 
@@ -1163,7 +1185,40 @@ const COMPANY_HOME_URLS={'Elisa':'https://www.elisa.fi/','S-ryhmä':'https://www
 const TOTAL=12;
 const MODULE9_ID='moduuli9-haastattelu';
 const HA_KEY='aip-haastattelu-v1';
+const HA_STEP_LABELS={
+  1:'Aloitus',2:'Ymmärrys',3:'STAR',4:'Decoder',5:'Kirjoita',
+  6:'Vastaväite',7:'Spot the flaw',8:'Hissipuhe',9:'Yritys',
+  10:'Tilanteet',11:'Vaikeat',12:'Ansaitse'
+};
 let curScreen=1;
+
+function formatResumeSavedWhen(ts){
+  if(!ts)return '';
+  try{
+    const d=new Date(ts);
+    const dayStart=dt=>new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()).getTime();
+    const diff=Math.round((dayStart(new Date())-dayStart(d))/86400000);
+    if(diff===0)return 'tänään';
+    if(diff===1)return 'eilen';
+    return d.toLocaleDateString('fi-FI',{day:'numeric',month:'numeric'});
+  }catch(e){return '';}
+}
+
+function showResumeBanner(screen,ts){
+  if(!screen||screen<=1||screen>=TOTAL)return;
+  const banner=document.getElementById('resumeBanner');
+  const text=document.getElementById('resumeBannerText');
+  const btn=document.getElementById('resumeBannerBtn');
+  if(!banner||!text)return;
+  const lbl=HA_STEP_LABELS[screen]||('Vaihe '+screen);
+  const when=formatResumeSavedWhen(ts);
+  text.innerHTML='Tallenne tallessa'+(when?' ('+when+')':'')+' — jatka kohdasta <strong>'+screen+'/'+TOTAL+' · '+lbl+'</strong>';
+  banner.classList.add('show');
+  document.body.classList.add('has-resume-banner');
+  if(btn){
+    btn.onclick=function(){go(screen);window.scrollTo({top:0,behavior:'smooth'});};
+  }
+}
 let haWorkApi=null;
 let haSaveTimer=null;
 
@@ -1814,6 +1869,7 @@ function applyHaData(d){
   const screen=Math.min(TOTAL,Math.max(1,Number(d.curScreen)||1));
   go(screen);
   if(screen===12)buildEarn();
+  if(screen>1&&!(d.shown&&d.shown.finished))showResumeBanner(screen,d.ts);
   return true;
 }
 function loadLocalHaData(){
@@ -1851,10 +1907,14 @@ async function initHaWorkPersistence(){
     if(haWorkApi?.saveNow)haWorkApi.saveNow();
   }catch(e){console.warn('[haastattelu] module-work init failed:',e);}
 }
-function initHaPersistence(){
+async function initHaPersistence(){
+  await initHaWorkPersistence();
   const local=loadLocalHaData();
-  if(local)applyHaData(local);
-  initHaWorkPersistence();
+  if(local){
+    const remoteTs=haWorkApi&&haWorkApi.data?Number(haWorkApi.data.ts||0):0;
+    const localTs=Number(local.ts||0);
+    if(localTs>remoteTs)applyHaData(local);
+  }
 }
 document.addEventListener('input',saveProgress,true);
 document.addEventListener('change',saveProgress,true);

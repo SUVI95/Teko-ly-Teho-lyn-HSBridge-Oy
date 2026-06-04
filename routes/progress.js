@@ -3,6 +3,50 @@ const pool = require('../database/db');
 
 const router = express.Router();
 
+const MODULE_WORK_IDS = [
+  'moduuli8-ai-polku__work',
+  'moduuli9-haastattelu__work'
+];
+
+async function resolveUserId(req) {
+  if (req.user && req.user.id) return req.user.id;
+  const token = req.cookies && req.cookies.session_token;
+  if (!token) return null;
+  try {
+    const session = await pool.query(
+      `SELECT u.id FROM sessions s
+       JOIN users u ON s.user_id = u.id
+       WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE`,
+      [token]
+    );
+    return session.rows.length ? session.rows[0].id : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function parseModuleWorkRow(row) {
+  if (!row || !row.reflection_text) return null;
+  let parsed;
+  try {
+    parsed = JSON.parse(row.reflection_text);
+  } catch (e) {
+    return null;
+  }
+  const data = parsed && parsed.data !== undefined ? parsed.data : parsed;
+  if (!data || typeof data !== 'object') return null;
+  const moduleId = String(row.module_id || '').replace(/__work$/, '');
+  const curScreen = Math.max(1, Number(data.curScreen) || 1);
+  return {
+    module_id: row.module_id,
+    base_module_id: moduleId,
+    cur_screen: curScreen,
+    summary: parsed.summary || '',
+    updated_at: row.updated_at,
+    finished: !!(data.shown && data.shown.finished)
+  };
+}
+
 // Get progress for a module (optional - works without auth)
 router.get('/module/:moduleId', async (req, res) => {
   try {
@@ -103,18 +147,17 @@ router.post('/module/:moduleId/checklist/:itemId', async (req, res) => {
   }
 });
 
-// Get all user progress summary (optional - works without auth)
+// Get all user progress summary (optional — resolves user from session cookie)
 router.get('/summary', async (req, res) => {
   try {
-    const userId = req.user?.id;
-    
-    // If no user, return empty summary
+    const userId = await resolveUserId(req);
+
     if (!userId) {
-      return res.json({ modules: [], checklists: [] });
+      return res.json({ modules: [], checklists: [], module_work: [] });
     }
-    
+
     const progressResult = await pool.query(
-      `SELECT module_id, 
+      `SELECT module_id,
               COUNT(*) as total_sections,
               SUM(CASE WHEN completed THEN 1 ELSE 0 END) as completed_sections,
               SUM(time_spent) as total_time_spent
@@ -123,7 +166,7 @@ router.get('/summary', async (req, res) => {
        GROUP BY module_id`,
       [userId]
     );
-    
+
     const checklistResult = await pool.query(
       `SELECT module_id,
               COUNT(*) as total_items,
@@ -133,17 +176,29 @@ router.get('/summary', async (req, res) => {
        GROUP BY module_id`,
       [userId]
     );
-    
+
+    const workResult = await pool.query(
+      `SELECT module_id, reflection_text, updated_at
+       FROM reflections
+       WHERE user_id = $1 AND module_id = ANY($2::text[])`,
+      [userId, MODULE_WORK_IDS]
+    );
+
+    const module_work = workResult.rows
+      .map(parseModuleWorkRow)
+      .filter(Boolean);
+
     res.json({
       modules: progressResult.rows,
-      checklists: checklistResult.rows
+      checklists: checklistResult.rows,
+      module_work
     });
   } catch (error) {
     console.error('Get summary error:', error);
-    // Return empty summary instead of error
     res.json({
       modules: [],
-      checklists: []
+      checklists: [],
+      module_work: []
     });
   }
 });
