@@ -4,6 +4,7 @@ const router = express.Router();
 const { fetch } = require('undici');
 const { extractPdfTextFromBuffer } = require('../lib/pdf-extract');
 const { buildMultipartForm } = require('../lib/multipart-form');
+const { MOCK_INTERVIEW_QUESTIONS, buildMockRealtimeInstructions } = require('../lib/mock-interview-questions');
 
 const cvUpload = multer({
   storage: multer.memoryStorage(),
@@ -113,7 +114,30 @@ function realtimeModel() {
 }
 
 function realtimeVoice() {
-  return envTrim('OPENAI_REALTIME_VOICE') || 'ash';
+  return envTrim('OPENAI_REALTIME_VOICE') || 'cedar';
+}
+
+function ttsVoice() {
+  return envTrim('OPENAI_TTS_VOICE') || 'cedar';
+}
+
+function buildRealtimeSessionConfig() {
+  return {
+    type: 'realtime',
+    model: realtimeModel(),
+    instructions: buildMockRealtimeInstructions(MOCK_INTERVIEW_QUESTIONS),
+    output_modalities: ['audio', 'text'],
+    audio: {
+      input: {
+        turn_detection: { type: 'semantic_vad' },
+        transcription: { model: 'gpt-4o-mini-transcribe', language: 'fi' }
+      },
+      output: {
+        format: { type: 'audio/pcm', rate: 24000 },
+        voice: realtimeVoice()
+      }
+    }
+  };
 }
 
 /** Transcribe audio buffer via OpenAI Whisper (multipart body built manually for Node fetch). */
@@ -425,13 +449,12 @@ router.post('/voice-interview', audioUpload.single('file'), async (req, res) => 
 
 /** TTS for mock interview — human recruiter delivery (gpt-4o-mini-tts instructions). */
 const DEFAULT_TTS_INSTRUCTIONS = [
-  'Role: adult male Finnish recruiter in a relaxed face-to-face job interview.',
-  'Tone: warm, upbeat, genuinely friendly — you like people and it shows.',
-  'Energy: medium-high — engaged and lively, but still calm and professional, never hyper or shouty.',
-  'Human speech: conversational Finnish, not read-aloud text. Use natural rhythm, micro-pauses, and audible breaths between phrases.',
-  'Voice texture: smile in your voice. On a warm greeting, a brief soft chuckle or breathy "heh" once is welcome — subtle, never cartoonish.',
-  'Intonation: vary pitch — gentle rise on hello, curious and open on the question. Never monotone or robotic.',
-  'Avoid: newsreader cadence, GPS voice, rushed reading, flat delivery, exaggerated acting, constant laughing.',
+  'Role: adult Finnish recruiter sitting across the table in a quiet room — same room as the candidate, not on a phone.',
+  'Tone: warm, clear, genuinely friendly. Speak at a natural conversational pace — slightly slower than news, never rushed.',
+  'Human speech: conversational Finnish with natural rhythm, micro-pauses, and soft breaths between phrases.',
+  'Voice texture: close and present — like a real person nearby. Smile in your voice. Subtle warmth, never flat or robotic.',
+  'Intonation: vary pitch naturally. Sound curious and open when asking questions.',
+  'Avoid: phone-line muffiness, tunnel echo, GPS voice, monotone reading, robotic cadence, shouting, cartoonish acting.',
   'Language: Finnish.'
 ].join(' ');
 
@@ -447,16 +470,17 @@ router.post('/speech', async (req, res) => {
       return res.status(503).json({ error: 'Puhepalvelu ei ole käytössä. Ota yhteyttä opettajaan.' });
     }
 
-    const voice = envTrim('OPENAI_TTS_VOICE') || 'onyx';
+    const voice = ttsVoice();
     const instructions = String(req.body.instructions || '').trim()
       || envTrim('OPENAI_TTS_INSTRUCTIONS')
       || DEFAULT_TTS_INSTRUCTIONS;
-    const speedRaw = parseFloat(envTrim('OPENAI_TTS_SPEED') || '1.02');
-    const speed = Number.isFinite(speedRaw) ? Math.min(1.2, Math.max(0.8, speedRaw)) : 1.02;
+    const speedRaw = parseFloat(envTrim('OPENAI_TTS_SPEED') || '0.97');
+    const speed = Number.isFinite(speedRaw) ? Math.min(1.15, Math.max(0.85, speedRaw)) : 0.97;
 
     const primaryModel = envTrim('OPENAI_TTS_MODEL') || 'gpt-4o-mini-tts-2025-03-20';
     const fallbackModel = 'gpt-4o-mini-tts';
     const legacyModel = 'tts-1-hd';
+    const responseFormat = envTrim('OPENAI_TTS_FORMAT') || 'wav';
 
     const models = [primaryModel, fallbackModel, legacyModel].filter(
       (m, i, arr) => m && arr.indexOf(m) === i
@@ -468,7 +492,7 @@ router.post('/speech', async (req, res) => {
         model,
         voice,
         input: text.slice(0, 4096),
-        response_format: 'mp3'
+        response_format: model === legacyModel ? 'mp3' : responseFormat
       };
       if (model.startsWith('gpt-4o-mini-tts')) {
         payload.instructions = instructions;
@@ -495,7 +519,8 @@ router.post('/speech', async (req, res) => {
         }
 
         const audio = Buffer.from(await response.arrayBuffer());
-        res.setHeader('Content-Type', 'audio/mpeg');
+        const mime = responseFormat === 'wav' ? 'audio/wav' : responseFormat === 'opus' ? 'audio/opus' : 'audio/mpeg';
+        res.setHeader('Content-Type', mime);
         res.setHeader('Cache-Control', 'no-store');
         res.setHeader('X-TTS-Model', model);
         return res.send(audio);
@@ -513,8 +538,6 @@ router.post('/speech', async (req, res) => {
   }
 });
 
-const { MOCK_INTERVIEW_QUESTIONS, buildMockRealtimeInstructions } = require('../lib/mock-interview-questions');
-
 /** WebRTC Realtime session for live mock interview (gpt-realtime-2). */
 router.post('/realtime/session', express.text({ type: ['application/sdp', 'text/plain'], limit: '512kb' }), async (req, res) => {
   try {
@@ -528,21 +551,7 @@ router.post('/realtime/session', express.text({ type: ['application/sdp', 'text/
       return res.status(503).json({ error: 'Live-haastattelu ei ole käytössä. Ota yhteyttä opettajaan.' });
     }
 
-    const sessionConfig = {
-      type: 'realtime',
-      model: realtimeModel(),
-      instructions: buildMockRealtimeInstructions(MOCK_INTERVIEW_QUESTIONS),
-      output_modalities: ['audio', 'text'],
-      audio: {
-        input: {
-          turn_detection: { type: 'semantic_vad' },
-          transcription: { model: 'gpt-4o-mini-transcribe', language: 'fi' }
-        },
-        output: {
-          voice: realtimeVoice()
-        }
-      }
-    };
+    const sessionConfig = buildRealtimeSessionConfig();
 
     const fd = new FormData();
     fd.set('sdp', sdp);
@@ -580,7 +589,11 @@ router.get('/realtime/config', (req, res) => {
   res.json({
     model: realtimeModel(),
     voice: realtimeVoice(),
-    questions: MOCK_INTERVIEW_QUESTIONS
+    questions: MOCK_INTERVIEW_QUESTIONS,
+    deliveryHint: [
+      'Puhu selkeästi ja lämpimästi — kuin sama huone, ei puhelimesta eikä tunnelista.',
+      'Läheltä kuultava ääni, luonnollinen hengitys, ei robotti eikä uutistenlukija.'
+    ].join(' ')
   });
 });
 

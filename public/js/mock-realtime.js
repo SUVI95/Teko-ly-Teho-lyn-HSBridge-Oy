@@ -1,6 +1,5 @@
 /**
  * Live mock interview via OpenAI Realtime API + WebRTC (gpt-realtime-2).
- * Browser mic/speaker stream directly — lower latency than record→Whisper→TTS.
  */
 (function (global) {
   'use strict';
@@ -25,6 +24,7 @@
     this.awaitingWrapUp = false;
     this.wrapUpTimer = null;
     this.sessionStartedAt = 0;
+    this.deliveryHint = options.deliveryHint || '';
   }
 
   MockRealtimeInterview.prototype.sendEvent = function (event) {
@@ -43,7 +43,7 @@
         this.sendEvent({
           type: 'response.create',
           response: {
-            instructions: 'Aloita haastattelu lämpimällä tervehdyksellä ja esitä ensimmäinen kysymys listalta.'
+            instructions: 'Aloita haastattelu lämpimällä tervehdyksellä ja esitä ensimmäinen kysymys listalta. Puhu selkeästi — kuin sama huone.'
           }
         });
       }
@@ -99,7 +99,28 @@
   };
 
   MockRealtimeInterview.prototype.onDataChannelOpen = function () {
+    if (this.deliveryHint) {
+      this.sendEvent({
+        type: 'session.update',
+        session: {
+          type: 'realtime',
+          instructions: this.deliveryHint
+        }
+      });
+    }
     this.onStatus('Yhteys valmis — odota rekrytoijaa...');
+  };
+
+  MockRealtimeInterview.prototype.setupRemoteAudio = function (stream) {
+    const audio = this.audioEl;
+    if (!audio || !stream) return;
+    audio.srcObject = stream;
+    audio.volume = 1;
+    audio.muted = false;
+    const playPromise = audio.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(function () {});
+    }
   };
 
   MockRealtimeInterview.prototype.start = async function () {
@@ -113,24 +134,40 @@
     this.onStatus('Yhdistetään live-rekrytoijaan...');
     this.sessionStartedAt = Date.now();
 
-    const pc = new RTCPeerConnection();
+    try {
+      const cfgRes = await fetch('/api/ai/realtime/config', { credentials: 'include' });
+      if (cfgRes.ok) {
+        const cfg = await cfgRes.json();
+        if (cfg.deliveryHint) this.deliveryHint = cfg.deliveryHint;
+      }
+    } catch (e) {}
+
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
     this.pc = pc;
 
+    const mount = document.getElementById('mockAudioMount') || document.body;
     const audio = document.createElement('audio');
     audio.autoplay = true;
     audio.setAttribute('playsinline', 'true');
+    audio.setAttribute('webkit-playsinline', 'true');
+    audio.id = 'mockRealtimeAudio';
+    audio.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none';
     this.audioEl = audio;
-    document.body.appendChild(audio);
+    mount.appendChild(audio);
 
+    const self = this;
     pc.ontrack = function (e) {
-      if (e.streams && e.streams[0]) audio.srcObject = e.streams[0];
+      if (e.streams && e.streams[0]) self.setupRemoteAudio(e.streams[0]);
     };
 
     const ms = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
-        autoGainControl: true
+        autoGainControl: true,
+        channelCount: 1
       }
     });
     this.mediaStream = ms;
@@ -140,7 +177,6 @@
 
     const dc = pc.createDataChannel('oai-events');
     this.dc = dc;
-    const self = this;
     dc.addEventListener('open', function () { self.onDataChannelOpen(); });
     dc.addEventListener('message', function (e) {
       try {
@@ -203,8 +239,10 @@
       if (this.pc) this.pc.close();
     } catch (e) {}
 
-    if (this.audioEl && this.audioEl.parentNode) {
-      this.audioEl.parentNode.removeChild(this.audioEl);
+    if (this.audioEl) {
+      try { this.audioEl.pause(); } catch (e) {}
+      if (this.audioEl.srcObject) this.audioEl.srcObject = null;
+      if (this.audioEl.parentNode) this.audioEl.parentNode.removeChild(this.audioEl);
     }
 
     this.mediaStream = null;
