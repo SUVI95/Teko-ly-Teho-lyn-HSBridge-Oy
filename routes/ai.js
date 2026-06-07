@@ -415,6 +415,53 @@ router.post('/voice-interview', audioUpload.single('file'), async (req, res) => 
   }
 });
 
+/** TTS for mock interview questions (male recruiter voice). */
+router.post('/speech', async (req, res) => {
+  try {
+    const text = String(req.body.text || '').trim();
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return res.status(503).json({ error: 'Puhepalvelu ei ole käytössä. Ota yhteyttä opettajaan.' });
+    }
+
+    const voice = envTrim('OPENAI_TTS_VOICE') || 'onyx';
+    const model = envTrim('OPENAI_TTS_MODEL') || 'tts-1-hd';
+
+    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${openaiApiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        voice,
+        input: text.slice(0, 4096),
+        response_format: 'mp3'
+      }),
+      signal: timeoutSignal(30000)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text().catch(() => '');
+      console.error('OpenAI TTS error:', errorData);
+      return res.status(response.status).json({ error: 'Speech generation failed', details: errorData });
+    }
+
+    const audio = Buffer.from(await response.arrayBuffer());
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(audio);
+  } catch (error) {
+    console.error('Speech error:', error);
+    res.status(500).json({ error: 'Failed to generate speech', message: error.message });
+  }
+});
+
 // OpenAI API endpoint for image generation (DALL-E 3)
 router.post('/image', async (req, res) => {
   try {

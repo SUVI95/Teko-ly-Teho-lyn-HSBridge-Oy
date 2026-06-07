@@ -414,6 +414,10 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
 .mock-q-dot.done{background:var(--forest)}
 .mock-transcript-box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:var(--r10);padding:12px 15px;font-size:14.5px;color:rgba(255,255,255,.7);line-height:1.7;min-height:44px;white-space:pre-wrap;display:none}
 .mock-transcript-box.show{display:block}
+.mock-answer-lbl{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:8px;display:none}
+.mock-answer-lbl.show{display:block}
+.mock-q-speaking{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7EC8A4;margin-top:10px}
+.mock-q-speaking.hide{display:none}
 .mock-fb-area{padding:0 28px 28px;display:none}
 .mock-fb-area.show{display:block}
 .mock-fb-section{margin-bottom:14px}
@@ -920,8 +924,8 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
   <div class="mission-hdr">
     <span class="mh-eye">Bonusosio — Live Mock Haastattelu</span>
     <div class="mh-title">Oikea haastattelu — AI-rekrytoijana</div>
-    <div class="mh-sub">Kolme kysymystä. Sinä vastaat ääneen. AI kuuntelee, transkriboi ja antaa rakentavaa palautetta jokaisesta vastauksesta. Tämä on lähimpänä oikeaa haastattelua mitä voit harjoitella yksin.</div>
-    <div class="mh-goal"><strong>Miten tämä toimii:</strong> Näet kysymyksen ruudulla. Paina nauhoia. Vastaa ääneen. Lopeta. AI arvioi vastauksesi — mitä toimi, mitä parantaa, yksi konkreettinen muutos.</div>
+    <div class="mh-sub">Kolme kysymystä. AI-rekrytoija kysyy ääneen — sinä vastaat. AI kuuntelee, transkriboi ja antaa rakentavaa palautetta jokaisesta vastauksesta. Tämä on lähimpänä oikeaa haastattelua mitä voit harjoitella yksin.</div>
+    <div class="mh-goal"><strong>Miten tämä toimii:</strong> Rekrytoija kysyy kysymyksen ääneen (kuulet sen kaiuttimesta). Sama kysymys näkyy ruudulla. Kun kysymys on kuultu, nauhoitus alkaa — vastaa ääneen. Lopeta. Näet transkription ja AI-palautteen.</div>
   </div>
 
   <div class="context-box"><strong>Ennen kuin aloitat:</strong> Varmista että olet rauhallisessa paikassa. Puhu normaalisti — ei tarvitse olla täydellinen. Tavoite on kuulla miltä sinä kuulostat, ei esittää täydellistä vastausta. Useimmat ihmiset parantavat merkittävästi jo toisella kierroksella.</div>
@@ -939,8 +943,10 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
       </div>
       <span class="mock-q-label" id="mockQLabel">Kysymys 1 / 3</span>
       <div class="mock-q-text" id="mockQText">Paina "Aloita haastattelu" kun olet valmis</div>
+      <div class="mock-q-speaking hide" id="mockQSpeaking">🔊 Rekrytoija kysyy...</div>
     </div>
     <div class="mock-answer-area">
+      <span class="mock-answer-lbl" id="mockTranscriptLbl">Vastauksesi (transkriptio)</span>
       <div class="mock-transcript-box" id="mockTranscript"></div>
       <div class="mock-fb-area" id="mockFbArea">
         <div class="mock-fb-section">
@@ -959,6 +965,7 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
     </div>
     <div class="mock-controls">
       <div class="ripple-indicator" id="mockRipple">🎤</div>
+      <button class="voice-btn voice-btn-play" id="mockReplayBtn" onclick="mockReplayQuestion()" style="display:none" title="Kuuntele kysymys uudelleen">🔊 Kysymys uudelleen</button>
       <button class="voice-btn voice-btn-rec" id="mockRecBtn" onclick="mockStart()">● Aloita haastattelu</button>
       <button class="voice-btn voice-btn-stop" id="mockStopBtn" onclick="mockStop()" style="display:none">■ Valmis — analysoi</button>
       <span class="voice-timer" id="mockTimer">0:00</span>
@@ -2120,6 +2127,7 @@ function applyHaData(d){
       if(id==='starVoiceFbT'||id==='hpVoiceFbT')el.innerHTML=d.texts[id];
       else el.textContent=d.texts[id];
       if(id==='starTranscript'||id==='hpTranscript'||id==='mockTranscript')el.classList.add('show');
+      if(id==='mockTranscript'&&d.texts[id])document.getElementById('mockTranscriptLbl')?.classList.add('show');
     });
   }
   if(d.voiceShown){
@@ -2495,18 +2503,86 @@ let mockChunks = [];
 let mockTimerInt = null;
 let mockElapsed = 0;
 let mockDoneCount = 0;
+let mockQuestionAudio = null;
+let mockCurrentQuestionText = '';
 
-function mockStart() {
-  if (!navigator.mediaDevices) { alert('Selaimesi ei tue äänittämistä.'); return; }
-  // Show first question
-  mockQ = 0;
-  mockDoneCount = 0;
-  document.getElementById('mockQText').textContent = MOCK_QUESTIONS[0];
-  document.getElementById('mockQLabel').textContent = 'Kysymys 1 / ' + MOCK_QUESTIONS.length;
-  updateMockDots();
+function mockQuestionPlain(i) {
+  return String(MOCK_QUESTIONS[i] || '').replace(/^["""]|["""]$/g, '').trim();
+}
+
+function mockStopQuestionAudio() {
+  if (mockQuestionAudio) {
+    try { mockQuestionAudio.pause(); } catch (e) {}
+    if (mockQuestionAudio.src) URL.revokeObjectURL(mockQuestionAudio.src);
+    mockQuestionAudio = null;
+  }
+}
+
+async function speakMockQuestion(text) {
+  mockCurrentQuestionText = text;
+  document.getElementById('mockQSpeaking')?.classList.remove('hide');
+  document.getElementById('mockTopStatus').textContent = '🔊 Rekrytoija kysyy...';
+  document.getElementById('mockStatus').textContent = 'Kuuntele kysymystä — nauhoitus alkaa automaattisesti sen jälkeen';
+  document.getElementById('mockRipple').classList.add('active');
+  document.getElementById('mockReplayBtn').style.display = 'none';
+  try {
+    const r = await fetch('/api/ai/speech', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ text }),
+      signal: AbortSignal.timeout(35000)
+    });
+    if (!r.ok) throw new Error('speech ' + r.status);
+    const blob = await r.blob();
+    mockStopQuestionAudio();
+    const url = URL.createObjectURL(blob);
+    mockQuestionAudio = new Audio(url);
+    await new Promise((resolve, reject) => {
+      mockQuestionAudio.onended = () => { URL.revokeObjectURL(url); mockQuestionAudio = null; resolve(); };
+      mockQuestionAudio.onerror = () => reject(new Error('playback failed'));
+      mockQuestionAudio.play().catch(reject);
+    });
+  } catch (e) {
+    console.warn('[mock] TTS', e);
+    document.getElementById('mockStatus').textContent = 'Ääni ei saatavilla — lue kysymys ruudulta. Nauhoitus alkaa pian...';
+    await new Promise(r => setTimeout(r, 1200));
+  }
+  document.getElementById('mockQSpeaking')?.classList.add('hide');
+  document.getElementById('mockRipple').classList.remove('active');
+  document.getElementById('mockReplayBtn').style.display = 'inline-flex';
+}
+
+async function mockReplayQuestion() {
+  if (!mockCurrentQuestionText) return;
+  if (mockRecorder && mockRecorder.mr && mockRecorder.mr.state === 'recording') return;
+  await speakMockQuestion(mockCurrentQuestionText);
+}
+
+async function presentMockQuestion(qIndex) {
+  const plain = mockQuestionPlain(qIndex);
+  document.getElementById('mockQText').textContent = plain;
+  document.getElementById('mockQLabel').textContent = 'Kysymys ' + (qIndex + 1) + ' / ' + MOCK_QUESTIONS.length;
+  document.getElementById('mockRecBtn').style.display = 'none';
+  document.getElementById('mockStopBtn').style.display = 'none';
+  document.getElementById('mockNextBtn').style.display = 'none';
+  document.getElementById('mockTranscriptLbl')?.classList.remove('show');
+  await speakMockQuestion(plain);
+  document.getElementById('mockTopStatus').textContent = 'Sinun vuorosi vastata';
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
     startMockRecording(stream);
   }).catch(e => alert('Mikrofoniin ei pääse: ' + e.message));
+}
+
+function mockStart() {
+  if (!navigator.mediaDevices) { alert('Selaimesi ei tue äänittämistä.'); return; }
+  mockQ = 0;
+  mockDoneCount = 0;
+  updateMockDots();
+  document.getElementById('mockFbArea').classList.remove('show');
+  document.getElementById('mockTranscript').classList.remove('show');
+  document.getElementById('mockTranscript').textContent = '';
+  presentMockQuestion(0);
 }
 
 function startMockRecording(stream) {
@@ -2523,6 +2599,7 @@ function startMockRecording(stream) {
   document.getElementById('mockRipple').classList.add('active');
   document.getElementById('mockFbArea').classList.remove('show');
   document.getElementById('mockTranscript').classList.remove('show');
+  document.getElementById('mockTranscriptLbl')?.classList.remove('show');
   document.getElementById('mockTopStatus').textContent = '● Nauhoitetaan...';
   document.getElementById('mockStatus').textContent = 'Vastaa ääneen — paina "Valmis" kun olet valmis';
   clearInterval(mockTimerInt);
@@ -2545,7 +2622,7 @@ function mockStop() {
 }
 
 async function processMockAnswer(blob) {
-  const question = MOCK_QUESTIONS[mockQ].replace(/["""]/g, '');
+  const question = mockQuestionPlain(mockQ);
   const sys = 'Olet rekrytoija suomalaisessa yrityksessä. Sait hakijan vastauksen haastattelukysymykseen. Anna palaute täsmälleen kolmessa osassa, merkitse selkeästi:\n✓ TOIMI:\n⚠ PARANNA:\n→ MUUTOS:';
   const result = await voiceInterviewRequest(blob, {
     system: sys,
@@ -2558,6 +2635,7 @@ async function processMockAnswer(blob) {
   const tBox = document.getElementById('mockTranscript');
   tBox.textContent = transcript;
   tBox.classList.add('show');
+  document.getElementById('mockTranscriptLbl')?.classList.add('show');
   document.getElementById('mockStatus').textContent = 'AI analysoi...';
   const txt = result.feedback || '';
   // Parse sections
@@ -2587,16 +2665,14 @@ function mockNext() {
     try{saveProgress();}catch(e){}
     return;
   }
-  document.getElementById('mockQText').textContent = MOCK_QUESTIONS[mockQ];
-  document.getElementById('mockQLabel').textContent = 'Kysymys ' + (mockQ + 1) + ' / ' + MOCK_QUESTIONS.length;
   document.getElementById('mockFbArea').classList.remove('show');
   document.getElementById('mockTranscript').classList.remove('show');
+  document.getElementById('mockTranscriptLbl')?.classList.remove('show');
+  document.getElementById('mockTranscript').textContent = '';
   document.getElementById('mockTimer').textContent = '0:00';
   updateMockDots();
   try{saveProgress();}catch(e){}
-  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-    startMockRecording(stream);
-  }).catch(e => alert('Mikrofoni: ' + e.message));
+  presentMockQuestion(mockQ);
 }
 
 function updateMockDots() {
