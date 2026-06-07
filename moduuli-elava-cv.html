@@ -407,7 +407,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
     <!-- PORTFOLIO URL -->
     <div class="card">
       <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;">🔗 Portfolio-osoite</h3>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Tämä on julkinen linkkisi. Osoite luodaan ensimmäisellä tallennuksella nimestäsi — voit muuttaa sitä täällä ennen julkaisua tai korjata julkaistun osoitteen.</p>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Tämä on julkinen linkkisi. Osoite päivittyy automaattisesti kun muutat nimeä (ellei muokkaa osoitekenttää itse). Vanha linkki lakkaa toimimasta jos vaihdat osoitetta.</p>
       <div class="field-group">
         <label class="field-label">URL-polku</label>
         <div style="display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff;">
@@ -600,7 +600,7 @@ function showScreen(id){
   if(tab) tab.classList.remove('done');
   window.scrollTo({top:0,behavior:'smooth'});
   if(id==='s-preview') loadPreview();
-  if(id==='s-publish') buildPublishChecklist();
+  if(id==='s-publish'){ syncPayloadFromForm(); buildPublishChecklist(); }
   if(id==='s-details'){ syncDetailsFields(); updateSlugUi(); }
 }
 
@@ -937,8 +937,8 @@ function updateSlugUi(){
   var hint=document.getElementById('slugHint');
   if(hint){
     hint.textContent=portfolioPublished
-      ? 'Portfolio on julkaistu. Voit vaihtaa osoitteen ja tallentaa — vanha linkki lakkaa toimimasta.'
-      : 'Osoite päivittyy automaattisesti kun vaihdat nimeä (ellei muokkaa osoitetta itse). Tallenna esikatselulla.';
+      ? 'Portfolio on julkaistu. Muuta nimeä päivittääksesi osoitteen automaattisesti, tai muokkaa osoitekenttää suoraan. Vanha linkki lakkaa toimimasta jos osoite vaihtuu.'
+      : 'Osoite päivittyy automaattisesti kun vaihdat nimeä (ellei muokkaa osoitekenttää itse). Tallenna esikatselulla tai julkaise.';
   }
 }
 
@@ -1019,25 +1019,62 @@ async function handlePhoto(file){
 // ══════════════════════════════════════════
 // SAVE & PREVIEW
 // ══════════════════════════════════════════
-async function savePortfolioData(){
-  // Sync fields
-  ['d_name','d_city','d_role','d_bio','d_email','d_linkedin'].forEach(function(id){
-    var m={d_name:'full_name',d_city:'city',d_role:'target_role',d_bio:'bio',d_email:'email_public',d_linkedin:'linkedin_url'};
+function syncPayloadFromForm(){
+  var fieldMap={d_name:'full_name',d_city:'city',d_role:'target_role',d_bio:'bio',d_email:'email_public',d_linkedin:'linkedin_url'};
+  Object.keys(fieldMap).forEach(function(id){
     var el=document.getElementById(id);
-    if(el&&el.value) P[m[id]]=el.value;
+    if(el) P[fieldMap[id]]=el.value.trim();
   });
-  // Parse experience from textarea
-  var exTa=document.getElementById('d_experience');
-  if(exTa&&exTa.value.trim()){
-    P.experience=exTa.value.trim().split('\n').filter(Boolean).map(function(line){
-      var parts=line.split('·').map(function(p){return p.trim();});
-      return {role:parts[0]||'',company:parts[1]||'',years:parts[2]||'',desc:parts[3]||''};
-    });
+  if(!P.full_name){
+    var fn=document.getElementById('f_name');
+    if(fn&&fn.value.trim()) P.full_name=fn.value.trim();
   }
+  if(!P.city){
+    var fc=document.getElementById('f_city');
+    if(fc&&fc.value.trim()) P.city=fc.value.trim();
+  }
+  if(!P.target_role){
+    var fr=document.getElementById('f_role');
+    if(fr&&fr.value.trim()) P.target_role=fr.value.trim();
+  }
+  if(!P.bio){
+    var fb=document.getElementById('f_bio');
+    if(fb&&fb.value.trim()) P.bio=fb.value.trim();
+  }
+  var skEl=document.getElementById('d_skills');
+  if(skEl) parseSkills(skEl.value);
+  var exTa=document.getElementById('d_experience');
+  if(exTa){
+    P.experience=exTa.value.trim()
+      ? exTa.value.trim().split('\n').filter(Boolean).map(function(line){
+          var parts=line.split('·').map(function(p){return p.trim();});
+          return {role:parts[0]||'',company:parts[1]||'',years:parts[2]||'',desc:parts[3]||''};
+        })
+      : [];
+  }
+  if(!slugManuallyEdited) suggestSlugFromName();
+}
 
+function buildSavePayload(){
+  syncPayloadFromForm();
   var slugEl=document.getElementById('d_slug');
-  var payload=Object.assign({},P,{slug:(slugEl&&slugEl.value)?slugEl.value.trim():portfolioSlug});
+  return Object.assign({},P,{slug:(slugEl&&slugEl.value)?slugEl.value.trim():portfolioSlug});
+}
 
+async function applySaveResponse(d){
+  portfolioSlug=d.slug;
+  if(d.published!=null) portfolioPublished=!!d.published;
+  var slugEl=document.getElementById('d_slug');
+  if(slugEl) slugEl.value=d.slug;
+  if(d.preview_token) previewToken=d.preview_token;
+  if(d.public_url) applyPublishedUrlUi(d.public_url);
+  else if(d.slug) applyPublishedUrlUi(portfolioPublicUrl(d.slug));
+  updateSlugUi();
+  return d.slug;
+}
+
+async function savePortfolioData(){
+  var payload=buildSavePayload();
   var r=await fetch(apiBase()+'/api/portfolio/save',{
     method:'POST',credentials:'include',
     headers:{'Content-Type':'application/json'},
@@ -1045,10 +1082,7 @@ async function savePortfolioData(){
   });
   var d=await r.json();
   if(!r.ok) throw new Error(d.error||'Tallennusvirhe');
-  portfolioSlug=d.slug;
-  if(slugEl) slugEl.value=d.slug;
-  slugManuallyEdited=true;
-  if(d.preview_token) previewToken=d.preview_token;
+  await applySaveResponse(d);
   if(cvFilePending){
     try{ await uploadCvToPortfolio(cvFilePending); }catch(e){ console.warn('[cv-upload]',e); }
   }
@@ -1120,18 +1154,21 @@ async function publishPortfolio(){
   var btn=document.getElementById('publishBtn');
   btn.disabled=true; btn.textContent='Julkaistaan...';
   try{
-    if(!portfolioSlug) await savePortfolioData();
+    var payload=buildSavePayload();
+    payload.published=true;
     var r=await fetch(apiBase()+'/api/portfolio/publish',{
       method:'POST',credentials:'include',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({published:true})
+      body:JSON.stringify(payload)
     });
     var d=await r.json();
     if(!r.ok) throw new Error(d.error||'Julkaisuvirhe');
-    var url=d.public_url||portfolioPublicUrl(d.slug);
-    applyPublishedUrlUi(url);
+    portfolioPublished=true;
+    portfolioSlug=d.slug;
+    await applySaveResponse(d);
     document.getElementById('publishNotYet').style.display='none';
     document.getElementById('publishSuccess').style.display='block';
+    btn.textContent='🚀 Julkaise portfolio';
   }catch(e){
     alert('Virhe: '+e.message);
     btn.disabled=false; btn.textContent='🚀 Julkaise portfolio';
@@ -1182,7 +1219,7 @@ document.addEventListener('DOMContentLoaded',async function(){
       var pf=d.portfolio;
       portfolioSlug=pf.slug;
       portfolioPublished=!!pf.published;
-      slugManuallyEdited=!!pf.slug;
+      slugManuallyEdited=false;
       if(pf.preview_token) previewToken=pf.preview_token;
       if(pf.public_url&&pf.published) applyPublishedUrlUi(pf.public_url);
       Object.keys(pf).forEach(function(k){if(P.hasOwnProperty(k)&&pf[k]!=null)P[k]=pf[k];});

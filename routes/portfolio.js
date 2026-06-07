@@ -155,9 +155,9 @@ async function resolveSlugForSave(uid, d, existingSlug, isPublished) {
     const fromName = makeSlug(d.full_name) || 'portfolio';
     return uniqueSlug(fromName, uid);
   }
-  if (!isPublished) {
-    const fromName = makeSlug(d.full_name);
-    if (fromName && fromName !== existingSlug) return uniqueSlug(fromName, uid);
+  const fromName = makeSlug(d.full_name);
+  if (fromName && fromName !== existingSlug) {
+    return uniqueSlug(fromName, uid);
   }
   return existingSlug;
 }
@@ -206,9 +206,11 @@ router.post('/save', authenticateToken, async (req, res) => {
         [uid, slug, ...vals.slice(1)]);
     }
     const userId = uid;
+    const published = existing.rows.length > 0 ? existing.rows[0].published === true : false;
     res.json({
       success: true,
       slug,
+      published,
       preview_token: makePreviewToken(slug, userId),
       public_url: portfolioPublicUrl(slug),
       ...portfolioSourceMeta()
@@ -220,23 +222,57 @@ router.post('/save', authenticateToken, async (req, res) => {
   }
 });
 
-// Publish / unpublish
+// Publish / unpublish (always saves latest form data first)
 router.post('/publish', authenticateToken, async (req, res) => {
   try {
     await ready();
+    const uid = req.user.id;
+    const d = req.body && typeof req.body === 'object' ? req.body : {};
+
+    if (d.full_name) {
+      const existing = await pool.query(
+        'SELECT slug, published FROM student_portfolios WHERE user_id=$1', [uid]
+      );
+      if (existing.rows.length > 0) {
+        const isPublished = existing.rows[0].published === true;
+        const slug = await resolveSlugForSave(uid, d, existing.rows[0].slug, isPublished);
+        await pool.query(`UPDATE student_portfolios SET
+          slug=$2, full_name=$3, tagline=$4, bio=$5, city=$6, target_role=$7,
+          email_public=$8, phone_public=$9, linkedin_url=$10,
+          experience=$11, education=$12, skills=$13, achievements=$14,
+          languages=$15, certificates=$16,
+          brand_color=$17, brand_accent=$18, brand_bg=$19, template=$20,
+          career_summary=$21, hidden_strengths=$22, updated_at=CURRENT_TIMESTAMP
+          WHERE user_id=$1`, [
+          uid, slug, d.full_name, d.tagline || null, d.bio || null, d.city || null, d.target_role || null,
+          d.email_public || null, d.phone_public || null, d.linkedin_url || null,
+          JSON.stringify(d.experience || []), JSON.stringify(d.education || []),
+          JSON.stringify(d.skills || []), JSON.stringify(d.achievements || []),
+          JSON.stringify(d.languages || []), JSON.stringify(d.certificates || []),
+          d.brand_color || '#2563a8', d.brand_accent || '#c75b3a', d.brand_bg || '#f5f3ef',
+          d.template || 'modern', d.career_summary || null, d.hidden_strengths || null
+        ]);
+      }
+    }
+
     const r = await pool.query(
       'UPDATE student_portfolios SET published=$2, updated_at=CURRENT_TIMESTAMP WHERE user_id=$1 RETURNING slug',
-      [req.user.id, !!req.body.published]);
+      [uid, d.published !== false]
+    );
     if (!r.rows.length) return res.status(404).json({ error: 'Ei portfoliota' });
     const slug = r.rows[0].slug;
     res.json({
       success: true,
       slug,
-      published: !!req.body.published,
+      published: d.published !== false,
       public_url: portfolioPublicUrl(slug),
       ...portfolioSourceMeta()
     });
-  } catch (e) { console.error('Portfolio publish:', e); res.status(500).json({ error: 'Virhe' }); }
+  } catch (e) {
+    if (e.status) return res.status(e.status).json({ error: e.message });
+    console.error('Portfolio publish:', e);
+    res.status(500).json({ error: 'Virhe' });
+  }
 });
 
 // Upload photo
