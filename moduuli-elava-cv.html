@@ -154,6 +154,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
 .btn-green:hover{background:#047857;}
 .btn-green:disabled{opacity:.42;cursor:default;}
 .btn-row{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;margin-top:1.75rem;}
+.btn-ai-suggest{padding:6px 14px;border-radius:999px;font-size:.76rem;font-weight:600;cursor:pointer;border:1px solid rgba(124,110,242,.35);background:rgba(124,110,242,.08);color:var(--v);font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;}
+.btn-ai-suggest:hover{background:rgba(124,110,242,.15);border-color:var(--v);}
+.btn-ai-suggest:disabled{opacity:.45;cursor:default;}
+.field-label-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.45rem;flex-wrap:wrap;}
+.field-label-row .field-label{margin-bottom:0;}
+.bio-ai-status{font-size:.78rem;color:var(--muted);margin-top:.35rem;min-height:1.1em;}
 
 /* ── PREVIEW FRAME ── */
 .preview-wrapper{border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-lg);background:#fff;margin-top:1.5rem;}
@@ -296,8 +302,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
         <input class="field-input" id="f_role" placeholder="Esim. Asiakaspalvelija · Myyntiassistentti" oninput="P.target_role=this.value">
       </div>
       <div class="field-group">
-        <label class="field-label">Lyhyt esittely</label>
+        <div class="field-label-row">
+          <label class="field-label">Lyhyt esittely</label>
+          <button type="button" class="btn-ai-suggest" id="bioAiBtn_f_bio" onclick="suggestBioAi('f_bio')">✨ AI auttaa kirjoittamaan</button>
+        </div>
         <textarea class="field-textarea" id="f_bio" placeholder="3–5 lausetta — kuka olet, mitä osaat, mitä haet" oninput="P.bio=this.value"></textarea>
+        <div class="bio-ai-status" id="bioAiStatus_f_bio"></div>
       </div>
     </div>
 
@@ -410,8 +420,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
         <p class="field-hint">Näkyy nimen alla portfoliossa — AI täyttää haastattelun jälkeen.</p>
       </div>
       <div class="field-group">
-        <label class="field-label">Esittely</label>
+        <div class="field-label-row">
+          <label class="field-label">Esittely</label>
+          <button type="button" class="btn-ai-suggest" id="bioAiBtn_d_bio" onclick="suggestBioAi('d_bio')">✨ AI auttaa kirjoittamaan</button>
+        </div>
         <textarea class="field-textarea" id="d_bio" rows="4" oninput="P.bio=this.value"></textarea>
+        <p class="field-hint">Portfoliossa näkyvä esittely — voit muokata AI:n ehdotusta vapaasti.</p>
+        <div class="bio-ai-status" id="bioAiStatus_d_bio"></div>
       </div>
       <div class="field-group">
         <label class="field-label">Piilotetut vahvuudet</label>
@@ -929,6 +944,67 @@ function syncFormFields(){
 }
 
 function setVal(id,v){var el=document.getElementById(id);if(el&&!el.value)el.value=v;}
+
+function syncBioFields(text){
+  P.bio=text||'';
+  ['f_bio','d_bio'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.value=P.bio;
+  });
+}
+
+function collectBioSuggestContext(){
+  var name=(document.getElementById('d_name')||{}).value||(document.getElementById('f_name')||{}).value||P.full_name||'';
+  var city=(document.getElementById('d_city')||{}).value||(document.getElementById('f_city')||{}).value||P.city||'';
+  var role=(document.getElementById('d_role')||{}).value||(document.getElementById('f_role')||{}).value||P.target_role||'';
+  return {
+    name: name.trim(),
+    city: city.trim(),
+    target_role: role.trim(),
+    cvText: cvText||'',
+    skills: P.skills||[],
+    experience: P.experience||[],
+    languages: P.languages||[],
+    interviewAnswers: interviewAnswers||[],
+    career_summary: P.career_summary||'',
+    hidden_strengths: P.hidden_strengths||''
+  };
+}
+
+async function suggestBioAi(targetId){
+  var ta=document.getElementById(targetId);
+  var btn=document.getElementById('bioAiBtn_'+targetId);
+  var status=document.getElementById('bioAiStatus_'+targetId);
+  if(!ta) return;
+
+  var ctx=collectBioSuggestContext();
+  if(!ctx.cvText&&!ctx.name&&!ctx.skills.length&&!ctx.experience.length){
+    if(status) status.textContent='Lataa CV tai täytä nimi ensin — AI tarvitsee pohjatiedot.';
+    return;
+  }
+
+  if(ta.value.trim().length>20){
+    if(!confirm('Korvataanko nykyinen esittely AI:n ehdotuksella? Voit muokata tekstiä sen jälkeen.')) return;
+  }
+
+  if(btn) btn.disabled=true;
+  if(status) status.textContent='AI kirjoittaa esittelyn CV:si pohjalta...';
+
+  try{
+    var r=await fetch(apiBase()+'/api/ai/portfolio-bio-suggest',{
+      method:'POST',credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(ctx)
+    });
+    var d=await r.json();
+    if(!r.ok||!d.bio) throw new Error(d.error||'Esittelyn luonti epäonnistui');
+    syncBioFields(d.bio);
+    if(status) status.textContent='✓ Valmis! Muokkaa tarvittaessa tai jätä sellaisenaan.';
+  }catch(e){
+    if(status) status.textContent='⚠ '+(e.message||'Virhe');
+  }
+  if(btn) btn.disabled=false;
+}
 
 function goToInterview(){
   if(document.getElementById('f_name').value) P.full_name=document.getElementById('f_name').value;

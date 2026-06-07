@@ -1046,4 +1046,106 @@ router.post('/interview-portfolio-parse', async (req, res) => {
   }
 });
 
+/** Suggest portfolio intro bio from CV and form context (moduuli-elava-cv). */
+router.post('/portfolio-bio-suggest', async (req, res) => {
+  try {
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return res.status(503).json({ error: 'Tekoälypalvelu ei ole käytössä.' });
+    }
+
+    const name = String(req.body.name || '').trim();
+    const city = String(req.body.city || '').trim();
+    const targetRole = String(req.body.target_role || '').trim();
+    const cvText = String(req.body.cvText || '').trim();
+    const skills = Array.isArray(req.body.skills) ? req.body.skills : [];
+    const experience = Array.isArray(req.body.experience) ? req.body.experience : [];
+    const languages = Array.isArray(req.body.languages) ? req.body.languages : [];
+    const interviewAnswers = Array.isArray(req.body.interviewAnswers) ? req.body.interviewAnswers : [];
+    const careerSummary = String(req.body.career_summary || '').trim();
+    const hiddenStrengths = String(req.body.hidden_strengths || '').trim();
+
+    const contextParts = [];
+    if (name) contextParts.push('Nimi: ' + name);
+    if (city) contextParts.push('Paikkakunta: ' + city);
+    if (targetRole) contextParts.push('Tavoiterooli: ' + targetRole);
+    if (skills.length) {
+      contextParts.push('Taidot: ' + skills.map((s) => (typeof s === 'string' ? s : s.name || '')).filter(Boolean).join(', '));
+    }
+    if (experience.length) {
+      contextParts.push('Kokemus: ' + experience.map((e) => {
+        return [e.role || e.title, e.company, e.years, e.desc || e.description].filter(Boolean).join(' · ');
+      }).filter(Boolean).join('\n'));
+    }
+    if (languages.length) {
+      contextParts.push('Kielet: ' + languages.map((l) => {
+        if (typeof l === 'string') return l;
+        return [l.name, l.level].filter(Boolean).join(' ');
+      }).filter(Boolean).join(', '));
+    }
+    if (careerSummary) contextParts.push('Uratiivistelmä: ' + careerSummary);
+    if (hiddenStrengths) contextParts.push('Vahvuudet: ' + hiddenStrengths);
+    if (cvText) contextParts.push('CV-TEKSTI:\n' + cvText.slice(0, 8000));
+    if (interviewAnswers.length) {
+      contextParts.push('Haastatteluvastaukset:\n' + interviewAnswers.map((a, i) => (i + 1) + '. ' + String(a).trim()).join('\n\n').slice(0, 4000));
+    }
+
+    if (!contextParts.length) {
+      return res.status(400).json({ error: 'Anna CV tai perustiedot — AI tarvitsee pohjan esittelylle.' });
+    }
+
+    const system = [
+      'Kirjoitat suomenkielisen lyhyen esittelyn työnhakijan portfolioon.',
+      '3–5 lausetta, ensimmäisessä persoonassa ("Olen...", "Erityisosaamiseni...").',
+      'Lämpimä, ammattimainen ja konkreettinen — ei geneeristä corporate-jargonia.',
+      'Käytä vain annettuja faktoja. Älä keksi työnantajia, tutkintoja tai saavutuksia.',
+      'Vastaa JSON-muodossa: {"bio":"esittelyteksti"}'
+    ].join(' ');
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${openaiApiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: contextParts.join('\n\n') }
+        ],
+        max_tokens: 500,
+        temperature: 0.55,
+        response_format: { type: 'json_object' }
+      }),
+      signal: timeoutSignal(30000)
+    });
+
+    if (!response.ok) {
+      const details = await response.text().catch(() => '');
+      console.error('portfolio-bio-suggest OpenAI error:', details);
+      return res.status(502).json({ error: 'Esittelyn luonti epäonnistui.' });
+    }
+
+    const data = await response.json();
+    const raw = String(data.choices?.[0]?.message?.content || '').trim();
+    let parsed;
+    try {
+      parsed = JSON.parse(raw.replace(/^```json\s*|\s*```$/g, '').trim());
+    } catch (parseErr) {
+      return res.status(502).json({ error: 'Esittelyn jäsentäminen epäonnistui.' });
+    }
+
+    const bio = String(parsed.bio || '').trim();
+    if (bio.replace(/\s/g, '').length < 40) {
+      return res.status(502).json({ error: 'Esittely jäi liian lyhyeksi. Yritä uudelleen.' });
+    }
+
+    res.json({ bio });
+  } catch (err) {
+    console.error('portfolio-bio-suggest error:', err);
+    res.status(500).json({ error: 'Esittelyn luonti epäonnistui.' });
+  }
+});
+
 module.exports = router;
