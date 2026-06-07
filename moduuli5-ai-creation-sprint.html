@@ -73,6 +73,14 @@ h1.hero-title em{font-style:italic;color:#f0b060;}
 .fill-prompts-btn{padding:9px 18px;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;background:var(--accent3);color:#fff;font-family:'DM Sans',sans-serif;transition:all .2s;}
 .fill-prompts-btn:hover{background:#1f5c38;}
 .company-fill-status{font-size:.78rem;color:var(--accent3);margin-top:.5rem;min-height:1.2em;}
+.logo-prompt-zone{background:#fff;border:1px solid rgba(42,122,75,.22);border-radius:12px;margin:1rem 0 1.5rem;box-shadow:var(--shadow);overflow:hidden;}
+.logo-prompt-zone .company-fill{border:none;border-radius:0;margin:0;box-shadow:none;}
+.logo-prompt-section{padding:1.25rem 1.35rem 1.35rem;border-top:1px solid var(--border);background:var(--paper);}
+.logo-prompt-heading{font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;color:var(--ink);margin-bottom:.5rem;}
+.logo-prompt-intro{font-size:.88rem;color:var(--muted);line-height:1.65;margin-bottom:1rem;}
+.prompt-ready-banner{background:rgba(42,122,75,.1);border-top:2px solid var(--accent3);border-bottom:2px solid var(--accent3);padding:1rem 1.35rem;font-size:.9rem;line-height:1.65;color:var(--ink);display:none;}
+.prompt-ready-banner.visible{display:block;}
+.prompt-ready-banner strong{display:block;font-size:1rem;color:var(--accent3);margin-bottom:.35rem;}
 .prompt-howto.ready{color:var(--accent3);}
 .prompt-vinkki{background:rgba(16,163,127,.07);border:1px solid rgba(16,163,127,.2);border-radius:10px;padding:1rem 1.15rem;margin-bottom:1rem;font-size:.84rem;color:var(--ink);line-height:1.65;}
 .prompt-vinkki strong{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gpt);margin-bottom:.5rem;}
@@ -167,8 +175,8 @@ h1.hero-title em{font-style:italic;color:#f0b060;}
       </div>
     </div>
     <div class="prompt-callout" style="margin-top:1.5rem;">
-      <strong>Täytä yritystiedot kerran — promptit päivittyvät automaattisesti</strong>
-      Projektissa 1 kirjoitat yrityksesi tiedot ylhäällä. Kaikki promptit täyttyvät itse — kopioi suoraan AI-työkaluun.
+      <strong>Täytä yritystiedot kerran — logo-prompti ilmestyy heti alle</strong>
+      Projektissa 1 kirjoitat yrityksesi tiedot yhteen laatikkoon. Logo-prompti päivittyy saman laatikon sisällä — kopioi se suoraan ChatGPT:hen.
     </div>
   </div>
 </section>
@@ -197,63 +205,66 @@ h1.hero-title em{font-style:italic;color:#f0b060;}
           <span class="project-tool claude">Claude — teksti</span>
           <span class="project-tool copilot">Copilot — tutkimus</span>
         </div>
-        <div class="project-step"><div class="project-step-num">Vaihe 1 — Keksi yritys (5 min)</div><div class="project-step-text">Keksi kuvitteellinen yritys tai palvelu. Se voi olla mitä tahansa: kahvila, siivouspalvelu, verkkokauppa, konsultointi. <strong>Kirjoita ylös: nimi, mitä se tekee, kenelle.</strong></div></div>
+        <div class="project-step"><div class="project-step-num">Vaihe 1 — Keksi yritys (5 min)</div><div class="project-step-text">Keksi kuvitteellinen yritys tai palvelu — kahvila, siivouspalvelu, verkkokauppa, mitä vain. Kirjoita tiedot alla oleviin kenttiin.</div></div>
+        <div class="logo-prompt-zone" id="logoPromptZone">
         <div class="company-fill" id="companyFill">
-          <h4>Yrityksesi tiedot — täytä kerran</h4>
-          <p>Kun täytät nämä, kaikki sprintin promptit päivittyvät automaattisesti. Sen jälkeen voit kopioida suoraan — ei tarvitse muokata uudelleen.</p>
+          <h4>Yrityksesi tiedot</h4>
+          <p>Kirjoita tiedot alla. Logo-prompti päivittyy automaattisesti heti tämän laatikon alle — sinun ei tarvitse etsiä sitä muualta.</p>
           <div class="company-fill-grid">
             <div class="company-field"><label for="cfNimi">Yrityksen nimi</label><input type="text" id="cfNimi" placeholder="Esim. Kahvila Aamu"></div>
-            <div class="company-field"><label for="cfKenelle">Kenelle (kohderyhmä)</label><input type="text" id="cfKenelle" placeholder="Esim. kiireiset aamukahvilaa etsivät"></div>
-            <div class="company-field full"><label for="cfKuvaus">Mitä yritys tekee</label><textarea id="cfKuvaus" rows="2" placeholder="Esim. erikoiskahvilaa keskustassa, take away -painotteinen"></textarea></div>
-            <div class="company-field"><label for="cfTunnelma">Tunnelma / värit</label><input type="text" id="cfTunnelma" placeholder="Esim. lämmin, luotettava, luonnonläheinen"></div>
-            <div class="company-field"><label for="cfSijainti">Missä toimii</label><input type="text" id="cfSijainti" placeholder="Esim. Kuopio keskusta"></div>
-            <div class="company-field full"><label for="cfEtu">Miksi asiakas valitsisi tämän</label><textarea id="cfEtu" rows="2" placeholder="Esim. nopea palvelu, laadukkaat raaka-aineet, lämmin tunnelma"></textarea></div>
-            <div class="company-field"><label for="cfLogoKuvio">Logo-kuvio / symboli</label><input type="text" id="cfLogoKuvio" placeholder="Esim. kahvipapu ja höyryävä kuppi"></div>
-            <div class="company-field"><label for="cfFontti">Fonttityyli logossa</label><input type="text" id="cfFontti" placeholder="Esim. pyöreä sans-serif, pehmeä ja lämmin"></div>
+            <div class="company-field"><label for="cfKenelle">Kenelle palvelu on tarkoitettu</label><input type="text" id="cfKenelle" placeholder="Esim. kiireiset aamukahvilaa etsivät"></div>
+            <div class="company-field full"><label for="cfKuvaus">Mitä yritys tekee</label><textarea id="cfKuvaus" rows="2" placeholder="Esim. pieni kahvila keskustassa, take away -painotteinen"></textarea></div>
+            <div class="company-field"><label for="cfTunnelma">Tunnelma ja värit</label><input type="text" id="cfTunnelma" placeholder="Esim. lämmin, luotettava, luonnonvärit"></div>
+            <div class="company-field"><label for="cfSijainti">Missä toimii</label><input type="text" id="cfSijainti" placeholder="Esim. Kuopion keskusta"></div>
+            <div class="company-field full"><label for="cfEtu">Miksi asiakas valitsisi juuri tämän</label><textarea id="cfEtu" rows="2" placeholder="Esim. nopea palvelu, laadukkaat raaka-aineet, kodikas tunnelma"></textarea></div>
+            <div class="company-field"><label for="cfLogoKuvio">Kuvio logossa</label><input type="text" id="cfLogoKuvio" placeholder="Esim. kahvipapu ja höyryävä kuppi"></div>
+            <div class="company-field"><label for="cfFontti">Miltä nimi näyttää logossa</label><input type="text" id="cfFontti" placeholder="Esim. pehmeät pyöreät kirjaimet, helppo lukea"></div>
           </div>
-          <div class="company-fill-status" id="companyFillStatus"></div>
         </div>
-        <div class="project-step"><div class="project-step-num">Vaihe 2 — Logo/kuva ChatGPT:llä (10 min)</div><div class="project-step-text">Prompti täyttyy automaattisesti — <strong>lisää vielä yksityiskohtia</strong> ennen kopiointia. Mitä tarkemmin kuvaat, sitä parempi logo ChatGPT tekee.</div></div>
+        <div class="prompt-ready-banner" id="companyFillStatus" aria-live="polite"></div>
+        <div class="logo-prompt-section" id="logoPromptSection">
+        <h4 class="logo-prompt-heading">Vaihe 2 — Logo ChatGPT:llä (10 min)</h4>
+        <p class="logo-prompt-intro">Kun olet täyttänyt tiedot yllä, valmis logo-prompti ilmestyy tähän. Voit vielä tarkentaa tekstiä — mitä selkeämmin kuvaat, sitä parempi logo. Kopioi lopuksi prompti ja liitä ChatGPT:hen.</p>
         <div class="prompt-vinkki">
-          <strong>Vinkki — kirjoita promptiin mahdollisimman paljon yksityiskohtia</strong>
-          Lyhyt prompti tuottaa geneerisen logon. Hyvä logo vaatii tarkkuutta. Lisää promptiin esimerkiksi:
+          <strong>Vinkki: kuvaile kuin kertoisit ystävälle</strong>
+          ChatGPT ei arvaa toiveitasi — sinun pitää kertoa ne. Hyviä lisäyksiä promptiin:
           <ul>
-            <li><strong>Symboli:</strong> <em>“Yksinkertainen kahvipapu ja höyryävä kuppi, ei liian monimutkainen”</em></li>
-            <li><strong>Värit tarkasti:</strong> <em>“Tummanruskea #3D2314, lämpimän beige tausta #F5E6D3, vihreä korostus”</em></li>
-            <li><strong>Fontti:</strong> <em>“Pyöreä sans-serif, pehmeä mutta luettava — ei koristeellista”</em></li>
-            <li><strong>Muoto:</strong> <em>“Pyöreä badge tai neliö, tasapainoinen somessa ja kyltissä”</em></li>
-            <li><strong>Tunnelma:</strong> <em>“Luotettava, lämmin, skandinavinen — ei liian leikkisä”</em></li>
-            <li><strong>Missä käytetään:</strong> <em>“Instagram-profiili, nettisivujen header, käyntikortti”</em></li>
+            <li><strong>Kuvio:</strong> <em>„Yksinkertainen kahvipapu ja höyry nouseva kupista — ei liian monimutkainen”</em></li>
+            <li><strong>Värit:</strong> <em>„Tummanruskea, lämmin beige ja pieni vihreä korostus”</em></li>
+            <li><strong>Nimen ulkoasu:</strong> <em>„Pehmeät pyöreät kirjaimet, selkeät ja helppo lukea”</em></li>
+            <li><strong>Muoto:</strong> <em>„Pyöreä tai neliön muotoinen, toimii somen profiilikuvana”</em></li>
+            <li><strong>Tunnelma:</strong> <em>„Luotettava, lämmin ja rauhallinen — ei liian leikkisä”</em></li>
           </ul>
         </div>
-        <div class="prompt-block" style="border-left-color:var(--gpt);"><div class="prompt-label" style="color:var(--gpt);">ChatGPT-prompti — logo</div><div class="prompt-text">Luo ammattimainen, moderni logo yritykselle nimeltä [NIMI].
+        <div class="prompt-block" style="border-left-color:var(--gpt);"><div class="prompt-label" style="color:var(--gpt);">Valmis logo-prompti — kopioi ChatGPT:hen</div><div class="prompt-text">Luo ammattimainen logo yritykselle nimeltä [NIMI].
 
 YRITYKSESTÄ:
 - Mitä tekee: [KUVAUS]
-- Kohderyhmä: [KENELLE]
+- Kenelle: [KENELLE]
 - Miksi asiakas valitsee tämän: [MIKSI ASIAKAS VALITSISI TÄMÄN]
 - Toimialue: [MISSÄ TOIMII]
 
-LOGON TYYLI JA VÄRIT:
-- Brändin tunnelma: [TUNNELMA]
-- Väripaletti: 2–3 väriä jotka viestivät [TUNNELMA] — kerro värit tarkasti (esim. tummanvihreä + kulta + valkoinen)
-- Yleisilme: moderni, minimalistinen, luotettava, skaalautuva
+TYYLI JA VÄRIT:
+- Tunnelma: [TUNNELMA]
+- Värit: kuvaile 2–3 väriä selkeästi (esim. tummanvihreä, kulta ja valkoinen)
+- Yleisilme: moderni, selkeä ja luotettava
 
-SYMBOLI TAI KUVIO:
+KUVIO:
 - [LOGO-KUVIO]
-- Yksinkertainen muoto — tunnistettava myös pienenä profiilikuvana, ei liian monimutkainen
+- Yksinkertainen muoto — tunnistettava myös pienenä profiilikuvana
 
-Typografia:
-- Näytä yrityksen nimi "[NIMI]" logossa selkeästi luettavana
-- Fonttityyli: [FONTTITYYLI]
+YRITYKSEN NIMI LOGOSSA:
+- Näytä nimi "[NIMI]" selkeästi
+- [FONTTITYYLI]
 
-KÄYTTÖ JA TEKNISET VAATIMUKSET:
-- Toimii nettisivuilla, somessa, käyntikortissa ja kyltissä
-- Tausta valkoinen tai läpinäkyvä
-- Selkeä flat/modern-tyyli — ei sekavaa 3D:tä tai varjoja
-- Korkea resoluutio, ammattimainen lopputulos
+KÄYTTÖ:
+- Toimii nettisivuilla, somessa ja käyntikortissa
+- Valkoinen tai läpinäkyvä tausta
+- Selkeä ja ammattimainen — ei sekavaa efektiä
 
-Tee logosta sellainen jota oikea yritys voisi käyttää heti brändinä.</div><button class="copy-btn" onclick="copyText(this,'')">📋 Kopioi</button></div>
+Tee logosta sellainen, jota oikea yritys voisi käyttää heti.</div><button class="copy-btn" onclick="copyText(this,'')">📋 Kopioi</button></div>
+        </div>
+        </div>
         <div class="project-step"><div class="project-step-num">Vaihe 3 — Pitchteksti Claudella (10 min)</div><div class="project-step-text">Kopioi prompti ja liitä Claudeen:</div></div>
         <div class="prompt-block" style="border-left-color:var(--claude);"><div class="prompt-label" style="color:var(--claude);">Claude-prompti</div><div class="prompt-text">Olet markkinointiasiantuntija. Kirjoita 3 kappaleen pitchteksti yritykselle:
 
@@ -639,11 +650,29 @@ function updatePromptHowto(ta){
     return;
   }
   if(/\[[^\]]+\]/.test(ta.value)){
-    howto.textContent='Täydennä vielä jäljellä olevat kohdat (esim. hinnat tai Geminin vastaus), sitten kopioi.';
+    howto.textContent='Täydennä vielä puuttuvat kohdat, sitten kopioi.';
     howto.classList.remove('ready');
   }else{
-    howto.textContent='Valmis — kopioi suoraan AI-työkaluun.';
+    howto.textContent='Valmis — kopioi ja liitä AI-työkaluun.';
     howto.classList.add('ready');
+  }
+}
+
+function showPromptReadyBanner(updated){
+  const status=document.getElementById('companyFillStatus');
+  if(!status)return;
+  if(!updated){
+    status.classList.remove('visible');
+    status.innerHTML='';
+    return;
+  }
+  const nimi=(document.getElementById('cfNimi')||{}).value||'';
+  status.classList.add('visible');
+  status.innerHTML='<strong>Valmis — logo-promptisi on tässä alla</strong>Kopioi prompti ja liitä ChatGPT:hen. Voit vielä tarkentaa tekstiä, jos haluat.';
+  if(nimi&&!window._logoPromptScrolled){
+    window._logoPromptScrolled=true;
+    const sec=document.getElementById('logoPromptSection');
+    if(sec)setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'nearest'}),200);
   }
 }
 
@@ -668,7 +697,7 @@ function initPromptEditors(){
     const block=textEl.closest('.prompt-block');
     const howto=document.createElement('p');
     howto.className='prompt-howto';
-    howto.textContent='Täyttyy automaattisesti yritystiedoistasi.';
+    howto.textContent='Täyttyy automaattisesti, kun kirjoitat tiedot yllä.';
     const ta=document.createElement('textarea');
     ta.className='prompt-edit';
     ta.id='promptEdit'+(++n);
@@ -693,8 +722,7 @@ function applyCompanyToPrompts(){
   const reps=getCompanyReplacements();
   const hasData=reps.some(([,v])=>v);
   if(!hasData){
-    const status=document.getElementById('companyFillStatus');
-    if(status)status.textContent='';
+    showPromptReadyBanner(false);
     return;
   }
   let updated=0;
@@ -704,8 +732,7 @@ function applyCompanyToPrompts(){
     updatePromptHowto(ta);
     updated++;
   });
-  const status=document.getElementById('companyFillStatus');
-  if(status&&updated)status.textContent='✓ Promptit päivitetty — voit kopioida suoraan';
+  showPromptReadyBanner(updated>0);
 }
 
 function setupCompanyAutoFill(){
