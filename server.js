@@ -396,7 +396,8 @@ app.get('/portfolio/:slug', async (req, res) => {
 const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-ai-verkkosivustotyokalut',
   'moduuli7-ai-tyonhaussa',
-  'moduuli-tyonhaku'
+  'moduuli-tyonhaku',
+  'moduuli5-ai-creation-sprint-legacy',
 ]);
 
 /** Soft-locked modules: visible on dashboard with lock badge but only admin can open. */
