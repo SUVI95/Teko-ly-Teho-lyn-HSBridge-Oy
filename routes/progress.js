@@ -4,6 +4,7 @@ const pool = require('../database/db');
 const router = express.Router();
 
 const MODULE_WORK_IDS = [
+  'moduuli5-ai-creation-sprint__work',
   'moduuli8-ai-polku__work',
   'moduuli9-haastattelu__work'
 ];

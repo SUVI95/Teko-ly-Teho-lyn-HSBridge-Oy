@@ -2127,17 +2127,29 @@
         .replace(/"/g, '&quot;');
     }
 
-    const TYONHAKU_WORK_TOTAL = 12;
-    const TYONHAKU_WORK_LABELS = {
+    const MODULE_WORK_META = {
+      'moduuli5-ai-creation-sprint': {
+        total: 9,
+        labels: {
+          1: 'Aloitus', 2: 'Säännöt', 3: 'Projekti 1', 4: 'Projekti 2', 5: 'Projekti 3',
+          6: 'Projekti 4', 7: 'Galleria', 8: 'Reflektio', 9: 'Yhteenveto'
+        }
+      },
       'moduuli8-ai-polku': {
-        1: 'Alku', 2: 'Taidot', 3: 'Valitse vahvuudet', 4: 'ATS-teoria', 5: 'Ilmoitus',
-        6: 'Avainsanat', 7: 'Analyysi', 8: 'Claude-testi', 9: 'Hakemus', 10: 'Haastattelu',
-        11: 'Promptit', 12: 'Hakukompassi'
+        total: 12,
+        labels: {
+          1: 'Alku', 2: 'Taidot', 3: 'Valitse vahvuudet', 4: 'ATS-teoria', 5: 'Ilmoitus',
+          6: 'Avainsanat', 7: 'Analyysi', 8: 'Claude-testi', 9: 'Hakemus', 10: 'Haastattelu',
+          11: 'Promptit', 12: 'Hakukompassi'
+        }
       },
       'moduuli9-haastattelu': {
-        1: 'Aloitus', 2: 'Ymmärrys', 3: 'STAR', 4: 'Decoder', 5: 'Kirjoita',
-        6: 'Vastaväite', 7: 'Spot the flaw', 8: 'Hissipuhe', 9: 'Yritys',
-        10: 'Tilanteet', 11: 'Vaikeat', 12: 'Ansaitse'
+        total: 12,
+        labels: {
+          1: 'Aloitus', 2: 'Ymmärrys', 3: 'STAR', 4: 'Decoder', 5: 'Kirjoita',
+          6: 'Vastaväite', 7: 'Spot the flaw', 8: 'Hissipuhe', 9: 'Yritys',
+          10: 'Tilanteet', 11: 'Vaikeat', 12: 'Ansaitse'
+        }
       }
     };
 
@@ -2165,18 +2177,21 @@
 
     function formatModuleWorkProgress(moduleId, work) {
       if (!work) return null;
-      if (work.finished || work.cur_screen >= TYONHAKU_WORK_TOTAL) return 'Suoritettu ✓';
+      const meta = MODULE_WORK_META[moduleId];
+      const total = meta ? meta.total : 12;
+      if (work.finished || work.cur_screen >= total) return 'Suoritettu ✓';
       if (work.cur_screen <= 1) return null;
-      const labels = TYONHAKU_WORK_LABELS[moduleId] || {};
+      const labels = meta ? meta.labels : {};
       const lbl = labels[work.cur_screen] || ('Vaihe ' + work.cur_screen);
       const when = formatWorkSavedWhen(work.updated_at);
-      return 'Jatka vaiheesta ' + work.cur_screen + '/' + TYONHAKU_WORK_TOTAL + ' · ' + lbl + (when ? ' · tallennettu ' + when : '');
+      return 'Jatka vaiheesta ' + work.cur_screen + '/' + total + ' · ' + lbl + (when ? ' · tallennettu ' + when : '');
     }
 
     function updateResumeWelcome(summary) {
       const el = document.getElementById('welcomeSubtitle');
       if (!el || !summary || !Array.isArray(summary.module_work)) return;
       const titles = {
+        'moduuli5-ai-creation-sprint': '★ Creation Sprint',
         'moduuli8-ai-polku': '★ AI Polku — työnhaku',
         'moduuli9-haastattelu': '★ Haastattelu'
       };
@@ -2184,7 +2199,10 @@
       summary.module_work.forEach(function (w) {
         if (!w || w.finished || w.cur_screen <= 1) return;
         const t = titles[w.base_module_id];
-        if (t) parts.push(t + ' (vaihe ' + w.cur_screen + '/12)');
+        if (!t) return;
+        const meta = MODULE_WORK_META[w.base_module_id];
+        const total = meta ? meta.total : 12;
+        parts.push(t + ' (vaihe ' + w.cur_screen + '/' + total + ')');
       });
       if (parts.length) {
         el.innerHTML = 'Tallenne tallessa — jatka: <strong>' + parts.map(escModuleCardText).join('</strong>, <strong>') + '</strong>';
@@ -2327,7 +2345,8 @@
         const workEntry = getModuleWorkEntry(summary, module.id);
         const workLine = formatModuleWorkProgress(module.id, workEntry);
         if (workLine && workEntry && !isCompleted) {
-          const workPct = Math.min(100, Math.round((workEntry.cur_screen / TYONHAKU_WORK_TOTAL) * 100));
+          const workTotal = (MODULE_WORK_META[module.id] && MODULE_WORK_META[module.id].total) || 12;
+          const workPct = Math.min(100, Math.round((workEntry.cur_screen / workTotal) * 100));
           progressBlock = `
             <div class="progress-bar">
               <div class="progress-fill" style="width: ${workPct}%"></div>

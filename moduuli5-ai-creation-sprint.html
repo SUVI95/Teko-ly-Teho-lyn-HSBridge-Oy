@@ -825,6 +825,7 @@ window.addEventListener('scroll',updateProgress,{passive:true});
 // ── CHALLENGE MODE ──
 function setChallengeMode(on){
   document.body.classList.toggle('challenge-on',on);
+  saveSprintProgress();
 }
 
 // ── THINK GATES ──
@@ -848,7 +849,18 @@ function openGate(n){
   document.getElementById('tg'+n+'btn').textContent='✓ Hyvä ajattelu!';
   document.getElementById('tg'+n+'btn').style.background='var(--accent3)';
   content.classList.add('open');
+  saveSprintProgress();
   setTimeout(()=>content.scrollIntoView({behavior:'smooth',block:'nearest'}),200);
+}
+function restoreGateOpen(n){
+  const gate=document.getElementById('tg'+n);
+  const content=document.getElementById('gc'+n);
+  if(!gate||!content||content.classList.contains('open'))return;
+  gate.style.borderColor='rgba(42,122,75,.4)';
+  gate.style.background='rgba(42,122,75,.04)';
+  const btn=document.getElementById('tg'+n+'btn');
+  if(btn){btn.textContent='✓ Hyvä ajattelu!';btn.style.background='var(--accent3)';}
+  content.classList.add('open');
 }
 
 // ── GEMINI PASTE → CLAUDE PROMPT (live injection) ──
@@ -929,6 +941,7 @@ Vastaa suomeksi. Ole luova ja konkreettinen — ei yleisiä fraaseja.`;
       if(howto){howto.textContent='Valmis — vertaa omaan versioosi jonka kirjoitit yllä.';howto.classList.add('ready');}
       // store for PDF
       window._claudeAdContent={nimi,text};
+      saveSprintProgress();
     } else {
       result.textContent='Virhe: '+JSON.stringify(data);
     }
@@ -1004,7 +1017,8 @@ function pickCrisis(btn,letter){
       ta.value=base;
     }
   }
-  setTimeout(()=>document.getElementById('crisisAdaptedContent').scrollIntoView({behavior:'smooth',block:'nearest'}),250);
+  setTimeout(()=>{if(!sprintRestoring)document.getElementById('crisisAdaptedContent').scrollIntoView({behavior:'smooth',block:'nearest'});},250);
+  saveSprintProgress();
 }
 
 // ── COMPANY FILL + PROMPT AUTO-FILL ──
@@ -1091,16 +1105,226 @@ function toggleTimer(id,minutes){
 }
 
 // ── REFLECTION ──
-async function saveReflection(){try{await window.saveReflectionToAPI('m5sprint');const c=document.getElementById('reflConfirm');if(c){c.style.display='block';setTimeout(()=>c.style.display='none',3000);}}catch(e){alert('Virhe tallennuksessa.');}}
+async function saveReflection(){try{await window.saveReflectionToAPI('m5sprint');const c=document.getElementById('reflConfirm');if(c){c.style.display='block';setTimeout(()=>c.style.display='none',3000);}saveSprintProgress();}catch(e){alert('Virhe tallennuksessa.');}}
+
+// ── PERSISTENCE (server + localStorage) ──
+const MODULE5_ID='moduuli5-ai-creation-sprint';
+const SPRINT_PKEY='m5sprint_work_v1';
+let sprintWorkApi=null;
+let sprintSaveTimer=null;
+let sprintRestoring=false;
+let sprintHadRestore=false;
+
+function getActiveSectionIndex(){
+  let ai=0;
+  sections.forEach((s,i)=>{if(s.getBoundingClientRect().top<=window.innerHeight*0.5)ai=i;});
+  return ai;
+}
+
+function sprintSnapshot(){
+  const inputs={};
+  ['cfNimi','cfKenelle','cfKuvaus','cfTunnelma','cfSijainti','cfEtu','cfLogoKuvio','cfFontti',
+   'tg1text','tg2text','tg3text','tg4text','geminiPaste','reflectionText'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)inputs[id]=el.value;
+  });
+  const prompts={};
+  document.querySelectorAll('.prompt-edit').forEach(ta=>{
+    if(ta.id)prompts[ta.id]={value:ta.value,locked:ta.dataset.locked==='1'};
+  });
+  const gatesOpen=[1,2,3,4].map(n=>{
+    const gc=document.getElementById('gc'+n);
+    return!!(gc&&gc.classList.contains('open'));
+  });
+  let crisisLetter=null;
+  document.querySelectorAll('.crisis-opt.picked').forEach(b=>{crisisLetter=b.dataset.letter||crisisLetter;});
+  const checkboxes=[];
+  document.querySelectorAll('.checklist input[type="checkbox"]').forEach(el=>{checkboxes.push(!!el.checked);});
+  const claudeAdResult=document.getElementById('claudeAdResult');
+  const claudeAdPdfBtn=document.getElementById('claudeAdPdfBtn');
+  const claudeAdBtn=document.getElementById('claudeAdBtn');
+  return{
+    v:1,
+    ts:Date.now(),
+    curScreen:getActiveSectionIndex()+1,
+    scrollY:window.scrollY||0,
+    inputs,
+    prompts,
+    gatesOpen,
+    crisisLetter,
+    challengeOn:document.body.classList.contains('challenge-on'),
+    checkboxes,
+    claudeAd:{
+      text:claudeAdResult?claudeAdResult.textContent:'',
+      visible:!!(claudeAdResult&&claudeAdResult.style.display!=='none'&&claudeAdResult.textContent),
+      pdfVisible:!!(claudeAdPdfBtn&&claudeAdPdfBtn.style.display!=='none'),
+      btnLabel:claudeAdBtn?claudeAdBtn.textContent:'',
+      content:window._claudeAdContent||null
+    }
+  };
+}
+
+function summarizeSprintData(data){
+  if(!data||typeof data!=='object')return'Creation Sprint — tallennettu';
+  const labels={1:'Aloitus',2:'Säännöt',3:'Projekti 1',4:'Projekti 2',5:'Projekti 3',6:'Projekti 4',7:'Galleria',8:'Reflektio',9:'Yhteenveto'};
+  const parts=[labels[data.curScreen]||('Vaihe '+data.curScreen)];
+  if(data.inputs&&data.inputs.cfNimi)parts.push(data.inputs.cfNimi);
+  const openGates=(data.gatesOpen||[]).filter(Boolean).length;
+  if(openGates)parts.push(openGates+' porttia avattu');
+  if(data.crisisLetter)parts.push('Kriisi '+data.crisisLetter);
+  return parts.join(' · ');
+}
+
+function applySprintData(d){
+  if(!d||d.v!==1)return false;
+  sprintRestoring=true;
+  try{
+    if(d.inputs){
+      Object.keys(d.inputs).forEach(id=>{
+        const el=document.getElementById(id);
+        if(el&&'value' in el)el.value=d.inputs[id];
+      });
+    }
+    [1,2,3,4].forEach(n=>checkGate(n));
+    if(Array.isArray(d.gatesOpen))d.gatesOpen.forEach((open,i)=>{if(open)restoreGateOpen(i+1);});
+    if(d.prompts){
+      Object.keys(d.prompts).forEach(id=>{
+        const ta=document.getElementById(id);
+        const cell=d.prompts[id];
+        if(!ta||!cell)return;
+        ta.value=cell.value||'';
+        if(cell.locked)ta.dataset.locked='1';
+        else delete ta.dataset.locked;
+        updatePromptHowto(ta);
+      });
+    }
+    if(d.crisisLetter){
+      const btn=document.querySelector('.crisis-opt[data-letter="'+d.crisisLetter+'"]');
+      if(btn)pickCrisis(btn,d.crisisLetter);
+    }
+    if(d.challengeOn)setChallengeMode(true);
+    if(Array.isArray(d.checkboxes)){
+      document.querySelectorAll('.checklist input[type="checkbox"]').forEach((el,i)=>{
+        if(d.checkboxes[i]!=null)el.checked=!!d.checkboxes[i];
+      });
+    }
+    if(d.claudeAd&&d.claudeAd.content)window._claudeAdContent=d.claudeAd.content;
+    if(d.claudeAd&&d.claudeAd.text){
+      const result=document.getElementById('claudeAdResult');
+      const pdfBtn=document.getElementById('claudeAdPdfBtn');
+      const btn=document.getElementById('claudeAdBtn');
+      const howto=document.getElementById('claudeAdHowto');
+      if(result){
+        result.textContent=d.claudeAd.text;
+        result.style.display='block';
+      }
+      if(pdfBtn&&d.claudeAd.pdfVisible)pdfBtn.style.display='inline-flex';
+      if(btn&&d.claudeAd.btnLabel)btn.textContent=d.claudeAd.btnLabel;
+      if(howto&&d.claudeAd.visible){howto.textContent='Valmis — vertaa omaan versioosi jonka kirjoitit yllä.';howto.classList.add('ready');}
+    }
+    updateGeminiPaste();
+    const reps=getCompanyReplacements();
+    if(reps.some(([,v])=>v))showPromptReadyBanner(true);
+    if(typeof d.scrollY==='number'&&d.scrollY>0){
+      setTimeout(()=>window.scrollTo({top:d.scrollY,behavior:'auto'}),120);
+    }
+    updateProgress();
+    sprintHadRestore=true;
+    return true;
+  }finally{
+    sprintRestoring=false;
+  }
+}
+
+function loadLocalSprintData(){
+  try{
+    const raw=localStorage.getItem(SPRINT_PKEY);
+    if(!raw)return null;
+    const d=JSON.parse(raw);
+    return d&&d.v===1?d:null;
+  }catch(e){return null;}
+}
+
+function saveLocalSprintData(data){
+  if(!data||data.v!==1)return;
+  try{localStorage.setItem(SPRINT_PKEY,JSON.stringify(data));}catch(e){}
+}
+
+function saveSprintProgress(){
+  if(sprintRestoring)return;
+  try{
+    if(sprintWorkApi&&typeof sprintWorkApi.scheduleSave==='function')sprintWorkApi.scheduleSave();
+  }catch(e){}
+  clearTimeout(sprintSaveTimer);
+  sprintSaveTimer=setTimeout(()=>{
+    try{saveLocalSprintData(sprintSnapshot());}catch(e){}
+  },400);
+}
+
+async function initSprintWorkPersistence(){
+  if(!window.moduleWork||typeof window.moduleWork.initModuleWork!=='function')return;
+  try{
+    sprintWorkApi=await window.moduleWork.initModuleWork(MODULE5_ID,{
+      collect:sprintSnapshot,
+      summarize:summarizeSprintData,
+      debounceMs:800,
+      apply:function(remoteData){
+        if(!remoteData||remoteData.v!==1)return;
+        const localData=loadLocalSprintData();
+        const localTs=localData&&Number(localData.ts||0);
+        const remoteTs=Number(remoteData.ts||0);
+        const newest=(localTs&&localTs>remoteTs)?localData:remoteData;
+        if(applySprintData(newest))saveLocalSprintData(newest);
+      }
+    });
+    if(sprintWorkApi&&typeof sprintWorkApi.saveNow==='function')sprintWorkApi.saveNow();
+  }catch(e){
+    console.warn('[creation-sprint] module-work persistence init failed:',e);
+  }
+}
+
+async function initSprintPersistence(){
+  await initSprintWorkPersistence();
+  const local=loadLocalSprintData();
+  if(local){
+    const remoteTs=sprintWorkApi&&sprintWorkApi.data?Number(sprintWorkApi.data.ts||0):0;
+    const localTs=Number(local.ts||0);
+    if(localTs>remoteTs)applySprintData(local);
+  }
+}
 
 // ── INIT ──
-document.addEventListener('DOMContentLoaded',()=>{
+async function bootCreationSprint(){
   initPromptEditors();
   setupCompanyAutoFill();
-  applyCompanyToPrompts();
+  await new Promise(r=>setTimeout(r,100));
+  await initSprintPersistence();
+  if(!sprintHadRestore)applyCompanyToPrompts();
+  else{
+    document.querySelectorAll('.prompt-edit').forEach(ta=>{
+      if(ta.dataset.locked!=='1'&&ta.dataset.template){
+        ta.value=fillTemplate(ta.dataset.template,getCompanyReplacements());
+        updatePromptHowto(ta);
+      }
+    });
+  }
   if(window.loadReflection)window.loadReflection('m5sprint');
-  else{try{const s=localStorage.getItem('m5sprint');if(s)document.getElementById('reflectionText').value=s;}catch(e){}}
-});
+  else{try{const s=localStorage.getItem('m5sprint_reflection');if(s){const el=document.getElementById('reflectionText');if(el)el.value=s;}}catch(e){}}
+  saveSprintProgress();
+}
+document.addEventListener('input',saveSprintProgress,true);
+document.addEventListener('change',saveSprintProgress,true);
+document.addEventListener('click',()=>setTimeout(saveSprintProgress,400),true);
+let scrollSaveTimer;
+window.addEventListener('scroll',()=>{
+  clearTimeout(scrollSaveTimer);
+  scrollSaveTimer=setTimeout(saveSprintProgress,600);
+},{passive:true});
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(bootCreationSprint,50));
+}else{
+  setTimeout(bootCreationSprint,50);
+}
 fetch('/ai-chat-widget.html').then(r=>r.text()).then(html=>{document.body.insertAdjacentHTML('beforeend',html);}).catch(e=>console.error('Widget:',e));
 </script>
 </body>
