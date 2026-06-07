@@ -992,8 +992,8 @@ router.post('/interview-portfolio-parse', async (req, res) => {
     const system = [
       'You build a Finnish job-seeker portfolio from an AI interview transcript and optional CV text.',
       'Reply with ONLY valid JSON (no markdown):',
-      '{"tagline":"max 8 words in Finnish","bio":"2-3 sentences — professional background and expertise only (who you are, what you do)","career_summary":"2-3 sentences — why hire this person and what role they seek; MUST NOT repeat bio wording or facts","hidden_strengths":"3-5 bullet points as plain text lines separated by newline — strengths others see","skills":["5-10 concrete skills in Finnish"],"languages":[{"name":"","level":""}],"experience":[{"role":"","company":"","years":"","desc":"1-2 sentences from CV and interview","show":true}],"achievements":["3-6 concrete achievements from interview answers in Finnish"]}',
-      'Rules: bio and career_summary must be clearly different — no copy-paste between them. Use facts from transcript and CV only. Extract ALL work roles mentioned (up to 8) with descriptions from interview stories. Infer languages if stated (e.g. Finnish native, English good). Merge with existing data — do not drop employers already in CV. Finnish text. show:true for each experience unless clearly minor.'
+      '{"tagline":"max 8 words in Finnish — punchy headline under the name","bio":"3-5 sentences for the About/Tietoa section ONLY: career background, expertise, concrete wins from CV/interview. Past-focused. NO questions. NO job-search pitch. NO sentence that could appear in career_summary.","career_summary":"1-2 sentences for the portfolio HERO hook ONLY: forward-looking, why a recruiter should contact you now, optional rhetorical question, what role you seek next. Must use completely different wording than bio — zero shared sentences.","hidden_strengths":"3-5 bullet points as plain text lines separated by newline — strengths others see","skills":["5-10 concrete skills in Finnish"],"languages":[{"name":"","level":""}],"experience":[{"role":"","company":"","years":"","desc":"1-2 sentences from CV and interview","show":true}],"achievements":["3-6 short highlight chips for hero — concrete wins, max 12 words each, Finnish"]}',
+      'Layout rules: career_summary → hero intro; bio → Tietoa section; achievements → hero chips. Never duplicate the same paragraph across fields. Use facts from transcript and CV only. Extract ALL work roles mentioned (up to 8). Finnish text.'
     ].join(' ');
 
     const userContent = [
@@ -1096,9 +1096,9 @@ router.post('/portfolio-bio-suggest', async (req, res) => {
     }
 
     const system = [
-      'Kirjoitat suomenkielisen lyhyen esittelyn työnhakijan portfolioon.',
-      '2–3 lausetta, ensimmäisessä persoonassa ("Olen...", "Erityisosaamiseni...").',
-      'Tausta ja osaaminen — EI toista uratiivistelmää tai haastattelun "miksi minut" -kohtaa.',
+      'Kirjoitat suomenkielisen esittelyn työnhakijan portfolioon Tietoa-osioon (EI hero-osion koukkuun).',
+      '3–5 lausetta: tausta, osaaminen, konkreettiset saavutukset CV:stä/haastattelusta.',
+      'Menneisyys ja faktoja — EI kysymyksiä ("Etsitkö..."), EI uratoivepitchiä, EI samaa tekstiä kuin career_summary.',
       'Lämpimä, ammattimainen ja konkreettinen — ei geneeristä corporate-jargonia.',
       'Käytä vain annettuja faktoja. Älä keksi työnantajia, tutkintoja tai saavutuksia.',
       'Vastaa JSON-muodossa: {"bio":"esittelyteksti"}'

@@ -35,8 +35,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;display:flex;ali
 h1{font-family:'Instrument Serif',serif;font-size:clamp(3rem,7vw,6rem);line-height:.95;letter-spacing:-.02em;margin-bottom:1.75rem;}
 h1 .block{display:block;}
 .grad{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-style:italic;}
-.hero-sub{font-size:1.05rem;color:var(--fg2);max-width:500px;line-height:1.8;margin-bottom:2.75rem;font-weight:300;}
+.hero-sub{font-size:1.05rem;color:var(--fg2);max-width:500px;line-height:1.8;margin-bottom:1.25rem;font-weight:300;}
 .hero-sub strong{color:var(--fg);font-weight:500;}
+.hero-highlights{display:flex;flex-wrap:wrap;gap:.45rem;margin:0 0 2.25rem;max-width:540px;}
+.hero-highlight-chip{font-size:.72rem;line-height:1.45;padding:.38rem .72rem;border-radius:999px;background:var(--v-soft);border:1px solid var(--v-border);color:var(--fg2);}
+.hero-left .hero-highlights{opacity:0;transform:translateY(16px);transition:opacity .6s .42s ease,transform .6s .42s ease;}
+.hero-left.loaded .hero-highlights{opacity:1;transform:translateY(0);}
 .btn-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:4rem;}
 .btn-primary{background:var(--v);color:#fff;padding:.9rem 2rem;border-radius:999px;font-size:.88rem;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;gap:.6rem;transition:all .25s;}
 .btn-primary:hover{background:var(--v2);transform:translateY(-2px);box-shadow:0 10px 28px var(--shadow-v);}
@@ -358,6 +362,14 @@ function dedupeParagraphs(text){
   });
   return out.join('\n\n');
 }
+function filterBioForAbout(bio,heroText){
+  var paras=String(bio||'').split(/\n\n+/).map(function(p){return p.trim();}).filter(Boolean);
+  var hero=String(heroText||'').trim();
+  if(!paras.length) return '';
+  if(!hero) return dedupeParagraphs(bio||'');
+  var kept=paras.filter(function(p){return !textsOverlap(p,hero);});
+  return kept.length?kept.join('\n\n'):paras.join('\n\n');
+}
 
 function trackPortfolioVisit(slug){
   try{
@@ -374,8 +386,11 @@ applyBrandTheme(p);
 var nm=esc(p.full_name||''),tl=esc(p.tagline||''),bio=esc(p.bio||''),ct=esc(p.city||''),rl=esc(p.target_role||''),em=esc(p.email_public||''),ph=esc(p.phone_public||''),li=esc(p.linkedin_url||'');
 var photo=p.has_photo?'/api/portfolio/photo/'+encodeURIComponent(p.slug):'';
 var sk=p.skills||[],ex=(p.experience||[]).filter(function(e){return e&&e.show!==false;}),ed=p.education||[],la=p.languages||[],certs=p.certificates||[],achiev=p.achievements||[];
-var csRaw=p.career_summary||'',bioRaw=dedupeParagraphs(p.bio||''),cs=esc(csRaw),hs=esc(p.hidden_strengths||'');
-bio=esc(bioRaw);
+var csRaw=String(p.career_summary||'').trim(),bioRaw=dedupeParagraphs(p.bio||''),hs=esc(p.hidden_strengths||'');
+var heroHookRaw=csRaw||(achiev.length?String(achiev[0]):'');
+var aboutBioRaw=filterBioForAbout(bioRaw,heroHookRaw);
+var heroHook=heroHookRaw?esc(heroHookRaw):'';
+var aboutBio=esc(aboutBioRaw);
 var I=ini(p.full_name),fn=nm.split(' ')[0];
 document.title=nm+' \u2014 Portfolio';
 var h='';
@@ -389,8 +404,15 @@ h+='<li><a href="#contact">Yhteystiedot</a></li></ul><a href="#contact" class="b
 h+='<section id="top"><div id="hero"><div class="orb orb1"></div><div class="orb orb2"></div><div class="grid-bg"></div><div class="hero-inner"><div class="hero-left" id="heroLeft">';
 h+='<div class="hero-pill">'+SVG.star+'Avoin uusille mahdollisuuksille'+(rl?' \xb7 '+rl:'')+(ct?' \xb7 '+ct:'')+'</div>';
 h+='<h1><span class="block">'+nm+'.</span>'+(tl?'<span class="block grad">'+tl+'</span>':'')+'</h1>';
-var heroHook=csRaw&&!textsOverlap(csRaw,bioRaw)?cs:'';
 if(heroHook) h+='<p class="hero-sub">'+heroHook+'</p>';
+if(achiev.length){
+  h+='<div class="hero-highlights">';
+  achiev.slice(0,3).forEach(function(a){
+    var t=typeof a==='string'?a:(a&&a.text)||'';
+    if(t) h+='<span class="hero-highlight-chip">'+esc(t)+'</span>';
+  });
+  h+='</div>';
+}
 h+='<div class="btn-row">';
 h+='<button type="button" class="btn-primary" onclick="scrollToContactForm(event)">'+SVG.mail+' Kutsu haastatteluun<span class="blink"></span></button>';
 if(p.has_cv)h+='<a href="/api/portfolio/cv/'+encodeURIComponent(p.slug)+'" class="btn-outline" download>'+SVG.download+' Lataa CV</a>';
@@ -411,11 +433,8 @@ h+='<div class="photo-badge"><span class="badge-dot"></span>Avoin haastatteluill
 h+='</div></div></section><div class="divider"></div>';
 
 // ABOUT
-var showCs=csRaw&&(!bioRaw||!textsOverlap(csRaw,bioRaw));
-if(bio||showCs||hs){h+='<div class="wrap" id="about"><div class="about-grid"><div class="reveal-left"><div class="eyebrow">Tietoa</div><h2>'+nm+'</h2></div><div class="reveal-right">';
-if(bio) bio.split('\n').filter(Boolean).forEach(function(para){h+='<p class="lead" style="margin-bottom:1rem;">'+para+'</p>';});
-else if(showCs) h+='<p class="lead" style="margin-bottom:1rem;">'+cs+'</p>';
-if(showCs&&bio) h+='<p class="lead" style="margin-bottom:1rem;color:var(--fg2);">'+cs+'</p>';
+if(aboutBio||hs){h+='<div class="wrap" id="about"><div class="about-grid"><div class="reveal-left"><div class="eyebrow">Tietoa</div><h2>'+nm+'</h2></div><div class="reveal-right">';
+if(aboutBio) aboutBio.split('\n').filter(Boolean).forEach(function(para){h+='<p class="lead" style="margin-bottom:1rem;">'+para+'</p>';});
 if(hs){
   h+='<div style="margin-bottom:1rem;"><div style="font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--fg3);margin-bottom:.55rem;">Vahvuudet</div>';
   hs.split('\n').filter(Boolean).forEach(function(line){
