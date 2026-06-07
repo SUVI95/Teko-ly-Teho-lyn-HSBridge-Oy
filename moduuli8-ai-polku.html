@@ -1222,6 +1222,64 @@ function apiBasePath(){
   return pathname.indexOf('/module/')>0?pathname.substring(0,pathname.indexOf('/module/')):'';
 }
 
+function syncCvExtractedGlobal(){
+  if(S.cvExtractedS2) window._cvExtractedS2=S.cvExtractedS2;
+}
+
+function cvContextForAi(maxChars){
+  const raw=String(window._cvExtractedS2||S.cvExtractedS2||'').trim();
+  if(!raw) return '';
+  return '\n\nHakijan CV (poimittu tiedosto):\n'+raw.slice(0,maxChars||2000);
+}
+
+function mapPortfolioFieldsToS2(fields){
+  if(!fields||typeof fields!=='object') return false;
+  const mapped={
+    skills:Array.isArray(fields.skills)?fields.skills:[],
+    bio:String(fields.bio||'').trim(),
+    experience:Array.isArray(fields.experience)
+      ? fields.experience.map(function(e){
+          return [e.role,e.company,e.years,e.desc].filter(Boolean).join(' · ');
+        }).filter(Boolean).join('. ')
+      : String(fields.experience||'').trim(),
+    pride:''
+  };
+  return applyCVFieldsS2(mapped,true);
+}
+
+async function parseCvTextForPolku(text,base){
+  const trimmed=String(text||'').trim();
+  if(trimmed.replace(/\s/g,'').length<20) return false;
+  let parsed=false;
+  try{
+    const pr=await fetch((window.location.origin||'')+base+'/api/ai/cv-parse',{
+      method:'POST',
+      credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:trimmed})
+    });
+    const pd=await pr.json();
+    if(pr.ok&&pd.fields){
+      parsed=applyCVFieldsS2(pd.fields,true);
+      S.cvParsedAt=new Date().toISOString();
+    }
+  }catch(e){ console.warn('[cv-parse]',e); }
+  if(!parsed){
+    try{
+      const pr2=await fetch((window.location.origin||'')+base+'/api/ai/cv-portfolio-parse',{
+        method:'POST',
+        credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({text:trimmed})
+      });
+      const pd2=await pr2.json();
+      if(pr2.ok&&pd2.fields) parsed=mapPortfolioFieldsToS2(pd2.fields);
+    }catch(e2){ console.warn('[cv-portfolio-parse]',e2); }
+  }
+  if(!parsed) applyCVFieldsS2(null,true);
+  return parsed;
+}
+
 function applyCVFieldsS2(fields,force){
   let filled=false;
   if(fields){
@@ -1279,7 +1337,7 @@ function showCVS2Success(fileName,chars,parsed){
 
 function restoreCvS2State(){
   if(!S.cvExtractedS2)return;
-  window._cvExtractedS2=S.cvExtractedS2;
+  syncCvExtractedGlobal();
   if(S.cvFileName) showCVS2Success(S.cvFileName,(S.cvExtractedS2||'').length,!!S.cvParsedAt);
 }
 
@@ -1310,7 +1368,7 @@ async function uploadCVS2(file){
       S.cvExtractedS2=text;
     }
 
-    if(!text||plainLen<40){
+    if(!text||plainLen<20){
       showCVS2Partial(file.name,d.message||'Skannattu tai kuva-PDF ei aina toimi — kirjoita taustasi alle, se riittää.');
       applyCVFieldsS2(null,true);
       try{saveProgress();}catch(e){}
@@ -1320,27 +1378,9 @@ async function uploadCVS2(file){
       return;
     }
 
+    syncCvExtractedGlobal();
     status.textContent='⏳ AI poimii tiedot CV:stä...';
-    let parsed=false;
-    try{
-      const pr=await fetch((window.location.origin||'')+base+'/api/ai/cv-parse',{
-        method:'POST',
-        credentials:'include',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({text:text})
-      });
-      const pd=await pr.json();
-      if(pr.ok&&pd.fields){
-        applyCVFieldsS2(pd.fields,true);
-        S.cvParsedAt=new Date().toISOString();
-        parsed=true;
-      }else{
-        applyCVFieldsS2(null,true);
-      }
-    }catch(parseErr){
-      console.warn('[cv-parse]',parseErr);
-      applyCVFieldsS2(null,true);
-    }
+    const parsed=await parseCvTextForPolku(text,base);
 
     showCVS2Success(file.name,d.chars||text.length,parsed);
     try{saveProgress();}catch(e){}
@@ -1374,7 +1414,7 @@ async function analyzeSkills(){
   document.getElementById('analyzeBtn').disabled=true;
   load('skillFbT');
   const sys='Olet rekrytoija joka tekee taitokarttoituksen. Kirjoitat suomeksi. Tehtävä: anna täsmälleen 5–7 riviä, yksi vahvuus per rivi muodossa "Vahvuuden nimi — lyhyt perustelu miksi se näkyy juuri tässä tarinassa (1 lause)". Vahvuuden nimi: 2–5 sanaa, täsmällinen, konkreettinen — ei "tiimityö" ellei tarina todella tue sitä. Ota huomioon ala jonka tarinan perusteella päättelet. TÄRKEÄÄ: Älä toista hakijan listaamia taitoja sellaisenaan. Etsi PIILOTETUT vahvuudet — asioita joita henkilö ei itse maininnut mutta jotka näkyvät tavassa jolla hän kirjoittaa tai tilanteissa jotka hän kuvaa. Esim. jos henkilö kertoo rauhoitelleensa asiakkaan, hän ei kerro "paineensietokyvystä" — sinä kerrot sen. Ei johdantoa, ei lopetusta, ei ylistystä — vain lista.';
-  const txt=await ai(`Henkilön listamat taidot: ${S.skills.join(', ')}.\n\nHenkilön kertomus omin sanoin:\n${S.story}`,sys,420);
+  const txt=await ai(`Henkilön listamat taidot: ${S.skills.join(', ')}.\n\nHenkilön kertomus omin sanoin:\n${S.story}${cvContextForAi(2500)}`,sys,420);
   document.getElementById('skillFbT').textContent=txt||'Analyysiä ei saatavilla — tarkista yhteys.';
   S.aiFbT=txt;
   document.getElementById('skillFb').classList.add('show');
@@ -1482,7 +1522,7 @@ function checkGapAction(){
 async function runGap(){
   document.getElementById('gapBtn').disabled=true;
   load('gapFbT');
-  const cvContext=window._cvExtractedS2?`\n\nHakijan CV:\n${window._cvExtractedS2.slice(0,2000)}`:'';
+  const cvContext=cvContextForAi(2000);
   const sys=`Olet suomalainen rekrytoija joka antaa rehellisen arvion — ei kohteliaisuuksia. Kirjoitat suomeksi. Rakenne täsmälleen näin:
 
 ✓ VAHVUUDET (2–3): mitä hakijalla on joka oikeasti istuu — perustele ilmoituksen sanoilla
@@ -1557,7 +1597,7 @@ async function buildApp(){
   document.getElementById('buildBtn').disabled=true;
   load('appFbT');
   const sys=`Olet hakija joka kirjoittaa hakemuksen. Ensimmäinen persoona. Max 4 lausetta. TIUKAT SÄÄNNÖT: Aloita konkreettisella tosiasialla tai tilanteella — ei koskaan "Olen kiinnostunut" tai "Haluaisin hakea". Älä käytä sanoja: asiakaslähtöinen, tiimipelaaja, intohimoinen, proaktiivinen, motivoitunut, tuloshakuinen. Yksi konkreettinen tilanne tai luku pakollinen. Avainsanat ilmoituksesta luontevasti — ei listana. Kuulostaa ihmiseltä — ei tekoälylta. Lue läpi: kuulostaako tämä siltä että oikea ihminen kirjoitti sen? Jos kuulostaa tekoälylta — kirjoita uudelleen. Päättele rooli ilmoituksesta. Suomi.`;
-  const p=`Vahvuudet: ${S.strengths.join(', ')}\nTodisteet: ${S.evidence.filter(Boolean).join(' | ')}\nTarina: ${S.story}\nAvainsanat: ${S.atsAIT.slice(0,400)}\nIlmoitus: ${S.jobPosting.slice(0,800)}`;
+  const p=`Vahvuudet: ${S.strengths.join(', ')}\nTodisteet: ${S.evidence.filter(Boolean).join(' | ')}\nTarina: ${S.story}${cvContextForAi(1500)}\nAvainsanat: ${S.atsAIT.slice(0,400)}\nIlmoitus: ${S.jobPosting.slice(0,800)}`;
   const txt=await ai(p,sys,400);
   document.getElementById('appFbT').textContent=txt;
   document.getElementById('appFb').classList.add('show');
@@ -1654,6 +1694,7 @@ function finish(){const b=document.querySelector('#s12 .btn-sage');if(b){b.textC
 function syncSFromDom(){
   try{checkStory();}catch(e){}
   try{saveKW();}catch(e){}
+  syncCvExtractedGlobal();
   const job=document.getElementById('jobPosting');
   if(job) S.jobPosting=job.value;
   S.intQ=[0,1,2].map(i=>{
