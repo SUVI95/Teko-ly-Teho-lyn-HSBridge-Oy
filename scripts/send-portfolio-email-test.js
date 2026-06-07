@@ -9,12 +9,12 @@ const { portfolioPublicUrl } = require('../lib/portfolio-public-url');
 const { escapeHtml, duuniJobsEmail, quoteBlock, infoRow } = require('../lib/email-template');
 
 const to = (process.argv[2] || 'suvi@duunijobs.com').trim();
-const slug = (process.argv[3] || 'suvi').trim();
-const recruiterName = 'Matti Rekrytoija';
-const recruiterEmail = 'matti.rekry@yritys.fi';
+const slug = (process.argv[3] || 'dvasdv').trim();
+const recruiterName = 'Anna Rekrytoija';
+const recruiterEmail = 'rekry@yritys.fi';
 const url = portfolioPublicUrl(slug);
-const studentName = 'Etunimi Sukunimi';
-const firstName = 'Etunimi';
+const studentName = slug === 'dvasdv' ? 'Suvi Soppinen' : 'Etunimi Sukunimi';
+const firstName = studentName.split(/\s+/)[0];
 
 async function main() {
   console.log('Sending branded portfolio email previews to:', to);

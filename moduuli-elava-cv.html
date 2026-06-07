@@ -475,7 +475,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
         <div class="pb-dot" style="background:#ff5f56"></div>
         <div class="pb-dot" style="background:#ffbd2e"></div>
         <div class="pb-dot" style="background:#27c93f"></div>
-        <span style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);margin-left:.65rem;" id="previewUrlBar">portfolio.duunijobs.fi/sinun-nimi</span>
+        <span style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);margin-left:.65rem;" id="previewUrlBar">…</span>
       </div>
       <div id="previewLoading" class="preview-loading">
         <div class="preview-spinner"></div>
@@ -496,7 +496,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
   <div class="wrap">
     <span class="eyebrow">Vaihe 5 / 5</span>
     <h2 class="section-h">Julkaise — <em>saat oman URL:n</em></h2>
-    <p class="section-sub" style="margin-bottom:2rem;">Portfolio julkaistaan osoitteessa <strong>portfolio.duunijobs.fi/etunimi-sukunimi</strong>. Voit lisätä linkin CV:hen, LinkedIniin tai hakemukseen.</p>
+    <p class="section-sub" style="margin-bottom:2rem;">Portfolio julkaistaan osoitteessa <strong id="publishUrlExample">aipolku.duunijobs.fi/portfolio/etunimi-sukunimi</strong>. Voit lisätä linkin CV:hen, LinkedIniin tai hakemukseen.</p>
 
     <div class="progress-steps">
       <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">CV</div></div>
@@ -523,7 +523,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
           <h2 style="font-family:'Instrument Serif',serif;font-size:2rem;color:#f8f7f4;margin-bottom:.75rem;line-height:1.2;">Portfoliosi on nyt verkossa! 🎉</h2>
           <p style="font-size:.92rem;color:rgba(200,195,255,.6);margin-bottom:1.5rem;font-weight:300;">Kopioi alla oleva linkki CV:hen, hakemukseen tai LinkedIn-profiiliisi.</p>
           <div class="publish-url">
-            <span id="publishedUrl">portfolio.duunijobs.fi/...</span>
+            <span id="publishedUrl">…</span>
             <button class="copy-url-btn" onclick="copyPublishedUrl()">Kopioi</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:.85rem;text-align:left;background:rgba(255,255,255,.05);border-radius:10px;padding:1.25rem;margin-top:.5rem;">
@@ -891,9 +891,25 @@ function isLocalDev(){
 }
 
 function portfolioPublicUrl(slug){
+  if(!slug) return '';
   if(isLocalDev()) return (window.location.origin||'')+'/portfolio/'+slug;
   if(PORTFOLIO_USE_SUBDOMAIN) return 'https://'+PORTFOLIO_PUBLIC_HOST+'/'+slug;
   return PORTFOLIO_APP_ORIGIN.replace(/\/+$/,'')+'/portfolio/'+slug;
+}
+
+function portfolioPublicUrlDisplay(slug){
+  var url=portfolioPublicUrl(slug);
+  if(!url) return '…';
+  return url.replace(/^https?:\/\//,'');
+}
+
+function applyPublishedUrlUi(url){
+  if(!url) return;
+  window._publishedUrl=url;
+  var pub=document.getElementById('publishedUrl');
+  if(pub) pub.textContent=url.replace(/^https?:\/\//,'');
+  var openBtn=document.getElementById('openPortfolioBtn');
+  if(openBtn) openBtn.href=url;
 }
 
 function portfolioPreviewUrl(slug,previewQs){
@@ -909,6 +925,12 @@ function updateSlugUi(){
       ? (window.location.host||'localhost')+'/portfolio/'
       : (PORTFOLIO_USE_SUBDOMAIN ? PORTFOLIO_PUBLIC_HOST+'/' : PORTFOLIO_APP_ORIGIN.replace(/^https?:\/\//,'')+'/portfolio/');
   }
+  var slugEl=document.getElementById('d_slug');
+  var slugForUrl=(slugEl&&slugEl.value.trim())||portfolioSlug||'etunimi-sukunimi';
+  var pubEx=document.getElementById('publishUrlExample');
+  if(pubEx) pubEx.textContent=portfolioPublicUrlDisplay(slugForUrl);
+  var urlBar=document.getElementById('previewUrlBar');
+  if(urlBar&&portfolioSlug) urlBar.textContent=portfolioPublicUrlDisplay(portfolioSlug);
   var el=document.getElementById('d_slug');
   if(el&&portfolioSlug&&!el.value) el.value=portfolioSlug;
   var hint=document.getElementById('slugHint');
@@ -1051,11 +1073,7 @@ function loadPreview(){
   if(!portfolioSlug){loading.innerHTML='<span style="font-size:.9rem;color:var(--muted);">Täytä tiedot ensin ja paina "Rakenna esikatselu".</span>';return;}
   loading.style.display='flex'; frame.style.display='none';
   var urlBar=document.getElementById('previewUrlBar');
-  if(urlBar){
-    urlBar.textContent=isLocalDev()
-      ? (window.location.host||'localhost')+'/portfolio/'+portfolioSlug
-      : PORTFOLIO_PUBLIC_HOST+'/'+portfolioSlug;
-  }
+  if(urlBar) urlBar.textContent=portfolioPublicUrlDisplay(portfolioSlug);
   frame.onload=function(){loading.style.display='none';frame.style.display='block';};
   function openPreviewFrame(){
     var previewQs='preview=1&t='+Date.now();
@@ -1109,12 +1127,10 @@ async function publishPortfolio(){
     });
     var d=await r.json();
     if(!r.ok) throw new Error(d.error||'Julkaisuvirhe');
-    var url=portfolioPublicUrl(d.slug);
-    document.getElementById('publishedUrl').textContent=url;
-    document.getElementById('openPortfolioBtn').href=url;
+    var url=d.public_url||portfolioPublicUrl(d.slug);
+    applyPublishedUrlUi(url);
     document.getElementById('publishNotYet').style.display='none';
     document.getElementById('publishSuccess').style.display='block';
-    window._publishedUrl=url;
   }catch(e){
     alert('Virhe: '+e.message);
     btn.disabled=false; btn.textContent='🚀 Julkaise portfolio';
@@ -1122,7 +1138,8 @@ async function publishPortfolio(){
 }
 
 function copyPublishedUrl(){
-  var url=window._publishedUrl||document.getElementById('publishedUrl').textContent;
+  var url=window._publishedUrl||portfolioPublicUrl(portfolioSlug);
+  if(url&&!/^https?:\/\//i.test(url)) url='https://'+String(url).replace(/^\/+/,'');
   navigator.clipboard.writeText(url).then(function(){
     var btn=document.querySelector('.copy-url-btn');
     if(btn){btn.textContent='✓ Kopioitu';setTimeout(function(){btn.textContent='Kopioi';},2000);}
@@ -1166,6 +1183,7 @@ document.addEventListener('DOMContentLoaded',async function(){
       portfolioPublished=!!pf.published;
       slugManuallyEdited=!!pf.slug;
       if(pf.preview_token) previewToken=pf.preview_token;
+      if(pf.public_url&&pf.published) applyPublishedUrlUi(pf.public_url);
       Object.keys(pf).forEach(function(k){if(P.hasOwnProperty(k)&&pf[k]!=null)P[k]=pf[k];});
       if(pf.has_cv&&pf.cv_filename) cvFilenameOnServer=pf.cv_filename;
       updateCvStatusUi();

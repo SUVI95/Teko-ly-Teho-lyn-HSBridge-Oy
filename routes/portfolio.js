@@ -4,6 +4,7 @@ const pool = require('../database/db');
 const { authenticateToken } = require('../middleware/auth');
 const { makePreviewToken, verifyPreviewToken } = require('../lib/preview-token');
 const { notifyVisit, notifyContact, notifyCvDownload } = require('../lib/portfolio-notify');
+const { portfolioPublicUrl } = require('../lib/portfolio-public-url');
 
 const router = express.Router();
 
@@ -193,7 +194,12 @@ router.post('/save', authenticateToken, async (req, res) => {
         [uid, slug, ...vals.slice(1)]);
     }
     const userId = uid;
-    res.json({ success: true, slug, preview_token: makePreviewToken(slug, userId) });
+    res.json({
+      success: true,
+      slug,
+      preview_token: makePreviewToken(slug, userId),
+      public_url: portfolioPublicUrl(slug)
+    });
   } catch (e) {
     if (e.status) return res.status(e.status).json({ error: e.message });
     console.error('Portfolio save:', e);
@@ -209,7 +215,13 @@ router.post('/publish', authenticateToken, async (req, res) => {
       'UPDATE student_portfolios SET published=$2, updated_at=CURRENT_TIMESTAMP WHERE user_id=$1 RETURNING slug',
       [req.user.id, !!req.body.published]);
     if (!r.rows.length) return res.status(404).json({ error: 'Ei portfoliota' });
-    res.json({ success: true, slug: r.rows[0].slug, published: !!req.body.published });
+    const slug = r.rows[0].slug;
+    res.json({
+      success: true,
+      slug,
+      published: !!req.body.published,
+      public_url: portfolioPublicUrl(slug)
+    });
   } catch (e) { console.error('Portfolio publish:', e); res.status(500).json({ error: 'Virhe' }); }
 });
 
@@ -248,6 +260,7 @@ router.get('/mine', authenticateToken, async (req, res) => {
     const portfolio = r.rows[0] || null;
     if (portfolio) {
       portfolio.preview_token = makePreviewToken(portfolio.slug, req.user.id);
+      portfolio.public_url = portfolioPublicUrl(portfolio.slug);
     }
     res.json({ portfolio });
   } catch (e) { res.status(500).json({ error: 'Virhe' }); }
