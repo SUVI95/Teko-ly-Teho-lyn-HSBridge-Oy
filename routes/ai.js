@@ -786,4 +786,75 @@ router.post('/cv-extract-text', cvUpload.single('file'), async (req, res) => {
   }
 });
 
+/** Parse CV plain text into structured fields (name, city, experience, etc.). */
+router.post('/cv-parse', async (req, res) => {
+  try {
+    const text = String(req.body.text || '').trim();
+    if (text.replace(/\s/g, '').length < 40) {
+      return res.status(400).json({ error: 'CV-teksti on liian lyhyt analysoitavaksi.' });
+    }
+
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return res.status(503).json({ error: 'Tekoälypalvelu ei ole käytössä.' });
+    }
+
+    const system = [
+      'You extract structured facts from a Finnish CV or resume.',
+      'Reply with ONLY valid JSON (no markdown, no commentary) using this shape:',
+      '{"name":"","city":"","experience":"2-4 sentences in Finnish summarizing work, education, and relevant background","targetRole":"best guess of desired role or field in Finnish, or empty string","pride":"one concrete achievement from the CV in Finnish, or empty string"}',
+      'Use only information explicitly in the CV. Do not invent employers, dates, or skills.'
+    ].join(' ');
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${openaiApiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: text.slice(0, 12000) }
+        ],
+        max_tokens: 700,
+        temperature: 0.2,
+        response_format: { type: 'json_object' }
+      }),
+      signal: timeoutSignal(45000)
+    });
+
+    if (!response.ok) {
+      const details = await response.text().catch(() => '');
+      console.error('cv-parse OpenAI error:', details);
+      return res.status(502).json({ error: 'CV:n analysointi epäonnistui. Täytä kentät käsin.' });
+    }
+
+    const data = await response.json();
+    const raw = String(data.choices?.[0]?.message?.content || '').trim();
+    let fields;
+    try {
+      fields = JSON.parse(raw.replace(/^```json\s*|\s*```$/g, '').trim());
+    } catch (parseErr) {
+      console.error('cv-parse JSON parse failed:', raw.slice(0, 200));
+      return res.status(502).json({ error: 'CV:n tietojen jäsentäminen epäonnistui.' });
+    }
+
+    res.json({
+      fields: {
+        name: String(fields.name || '').trim(),
+        city: String(fields.city || '').trim(),
+        experience: String(fields.experience || '').trim(),
+        targetRole: String(fields.targetRole || fields.target_role || '').trim(),
+        pride: String(fields.pride || '').trim()
+      },
+      chars: text.length
+    });
+  } catch (err) {
+    console.error('cv-parse error:', err);
+    res.status(500).json({ error: 'CV:n analysointi epäonnistui.' });
+  }
+});
+
 module.exports = router;

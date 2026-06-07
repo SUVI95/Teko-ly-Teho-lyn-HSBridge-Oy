@@ -777,46 +777,168 @@ function loadLocal(key) {
   return '';
 }
 
+function apiBasePath() {
+  var pathname = window.location.pathname || '';
+  return (pathname.indexOf('/module/') > 0)
+    ? pathname.substring(0, pathname.indexOf('/module/')) : '';
+}
+
+function getElText(id) {
+  var el = document.getElementById(id);
+  if (!el) return '';
+  return (el.innerText || el.textContent || '').trim();
+}
+
+function persistModuleWork() {
+  if (moduleWorkApi && moduleWorkApi.saveNow) return moduleWorkApi.saveNow();
+  return Promise.resolve();
+}
+
+var WORK_FIELD_IDS = [
+  'bgName', 'bgCity', 'bgExp', 'bgTarget', 'bgPride',
+  'gammaLink', 'gammaPromptText', 'bannerImagePrompt'
+];
+
 function collectVisualsWork() {
-  var ids = [
-    'bgName', 'bgCity', 'bgExp', 'bgTarget', 'bgPride',
-    'gammaLink', 'canvaLink', 'bannerImagePrompt'
-  ];
-  var o = { pitchPromptData: pitchPromptData || '' };
-  ids.forEach(function (id) {
+  var o = {};
+  WORK_FIELD_IDS.forEach(function (id) {
     var el = document.getElementById(id);
     if (el) o[id] = el.value;
   });
+  o.cvExtractedText = window._cvExtracted || '';
+  o.cvFileName = window._cvFileName || '';
+  o.cvParsedAt = window._cvParsedAt || '';
+  o.bgAnalysis = getElText('bgAnalysisText');
+  o.improvedCV = window._improvedCV || getElText('cvImprovedText');
+  o.gammaPrompt = window._gammaPrompt || o.gammaPromptText || '';
+  o.linkedinPackage = window._linkedinPackage || getElText('linkedinText');
+  o.bannerImageUrl = window._bannerImageUrl || '';
   o.modulePath = modulePath || 'a';
+  if (window._bgSummary) o.bgSummary = window._bgSummary;
   return o;
 }
 
 function summarizeVisualsWork(d) {
   if (!d) return '';
   var parts = [];
-  if (d.pdCompany) parts.push('Aihe: ' + d.pdCompany);
-  if (d.pdRole) parts.push('Ongelma: ' + d.pdRole);
+  if (d.bgName) parts.push('Nimi: ' + d.bgName);
+  if (d.bgTarget) parts.push('Hakee: ' + d.bgTarget);
+  if (d.cvFileName) parts.push('CV: ' + d.cvFileName);
   if (d.gammaLink) parts.push('Gamma: ' + d.gammaLink);
-  if (d.canvaName) parts.push('Canva: ' + d.canvaName);
+  if (d.bgAnalysis) parts.push('Analyysi tallennettu');
+  if (d.improvedCV) parts.push('CV parannettu');
   return parts.join(' · ');
+}
+
+function showCVUploadSuccess(fileName, chars, parsed) {
+  var zone = document.getElementById('cvDropZone');
+  var status = document.getElementById('cvUploadStatus');
+  if (!zone || !status) return;
+  status.style.cssText = 'display:block;font-size:.85rem;padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;background:rgba(42,122,75,.08);border:1px solid rgba(42,122,75,.25);color:var(--accent3);';
+  var parsedNote = parsed
+    ? ' AI täytti kentät automaattisesti — tarkista ja muokkaa tarvittaessa.'
+    : ' Tarkista kentät ja paina "Analysoi taustani".';
+  status.innerHTML = '✓ <strong>' + fileName + '</strong> luettu (' + chars + ' merkkiä).' + parsedNote;
+  zone.style.borderColor = 'var(--accent3)';
+  zone.style.background = 'rgba(42,122,75,.03)';
+  zone.innerHTML = '<div style="font-size:1.5rem;margin-bottom:.35rem;">✓</div><strong style="display:block;color:var(--accent3);margin-bottom:.2rem;">' + fileName + ' tallennettu</strong><p style="font-size:.82rem;color:var(--muted);margin:0;">Tiedot tallennettu tiliisi</p>';
+}
+
+function applyCVFields(fields, force) {
+  if (!fields) return false;
+  var filled = false;
+  function set(id, val) {
+    var el = document.getElementById(id);
+    if (!el || !val) return;
+    if (force || !String(el.value || '').trim()) {
+      el.value = val;
+      filled = true;
+    }
+  }
+  set('bgName', fields.name);
+  set('bgCity', fields.city);
+  set('bgExp', fields.experience);
+  set('bgTarget', fields.targetRole);
+  set('bgPride', fields.pride);
+  return filled;
 }
 
 function applyVisualsWork(d) {
   if (!d) return;
   Object.keys(d).forEach(function (key) {
-    if (key === 'pitchPromptData') {
-      pitchPromptData = d.pitchPromptData || '';
-      var txt = document.getElementById('pitchPromptText');
-      if (txt && pitchPromptData) {
-        txt.value = pitchPromptData;
-        document.getElementById('pitchPromptResult').classList.add('show');
+    if (key === 'bgSummary') {
+      window._bgSummary = d.bgSummary || null;
+      return;
+    }
+    if (key === 'cvExtractedText') {
+      window._cvExtracted = d.cvExtractedText || '';
+      return;
+    }
+    if (key === 'cvFileName') {
+      window._cvFileName = d.cvFileName || '';
+      return;
+    }
+    if (key === 'cvParsedAt') {
+      window._cvParsedAt = d.cvParsedAt || '';
+      return;
+    }
+    if (key === 'improvedCV') {
+      window._improvedCV = d.improvedCV || '';
+      var cvImp = document.getElementById('cvImprovedText');
+      if (cvImp && window._improvedCV) {
+        cvImp.innerHTML = window._improvedCV.replace(/\n/g, '<br>');
+        document.getElementById('cvImprovedResult')?.classList.add('show');
       }
       return;
     }
+    if (key === 'gammaPrompt') {
+      window._gammaPrompt = d.gammaPrompt || '';
+      var gp = document.getElementById('gammaPromptText');
+      if (gp && window._gammaPrompt) {
+        gp.value = window._gammaPrompt;
+        document.getElementById('gammaPromptResult')?.classList.add('show');
+      }
+      return;
+    }
+    if (key === 'linkedinPackage') {
+      window._linkedinPackage = d.linkedinPackage || '';
+      var li = document.getElementById('linkedinText');
+      if (li && window._linkedinPackage) {
+        li.innerHTML = window._linkedinPackage.replace(/\n/g, '<br>');
+        document.getElementById('linkedinResult')?.classList.add('show');
+      }
+      return;
+    }
+    if (key === 'bgAnalysis') {
+      var ba = document.getElementById('bgAnalysisText');
+      if (ba && d.bgAnalysis) {
+        ba.innerHTML = String(d.bgAnalysis).replace(/\n/g, '<br>');
+        document.getElementById('bgAnalysisResult')?.classList.add('show');
+        document.getElementById('cvReveal').style.display = 'block';
+      }
+      return;
+    }
+    if (key === 'bannerImageUrl') {
+      window._bannerImageUrl = d.bannerImageUrl || '';
+      if (window._bannerImageUrl) {
+        var img = document.getElementById('bannerImage');
+        var dl = document.getElementById('bannerDownloadLink');
+        var br = document.getElementById('bannerImageResult');
+        if (img) img.src = window._bannerImageUrl;
+        if (dl) dl.href = window._bannerImageUrl;
+        if (br) br.style.display = 'block';
+      }
+      return;
+    }
+    if (key === 'modulePath') return;
     var el = document.getElementById(key);
     if (el && d[key] != null) el.value = d[key];
   });
   if (d.modulePath) setModulePath(d.modulePath);
+  if (d.cvFileName && d.cvExtractedText) {
+    showCVUploadSuccess(d.cvFileName, (d.cvExtractedText || '').length, !!d.cvParsedAt);
+  }
+  if (d.bgSummary) window._bgSummary = d.bgSummary;
 }
 
 var modulePath = 'a';
@@ -1263,22 +1385,38 @@ async function uploadCV(file) {
   var fd = new FormData();
   fd.append('file', file);
   try {
-    var base = (window.location.pathname.indexOf('/module/') > 0)
-      ? window.location.pathname.substring(0, window.location.pathname.indexOf('/module/')) : '';
+    var base = apiBasePath();
     var r = await fetch((window.location.origin || '') + base + '/api/ai/cv-extract-text', {
       method: 'POST', credentials: 'include', body: fd
     });
     var d = await r.json();
     if (!r.ok || !d.text) throw new Error(d.error || 'Lukeminen epäonnistui');
     window._cvExtracted = d.text;
-    status.style.cssText = 'display:block;font-size:.85rem;padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;background:rgba(42,122,75,.08);border:1px solid rgba(42,122,75,.25);color:var(--accent3);';
-    status.innerHTML = '✓ <strong>' + file.name + '</strong> luettu (' + d.chars + ' merkkiä) — paina "Analysoi taustani" alla.';
-    zone.style.borderColor = 'var(--accent3)';
-    zone.style.background = 'rgba(42,122,75,.03)';
-    zone.innerHTML = '<div style="font-size:1.5rem;margin-bottom:.35rem;">✓</div><strong style="display:block;color:var(--accent3);margin-bottom:.2rem;">' + file.name + ' luettu</strong><p style="font-size:.82rem;color:var(--muted);margin:0;">Paina "Analysoi taustani" alla</p>';
-    // Show the analyze button more prominently
+    window._cvFileName = file.name;
+
+    status.textContent = '⏳ AI poimii tiedot CV:stä...';
+    var parsed = false;
+    try {
+      var pr = await fetch((window.location.origin || '') + base + '/api/ai/cv-parse', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: d.text })
+      });
+      var pd = await pr.json();
+      if (pr.ok && pd.fields) {
+        applyCVFields(pd.fields, true);
+        window._cvParsedAt = new Date().toISOString();
+        parsed = true;
+      }
+    } catch (parseErr) {
+      console.warn('[cv-parse]', parseErr);
+    }
+
+    showCVUploadSuccess(file.name, d.chars || d.text.length, parsed);
     var btn = document.getElementById('analyzeBtn');
     if (btn) { btn.style.background = 'var(--accent3)'; btn.style.boxShadow = '0 4px 16px rgba(42,122,75,.4)'; }
+    await persistModuleWork();
   } catch(e) {
     status.style.cssText = 'display:block;font-size:.85rem;padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;background:rgba(199,91,58,.08);border:1px solid rgba(199,91,58,.2);color:var(--accent2);';
     status.textContent = '⚠ ' + (e.message || 'Virhe') + ' — täytä kentät alla käsin.';
@@ -1322,7 +1460,7 @@ async function analyzeBG() {
     // Store for later use
     window._bgSummary = { name, city, exp, target, pride, cvText, analysis };
     document.getElementById('cvReveal').style.display = 'block';
-    saveLocal('bgAnalysis', analysis);
+    await persistModuleWork();
   } catch(e) { txt.textContent = (e && e.message) || 'Yhteysvirhe.'; }
   btn.disabled = false; btn.textContent = '✦ Analysoi taustani';
 }
@@ -1351,7 +1489,7 @@ async function generatePersonalGamma() {
       summary, 1200);
     txt.value = prompt;
     window._gammaPrompt = prompt;
-    saveLocal('gammaPrompt', prompt);
+    await persistModuleWork();
   } catch(e) { txt.value = (e && e.message) || 'Yhteysvirhe.'; }
   btn.disabled = false; btn.textContent = '✦ Generoi Gamma-prompti';
 }
@@ -1388,6 +1526,7 @@ async function improveCVContent() {
       input, 800);
     txt.innerHTML = improved.replace(/\n/g, '<br>');
     window._improvedCV = improved;
+    await persistModuleWork();
   } catch(e) { txt.textContent = (e && e.message) || 'Yhteysvirhe.'; }
   btn.disabled = false; btn.textContent = '✦ Paranna CV-sisältö';
 }
@@ -1424,11 +1563,11 @@ async function generateLinkedInPackage() {
       600);
     txt.innerHTML = pkg.replace(/\n/g, '<br>');
     window._linkedinPackage = pkg;
-    // Suggest a banner image prompt based on target
     var bannerField = document.getElementById('bannerImagePrompt');
     if (bannerField && !bannerField.value) {
       bannerField.value = 'professional Nordic workspace, clean minimal desk, soft natural light, person working confidently, high quality photography, LinkedIn banner style';
     }
+    await persistModuleWork();
   } catch(e) { txt.textContent = (e && e.message) || 'Yhteysvirhe.'; }
   btn.disabled = false; btn.textContent = '✦ Generoi LinkedIn-paketti';
 }
@@ -1482,6 +1621,8 @@ async function generateBannerImage() {
     img.src = d.imageUrl;
     dl.href = d.imageUrl;
     result.style.display = 'block';
+    window._bannerImageUrl = d.imageUrl;
+    await persistModuleWork();
   } catch(e) {
     alert('Kuvan generointi epäonnistui: ' + (e.message || 'Tuntematon virhe'));
   }
@@ -1510,13 +1651,9 @@ document.addEventListener('DOMContentLoaded',async function(){
       collect:collectVisualsWork,
       apply:applyVisualsWork,
       summarize:summarizeVisualsWork,
-      fieldIds:[
-        'canvaName','canvaRole','canvaTagline','canvaFormat','gammaLink',
-        'pdCompany','pdRole','pdCompanyKnowledge','pdName','pdAchievements',
-        'pdFit','pdProblem','pdValue','canvaReflection'
-      ]
+      fieldIds: WORK_FIELD_IDS
     });
-    modulePath=(collectVisualsWork().modulePath)||'a';
+    modulePath = (collectVisualsWork().modulePath) || 'a';
   } else {
     setModulePath('a');
   }
@@ -1524,16 +1661,10 @@ document.addEventListener('DOMContentLoaded',async function(){
   updateCanvaFormatHint();
   updateMockup();
   updatePdPreview();
-  if(window.loadReflection)window.loadReflection('m_esitykset_reflection');
-
-  // Track pitch deck fields for live preview
-  ['pdCompany','pdRole','pdName'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el)el.addEventListener('input',updatePdPreview);
-  });
+  if (window.loadReflection) window.loadReflection('m_esitykset_reflection');
 
   // Gamma link success indicator
-  var gl=document.getElementById('gammaLink');
+  var gl = document.getElementById('gammaLink');
   if(gl){
     gl.addEventListener('input',function(){
       saveLocal('gammaLink',this.value);

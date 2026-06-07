@@ -195,9 +195,14 @@
       if (d.defence && d.defence.q1) lines.push('Puolustus 1: ' + d.defence.q1);
     }
     if (moduleId.indexOf('esitykset') >= 0) {
-      if (d.pdCompany) lines.push('Aihe: ' + d.pdCompany);
-      if (d.pdRole) lines.push('Ongelma: ' + d.pdRole);
+      if (d.bgName) lines.push('Nimi: ' + d.bgName);
+      if (d.bgTarget) lines.push('Hakee: ' + d.bgTarget);
+      if (d.bgCity) lines.push('Paikkakunta: ' + d.bgCity);
+      if (d.cvFileName) lines.push('CV: ' + d.cvFileName);
       if (d.gammaLink) lines.push('Gamma-linkki: ' + d.gammaLink);
+      if (d.bgAnalysis) lines.push('Taustaanalyysi tallennettu');
+      if (d.improvedCV) lines.push('Parannettu CV tallennettu');
+      if (d.linkedinPackage) lines.push('LinkedIn-paketti tallennettu');
     }
     return escapeHtml(lines.filter(Boolean).join('\n\n') || parsed.summary || 'Tallennettu');
   }
