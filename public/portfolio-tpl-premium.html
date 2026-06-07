@@ -210,7 +210,15 @@ footer{max-width:1100px;margin:0 auto;padding:1.5rem 2.5rem;display:flex;justify
 <div class="loading-screen" id="loadingScreen"><div class="ldsp"></div></div>
 <div id="app"></div>
 <script>
-var slug=location.pathname.split('/portfolio/')[1];
+function portfolioSlugFromPath(){
+  var path=location.pathname.replace(/^\/+|\/+$/g,'');
+  if(!path) return '';
+  var seg=path.split('/').filter(Boolean);
+  if(seg[0]==='portfolio'&&seg[1]) return seg[1].split('?')[0];
+  if(seg.length===1) return seg[0].split('?')[0];
+  return '';
+}
+var slug=portfolioSlugFromPath();
 if(!slug){show404();}else{
 slug=slug.replace(/\/+$/,'').split('?')[0];
 var qs=new URLSearchParams(location.search);

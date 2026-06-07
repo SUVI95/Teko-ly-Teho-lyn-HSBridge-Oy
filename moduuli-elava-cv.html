@@ -464,7 +464,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
         <div class="pb-dot" style="background:#ff5f56"></div>
         <div class="pb-dot" style="background:#ffbd2e"></div>
         <div class="pb-dot" style="background:#27c93f"></div>
-        <span style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);margin-left:.65rem;" id="previewUrlBar">duunijobs.fi/portfolio/sinun-nimi</span>
+        <span style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);margin-left:.65rem;" id="previewUrlBar">portfolio.duunijobs.fi/sinun-nimi</span>
       </div>
       <div id="previewLoading" class="preview-loading">
         <div class="preview-spinner"></div>
@@ -485,7 +485,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
   <div class="wrap">
     <span class="eyebrow">Vaihe 5 / 5</span>
     <h2 class="section-h">Julkaise — <em>saat oman URL:n</em></h2>
-    <p class="section-sub" style="margin-bottom:2rem;">Portfolio julkaistaan osoitteessa duunijobs.fi/portfolio/sinun-nimi. Voit lisätä linkin CV:hen, LinkedIniin tai hakemukseen.</p>
+    <p class="section-sub" style="margin-bottom:2rem;">Portfolio julkaistaan osoitteessa <strong>portfolio.duunijobs.fi/etunimi-sukunimi</strong>. Voit lisätä linkin CV:hen, LinkedIniin tai hakemukseen.</p>
 
     <div class="progress-steps">
       <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">CV</div></div>
@@ -512,7 +512,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
           <h2 style="font-family:'Instrument Serif',serif;font-size:2rem;color:#f8f7f4;margin-bottom:.75rem;line-height:1.2;">Portfoliosi on nyt verkossa! 🎉</h2>
           <p style="font-size:.92rem;color:rgba(200,195,255,.6);margin-bottom:1.5rem;font-weight:300;">Kopioi alla oleva linkki CV:hen, hakemukseen tai LinkedIn-profiiliisi.</p>
           <div class="publish-url">
-            <span id="publishedUrl">duunijobs.fi/portfolio/...</span>
+            <span id="publishedUrl">portfolio.duunijobs.fi/...</span>
             <button class="copy-url-btn" onclick="copyPublishedUrl()">Kopioi</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:.85rem;text-align:left;background:rgba(255,255,255,.05);border-radius:10px;padding:1.25rem;margin-top:.5rem;">
@@ -829,10 +829,30 @@ function suggestSlugFromName(){
   if(s){ el.value=s; portfolioSlug=s; }
 }
 
+var PORTFOLIO_PUBLIC_HOST='portfolio.duunijobs.fi';
+
+function isLocalDev(){
+  var h=window.location.hostname||'';
+  return h==='localhost'||h==='127.0.0.1';
+}
+
+function portfolioPublicUrl(slug){
+  if(isLocalDev()) return (window.location.origin||'')+'/portfolio/'+slug;
+  return 'https://'+PORTFOLIO_PUBLIC_HOST+'/'+slug;
+}
+
+function portfolioPreviewUrl(slug,previewQs){
+  if(isLocalDev()) return (apiBase()||window.location.origin||'')+'/portfolio/'+slug+'?'+previewQs;
+  return 'https://'+PORTFOLIO_PUBLIC_HOST+'/'+slug+'?'+previewQs;
+}
+
 function updateSlugUi(){
-  var host=(window.location.host||'duunijobs.fi');
   var prefix=document.getElementById('slugHostPrefix');
-  if(prefix) prefix.textContent=host+'/portfolio/';
+  if(prefix){
+    prefix.textContent=isLocalDev()
+      ? (window.location.host||'localhost')+'/portfolio/'
+      : PORTFOLIO_PUBLIC_HOST+'/';
+  }
   var el=document.getElementById('d_slug');
   if(el&&portfolioSlug&&!el.value) el.value=portfolioSlug;
   var hint=document.getElementById('slugHint');
@@ -972,12 +992,16 @@ function loadPreview(){
   if(!portfolioSlug){loading.innerHTML='<span style="font-size:.9rem;color:var(--muted);">Täytä tiedot ensin ja paina "Rakenna esikatselu".</span>';return;}
   loading.style.display='flex'; frame.style.display='none';
   var urlBar=document.getElementById('previewUrlBar');
-  if(urlBar) urlBar.textContent=(window.location.host||'duunijobs.fi')+'/portfolio/'+portfolioSlug;
+  if(urlBar){
+    urlBar.textContent=isLocalDev()
+      ? (window.location.host||'localhost')+'/portfolio/'+portfolioSlug
+      : PORTFOLIO_PUBLIC_HOST+'/'+portfolioSlug;
+  }
   frame.onload=function(){loading.style.display='none';frame.style.display='block';};
   function openPreviewFrame(){
     var previewQs='preview=1&t='+Date.now();
     if(previewToken) previewQs+='&pt='+encodeURIComponent(previewToken);
-    frame.src=apiBase()+'/portfolio/'+portfolioSlug+'?'+previewQs;
+    frame.src=portfolioPreviewUrl(portfolioSlug,previewQs);
   }
   if(previewToken){ openPreviewFrame(); return; }
   fetch(apiBase()+'/api/portfolio/mine',{credentials:'include'})
@@ -1012,10 +1036,6 @@ function buildPublishChecklist(){
   });
   var btn=document.getElementById('publishBtn');
   if(btn) btn.disabled=!allOk;
-}
-
-function portfolioPublicUrl(slug){
-  return (window.location.origin||'')+'/portfolio/'+slug;
 }
 
 async function publishPortfolio(){

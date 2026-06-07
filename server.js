@@ -23,6 +23,7 @@ const {
   isGiftRecipient
 } = require('./config/personal-gift-access');
 const { resetKuopioDemoUserData } = require('./lib/reset-kuopio-demo-user-data');
+const { portfolioPublicUrl, isPortfolioSubdomain } = require('./lib/portfolio-public-url');
 
 const KUOPIO_DEMO_LS_CLEAR = '<script>(function(){try{if(/(?:^|;\\s*)kuopio_demo=1(?:;|$)/.test(document.cookie))localStorage.clear();}catch(e){}})();</script>';
 
@@ -175,6 +176,16 @@ app.get('/homework', (req, res) => {
 
 // Serve HTML files
 app.get('/', (req, res) => {
+  if (isPortfolioSubdomain(req)) {
+    return res.status(404).type('html').send(
+      '<!DOCTYPE html><html lang="fi"><head><meta charset="UTF-8"><title>Portfolio</title></head>'
+      + '<body style="font-family:system-ui,sans-serif;text-align:center;padding:3rem;color:#333;">'
+      + '<h1>portfolio.duunijobs.fi</h1>'
+      + '<p>Henkilökohtainen portfolio löytyy osoitteesta <strong>/etunimi-sukunimi</strong>.</p>'
+      + '<p style="color:#666;margin-top:1.5rem;"><a href="https://aipolku.duunijobs.fi">Takaisin AI Polkuun</a></p>'
+      + '</body></html>'
+    );
+  }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
@@ -376,18 +387,33 @@ app.get('/ai-simulation-lab', (req, res) => {
   res.redirect(302, '/ai-simulation-lab.html');
 });
 
-// Public portfolio page — duunijobs.fi/portfolio/slug (HTML shell; data via /api/portfolio/view)
-app.get('/portfolio/:slug', async (req, res) => {
-  try {
-    const templatePath = path.join(__dirname, 'public', 'portfolio-tpl-premium.html');
-    if (!fs.existsSync(templatePath)) return res.status(404).send('Portfolio-sivua ei löydy.');
-    res.set('Cache-Control', 'public, max-age=60');
-    res.sendFile(templatePath);
-  } catch (e) {
-    const fallback = path.join(__dirname, 'public', 'portfolio-tpl-premium.html');
-    if (fs.existsSync(fallback)) return res.set('Cache-Control', 'public, max-age=60').sendFile(fallback);
-    res.status(500).send('Virhe');
-  }
+const PORTFOLIO_RESERVED = new Set([
+  'api', 'login', 'register', 'module', 'portfolio', 'admin', 'uploads', 'js',
+  'homework', 'onboarding', 'setup-production', 'final', 'go', 'course-feedback',
+  'reset-password', 'ai-simulation-lab', 'favicon.ico', 'robots.txt'
+]);
+
+function sendPortfolioTemplate(req, res) {
+  const templatePath = path.join(__dirname, 'public', 'portfolio-tpl-premium.html');
+  if (!fs.existsSync(templatePath)) return res.status(404).send('Portfolio-sivua ei löydy.');
+  res.set('Cache-Control', 'public, max-age=60');
+  return res.sendFile(templatePath);
+}
+
+// Legacy aipolku path — public visits redirect to portfolio.duunijobs.fi/slug
+app.get('/portfolio/:slug', (req, res) => {
+  const slug = req.params.slug;
+  if (req.query.preview === '1') return sendPortfolioTemplate(req, res);
+  return res.redirect(301, portfolioPublicUrl(slug));
+});
+
+// portfolio.duunijobs.fi/etunimi-sukunimi
+app.get('/:slug', (req, res, next) => {
+  if (!isPortfolioSubdomain(req)) return next();
+  const slug = String(req.params.slug || '').toLowerCase();
+  if (!slug || PORTFOLIO_RESERVED.has(slug) || slug.includes('.')) return next();
+  if (req.path !== `/${req.params.slug}`) return next();
+  return sendPortfolioTemplate(req, res);
 });
 
 /** Modules hidden from students; only admins may open (see adminOnlyModuleIds in public/index.html). */
