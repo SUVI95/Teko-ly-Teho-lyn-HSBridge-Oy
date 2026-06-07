@@ -1,7 +1,7 @@
 /**
  * Personal gift modules (Sonja, Satu, …).
  * Email allowlist + first-name fallback when registration email differs.
- * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL / VILLE_GIFT_EMAIL / MINNA_GIFT_EMAIL / SANTERI_GIFT_EMAIL / SANTERI_AUTOMATIO_GIFT_EMAIL (comma-separated).
+ * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL / VILLE_GIFT_EMAIL / MINNA_GIFT_EMAIL / SANTERI_GIFT_EMAIL (comma-separated).
  */
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -75,15 +75,6 @@ const GIFTS = {
     moduleId: 'santeri-ai-haastattelu',
     firstName: 'santeri',
     emails: parseEmailList(process.env.SANTERI_GIFT_EMAIL, ['santeri.kekarainen@gmail.com'])
-  },
-  santeri_automaatio: {
-    moduleIds: ['moduuli1-ai-automaatio', 'moduuli1b-ai-automaatio'],
-    firstName: 'santeri',
-    emails: parseEmailList(process.env.SANTERI_AUTOMATIO_GIFT_EMAIL || process.env.SANTERI_GIFT_EMAIL, [
-      'santeri.kekarainen@gmail.com',
-      'testi.opiskelija@example.com',
-      'test.opiskelija@hsbridge.local'
-    ])
   },
   ville: {
     moduleId: 'ville-ai-opas-2025',
