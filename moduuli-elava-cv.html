@@ -228,6 +228,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
     <button class="btn-hero" onclick="showScreen('s-cv')">
       Aloita → <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
     </button>
+    <div id="resumePortfolioBanner" style="display:none;margin-top:2rem;padding:1.25rem 1.5rem;background:var(--card);border:1px solid var(--border);border-radius:14px;">
+      <div style="font-size:.95rem;font-weight:600;color:var(--ink);margin-bottom:.35rem;">Sinulla on portfolio jo tallennettuna</div>
+      <div style="font-size:.84rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Voit muokata tietoja, vaihtaa osoitetta (ennen julkaisua tai alla olevalla kentällä) ja julkaista uudelleen.</div>
+      <button class="btn-primary" type="button" onclick="showScreen('s-details')" style="margin-right:.5rem;">Muokkaa portfolioa</button>
+      <button class="btn-secondary" type="button" onclick="showScreen('s-preview')">Esikatselu</button>
+    </div>
   </div>
 </div>
 
@@ -360,7 +366,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
       <div class="field-row">
         <div class="field-group">
           <label class="field-label">Nimi *</label>
-          <input class="field-input" id="d_name" placeholder="Koko nimi" oninput="P.full_name=this.value;updateInitials()">
+          <input class="field-input" id="d_name" placeholder="Koko nimi" oninput="P.full_name=this.value;updateInitials();suggestSlugFromName()">
         </div>
         <div class="field-group">
           <label class="field-label">Paikkakunta</label>
@@ -384,6 +390,20 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
           <label class="field-label">LinkedIn URL (valinnainen)</label>
           <input class="field-input" id="d_linkedin" placeholder="linkedin.com/in/..." oninput="P.linkedin_url=this.value">
         </div>
+      </div>
+    </div>
+
+    <!-- PORTFOLIO URL -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;">🔗 Portfolio-osoite</h3>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Tämä on julkinen linkkisi. Osoite luodaan ensimmäisellä tallennuksella nimestäsi — voit muuttaa sitä täällä ennen julkaisua tai korjata julkaistun osoitteen.</p>
+      <div class="field-group">
+        <label class="field-label">URL-polku</label>
+        <div style="display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff;">
+          <span id="slugHostPrefix" style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);padding:.75rem .85rem;background:var(--bg2);border-right:1px solid var(--border);white-space:nowrap;">…/portfolio/</span>
+          <input class="field-input" id="d_slug" style="border:none;border-radius:0;flex:1;" placeholder="nimi-sukunimi" oninput="onSlugInput(this.value)">
+        </div>
+        <p id="slugHint" style="font-size:.78rem;color:var(--muted);margin-top:.5rem;line-height:1.5;">Vain pienet kirjaimet, numerot ja väliviiva. Esim. <code style="font-family:'DM Mono',monospace;">maria-korhonen</code></p>
       </div>
     </div>
 
@@ -530,6 +550,8 @@ var selectedThemeClass = '';
 var photoUploaded = false;
 var portfolioSlug = '';
 var previewToken = '';
+var portfolioPublished = false;
+var slugManuallyEdited = false;
 
 function apiBase(){
   var p=window.location.pathname;
@@ -566,7 +588,7 @@ function showScreen(id){
   window.scrollTo({top:0,behavior:'smooth'});
   if(id==='s-preview') loadPreview();
   if(id==='s-publish') buildPublishChecklist();
-  if(id==='s-details') syncDetailsFields();
+  if(id==='s-details'){ syncDetailsFields(); updateSlugUi(); }
 }
 
 // ══════════════════════════════════════════
@@ -773,6 +795,8 @@ function syncDetailsFields(){
       return [e.role||e.title||'',e.company||'',e.years||'',e.desc||''].filter(Boolean).join(' · ');
     }).join('\n');
   }
+  var slugEl=document.getElementById('d_slug');
+  if(slugEl&&portfolioSlug) slugEl.value=portfolioSlug;
   updateInitials();
 }
 
@@ -782,6 +806,41 @@ function updateInitials(){
   var ini=parts.length>=2?parts[0][0]+parts[parts.length-1][0]:nm.substring(0,2);
   var el=document.getElementById('photoInitials');
   if(el) el.textContent=ini.toUpperCase()||'?';
+}
+
+function slugifyClient(name){
+  return (name||'').toLowerCase()
+    .replace(/[äå]/g,'a').replace(/ö/g,'o').replace(/ü/g,'u')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,80);
+}
+
+function onSlugInput(v){
+  slugManuallyEdited=true;
+  portfolioSlug=String(v||'').toLowerCase().replace(/[^a-z0-9-]/g,'');
+  var el=document.getElementById('d_slug');
+  if(el&&el.value!==portfolioSlug) el.value=portfolioSlug;
+}
+
+function suggestSlugFromName(){
+  if(slugManuallyEdited) return;
+  var el=document.getElementById('d_slug');
+  if(!el) return;
+  var s=slugifyClient((document.getElementById('d_name')||{}).value||'');
+  if(s){ el.value=s; portfolioSlug=s; }
+}
+
+function updateSlugUi(){
+  var host=(window.location.host||'duunijobs.fi');
+  var prefix=document.getElementById('slugHostPrefix');
+  if(prefix) prefix.textContent=host+'/portfolio/';
+  var el=document.getElementById('d_slug');
+  if(el&&portfolioSlug&&!el.value) el.value=portfolioSlug;
+  var hint=document.getElementById('slugHint');
+  if(hint){
+    hint.textContent=portfolioPublished
+      ? 'Portfolio on julkaistu. Voit vaihtaa osoitteen ja tallentaa — vanha linkki lakkaa toimimasta.'
+      : 'Osoite päivittyy automaattisesti kun vaihdat nimeä (ellei muokkaa osoitetta itse). Tallenna esikatselulla.';
+  }
 }
 
 function parseSkills(txt){
@@ -877,14 +936,19 @@ async function savePortfolioData(){
     });
   }
 
+  var slugEl=document.getElementById('d_slug');
+  var payload=Object.assign({},P,{slug:(slugEl&&slugEl.value)?slugEl.value.trim():portfolioSlug});
+
   var r=await fetch(apiBase()+'/api/portfolio/save',{
     method:'POST',credentials:'include',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(P)
+    body:JSON.stringify(payload)
   });
   var d=await r.json();
   if(!r.ok) throw new Error(d.error||'Tallennusvirhe');
   portfolioSlug=d.slug;
+  if(slugEl) slugEl.value=d.slug;
+  slugManuallyEdited=true;
   if(d.preview_token) previewToken=d.preview_token;
   return d.slug;
 }
@@ -997,8 +1061,12 @@ document.addEventListener('DOMContentLoaded',async function(){
     if(d.portfolio){
       var pf=d.portfolio;
       portfolioSlug=pf.slug;
+      portfolioPublished=!!pf.published;
+      slugManuallyEdited=!!pf.slug;
       if(pf.preview_token) previewToken=pf.preview_token;
       Object.keys(pf).forEach(function(k){if(P.hasOwnProperty(k)&&pf[k]!=null)P[k]=pf[k];});
+      var banner=document.getElementById('resumePortfolioBanner');
+      if(banner) banner.style.display='block';
       if(pf.has_photo){
         photoUploaded=true;
         var prev=document.getElementById('photoPreview');
@@ -1007,6 +1075,7 @@ document.addEventListener('DOMContentLoaded',async function(){
       syncDetailsFields();
       syncFormFields();
       restoreThemePicker();
+      updateSlugUi();
     }
   }catch(e){}
 });

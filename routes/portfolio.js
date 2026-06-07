@@ -69,6 +69,55 @@ function makeSlug(name) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 80);
 }
 
+function validateSlug(slug) {
+  return typeof slug === 'string'
+    && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
+    && slug.length >= 2
+    && slug.length <= 80;
+}
+
+async function uniqueSlug(candidate, excludeUserId) {
+  let slug = candidate;
+  const dup = await pool.query(
+    'SELECT user_id FROM student_portfolios WHERE slug=$1 AND user_id != $2',
+    [slug, excludeUserId]
+  );
+  if (dup.rows.length) slug = slug + '-' + Date.now().toString(36).slice(-4);
+  return slug;
+}
+
+async function resolveSlugForSave(uid, d, existingSlug, isPublished) {
+  const requested = d.slug ? String(d.slug).toLowerCase().trim() : '';
+  if (requested) {
+    if (!validateSlug(requested)) {
+      const err = new Error('Osoite saa sisältää vain pieniä kirjaimia, numeroita ja väliviivoja.');
+      err.status = 400;
+      throw err;
+    }
+    if (requested !== existingSlug) {
+      const dup = await pool.query(
+        'SELECT user_id FROM student_portfolios WHERE slug=$1 AND user_id != $2',
+        [requested, uid]
+      );
+      if (dup.rows.length) {
+        const err = new Error('Tämä portfolio-osoite on jo käytössä. Valitse toinen.');
+        err.status = 409;
+        throw err;
+      }
+    }
+    return requested;
+  }
+  if (!existingSlug) {
+    const fromName = makeSlug(d.full_name) || 'portfolio';
+    return uniqueSlug(fromName, uid);
+  }
+  if (!isPublished) {
+    const fromName = makeSlug(d.full_name);
+    if (fromName && fromName !== existingSlug) return uniqueSlug(fromName, uid);
+  }
+  return existingSlug;
+}
+
 // Save / update portfolio
 router.post('/save', authenticateToken, async (req, res) => {
   try {
@@ -77,7 +126,9 @@ router.post('/save', authenticateToken, async (req, res) => {
     const d = req.body;
     if (!d.full_name) return res.status(400).json({ error: 'Nimi puuttuu' });
 
-    const existing = await pool.query('SELECT slug FROM student_portfolios WHERE user_id=$1', [uid]);
+    const existing = await pool.query(
+      'SELECT slug, published FROM student_portfolios WHERE user_id=$1', [uid]
+    );
     let slug;
 
     const vals = [uid, d.full_name, d.tagline||null, d.bio||null, d.city||null, d.target_role||null,
@@ -89,31 +140,34 @@ router.post('/save', authenticateToken, async (req, res) => {
       d.template||'modern', d.career_summary||null, d.hidden_strengths||null];
 
     if (existing.rows.length > 0) {
-      slug = existing.rows[0].slug;
+      const isPublished = existing.rows[0].published === true;
+      slug = await resolveSlugForSave(uid, d, existing.rows[0].slug, isPublished);
       await pool.query(`UPDATE student_portfolios SET
-        full_name=$2, tagline=$3, bio=$4, city=$5, target_role=$6,
-        email_public=$7, phone_public=$8, linkedin_url=$9,
-        experience=$10, education=$11, skills=$12, achievements=$13,
-        languages=$14, certificates=$15,
-        brand_color=$16, brand_accent=$17, brand_bg=$18, template=$19,
-        career_summary=$20, hidden_strengths=$21, updated_at=CURRENT_TIMESTAMP
-        WHERE user_id=$1`, vals);
+        slug=$2, full_name=$3, tagline=$4, bio=$5, city=$6, target_role=$7,
+        email_public=$8, phone_public=$9, linkedin_url=$10,
+        experience=$11, education=$12, skills=$13, achievements=$14,
+        languages=$15, certificates=$16,
+        brand_color=$17, brand_accent=$18, brand_bg=$19, template=$20,
+        career_summary=$21, hidden_strengths=$22, updated_at=CURRENT_TIMESTAMP
+        WHERE user_id=$1`, [uid, slug, ...vals.slice(1)]);
     } else {
-      slug = makeSlug(d.full_name);
-      const dup = await pool.query('SELECT id FROM student_portfolios WHERE slug=$1', [slug]);
-      if (dup.rows.length > 0) slug = slug + '-' + Date.now().toString(36).slice(-4);
+      slug = await resolveSlugForSave(uid, d, null, false);
       await pool.query(`INSERT INTO student_portfolios (
         user_id, slug, full_name, tagline, bio, city, target_role,
         email_public, phone_public, linkedin_url,
         experience, education, skills, achievements, languages, certificates,
         brand_color, brand_accent, brand_bg, template,
         career_summary, hidden_strengths
-      ) VALUES ($1,$22,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)`,
-        [...vals, slug]);
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)`,
+        [uid, slug, ...vals.slice(1)]);
     }
     const userId = uid;
     res.json({ success: true, slug, preview_token: makePreviewToken(slug, userId) });
-  } catch (e) { console.error('Portfolio save:', e); res.status(500).json({ error: 'Tallennus epäonnistui' }); }
+  } catch (e) {
+    if (e.status) return res.status(e.status).json({ error: e.message });
+    console.error('Portfolio save:', e);
+    res.status(500).json({ error: 'Tallennus epäonnistui' });
+  }
 });
 
 // Publish / unpublish
