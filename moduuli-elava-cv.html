@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elävä CV — Rakenna portfolio joka erottuu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f0f1a;--ink2:#2d2d44;--paper:#f8f7f4;--paper2:#f0ede7;
+  --warm:#e8e0d4;--v:#7c6ef2;--v2:#5b4de0;--em:#10b981;
+  --accent:#7c6ef2;--accent2:#c75b3a;--accent3:#059669;
+  --border:rgba(15,15,26,.1);--border2:rgba(15,15,26,.18);
+  --shadow:0 2px 20px rgba(15,15,26,.07);--shadow-lg:0 12px 48px rgba(15,15,26,.14);
+  --muted:#6b6880;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;font-weight:400;line-height:1.7;overflow-x:hidden;}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(248,247,244,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2rem;gap:1rem;}
+.nav-tag{font-family:'DM Mono',monospace;font-size:.62rem;font-weight:500;color:var(--v);letter-spacing:.14em;text-transform:uppercase;background:rgba(124,110,242,.08);border:1px solid rgba(124,110,242,.2);padding:3px 10px;border-radius:4px;}
+.nav-title{font-size:.82rem;color:var(--muted);font-weight:400;}
+.nav-right{margin-left:auto;display:flex;gap:.65rem;align-items:center;}
+
+/* ── PROGRESS ── */
+#prog-bar{position:fixed;top:62px;left:0;height:2px;background:linear-gradient(90deg,var(--v),var(--em));z-index:199;transition:width .5s;width:0%;}
+
+/* ── STEPS ── */
+.steps-bar{position:fixed;top:64px;left:0;right:0;z-index:198;background:rgba(248,247,244,.96);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;padding:0 1.5rem;}
+.steps-bar::-webkit-scrollbar{display:none;}
+.steps-inner{display:inline-flex;gap:0;white-space:nowrap;min-width:100%;}
+.step-tab{display:inline-flex;align-items:center;gap:.4rem;padding:10px 16px;font-family:'DM Mono',monospace;font-size:.68rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;}
+.step-tab.active{color:var(--v);border-bottom-color:var(--v);}
+.step-tab.done{color:var(--em);border-bottom-color:var(--em);}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:currentColor;font-size:.55rem;color:var(--paper);}
+.step-tab.done .step-num{background:var(--em);}
+
+/* ── SCREENS ── */
+.screen{display:none;padding-top:106px;min-height:100vh;}
+.screen.active{display:block;}
+.wrap{max-width:780px;margin:0 auto;padding:48px 24px 120px;}
+
+/* ── HERO ── */
+#s-hero{background:var(--ink);padding-top:62px;}
+#s-hero .wrap{padding-top:80px;min-height:100vh;display:flex;flex-direction:column;justify-content:center;}
+.hero-pill{display:inline-flex;align-items:center;gap:.5rem;background:rgba(124,110,242,.12);border:1px solid rgba(124,110,242,.25);border-radius:999px;padding:.35rem 1rem;font-size:.72rem;color:rgba(200,195,255,.9);margin-bottom:2rem;font-family:'DM Mono',monospace;letter-spacing:.08em;}
+.hero-h{font-family:'Instrument Serif',serif;font-size:clamp(2.8rem,6vw,5rem);line-height:.98;color:#f8f7f4;margin-bottom:1.5rem;letter-spacing:-.02em;}
+.hero-h em{font-style:italic;background:linear-gradient(135deg,#a59af5,#7c6ef2,#6ad5c3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{font-size:1.05rem;color:rgba(200,195,255,.5);max-width:520px;line-height:1.8;font-weight:300;margin-bottom:3rem;}
+.hero-steps{display:flex;flex-direction:column;gap:.75rem;margin-bottom:3.5rem;}
+.hero-step{display:flex;align-items:center;gap:.85rem;}
+.hstep-n{width:28px;height:28px;border-radius:50%;background:rgba(124,110,242,.15);border:1px solid rgba(124,110,242,.3);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.68rem;font-weight:700;color:var(--v);flex-shrink:0;}
+.hstep-t{font-size:.92rem;color:rgba(200,195,255,.75);font-weight:300;}
+.hstep-t strong{color:#f8f7f4;font-weight:500;}
+.btn-hero{display:inline-flex;align-items:center;gap:.65rem;background:var(--v);color:#fff;padding:14px 32px;border-radius:8px;font-weight:600;font-size:.95rem;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .25s;text-decoration:none;}
+.btn-hero:hover{background:var(--v2);transform:translateY(-2px);box-shadow:0 12px 32px rgba(124,110,242,.45);}
+
+/* ── SECTION TITLES ── */
+.eyebrow{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--v);margin-bottom:.85rem;display:block;}
+.section-h{font-family:'Instrument Serif',serif;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.1;color:var(--ink);margin-bottom:.75rem;}
+.section-h em{font-style:italic;color:var(--v);}
+.section-sub{font-size:.95rem;color:var(--muted);line-height:1.75;max-width:560px;font-weight:300;}
+
+/* ── CARDS ── */
+.card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow);padding:2rem;margin-bottom:1.25rem;}
+.card-dark{background:var(--ink);border-radius:16px;padding:2rem;margin-bottom:1.25rem;}
+.card-accent{background:rgba(124,110,242,.05);border:1px solid rgba(124,110,242,.18);border-radius:16px;padding:1.5rem;margin-bottom:1.25rem;}
+.card-green{background:rgba(5,150,105,.05);border:1px solid rgba(5,150,105,.2);border-radius:16px;padding:1.5rem;margin-bottom:1.25rem;}
+.divider{height:1px;background:var(--border);margin:2rem 0;}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone{border:2px dashed rgba(124,110,242,.35);border-radius:16px;padding:2.5rem;text-align:center;cursor:pointer;transition:all .25s;background:rgba(124,110,242,.02);}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--v);background:rgba(124,110,242,.06);}
+.upload-zone.uploaded{border-color:var(--em);background:rgba(16,185,129,.04);border-style:solid;}
+.upload-icon{font-size:2.5rem;margin-bottom:.75rem;}
+.upload-title{font-size:1rem;font-weight:500;color:var(--ink);margin-bottom:.35rem;}
+.upload-sub{font-size:.84rem;color:var(--muted);}
+.upload-status{display:none;margin-top:1rem;font-size:.88rem;padding:.65rem 1rem;border-radius:8px;}
+.upload-status.ok{display:block;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#059669;}
+.upload-status.err{display:block;background:rgba(199,91,58,.1);border:1px solid rgba(199,91,58,.25);color:var(--accent2);}
+
+/* ── CHAT ── */
+.chat-box{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.25rem;}
+.chat-msgs{max-height:400px;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:.85rem;}
+.chat-msgs::-webkit-scrollbar{width:4px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:rgba(124,110,242,.2);border-radius:2px;}
+.msg-wrap{display:flex;flex-direction:column;}
+.msg-wrap.user{align-items:flex-end;}
+.msg-wrap.ai{align-items:flex-start;}
+.msg-bubble{max-width:85%;padding:.85rem 1.1rem;border-radius:14px;font-size:.9rem;line-height:1.65;white-space:pre-wrap;}
+.msg-wrap.user .msg-bubble{background:var(--v);color:#fff;border-bottom-right-radius:4px;}
+.msg-wrap.ai .msg-bubble{background:var(--paper2);color:var(--ink);border-bottom-left-radius:4px;border:1px solid var(--border);}
+.chat-input-row{display:flex;gap:.65rem;padding:1rem;border-top:1px solid var(--border);background:var(--paper);}
+.chat-input{flex:1;background:#fff;border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;font-size:.9rem;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;resize:none;line-height:1.5;max-height:120px;}
+.chat-input:focus{border-color:rgba(124,110,242,.4);}
+.chat-send{padding:10px 20px;border-radius:8px;background:var(--v);color:#fff;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:600;transition:all .2s;align-self:flex-end;white-space:nowrap;}
+.chat-send:hover{background:var(--v2);}
+.chat-send:disabled{opacity:.4;cursor:default;}
+.typing-dots{display:inline-flex;gap:4px;padding:.2rem 0;}
+.typing-dots span{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:td .6s infinite alternate;}
+.typing-dots span:nth-child(2){animation-delay:.15s;}
+.typing-dots span:nth-child(3){animation-delay:.3s;}
+@keyframes td{to{opacity:.2;transform:translateY(-3px);}}
+
+/* ── FORM ── */
+.field-group{margin-bottom:1.25rem;}
+.field-label{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--v);letter-spacing:.14em;text-transform:uppercase;margin-bottom:.45rem;display:block;}
+.field-input,.field-textarea{width:100%;background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:.8rem 1rem;font-size:.9rem;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;transition:border-color .2s;line-height:1.6;}
+.field-input:focus,.field-textarea:focus{border-color:rgba(124,110,242,.4);}
+.field-textarea{resize:vertical;min-height:80px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:580px){.field-row{grid-template-columns:1fr;}}
+.field-hint{font-size:.78rem;color:var(--muted);margin-top:.35rem;line-height:1.5;}
+
+/* ── PHOTO UPLOAD ── */
+.photo-upload-area{display:flex;gap:1.75rem;align-items:center;padding:1.5rem;background:var(--paper2);border-radius:12px;border:1px solid var(--border);}
+.photo-preview{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,rgba(124,110,242,.2),rgba(124,110,242,.1));border:2px solid rgba(124,110,242,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;font-family:'Instrument Serif',serif;font-size:1.8rem;color:var(--v);}
+.photo-preview img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.photo-upload-btn{padding:9px 20px;border-radius:6px;border:1.5px solid var(--border);background:#fff;font-size:.84rem;font-weight:600;cursor:pointer;color:var(--ink);font-family:'DM Sans',sans-serif;transition:all .2s;}
+.photo-upload-btn:hover{border-color:var(--v);color:var(--v);}
+
+/* ── COLOR PICKER ── */
+.theme-picker{display:flex;gap:.65rem;flex-wrap:wrap;margin-top:.65rem;}
+.theme-swatch{width:36px;height:36px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s;position:relative;}
+.theme-swatch.selected{border-color:var(--ink);box-shadow:0 0 0 3px rgba(15,15,26,.15);}
+.theme-swatch:hover{transform:scale(1.12);}
+
+/* ── BUTTONS ── */
+.btn-primary{padding:12px 28px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;border:none;background:var(--v);color:#fff;transition:all .2s;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary:hover{background:var(--v2);transform:translateY(-1px);}
+.btn-primary:disabled{opacity:.42;cursor:default;transform:none;}
+.btn-secondary{padding:12px 28px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--ink);transition:all .2s;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:6px;}
+.btn-secondary:hover{border-color:var(--v);color:var(--v);}
+.btn-green{padding:12px 28px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;border:none;background:#059669;color:#fff;transition:all .2s;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:6px;}
+.btn-green:hover{background:#047857;}
+.btn-green:disabled{opacity:.42;cursor:default;}
+.btn-row{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;margin-top:1.75rem;}
+
+/* ── PREVIEW FRAME ── */
+.preview-wrapper{border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-lg);background:#fff;margin-top:1.5rem;}
+.preview-bar{background:var(--paper2);padding:.75rem 1rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid var(--border);}
+.pb-dot{width:11px;height:11px;border-radius:50%;}
+.preview-iframe{width:100%;height:680px;border:none;display:block;}
+.preview-loading{height:680px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;color:var(--muted);}
+.preview-spinner{width:40px;height:40px;border:3px solid rgba(124,110,242,.15);border-top-color:var(--v);border-radius:50%;animation:spin .9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── PUBLISH CARD ── */
+.publish-card{background:var(--ink);border-radius:20px;padding:2.5rem;text-align:center;position:relative;overflow:hidden;}
+.publish-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(124,110,242,.25) 0%,transparent 65%);pointer-events:none;}
+.publish-card-inner{position:relative;z-index:1;}
+.publish-url{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:.85rem 1.25rem;font-family:'DM Mono',monospace;font-size:.82rem;color:rgba(200,195,255,.8);display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin:1.5rem 0;}
+.copy-url-btn{padding:6px 14px;border-radius:5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:.75rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all .2s;}
+.copy-url-btn:hover{background:rgba(255,255,255,.2);}
+.published-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);border-radius:999px;padding:.35rem 1rem;font-size:.72rem;color:#34d399;margin-bottom:1.25rem;}
+.pb-live-dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3;}}
+
+/* ── PROGRESS INDICATOR ── */
+.progress-steps{display:flex;gap:0;margin-bottom:2rem;}
+.ps-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:.35rem;position:relative;}
+.ps-item:not(:last-child)::after{content:'';position:absolute;top:13px;left:50%;width:100%;height:1px;background:var(--border);}
+.ps-item.done::after{background:var(--em);}
+.ps-circle{width:26px;height:26px;border-radius:50%;background:var(--paper2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--muted);z-index:1;position:relative;}
+.ps-item.active .ps-circle{background:var(--v);border-color:var(--v);color:#fff;}
+.ps-item.done .ps-circle{background:var(--em);border-color:var(--em);color:#fff;}
+.ps-label{font-size:.62rem;color:var(--muted);text-align:center;font-family:'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase;}
+.ps-item.active .ps-label{color:var(--v);}
+.ps-item.done .ps-label{color:var(--em);}
+
+/* ── ALERTS ── */
+.alert{padding:1rem 1.25rem;border-radius:10px;font-size:.88rem;line-height:1.6;margin-bottom:1rem;}
+.alert-info{background:rgba(124,110,242,.06);border:1px solid rgba(124,110,242,.2);color:var(--ink);}
+.alert-success{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.22);color:#065f46;}
+.alert-warn{background:rgba(199,91,58,.06);border:1px solid rgba(199,91,58,.2);color:#9a3412;}
+
+/* ── LOADING SPINNER INLINE ── */
+.loading-dots{display:inline-flex;gap:4px;}
+.loading-dots span{width:5px;height:5px;border-radius:50%;background:var(--v);animation:td .6s infinite alternate;}
+.loading-dots span:nth-child(2){animation-delay:.15s;}
+.loading-dots span:nth-child(3){animation-delay:.3s;}
+
+@media(max-width:720px){.step-tab .step-label{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" style="display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--muted);font-size:.82rem;" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--muted)'">
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg> Etusivu
+  </a>
+  <span class="nav-tag">Elävä CV</span>
+  <span class="nav-title" id="navTitle">Portfolio</span>
+  <div class="nav-right">
+    <button class="btn-secondary" style="padding:7px 16px;font-size:.8rem;" id="navPreviewBtn" onclick="showScreen('s-preview')" style="display:none">👁 Esikatsele</button>
+  </div>
+</nav>
+<div id="prog-bar"></div>
+
+<!-- STEPS BAR -->
+<div class="steps-bar">
+  <div class="steps-inner">
+    <div class="step-tab active" id="tab-s-hero" onclick="showScreen('s-hero')"><span class="step-num">✦</span><span class="step-label"> Aloitus</span></div>
+    <div class="step-tab" id="tab-s-cv" onclick="showScreen('s-cv')"><span class="step-num">1</span><span class="step-label"> Lataa CV</span></div>
+    <div class="step-tab" id="tab-s-interview" onclick="showScreen('s-interview')"><span class="step-num">2</span><span class="step-label"> Haastattelu</span></div>
+    <div class="step-tab" id="tab-s-details" onclick="showScreen('s-details')"><span class="step-num">3</span><span class="step-label"> Tiedot</span></div>
+    <div class="step-tab" id="tab-s-preview" onclick="showScreen('s-preview')"><span class="step-num">4</span><span class="step-label"> Esikatselu</span></div>
+    <div class="step-tab" id="tab-s-publish" onclick="showScreen('s-publish')"><span class="step-num">5</span><span class="step-label"> Julkaise</span></div>
+  </div>
+</div>
+
+<!-- ═══════════ HERO ═══════════ -->
+<div class="screen active" id="s-hero">
+  <div class="wrap">
+    <div class="hero-pill">✦ Powered by Claude AI · duunijobs.fi</div>
+    <h1 class="hero-h">Portfoliosi — <em>viiden minuutin</em> päässä.</h1>
+    <p class="hero-sub">Lataat CV:si. AI haastattelee sinua. Portfolio on valmis — ja julkaistu omalla URL-osoitteellasi.</p>
+    <div class="hero-steps">
+      <div class="hero-step"><div class="hstep-n">1</div><div class="hstep-t"><strong>Lataa CV</strong> — AI lukee sen automaattisesti</div></div>
+      <div class="hero-step"><div class="hstep-n">2</div><div class="hstep-t"><strong>4 kysymystä</strong> — AI haastattelee sinua vahvuuksistasi</div></div>
+      <div class="hero-step"><div class="hstep-n">3</div><div class="hstep-t"><strong>Lisää kuva</strong> ja valitse värimaailma</div></div>
+      <div class="hero-step"><div class="hstep-n">4</div><div class="hstep-t"><strong>Esikatsele ja julkaise</strong> — saat URL:n CV:hen ja LinkedIniin</div></div>
+    </div>
+    <button class="btn-hero" onclick="showScreen('s-cv')">
+      Aloita → <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════ STEP 1: CV UPLOAD ═══════════ -->
+<div class="screen" id="s-cv">
+  <div class="wrap">
+    <span class="eyebrow">Vaihe 1 / 5</span>
+    <h2 class="section-h">Lataa CV — <em>AI lukee sen</em></h2>
+    <p class="section-sub" style="margin-bottom:2rem;">Lataa PDF tai tekstitiedosto. AI poimii tiedot automaattisesti — nimen, kokemuksen, taidot, koulutuksen. Jos sinulla ei ole CV:tä, kirjoita tiedot alla oleviin kenttiin.</p>
+
+    <div class="progress-steps">
+      <div class="ps-item active"><div class="ps-circle">1</div><div class="ps-label">CV</div></div>
+      <div class="ps-item"><div class="ps-circle">2</div><div class="ps-label">Haastattelu</div></div>
+      <div class="ps-item"><div class="ps-circle">3</div><div class="ps-label">Tiedot</div></div>
+      <div class="ps-item"><div class="ps-circle">4</div><div class="ps-label">Esikatselu</div></div>
+      <div class="ps-item"><div class="ps-circle">5</div><div class="ps-label">Julkaise</div></div>
+    </div>
+
+    <div class="upload-zone" id="cvDropZone" onclick="document.getElementById('cvFile').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleCVDrop(event)">
+      <div class="upload-icon">📄</div>
+      <div class="upload-title">Lataa CV tähän</div>
+      <div class="upload-sub">PDF tai TXT · Klikkaa tai vedä tiedosto</div>
+      <input type="file" id="cvFile" accept=".pdf,.txt" style="display:none" onchange="handleCVFile(this.files[0])">
+    </div>
+    <div class="upload-status" id="cvStatus"></div>
+
+    <div class="divider" style="margin:1.75rem 0;"></div>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:1.25rem;">Tai kirjoita tiedot suoraan:</p>
+
+    <div class="card">
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Koko nimi *</label>
+          <input class="field-input" id="f_name" placeholder="Esim. Maria Korhonen" oninput="P.full_name=this.value">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Paikkakunta</label>
+          <input class="field-input" id="f_city" placeholder="Esim. Helsinki" oninput="P.city=this.value">
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Tavoiterooli / Ammatti</label>
+        <input class="field-input" id="f_role" placeholder="Esim. Asiakaspalvelija · Myyntiassistentti" oninput="P.target_role=this.value">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Lyhyt esittely</label>
+        <textarea class="field-textarea" id="f_bio" placeholder="3–5 lausetta — kuka olet, mitä osaat, mitä haet" oninput="P.bio=this.value"></textarea>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="goToInterview()">Seuraava — Haastattelu <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ STEP 2: AI INTERVIEW ═══════════ -->
+<div class="screen" id="s-interview">
+  <div class="wrap">
+    <span class="eyebrow">Vaihe 2 / 5</span>
+    <h2 class="section-h">AI haastattelee <em>sinua</em></h2>
+    <p class="section-sub" style="margin-bottom:2rem;">4 kysymystä. AI lukee vastauksesi ja poimii vahvuudet, saavutukset ja persoonallisuuden portfoliota varten. Vastaa rehellisesti — mitä enemmän kerrot, sitä parempi portfolio.</p>
+
+    <div class="progress-steps">
+      <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">CV</div></div>
+      <div class="ps-item active"><div class="ps-circle">2</div><div class="ps-label">Haastattelu</div></div>
+      <div class="ps-item"><div class="ps-circle">3</div><div class="ps-label">Tiedot</div></div>
+      <div class="ps-item"><div class="ps-circle">4</div><div class="ps-label">Esikatselu</div></div>
+      <div class="ps-item"><div class="ps-circle">5</div><div class="ps-label">Julkaise</div></div>
+    </div>
+
+    <div class="card-accent" style="margin-bottom:1.5rem;">
+      <strong style="display:block;font-size:.88rem;color:var(--ink);margin-bottom:.3rem;">Miten tämä toimii:</strong>
+      <p style="font-size:.84rem;color:var(--muted);margin:0;line-height:1.65;">AI esittää 4 kysymystä yksi kerrallaan. Vastaa jokaiseen omin sanoin — ei tarvitse olla täydellinen. AI kerää tiedot automaattisesti ja käyttää niitä portfolion täyttämiseen.</p>
+    </div>
+
+    <div class="chat-box" id="interviewBox">
+      <div class="chat-msgs" id="interviewMsgs"></div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="interviewInput" placeholder="Kirjoita vastauksesi..." rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendInterview();}"></textarea>
+        <button class="chat-send" id="interviewSend" onclick="sendInterview()" disabled>Lähetä</button>
+      </div>
+    </div>
+
+    <div id="interviewDone" style="display:none;">
+      <div class="card-green">
+        <strong style="display:block;color:#065f46;font-size:.95rem;margin-bottom:.35rem;">✓ Haastattelu valmis!</strong>
+        <p style="font-size:.88rem;color:#047857;margin:0;">AI on poiminut tietoja vastauksistasi. Voit jatkaa tietojen täydentämiseen.</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="showScreen('s-details')">Seuraava — Täydennä tiedot <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ STEP 3: DETAILS ═══════════ -->
+<div class="screen" id="s-details">
+  <div class="wrap">
+    <span class="eyebrow">Vaihe 3 / 5</span>
+    <h2 class="section-h">Viimeistele <em>tietosi</em></h2>
+    <p class="section-sub" style="margin-bottom:2rem;">AI on täyttänyt tiedot valmiiksi. Tarkista, muokkaa ja lisää puuttuvat tiedot. Lisää myös kuva — se tekee portfoliosta henkilökohtaisen.</p>
+
+    <div class="progress-steps">
+      <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">CV</div></div>
+      <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">Haastattelu</div></div>
+      <div class="ps-item active"><div class="ps-circle">3</div><div class="ps-label">Tiedot</div></div>
+      <div class="ps-item"><div class="ps-circle">4</div><div class="ps-label">Esikatselu</div></div>
+      <div class="ps-item"><div class="ps-circle">5</div><div class="ps-label">Julkaise</div></div>
+    </div>
+
+    <!-- PHOTO -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:1rem;">📷 Profiilikuva</h3>
+      <div class="photo-upload-area">
+        <div class="photo-preview" id="photoPreview"><span id="photoInitials">?</span></div>
+        <div>
+          <div style="font-size:.88rem;font-weight:500;color:var(--ink);margin-bottom:.35rem;">Lisää kuva portfolioon</div>
+          <div style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">JPG, PNG tai WebP · Max 5 MB · Kasvokuva toimii parhaiten</div>
+          <label class="photo-upload-btn" for="photoFile" style="display:inline-block;cursor:pointer;">Valitse kuva</label>
+          <input type="file" id="photoFile" accept=".jpg,.jpeg,.png,.webp" style="display:none" onchange="handlePhoto(this.files[0])">
+          <div id="photoStatus" style="font-size:.78rem;color:var(--accent3);margin-top:.5rem;display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BASIC INFO -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:1.25rem;">👤 Perustiedot</h3>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Nimi *</label>
+          <input class="field-input" id="d_name" placeholder="Koko nimi" oninput="P.full_name=this.value;updateInitials()">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Paikkakunta</label>
+          <input class="field-input" id="d_city" placeholder="Helsinki" oninput="P.city=this.value">
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Tavoiterooli</label>
+        <input class="field-input" id="d_role" placeholder="Esim. Asiakaspalvelija · myynti" oninput="P.target_role=this.value">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Esittely</label>
+        <textarea class="field-textarea" id="d_bio" rows="3" oninput="P.bio=this.value"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Sähköposti (näkyy portfoliossa)</label>
+          <input class="field-input" id="d_email" placeholder="nimi@email.fi" oninput="P.email_public=this.value">
+        </div>
+        <div class="field-group">
+          <label class="field-label">LinkedIn URL (valinnainen)</label>
+          <input class="field-input" id="d_linkedin" placeholder="linkedin.com/in/..." oninput="P.linkedin_url=this.value">
+        </div>
+      </div>
+    </div>
+
+    <!-- SKILLS -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;">💡 Taidot</h3>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">AI on täyttänyt listan. Lisää tai poista — pilkulla erotettuna.</p>
+      <textarea class="field-textarea" id="d_skills" rows="3" placeholder="Asiakaspalvelu, Excel, Myynti, Ongelmanratkaisu..." oninput="parseSkills(this.value)"></textarea>
+    </div>
+
+    <!-- EXPERIENCE -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;">💼 Kokemus</h3>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Yksi rivi per tehtävä: "Rooli · Yritys · Vuodet · Kuvaus"</p>
+      <textarea class="field-textarea" id="d_experience" rows="5" placeholder="Kassanhoitaja · S-market · 2020–2023 · Palvelin 100+ asiakasta päivässä&#10;Vapaaehtoinen · Kela · 2019 · Asiakasneuvonta"></textarea>
+    </div>
+
+    <!-- THEME -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.75rem;">🎨 Värimaailma</h3>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Valitse portfolion teema:</p>
+      <div class="theme-picker">
+        <div class="theme-swatch selected" style="background:linear-gradient(135deg,#7c6ef2,#3b82f6)" title="Violetti" onclick="setTheme('','#7c6ef2','#3b82f6',this)"></div>
+        <div class="theme-swatch" style="background:linear-gradient(135deg,#10b981,#065f46)" title="Vihreä (executive)" onclick="setTheme('theme-executive','#10b981','#065f46',this)"></div>
+        <div class="theme-swatch" style="background:linear-gradient(135deg,#ef4444,#dc2626)" title="Punainen" onclick="setTheme('','#ef4444','#dc2626',this)"></div>
+        <div class="theme-swatch" style="background:linear-gradient(135deg,#f59e0b,#d97706)" title="Kulta" onclick="setTheme('','#f59e0b','#d97706',this)"></div>
+        <div class="theme-swatch" style="background:linear-gradient(135deg,#0891b2,#0e7490)" title="Turkoosi" onclick="setTheme('','#0891b2','#0e7490',this)"></div>
+        <div class="theme-swatch" style="background:linear-gradient(135deg,#1a1a2e,#2d2d44)" title="Tummanharmaa" onclick="setTheme('','#374151','#1f2937',this)"></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="buildPreviewBtn" onclick="buildPreview()">
+        Rakenna esikatselu <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+      </button>
+      <button class="btn-secondary" onclick="showScreen('s-interview')">← Takaisin</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ STEP 4: PREVIEW ═══════════ -->
+<div class="screen" id="s-preview">
+  <div class="wrap">
+    <span class="eyebrow">Vaihe 4 / 5</span>
+    <h2 class="section-h">Esikatselusi — <em>tältä se näyttää</em></h2>
+    <p class="section-sub" style="margin-bottom:1.5rem;">Tältä rekrytoija näkee portfoliosi. Voit palata muokkaamaan tai jatkaa julkaisuun.</p>
+
+    <div class="progress-steps">
+      <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">CV</div></div>
+      <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">Haastattelu</div></div>
+      <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">Tiedot</div></div>
+      <div class="ps-item active"><div class="ps-circle">4</div><div class="ps-label">Esikatselu</div></div>
+      <div class="ps-item"><div class="ps-circle">5</div><div class="ps-label">Julkaise</div></div>
+    </div>
+
+    <div class="preview-wrapper">
+      <div class="preview-bar">
+        <div class="pb-dot" style="background:#ff5f56"></div>
+        <div class="pb-dot" style="background:#ffbd2e"></div>
+        <div class="pb-dot" style="background:#27c93f"></div>
+        <span style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);margin-left:.65rem;" id="previewUrlBar">duunijobs.fi/portfolio/sinun-nimi</span>
+      </div>
+      <div id="previewLoading" class="preview-loading">
+        <div class="preview-spinner"></div>
+        <span style="font-size:.88rem;">Rakennetaan portfoliota...</span>
+      </div>
+      <iframe id="previewFrame" class="preview-iframe" style="display:none"></iframe>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="showScreen('s-publish')">Julkaise portfolio <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></button>
+      <button class="btn-secondary" onclick="showScreen('s-details')">← Muokkaa tietoja</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ STEP 5: PUBLISH ═══════════ -->
+<div class="screen" id="s-publish">
+  <div class="wrap">
+    <span class="eyebrow">Vaihe 5 / 5</span>
+    <h2 class="section-h">Julkaise — <em>saat oman URL:n</em></h2>
+    <p class="section-sub" style="margin-bottom:2rem;">Portfolio julkaistaan osoitteessa duunijobs.fi/portfolio/sinun-nimi. Voit lisätä linkin CV:hen, LinkedIniin tai hakemukseen.</p>
+
+    <div class="progress-steps">
+      <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">CV</div></div>
+      <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">Haastattelu</div></div>
+      <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">Tiedot</div></div>
+      <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">Esikatselu</div></div>
+      <div class="ps-item active"><div class="ps-circle">5</div><div class="ps-label">Julkaise</div></div>
+    </div>
+
+    <div id="publishNotYet">
+      <div class="card">
+        <h3 style="font-size:1rem;font-weight:600;margin-bottom:.75rem;">Ennen julkaisua — tarkistus</h3>
+        <div id="pubChecklist" style="display:flex;flex-direction:column;gap:.65rem;margin-bottom:1.5rem;"></div>
+        <button class="btn-green" id="publishBtn" onclick="publishPortfolio()">
+          🚀 Julkaise portfolio
+        </button>
+      </div>
+    </div>
+
+    <div id="publishSuccess" style="display:none;">
+      <div class="publish-card">
+        <div class="publish-card-inner">
+          <div class="published-badge"><span class="pb-live-dot"></span> Julkaistu — live</div>
+          <h2 style="font-family:'Instrument Serif',serif;font-size:2rem;color:#f8f7f4;margin-bottom:.75rem;line-height:1.2;">Portfoliosi on nyt verkossa! 🎉</h2>
+          <p style="font-size:.92rem;color:rgba(200,195,255,.6);margin-bottom:1.5rem;font-weight:300;">Kopioi alla oleva linkki CV:hen, hakemukseen tai LinkedIn-profiiliisi.</p>
+          <div class="publish-url">
+            <span id="publishedUrl">duunijobs.fi/portfolio/...</span>
+            <button class="copy-url-btn" onclick="copyPublishedUrl()">Kopioi</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.85rem;text-align:left;background:rgba(255,255,255,.05);border-radius:10px;padding:1.25rem;margin-top:.5rem;">
+            <div style="font-size:.82rem;color:rgba(200,195,255,.7);font-weight:500;margin-bottom:.25rem;">Miten käytät tätä:</div>
+            <div style="font-size:.84rem;color:rgba(200,195,255,.6);line-height:1.65;">📄 <strong style="color:#f8f7f4;">CV:hen:</strong> Lisää linkin yhteystietoihin</div>
+            <div style="font-size:.84rem;color:rgba(200,195,255,.6);line-height:1.65;">💼 <strong style="color:#f8f7f4;">LinkedIniin:</strong> Lisää "Lisätiedot" → "Linkit"</div>
+            <div style="font-size:.84rem;color:rgba(200,195,255,.6);line-height:1.65;">📧 <strong style="color:#f8f7f4;">Hakemukseen:</strong> "Portfoliossani näet lisää: [linkki]"</div>
+          </div>
+          <div style="margin-top:1.5rem;display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
+            <a id="openPortfolioBtn" href="#" target="_blank" class="btn-hero" style="text-decoration:none;">Avaa portfolio ↗</a>
+            <button class="btn-secondary" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:rgba(200,195,255,.8);" onclick="showScreen('s-details')">Muokkaa</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+var P = {
+  full_name:'', city:'', target_role:'', bio:'', career_summary:'', hidden_strengths:'',
+  email_public:'', linkedin_url:'',
+  skills:[], experience:[], education:[], achievements:[], languages:[], certificates:[],
+  brand_color:'#7c6ef2', brand_accent:'#3b82f6', brand_bg:'#faf9f6',
+  template:'premium'
+};
+var cvText = '';
+var interviewHistory = [];
+var interviewAnswers = [];
+var interviewDone = false;
+var selectedThemeClass = '';
+var photoUploaded = false;
+var portfolioSlug = '';
+
+function apiBase(){
+  var p=window.location.pathname;
+  var i=p.indexOf('/module/');
+  return i>0?p.substring(0,i):'';
+}
+
+// ══════════════════════════════════════════
+// SCREEN NAVIGATION
+// ══════════════════════════════════════════
+var screenOrder = ['s-hero','s-cv','s-interview','s-details','s-preview','s-publish'];
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.step-tab').forEach(function(t){t.classList.remove('active');});
+  var sc = document.getElementById(id);
+  if(sc) sc.classList.add('active');
+  var tab = document.getElementById('tab-'+id);
+  if(tab) tab.classList.add('active');
+  document.getElementById('navTitle').textContent = {
+    's-hero':'Aloitus','s-cv':'Lataa CV','s-interview':'Haastattelu',
+    's-details':'Tiedot','s-preview':'Esikatselu','s-publish':'Julkaise'
+  }[id]||'';
+  var idx = screenOrder.indexOf(id);
+  document.getElementById('prog-bar').style.width = idx<=0?'0%':(idx/(screenOrder.length-1)*100)+'%';
+  // Mark done tabs
+  screenOrder.forEach(function(sid,i){
+    var t=document.getElementById('tab-'+sid);
+    if(!t)return;
+    if(i<idx){t.classList.remove('active');t.classList.add('done');}
+    else{t.classList.remove('done');}
+  });
+  if(tab) tab.classList.remove('done');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='s-preview') loadPreview();
+  if(id==='s-publish') buildPublishChecklist();
+  if(id==='s-details') syncDetailsFields();
+}
+
+// ══════════════════════════════════════════
+// CV UPLOAD
+// ══════════════════════════════════════════
+function handleCVDrop(e){
+  e.preventDefault();
+  document.getElementById('cvDropZone').classList.remove('drag-over');
+  var f=e.dataTransfer.files[0];
+  if(f) handleCVFile(f);
+}
+
+async function handleCVFile(file){
+  if(!file) return;
+  var zone=document.getElementById('cvDropZone');
+  var status=document.getElementById('cvStatus');
+  status.className='upload-status';
+  status.style.display='block';
+  status.textContent='Luetaan '+file.name+'...';
+
+  var fd=new FormData(); fd.append('file',file);
+  try{
+    var r=await fetch(apiBase()+'/api/ai/cv-extract-text',{method:'POST',credentials:'include',body:fd});
+    var d=await r.json();
+    if(!r.ok||!d.text) throw new Error(d.error||'Lukeminen epäonnistui');
+    cvText=d.text;
+    zone.classList.add('uploaded');
+    zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' luettu</div><div style="font-size:.8rem;color:#047857;">'+d.chars+' merkkiä · AI käyttää tätä portfolion rakentamiseen</div>';
+    status.className='upload-status ok';
+    status.textContent='✓ CV luettu. Paina "Seuraava" jatkaaksesi haastatteluun.';
+    // Pre-extract basic info silently
+    await extractCVBasics();
+  }catch(e){
+    status.className='upload-status err';
+    status.textContent='⚠ '+e.message+' — täytä tiedot alla käsin.';
+  }
+}
+
+async function extractCVBasics(){
+  if(!cvText) return;
+  try{
+    var r=await fetch(apiBase()+'/api/ai/claude',{
+      method:'POST',credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        system:'Poimia CV:stä JSON-muodossa: {name,city,target_role,bio,skills:[],experience:[{role,company,years,desc}],education:[{degree,school,year}],languages:[{name,level}]}. Suomi. Vain JSON, ei muuta.',
+        messages:[{role:'user',content:'CV:\n'+cvText.slice(0,3000)}],
+        max_tokens:1200
+      })
+    });
+    var d=await r.json();
+    var txt=(d.text||'').trim().replace(/```json|```/g,'').trim();
+    var parsed=JSON.parse(txt);
+    if(parsed.name) P.full_name=parsed.name;
+    if(parsed.city) P.city=parsed.city;
+    if(parsed.target_role) P.target_role=parsed.target_role;
+    if(parsed.bio) P.bio=parsed.bio;
+    if(parsed.skills&&parsed.skills.length) P.skills=parsed.skills;
+    if(parsed.experience&&parsed.experience.length) P.experience=parsed.experience;
+    if(parsed.education&&parsed.education.length) P.education=parsed.education;
+    if(parsed.languages&&parsed.languages.length) P.languages=parsed.languages;
+    syncFormFields();
+  }catch(e){}
+}
+
+function syncFormFields(){
+  if(P.full_name){ setVal('f_name',P.full_name); setVal('d_name',P.full_name); updateInitials(); }
+  if(P.city){ setVal('f_city',P.city); setVal('d_city',P.city); }
+  if(P.target_role){ setVal('f_role',P.target_role); setVal('d_role',P.target_role); }
+  if(P.bio){ setVal('f_bio',P.bio); setVal('d_bio',P.bio); }
+}
+
+function setVal(id,v){var el=document.getElementById(id);if(el&&!el.value)el.value=v;}
+
+function goToInterview(){
+  if(document.getElementById('f_name').value) P.full_name=document.getElementById('f_name').value;
+  if(document.getElementById('f_city').value) P.city=document.getElementById('f_city').value;
+  if(document.getElementById('f_role').value) P.target_role=document.getElementById('f_role').value;
+  if(document.getElementById('f_bio').value) P.bio=document.getElementById('f_bio').value;
+  showScreen('s-interview');
+  if(!interviewHistory.length) startInterview();
+}
+
+// ══════════════════════════════════════════
+// AI INTERVIEW
+// ══════════════════════════════════════════
+var INTERVIEW_SYSTEM = `Olet rekrytoija joka rakentaa henkilön portfoliota.
+Sinulla on seuraava CV-tieto: {CV_TEXT}
+Sinun tavoitteesi: kerätä 4 vastausta jotka täydentävät CV:tä — vahvuudet, saavutukset, persoonallisuus ja tavoitteet.
+
+Esitä TARKALLEEN nämä 4 kysymystä — yksi kerrallaan. Odota vastaus ennen seuraavaa.
+
+Kysymys 1: "Kerro yhdestä tilanteesta jossa onnistuit työssä, opiskelussa tai arjessa. Mitä tapahtui ja mikä oli sinun roolisi?"
+Kysymys 2: "Mikä on se asia jonka kollegasi, esimies tai asiakas on sanonut sinulle — mitä he arvostavat sinussa?"
+Kysymys 3: "Minkälaisissa tilanteissa olet parhaimmillasi? Milloin aika kuluu huomaamatta?"
+Kysymys 4: "Mihin suuntaan haluat urasi kehittyvän — mikä rooli tai ala kiinnostaa eniten?"
+
+Kun kaikki 4 vastausta on saatu, sano: "VALMIS" ja kirjoita JSON:
+{"career_summary":"2-3 lausetta persoonallinen esittely","hidden_strengths":"3-4 piilotettujen vahvuuksien lista","achievements":["saavutus1","saavutus2","saavutus3"],"tagline":"alle 8 sanaa iskulause"}
+
+Kirjoita suomeksi. Ole lämmin, rohkaiseva ja lyhytsanainen kysymyksissä.`;
+
+async function startInterview(){
+  var sys = INTERVIEW_SYSTEM.replace('{CV_TEXT}', cvText ? cvText.slice(0,1500) : 'Ei CV:tä — käytä haastattelua tietojen keräämiseen.');
+  interviewHistory = [];
+  addInterviewMsg('ai','Hei! Olen tässä auttamassa rakentamaan portfoliosi. Aloitetaan muutamalla kysymyksellä.\n\nKerro yhdestä tilanteesta jossa onnistuit työssä, opiskelussa tai arjessa. Mitä tapahtui ja mikä oli sinun roolisi?');
+  interviewHistory.push({role:'assistant',content:'Kerro yhdestä tilanteesta jossa onnistuit työssä, opiskelussa tai arjessa. Mitä tapahtui ja mikä oli sinun roolisi?'});
+  document.getElementById('interviewInput').disabled=false;
+  document.getElementById('interviewInput').focus();
+}
+
+function addInterviewMsg(role, text){
+  var c=document.getElementById('interviewMsgs');
+  var d=document.createElement('div'); d.className='msg-wrap '+role;
+  var b=document.createElement('div'); b.className='msg-bubble';
+  b.textContent=text;
+  d.appendChild(b); c.appendChild(d);
+  c.scrollTop=c.scrollHeight;
+}
+
+function addTyping(){
+  var c=document.getElementById('interviewMsgs');
+  var d=document.createElement('div'); d.className='msg-wrap ai'; d.id='typingIndicator';
+  var b=document.createElement('div'); b.className='msg-bubble';
+  b.innerHTML='<div class="typing-dots"><span></span><span></span><span></span></div>';
+  d.appendChild(b); c.appendChild(d);
+  c.scrollTop=c.scrollHeight;
+}
+
+async function sendInterview(){
+  var inp=document.getElementById('interviewInput');
+  var txt=inp.value.trim(); if(!txt) return;
+  var send=document.getElementById('interviewSend');
+  send.disabled=true; inp.value=''; inp.disabled=true;
+  addInterviewMsg('user',txt);
+  interviewHistory.push({role:'user',content:txt});
+  interviewAnswers.push(txt);
+  addTyping();
+
+  var sys = INTERVIEW_SYSTEM.replace('{CV_TEXT}', cvText ? cvText.slice(0,1500) : 'Ei CV:tä.');
+  try{
+    var r=await fetch(apiBase()+'/api/ai/claude',{
+      method:'POST',credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system:sys,messages:interviewHistory,max_tokens:600})
+    });
+    var d=await r.json();
+    var reply=d.text||'Kiitos vastauksesta!';
+    document.getElementById('typingIndicator')?.remove();
+    if(reply.includes('VALMIS')){
+      // Extract JSON from reply
+      var jsonMatch=reply.match(/\{[\s\S]*\}/);
+      if(jsonMatch){
+        try{
+          var extracted=JSON.parse(jsonMatch[0]);
+          if(extracted.career_summary) P.career_summary=extracted.career_summary;
+          if(extracted.hidden_strengths) P.hidden_strengths=extracted.hidden_strengths;
+          if(extracted.achievements&&extracted.achievements.length) P.achievements=extracted.achievements;
+          if(extracted.tagline) P.tagline=extracted.tagline;
+        }catch(e){}
+      }
+      addInterviewMsg('ai','Täydellistä! Olen kerännyt tietosi portfoliota varten. Jatka seuraavaan vaiheeseen. ✓');
+      interviewDone=true;
+      document.getElementById('interviewDone').style.display='block';
+      document.getElementById('interviewInput').disabled=true;
+      send.disabled=true;
+    } else {
+      interviewHistory.push({role:'assistant',content:reply});
+      addInterviewMsg('ai',reply);
+      inp.disabled=false;
+      send.disabled=false;
+      inp.focus();
+    }
+  }catch(e){
+    document.getElementById('typingIndicator')?.remove();
+    addInterviewMsg('ai','Yhteysvirhe — yritä uudelleen.');
+    inp.disabled=false; send.disabled=false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  var inp=document.getElementById('interviewInput');
+  if(inp) inp.addEventListener('input',function(){
+    document.getElementById('interviewSend').disabled=!this.value.trim();
+  });
+});
+
+// ══════════════════════════════════════════
+// DETAILS
+// ══════════════════════════════════════════
+function syncDetailsFields(){
+  var fields={d_name:'full_name',d_city:'city',d_role:'target_role',d_bio:'bio',d_email:'email_public',d_linkedin:'linkedin_url'};
+  Object.keys(fields).forEach(function(id){
+    var el=document.getElementById(id);
+    if(el&&P[fields[id]]) el.value=P[fields[id]];
+  });
+  // Skills
+  var sk=document.getElementById('d_skills');
+  if(sk&&P.skills.length){
+    sk.value=P.skills.map(function(s){return typeof s==='string'?s:(s.name||s);}).join(', ');
+  }
+  // Experience
+  var ex=document.getElementById('d_experience');
+  if(ex&&P.experience.length){
+    ex.value=P.experience.map(function(e){
+      return [e.role||e.title||'',e.company||'',e.years||'',e.desc||''].filter(Boolean).join(' · ');
+    }).join('\n');
+  }
+  updateInitials();
+}
+
+function updateInitials(){
+  var nm=P.full_name||(document.getElementById('d_name')||{}).value||'';
+  var parts=nm.trim().split(/\s+/);
+  var ini=parts.length>=2?parts[0][0]+parts[parts.length-1][0]:nm.substring(0,2);
+  var el=document.getElementById('photoInitials');
+  if(el) el.textContent=ini.toUpperCase()||'?';
+}
+
+function parseSkills(txt){
+  P.skills=txt.split(/[,;\n]+/).map(function(s){return s.trim();}).filter(Boolean);
+}
+
+var selectedTheme={themeClass:'',color:'#7c6ef2',accent:'#3b82f6'};
+
+function setTheme(cls,color,accent,el){
+  selectedTheme={themeClass:cls,color:color,accent:accent};
+  P.brand_color=color; P.brand_accent=accent;
+  P.brand_bg=cls==='theme-executive'?'#0b1512':'#faf9f6';
+  document.querySelectorAll('.theme-swatch').forEach(function(s){s.classList.remove('selected');});
+  if(el) el.classList.add('selected');
+}
+
+// PHOTO
+async function handlePhoto(file){
+  if(!file) return;
+  var status=document.getElementById('photoStatus');
+  status.style.display='block'; status.textContent='Ladataan kuvaa...';
+
+  // Preview locally
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var prev=document.getElementById('photoPreview');
+    prev.innerHTML='<img src="'+e.target.result+'" alt="Profiilikuva">';
+    window._photoDataUrl=e.target.result;
+  };
+  reader.readAsDataURL(file);
+
+  // Upload to server
+  var fd=new FormData(); fd.append('photo',file);
+  try{
+    // Need to save portfolio first to get slug
+    if(!portfolioSlug){
+      await savePortfolioData();
+    }
+    var r=await fetch(apiBase()+'/api/portfolio/photo',{method:'POST',credentials:'include',body:fd});
+    var d=await r.json();
+    if(!r.ok) throw new Error(d.error||'Virhe');
+    photoUploaded=true;
+    status.textContent='✓ Kuva tallennettu';
+    status.style.color='#059669';
+  }catch(e){
+    status.textContent='⚠ '+e.message;
+    status.style.color='var(--accent2)';
+  }
+}
+
+// ══════════════════════════════════════════
+// SAVE & PREVIEW
+// ══════════════════════════════════════════
+async function savePortfolioData(){
+  // Sync fields
+  ['d_name','d_city','d_role','d_bio','d_email','d_linkedin'].forEach(function(id){
+    var m={d_name:'full_name',d_city:'city',d_role:'target_role',d_bio:'bio',d_email:'email_public',d_linkedin:'linkedin_url'};
+    var el=document.getElementById(id);
+    if(el&&el.value) P[m[id]]=el.value;
+  });
+  // Parse experience from textarea
+  var exTa=document.getElementById('d_experience');
+  if(exTa&&exTa.value.trim()){
+    P.experience=exTa.value.trim().split('\n').filter(Boolean).map(function(line){
+      var parts=line.split('·').map(function(p){return p.trim();});
+      return {role:parts[0]||'',company:parts[1]||'',years:parts[2]||'',desc:parts[3]||''};
+    });
+  }
+
+  var r=await fetch(apiBase()+'/api/portfolio/save',{
+    method:'POST',credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(P)
+  });
+  var d=await r.json();
+  if(!r.ok) throw new Error(d.error||'Tallennusvirhe');
+  portfolioSlug=d.slug;
+  return d.slug;
+}
+
+async function buildPreview(){
+  var btn=document.getElementById('buildPreviewBtn');
+  btn.disabled=true; btn.textContent='Rakennetaan...';
+  try{
+    await savePortfolioData();
+    showScreen('s-preview');
+  }catch(e){
+    alert('Virhe: '+e.message);
+  }
+  btn.disabled=false;
+  btn.innerHTML='Rakenna esikatselu <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>';
+}
+
+function loadPreview(){
+  var frame=document.getElementById('previewFrame');
+  var loading=document.getElementById('previewLoading');
+  if(!portfolioSlug){loading.innerHTML='<span style="font-size:.9rem;color:var(--muted);">Täytä tiedot ensin ja paina "Rakenna esikatselu".</span>';return;}
+  loading.style.display='flex'; frame.style.display='none';
+  // Update URL bar
+  var urlBar=document.getElementById('previewUrlBar');
+  if(urlBar) urlBar.textContent='duunijobs.fi/portfolio/'+portfolioSlug;
+  frame.onload=function(){loading.style.display='none';frame.style.display='block';};
+  frame.src=apiBase()+'/portfolio/'+portfolioSlug+'?preview=1&t='+Date.now();
+}
+
+// ══════════════════════════════════════════
+// PUBLISH
+// ══════════════════════════════════════════
+function buildPublishChecklist(){
+  var items=[
+    {label:'Nimi lisätty', ok:!!P.full_name, hint:'Lisää nimesi Tiedot-vaiheessa'},
+    {label:'Tavoiterooli kirjoitettu', ok:!!P.target_role, hint:'Kirjoita ammatti tai rooli'},
+    {label:'Esittely kirjoitettu', ok:!!P.bio||!!P.career_summary, hint:'Lisää lyhyt esittely'},
+    {label:'Taidot lisätty', ok:P.skills.length>0, hint:'Lisää taidot pilkulla erotettuna'},
+    {label:'Portfolio esikatselu nähty', ok:!!portfolioSlug, hint:'Käy Esikatselu-vaiheessa'},
+  ];
+  var c=document.getElementById('pubChecklist');
+  c.innerHTML='';
+  var allOk=true;
+  items.forEach(function(item){
+    if(!item.ok) allOk=false;
+    var d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:.65rem;font-size:.88rem;';
+    d.innerHTML='<span style="font-size:1rem;">'+(item.ok?'✅':'⬜')+'</span><span style="color:'+(item.ok?'var(--ink)':'var(--muted)')+'">'+item.label+(item.ok?'':'<span style="font-size:.78rem;color:var(--muted);"> — '+item.hint+'</span>')+'</span>';
+    c.appendChild(d);
+  });
+  var btn=document.getElementById('publishBtn');
+  if(btn) btn.disabled=!allOk;
+}
+
+async function publishPortfolio(){
+  var btn=document.getElementById('publishBtn');
+  btn.disabled=true; btn.textContent='Julkaistaan...';
+  try{
+    if(!portfolioSlug) await savePortfolioData();
+    var r=await fetch(apiBase()+'/api/portfolio/publish',{
+      method:'POST',credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({published:true})
+    });
+    var d=await r.json();
+    if(!r.ok) throw new Error(d.error||'Julkaisuvirhe');
+    var url='https://aipolku.duunijobs.fi/portfolio/'+d.slug;
+    document.getElementById('publishedUrl').textContent=url;
+    document.getElementById('openPortfolioBtn').href=url;
+    document.getElementById('publishNotYet').style.display='none';
+    document.getElementById('publishSuccess').style.display='block';
+    window._publishedUrl=url;
+  }catch(e){
+    alert('Virhe: '+e.message);
+    btn.disabled=false; btn.textContent='🚀 Julkaise portfolio';
+  }
+}
+
+function copyPublishedUrl(){
+  var url=window._publishedUrl||document.getElementById('publishedUrl').textContent;
+  navigator.clipboard.writeText(url).then(function(){
+    var btn=document.querySelector('.copy-url-btn');
+    if(btn){btn.textContent='✓ Kopioitu';setTimeout(function(){btn.textContent='Kopioi';},2000);}
+  });
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',async function(){
+  // Try to load existing portfolio
+  try{
+    var r=await fetch(apiBase()+'/api/portfolio/mine',{credentials:'include'});
+    var d=await r.json();
+    if(d.portfolio){
+      var pf=d.portfolio;
+      portfolioSlug=pf.slug;
+      Object.keys(pf).forEach(function(k){if(P.hasOwnProperty(k)&&pf[k]!=null)P[k]=pf[k];});
+      if(pf.has_photo){
+        photoUploaded=true;
+        var prev=document.getElementById('photoPreview');
+        if(prev) prev.innerHTML='<img src="'+apiBase()+'/api/portfolio/photo/'+pf.slug+'" alt="Profiilikuva">';
+      }
+      syncDetailsFields();
+      syncFormFields();
+    }
+  }catch(e){}
+});
+</script>
+</body>
+</html>
