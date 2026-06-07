@@ -3,6 +3,10 @@ const multer = require('multer');
 const router = express.Router();
 const { fetch } = require('undici');
 const { extractPdfTextFromBuffer } = require('../lib/pdf-extract');
+const {
+  extractTextFromCvFile,
+  extractPortfolioFieldsFromCvText
+} = require('../lib/cv-portfolio-parse');
 const { buildMultipartForm } = require('../lib/multipart-form');
 const {
   CV_MAX_BYTES,
@@ -905,63 +909,59 @@ router.post('/cv-parse', async (req, res) => {
 router.post('/cv-portfolio-parse', async (req, res) => {
   try {
     const text = String(req.body.text || '').trim();
-    if (text.replace(/\s/g, '').length < 40) {
-      return res.status(400).json({ error: 'CV-teksti on liian lyhyt analysoitavaksi.' });
-    }
-
     const openaiApiKey = envTrim('OPENAI_API_KEY');
     if (!openaiApiKey) {
       return res.status(503).json({ error: 'Tekoälypalvelu ei ole käytössä.' });
     }
-
-    const system = [
-      'Extract structured portfolio data from a Finnish CV/resume.',
-      'Reply with ONLY valid JSON (no markdown):',
-      '{"name":"","city":"","target_role":"","bio":"2-3 sentence intro in Finnish","skills":["3-7 skills"],"experience":[{"role":"","company":"","years":"","desc":""}],"education":[{"degree":"","school":"","year":""}],"languages":[{"name":"","level":""}]}',
-      'Extract ALL work experience entries from the CV (up to 8), newest first. Each experience needs role, company, years/period, and a short desc if available in CV.',
-      'Use only facts from the CV. Empty arrays/strings if missing. Finnish text for bio and desc.'
-    ].join(' ');
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${openaiApiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: text.slice(0, 12000) }
-        ],
-        max_tokens: 2200,
-        temperature: 0.2,
-        response_format: { type: 'json_object' }
-      }),
-      signal: timeoutSignal(45000)
-    });
-
-    if (!response.ok) {
-      const details = await response.text().catch(() => '');
-      console.error('cv-portfolio-parse OpenAI error:', details);
-      return res.status(502).json({ error: 'CV:n analysointi epäonnistui.' });
-    }
-
-    const data = await response.json();
-    const raw = String(data.choices?.[0]?.message?.content || '').trim();
-    let fields;
-    try {
-      fields = JSON.parse(raw.replace(/^```json\s*|\s*```$/g, '').trim());
-    } catch (parseErr) {
-      console.error('cv-portfolio-parse JSON parse failed:', raw.slice(0, 200));
-      return res.status(502).json({ error: 'CV:n tietojen jäsentäminen epäonnistui.' });
-    }
-
-    res.json({ fields, chars: text.length });
+    const { fields, chars } = await extractPortfolioFieldsFromCvText(
+      text, openaiApiKey, fetch, timeoutSignal
+    );
+    res.json({ fields, chars });
   } catch (err) {
+    if (err.code === 'TEXT_TOO_SHORT') {
+      return res.status(400).json({ error: err.message });
+    }
     console.error('cv-portfolio-parse error:', err);
-    res.status(500).json({ error: 'CV:n analysointi epäonnistui.' });
+    res.status(err.message.includes('jäsentäminen') ? 502 : 500).json({ error: err.message || 'CV:n analysointi epäonnistui.' });
   }
+});
+
+/** Upload CV file → extract text → parse portfolio fields (moduuli-elava-cv). */
+router.post('/cv-portfolio-parse-file', (req, res) => {
+  cvUpload.single('file')(req, res, async (err) => {
+    if (err) {
+      const msg = err instanceof multer.MulterError
+        ? multerErrorMessage(err, 'cv')
+        : (err.message || 'CV:n lataus epäonnistui');
+      return res.status(err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({ error: msg });
+    }
+    try {
+      if (!req.file || !req.file.buffer) {
+        return res.status(400).json({ error: 'Tiedosto puuttuu' });
+      }
+      const openaiApiKey = envTrim('OPENAI_API_KEY');
+      if (!openaiApiKey) {
+        return res.status(503).json({ error: 'Tekoälypalvelu ei ole käytössä.' });
+      }
+      const text = await extractTextFromCvFile(req.file);
+      const plainLen = text.replace(/\s/g, '').length;
+      if (plainLen < 20) {
+        return res.status(200).json({
+          partial: true,
+          fields: {},
+          chars: text.length,
+          message: 'CV:stä ei saatu riittävästi tekstiä automaattista täyttöä varten.'
+        });
+      }
+      const { fields, chars } = await extractPortfolioFieldsFromCvText(
+        text, openaiApiKey, fetch, timeoutSignal
+      );
+      res.json({ fields, chars, partial: plainLen < 40 });
+    } catch (err) {
+      console.error('cv-portfolio-parse-file error:', err);
+      res.status(502).json({ error: err.message || 'CV:n analysointi epäonnistui.' });
+    }
+  });
 });
 
 /** Merge AI interview answers into portfolio fields (moduuli-elava-cv). */

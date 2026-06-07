@@ -13,6 +13,8 @@ const {
   isAllowedPhotoUpload,
   multerErrorMessage
 } = require('../lib/portfolio-upload-limits');
+const { extractTextFromCvFile, extractPortfolioFieldsFromCvText } = require('../lib/cv-portfolio-parse');
+const { fetch } = require('undici');
 
 /** Portfolio API — used exclusively by moduuli-elava-cv (student_portfolios table). */
 
@@ -433,6 +435,62 @@ router.post('/cv', authenticateToken, (req, res) => {
       res.status(500).json({ error: 'CV:n tallennus epäonnistui' });
     }
   });
+});
+
+function envTrim(name) {
+  const v = process.env[name];
+  if (v == null) return '';
+  return String(v).trim();
+}
+
+function timeoutSignal(ms) {
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), ms);
+  if (c.signal && typeof c.signal.addEventListener === 'function') {
+    c.signal.addEventListener('abort', () => clearTimeout(t));
+  }
+  return c.signal;
+}
+
+// Parse saved CV bytes into portfolio fields (auth — moduuli-elava-cv)
+router.post('/cv/parse-mine', authenticateToken, async (req, res) => {
+  try {
+    await ready();
+    const r = await pool.query(
+      `SELECT cv_bytes, cv_mime, cv_filename FROM student_portfolios
+       WHERE user_id=$1 AND cv_bytes IS NOT NULL`,
+      [req.user.id]
+    );
+    if (!r.rows.length) {
+      return res.status(404).json({ error: 'CV:tä ei ole tallennettu.' });
+    }
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return res.status(503).json({ error: 'Tekoälypalvelu ei ole käytössä.' });
+    }
+    const row = r.rows[0];
+    const file = {
+      buffer: row.cv_bytes,
+      originalname: row.cv_filename || 'cv.pdf',
+      mimetype: row.cv_mime || 'application/pdf'
+    };
+    const text = await extractTextFromCvFile(file);
+    const plainLen = text.replace(/\s/g, '').length;
+    if (plainLen < 20) {
+      return res.status(200).json({
+        partial: true,
+        fields: {},
+        message: 'CV:stä ei saatu riittävästi tekstiä automaattista täyttöä varten.'
+      });
+    }
+    const { fields, chars } = await extractPortfolioFieldsFromCvText(
+      text, openaiApiKey, fetch, timeoutSignal
+    );
+    res.json({ fields, chars, partial: plainLen < 40 });
+  } catch (e) {
+    console.error('CV parse-mine:', e);
+    res.status(502).json({ error: e.message || 'CV:n analysointi epäonnistui.' });
+  }
 });
 
 // Download CV by slug (PUBLIC — published portfolios only)

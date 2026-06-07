@@ -446,7 +446,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
     <!-- SKILLS -->
     <div class="card">
       <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;">💡 Taidot</h3>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">AI on täyttänyt listan. Lisää tai poista — pilkulla erotettuna.</p>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;" id="skillsHint">AI täyttää automaattisesti CV:stä ja haastattelusta. Voit muokata alla.</p>
+      <div id="skillsParseStatus" style="display:none;font-size:.78rem;color:var(--v);margin-bottom:.5rem;"></div>
       <textarea class="field-textarea" id="d_skills" rows="3" placeholder="Asiakaspalvelu, Excel, Myynti, Ongelmanratkaisu..." oninput="parseSkills(this.value)"></textarea>
     </div>
 
@@ -460,7 +461,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
     <!-- EXPERIENCE -->
     <div class="card">
       <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;">💼 Kokemus</h3>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">AI poimii työtehtäviä CV:stä. Valitse mitkä näkyvät portfoliossa — voit muokata ja lisätä rivejä.</p>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;" id="expHint">AI poimii työtehtäviä CV:stä automaattisesti. Valitse mitkä näkyvät portfoliossa.</p>
+      <div id="expParseStatus" style="display:none;font-size:.78rem;color:var(--v);margin-bottom:.5rem;"></div>
       <div id="expEditorList"></div>
       <button type="button" class="btn-secondary" style="padding:8px 16px;font-size:.82rem;margin-top:.25rem;" onclick="addExperienceRow()">+ Lisää työtehtävä</button>
     </div>
@@ -683,7 +685,7 @@ function showScreen(id){
   window.scrollTo({top:0,behavior:'smooth'});
   if(id==='s-preview') loadPreview();
   if(id==='s-publish'){ syncPayloadFromForm(); buildPublishChecklist(); }
-  if(id==='s-details'){ syncDetailsFields(); renderExperienceEditor(); updateSlugUi(); }
+  if(id==='s-details'){ syncDetailsFields(); ensureCvDataInForm(); updateSlugUi(); }
 }
 
 // ══════════════════════════════════════════
@@ -722,18 +724,22 @@ async function processCVFile(file){
     if(!r.ok) throw new Error(d.error||'Lukeminen epäonnistui');
 
     zone.classList.add('uploaded');
+    cvText=d.text||'';
     if(d.partial||!d.text){
-      cvText=d.text||'';
       var partialMsg=d.message||'Täytä alla oleva lomake, jotta portfolioosi tulee kaikki tarvittavat tiedot.';
       zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' · '+formatFileSize(file.size)+'</div><div style="font-size:.8rem;color:#047857;">'+partialMsg+'</div>';
       status.className='upload-status ok';
-      status.textContent='✓ CV vastaanotettu. '+partialMsg;
+      status.textContent='✓ CV vastaanotettu. Poimitaan tietoja automaattisesti...';
     } else {
-      cvText=d.text;
-      zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' · '+formatFileSize(file.size)+'</div><div style="font-size:.8rem;color:#047857;">'+d.chars+' merkkiä · AI käyttää tätä portfolion rakentamiseen</div>';
+      zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' · '+formatFileSize(file.size)+'</div><div style="font-size:.8rem;color:#047857;">'+d.chars+' merkkiä · AI täyttää tiedot automaattisesti</div>';
       status.className='upload-status ok';
-      status.textContent='✓ CV luettu ('+formatFileSize(file.size)+'). Paina "Seuraava" jatkaaksesi haastatteluun.';
-      await extractCVBasics();
+      status.textContent='✓ CV luettu ('+formatFileSize(file.size)+'). Poimitaan tietoja...';
+    }
+    await parseCvFileToPortfolio(file);
+    if(P.skills.length||P.experience.length){
+      status.textContent='✓ CV luettu ja tiedot poimittu. Paina "Seuraava" jatkaaksesi haastatteluun.';
+    } else {
+      status.textContent='✓ CV vastaanotettu. Täytä kentät alla tai jatka haastatteluun — AI täyttää lisätiedot.';
     }
   }catch(e){
     cvFilePending=file;
@@ -808,8 +814,98 @@ function updateCvStatusUi(){
   }
 }
 
+async function applyCvPortfolioFields(parsed){
+  if(!parsed) return false;
+  var got=false;
+  if(parsed.name){ P.full_name=parsed.name; got=true; }
+  if(parsed.city){ P.city=parsed.city; got=true; }
+  if(parsed.target_role){ P.target_role=parsed.target_role; got=true; }
+  if(parsed.bio){ P.bio=parsed.bio; got=true; }
+  if(parsed.skills&&parsed.skills.length){ P.skills=parsed.skills; got=true; }
+  if(parsed.experience&&parsed.experience.length){
+    P.experience=parsed.experience.map(function(e){ e.show=true; return normalizeExperience(e); });
+    got=true;
+  }
+  if(parsed.education&&parsed.education.length){ P.education=parsed.education; got=true; }
+  if(parsed.languages&&parsed.languages.length){ P.languages=parsed.languages; got=true; }
+  syncFormFields();
+  syncDetailsFields();
+  renderExperienceEditor();
+  return got;
+}
+
+function setCvParseStatus(msg,ok){
+  ['skillsParseStatus','expParseStatus'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el) return;
+    if(msg){ el.style.display='block'; el.textContent=msg; el.style.color=ok?'#059669':'var(--v)'; }
+    else { el.style.display='none'; el.textContent=''; }
+  });
+}
+
+async function parseCvFileToPortfolio(file){
+  if(!file) return false;
+  setCvParseStatus('Haetaan tietoja CV:stä...', false);
+  try{
+    var fd=new FormData(); fd.append('file',file);
+    var r=await fetch(apiBase()+'/api/ai/cv-portfolio-parse-file',{method:'POST',credentials:'include',body:fd});
+    var d=await r.json();
+    if(r.ok&&d.fields&&Object.keys(d.fields).length){
+      var ok=applyCvPortfolioFields(d.fields);
+      setCvParseStatus(ok?'✓ Taidot ja kokemus haettu CV:stä':'', true);
+      return ok;
+    }
+    if(cvText&&cvText.replace(/\s/g,'').length>=20){
+      return await extractCVBasics();
+    }
+    setCvParseStatus(d.message||'CV:stä ei voitu lukea riittävästi tekstiä — haastattelu täydentää tiedot.', false);
+    return false;
+  }catch(e){
+    console.warn('[cv-portfolio-parse-file]',e);
+    if(cvText) return await extractCVBasics();
+    setCvParseStatus('Automaattinen täyttö epäonnistui — voit muokata kentät käsin.', false);
+    return false;
+  }
+}
+
+async function parseSavedCvToPortfolio(){
+  setCvParseStatus('Haetaan tietoja tallennetusta CV:stä...', false);
+  try{
+    var r=await fetch(apiBase()+'/api/portfolio/cv/parse-mine',{method:'POST',credentials:'include'});
+    var d=await r.json();
+    if(r.ok&&d.fields&&Object.keys(d.fields).length){
+      var ok=applyCvPortfolioFields(d.fields);
+      setCvParseStatus(ok?'✓ Taidot ja kokemus haettu CV:stä':'', true);
+      return ok;
+    }
+    setCvParseStatus('', false);
+    return false;
+  }catch(e){
+    console.warn('[cv/parse-mine]',e);
+    setCvParseStatus('', false);
+    return false;
+  }
+}
+
+var cvAutoFillRunning=false;
+async function ensureCvDataInForm(){
+  renderExperienceEditor();
+  if(P.skills.length&&P.experience.length) return;
+  if(cvAutoFillRunning) return;
+  cvAutoFillRunning=true;
+  try{
+    if(cvFilePending){
+      await parseCvFileToPortfolio(cvFilePending);
+    } else if(cvFilenameOnServer||cvText){
+      await parseSavedCvToPortfolio();
+    }
+  } finally {
+    cvAutoFillRunning=false;
+  }
+}
+
 async function extractCVBasics(){
-  if(!cvText) return;
+  if(!cvText||cvText.replace(/\s/g,'').length<20) return false;
   try{
     var r=await fetch(apiBase()+'/api/ai/cv-portfolio-parse',{
       method:'POST',credentials:'include',
@@ -818,22 +914,10 @@ async function extractCVBasics(){
     });
     var d=await r.json();
     if(!r.ok||!d.fields) throw new Error(d.error||'Parse failed');
-    var parsed=d.fields;
-    if(parsed.name) P.full_name=parsed.name;
-    if(parsed.city) P.city=parsed.city;
-    if(parsed.target_role) P.target_role=parsed.target_role;
-    if(parsed.bio) P.bio=parsed.bio;
-    if(parsed.skills&&parsed.skills.length) P.skills=parsed.skills;
-    if(parsed.experience&&parsed.experience.length){
-      P.experience=parsed.experience.map(function(e){ e.show=true; return normalizeExperience(e); });
-    }
-    if(parsed.education&&parsed.education.length) P.education=parsed.education;
-    if(parsed.languages&&parsed.languages.length) P.languages=parsed.languages;
-    syncFormFields();
-    syncDetailsFields();
-    renderExperienceEditor();
+    return applyCvPortfolioFields(d.fields);
   }catch(e){
     console.warn('[cv-portfolio-parse]',e);
+    return false;
   }
 }
 
@@ -851,6 +935,7 @@ function goToInterview(){
   if(document.getElementById('f_city').value) P.city=document.getElementById('f_city').value;
   if(document.getElementById('f_role').value) P.target_role=document.getElementById('f_role').value;
   if(document.getElementById('f_bio').value) P.bio=document.getElementById('f_bio').value;
+  if(cvFilePending&&!P.skills.length) parseCvFileToPortfolio(cvFilePending);
   showScreen('s-interview');
   if(!interviewHistory.length) startInterview();
 }
@@ -1125,9 +1210,9 @@ function syncDetailsFields(){
   if(bioEl&&!bioEl.value&&(P.bio||P.career_summary)){
     bioEl.value=P.bio||P.career_summary;
   }
-  // Skills
+  // Skills — always refresh from P when we have data
   var sk=document.getElementById('d_skills');
-  if(sk&&P.skills.length){
+  if(sk&&P.skills&&P.skills.length){
     sk.value=P.skills.map(function(s){return typeof s==='string'?s:(s.name||s);}).join(', ');
   }
   // Languages
@@ -1550,6 +1635,7 @@ document.addEventListener('DOMContentLoaded',async function(){
       syncFormFields();
       renderExperienceEditor();
       restoreThemePicker();
+      if((pf.has_cv||cvText)&&(!P.skills.length||!P.experience.length)) ensureCvDataInForm();
       updateSlugUi();
       loadPortfolioNotifications();
     }
