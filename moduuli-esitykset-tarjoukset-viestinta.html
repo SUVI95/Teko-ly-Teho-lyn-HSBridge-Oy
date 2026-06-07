@@ -832,6 +832,16 @@ function summarizeVisualsWork(d) {
   return parts.join(' · ');
 }
 
+function showCVUploadPartial(fileName, message) {
+  var zone = document.getElementById('cvDropZone');
+  var status = document.getElementById('cvUploadStatus');
+  if (!zone || !status) return;
+  status.style.cssText = 'display:block;font-size:.85rem;padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;background:rgba(199,91,58,.08);border:1px solid rgba(199,91,58,.2);color:var(--accent2);';
+  status.innerHTML = '⚠ <strong>' + fileName + '</strong> — ' + (message || 'Emme voineet lukea tekstiä automaattisesti.') + ' Täytä kentät alla — se riittää.';
+  zone.style.borderColor = 'rgba(199,91,58,.4)';
+  zone.style.background = 'rgba(199,91,58,.03)';
+}
+
 function showCVUploadSuccess(fileName, chars, parsed) {
   var zone = document.getElementById('cvDropZone');
   var status = document.getElementById('cvUploadStatus');
@@ -937,8 +947,12 @@ function applyVisualsWork(d) {
     if (el && d[key] != null) el.value = d[key];
   });
   if (d.modulePath) setModulePath(d.modulePath);
-  if (d.cvFileName && d.cvExtractedText) {
-    showCVUploadSuccess(d.cvFileName, (d.cvExtractedText || '').length, !!d.cvParsedAt);
+  if (d.cvFileName) {
+    if (d.cvExtractedText) {
+      showCVUploadSuccess(d.cvFileName, (d.cvExtractedText || '').length, !!d.cvParsedAt);
+    } else {
+      showCVUploadPartial(d.cvFileName, 'CV tallennettu, mutta tekstiä ei voitu poimia.');
+    }
   }
   if (d.bgSummary) window._bgSummary = d.bgSummary;
 }
@@ -1009,8 +1023,10 @@ var PATH_COPY = {
 function setModulePath(path) {
   modulePath = path === 'b' ? 'b' : 'a';
   saveLocal('modulePath', modulePath);
-  document.getElementById('pathCardA').classList.toggle('selected', modulePath === 'a');
-  document.getElementById('pathCardB').classList.toggle('selected', modulePath === 'b');
+  var cardA = document.getElementById('pathCardA');
+  var cardB = document.getElementById('pathCardB');
+  if (cardA) cardA.classList.toggle('selected', modulePath === 'a');
+  if (cardB) cardB.classList.toggle('selected', modulePath === 'b');
   applyPathCopy();
 }
 
@@ -1384,6 +1400,7 @@ async function uploadCV(file) {
   status.style.cssText = 'display:block;font-size:.85rem;padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;background:rgba(37,99,168,.08);border:1px solid rgba(37,99,168,.2);color:var(--accent);';
   status.textContent = '⏳ Luetaan ' + file.name + '...';
   zone.style.borderColor = 'var(--accent)';
+  window._cvFileName = file.name;
   var fd = new FormData();
   fd.append('file', file);
   try {
@@ -1391,10 +1408,22 @@ async function uploadCV(file) {
     var r = await fetch((window.location.origin || '') + base + '/api/ai/cv-extract-text', {
       method: 'POST', credentials: 'include', body: fd
     });
-    var d = await r.json();
-    if (!r.ok || !d.text) throw new Error(d.error || 'Lukeminen epäonnistui');
-    window._cvExtracted = d.text;
-    window._cvFileName = file.name;
+    var d = {};
+    try { d = await r.json(); } catch (jsonErr) {
+      throw new Error('Palvelin ei vastannut odotetulla tavalla. Kokeile pienempää tiedostoa tai kirjoita kentät käsin.');
+    }
+    if (!r.ok) throw new Error(d.error || d.message || ('Virhe ' + r.status));
+
+    var text = String(d.text || '').trim();
+    var plainLen = text.replace(/\s/g, '').length;
+    if (text) window._cvExtracted = text;
+
+    if (!text || plainLen < 20) {
+      showCVUploadPartial(file.name, d.message || 'Skannattu, kuva-PDF tai HTML-tuloste ei aina toimi — tekstiä ei löytynyt.');
+      await persistModuleWork();
+      if (moduleWorkApi && moduleWorkApi.saveNow) await moduleWorkApi.saveNow();
+      return;
+    }
 
     status.textContent = '⏳ AI poimii tiedot CV:stä...';
     var parsed = false;
@@ -1403,7 +1432,7 @@ async function uploadCV(file) {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: d.text })
+        body: JSON.stringify({ text: text })
       });
       var pd = await pr.json();
       if (pr.ok && pd.fields) {
@@ -1415,15 +1444,13 @@ async function uploadCV(file) {
       console.warn('[cv-parse]', parseErr);
     }
 
-    showCVUploadSuccess(file.name, d.chars || d.text.length, parsed);
+    showCVUploadSuccess(file.name, d.chars || text.length, parsed);
     var btn = document.getElementById('analyzeBtn');
     if (btn) { btn.style.background = 'var(--accent3)'; btn.style.boxShadow = '0 4px 16px rgba(42,122,75,.4)'; }
     await persistModuleWork();
     if (moduleWorkApi && moduleWorkApi.saveNow) await moduleWorkApi.saveNow();
   } catch(e) {
-    status.style.cssText = 'display:block;font-size:.85rem;padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;background:rgba(199,91,58,.08);border:1px solid rgba(199,91,58,.2);color:var(--accent2);';
-    status.textContent = '⚠ ' + (e.message || 'Virhe') + ' — täytä kentät alla käsin.';
-    zone.style.borderColor = 'rgba(199,91,58,.4)';
+    showCVUploadPartial(file.name, e.message || 'Virhe');
   }
 }
 
