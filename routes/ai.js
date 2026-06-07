@@ -3,6 +3,7 @@ const multer = require('multer');
 const router = express.Router();
 const { fetch } = require('undici');
 const { extractPdfTextFromBuffer } = require('../lib/pdf-extract');
+const { buildMultipartForm } = require('../lib/multipart-form');
 
 const cvUpload = multer({
   storage: multer.memoryStorage(),
@@ -98,6 +99,94 @@ function timeoutSignal(ms) {
   const c = new AbortController();
   setTimeout(() => c.abort(), ms);
   return c.signal;
+}
+
+const WHISPER_TIMEOUT_MS = 30000;
+const VOICE_INTERVIEW_TIMEOUT_MS = 45000;
+
+function voiceFeedbackModel() {
+  return envTrim('OPENAI_VOICE_MODEL') || 'gpt-realtime-2';
+}
+
+/** Transcribe audio buffer via OpenAI Whisper (multipart body built manually for Node fetch). */
+async function whisperTranscribeBuffer(openaiApiKey, buffer, opts = {}) {
+  const language = opts.language || 'fi';
+  const model = opts.model || 'whisper-1';
+  const filename = opts.filename || 'recording.webm';
+  const mime = opts.mime || 'audio/webm';
+
+  const { body, contentType } = buildMultipartForm([
+    { name: 'file', value: buffer, filename, contentType: mime },
+    { name: 'model', value: model },
+    { name: 'language', value: language }
+  ]);
+
+  const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${openaiApiKey}`,
+      'Content-Type': contentType,
+      'Content-Length': String(body.length)
+    },
+    body,
+    signal: timeoutSignal(WHISPER_TIMEOUT_MS)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.text().catch(() => '');
+    const err = new Error('Transcription failed');
+    err.status = response.status;
+    err.details = errorData;
+    throw err;
+  }
+
+  const data = await response.json();
+  return String(data.text || '').trim();
+}
+
+/** Analyze interview speech with gpt-realtime-2 (falls back to gpt-4o-mini). */
+async function voiceInterviewFeedback(openaiApiKey, { system, prompt, max_tokens = 350 }) {
+  const models = [voiceFeedbackModel(), 'gpt-4o-mini'];
+  const messages = [];
+  if (system) messages.push({ role: 'system', content: system });
+  messages.push({ role: 'user', content: prompt });
+
+  let lastError = '';
+  for (const model of models) {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openaiApiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          max_tokens,
+          temperature: 0.6
+        }),
+        signal: timeoutSignal(VOICE_INTERVIEW_TIMEOUT_MS)
+      });
+
+      if (!response.ok) {
+        lastError = await response.text().catch(() => '');
+        console.warn('Voice feedback model failed:', model, lastError);
+        continue;
+      }
+
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content || '';
+      if (text.trim()) return text.trim();
+    } catch (err) {
+      lastError = err.message;
+      console.warn('Voice feedback error:', model, err.message);
+    }
+  }
+
+  const err = new Error('Voice feedback failed');
+  err.details = lastError;
+  throw err;
 }
 
 async function callOpenAIFallback(messages, system, max_tokens, res) {
@@ -244,7 +333,7 @@ router.post('/transcribe', audioUpload.single('file'), async (req, res) => {
 
     const openaiApiKey = envTrim('OPENAI_API_KEY');
     if (!openaiApiKey) {
-      return res.status(503).json({ error: 'Transcription service not configured' });
+      return res.status(503).json({ error: 'Transkriptiopalvelu ei ole käytössä. Ota yhteyttä opettajaan.' });
     }
 
     const language = String(req.body.language || 'fi').trim() || 'fi';
@@ -252,38 +341,75 @@ router.post('/transcribe', audioUpload.single('file'), async (req, res) => {
     const filename = req.file.originalname || 'recording.webm';
     const mime = req.file.mimetype || 'audio/webm';
 
-    const formData = new FormData();
-    formData.append('file', new Blob([req.file.buffer], { type: mime }), filename);
-    formData.append('model', model);
-    formData.append('language', language);
-
-    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${openaiApiKey}`
-      },
-      body: formData,
-      signal: timeoutSignal(30000)
+    const text = await whisperTranscribeBuffer(openaiApiKey, req.file.buffer, {
+      language,
+      model,
+      filename,
+      mime
     });
 
-    if (!response.ok) {
-      const errorData = await response.text().catch(() => '');
-      console.error('Whisper API error:', errorData);
-      return res.status(response.status).json({
-        error: 'Transcription failed',
-        details: errorData
+    res.json({ text, transcript: text });
+  } catch (error) {
+    console.error('Transcribe error:', error.details || error.message);
+    res.status(error.status || 500).json({
+      error: 'Transkriptio epäonnistui',
+      message: error.message
+    });
+  }
+});
+
+/** Transcribe + gpt-realtime-2 feedback for moduuli9 voice exercises. */
+router.post('/voice-interview', audioUpload.single('file'), async (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ error: 'Audio file required' });
+    }
+
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return res.status(503).json({ error: 'Äänipalvelu ei ole käytössä. Ota yhteyttä opettajaan.' });
+    }
+
+    const system = String(req.body.system || '').trim();
+    const prompt = String(req.body.prompt || '').trim();
+    const max_tokens = Math.min(800, Math.max(80, parseInt(req.body.max_tokens, 10) || 350));
+    const language = String(req.body.language || 'fi').trim() || 'fi';
+    const filename = req.file.originalname || 'recording.webm';
+    const mime = req.file.mimetype || 'audio/webm';
+
+    const transcript = await whisperTranscribeBuffer(openaiApiKey, req.file.buffer, {
+      language,
+      filename,
+      mime
+    });
+
+    if (!transcript) {
+      return res.json({
+        transcript: '',
+        feedback: '',
+        text: '',
+        warning: 'Puhetta ei tunnistettu. Yritä uudelleen selkeämmällä äänellä.'
       });
     }
 
-    const data = await response.json();
+    let feedback = '';
+    if (system) {
+      const userPrompt = prompt
+        ? `${prompt}\n\nHakijan vastaus (transkriptio):\n${transcript}`
+        : `Hakijan vastaus (transkriptio):\n${transcript}`;
+      feedback = await voiceInterviewFeedback(openaiApiKey, { system, prompt: userPrompt, max_tokens });
+    }
+
     res.json({
-      text: data.text || '',
-      transcript: data.text || ''
+      transcript,
+      text: transcript,
+      feedback,
+      model: voiceFeedbackModel()
     });
   } catch (error) {
-    console.error('Transcribe error:', error);
-    res.status(500).json({
-      error: 'Failed to transcribe audio',
+    console.error('Voice interview error:', error.details || error.message);
+    res.status(error.status || 500).json({
+      error: 'Äänianalyysi epäonnistui',
       message: error.message
     });
   }

@@ -1881,11 +1881,13 @@ function haSnapshot(){
       palkkaFb:panelShown('palkkaFb'),
       palkkaDone:panelShown('palkkaDone'),
       nextReveal:panelShown('nextReveal'),
+      mockDone:panelShown('mockDone'),
       finished:!!(document.querySelector('#s12 .btn-coral.btn-lg')?.disabled)
     },
     display:{
       nav2wait:(document.getElementById('nav2wait')||{}).style.display||'',
-      nav4wait:(document.getElementById('nav4wait')||{}).style.display||''
+      nav4wait:(document.getElementById('nav4wait')||{}).style.display||'',
+      mockNextBtn:(document.getElementById('mockNextBtn')||{}).style.display||''
     },
     texts:{
       startMsg:txt('startMsg'),
@@ -1902,11 +1904,19 @@ function haSnapshot(){
       hpTranscript:txt('hpTranscript'),
       starVoiceFbT:(document.getElementById('starVoiceFbT')||{}).innerHTML||'',
       hpVoiceFbT:(document.getElementById('hpVoiceFbT')||{}).innerHTML||'',
-      mockTranscript:txt('mockTranscript')
+      mockTranscript:txt('mockTranscript'),
+      mockFbGood:txt('mockFbGood'),
+      mockFbFix:txt('mockFbFix'),
+      mockFbNext:txt('mockFbNext'),
+      mockQText:txt('mockQText'),
+      mockQLabel:txt('mockQLabel')
     },
+    mockQ,
+    mockDoneCount,
     voiceShown:{
       starVoiceFb:panelShown('starVoiceFb'),
-      hpVoiceFb:panelShown('hpVoiceFb')
+      hpVoiceFb:panelShown('hpVoiceFb'),
+      mockFbArea:panelShown('mockFbArea')
     }
   };
 }
@@ -2000,6 +2010,16 @@ function applyHaData(d){
   if(d.voiceShown){
     if(d.voiceShown.starVoiceFb){const el=document.getElementById('starVoiceFb');if(el)el.classList.add('show');}
     if(d.voiceShown.hpVoiceFb){const el=document.getElementById('hpVoiceFb');if(el)el.classList.add('show');}
+    if(d.voiceShown.mockFbArea){const el=document.getElementById('mockFbArea');if(el)el.classList.add('show');}
+  }
+  if(typeof d.mockQ==='number'){
+    mockQ=d.mockQ;
+    mockDoneCount=Number(d.mockDoneCount||0);
+    if(typeof updateMockDots==='function')updateMockDots();
+  }
+  if(d.display&&d.display.mockNextBtn!=null){
+    const nb=document.getElementById('mockNextBtn');
+    if(nb)nb.style.display=d.display.mockNextBtn;
   }
   if(d.vastaQuestion){
     S.vastaQuestion=d.vastaQuestion;
@@ -2028,7 +2048,7 @@ function applyHaData(d){
   }
   if(d.shown){
     if(d.shown.finished)finish();
-    const showIds=['startReveal','tfDoneMsg','decoderReveal','writeFb','writeReveal','vastavFb','vastavReveal','abDone','hpFb','hpReveal','hpFilterFb','hpFixReveal','companyReveal','company2','companyFb','companyDone','scenDone','weakFb','whyFb','palkkaFb','palkkaDone','nextReveal'];
+    const showIds=['startReveal','tfDoneMsg','decoderReveal','writeFb','writeReveal','vastavFb','vastavReveal','abDone','hpFb','hpReveal','hpFilterFb','hpFixReveal','companyReveal','company2','companyFb','companyDone','scenDone','weakFb','whyFb','palkkaFb','palkkaDone','nextReveal','mockDone'];
     showIds.forEach(id=>{if(!d.shown[id])return;const el=document.getElementById(id);if(el)el.classList.add('show');});
     checkHardSectionDone();
   }
@@ -2146,39 +2166,53 @@ if(document.readyState==='loading'){
 }
 
 // ══════════════════════════════════════════════════════
-// VOICE RECORDING — Whisper transcription + AI feedback
+// VOICE RECORDING — Whisper transcription + gpt-realtime-2 feedback
 // ══════════════════════════════════════════════════════
-const OPENAI_KEY = window.OPENAI_API_KEY || '';
-
 const voiceState = {};
 
-async function whisperTranscribe(audioBlob) {
-  // Use the server proxy if available, fall back to direct OpenAI
+async function voiceInterviewRequest(audioBlob, fields) {
   const fd = new FormData();
   fd.append('file', audioBlob, 'recording.webm');
-  fd.append('model', 'whisper-1');
+  fd.append('language', 'fi');
+  Object.entries(fields || {}).forEach(([k, v]) => fd.append(k, String(v)));
+  try {
+    const r = await fetch('/api/ai/voice-interview', {
+      method: 'POST',
+      credentials: 'include',
+      body: fd,
+      signal: AbortSignal.timeout(45000)
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) return d;
+    if (r.status === 503) {
+      return { error: 'Äänipalvelu ei ole käytössä juuri nyt. Ota yhteyttä opettajaan.' };
+    }
+    return { error: d.error || d.message || ('Virhe ' + r.status) };
+  } catch (e) {
+    return { error: 'Yhteys palvelimeen katkesi. Tarkista internetyhteys ja yritä uudelleen.' };
+  }
+}
+
+async function whisperTranscribe(audioBlob) {
+  const fd = new FormData();
+  fd.append('file', audioBlob, 'recording.webm');
   fd.append('language', 'fi');
   try {
-    // Try server proxy first
     const r = await fetch('/api/ai/transcribe', {
-      method: 'POST', credentials: 'include', body: fd,
-      signal: AbortSignal.timeout(30000)
-    });
-    if (r.ok) { const d = await r.json(); return d.text || d.transcript || ''; }
-  } catch(e) {}
-  // Fallback: direct OpenAI Whisper (needs key in window.OPENAI_API_KEY)
-  const key = window.OPENAI_API_KEY || '';
-  if (!key) return '[Transkriptio ei saatavilla — lisää OpenAI API-avain]';
-  try {
-    const r2 = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + key },
+      credentials: 'include',
       body: fd,
       signal: AbortSignal.timeout(30000)
     });
-    if (r2.ok) { const d2 = await r2.json(); return d2.text || ''; }
-    return '[Transkriptio epäonnistui]';
-  } catch(e) { return '[Transkriptio epäonnistui: ' + e.message + ']'; }
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) return d.text || d.transcript || '';
+    if (r.status === 503) {
+      return '[Transkriptio ei saatavilla — palvelu ei ole käytössä. Ota yhteyttä opettajaan.]';
+    }
+    return '[Transkriptio epäonnistui — yritä uudelleen]';
+  } catch (e) {
+    return '[Transkriptio epäonnistui — tarkista internetyhteys]';
+  }
 }
 
 function voiceFmtTime(sec) {
@@ -2211,7 +2245,16 @@ function voiceStart(id) {
       document.getElementById(cfg.ripple).classList.remove('active');
       const blob = new Blob(chunks, { type: mr.mimeType });
       const elapsed = voiceState[id + '_elapsed'] || 0;
-      const transcript = await whisperTranscribe(blob);
+      const type = id === 'star' ? 'STAR-vastauksesta' : 'hissipuheesta';
+      const sys = `Olet rekrytoija. Kuuntelit hakijan ${type}. Transkriptio alla. Anna lyhyt palaute: (1) yksi asia joka toimi, (2) yksi konkreettinen parannusehdotus. Max 3 lausetta. Suomi. Ei ylistystä.`;
+      const result = await voiceInterviewRequest(blob, {
+        system: sys,
+        prompt: 'Analysoi hakijan nauhoitus ja anna palaute transkriptin perusteella.',
+        max_tokens: 250
+      });
+      const transcript = result.error
+        ? result.error
+        : (result.transcript || result.text || '(puhetta ei tunnistettu)');
       const transcriptEl = document.getElementById(cfg.transcript);
       transcriptEl.textContent = transcript;
       transcriptEl.classList.add('show');
@@ -2219,14 +2262,11 @@ function voiceStart(id) {
       let timingClass = 'good', timingMsg = `✓ ${voiceFmtTime(elapsed)} — sopiva aika`;
       if (elapsed < cfg.min * 0.7) { timingClass = 'short'; timingMsg = `⚠ ${voiceFmtTime(elapsed)} — liian lyhyt (tavoite ${cfg.min}–${cfg.max}s)`; }
       else if (elapsed > cfg.max * 1.3) { timingClass = 'long'; timingMsg = `⚠ ${voiceFmtTime(elapsed)} — liian pitkä (tavoite ${cfg.min}–${cfg.max}s)`; }
-      // AI feedback
+      // AI feedback (gpt-realtime-2 via server)
       document.getElementById(cfg.status).textContent = 'Analysoidaan...';
-      const type = id === 'star' ? 'STAR-vastauksesta' : 'hissipuheesta';
-      const target = id === 'star' ? 'STAR-rakenne (S/T/A/R), action-kohta on ensimmäisessä persoonassa, ei "me"' : `kesto ${timingMsg}, alkaa konkreettisesti, ei kliseitä`;
-      const sys = `Olet rekrytoija. Kuuntelit hakijan ${type}. Transkriptio alla. Anna lyhyt palaute: (1) yksi asia joka toimi, (2) yksi konkreettinen parannusehdotus. Max 3 lausetta. Suomi. Ei ylistystä.`;
-      const txt = await ai(transcript, sys, 250);
+      const txt = result.feedback || '';
       const fbEl = document.getElementById(cfg.fb);
-      document.getElementById(cfg.fbT).innerHTML = `<span class="voice-timing ${timingClass}">${timingMsg}</span><br><br>${txt || 'Palaute ei saatavilla'}`;
+      document.getElementById(cfg.fbT).innerHTML = `<span class="voice-timing ${timingClass}">${timingMsg}</span><br><br>${txt || (result.error ? 'Palaute ei saatavilla.' : 'Palaute ei saatavilla — yritä uudelleen.')}`;
       fbEl.classList.add('show');
       document.getElementById(cfg.status).textContent = 'Valmis — voit nauhoittaa uudelleen';
       try{saveProgress();}catch(e){}
@@ -2323,15 +2363,21 @@ function mockStop() {
 }
 
 async function processMockAnswer(blob) {
-  const transcript = await whisperTranscribe(blob);
-  const tBox = document.getElementById('mockTranscript');
-  tBox.textContent = transcript || '(ei puhetta tunnistettu)';
-  tBox.classList.add('show');
-  document.getElementById('mockStatus').textContent = 'AI analysoi...';
-  // Get structured feedback
   const question = MOCK_QUESTIONS[mockQ].replace(/["""]/g, '');
   const sys = 'Olet rekrytoija suomalaisessa yrityksessä. Sait hakijan vastauksen haastattelukysymykseen. Anna palaute täsmälleen kolmessa osassa, merkitse selkeästi:\n✓ TOIMI:\n⚠ PARANNA:\n→ MUUTOS:';
-  const txt = await ai(`Kysymys: ${question}\n\nHakijan vastaus: ${transcript}`, sys, 320);
+  const result = await voiceInterviewRequest(blob, {
+    system: sys,
+    prompt: `Kysymys: ${question}\n\nAnalysoi hakijan nauhoitettu vastaus ja anna palaute.`,
+    max_tokens: 320
+  });
+  const transcript = result.error
+    ? result.error
+    : (result.transcript || result.text || '(ei puhetta tunnistettu)');
+  const tBox = document.getElementById('mockTranscript');
+  tBox.textContent = transcript;
+  tBox.classList.add('show');
+  document.getElementById('mockStatus').textContent = 'AI analysoi...';
+  const txt = result.feedback || '';
   // Parse sections
   const goodM = txt.match(/✓\s*TOIMI[:\s]+([\s\S]+?)(?=⚠|$)/i);
   const fixM = txt.match(/⚠\s*PARANNA[:\s]+([\s\S]+?)(?=→|$)/i);
@@ -2347,6 +2393,7 @@ async function processMockAnswer(blob) {
   nextBtn.textContent = mockQ < MOCK_QUESTIONS.length - 1 ? 'Seuraava kysymys →' : '✓ Suoritettu';
   mockDoneCount++;
   updateMockDots();
+  try{saveProgress();}catch(e){}
 }
 
 function mockNext() {
@@ -2355,6 +2402,7 @@ function mockNext() {
     document.getElementById('mockDone').classList.add('show');
     document.getElementById('mockNextBtn').style.display = 'none';
     document.getElementById('mockTopStatus').textContent = '✓ Valmis';
+    try{saveProgress();}catch(e){}
     return;
   }
   document.getElementById('mockQText').textContent = MOCK_QUESTIONS[mockQ];
@@ -2363,6 +2411,7 @@ function mockNext() {
   document.getElementById('mockTranscript').classList.remove('show');
   document.getElementById('mockTimer').textContent = '0:00';
   updateMockDots();
+  try{saveProgress();}catch(e){}
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
     startMockRecording(stream);
   }).catch(e => alert('Mikrofoni: ' + e.message));
