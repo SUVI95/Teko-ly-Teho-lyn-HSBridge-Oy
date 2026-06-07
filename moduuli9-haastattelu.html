@@ -378,6 +378,8 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
 @keyframes pulse-rec{0%,100%{box-shadow:0 0 0 0 rgba(255,51,51,.4)}50%{box-shadow:0 0 0 8px rgba(255,51,51,0)}}
 .voice-btn-stop{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2)}
 .voice-btn-stop:hover{background:rgba(255,255,255,.2)}
+.voice-btn-retry{background:transparent;color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.25)}
+.voice-btn-retry:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.4)}
 .voice-btn-play{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15)}
 .voice-btn-play:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)}
 .voice-timer{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:#fff;min-width:52px}
@@ -699,6 +701,7 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
       <div class="ripple-indicator" id="starRipple">🎙</div>
       <button class="voice-btn voice-btn-rec" id="starRecBtn" onclick="voiceStart('star')">● Aloita nauhoitus</button>
       <button class="voice-btn voice-btn-stop" id="starStopBtn" onclick="voiceStop('star')" style="display:none">■ Lopeta</button>
+      <button class="voice-btn voice-btn-retry" id="starRetryBtn" onclick="voiceRetry('star')" style="display:none">↺ Yritä uudelleen</button>
       <span class="voice-timer" id="starTimer">0:00</span>
       <span style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.3)">tavoite 60–90s</span>
     </div>
@@ -856,6 +859,7 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
           <div class="ripple-indicator" id="hpRipple">🎙</div>
           <button class="voice-btn voice-btn-rec" id="hpRecBtn" onclick="voiceStart('hp')">● Nauhoita hissipuhe</button>
           <button class="voice-btn voice-btn-stop" id="hpStopBtn" onclick="voiceStop('hp')" style="display:none">■ Lopeta</button>
+          <button class="voice-btn voice-btn-retry" id="hpRetryBtn" onclick="voiceRetry('hp')" style="display:none">↺ Yritä uudelleen</button>
           <span class="voice-timer" id="hpTimer">0:00</span>
           <span style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.3)">tavoite 45–60s</span>
         </div>
@@ -1887,7 +1891,9 @@ function haSnapshot(){
     display:{
       nav2wait:(document.getElementById('nav2wait')||{}).style.display||'',
       nav4wait:(document.getElementById('nav4wait')||{}).style.display||'',
-      mockNextBtn:(document.getElementById('mockNextBtn')||{}).style.display||''
+      mockNextBtn:(document.getElementById('mockNextBtn')||{}).style.display||'',
+      starRetryBtn:(document.getElementById('starRetryBtn')||{}).style.display||'',
+      hpRetryBtn:(document.getElementById('hpRetryBtn')||{}).style.display||''
     },
     texts:{
       startMsg:txt('startMsg'),
@@ -2011,6 +2017,8 @@ function applyHaData(d){
     if(d.voiceShown.starVoiceFb){const el=document.getElementById('starVoiceFb');if(el)el.classList.add('show');}
     if(d.voiceShown.hpVoiceFb){const el=document.getElementById('hpVoiceFb');if(el)el.classList.add('show');}
     if(d.voiceShown.mockFbArea){const el=document.getElementById('mockFbArea');if(el)el.classList.add('show');}
+    if(d.voiceShown.starVoiceFb){const rb=document.getElementById('starRetryBtn');if(rb)rb.style.display='inline-flex';}
+    if(d.voiceShown.hpVoiceFb){const rb=document.getElementById('hpRetryBtn');if(rb)rb.style.display='inline-flex';}
   }
   if(typeof d.mockQ==='number'){
     mockQ=d.mockQ;
@@ -2020,6 +2028,10 @@ function applyHaData(d){
   if(d.display&&d.display.mockNextBtn!=null){
     const nb=document.getElementById('mockNextBtn');
     if(nb)nb.style.display=d.display.mockNextBtn;
+  }
+  if(d.display){
+    if(d.display.starRetryBtn){const rb=document.getElementById('starRetryBtn');if(rb)rb.style.display=d.display.starRetryBtn;}
+    if(d.display.hpRetryBtn){const rb=document.getElementById('hpRetryBtn');if(rb)rb.style.display=d.display.hpRetryBtn;}
   }
   if(d.vastaQuestion){
     S.vastaQuestion=d.vastaQuestion;
@@ -2221,15 +2233,63 @@ function voiceFmtTime(sec) {
   return m + ':' + String(s).padStart(2, '0');
 }
 
+function voiceCfg(id) {
+  return {
+    star: {
+      min: 60, max: 90,
+      recBtn: 'starRecBtn', stopBtn: 'starStopBtn', retryBtn: 'starRetryBtn',
+      timer: 'starTimer', status: 'starStatus', transcript: 'starTranscript',
+      fb: 'starVoiceFb', fbT: 'starVoiceFbT', ripple: 'starRipple',
+      idleStatus: 'Paina nauhoita ja kerro STAR-vastauksesi ääneen'
+    },
+    hp: {
+      min: 45, max: 60,
+      recBtn: 'hpRecBtn', stopBtn: 'hpStopBtn', retryBtn: 'hpRetryBtn',
+      timer: 'hpTimer', status: 'hpStatus', transcript: 'hpTranscript',
+      fb: 'hpVoiceFb', fbT: 'hpVoiceFbT', ripple: 'hpRipple',
+      idleStatus: 'Paina nauhoia ja sano hissipuheesi ääneen'
+    }
+  }[id];
+}
+
+function voiceClearTimer(id) {
+  if (voiceState[id + '_timer']) {
+    clearInterval(voiceState[id + '_timer']);
+    voiceState[id + '_timer'] = null;
+  }
+}
+
+function voiceRetry(id) {
+  const cfg = voiceCfg(id);
+  if (!cfg) return;
+  voiceClearTimer(id);
+  if (voiceState[id] && voiceState[id].state === 'recording') {
+    try { voiceState[id].stop(); } catch (e) {}
+  }
+  voiceState[id] = null;
+  voiceState[id + '_elapsed'] = 0;
+  document.getElementById(cfg.recBtn).style.display = 'inline-flex';
+  document.getElementById(cfg.recBtn).classList.remove('recording');
+  document.getElementById(cfg.stopBtn).style.display = 'none';
+  document.getElementById(cfg.retryBtn).style.display = 'none';
+  document.getElementById(cfg.timer).textContent = '0:00';
+  document.getElementById(cfg.timer).className = 'voice-timer';
+  document.getElementById(cfg.status).textContent = cfg.idleStatus;
+  document.getElementById(cfg.ripple).classList.remove('active');
+  const tr = document.getElementById(cfg.transcript);
+  tr.textContent = '';
+  tr.classList.remove('show');
+  document.getElementById(cfg.fb).classList.remove('show');
+  document.getElementById(cfg.fbT).innerHTML = '';
+  try { saveProgress(); } catch (e) {}
+}
+
 function voiceStart(id) {
   if (!navigator.mediaDevices) {
     alert('Selaimesi ei tue äänittämistä. Kokeile Chrome tai Firefox.');
     return;
   }
-  const cfg = {
-    star: { min: 60, max: 90, recBtn: 'starRecBtn', stopBtn: 'starStopBtn', timer: 'starTimer', status: 'starStatus', transcript: 'starTranscript', fb: 'starVoiceFb', fbT: 'starVoiceFbT', ripple: 'starRipple' },
-    hp:   { min: 45, max: 60, recBtn: 'hpRecBtn',   stopBtn: 'hpStopBtn',   timer: 'hpTimer',   status: 'hpStatus',   transcript: 'hpTranscript',   fb: 'hpVoiceFb',   fbT: 'hpVoiceFbT',   ripple: 'hpRipple' }
-  }[id];
+  const cfg = voiceCfg(id);
   if (!cfg) return;
 
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
@@ -2238,10 +2298,12 @@ function voiceStart(id) {
     mr.ondataavailable = e => chunks.push(e.data);
     mr.onstop = async () => {
       stream.getTracks().forEach(t => t.stop());
-      clearInterval(voiceState[id + '_timer']);
+      voiceClearTimer(id);
       document.getElementById(cfg.status).textContent = 'Transkriboidaan...';
-      document.getElementById(cfg.recBtn).style.display = 'inline-flex';
+      document.getElementById(cfg.recBtn).style.display = 'none';
       document.getElementById(cfg.stopBtn).style.display = 'none';
+      document.getElementById(cfg.retryBtn).style.display = 'none';
+      document.getElementById(cfg.recBtn).classList.remove('recording');
       document.getElementById(cfg.ripple).classList.remove('active');
       const blob = new Blob(chunks, { type: mr.mimeType });
       const elapsed = voiceState[id + '_elapsed'] || 0;
@@ -2258,26 +2320,31 @@ function voiceStart(id) {
       const transcriptEl = document.getElementById(cfg.transcript);
       transcriptEl.textContent = transcript;
       transcriptEl.classList.add('show');
-      // Timing badge
       let timingClass = 'good', timingMsg = `✓ ${voiceFmtTime(elapsed)} — sopiva aika`;
       if (elapsed < cfg.min * 0.7) { timingClass = 'short'; timingMsg = `⚠ ${voiceFmtTime(elapsed)} — liian lyhyt (tavoite ${cfg.min}–${cfg.max}s)`; }
       else if (elapsed > cfg.max * 1.3) { timingClass = 'long'; timingMsg = `⚠ ${voiceFmtTime(elapsed)} — liian pitkä (tavoite ${cfg.min}–${cfg.max}s)`; }
-      // AI feedback (gpt-realtime-2 via server)
       document.getElementById(cfg.status).textContent = 'Analysoidaan...';
       const txt = result.feedback || '';
       const fbEl = document.getElementById(cfg.fb);
       document.getElementById(cfg.fbT).innerHTML = `<span class="voice-timing ${timingClass}">${timingMsg}</span><br><br>${txt || (result.error ? 'Palaute ei saatavilla.' : 'Palaute ei saatavilla — yritä uudelleen.')}`;
       fbEl.classList.add('show');
-      document.getElementById(cfg.status).textContent = 'Valmis — voit nauhoittaa uudelleen';
-      try{saveProgress();}catch(e){}
+      document.getElementById(cfg.status).textContent = 'Valmis — paina "Yritä uudelleen" tai nauhoita uudelleen';
+      document.getElementById(cfg.recBtn).style.display = 'inline-flex';
+      document.getElementById(cfg.retryBtn).style.display = 'inline-flex';
+      try { saveProgress(); } catch (e) {}
     };
     voiceState[id] = mr;
     voiceState[id + '_elapsed'] = 0;
     mr.start(1000);
     document.getElementById(cfg.recBtn).classList.add('recording');
+    document.getElementById(cfg.recBtn).style.display = 'inline-flex';
     document.getElementById(cfg.stopBtn).style.display = 'inline-flex';
+    document.getElementById(cfg.retryBtn).style.display = 'none';
     document.getElementById(cfg.ripple).classList.add('active');
     document.getElementById(cfg.status).textContent = 'Nauhoitetaan...';
+    document.getElementById(cfg.timer).textContent = '0:00';
+    document.getElementById(cfg.timer).className = 'voice-timer';
+    voiceClearTimer(id);
     voiceState[id + '_timer'] = setInterval(() => {
       voiceState[id + '_elapsed']++;
       const el = document.getElementById(cfg.timer);
@@ -2291,11 +2358,15 @@ function voiceStart(id) {
 }
 
 function voiceStop(id) {
+  const cfg = voiceCfg(id);
+  if (!cfg) return;
+  voiceClearTimer(id);
   if (voiceState[id] && voiceState[id].state === 'recording') {
+    document.getElementById(cfg.stopBtn).style.display = 'none';
+    document.getElementById(cfg.status).textContent = 'Transkriboidaan...';
     voiceState[id].stop();
-    const cfg = { star: 'starRecBtn', hp: 'hpRecBtn' };
-    const btn = document.getElementById(cfg[id]);
-    if (btn) btn.classList.remove('recording');
+    document.getElementById(cfg.recBtn).classList.remove('recording');
+    document.getElementById(cfg.ripple).classList.remove('active');
   }
 }
 
