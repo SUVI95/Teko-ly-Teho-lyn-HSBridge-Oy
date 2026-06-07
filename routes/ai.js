@@ -865,4 +865,66 @@ router.post('/cv-parse', async (req, res) => {
   }
 });
 
+/** Rich CV parse for Elävä CV portfolio module (experience/education arrays). */
+router.post('/cv-portfolio-parse', async (req, res) => {
+  try {
+    const text = String(req.body.text || '').trim();
+    if (text.replace(/\s/g, '').length < 40) {
+      return res.status(400).json({ error: 'CV-teksti on liian lyhyt analysoitavaksi.' });
+    }
+
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return res.status(503).json({ error: 'Tekoälypalvelu ei ole käytössä.' });
+    }
+
+    const system = [
+      'Extract structured portfolio data from a Finnish CV/resume.',
+      'Reply with ONLY valid JSON (no markdown):',
+      '{"name":"","city":"","target_role":"","bio":"2-3 sentence intro in Finnish","skills":["3-7 skills"],"experience":[{"role":"","company":"","years":"","desc":""}],"education":[{"degree":"","school":"","year":""}],"languages":[{"name":"","level":""}]}',
+      'Use only facts from the CV. Empty arrays/strings if missing. Finnish text for bio and desc.'
+    ].join(' ');
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${openaiApiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: text.slice(0, 12000) }
+        ],
+        max_tokens: 1400,
+        temperature: 0.2,
+        response_format: { type: 'json_object' }
+      }),
+      signal: timeoutSignal(45000)
+    });
+
+    if (!response.ok) {
+      const details = await response.text().catch(() => '');
+      console.error('cv-portfolio-parse OpenAI error:', details);
+      return res.status(502).json({ error: 'CV:n analysointi epäonnistui.' });
+    }
+
+    const data = await response.json();
+    const raw = String(data.choices?.[0]?.message?.content || '').trim();
+    let fields;
+    try {
+      fields = JSON.parse(raw.replace(/^```json\s*|\s*```$/g, '').trim());
+    } catch (parseErr) {
+      console.error('cv-portfolio-parse JSON parse failed:', raw.slice(0, 200));
+      return res.status(502).json({ error: 'CV:n tietojen jäsentäminen epäonnistui.' });
+    }
+
+    res.json({ fields, chars: text.length });
+  } catch (err) {
+    console.error('cv-portfolio-parse error:', err);
+    res.status(500).json({ error: 'CV:n analysointi epäonnistui.' });
+  }
+});
+
 module.exports = router;

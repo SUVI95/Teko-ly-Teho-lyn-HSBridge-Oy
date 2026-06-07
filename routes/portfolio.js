@@ -145,7 +145,7 @@ router.get('/mine', authenticateToken, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Virhe' }); }
 });
 
-// Get portfolio by slug (PUBLIC)
+// Get portfolio by slug (PUBLIC — published only)
 router.get('/view/:slug', async (req, res) => {
   try {
     await ready();
@@ -155,6 +155,21 @@ router.get('/view/:slug', async (req, res) => {
        achievements, languages, certificates, brand_color, brand_accent, brand_bg,
        template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo
        FROM student_portfolios WHERE slug=$1 AND published=TRUE`, [req.params.slug]);
+    if (!r.rows.length) return res.status(404).json({ error: 'Ei löydy' });
+    res.json({ portfolio: r.rows[0] });
+  } catch (e) { res.status(500).json({ error: 'Virhe' }); }
+});
+
+// Preview own portfolio before publish (auth — ignores published flag)
+router.get('/preview/:slug', authenticateToken, async (req, res) => {
+  try {
+    await ready();
+    const r = await pool.query(
+      `SELECT slug, full_name, tagline, bio, city, target_role,
+       email_public, phone_public, linkedin_url, experience, education, skills,
+       achievements, languages, certificates, brand_color, brand_accent, brand_bg,
+       template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo
+       FROM student_portfolios WHERE slug=$1 AND user_id=$2`, [req.params.slug, req.user.id]);
     if (!r.rows.length) return res.status(404).json({ error: 'Ei löydy' });
     res.json({ portfolio: r.rows[0] });
   } catch (e) { res.status(500).json({ error: 'Virhe' }); }

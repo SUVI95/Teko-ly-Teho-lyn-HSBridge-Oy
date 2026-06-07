@@ -607,18 +607,14 @@ async function handleCVFile(file){
 async function extractCVBasics(){
   if(!cvText) return;
   try{
-    var r=await fetch(apiBase()+'/api/ai/claude',{
+    var r=await fetch(apiBase()+'/api/ai/cv-portfolio-parse',{
       method:'POST',credentials:'include',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        system:'Poimia CV:stä JSON-muodossa: {name,city,target_role,bio,skills:[],experience:[{role,company,years,desc}],education:[{degree,school,year}],languages:[{name,level}]}. Suomi. Vain JSON, ei muuta.',
-        messages:[{role:'user',content:'CV:\n'+cvText.slice(0,3000)}],
-        max_tokens:1200
-      })
+      body:JSON.stringify({text:cvText})
     });
     var d=await r.json();
-    var txt=(d.text||'').trim().replace(/```json|```/g,'').trim();
-    var parsed=JSON.parse(txt);
+    if(!r.ok||!d.fields) throw new Error(d.error||'Parse failed');
+    var parsed=d.fields;
     if(parsed.name) P.full_name=parsed.name;
     if(parsed.city) P.city=parsed.city;
     if(parsed.target_role) P.target_role=parsed.target_role;
@@ -628,7 +624,9 @@ async function extractCVBasics(){
     if(parsed.education&&parsed.education.length) P.education=parsed.education;
     if(parsed.languages&&parsed.languages.length) P.languages=parsed.languages;
     syncFormFields();
-  }catch(e){}
+  }catch(e){
+    console.warn('[cv-portfolio-parse]',e);
+  }
 }
 
 function syncFormFields(){
@@ -883,7 +881,7 @@ function loadPreview(){
   loading.style.display='flex'; frame.style.display='none';
   // Update URL bar
   var urlBar=document.getElementById('previewUrlBar');
-  if(urlBar) urlBar.textContent='duunijobs.fi/portfolio/'+portfolioSlug;
+  if(urlBar) urlBar.textContent=(window.location.host||'duunijobs.fi')+'/portfolio/'+portfolioSlug;
   frame.onload=function(){loading.style.display='none';frame.style.display='block';};
   frame.src=apiBase()+'/portfolio/'+portfolioSlug+'?preview=1&t='+Date.now();
 }
@@ -913,6 +911,10 @@ function buildPublishChecklist(){
   if(btn) btn.disabled=!allOk;
 }
 
+function portfolioPublicUrl(slug){
+  return (window.location.origin||'')+'/portfolio/'+slug;
+}
+
 async function publishPortfolio(){
   var btn=document.getElementById('publishBtn');
   btn.disabled=true; btn.textContent='Julkaistaan...';
@@ -925,7 +927,7 @@ async function publishPortfolio(){
     });
     var d=await r.json();
     if(!r.ok) throw new Error(d.error||'Julkaisuvirhe');
-    var url='https://aipolku.duunijobs.fi/portfolio/'+d.slug;
+    var url=portfolioPublicUrl(d.slug);
     document.getElementById('publishedUrl').textContent=url;
     document.getElementById('openPortfolioBtn').href=url;
     document.getElementById('publishNotYet').style.display='none';

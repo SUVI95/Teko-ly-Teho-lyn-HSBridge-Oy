@@ -376,11 +376,9 @@ app.get('/ai-simulation-lab', (req, res) => {
   res.redirect(302, '/ai-simulation-lab.html');
 });
 
-// Public portfolio page — duunijobs.fi/portfolio/slug
+// Public portfolio page — duunijobs.fi/portfolio/slug (HTML shell; data via /api/portfolio/view)
 app.get('/portfolio/:slug', async (req, res) => {
   try {
-    const pool = require('./database/db');
-    const r = await pool.query('SELECT template FROM student_portfolios WHERE slug=$1 AND published=TRUE', [req.params.slug]);
     const templatePath = path.join(__dirname, 'public', 'portfolio-tpl-premium.html');
     if (!fs.existsSync(templatePath)) return res.status(404).send('Portfolio-sivua ei löydy.');
     res.set('Cache-Control', 'public, max-age=60');
