@@ -440,7 +440,9 @@ router.post('/speech', async (req, res) => {
     }
 
     const voice = envTrim('OPENAI_TTS_VOICE') || 'onyx';
-    const instructions = envTrim('OPENAI_TTS_INSTRUCTIONS') || DEFAULT_TTS_INSTRUCTIONS;
+    const instructions = String(req.body.instructions || '').trim()
+      || envTrim('OPENAI_TTS_INSTRUCTIONS')
+      || DEFAULT_TTS_INSTRUCTIONS;
     const speedRaw = parseFloat(envTrim('OPENAI_TTS_SPEED') || '1.02');
     const speed = Number.isFinite(speedRaw) ? Math.min(1.2, Math.max(0.8, speedRaw)) : 1.02;
 
@@ -500,6 +502,93 @@ router.post('/speech', async (req, res) => {
   } catch (error) {
     console.error('Speech error:', error);
     res.status(500).json({ error: 'Failed to generate speech', message: error.message });
+  }
+});
+
+const MOCK_REACTION_TTS_INSTRUCTIONS = [
+  'Spontaneous brief Finnish recruiter reaction — like a real person listening in an interview.',
+  'Warm, light energy. Smile in voice. A soft chuckle or breathy "heh" is fine if natural.',
+  'Sound like you genuinely heard them — not reading a script. One or two short sentences max.',
+  'Language: Finnish.'
+].join(' ');
+
+/** Short human recruiter reaction between mock interview questions. */
+router.post('/mock-reaction', async (req, res) => {
+  try {
+    const question = String(req.body.question || '').trim();
+    const answer = String(req.body.answer || '').trim();
+    if (!question || !answer) {
+      return res.status(400).json({ error: 'Question and answer required' });
+    }
+
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return res.status(503).json({ error: 'AI-palvelu ei ole käytössä.' });
+    }
+
+    const system = [
+      'Olet suomalainen rekrytoija live-haastattelussa. Hakija vastasi juuri kysymykseesi.',
+      'Anna YKSI lyhyt puhekielinen reaktio (enintään 2 lausetta, max 30 sanaa) — kuin oikea ihminen:',
+      'tunnusta ("joo", "ymmärrän", "aivan", "hyvä"), myötäile kevyesti ("totta", "tuttu tilanne", "olet ihan oikeassa").',
+      'Pieni luonnollinen heh tai hymy äänessä OK. ÄLÄ anna palautetta, äLÄ arvioi, äLÄ esitä seuraavaa kysymystä.',
+      'Suomi, rento mutta ammattimainen.'
+    ].join(' ');
+
+    const reaction = await voiceInterviewFeedback(openaiApiKey, {
+      system,
+      prompt: `Kysymys: ${question}\n\nHakijan vastaus: ${answer}`,
+      max_tokens: 100
+    });
+
+    res.json({
+      reaction: reaction || 'Joo, kiitos — hyvä.',
+      speechInstructions: MOCK_REACTION_TTS_INSTRUCTIONS
+    });
+  } catch (error) {
+    console.error('Mock reaction error:', error);
+    res.status(500).json({ error: 'Reaktio epäonnistui', message: error.message });
+  }
+});
+
+/** Final feedback after all mock interview answers. */
+router.post('/mock-feedback', async (req, res) => {
+  try {
+    const sessions = req.body.sessions;
+    if (!Array.isArray(sessions) || !sessions.length) {
+      return res.status(400).json({ error: 'Sessions array required' });
+    }
+
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return res.status(503).json({ error: 'AI-palvelu ei ole käytössä.' });
+    }
+
+    const block = sessions.map((s, i) => {
+      const q = String(s.question || '').trim();
+      const a = String(s.transcript || s.answer || '').trim();
+      const tag = String(s.tag || '').trim();
+      return `--- Kysymys ${i + 1}${tag ? ' (' + tag + ')' : ''} ---\n${q}\n\nHakijan vastaus:\n${a}`;
+    }).join('\n\n');
+
+    const system = [
+      'Olet kokenut suomalainen rekrytoija. Mock-haastattelu (3 vaikeaa kysymystä) on päättynyt.',
+      'Anna kokonaispalaute kaikista vastauksista. Merkitse täsmälleen:',
+      '✓ TOIMI:',
+      '⚠ PARANNA:',
+      '→ MUUTOS:',
+      'Suomi. Konkreettinen. Max 8 lausetta yhteensä. Ensimmäisessä kysymyksessä piti käyttää STAR-rakennetta — mainitse jos puuttui.'
+    ].join(' ');
+
+    const feedback = await voiceInterviewFeedback(openaiApiKey, {
+      system,
+      prompt: block,
+      max_tokens: 450
+    });
+
+    res.json({ feedback: feedback || '' });
+  } catch (error) {
+    console.error('Mock feedback error:', error);
+    res.status(500).json({ error: 'Palaute epäonnistui', message: error.message });
   }
 });
 
