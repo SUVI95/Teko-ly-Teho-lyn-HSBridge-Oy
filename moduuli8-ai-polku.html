@@ -1042,9 +1042,9 @@ Säännöt:
   </div>
 
   <span class="lbl">Mihin paikkaan hait — tai haet?</span>
-  <textarea id="applied" placeholder="Yritys ja rooli — tai 'hakemus on valmis, lähetän tänään'" rows="2"></textarea>
+  <textarea id="applied" placeholder="Yritys ja rooli — tai 'hakemus on valmis, lähetän tänään'" rows="2" oninput="saveProgress()"></textarea>
   <span class="lbl" style="margin-top:13px">Mikä muuttui verrattuna ennen?</span>
-  <textarea id="changed" placeholder="Yksi asia joka on nyt eri kuin ennen tätä missiota" rows="3"></textarea>
+  <textarea id="changed" placeholder="Yksi asia joka on nyt eri kuin ennen tätä missiota" rows="3" oninput="saveProgress()"></textarea>
 
   <div class="rule"></div>
   <h2>Missä olet nyt —<br><em>verrattuna alussa.</em></h2>
@@ -1566,8 +1566,11 @@ function summarizePolkuData(data){
   if(!data||typeof data!=='object') return 'AI Polku — työnhaku tallennettu';
   const n=data.curScreen||1;
   const parts=[`Vaihe ${n}/${TOTAL}`];
-  if(data.S&&data.S.strengths&&data.S.strengths.length) parts.push('Vahvuudet valittu');
-  if(data.S&&data.S.appText) parts.push('Hakemus tallessa');
+  const S=data.S||{};
+  if(S.strengths&&S.strengths.length) parts.push('Vahvuudet valittu');
+  if(S.appText) parts.push('Hakemus tallessa');
+  const applied=data.inputs&&data.inputs.applied;
+  if(applied&&String(applied).trim()) parts.push(String(applied).trim().slice(0,60));
   if(data.shown&&data.shown.finished) parts.push('Suoritettu');
   return parts.join(' · ');
 }

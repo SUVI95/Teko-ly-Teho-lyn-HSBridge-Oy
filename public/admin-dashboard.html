@@ -1662,20 +1662,89 @@ nav {
       return 'Vaihe ' + n + '/12 · ' + lbl + (n >= 12 ? ' ✓' : '');
     }
 
+    function polkuPreBlock(label, text, opts) {
+      opts = opts || {};
+      if (text == null || !String(text).trim()) return '';
+      const maxH = opts.maxHeight ? `max-height:${opts.maxHeight};overflow:auto;` : '';
+      return `<h4 style="margin:${opts.marginTop || '0.75rem'} 0 0.35rem;font-size:0.95rem;">${label}</h4><div class="content-item-text" style="white-space:pre-wrap;${maxH}">${escapeHtml(String(text))}</div>`;
+    }
+
     function renderPolkuWorkHtml(workRow) {
       const parsed = parseModuleWorkPayload(workRow && workRow.reflection_text);
       const d = parsed && parsed.data ? parsed.data : null;
       if (!d) return `<div class="content-item-text">${escapeHtml((workRow && workRow.reflection_text) || '—')}</div>`;
-      const skills = Array.isArray(d.skills) ? d.skills.filter(Boolean) : [];
-      const strengths = Array.isArray(d.strengths) ? d.strengths.filter(Boolean) : [];
+
+      const S = d.S && typeof d.S === 'object' ? d.S : {};
+      const inputs = d.inputs && typeof d.inputs === 'object' ? d.inputs : {};
+      const texts = d.texts && typeof d.texts === 'object' ? d.texts : {};
+      const skills = Array.isArray(S.skills) ? S.skills.filter(Boolean) : [];
+      const strengths = Array.isArray(S.strengths) ? S.strengths.filter(Boolean) : [];
+      const evidence = Array.isArray(S.evidence) ? S.evidence.filter(Boolean) : [];
+      const kw = [
+        ...(Array.isArray(S.manualKW && S.manualKW.hard) ? S.manualKW.hard : []),
+        ...(Array.isArray(S.manualKW && S.manualKW.soft) ? S.manualKW.soft : []),
+        ...(Array.isArray(S.manualKW && S.manualKW.phrases) ? S.manualKW.phrases : [])
+      ].filter(Boolean);
+      const jobPosting = S.jobPosting || inputs.jobPosting || '';
+      const applied = inputs.applied || '';
+      const changed = inputs.changed || '';
+      const gapAction = S.gapAction || inputs.gapAction || '';
+
+      const compassStrengths = strengths.length
+        ? strengths.join(' · ') + (evidence.length ? '\n\n' + evidence.join('\n') : '')
+        : '';
+      const cs2Parts = [];
+      if (kw.length) cs2Parts.push('Omat avainsanat:\n' + kw.join(', '));
+      const atsFull = (S.atsAIT || texts.atsFbT || '').trim();
+      if (atsFull) cs2Parts.push('Tekoälyn analyysi:\n' + atsFull);
+      const compassKeywords = cs2Parts.join('\n\n');
+      const compassApp = S.appText || texts.appText || '';
+      const intQ = Array.isArray(S.intQ) ? S.intQ : [];
+      const intFbT = S.intFbT || texts.intFbT || '';
+      const compassInterview = intQ.some(Boolean)
+        ? ['1: ' + (intQ[0] || '—'), '2: ' + (intQ[1] || '—'), '3: ' + (intQ[2] || '—'), '', 'Palaute:', intFbT || '—'].join('\n')
+        : '';
+
+      const preArr = Array.isArray(S.pre) ? S.pre : [];
+      const postArr = Array.isArray(S.post) ? S.post : [];
+      const preAvg = preArr.length ? Math.round(preArr.reduce((a, b) => a + b, 0) / preArr.length * 10) / 10 : null;
+      const postAvg = postArr.length ? Math.round(postArr.reduce((a, b) => a + b, 0) / postArr.length * 10) / 10 : null;
+      const scoreDiff = preAvg != null && postAvg != null ? Math.round((postAvg - preAvg) * 10) / 10 : null;
+      const finished = !!(d.shown && d.shown.finished);
+
       return `
-        <p style="font-weight:600;margin-bottom:0.75rem;">${formatTyonhakuScreen(d.curScreen, POLKU_SCREEN_LABELS)}</p>
-        ${parsed.summary ? `<p style="color:var(--muted);font-size:0.88rem;">${escapeHtml(parsed.summary)}</p>` : ''}
+        <p style="font-weight:600;margin-bottom:0.75rem;">${formatTyonhakuScreen(d.curScreen, POLKU_SCREEN_LABELS)}${finished ? ' <span style="color:var(--accent3);">✓ Suoritettu</span>' : ''}</p>
+        ${parsed.summary ? `<p style="color:var(--muted);font-size:0.88rem;margin-bottom:0.75rem;">${escapeHtml(parsed.summary)}</p>` : ''}
         ${skills.length ? `<p><strong>Taidot:</strong> ${escapeHtml(skills.join(', '))}</p>` : ''}
-        ${d.story ? `<h4 style="margin:0.75rem 0 0.35rem;">Tarina</h4><div class="content-item-text" style="white-space:pre-wrap;max-height:120px;overflow:auto;">${escapeHtml(String(d.story).slice(0, 600))}${String(d.story).length > 600 ? '…' : ''}</div>` : ''}
-        ${strengths.length ? `<p><strong>Valitut vahvuudet:</strong> ${escapeHtml(strengths.join(', '))}</p>` : ''}
-        ${d.jobPosting ? `<p><strong>Ilmoitus:</strong> ${escapeHtml(String(d.jobPosting).slice(0, 120))}…</p>` : ''}
-        ${d.appText ? `<h4 style="margin:0.75rem 0 0.35rem;">Hakemus (AI)</h4><div class="content-item-text" style="white-space:pre-wrap;max-height:140px;overflow:auto;">${escapeHtml(String(d.appText).slice(0, 800))}</div>` : ''}
+        ${S.story ? polkuPreBlock('Tarina', String(S.story).slice(0, 2000), { maxHeight: '160px' }) : ''}
+        ${strengths.length ? `<p style="margin-top:0.75rem;"><strong>Valitut vahvuudet:</strong> ${escapeHtml(strengths.join(', '))}</p>` : ''}
+        ${jobPosting ? polkuPreBlock('Työpaikkailmoitus', String(jobPosting).slice(0, 3000), { maxHeight: '120px' }) : ''}
+        ${gapAction ? polkuPreBlock('Gap-analyysi — mitä muutan hakemuksessa', gapAction) : ''}
+        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);">
+          <p style="font-family:'DM Serif Display',serif;font-size:1.05rem;color:var(--ink);margin:0 0 0.75rem;">Hakukompassi</p>
+          ${compassStrengths ? polkuPreBlock('Vahvuudet + todisteet', compassStrengths) : ''}
+          ${compassKeywords ? polkuPreBlock('Avainsanat ilmoituksesta', compassKeywords) : ''}
+          ${compassApp ? polkuPreBlock('Hakemusteksti', compassApp) : ''}
+          ${compassInterview ? polkuPreBlock('Haastatteluvastaukset', compassInterview, { maxHeight: '280px' }) : ''}
+        </div>
+        ${(applied || changed) ? `
+        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);">
+          <p style="font-family:'DM Serif Display',serif;font-size:1.05rem;color:var(--ink);margin:0 0 0.75rem;">Lopulliset vastaukset</p>
+          ${applied ? polkuPreBlock('Mihin paikkaan hait — tai haet?', applied) : ''}
+          ${changed ? polkuPreBlock('Mikä muuttui verrattuna ennen?', changed) : ''}
+        </div>` : ''}
+        ${preAvg != null || postAvg != null ? `
+        <div style="margin-top:1rem;display:flex;gap:1rem;flex-wrap:wrap;">
+          <div style="background:var(--paper2);border:1px solid var(--border);border-radius:10px;padding:0.75rem 1rem;min-width:100px;text-align:center;">
+            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);">Alussa</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);">${preAvg != null ? escapeHtml(String(preAvg)) : '—'}</div>
+          </div>
+          <div style="background:var(--paper2);border:1px solid rgba(42,122,75,.25);border-radius:10px;padding:0.75rem 1rem;min-width:100px;text-align:center;">
+            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);">Nyt</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--accent3);">${postAvg != null ? escapeHtml(String(postAvg)) : '—'}</div>
+          </div>
+          ${scoreDiff != null ? `<div style="align-self:center;font-weight:600;color:${scoreDiff >= 0 ? 'var(--accent3)' : 'var(--red)'};">${scoreDiff >= 0 ? '+' : ''}${escapeHtml(String(scoreDiff))}</div>` : ''}
+        </div>` : ''}
       `;
     }
 
@@ -1683,13 +1752,18 @@ nav {
       const parsed = parseModuleWorkPayload(workRow && workRow.reflection_text);
       const d = parsed && parsed.data ? parsed.data : null;
       if (!d) return `<div class="content-item-text">${escapeHtml((workRow && workRow.reflection_text) || '—')}</div>`;
+      const S = d.S && typeof d.S === 'object' ? d.S : d;
+      const inputs = d.inputs && typeof d.inputs === 'object' ? d.inputs : {};
       return `
-        <p style="font-weight:600;margin-bottom:0.75rem;">${formatTyonhakuScreen(d.curScreen, HAAST_SCREEN_LABELS)}</p>
+        <p style="font-weight:600;margin-bottom:0.75rem;">${formatTyonhakuScreen(d.curScreen, HAAST_SCREEN_LABELS)}${d.shown && d.shown.finished ? ' <span style="color:var(--accent3);">✓ Suoritettu</span>' : ''}</p>
         ${parsed.summary ? `<p style="color:var(--muted);font-size:0.88rem;">${escapeHtml(parsed.summary)}</p>` : ''}
-        ${d.w_s ? `<p><strong>STAR S:</strong> ${escapeHtml(String(d.w_s).slice(0, 200))}</p>` : ''}
-        ${d.companyName ? `<p><strong>Yritys:</strong> ${escapeHtml(d.companyName)}</p>` : ''}
-        ${d.hpBuilt || d.hpFinal ? `<p><strong>Hissipuhe:</strong> ${escapeHtml(String(d.hpFinal || d.hpBuilt).slice(0, 280))}</p>` : ''}
-        ${d.w_weak ? `<h4 style="margin:0.75rem 0 0.35rem;">Heikkous</h4><div class="content-item-text" style="white-space:pre-wrap;">${escapeHtml(String(d.w_weak).slice(0, 400))}</div>` : ''}
+        ${S.w_s ? `<p><strong>STAR S:</strong> ${escapeHtml(String(S.w_s).slice(0, 200))}</p>` : ''}
+        ${S.companyName || inputs.companyName ? `<p><strong>Yritys:</strong> ${escapeHtml(S.companyName || inputs.companyName)}</p>` : ''}
+        ${S.hpBuilt || S.hpFinal ? `<p><strong>Hissipuhe:</strong> ${escapeHtml(String(S.hpFinal || S.hpBuilt).slice(0, 280))}</p>` : ''}
+        ${S.w_weak ? polkuPreBlock('Heikkousvastaus', S.w_weak, { maxHeight: '200px' }) : ''}
+        ${S.w_company || inputs.w_company ? polkuPreBlock('Miksi tämä yritys?', S.w_company || inputs.w_company) : ''}
+        ${S.w_palkka || inputs.w_palkka ? polkuPreBlock('Palkkavastaus', S.w_palkka || inputs.w_palkka) : ''}
+        ${inputs.nextKey || S.nextKey ? polkuPreBlock('Seuraava askel', inputs.nextKey || S.nextKey) : ''}
       `;
     }
 
