@@ -7,6 +7,7 @@ const {
   extractTextFromCvFile,
   extractPortfolioFieldsFromCvText
 } = require('../lib/cv-portfolio-parse');
+const { sanitizePortfolioNarratives } = require('../lib/portfolio-text-dedupe');
 const { buildMultipartForm } = require('../lib/multipart-form');
 const {
   CV_MAX_BYTES,
@@ -991,8 +992,8 @@ router.post('/interview-portfolio-parse', async (req, res) => {
     const system = [
       'You build a Finnish job-seeker portfolio from an AI interview transcript and optional CV text.',
       'Reply with ONLY valid JSON (no markdown):',
-      '{"tagline":"max 8 words in Finnish","bio":"3-5 sentences combining CV facts and interview — rich, personal, for portfolio About section","career_summary":"2-3 sentences — why hire this person","hidden_strengths":"3-5 bullet points as plain text lines separated by newline — strengths others see","skills":["5-10 concrete skills in Finnish"],"languages":[{"name":"","level":""}],"experience":[{"role":"","company":"","years":"","desc":"1-2 sentences from CV and interview","show":true}],"achievements":["3-6 concrete achievements from interview answers in Finnish"]}',
-      'Rules: Use facts from transcript and CV only. Extract ALL work roles mentioned (up to 8) with descriptions from interview stories. Infer languages if stated (e.g. Finnish native, English good). Merge with existing data — do not drop employers already in CV. Finnish text. show:true for each experience unless clearly minor.'
+      '{"tagline":"max 8 words in Finnish","bio":"2-3 sentences — professional background and expertise only (who you are, what you do)","career_summary":"2-3 sentences — why hire this person and what role they seek; MUST NOT repeat bio wording or facts","hidden_strengths":"3-5 bullet points as plain text lines separated by newline — strengths others see","skills":["5-10 concrete skills in Finnish"],"languages":[{"name":"","level":""}],"experience":[{"role":"","company":"","years":"","desc":"1-2 sentences from CV and interview","show":true}],"achievements":["3-6 concrete achievements from interview answers in Finnish"]}',
+      'Rules: bio and career_summary must be clearly different — no copy-paste between them. Use facts from transcript and CV only. Extract ALL work roles mentioned (up to 8) with descriptions from interview stories. Infer languages if stated (e.g. Finnish native, English good). Merge with existing data — do not drop employers already in CV. Finnish text. show:true for each experience unless clearly minor.'
     ].join(' ');
 
     const userContent = [
@@ -1039,7 +1040,7 @@ router.post('/interview-portfolio-parse', async (req, res) => {
       return res.status(502).json({ error: 'Haastattelun tietojen jäsentäminen epäonnistui.' });
     }
 
-    res.json({ fields });
+    res.json({ fields: sanitizePortfolioNarratives(fields) });
   } catch (err) {
     console.error('interview-portfolio-parse error:', err);
     res.status(500).json({ error: 'Haastattelun analysointi epäonnistui.' });
@@ -1096,7 +1097,8 @@ router.post('/portfolio-bio-suggest', async (req, res) => {
 
     const system = [
       'Kirjoitat suomenkielisen lyhyen esittelyn työnhakijan portfolioon.',
-      '3–5 lausetta, ensimmäisessä persoonassa ("Olen...", "Erityisosaamiseni...").',
+      '2–3 lausetta, ensimmäisessä persoonassa ("Olen...", "Erityisosaamiseni...").',
+      'Tausta ja osaaminen — EI toista uratiivistelmää tai haastattelun "miksi minut" -kohtaa.',
       'Lämpimä, ammattimainen ja konkreettinen — ei geneeristä corporate-jargonia.',
       'Käytä vain annettuja faktoja. Älä keksi työnantajia, tutkintoja tai saavutuksia.',
       'Vastaa JSON-muodossa: {"bio":"esittelyteksti"}'

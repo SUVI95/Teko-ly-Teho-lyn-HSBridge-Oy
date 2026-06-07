@@ -252,7 +252,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
     </button>
     <div id="resumePortfolioBanner" style="display:none;margin-top:2rem;padding:1.25rem 1.5rem;background:var(--card);border:1px solid var(--border);border-radius:14px;">
       <div style="font-size:.95rem;font-weight:600;color:var(--ink);margin-bottom:.35rem;">Sinulla on portfolio jo tallennettuna</div>
-      <div style="font-size:.84rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Voit muokata tietoja, vaihtaa osoitetta ja julkaista uudelleen.</div>
+      <div style="font-size:.84rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Tietosi tallentuvat automaattisesti palvelimelle — voit poistua ja jatkaa myöhemmin siitä mihin jäit.</div>
       <button class="btn-primary" type="button" onclick="showScreen('s-details')" style="margin-right:.5rem;">Muokkaa portfolioa</button>
       <button class="btn-secondary" type="button" onclick="showScreen('s-preview')">Esikatselu</button>
       <div id="portfolioNotifications" style="display:none;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);"></div>
@@ -306,7 +306,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
           <label class="field-label">Lyhyt esittely</label>
           <button type="button" class="btn-ai-suggest" id="bioAiBtn_f_bio" onclick="suggestBioAi('f_bio')">✨ AI auttaa kirjoittamaan</button>
         </div>
-        <textarea class="field-textarea" id="f_bio" placeholder="3–5 lausetta — kuka olet, mitä osaat, mitä haet" oninput="P.bio=this.value"></textarea>
+        <textarea class="field-textarea" id="f_bio" placeholder="2–3 lausetta — taustasi ja osaaminen (näkyy Tietoa-osiossa)" oninput="P.bio=this.value"></textarea>
         <div class="bio-ai-status" id="bioAiStatus_f_bio"></div>
       </div>
     </div>
@@ -616,6 +616,16 @@ var portfolioSlug = '';
 var previewToken = '';
 var portfolioPublished = false;
 var slugManuallyEdited = false;
+var portfolioAutosaveTimer = null;
+var portfolioAutosaveInFlight = false;
+var portfolioAutosaveDirty = false;
+
+var INTERVIEW_QUESTIONS = [
+  'Kerro yhdestä tilanteesta jossa onnistuit työssä, opiskelussa tai arjessa. Mitä tapahtui ja mikä oli sinun roolisi?',
+  'Mikä on se asia jonka kollegasi, esimies tai asiakas on sanonut sinulle — mitä he arvostavat sinussa?',
+  'Minkälaisissa tilanteissa olet parhaimmillasi? Milloin aika kuluu huomaamatta?',
+  'Mihin suuntaan haluat urasi kehittyvän — mikä rooli tai ala kiinnostaa eniten?'
+];
 
 function apiBase(){
   var p=window.location.pathname;
@@ -702,6 +712,7 @@ function showScreen(id){
   if(id==='s-preview') loadPreview();
   if(id==='s-publish'){ syncPayloadFromForm(); buildPublishChecklist(); }
   if(id==='s-details'){ syncDetailsFields(); ensureCvDataInForm(); updateSlugUi(); }
+  schedulePortfolioAutosave();
 }
 
 // ══════════════════════════════════════════
@@ -847,6 +858,7 @@ async function applyCvPortfolioFields(parsed){
   syncFormFields();
   syncDetailsFields();
   renderExperienceEditor();
+  schedulePortfolioAutosave();
   return got;
 }
 
@@ -937,14 +949,16 @@ async function extractCVBasics(){
   }
 }
 
-function syncFormFields(){
-  if(P.full_name){ setVal('f_name',P.full_name); setVal('d_name',P.full_name); updateInitials(); }
-  if(P.city){ setVal('f_city',P.city); setVal('d_city',P.city); }
-  if(P.target_role){ setVal('f_role',P.target_role); setVal('d_role',P.target_role); }
-  if(P.bio){ setVal('f_bio',P.bio); setVal('d_bio',P.bio); }
+function syncFormFields(force){
+  if(P.full_name){ setVal('f_name',P.full_name,force); setVal('d_name',P.full_name,force); updateInitials(); }
+  if(P.city){ setVal('f_city',P.city,force); setVal('d_city',P.city,force); }
+  if(P.target_role){ setVal('f_role',P.target_role,force); setVal('d_role',P.target_role,force); }
+  if(P.bio){ setVal('f_bio',P.bio,force); setVal('d_bio',P.bio,force); }
+  if(P.tagline) setVal('d_tagline',P.tagline,force);
+  if(P.hidden_strengths) setVal('d_strengths',P.hidden_strengths,force);
 }
 
-function setVal(id,v){var el=document.getElementById(id);if(el&&!el.value)el.value=v;}
+function setVal(id,v,force){var el=document.getElementById(id);if(el&&(force||!el.value))el.value=v;}
 
 function syncBioFields(text){
   P.bio=text||'';
@@ -1039,8 +1053,8 @@ Kirjoita suomeksi. Ole lämmin, rohkaiseva ja lyhytsanainen kysymyksissä.`;
 async function startInterview(){
   var sys = INTERVIEW_SYSTEM.replace('{CV_TEXT}', cvText ? cvText.slice(0,1500) : 'Ei CV:tä — käytä haastattelua tietojen keräämiseen.');
   interviewHistory = [];
-  addInterviewMsg('ai','Hei! Olen tässä auttamassa rakentamaan portfoliosi. Aloitetaan muutamalla kysymyksellä.\n\nKerro yhdestä tilanteesta jossa onnistuit työssä, opiskelussa tai arjessa. Mitä tapahtui ja mikä oli sinun roolisi?');
-  interviewHistory.push({role:'assistant',content:'Kerro yhdestä tilanteesta jossa onnistuit työssä, opiskelussa tai arjessa. Mitä tapahtui ja mikä oli sinun roolisi?'});
+  addInterviewMsg('ai','Hei! Olen tässä auttamassa rakentamaan portfoliosi. Aloitetaan muutamalla kysymyksellä.\n\n'+INTERVIEW_QUESTIONS[0]);
+  interviewHistory.push({role:'assistant',content:INTERVIEW_QUESTIONS[0]});
   document.getElementById('interviewInput').disabled=false;
   document.getElementById('interviewInput').focus();
 }
@@ -1071,6 +1085,7 @@ async function sendInterview(){
   addInterviewMsg('user',txt);
   interviewHistory.push({role:'user',content:txt});
   interviewAnswers.push(txt);
+  schedulePortfolioAutosave();
   addTyping();
 
   if(interviewAnswers.length >= 4){
@@ -1151,16 +1166,45 @@ function mergeExperienceLists(existing,incoming){
   return out.filter(function(e){return e.role||e.company||e.years||e.desc;});
 }
 
+function normPortfolioText(s){return String(s||'').replace(/\s+/g,' ').trim().toLowerCase();}
+function portfolioTextsOverlap(a,b){
+  var x=normPortfolioText(a),y=normPortfolioText(b);
+  if(!x||!y) return false;
+  if(x===y) return true;
+  var shorter=x.length<y.length?x:y,longer=x.length<y.length?y:x;
+  if(shorter.length>=60&&longer.indexOf(shorter)>=0) return true;
+  var prefix=shorter.slice(0,100);
+  return prefix.length>=50&&longer.indexOf(prefix)>=0;
+}
+function dedupePortfolioParagraphs(text){
+  var paras=String(text||'').split(/\n\n+/).map(function(p){return p.trim();}).filter(Boolean);
+  var out=[],seen={};
+  paras.forEach(function(p){
+    var k=normPortfolioText(p).slice(0,120);
+    if(!k||seen[k]) return;
+    seen[k]=true;
+    out.push(p);
+  });
+  return out.join('\n\n');
+}
+function mergePortfolioBio(existing,incoming){
+  if(!incoming) return existing||'';
+  if(!existing) return incoming;
+  if(portfolioTextsOverlap(existing,incoming)) return incoming.length>existing.length?incoming:existing;
+  if(existing.indexOf(incoming.slice(0,50))>=0) return existing;
+  if(incoming.indexOf(existing.slice(0,50))>=0) return incoming;
+  return existing;
+}
+
 function applyInterviewPortfolioFields(f){
   if(!f) return;
   if(f.tagline) P.tagline=f.tagline;
-  if(f.career_summary) P.career_summary=f.career_summary;
   if(f.hidden_strengths) P.hidden_strengths=f.hidden_strengths;
-  if(f.bio){
-    if(!P.bio||P.bio.length<f.bio.length*0.6) P.bio=f.bio;
-    else if(P.bio.indexOf(f.bio.slice(0,40))<0) P.bio=(P.bio+'\n\n'+f.bio).trim();
-  } else if(f.career_summary&&!P.bio){
-    P.bio=f.career_summary;
+  if(f.bio) P.bio=dedupePortfolioParagraphs(mergePortfolioBio(P.bio,f.bio));
+  if(f.career_summary){
+    var cs=dedupePortfolioParagraphs(f.career_summary);
+    if(!portfolioTextsOverlap(cs,P.bio)) P.career_summary=cs;
+    else if(!P.career_summary) P.career_summary='';
   }
   if(f.skills&&f.skills.length){
     P.skills=mergeUniqueStrings(P.skills,f.skills);
@@ -1203,6 +1247,119 @@ async function finalizeInterview(reply){
   document.getElementById('interviewDone').style.display='block';
   if(inp) inp.disabled=true;
   if(send) send.disabled=true;
+  schedulePortfolioAutosave();
+}
+
+function restoreInterviewFromDraft(){
+  if(!interviewAnswers.length && !interviewDone) return;
+  var msgsEl=document.getElementById('interviewMsgs');
+  if(!msgsEl) return;
+  msgsEl.innerHTML='';
+  interviewHistory=[];
+  addInterviewMsg('ai','Hei! Jatketaan portfolio-haastattelua.');
+  for(var i=0;i<interviewAnswers.length;i++){
+    if(i===0){
+      addInterviewMsg('ai',INTERVIEW_QUESTIONS[0]);
+      interviewHistory.push({role:'assistant',content:INTERVIEW_QUESTIONS[0]});
+    }
+    addInterviewMsg('user',interviewAnswers[i]);
+    interviewHistory.push({role:'user',content:interviewAnswers[i]});
+    if(i<INTERVIEW_QUESTIONS.length-1){
+      addInterviewMsg('ai',INTERVIEW_QUESTIONS[i+1]);
+      interviewHistory.push({role:'assistant',content:INTERVIEW_QUESTIONS[i+1]});
+    }
+  }
+  var inp=document.getElementById('interviewInput');
+  var send=document.getElementById('interviewSend');
+  var doneEl=document.getElementById('interviewDone');
+  if(interviewDone||interviewAnswers.length>=4){
+    if(doneEl) doneEl.style.display='block';
+    if(inp) inp.disabled=true;
+    if(send) send.disabled=true;
+    return;
+  }
+  if(interviewAnswers.length===0){
+    startInterview();
+    return;
+  }
+  if(inp){ inp.disabled=false; inp.focus(); }
+  if(send) send.disabled=false;
+}
+
+function applyWorkspaceDraft(draft){
+  if(!draft||typeof draft!=='object') return;
+  if(Array.isArray(draft.interviewAnswers)) interviewAnswers=draft.interviewAnswers.slice();
+  if(typeof draft.interviewDone==='boolean') interviewDone=draft.interviewDone;
+  if(draft.cvText&&!cvText) cvText=String(draft.cvText);
+  if(typeof draft.slugManuallyEdited==='boolean') slugManuallyEdited=draft.slugManuallyEdited;
+}
+
+function getCurrentScreenId(){
+  var active=document.querySelector('.screen.active');
+  return active?active.id:'s-hero';
+}
+
+function buildWorkspaceDraft(){
+  return {
+    interviewAnswers: interviewAnswers.slice(),
+    interviewDone: !!interviewDone,
+    lastScreen: getCurrentScreenId(),
+    cvText: cvText ? cvText.slice(0, 12000) : '',
+    slugManuallyEdited: !!slugManuallyEdited,
+    savedAt: new Date().toISOString()
+  };
+}
+
+function schedulePortfolioAutosave(){
+  portfolioAutosaveDirty=true;
+  if(portfolioAutosaveTimer) clearTimeout(portfolioAutosaveTimer);
+  portfolioAutosaveTimer=setTimeout(function(){
+    portfolioAutosaveTimer=null;
+    savePortfolioDraft();
+  },1500);
+}
+
+function flushPortfolioAutosave(){
+  if(portfolioAutosaveTimer){
+    clearTimeout(portfolioAutosaveTimer);
+    portfolioAutosaveTimer=null;
+  }
+  if(portfolioAutosaveDirty) savePortfolioDraft(true);
+}
+
+async function savePortfolioDraft(preferBeacon){
+  syncPayloadFromForm();
+  var name=P.full_name||(document.getElementById('f_name')||{}).value.trim()||(document.getElementById('d_name')||{}).value.trim();
+  if(!name) return;
+  if(portfolioAutosaveInFlight) return;
+  portfolioAutosaveInFlight=true;
+  try{
+    var payload=buildSavePayload();
+    payload.full_name=name;
+    var opts={
+      method:'POST',
+      credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    };
+    if(preferBeacon&&navigator.sendBeacon){
+      var ok=navigator.sendBeacon(apiBase()+'/api/portfolio/save',new Blob([opts.body],{type:'application/json'}));
+      if(ok){
+        portfolioAutosaveDirty=false;
+        return;
+      }
+    }
+    var r=await fetch(apiBase()+'/api/portfolio/save',Object.assign({keepalive:!!preferBeacon},opts));
+    var d=await r.json();
+    if(r.ok){
+      portfolioAutosaveDirty=false;
+      await applySaveResponse(d);
+    }
+  }catch(e){
+    console.warn('[portfolio-autosave]',e);
+  }finally{
+    portfolioAutosaveInFlight=false;
+  }
 }
 
 document.addEventListener('DOMContentLoaded',function(){
@@ -1534,7 +1691,10 @@ function syncPayloadFromForm(){
 function buildSavePayload(){
   syncPayloadFromForm();
   var slugEl=document.getElementById('d_slug');
-  return Object.assign({},P,{slug:(slugEl&&slugEl.value)?slugEl.value.trim():portfolioSlug});
+  return Object.assign({},P,{
+    slug:(slugEl&&slugEl.value)?slugEl.value.trim():portfolioSlug,
+    workspace_draft:buildWorkspaceDraft()
+  });
 }
 
 async function applySaveResponse(d){
@@ -1687,7 +1847,19 @@ async function loadPortfolioNotifications(){
 // INIT
 // ══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',async function(){
-  // Try to load existing portfolio
+  document.addEventListener('input',function(ev){
+    if(ev.target&&(ev.target.closest('.screen')||ev.target.id==='interviewInput')) schedulePortfolioAutosave();
+  },true);
+  document.addEventListener('change',function(ev){
+    if(ev.target&&ev.target.closest('.screen')) schedulePortfolioAutosave();
+  },true);
+  window.addEventListener('pagehide',function(){ flushPortfolioAutosave(); });
+  window.addEventListener('beforeunload',function(){ flushPortfolioAutosave(); });
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='hidden') flushPortfolioAutosave();
+  });
+
+  var resumeScreen = null;
   try{
     var r=await fetch(apiBase()+'/api/portfolio/mine',{credentials:'include'});
     var d=await r.json();
@@ -1695,10 +1867,14 @@ document.addEventListener('DOMContentLoaded',async function(){
       var pf=d.portfolio;
       portfolioSlug=pf.slug;
       portfolioPublished=!!pf.published;
-      slugManuallyEdited=false;
       if(pf.preview_token) previewToken=pf.preview_token;
       if(pf.public_url&&pf.published) applyPublishedUrlUi(pf.public_url);
-      Object.keys(pf).forEach(function(k){if(P.hasOwnProperty(k)&&pf[k]!=null)P[k]=pf[k];});
+      Object.keys(pf).forEach(function(k){
+        if(k==='workspace_draft') return;
+        if(P.hasOwnProperty(k)&&pf[k]!=null) P[k]=pf[k];
+      });
+      applyWorkspaceDraft(pf.workspace_draft);
+      if(pf.workspace_draft&&pf.workspace_draft.lastScreen) resumeScreen=pf.workspace_draft.lastScreen;
       if(pf.has_cv&&pf.cv_filename) cvFilenameOnServer=pf.cv_filename;
       updateCvStatusUi();
       var banner=document.getElementById('resumePortfolioBanner');
@@ -1709,14 +1885,19 @@ document.addEventListener('DOMContentLoaded',async function(){
         if(prev) prev.innerHTML='<img src="'+apiBase()+'/api/portfolio/photo/'+pf.slug+'" alt="Profiilikuva">';
       }
       syncDetailsFields();
-      syncFormFields();
+      syncFormFields(true);
       renderExperienceEditor();
       restoreThemePicker();
+      restoreInterviewFromDraft();
       if((pf.has_cv||cvText)&&(!P.skills.length||!P.experience.length)) ensureCvDataInForm();
       updateSlugUi();
       loadPortfolioNotifications();
     }
   }catch(e){}
+
+  if(resumeScreen&&screenOrder.indexOf(resumeScreen)>=0){
+    showScreen(resumeScreen);
+  }
 });
 </script>
 </body>

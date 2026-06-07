@@ -14,6 +14,7 @@ const {
   multerErrorMessage
 } = require('../lib/portfolio-upload-limits');
 const { extractTextFromCvFile, extractPortfolioFieldsFromCvText } = require('../lib/cv-portfolio-parse');
+const { sanitizePortfolioNarratives } = require('../lib/portfolio-text-dedupe');
 const { fetch } = require('undici');
 
 /** Portfolio API — used exclusively by moduuli-elava-cv (student_portfolios table). */
@@ -85,6 +86,7 @@ async function ensureTable() {
   await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS cv_bytes BYTEA`);
   await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS cv_mime VARCHAR(100)`);
   await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS cv_filename VARCHAR(255)`);
+  await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS workspace_draft JSONB DEFAULT '{}'`);
   await pool.query(`ALTER TABLE student_portfolios ALTER COLUMN photo_mime TYPE VARCHAR(128)`);
   await pool.query(`ALTER TABLE student_portfolios ALTER COLUMN cv_mime TYPE VARCHAR(128)`);
   await pool.query(`
@@ -121,6 +123,45 @@ async function resolveSessionUser(req) {
     [token]
   );
   return r.rows[0]?.id ?? null;
+}
+
+function sanitizePortfolioBody(raw) {
+  const d = raw && typeof raw === 'object' ? raw : {};
+  const narratives = sanitizePortfolioNarratives({
+    bio: d.bio,
+    career_summary: d.career_summary
+  });
+  d.bio = narratives.bio || null;
+  d.career_summary = narratives.career_summary || null;
+  const workspaceDraft =
+    d.workspace_draft && typeof d.workspace_draft === 'object' ? d.workspace_draft : null;
+  return { d, workspaceDraft };
+}
+
+function portfolioFieldValues(d, workspaceDraft) {
+  return [
+    d.full_name,
+    d.tagline || null,
+    d.bio || null,
+    d.city || null,
+    d.target_role || null,
+    d.email_public || null,
+    d.phone_public || null,
+    d.linkedin_url || null,
+    JSON.stringify(d.experience || []),
+    JSON.stringify(d.education || []),
+    JSON.stringify(d.skills || []),
+    JSON.stringify(d.achievements || []),
+    JSON.stringify(d.languages || []),
+    JSON.stringify(d.certificates || []),
+    d.brand_color || '#2563a8',
+    d.brand_accent || '#c75b3a',
+    d.brand_bg || '#f5f3ef',
+    d.template || 'modern',
+    d.career_summary || null,
+    d.hidden_strengths || null,
+    JSON.stringify(workspaceDraft || {})
+  ];
 }
 
 function makeSlug(name) {
@@ -183,7 +224,7 @@ router.post('/save', authenticateToken, async (req, res) => {
   try {
     await ready();
     const uid = req.user.id;
-    const d = req.body;
+    const { d, workspaceDraft } = sanitizePortfolioBody(req.body);
     if (!d.full_name) return res.status(400).json({ error: 'Nimi puuttuu' });
 
     const existing = await pool.query(
@@ -191,13 +232,7 @@ router.post('/save', authenticateToken, async (req, res) => {
     );
     let slug;
 
-    const vals = [uid, d.full_name, d.tagline||null, d.bio||null, d.city||null, d.target_role||null,
-      d.email_public||null, d.phone_public||null, d.linkedin_url||null,
-      JSON.stringify(d.experience||[]), JSON.stringify(d.education||[]),
-      JSON.stringify(d.skills||[]), JSON.stringify(d.achievements||[]),
-      JSON.stringify(d.languages||[]), JSON.stringify(d.certificates||[]),
-      d.brand_color||'#2563a8', d.brand_accent||'#c75b3a', d.brand_bg||'#f5f3ef',
-      d.template||'modern', d.career_summary||null, d.hidden_strengths||null];
+    const vals = portfolioFieldValues(d, workspaceDraft);
 
     if (existing.rows.length > 0) {
       const isPublished = existing.rows[0].published === true;
@@ -208,8 +243,8 @@ router.post('/save', authenticateToken, async (req, res) => {
         experience=$11, education=$12, skills=$13, achievements=$14,
         languages=$15, certificates=$16,
         brand_color=$17, brand_accent=$18, brand_bg=$19, template=$20,
-        career_summary=$21, hidden_strengths=$22, updated_at=CURRENT_TIMESTAMP
-        WHERE user_id=$1`, [uid, slug, ...vals.slice(1)]);
+        career_summary=$21, hidden_strengths=$22, workspace_draft=$23, updated_at=CURRENT_TIMESTAMP
+        WHERE user_id=$1`, [uid, slug, ...vals]);
     } else {
       slug = await resolveSlugForSave(uid, d, null, false);
       await pool.query(`INSERT INTO student_portfolios (
@@ -217,9 +252,9 @@ router.post('/save', authenticateToken, async (req, res) => {
         email_public, phone_public, linkedin_url,
         experience, education, skills, achievements, languages, certificates,
         brand_color, brand_accent, brand_bg, template,
-        career_summary, hidden_strengths
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)`,
-        [uid, slug, ...vals.slice(1)]);
+        career_summary, hidden_strengths, workspace_draft
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)`,
+        [uid, slug, ...vals]);
     }
     const userId = uid;
     const published = existing.rows.length > 0 ? existing.rows[0].published === true : false;
@@ -243,7 +278,7 @@ router.post('/publish', authenticateToken, async (req, res) => {
   try {
     await ready();
     const uid = req.user.id;
-    const d = req.body && typeof req.body === 'object' ? req.body : {};
+    const { d, workspaceDraft } = sanitizePortfolioBody(req.body);
 
     if (d.full_name) {
       const existing = await pool.query(
@@ -252,22 +287,15 @@ router.post('/publish', authenticateToken, async (req, res) => {
       if (existing.rows.length > 0) {
         const isPublished = existing.rows[0].published === true;
         const slug = await resolveSlugForSave(uid, d, existing.rows[0].slug, isPublished);
+        const vals = portfolioFieldValues(d, workspaceDraft);
         await pool.query(`UPDATE student_portfolios SET
           slug=$2, full_name=$3, tagline=$4, bio=$5, city=$6, target_role=$7,
           email_public=$8, phone_public=$9, linkedin_url=$10,
           experience=$11, education=$12, skills=$13, achievements=$14,
           languages=$15, certificates=$16,
           brand_color=$17, brand_accent=$18, brand_bg=$19, template=$20,
-          career_summary=$21, hidden_strengths=$22, updated_at=CURRENT_TIMESTAMP
-          WHERE user_id=$1`, [
-          uid, slug, d.full_name, d.tagline || null, d.bio || null, d.city || null, d.target_role || null,
-          d.email_public || null, d.phone_public || null, d.linkedin_url || null,
-          JSON.stringify(d.experience || []), JSON.stringify(d.education || []),
-          JSON.stringify(d.skills || []), JSON.stringify(d.achievements || []),
-          JSON.stringify(d.languages || []), JSON.stringify(d.certificates || []),
-          d.brand_color || '#2563a8', d.brand_accent || '#c75b3a', d.brand_bg || '#f5f3ef',
-          d.template || 'modern', d.career_summary || null, d.hidden_strengths || null
-        ]);
+          career_summary=$21, hidden_strengths=$22, workspace_draft=$23, updated_at=CURRENT_TIMESTAMP
+          WHERE user_id=$1`, [uid, slug, ...vals]);
       }
     }
 
@@ -326,7 +354,7 @@ router.get('/mine', authenticateToken, async (req, res) => {
        email_public, phone_public, linkedin_url, experience, education, skills,
        achievements, languages, certificates, brand_color, brand_accent, brand_bg,
        template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo,
-       cv_filename, (cv_bytes IS NOT NULL) AS has_cv,
+       cv_filename, (cv_bytes IS NOT NULL) AS has_cv, workspace_draft,
        created_at, updated_at FROM student_portfolios WHERE user_id=$1`, [req.user.id]);
     const portfolio = r.rows[0] ? withPortfolioUrls(r.rows[0]) : null;
     if (portfolio) {

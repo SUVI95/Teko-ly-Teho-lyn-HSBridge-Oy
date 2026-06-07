@@ -186,12 +186,36 @@ footer{max-width:1100px;margin:0 auto;padding:1.5rem 2.5rem;display:flex;justify
   }
 
   function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+  function normText(s){return String(s||'').replace(/\s+/g,' ').trim().toLowerCase();}
+  function textsOverlap(a,b){
+    var x=normText(a),y=normText(b);
+    if(!x||!y) return false;
+    if(x===y) return true;
+    var shorter=x.length<y.length?x:y,longer=x.length<y.length?y:x;
+    if(shorter.length>=60&&longer.indexOf(shorter)>=0) return true;
+    var prefix=shorter.slice(0,100);
+    return prefix.length>=50&&longer.indexOf(prefix)>=0;
+  }
+  function dedupeParagraphs(text){
+    var paras=String(text||'').split(/\n\n+/).map(function(p){return p.trim();}).filter(Boolean);
+    var out=[],seen={};
+    paras.forEach(function(p){
+      var k=normText(p).slice(0,120);
+      if(!k||seen[k]) return;
+      seen[k]=true;
+      out.push(p);
+    });
+    return out.join('\n\n');
+  }
 
   function render(p){
     document.title=(p.full_name||'Portfolio')+' \u2014 Portfolio';
     var name=esc(p.full_name||'');
     var tagline=esc(p.tagline||'');
-    var bio=esc(p.bio||'');
+    var bioRaw=dedupeParagraphs(p.bio||'');
+    var csRaw=p.career_summary||'';
+    var bio=esc(bioRaw);
+    var cs=esc(csRaw);
     var city=esc(p.city||'');
     var role=esc(p.target_role||'');
     var photoUrl=p.has_photo?'/api/portfolio/photo/'+esc(p.slug):'';
@@ -202,7 +226,8 @@ footer{max-width:1100px;margin:0 auto;padding:1.5rem 2.5rem;display:flex;justify
     html+='<nav>';
     html+='<a href="#top" class="nav-brand"><span class="dot"></span>'+name+'</a>';
     html+='<ul class="nav-links">';
-    if(bio) html+='<li><a href="#about">Tietoa</a></li>';
+    var showCs=csRaw&&(!bioRaw||!textsOverlap(csRaw,bioRaw));
+    if(bioRaw||showCs) html+='<li><a href="#about">Tietoa</a></li>';
     html+='<li><a href="#skills">Taidot</a></li>';
     html+='<li><a href="#experience">Kokemus</a></li>';
     html+='<li><a href="#contact">Yhteystiedot</a></li>';
@@ -218,10 +243,8 @@ footer{max-width:1100px;margin:0 auto;padding:1.5rem 2.5rem;display:flex;justify
     html+='<h1><span class="block">'+name+'.</span>';
     if(tagline) html+='<span class="block grad">'+tagline+'</span>';
     html+='</h1>';
-    if(bio){
-      var shortBio=bio.split('.').slice(0,2).join('.')+'.';
-      html+='<p class="hero-sub">'+shortBio+'</p>';
-    }
+    var heroHook=csRaw&&!textsOverlap(csRaw,bioRaw)?cs:'';
+    if(heroHook) html+='<p class="hero-sub">'+heroHook+'</p>';
     html+='<div class="btn-row">';
     if(p.email_public) html+='<a href="mailto:'+esc(p.email_public)+'" class="btn-primary">Ota yhteytt\u00e4<span class="blink"></span></a>';
     if(p.linkedin_url) html+='<a href="'+esc(p.linkedin_url)+'" target="_blank" class="btn-outline">LinkedIn</a>';
@@ -232,12 +255,14 @@ footer{max-width:1100px;margin:0 auto;padding:1.5rem 2.5rem;display:flex;justify
     html+='<div class="divider"></div>';
 
     /* ABOUT */
-    if(bio){
+    if(bioRaw||showCs){
       html+='<div class="wrap reveal" id="about"><div class="about-grid"><div>';
       html+='<div class="eyebrow">Tietoa</div>';
       html+='<h2>'+name+'</h2>';
       html+='</div><div>';
-      html+='<p class="lead">'+bio.replace(/\n/g,'<br>')+'</p>';
+      if(bio) html+='<p class="lead">'+bio.replace(/\n/g,'<br>')+'</p>';
+      else if(showCs) html+='<p class="lead">'+cs+'</p>';
+      if(showCs&&bio) html+='<p class="lead" style="margin-top:1rem;color:var(--fg2);">'+cs+'</p>';
       var chips=[];
       if(city) chips.push(city);
       var langs=p.languages||[];

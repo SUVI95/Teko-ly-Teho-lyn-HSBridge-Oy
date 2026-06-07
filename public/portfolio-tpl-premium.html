@@ -337,6 +337,28 @@ function buildLocalFaqAnswer(p,fn,nm){
     return p.bio||p.career_summary||('Lis\xe4tietoja henkil\xf6st\xe4 '+nm+' portfolio-sivulla. L\xe4het\xe4 viesti yhteydenottolomakkeella sivun alaosassa.');
   };
 }
+function normText(s){return String(s||'').replace(/\s+/g,' ').trim().toLowerCase();}
+function textsOverlap(a,b){
+  var x=normText(a),y=normText(b);
+  if(!x||!y) return false;
+  if(x===y) return true;
+  var shorter=x.length<y.length?x:y,longer=x.length<y.length?y:x;
+  if(shorter.length>=60&&longer.indexOf(shorter)>=0) return true;
+  var prefix=shorter.slice(0,100);
+  return prefix.length>=50&&longer.indexOf(prefix)>=0;
+}
+function dedupeParagraphs(text){
+  var paras=String(text||'').split(/\n\n+/).map(function(p){return p.trim();}).filter(Boolean);
+  var out=[],seen={};
+  paras.forEach(function(p){
+    var k=normText(p).slice(0,120);
+    if(!k||seen[k]) return;
+    seen[k]=true;
+    out.push(p);
+  });
+  return out.join('\n\n');
+}
+
 function trackPortfolioVisit(slug){
   try{
     if(new URLSearchParams(location.search).get('preview')==='1') return;
@@ -352,7 +374,8 @@ applyBrandTheme(p);
 var nm=esc(p.full_name||''),tl=esc(p.tagline||''),bio=esc(p.bio||''),ct=esc(p.city||''),rl=esc(p.target_role||''),em=esc(p.email_public||''),ph=esc(p.phone_public||''),li=esc(p.linkedin_url||'');
 var photo=p.has_photo?'/api/portfolio/photo/'+encodeURIComponent(p.slug):'';
 var sk=p.skills||[],ex=(p.experience||[]).filter(function(e){return e&&e.show!==false;}),ed=p.education||[],la=p.languages||[],certs=p.certificates||[],achiev=p.achievements||[];
-var cs=esc(p.career_summary||''),hs=esc(p.hidden_strengths||'');
+var csRaw=p.career_summary||'',bioRaw=dedupeParagraphs(p.bio||''),cs=esc(csRaw),hs=esc(p.hidden_strengths||'');
+bio=esc(bioRaw);
 var I=ini(p.full_name),fn=nm.split(' ')[0];
 document.title=nm+' \u2014 Portfolio';
 var h='';
@@ -366,7 +389,8 @@ h+='<li><a href="#contact">Yhteystiedot</a></li></ul><a href="#contact" class="b
 h+='<section id="top"><div id="hero"><div class="orb orb1"></div><div class="orb orb2"></div><div class="grid-bg"></div><div class="hero-inner"><div class="hero-left" id="heroLeft">';
 h+='<div class="hero-pill">'+SVG.star+'Avoin uusille mahdollisuuksille'+(rl?' \xb7 '+rl:'')+(ct?' \xb7 '+ct:'')+'</div>';
 h+='<h1><span class="block">'+nm+'.</span>'+(tl?'<span class="block grad">'+tl+'</span>':'')+'</h1>';
-if(bio){var sb=bio.split('.').slice(0,2).join('.')+'.';h+='<p class="hero-sub">'+sb+'</p>';}
+var heroHook=csRaw&&!textsOverlap(csRaw,bioRaw)?cs:'';
+if(heroHook) h+='<p class="hero-sub">'+heroHook+'</p>';
 h+='<div class="btn-row">';
 h+='<button type="button" class="btn-primary" onclick="scrollToContactForm(event)">'+SVG.mail+' Kutsu haastatteluun<span class="blink"></span></button>';
 if(p.has_cv)h+='<a href="/api/portfolio/cv/'+encodeURIComponent(p.slug)+'" class="btn-outline" download>'+SVG.download+' Lataa CV</a>';
@@ -387,10 +411,11 @@ h+='<div class="photo-badge"><span class="badge-dot"></span>Avoin haastatteluill
 h+='</div></div></section><div class="divider"></div>';
 
 // ABOUT
-if(bio||cs||hs){h+='<div class="wrap" id="about"><div class="about-grid"><div class="reveal-left"><div class="eyebrow">Tietoa</div><h2>'+nm+'</h2></div><div class="reveal-right">';
+var showCs=csRaw&&(!bioRaw||!textsOverlap(csRaw,bioRaw));
+if(bio||showCs||hs){h+='<div class="wrap" id="about"><div class="about-grid"><div class="reveal-left"><div class="eyebrow">Tietoa</div><h2>'+nm+'</h2></div><div class="reveal-right">';
 if(bio) bio.split('\n').filter(Boolean).forEach(function(para){h+='<p class="lead" style="margin-bottom:1rem;">'+para+'</p>';});
-else if(cs) h+='<p class="lead" style="margin-bottom:1rem;">'+cs+'</p>';
-if(cs&&bio&&cs!==bio) h+='<p class="lead" style="margin-bottom:1rem;color:var(--fg2);">'+cs+'</p>';
+else if(showCs) h+='<p class="lead" style="margin-bottom:1rem;">'+cs+'</p>';
+if(showCs&&bio) h+='<p class="lead" style="margin-bottom:1rem;color:var(--fg2);">'+cs+'</p>';
 if(hs){
   h+='<div style="margin-bottom:1rem;"><div style="font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--fg3);margin-bottom:.55rem;">Vahvuudet</div>';
   hs.split('\n').filter(Boolean).forEach(function(line){
