@@ -15,6 +15,18 @@ const photoUpload = multer({
   }
 });
 
+const cvUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const name = (file.originalname || '').toLowerCase();
+    const mime = (file.mimetype || '').toLowerCase();
+    const ok = mime === 'application/pdf' || mime === 'text/plain'
+      || name.endsWith('.pdf') || name.endsWith('.txt');
+    cb(ok ? null : new Error('Vain PDF tai TXT'), ok);
+  }
+});
+
 async function ensureTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS student_portfolios (
@@ -42,6 +54,9 @@ async function ensureTable() {
     CREATE INDEX IF NOT EXISTS idx_sp_slug ON student_portfolios(slug);
     CREATE INDEX IF NOT EXISTS idx_sp_pub ON student_portfolios(published);
   `);
+  await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS cv_bytes BYTEA`);
+  await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS cv_mime VARCHAR(100)`);
+  await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS cv_filename VARCHAR(255)`);
 }
 
 let _ready = false;
@@ -50,7 +65,9 @@ async function ready() { if (!_ready) { await ensureTable(); _ready = true; } }
 const PORTFOLIO_FIELDS = `slug, full_name, tagline, bio, city, target_role,
        email_public, phone_public, linkedin_url, experience, education, skills,
        achievements, languages, certificates, brand_color, brand_accent, brand_bg,
-       template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo`;
+       template, career_summary, hidden_strengths, cv_filename,
+       photo_mime IS NOT NULL AS has_photo,
+       (cv_bytes IS NOT NULL) AS has_cv`;
 
 async function resolveSessionUser(req) {
   const token = req.cookies?.session_token || req.headers.authorization?.split(' ')[1];
@@ -212,6 +229,7 @@ router.get('/mine', authenticateToken, async (req, res) => {
        email_public, phone_public, linkedin_url, experience, education, skills,
        achievements, languages, certificates, brand_color, brand_accent, brand_bg,
        template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo,
+       cv_filename, (cv_bytes IS NOT NULL) AS has_cv,
        created_at, updated_at FROM student_portfolios WHERE user_id=$1`, [req.user.id]);
     const portfolio = r.rows[0] || null;
     if (portfolio) {
@@ -275,12 +293,13 @@ router.get('/preview/:slug', async (req, res) => {
   }
 });
 
-// Serve photo by slug (PUBLIC)
+// Serve photo by slug (PUBLIC — published portfolios only)
 router.get('/photo/:slug', async (req, res) => {
   try {
     await ready();
     const r = await pool.query(
-      'SELECT photo_bytes, photo_mime FROM student_portfolios WHERE slug=$1 AND photo_bytes IS NOT NULL',
+      `SELECT photo_bytes, photo_mime FROM student_portfolios
+       WHERE slug=$1 AND published=TRUE AND photo_bytes IS NOT NULL`,
       [req.params.slug]);
     if (!r.rows.length) return res.status(404).send('Ei kuvaa');
     const row = r.rows[0];
@@ -288,6 +307,54 @@ router.get('/photo/:slug', async (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600');
     res.send(row.photo_bytes);
   } catch (e) { res.status(500).send('Virhe'); }
+});
+
+// Upload CV file for recruiters (auth)
+router.post('/cv', authenticateToken, (req, res) => {
+  cvUpload.single('cv')(req, res, async (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'Ei tiedostoa' });
+    try {
+      await ready();
+      const safeName = (req.file.originalname || 'cv.pdf')
+        .replace(/[^\w.\-åäöÅÄÖ ]+/g, '_')
+        .slice(0, 200);
+      const result = await pool.query(
+        `UPDATE student_portfolios SET cv_bytes=$2, cv_mime=$3, cv_filename=$4, updated_at=CURRENT_TIMESTAMP
+         WHERE user_id=$1 RETURNING slug, cv_filename`,
+        [req.user.id, req.file.buffer, req.file.mimetype, safeName]
+      );
+      if (!result.rows.length) {
+        return res.status(404).json({ error: 'Tallenna portfolio ensin' });
+      }
+      res.json({ success: true, filename: result.rows[0].cv_filename });
+    } catch (e) {
+      console.error('CV upload:', e);
+      res.status(500).json({ error: 'CV:n tallennus epäonnistui' });
+    }
+  });
+});
+
+// Download CV by slug (PUBLIC — published portfolios only)
+router.get('/cv/:slug', async (req, res) => {
+  try {
+    await ready();
+    const r = await pool.query(
+      `SELECT cv_bytes, cv_mime, cv_filename FROM student_portfolios
+       WHERE slug=$1 AND published=TRUE AND cv_bytes IS NOT NULL`,
+      [req.params.slug]
+    );
+    if (!r.rows.length) return res.status(404).send('CV:tä ei löydy');
+    const row = r.rows[0];
+    const filename = row.cv_filename || 'cv.pdf';
+    res.set('Content-Type', row.cv_mime || 'application/pdf');
+    res.set('Content-Disposition', `attachment; filename="${filename.replace(/"/g, '')}"`);
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(row.cv_bytes);
+  } catch (e) {
+    console.error('CV download:', e);
+    res.status(500).send('Virhe');
+  }
 });
 
 // Admin: list all portfolios

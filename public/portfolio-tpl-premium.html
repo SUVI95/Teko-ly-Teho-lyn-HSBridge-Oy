@@ -246,6 +246,7 @@ linkedin:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cu
 spark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>',
 x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
 send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>',
+download:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
 award:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>',
 grad2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 10 3 12 0v-5"/></svg>',
 img:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>'
@@ -316,6 +317,7 @@ h+='<h1><span class="block">'+nm+'.</span>'+(tl?'<span class="block grad">'+tl+'
 if(bio){var sb=bio.split('.').slice(0,2).join('.')+'.';h+='<p class="hero-sub">'+sb+'</p>';}
 h+='<div class="btn-row">';
 if(em)h+='<a href="mailto:'+em+'" class="btn-primary">'+SVG.mail+' Kutsu haastatteluun<span class="blink"></span></a>';
+if(p.has_cv)h+='<a href="/api/portfolio/cv/'+encodeURIComponent(p.slug)+'" class="btn-outline" download>'+SVG.download+' Lataa CV</a>';
 if(li)h+='<a href="'+li+'" target="_blank" class="btn-outline">'+SVG.linkedin+' LinkedIn</a>';
 h+='</div>';
 h+='<div class="stats-grid"><div class="stat"><div class="stat-n">'+(ex.length?ex.length+'+':'\u2014')+'</div><div class="stat-l">Ty\xf6teht\xe4v\xe4t</div></div>';
@@ -401,6 +403,7 @@ h+='</div></div></div><div class="divider"></div>';}
 // CONTACT
 h+='<div class="wrap" id="contact"><div class="contact-card reveal-scale"><div class="contact-inner"><div style="font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fg3);margin-bottom:1.5rem;">Ota yhteytt\xe4</div><h2 class="contact-h">Seuraava huippurekrytointisi on <span class="grad">yhden keskustelun</span> p\xe4\xe4ss\xe4.</h2><p class="contact-sub">Olen avoin uusille mahdollisuuksille'+(rl?' alalla '+rl:'')+(ct?' \u2014 sijainti '+ct:'')+'.</p><div class="btn-row">';
 if(em)h+='<a href="mailto:'+em+'" class="btn-primary">'+SVG.mail+' Kutsu haastatteluun</a>';
+if(p.has_cv)h+='<a href="/api/portfolio/cv/'+encodeURIComponent(p.slug)+'" class="btn-outline" download>'+SVG.download+' Lataa CV</a>';
 if(li)h+='<a href="'+li+'" target="_blank" class="btn-outline">'+SVG.linkedin+' LinkedIn</a>';
 h+='</div><div class="info-row">';
 if(em)h+='<div class="info-cell"><div class="ic-label">'+SVG.at+' S\xe4hk\xf6posti</div><div class="ic-val" style="font-size:.78rem;word-break:break-all;">'+em+'</div></div>';
@@ -415,7 +418,7 @@ h+='<footer><span>\xa9 '+new Date().getFullYear()+' '+nm+'</span><div class="ava
 // CHATBOT
 h+='<button id="chatBtn" onclick="toggleChat()">'+SVG.spark+' Kysy '+fn+' AI:lta</button>';
 h+='<div id="chatPanel"><div class="cp-head"><div class="cp-av">'+I[0]+'<div class="cp-online"></div></div><div><div class="cp-name">'+fn+' AI</div><div class="cp-sub">Henkil\xf6kohtainen avustaja</div></div><button class="cp-close" onclick="toggleChat()">'+SVG.x+'</button></div>';
-h+='<div class="cp-msgs" id="cpMsgs"><div class="msg ai">Hei \u2014 olen <strong>'+fn+' AI</strong>. Kysy minulta mit\xe4 tahansa '+nm+':n kokemuksesta, vahvuuksista tai soveltuvuudesta teht\xe4v\xe4\xe4n.</div></div>';
+h+='<div class="cp-msgs" id="cpMsgs"><div class="msg ai">Hei \u2014 olen <strong>'+fn+' AI</strong>, teko\xe4lyavustaja joka vastaa '+nm+':n puolesta. Kysy kokemuksesta, vahvuuksista tai sopivuudesta teht\xe4v\xe4\xe4n. En ole '+nm+' henkil\xf6kohtaisesti \u2014 vastaan portfolio-tietojen perusteella.</div></div>';
 h+='<div class="sugs" id="sugs"><button class="sug" onclick="quickAsk(this)">Mitk\xe4 ovat '+fn+':n vahvuudet?</button><button class="sug" onclick="quickAsk(this)">Miksi '+fn+' kannattaa palkata?</button>';
 if(rl)h+='<button class="sug" onclick="quickAsk(this)">Kokemus: '+rl+'?</button>';
 h+='<button class="sug" onclick="quickAsk(this)">Kerro lis\xe4\xe4 '+nm+':sta.</button></div>';
@@ -440,7 +443,7 @@ if(la.length)window._CTX+='- Languages: '+la.map(function(l){return typeof l==='
 if(certs.length)window._CTX+='- Certificates: '+certs.map(function(c){return typeof c==='string'?c:(c.name||'');}).join(', ')+'\n';
 if(em)window._CTX+='- Email: '+em+'\n';
 if(ph)window._CTX+='- Phone: '+ph+'\n';
-window._CTX+='Vastaa suomeksi '+fn+' AI:na \u2014 suoraan, l\xe4mpim\xe4sti, lyhyesti. Korkeintaan 3 lausetta ellei lis\xe4\xe4 tarvita.';
+window._CTX+='Rules: You are an AI assistant for '+nm+', NOT '+nm+' live. Answer ONLY using the facts above — do not invent employers, dates, or skills. If unknown, say you do not have that information and suggest email contact. Reply in Finnish, warm and professional, max 3 sentences unless more detail is clearly needed.';
 window._chatH=[];
 document.getElementById('chatInput').addEventListener('input',function(){document.getElementById('chatSend').disabled=!this.value.trim();});
 }

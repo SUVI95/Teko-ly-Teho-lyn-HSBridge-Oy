@@ -360,6 +360,16 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
       </div>
     </div>
 
+    <!-- CV FOR RECRUITERS -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;">📄 CV rekrytoijille</h3>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Rekrytoija voi ladata CV:si suoraan portfoliosivulta. Jos latasit CV:n vaiheessa 1, se tallentuu automaattisesti kun rakennat esikatselun.</p>
+      <div id="cvDownloadStatus" style="display:none;font-size:.84rem;color:#059669;margin-bottom:.75rem;"></div>
+      <label class="photo-upload-btn" for="cvRecruiterFile" style="display:inline-block;cursor:pointer;">Vaihda / lataa CV (PDF tai TXT)</label>
+      <input type="file" id="cvRecruiterFile" accept=".pdf,.txt" style="display:none" onchange="handleRecruiterCv(this.files[0])">
+      <div id="cvRecruiterStatus" style="font-size:.78rem;color:var(--muted);margin-top:.5rem;"></div>
+    </div>
+
     <!-- BASIC INFO -->
     <div class="card">
       <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:1.25rem;">👤 Perustiedot</h3>
@@ -543,6 +553,8 @@ var P = {
   template:'premium'
 };
 var cvText = '';
+var cvFilePending = null;
+var cvFilenameOnServer = '';
 var interviewHistory = [];
 var interviewAnswers = [];
 var interviewDone = false;
@@ -615,6 +627,7 @@ async function handleCVFile(file){
     var d=await r.json();
     if(!r.ok||!d.text) throw new Error(d.error||'Lukeminen epäonnistui');
     cvText=d.text;
+    cvFilePending=file;
     zone.classList.add('uploaded');
     zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' luettu</div><div style="font-size:.8rem;color:#047857;">'+d.chars+' merkkiä · AI käyttää tätä portfolion rakentamiseen</div>';
     status.className='upload-status ok';
@@ -624,6 +637,44 @@ async function handleCVFile(file){
   }catch(e){
     status.className='upload-status err';
     status.textContent='⚠ '+e.message+' — täytä tiedot alla käsin.';
+  }
+}
+
+async function uploadCvToPortfolio(file){
+  if(!file) return;
+  var fd=new FormData(); fd.append('cv',file);
+  var r=await fetch(apiBase()+'/api/portfolio/cv',{method:'POST',credentials:'include',body:fd});
+  var d=await r.json();
+  if(!r.ok) throw new Error(d.error||'CV:n tallennus epäonnistui');
+  cvFilePending=null;
+  cvFilenameOnServer=d.filename||file.name;
+  updateCvStatusUi();
+}
+
+async function handleRecruiterCv(file){
+  if(!file) return;
+  var status=document.getElementById('cvRecruiterStatus');
+  status.textContent='Tallennetaan...';
+  cvFilePending=file;
+  try{
+    if(!portfolioSlug) await savePortfolioData();
+    else await uploadCvToPortfolio(file);
+    status.textContent='✓ CV tallennettu: '+cvFilenameOnServer;
+    status.style.color='#059669';
+  }catch(e){
+    status.textContent='⚠ '+e.message;
+    status.style.color='var(--accent2)';
+  }
+}
+
+function updateCvStatusUi(){
+  var el=document.getElementById('cvDownloadStatus');
+  if(!el) return;
+  if(cvFilenameOnServer){
+    el.style.display='block';
+    el.textContent='✓ Rekrytoija voi ladata: '+cvFilenameOnServer;
+  } else {
+    el.style.display='none';
   }
 }
 
@@ -970,6 +1021,9 @@ async function savePortfolioData(){
   if(slugEl) slugEl.value=d.slug;
   slugManuallyEdited=true;
   if(d.preview_token) previewToken=d.preview_token;
+  if(cvFilePending){
+    try{ await uploadCvToPortfolio(cvFilePending); }catch(e){ console.warn('[cv-upload]',e); }
+  }
   return d.slug;
 }
 
@@ -1085,6 +1139,8 @@ document.addEventListener('DOMContentLoaded',async function(){
       slugManuallyEdited=!!pf.slug;
       if(pf.preview_token) previewToken=pf.preview_token;
       Object.keys(pf).forEach(function(k){if(P.hasOwnProperty(k)&&pf[k]!=null)P[k]=pf[k];});
+      if(pf.has_cv&&pf.cv_filename) cvFilenameOnServer=pf.cv_filename;
+      updateCvStatusUi();
       var banner=document.getElementById('resumePortfolioBanner');
       if(banner) banner.style.display='block';
       if(pf.has_photo){
