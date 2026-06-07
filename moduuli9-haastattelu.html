@@ -64,6 +64,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .sb:hover{color:var(--ink2);background:rgba(26,26,26,.03)}
 .sb.active{color:var(--coral);border-bottom-color:var(--coral)}
 .sb.done{color:var(--forest);border-bottom-color:var(--forest)}
+.sb.locked{opacity:.4;cursor:not-allowed;pointer-events:none}
+.sb.locked:hover{color:var(--ink3);background:transparent}
 @media(max-width:900px){
   .step-bar-inner{padding:0 16px}
   .sb{padding:0 8px;font-size:10px}
@@ -807,7 +809,10 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
     </div>
     <div class="nav-row"><button class="btn btn-outline" onclick="go(6)">← Takaisin</button><button class="btn btn-coral btn-lg" onclick="go(8)">Hissipuhe →</button></div>
   </div>
-  <div class="nav-row" style="margin-top:20px;padding-top:0;border:none"><button class="btn btn-outline" onclick="go(5)">← Takaisin</button></div>
+  <div id="stfNavWait" class="nav-row" style="margin-top:20px;padding-top:0;border:none">
+    <button class="btn btn-outline" onclick="go(6)">← Takaisin</button>
+    <span style="font-size:14px;color:var(--ink3)">Suorita kaikki viisi kierrosta ennen Hissipuhetta</span>
+  </div>
 </div>
 </div>
 
@@ -1448,7 +1453,39 @@ function showResumeBanner(screen,ts){
 let haWorkApi=null;
 let haSaveTimer=null;
 
+function screenNum(n){
+  if(n==='5b')return 5.5;
+  if(n==='8b')return 8.5;
+  return Number(n);
+}
+
+function isStfComplete(){
+  if(stfCurrent<stfData.length)return false;
+  const answers=(S.stfAnswers||[]).filter(a=>String(a||'').trim().length>=10);
+  return answers.length>=stfData.length;
+}
+
+function updateStfGate(){
+  const locked=!isStfComplete();
+  ['sb8','sb8b','sb9','sb10','sb11','sb12'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.classList.toggle('locked',locked);
+  });
+  const wait=document.getElementById('stfNavWait');
+  const doneEl=document.getElementById('abDone');
+  if(wait){
+    const onSpot=curScreen===7;
+    wait.style.display=(locked&&onSpot&&!(doneEl&&doneEl.classList.contains('show')))?'flex':'none';
+  }
+}
+
 function go(n){
+  const targetNum=screenNum(n);
+  if(targetNum>=8&&!isStfComplete()){
+    alert('Suorita ensin kaikki viisi Spot Flaw -kierrosta (Osio 06).');
+    n=7;
+    if(!abBuilt)buildAB();
+  }
   curScreen=n;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const sc=document.getElementById('s'+n);if(!sc)return;
@@ -1473,6 +1510,7 @@ function go(n){
   if(n===10&&!scenBuilt)buildScen();
   if(n===12)buildEarn();
   if(n==='5b')updateStarVoicePrompt();
+  updateStfGate();
   try{saveProgress();}catch(e){}
 }
 
@@ -1600,15 +1638,20 @@ const stfData=[
   }
 ];
 let abBuilt=false,stfCurrent=0,stfDone=0;
-function buildAB(){abBuilt=true;renderSTF();}
+function buildAB(){abBuilt=true;renderSTF();updateStfGate();}
 function renderSTF(){
   const c=document.getElementById('abContainer');
   if(stfCurrent>=stfData.length){
     c.innerHTML='';
     document.getElementById('abDone').classList.add('show');
+    document.getElementById('stfNavWait')?.style.setProperty('display','none');
+    updateStfGate();
     return;
   }
+  document.getElementById('abDone')?.classList.remove('show');
   const d=stfData[stfCurrent];
+  const isLastRound=stfCurrent===stfData.length-1;
+  const nextLabel=isLastRound?'Viimeistele harjoitus →':'Seuraava kierros →';
   document.querySelectorAll('.ab-dot').forEach((dot,i)=>{
     dot.className='ab-dot'+(i<stfCurrent?' done-right':i===stfCurrent?' current':'');
   });
@@ -1635,8 +1678,9 @@ function renderSTF(){
         <div class="stf-why">${d.why}</div>
       </div>
     </div>
-    <button class="btn btn-outline stf-next" id="stf-next" style="display:none;margin-top:14px" onclick="nextSTF()">Seuraava kierros →</button>
+    <button class="btn btn-coral btn-lg stf-next" id="stf-next" style="display:none;margin-top:14px" onclick="nextSTF()">${nextLabel}</button>
   </div>`;
+  updateStfGate();
 }
 function submitSTF(idx){
   const ta=document.getElementById('stf-ta');
@@ -2035,8 +2079,11 @@ function restoreSTF(d){
     const c=document.getElementById('abContainer');
     if(c)c.innerHTML='';
     document.getElementById('abDone')?.classList.add('show');
+    document.getElementById('stfNavWait')?.style.setProperty('display','none');
+    updateStfGate();
     return;
   }
+  document.getElementById('abDone')?.classList.remove('show');
   renderSTF();
   if(d.stfRoundSubmitted){
     const ta=document.getElementById('stf-ta');
@@ -2180,7 +2227,8 @@ function applyHaData(d){
   try{checkVastav();}catch(e){}
   try{checkCompany();}catch(e){}
   try{checkPalkka();}catch(e){}
-  const screen=Math.min(TOTAL,Math.max(1,Number(d.curScreen)||1));
+  let screen=Math.min(TOTAL,Math.max(1,Number(d.curScreen)||1));
+  if(screenNum(screen)>=8&&!isStfComplete())screen=7;
   go(screen);
   if(screen===12)buildEarn();
   if(screen>1&&!(d.shown&&d.shown.finished))showResumeBanner(screen,d.ts);
