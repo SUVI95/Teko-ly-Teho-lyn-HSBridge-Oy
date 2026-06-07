@@ -370,6 +370,13 @@ function filterBioForAbout(bio,heroText){
   var kept=paras.filter(function(p){return !textsOverlap(p,hero);});
   return kept.length?kept.join('\n\n'):paras.join('\n\n');
 }
+function shortHighlight(text,maxWords){
+  var words=String(text||'').trim().split(/\s+/).filter(Boolean);
+  if(!words.length) return '';
+  maxWords=maxWords||12;
+  if(words.length<=maxWords) return words.join(' ');
+  return words.slice(0,maxWords).join(' ')+'\u2026';
+}
 
 function trackPortfolioVisit(slug){
   try{
@@ -409,7 +416,7 @@ if(achiev.length){
   h+='<div class="hero-highlights">';
   achiev.slice(0,3).forEach(function(a){
     var t=typeof a==='string'?a:(a&&a.text)||'';
-    if(t) h+='<span class="hero-highlight-chip">'+esc(t)+'</span>';
+    if(t) h+='<span class="hero-highlight-chip">'+esc(shortHighlight(t))+'</span>';
   });
   h+='</div>';
 }

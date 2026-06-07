@@ -217,6 +217,14 @@ footer{max-width:1100px;margin:0 auto;padding:1.5rem 2.5rem;display:flex;justify
     return kept.length?kept.join('\n\n'):paras.join('\n\n');
   }
 
+  function shortHighlight(text,maxWords){
+    var words=String(text||'').trim().split(/\s+/).filter(Boolean);
+    if(!words.length) return '';
+    maxWords=maxWords||12;
+    if(words.length<=maxWords) return words.join(' ');
+    return words.slice(0,maxWords).join(' ')+'\u2026';
+  }
+
   function render(p){
     document.title=(p.full_name||'Portfolio')+' \u2014 Portfolio';
     var name=esc(p.full_name||'');
@@ -259,7 +267,7 @@ footer{max-width:1100px;margin:0 auto;padding:1.5rem 2.5rem;display:flex;justify
       html+='<div style="display:flex;flex-wrap:wrap;gap:.45rem;margin:0 0 2rem;max-width:540px;">';
       achiev.slice(0,3).forEach(function(a){
         var t=typeof a==='string'?a:(a&&a.text)||'';
-        if(t) html+='<span style="font-size:.72rem;padding:.38rem .72rem;border-radius:999px;background:var(--v-soft);border:1px solid var(--v-border);color:var(--fg2);">'+esc(t)+'</span>';
+        if(t) html+='<span style="font-size:.72rem;padding:.38rem .72rem;border-radius:999px;background:var(--v-soft);border:1px solid var(--v-border);color:var(--fg2);">'+esc(shortHighlight(t))+'</span>';
       });
       html+='</div>';
     }
