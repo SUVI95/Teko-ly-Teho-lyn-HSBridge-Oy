@@ -411,6 +411,21 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
     </div>
   </div>
 
+  <span class="lbl">Onko sinulla CV? Lataa se — AI lukee sen automaattisesti</span>
+  <div id="cvUploadZone" style="border:2px dashed rgba(184,134,11,.35);border-radius:var(--r14);padding:16px 20px;text-align:center;cursor:pointer;margin-bottom:10px;transition:all .2s" onclick="document.getElementById('cvFileS2').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor='rgba(184,134,11,.35)'" ondrop="handleCVDropS2(event)">
+    <div style="font-size:1.3rem;margin-bottom:4px">📄</div>
+    <strong style="display:block;font-size:14px;color:var(--ink);margin-bottom:2px">Lataa CV (PDF tai TXT)</strong>
+    <span style="font-size:13px;color:var(--ink3)">Klikkaa tai vedä tiedosto tähän</span>
+    <input type="file" id="cvFileS2" accept=".pdf,.txt" style="display:none" onchange="uploadCVS2(this.files[0])">
+  </div>
+  <div id="cvS2Status" style="display:none;font-size:13.5px;padding:.6rem 1rem;border-radius:var(--r10);margin-bottom:12px;"></div>
+
+  <div style="display:flex;align-items:center;gap:10px;margin:10px 0;">
+    <div style="flex:1;height:1px;background:var(--line)"></div>
+    <span style="font-size:12px;color:var(--ink3);white-space:nowrap">tai kirjoita itse alla</span>
+    <div style="flex:1;height:1px;background:var(--line)"></div>
+  </div>
+
   <span class="lbl">Kerro taustastasi — mitä enemmän kirjoitat, sitä parempi analyysi</span>
   <textarea id="storyTa" placeholder="Kerro työkokemuksistasi, harrastuksistasi, arjestasi. Mainitse myös jos hoidat lapsia, olet auttanut naapuria, toiminut vapaaehtoisena, oppinut uuden kielen tai järjestelmän..." rows="7" oninput="S.story=this.value;checkStory()"></textarea>
   <div id="storyHint" style="margin-top:5px;font-size:13.5px;color:var(--red)"></div>
@@ -555,8 +570,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
     <div class="out-step"><span class="out-step-num">2</span><span>Etsi <strong>yksi</strong> ilmoitus joka kiinnostaa sinua — juuri sellainen johon voisit oikeasti hakea</span></div>
     <div class="out-step"><span class="out-step-num">3</span><span>Kopioi <strong>koko ilmoitusteksti</strong> — myös vaatimukset, toiveet ja yrityksen kuvaus</span></div>
     <div class="out-step"><span class="out-step-num">4</span><span>Palaa tähän ja liitä teksti alla olevaan kenttään</span></div>
-    <a href="https://duunitori.fi/tyopaikat/" target="_blank" rel="noopener noreferrer" class="out-link">↗ Duunitori</a>
-    <a href="https://tyomarkkinatori.fi/henkiloasiakkaat/avoimet-tyopaikat" target="_blank" rel="noopener noreferrer" class="out-link">↗ Työmarkkinatori</a>
+    <a href="https://duunitori.fi/tyopaikat/" target="_blank" class="out-link">↗ Duunitori</a>
+    <a href="https://www.oikotie.fi/tyopaikat/" target="_blank" class="out-link">↗ Oikotie</a>
+    <a href="https://www.tyomarkkinatori.fi/tyonhakijalle/avoimet-tyopaikat" target="_blank" class="out-link">↗ Työmarkkinatori</a>
+    <a href="https://www.mol.fi/fi/tyonhakijat/etsi-toita" target="_blank" class="out-link">↗ Työmarkkinatori</a>
   </div>
 
   <div class="note-gold note">Valitse ilmoitus johon voisit <strong>oikeasti hakea</strong> — ei sellainen joka tuntuu liian hyvältä tai liian huonolta. Harjoittelusta tulee hyödyllinen vain jos ilmoitus on aito.</div>
@@ -1078,7 +1095,7 @@ const S = {
   pre:[5,5,5], post:[5,5,5],
   skills:[], story:'', aiFbT:'',
   strengths:[], evidence:['','',''],
-  jobPosting:'', manualKW:{hard:[],soft:[],phrases:[]}, atsAIT:'', gapAIT:'', atsInsight:'', gapAction:'',
+  jobPosting:'', manualKW:{hard:[],soft:[],phrases:[]}, atsAIT:'', gapAIT:'', atsInsight:'', gapAction:'', cvExtractedS2:'',
   appText:'', extResult:'', extFb:'',
   intQ:['','',''], intFbT:'', intQTexts:null,
   promptResult:''
@@ -1199,6 +1216,37 @@ function load(id){const el=document.getElementById(id);if(el)el.innerHTML='<div 
 
 const AI_COACH_SYS='Olet rennonlainen uravalmentaja. Kirjoitat suomeksi. Enintään 3–4 lyhyttä lausetta TAI max 4 bulletia (•). Älä toista opiskelijan sanoja tai listoja. Älä käytä yritysjargonaa (kokonaisuudessa, olennaista, proaktiivinen, rekrytoijan näkökulmasta, vahvuusprofiili). Anna vain uutta: yksi havainto tai yksi selkeä seuraava askel. Puhekieli ok. Päättele hakijan ala tarinasta ja ilmoituksesta — älä oleta asiakaspalvelua; sama ohje toimii kaikille ammateille (hoito, rakennus, logistiikka, toimisto, myynti jne.).';
 
+// CV Upload S2
+async function uploadCVS2(file){
+  if(!file)return;
+  const zone=document.getElementById('cvUploadZone');
+  const status=document.getElementById('cvS2Status');
+  status.style.display='block';
+  status.style.cssText='display:block;font-size:13.5px;padding:.6rem 1rem;border-radius:10px;margin-bottom:12px;background:var(--gold-lt);border:1px solid var(--gold);color:var(--gold-dk)';
+  status.textContent='⏳ Luetaan '+file.name+'...';
+  const fd=new FormData();fd.append('file',file);
+  try{
+    const base=(window.location.pathname.indexOf('/module/')>0)?window.location.pathname.substring(0,window.location.pathname.indexOf('/module/')):'';
+    const r=await fetch((window.location.origin||'')+base+'/api/ai/cv-extract-text',{method:'POST',credentials:'include',body:fd});
+    const d=await r.json();
+    if(!r.ok||!d.text)throw new Error(d.error||'Lukeminen epäonnistui');
+    window._cvExtractedS2=d.text;
+    S.cvExtractedS2=d.text;
+    // Pre-fill story textarea
+    const ta=document.getElementById('storyTa');
+    if(ta&&!ta.value){ta.value=d.text.slice(0,1200);S.story=ta.value;checkStory();}
+    status.style.cssText='display:block;font-size:13.5px;padding:.6rem 1rem;border-radius:10px;margin-bottom:12px;background:var(--sage-lt);border:1px solid var(--sage);color:var(--sage)';
+    status.innerHTML='✓ <strong>'+file.name+'</strong> luettu ('+d.chars+' merkkiä) — teksti liitetty alla olevaan kenttään. Voit muokata tai lisätä tietoja.';
+    zone.style.borderColor='var(--sage)';
+    zone.innerHTML='<div style="font-size:1rem;color:var(--sage);font-weight:600">✓ '+file.name+' luettu</div>';
+    try{saveProgress();}catch(e){}
+  }catch(e){
+    status.style.cssText='display:block;font-size:13.5px;padding:.6rem 1rem;border-radius:10px;margin-bottom:12px;background:var(--red-lt);border:1px solid var(--red);color:var(--red)';
+    status.textContent='⚠ '+(e.message||'Virhe')+' — kirjoita alla olevaan kenttään.';
+  }
+}
+function handleCVDropS2(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)uploadCVS2(f);document.getElementById('cvUploadZone').style.borderColor='rgba(184,134,11,.35)';}
+
 // S2
 function checkStory(){
   S.skills=[1,2,3,4,5].map(i=>document.getElementById('sk'+i)?.value.trim()).filter(Boolean);
@@ -1217,7 +1265,7 @@ function checkStory(){
 async function analyzeSkills(){
   document.getElementById('analyzeBtn').disabled=true;
   load('skillFbT');
-  const sys='Olet rekrytoija joka tekee taitokarttoituksen. Kirjoitat suomeksi. Tehtävä: anna täsmälleen 5–7 riviä, yksi vahvuus per rivi muodossa "Vahvuuden nimi — lyhyt perustelu miksi se näkyy juuri tässä tarinassa (1 lause)". Vahvuuden nimi: 2–5 sanaa, täsmällinen, konkreettinen — ei "tiimityö" ellei tarina todella tue sitä. Ota huomioon ala jonka tarinan perusteella päättelet. Ei johdantoa, ei lopetusta, ei ylistystä — vain lista.';
+  const sys='Olet rekrytoija joka tekee taitokarttoituksen. Kirjoitat suomeksi. Tehtävä: anna täsmälleen 5–7 riviä, yksi vahvuus per rivi muodossa "Vahvuuden nimi — lyhyt perustelu miksi se näkyy juuri tässä tarinassa (1 lause)". Vahvuuden nimi: 2–5 sanaa, täsmällinen, konkreettinen — ei "tiimityö" ellei tarina todella tue sitä. Ota huomioon ala jonka tarinan perusteella päättelet. TÄRKEÄÄ: Älä toista hakijan listaamia taitoja sellaisenaan. Etsi PIILOTETUT vahvuudet — asioita joita henkilö ei itse maininnut mutta jotka näkyvät tavassa jolla hän kirjoittaa tai tilanteissa jotka hän kuvaa. Esim. jos henkilö kertoo rauhoitelleensa asiakkaan, hän ei kerro "paineensietokyvystä" — sinä kerrot sen. Ei johdantoa, ei lopetusta, ei ylistystä — vain lista.';
   const txt=await ai(`Henkilön listamat taidot: ${S.skills.join(', ')}.\n\nHenkilön kertomus omin sanoin:\n${S.story}`,sys,420);
   document.getElementById('skillFbT').textContent=txt||'Analyysiä ei saatavilla — tarkista yhteys.';
   S.aiFbT=txt;
@@ -1326,9 +1374,18 @@ function checkGapAction(){
 async function runGap(){
   document.getElementById('gapBtn').disabled=true;
   load('gapFbT');
-  const sys='Olet rekrytoija Suomessa. Kirjoitat suomeksi. Tee rehellinen vertailu hakijan ja ilmoituksen välillä. Rakenne täsmälleen näin — kolme osiota:\n\n✓ SOPII HYVIN (2–3 kohtaa): mitä hakijalla on joka istuu ilmoitukseen — perustele miksi\n⚠ PUUTTUU TAI HEIKKO (2–3 kohtaa): mitä ilmoituksessa vaaditaan mitä hakijalla ei ole tai ei sanonut riittävän selkeästi\n→ MITEN MUOTOILISIT (2–3 kohtaa): konkreettinen ohje miten kirjoittaa jokin puuttuva asia hakemukseen ilmoituksen sanoilla — älä keksi taitoja joita ei ole, muotoile vain ne joita on\n\nOle täsmällinen. Käytä ilmoituksen sanoja. Älä käytä yritysjargonaa.';
-  const prompt=`Hakijan vahvuudet: ${S.strengths.join(', ')}\nHakijan tarina: ${S.story}\nHakijan löytämät avainsanat: ${[...S.manualKW.hard,...S.manualKW.soft,...S.manualKW.phrases].join(', ')}\n\nTyöpaikkailmoitus:\n${S.jobPosting}`;
-  const txt=await ai(prompt,sys,480);
+  const cvContext=window._cvExtractedS2?`\n\nHakijan CV:\n${window._cvExtractedS2.slice(0,2000)}`:'';
+  const sys=`Olet suomalainen rekrytoija joka antaa rehellisen arvion — ei kohteliaisuuksia. Kirjoitat suomeksi. Rakenne täsmälleen näin:
+
+✓ VAHVUUDET (2–3): mitä hakijalla on joka oikeasti istuu — perustele ilmoituksen sanoilla
+⚠ HEIKKOUDET (2–3): mitä puuttuu tai on liian heikko — kerro suoraan, ei pehmentäen
+→ MUOTOILE NÄIN (2–3): täsmälliset sanat hakemukseen — kopioi suoraan käyttöön
+📊 REHELLINEN ARVIO: Kirjoita yksi virke: "Palkkaustodennäköisyys tähän rooliin: [%] — [yksi lause miksi]"
+⚡ SUURIN RISKI: yksi konkreettinen asia joka hylkää hakemuksen ennen kuin kukaan lukee sen
+
+TÄRKEÄÄ: Tämä rooli on ${S.jobPosting.slice(0,100)}. Painota persoonallisuutta ja asennetta jos ilmoitus sen mainitsee — älä painota pelkkiä teknisiä avainsanoja jos ilmoitus painottaa ihmistaitoja. Ole rehellinen — "hyvä pohja" ei ole rehellinen arvio.`;
+  const prompt=`Hakijan vahvuudet: ${S.strengths.join(', ')}\nHakijan tarina: ${S.story}\nHakijan löytämät avainsanat: ${[...S.manualKW.hard,...S.manualKW.soft,...S.manualKW.phrases].join(', ')}${cvContext}\n\nTyöpaikkailmoitus:\n${S.jobPosting}`;
+  const txt=await ai(prompt,sys,550);
   document.getElementById('gapFbT').textContent=txt||'Analyysi ei saatavilla.';
   S.gapAIT=txt;
   document.getElementById('gapFb').classList.add('show');
@@ -1391,7 +1448,7 @@ function setExtFb(v,el){S.extFb=v;document.querySelectorAll('#s8 .eq-btn').forEa
 async function buildApp(){
   document.getElementById('buildBtn').disabled=true;
   load('appFbT');
-  const sys='Olet huippurekrytoija joka kirjoittaa hakemuksia kaikille aloille. Päättele rooli ilmoituksesta. Ensimmäinen persoona. Max 4 lausetta. Ensimmäinen lause on vahva ja konkreettinen. Ei kliseitä. Aloita konkreettisella tosiasalla — ei "Olen kiinnostunut". Sisällytä ilmoituksen avainsanat luontevasti. Kuulostaa ihmiseltä. Suomi.';
+  const sys=`Olet hakija joka kirjoittaa hakemuksen. Ensimmäinen persoona. Max 4 lausetta. TIUKAT SÄÄNNÖT: Aloita konkreettisella tosiasialla tai tilanteella — ei koskaan "Olen kiinnostunut" tai "Haluaisin hakea". Älä käytä sanoja: asiakaslähtöinen, tiimipelaaja, intohimoinen, proaktiivinen, motivoitunut, tuloshakuinen. Yksi konkreettinen tilanne tai luku pakollinen. Avainsanat ilmoituksesta luontevasti — ei listana. Kuulostaa ihmiseltä — ei tekoälylta. Lue läpi: kuulostaako tämä siltä että oikea ihminen kirjoitti sen? Jos kuulostaa tekoälylta — kirjoita uudelleen. Päättele rooli ilmoituksesta. Suomi.`;
   const p=`Vahvuudet: ${S.strengths.join(', ')}\nTodisteet: ${S.evidence.filter(Boolean).join(' | ')}\nTarina: ${S.story}\nAvainsanat: ${S.atsAIT.slice(0,400)}\nIlmoitus: ${S.jobPosting.slice(0,800)}`;
   const txt=await ai(p,sys,400);
   document.getElementById('appFbT').textContent=txt;
@@ -1433,9 +1490,9 @@ function checkInt(){document.getElementById('evalIntBtn').disabled=S.intQ.filter
 async function evalInt(){
   document.getElementById('evalIntBtn').disabled=true;
   load('intFbT');
-  const sys=AI_COACH_SYS+' Tehtävä: kolme vastausta — per vastaus max 2 lausetta (mikä toimii + yksi parannus). Lopuksi yksi lause kokonaisuudesta. Älä siteeraa hakemusta.';
-  const p=`Hakemus: ${S.appText}\nV1 (vaikea tilanne): ${S.intQ[0]}\nV2 (kiire/paine): ${S.intQ[1]}\nV3 (miksi tämä rooli): ${S.intQ[2]}`;
-  const txt=await ai(p,sys,320);
+  const sys=`Olet rekrytoija joka arvioi haastatteluvastauksia. Kirjoitat suomeksi. Anna jokaiselle vastaukselle signaalin vahvuus (VAHVA / KESKITASO / HEIKKO), yksi konkreettinen asia joka toimi, ja yksi täsmällinen parannus — ei "kehitä", vaan kerro täsmälleen mitä sanoa. Lopuksi: KOKONAISARVIO yhdellä virkkeellä, SUURIN VAHVUUS joka erottaa tämän muista, SUURIN RISKI joka voi hylätä haastattelussa. Ole rehellinen — ei "hyvä pohja" ilman perustelua.`;
+  const p=`Rooli: ${S.jobPosting.slice(0,200)}\nHakemus: ${S.appText}\nV1: ${S.intQ[0]}\nV2: ${S.intQ[1]}\nV3: ${S.intQ[2]}`;
+  const txt=await ai(p,sys,450);
   document.getElementById('intFbT').textContent=txt;
   document.getElementById('intFb').classList.add('show');
   S.intFbT=txt;
@@ -1659,8 +1716,8 @@ function applyPolkuData(d){
   try{checkEvidence();}catch(e){}
   try{checkJob();}catch(e){}
   try{checkInt();}catch(e){}
-  try{updateScore();}catch(e){}
   try{restoreIntQuestionsFromState();}catch(e){}
+  try{updateScore();}catch(e){}
   const screen=Math.min(TOTAL,Math.max(1,Number(d.curScreen)||1));
   go(screen);
   if(screen===12) buildCompass();
