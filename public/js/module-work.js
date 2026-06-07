@@ -204,6 +204,12 @@
       if (d.improvedCV) lines.push('Parannettu CV tallennettu');
       if (d.linkedinPackage) lines.push('LinkedIn-paketti tallennettu');
     }
+    if (moduleId.indexOf('ai-polku') >= 0) {
+      if (d.S && d.S.cvFileName) lines.push('CV: ' + d.S.cvFileName);
+      if (d.S && d.S.strengths && d.S.strengths.length) lines.push('Vahvuudet valittu');
+      if (d.S && d.S.appText) lines.push('Hakemus tallessa');
+      if (d.curScreen) lines.push('Vaihe: ' + d.curScreen + '/12');
+    }
     return escapeHtml(lines.filter(Boolean).join('\n\n') || parsed.summary || 'Tallennettu');
   }
 

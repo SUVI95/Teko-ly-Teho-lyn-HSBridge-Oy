@@ -746,6 +746,8 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
   </div>
 </section>
 
+<script src="/js/module-work.js"></script>
+<script src="/js/ai-helper.js"></script>
 <script>
 /* ── NAV + PROGRESS ── */
 var sections = document.querySelectorAll('.section[data-index]');
@@ -1417,6 +1419,7 @@ async function uploadCV(file) {
     var btn = document.getElementById('analyzeBtn');
     if (btn) { btn.style.background = 'var(--accent3)'; btn.style.boxShadow = '0 4px 16px rgba(42,122,75,.4)'; }
     await persistModuleWork();
+    if (moduleWorkApi && moduleWorkApi.saveNow) await moduleWorkApi.saveNow();
   } catch(e) {
     status.style.cssText = 'display:block;font-size:.85rem;padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;background:rgba(199,91,58,.08);border:1px solid rgba(199,91,58,.2);color:var(--accent2);';
     status.textContent = '⚠ ' + (e.message || 'Virhe') + ' — täytä kentät alla käsin.';
@@ -1667,9 +1670,9 @@ document.addEventListener('DOMContentLoaded',async function(){
   var gl = document.getElementById('gammaLink');
   if(gl){
     gl.addEventListener('input',function(){
-      saveLocal('gammaLink',this.value);
       var s=document.getElementById('gammaLinkSuccess');
       if(s){s.style.display=this.value.length>10?'block':'none';}
+      persistModuleWork();
     });
     if(gl.value.length>10){
       var s=document.getElementById('gammaLinkSuccess');
@@ -1679,8 +1682,6 @@ document.addEventListener('DOMContentLoaded',async function(){
 });
 </script>
 
-<script src="/js/module-work.js"></script>
-<script src="/js/ai-helper.js"></script>
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
 <script>

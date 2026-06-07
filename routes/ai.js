@@ -802,8 +802,9 @@ router.post('/cv-parse', async (req, res) => {
     const system = [
       'You extract structured facts from a Finnish CV or resume.',
       'Reply with ONLY valid JSON (no markdown, no commentary) using this shape:',
-      '{"name":"","city":"","experience":"2-4 sentences in Finnish summarizing work, education, and relevant background","targetRole":"best guess of desired role or field in Finnish, or empty string","pride":"one concrete achievement from the CV in Finnish, or empty string"}',
-      'Use only information explicitly in the CV. Do not invent employers, dates, or skills.'
+      '{"name":"","city":"","experience":"2-4 sentences in Finnish summarizing work, education, and relevant background","targetRole":"best guess of desired role or field in Finnish, or empty string","pride":"one concrete achievement from the CV in Finnish, or empty string","skills":["3-5 concrete skills or strengths from the CV in Finnish, each 2-5 words"]}',
+      'Use only information explicitly in the CV. Do not invent employers, dates, or skills.',
+      'skills must be transferable strengths (e.g. tiimityö, asiakaspalvelu, logistiikka) — not job titles alone.'
     ].join(' ');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -841,13 +842,20 @@ router.post('/cv-parse', async (req, res) => {
       return res.status(502).json({ error: 'CV:n tietojen jäsentäminen epäonnistui.' });
     }
 
+    const skillsRaw = fields.skills || fields.skill_list || [];
+    const skills = (Array.isArray(skillsRaw) ? skillsRaw : [])
+      .map((s) => String(s || '').trim())
+      .filter(Boolean)
+      .slice(0, 7);
+
     res.json({
       fields: {
         name: String(fields.name || '').trim(),
         city: String(fields.city || '').trim(),
         experience: String(fields.experience || '').trim(),
         targetRole: String(fields.targetRole || fields.target_role || '').trim(),
-        pride: String(fields.pride || '').trim()
+        pride: String(fields.pride || '').trim(),
+        skills
       },
       chars: text.length
     });

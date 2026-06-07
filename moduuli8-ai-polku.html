@@ -1095,7 +1095,8 @@ const S = {
   pre:[5,5,5], post:[5,5,5],
   skills:[], story:'', aiFbT:'',
   strengths:[], evidence:['','',''],
-  jobPosting:'', manualKW:{hard:[],soft:[],phrases:[]}, atsAIT:'', gapAIT:'', atsInsight:'', gapAction:'', cvExtractedS2:'',
+  jobPosting:'', manualKW:{hard:[],soft:[],phrases:[]}, atsAIT:'', gapAIT:'', atsInsight:'', gapAction:'',
+  cvExtractedS2:'', cvFileName:'', cvParsedAt:'',
   appText:'', extResult:'', extFb:'',
   intQ:['','',''], intFbT:'', intQTexts:null,
   promptResult:''
@@ -1216,6 +1217,54 @@ function load(id){const el=document.getElementById(id);if(el)el.innerHTML='<div 
 
 const AI_COACH_SYS='Olet rennonlainen uravalmentaja. Kirjoitat suomeksi. Enintään 3–4 lyhyttä lausetta TAI max 4 bulletia (•). Älä toista opiskelijan sanoja tai listoja. Älä käytä yritysjargonaa (kokonaisuudessa, olennaista, proaktiivinen, rekrytoijan näkökulmasta, vahvuusprofiili). Anna vain uutta: yksi havainto tai yksi selkeä seuraava askel. Puhekieli ok. Päättele hakijan ala tarinasta ja ilmoituksesta — älä oleta asiakaspalvelua; sama ohje toimii kaikille ammateille (hoito, rakennus, logistiikka, toimisto, myynti jne.).';
 
+function apiBasePath(){
+  const pathname=window.location.pathname||'';
+  return pathname.indexOf('/module/')>0?pathname.substring(0,pathname.indexOf('/module/')):'';
+}
+
+function applyCVFieldsS2(fields,force){
+  if(!fields)return false;
+  let filled=false;
+  const skills=Array.isArray(fields.skills)?fields.skills.filter(Boolean):[];
+  skills.slice(0,5).forEach((skill,i)=>{
+    const el=document.getElementById('sk'+(i+1));
+    if(el&&skill&&(force||!String(el.value||'').trim())){el.value=skill;filled=true;}
+  });
+  const ta=document.getElementById('storyTa');
+  const storyParts=[String(fields.experience||'').trim(),String(fields.pride||'').trim()].filter(Boolean);
+  const storyText=storyParts.join(' ');
+  if(ta&&storyText&&(force||!String(ta.value||'').trim())){
+    ta.value=storyText;
+    S.story=storyText;
+    filled=true;
+  } else if(ta&&!String(ta.value||'').trim()&&S.cvExtractedS2){
+    ta.value=S.cvExtractedS2.slice(0,1200);
+    S.story=ta.value;
+    filled=true;
+  }
+  checkStory();
+  return filled;
+}
+
+function showCVS2Success(fileName,chars,parsed){
+  const zone=document.getElementById('cvUploadZone');
+  const status=document.getElementById('cvS2Status');
+  if(!zone||!status)return;
+  const parsedNote=parsed
+    ? ' AI täytti taidot ja taustatarinan — tarkista ja muokkaa tarvittaessa.'
+    : ' Teksti liitetty alla olevaan kenttään — tarkista ja täydennä tarvittaessa.';
+  status.style.cssText='display:block;font-size:13.5px;padding:.6rem 1rem;border-radius:10px;margin-bottom:12px;background:var(--sage-lt);border:1px solid var(--sage);color:var(--sage)';
+  status.innerHTML='✓ <strong>'+fileName+'</strong> luettu ('+chars+' merkkiä).'+parsedNote+' Tiedot tallennettu tiliisi.';
+  zone.style.borderColor='var(--sage)';
+  zone.innerHTML='<div style="font-size:1rem;color:var(--sage);font-weight:600">✓ '+fileName+' tallennettu</div>';
+}
+
+function restoreCvS2State(){
+  if(!S.cvExtractedS2)return;
+  window._cvExtractedS2=S.cvExtractedS2;
+  if(S.cvFileName) showCVS2Success(S.cvFileName,(S.cvExtractedS2||'').length,!!S.cvParsedAt);
+}
+
 // CV Upload S2
 async function uploadCVS2(file){
   if(!file)return;
@@ -1224,25 +1273,46 @@ async function uploadCVS2(file){
   status.style.display='block';
   status.style.cssText='display:block;font-size:13.5px;padding:.6rem 1rem;border-radius:10px;margin-bottom:12px;background:var(--gold-lt);border:1px solid var(--gold);color:var(--gold-dk)';
   status.textContent='⏳ Luetaan '+file.name+'...';
+  zone.style.borderColor='var(--gold)';
   const fd=new FormData();fd.append('file',file);
   try{
-    const base=(window.location.pathname.indexOf('/module/')>0)?window.location.pathname.substring(0,window.location.pathname.indexOf('/module/')):'';
+    const base=apiBasePath();
     const r=await fetch((window.location.origin||'')+base+'/api/ai/cv-extract-text',{method:'POST',credentials:'include',body:fd});
     const d=await r.json();
     if(!r.ok||!d.text)throw new Error(d.error||'Lukeminen epäonnistui');
     window._cvExtractedS2=d.text;
     S.cvExtractedS2=d.text;
-    // Pre-fill story textarea
-    const ta=document.getElementById('storyTa');
-    if(ta&&!ta.value){ta.value=d.text.slice(0,1200);S.story=ta.value;checkStory();}
-    status.style.cssText='display:block;font-size:13.5px;padding:.6rem 1rem;border-radius:10px;margin-bottom:12px;background:var(--sage-lt);border:1px solid var(--sage);color:var(--sage)';
-    status.innerHTML='✓ <strong>'+file.name+'</strong> luettu ('+d.chars+' merkkiä) — teksti liitetty alla olevaan kenttään. Voit muokata tai lisätä tietoja.';
-    zone.style.borderColor='var(--sage)';
-    zone.innerHTML='<div style="font-size:1rem;color:var(--sage);font-weight:600">✓ '+file.name+' luettu</div>';
+    S.cvFileName=file.name;
+
+    status.textContent='⏳ AI poimii tiedot CV:stä...';
+    let parsed=false;
+    try{
+      const pr=await fetch((window.location.origin||'')+base+'/api/ai/cv-parse',{
+        method:'POST',
+        credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({text:d.text})
+      });
+      const pd=await pr.json();
+      if(pr.ok&&pd.fields){
+        applyCVFieldsS2(pd.fields,true);
+        S.cvParsedAt=new Date().toISOString();
+        parsed=true;
+      }
+    }catch(parseErr){
+      console.warn('[cv-parse]',parseErr);
+      applyCVFieldsS2(null,true);
+    }
+
+    showCVS2Success(file.name,d.chars||d.text.length,parsed);
     try{saveProgress();}catch(e){}
+    if(polkuWorkApi&&typeof polkuWorkApi.saveNow==='function'){
+      try{await polkuWorkApi.saveNow();}catch(e2){}
+    }
   }catch(e){
     status.style.cssText='display:block;font-size:13.5px;padding:.6rem 1rem;border-radius:10px;margin-bottom:12px;background:var(--red-lt);border:1px solid var(--red);color:var(--red)';
     status.textContent='⚠ '+(e.message||'Virhe')+' — kirjoita alla olevaan kenttään.';
+    zone.style.borderColor='rgba(184,134,11,.35)';
   }
 }
 function handleCVDropS2(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)uploadCVS2(f);document.getElementById('cvUploadZone').style.borderColor='rgba(184,134,11,.35)';}
@@ -1625,6 +1695,7 @@ function summarizePolkuData(data){
   const parts=[`Vaihe ${n}/${TOTAL}`];
   const S=data.S||{};
   if(S.strengths&&S.strengths.length) parts.push('Vahvuudet valittu');
+  if(S.cvFileName) parts.push('CV: '+S.cvFileName);
   if(S.appText) parts.push('Hakemus tallessa');
   const applied=data.inputs&&data.inputs.applied;
   if(applied&&String(applied).trim()) parts.push(String(applied).trim().slice(0,60));
@@ -1711,6 +1782,7 @@ function applyPolkuData(d){
       if(btn) btn.disabled=false;
     }
   }
+  try{restoreCvS2State();}catch(e){}
   try{checkStory();}catch(e){}
   try{checkGapAction();}catch(e){}
   try{checkEvidence();}catch(e){}
