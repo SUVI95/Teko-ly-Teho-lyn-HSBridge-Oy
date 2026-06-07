@@ -3,256 +3,165 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Urasuunnan kartta — Claude & Napkin.ai</title>
+<title>Urasuunnan kartta — Löydä mitä sinulla on</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
   :root {
-    --ink: #1a1a2e;
-    --text: #1a1a2e;
-    --muted: #6b6880;
-    --paper: #f5f3ef;
-    --paper2: #eeeae3;
-    --warm: #e8e0d4;
-    --border: rgba(26,26,46,0.12);
-    --accent: #7c3aed;
-    --accent2: #c75b3a;
-    --accent3: #2563a8;
-    --napkin: #f59e0b;
-    --shadow: 0 1px 4px rgba(26,26,46,0.08);
-    --shadow-md: 0 4px 16px rgba(26,26,46,0.12);
+    --ink:#1a1a2e;--text:#1a1a2e;--muted:#6b6880;--paper:#f5f3ef;--paper2:#eeeae3;--warm:#e8e0d4;
+    --border:rgba(26,26,46,.12);--accent:#7c3aed;--accent2:#c75b3a;--accent3:#2563a8;--napkin:#f59e0b;
+    --shadow:0 1px 4px rgba(26,26,46,.08);--shadow-md:0 4px 16px rgba(26,26,46,.12);
   }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--text); line-height: 1.7; font-size: 17px; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--text);line-height:1.7;font-size:17px;}
+  #progress-bar{position:fixed;top:0;left:0;height:3px;width:0%;background:linear-gradient(90deg,var(--accent),var(--napkin));z-index:1000;transition:width .2s ease;}
+  .top-nav{position:fixed;top:3px;left:0;right:0;height:64px;background:rgba(245,243,239,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;z-index:999;}
+  .nav-badge{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:3px 10px;}
+  .nav-title{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--muted);}
+  .nav-time{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+  .nav-time::before{content:'';display:inline-block;width:7px;height:7px;background:var(--napkin);border-radius:50%;}
+  .hero{background:var(--ink);background-image:radial-gradient(ellipse at 20% 60%,rgba(124,58,237,.25) 0%,transparent 55%),radial-gradient(ellipse at 80% 20%,rgba(245,158,11,.15) 0%,transparent 50%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:120px 32px 80px;text-align:center;}
+  .hero-inner{max-width:760px;}
+  .hero-label{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:32px;}
+  .hero h1{font-family:'DM Serif Display',serif;font-size:clamp(2.4rem,5vw,3.8rem);color:#fff;line-height:1.15;margin-bottom:24px;}
+  .hero h1 em{font-style:italic;color:#fcd34d;}
+  .hero-sub{font-size:18px;font-weight:300;color:rgba(255,255,255,.5);max-width:580px;margin:0 auto 40px;line-height:1.75;}
+  .hero-flow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:36px;}
+  .hero-flow-step{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:14px 18px;text-align:center;min-width:110px;}
+  .hero-flow-step-icon{font-size:1.4rem;margin-bottom:5px;display:block;}
+  .hero-flow-step-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:2px;}
+  .hero-flow-step-name{font-size:12px;font-weight:500;color:rgba(255,255,255,.75);}
+  .hero-flow-arrow{font-size:1.2rem;color:rgba(255,255,255,.18);}
+  .hero-cta{display:inline-block;background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;padding:14px 32px;border-radius:6px;text-decoration:none;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(124,58,237,.35);border:none;cursor:pointer;}
+  .hero-cta:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,58,237,.45);}
+  .section{padding:96px 32px;background:var(--paper);}
+  .section-alt{background:var(--paper2);}
+  .section-inner{max-width:820px;margin:0 auto;}
+  .section-label{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;display:block;}
+  h2.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,3.5vw,2.6rem);color:var(--ink);line-height:1.2;margin-bottom:20px;}
+  h2.section-h2 em{font-style:italic;color:var(--accent);}
+  .section-divider{width:48px;height:3px;background:var(--accent);margin-bottom:32px;border-radius:2px;}
+  .section-divider.amber{background:var(--napkin);}
+  .lead{font-size:19px;font-weight:300;color:var(--muted);line-height:1.75;margin-bottom:40px;}
+  p{margin-bottom:20px;}
+  .step-header{display:flex;align-items:center;gap:16px;background:var(--ink);border-radius:12px 12px 0 0;padding:20px 28px;}
+  .step-number{font-family:'DM Mono',monospace;font-size:11px;color:#a78bfa;background:rgba(124,58,237,.15);border:1px solid rgba(167,139,250,.3);border-radius:4px;padding:4px 10px;white-space:nowrap;letter-spacing:.08em;text-transform:uppercase;}
+  .step-number.amber{color:#fcd34d;background:rgba(245,158,11,.15);border-color:rgba(252,211,77,.3);}
+  .step-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:16px;color:#fff;}
+  .step-time{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,.35);white-space:nowrap;}
+  .exercise{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:32px;box-shadow:var(--shadow-md);}
+  .exercise-body{padding:28px 32px;}
+  .exercise-steps{counter-reset:step;list-style:none;padding:0;}
+  .exercise-steps>li{counter-increment:step;display:flex;gap:16px;margin-bottom:24px;align-items:flex-start;}
+  .exercise-steps>li::before{content:counter(step);font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:#fff;background:var(--accent);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .step-content{flex:1;}
+  .step-content strong{display:block;color:var(--ink);font-weight:600;margin-bottom:6px;}
+  .prompt-block{background:#0f0f1a;border:1px solid rgba(124,58,237,.25);border-radius:10px;padding:20px 24px;margin:16px 0;position:relative;}
+  .prompt-block.amber{border-color:rgba(245,158,11,.25);}
+  .prompt-block-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#a78bfa;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .prompt-block.amber .prompt-block-label{color:#fcd34d;}
+  .prompt-block p{font-family:'DM Mono',monospace;font-size:13px;color:rgba(255,255,255,.82);line-height:1.75;margin:0;white-space:pre-wrap;}
+  .prompt-block em{color:#fb923c;font-style:normal;font-weight:500;}
+  .copy-btn{position:absolute;top:14px;right:14px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.22);border-radius:4px;padding:5px 12px;font-family:'DM Mono',monospace;font-size:10px;color:#a78bfa;cursor:pointer;transition:background .15s;}
+  .prompt-block.amber .copy-btn{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.22);color:#fcd34d;}
+  .copy-btn:hover{background:rgba(124,58,237,.22);}
+  .callout{border-radius:10px;padding:20px 24px;margin:24px 0;display:flex;gap:16px;align-items:flex-start;}
+  .callout-warning{background:rgba(199,91,58,.08);border-left:3px solid var(--accent2);}
+  .callout-info{background:rgba(37,99,168,.07);border-left:3px solid var(--accent3);}
+  .callout-tip{background:rgba(124,58,237,.07);border-left:3px solid var(--accent);}
+  .callout-amber{background:rgba(245,158,11,.07);border-left:3px solid var(--napkin);}
+  .callout-success{background:rgba(22,163,74,.08);border-left:3px solid #16a34a;}
+  .callout-icon{font-size:1.3rem;flex-shrink:0;margin-top:1px;}
+  .callout-text{flex:1;}
+  .callout-text strong{color:var(--ink);display:block;margin-bottom:4px;}
+  .callout-text p{margin:0;font-size:15px;color:var(--muted);}
+  .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:28px 32px;margin-bottom:20px;box-shadow:var(--shadow);}
+  .tool-link{display:inline-flex;align-items:center;gap:8px;border-radius:6px;padding:8px 16px;font-family:'DM Mono',monospace;font-size:13px;text-decoration:none;transition:background .15s;margin:4px 0;}
+  .tool-link-purple{background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);color:var(--accent);}
+  .tool-link-amber{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#b45309;}
+  .pull-quote{border-left:3px solid var(--accent);padding:12px 24px;margin:28px 0;font-family:'DM Serif Display',serif;font-size:1.2rem;font-style:italic;color:var(--ink);line-height:1.5;}
+  .final-section{background:var(--ink);background-image:radial-gradient(ellipse at 20% 50%,rgba(124,58,237,.2) 0%,transparent 55%),radial-gradient(ellipse at 85% 20%,rgba(245,158,11,.2) 0%,transparent 50%);padding:96px 32px;text-align:center;}
+  .final-section h2{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);color:#fff;margin-bottom:20px;}
+  .final-section h2 em{color:#fcd34d;}
+  .final-section>.section-inner>p{color:rgba(255,255,255,.5);max-width:560px;margin:0 auto 48px;font-size:17px;font-weight:300;}
+  .final-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:820px;margin:0 auto 48px;text-align:left;}
+  .final-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:24px;}
+  .final-card span{font-size:1.5rem;margin-bottom:12px;display:block;}
+  .final-card h4{font-family:'DM Serif Display',serif;font-size:1rem;color:#fff;margin-bottom:8px;}
+  .final-card p{font-size:13px;color:rgba(255,255,255,.4);margin:0;}
+  .module-footer-nav{position:static;height:auto;background:transparent;backdrop-filter:none;border-bottom:none;padding:0;z-index:auto;margin-top:48px;padding-top:32px;border-top:1px solid rgba(255,255,255,.12);display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;}
+  .btn-next{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:13px 28px;border-radius:6px;font-weight:600;font-size:15px;text-decoration:none;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 16px rgba(124,58,237,.35);}
+  .btn-next:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(124,58,237,.45);}
+  .module-footer-nav .btn-back-light{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.85);padding:13px 20px;border-radius:6px;font-weight:500;font-size:15px;border:1px solid rgba(255,255,255,.28);text-decoration:none;}
 
-  #progress-bar { position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, var(--accent), var(--napkin)); z-index: 1000; transition: width 0.2s ease; }
+  /* THINK GATES */
+  .think-gate{border:2px dashed rgba(199,91,58,.35);border-radius:12px;padding:18px 20px;background:rgba(199,91,58,.03);margin-bottom:16px;}
+  .tg-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2);margin-bottom:8px;}
+  .tg-desc{font-size:14.5px;color:var(--muted);line-height:1.65;margin-bottom:12px;}
+  .tg-input{width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:.7rem .9rem;font-size:14.5px;font-family:'DM Sans',sans-serif;color:var(--ink);resize:vertical;outline:none;min-height:72px;line-height:1.6;transition:border-color .2s;}
+  .tg-input:focus{border-color:rgba(199,91,58,.4);}
+  .tg-footer{display:flex;align-items:center;gap:1rem;margin-top:10px;flex-wrap:wrap;}
+  .tg-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+  .tg-count.ok{color:#16a34a;}
+  .tg-btn{padding:9px 20px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:var(--accent2);color:#fff;font-family:'DM Sans',sans-serif;transition:all .2s;opacity:.35;pointer-events:none;}
+  .tg-btn.unlocked{opacity:1;pointer-events:auto;}
+  .tg-btn.unlocked:hover{background:#a84a2e;}
+  .tg-btn.done{background:#16a34a;opacity:1;pointer-events:none;}
+  .gate-content{max-height:0;overflow:hidden;opacity:0;transition:max-height .4s,opacity .4s;}
+  .gate-content.open{max-height:2000px;opacity:1;margin-top:14px;}
 
-  .top-nav { position: fixed; top: 3px; left: 0; right: 0; height: 64px; background: rgba(245,243,239,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; z-index: 999; }
-  .nav-badge { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 3px 10px; }
-  .nav-title { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--muted); }
-  .nav-time { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-  .nav-time::before { content: ''; display: inline-block; width: 7px; height: 7px; background: var(--napkin); border-radius: 50%; }
+  /* AI RESULT PANEL */
+  .ai-result-panel{background:#0f0f1a;border-radius:12px;padding:24px 28px;margin:20px 0;display:none;border:1px solid rgba(124,58,237,.3);}
+  .ai-result-panel.show{display:block;}
+  .ai-result-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#a78bfa;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .ai-result-label::before{content:'✦';color:#a78bfa;}
+  .ai-result-text{font-size:15px;color:rgba(255,255,255,.82);line-height:1.8;white-space:pre-wrap;}
+  .ai-result-text strong{color:#fcd34d;font-weight:600;}
+  .loading-dots{display:inline-flex;gap:4px;}
+  .loading-dots span{width:5px;height:5px;border-radius:50%;background:#a78bfa;animation:ld .6s infinite alternate;}
+  .loading-dots span:nth-child(2){animation-delay:.15s;}
+  .loading-dots span:nth-child(3){animation-delay:.3s;}
+  @keyframes ld{to{opacity:.2;transform:translateY(-3px);}}
 
-  /* HERO */
-  .hero { background: var(--ink); background-image: radial-gradient(ellipse at 20% 60%, rgba(124,58,237,0.25) 0%, transparent 55%), radial-gradient(ellipse at 80% 20%, rgba(245,158,11,0.15) 0%, transparent 50%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 120px 32px 80px; text-align: center; }
-  .hero-inner { max-width: 760px; }
-  .hero-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 32px; }
-  .hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2.4rem, 5vw, 3.8rem); color: #fff; line-height: 1.15; margin-bottom: 24px; }
-  .hero h1 em { font-style: italic; color: #fcd34d; }
-  .hero-sub { font-size: 18px; font-weight: 300; color: rgba(255,255,255,0.5); max-width: 580px; margin: 0 auto 48px; line-height: 1.75; }
+  /* NAPKIN SVG FLOW */
+  .napkin-flow-visual{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:24px 0;}
+  .nfv-step{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:12px 16px;text-align:center;min-width:100px;}
+  .nfv-step-icon{font-size:1.3rem;margin-bottom:4px;display:block;}
+  .nfv-step-name{font-size:12px;font-weight:500;color:#b45309;}
+  .nfv-arrow{color:rgba(245,158,11,.4);font-size:1.1rem;}
 
-  .hero-flow { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 40px; }
-  .hero-flow-step { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px 18px; text-align: center; min-width: 110px; }
-  .hero-flow-step-icon { font-size: 1.4rem; margin-bottom: 5px; display: block; }
-  .hero-flow-step-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 2px; }
-  .hero-flow-step-name { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.75); }
-  .hero-flow-arrow { font-size: 1.2rem; color: rgba(255,255,255,0.18); }
-  .hero-cta { display: inline-block; background: var(--accent); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; padding: 14px 32px; border-radius: 6px; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 4px 20px rgba(124,58,237,0.35); }
-  .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(124,58,237,0.45); }
+  /* WEEK PLAN */
+  .week-plan{display:flex;flex-direction:column;gap:12px;margin:24px 0;}
+  .week-day{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;gap:16px;align-items:flex-start;box-shadow:var(--shadow);}
+  .week-day-num{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:#fff;background:var(--accent);border-radius:6px;padding:4px 10px;white-space:nowrap;flex-shrink:0;margin-top:2px;}
+  .week-day-content strong{display:block;font-size:14.5px;color:var(--ink);margin-bottom:4px;}
+  .week-day-content span{font-size:13.5px;color:var(--muted);line-height:1.6;}
+  .week-day-time{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);flex-shrink:0;}
 
-  /* SECTIONS */
-  .section { padding: 96px 32px; background: var(--paper); }
-  .section-alt { background: var(--paper2); }
-  .section-inner { max-width: 820px; margin: 0 auto; }
-  .section-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; display: block; }
-  h2.section-h2 { font-family: 'DM Serif Display', serif; font-size: clamp(1.8rem, 3.5vw, 2.6rem); color: var(--ink); line-height: 1.2; margin-bottom: 20px; }
-  h2.section-h2 em { font-style: italic; color: var(--accent); }
-  .section-divider { width: 48px; height: 3px; background: var(--accent); margin-bottom: 32px; border-radius: 2px; }
-  .section-divider.amber { background: var(--napkin); }
-  .lead { font-size: 19px; font-weight: 300; color: var(--muted); line-height: 1.75; margin-bottom: 40px; }
-  p { margin-bottom: 20px; }
+  /* SKILLS REVEAL */
+  .skills-reveal{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0;}
+  .skill-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow);opacity:0;transform:translateY(8px);transition:all .3s;}
+  .skill-card.visible{opacity:1;transform:translateY(0);}
+  .skill-card-icon{font-size:1.3rem;margin-bottom:8px;}
+  .skill-card-name{font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+  .skill-card-desc{font-size:12px;color:var(--muted);line-height:1.55;}
 
-  /* STEP HEADER */
-  .step-header { display: flex; align-items: center; gap: 16px; background: var(--ink); border-radius: 12px 12px 0 0; padding: 20px 28px; }
-  .step-number { font-family: 'DM Mono', monospace; font-size: 11px; color: #a78bfa; background: rgba(124,58,237,0.15); border: 1px solid rgba(167,139,250,0.3); border-radius: 4px; padding: 4px 10px; white-space: nowrap; letter-spacing: 0.08em; text-transform: uppercase; }
-  .step-number.amber { color: #fcd34d; background: rgba(245,158,11,0.15); border-color: rgba(252,211,77,0.3); }
-  .step-title { font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 16px; color: #fff; }
-  .step-time { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.35); white-space: nowrap; }
-
-  /* EXERCISE */
-  .exercise { background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 32px; box-shadow: var(--shadow-md); }
-  .exercise-body { padding: 28px 32px; }
-  .exercise-steps { counter-reset: step; list-style: none; padding: 0; }
-  .exercise-steps > li { counter-increment: step; display: flex; gap: 16px; margin-bottom: 24px; align-items: flex-start; }
-  .exercise-steps > li::before { content: counter(step); font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; color: #fff; background: var(--accent); border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
-  .exercise-steps.amber > li::before { background: var(--napkin); }
-  .step-content { flex: 1; }
-  .step-content strong { display: block; color: var(--ink); font-weight: 600; margin-bottom: 6px; }
-
-  /* PROMPT BLOCK */
-  .prompt-block { background: #0f0f1a; border: 1px solid rgba(124,58,237,0.25); border-radius: 10px; padding: 20px 24px; margin: 16px 0; position: relative; }
-  .prompt-block.amber { border-color: rgba(245,158,11,0.25); }
-  .prompt-block-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #a78bfa; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-  .prompt-block.amber .prompt-block-label { color: #fcd34d; }
-  .prompt-block-label::after { content: 'kopioi ja käytä'; background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.22); border-radius: 3px; padding: 2px 8px; font-size: 9px; }
-  .prompt-block.amber .prompt-block-label::after { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.22); }
-  .prompt-block p { font-family: 'DM Mono', monospace; font-size: 13px; color: rgba(255,255,255,0.82); line-height: 1.75; margin: 0; white-space: pre-wrap; }
-  .prompt-block em { color: #fb923c; font-style: normal; font-weight: 500; }
-  .copy-btn { position: absolute; top: 14px; right: 14px; background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.22); border-radius: 4px; padding: 5px 12px; font-family: 'DM Mono', monospace; font-size: 10px; color: #a78bfa; cursor: pointer; transition: background 0.15s; }
-  .prompt-block.amber .copy-btn { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.22); color: #fcd34d; }
-  .copy-btn:hover { background: rgba(124,58,237,0.22); }
-
-  /* CALLOUTS */
-  .callout { border-radius: 10px; padding: 20px 24px; margin: 24px 0; display: flex; gap: 16px; align-items: flex-start; }
-  .callout-warning { background: rgba(199,91,58,0.08); border-left: 3px solid var(--accent2); }
-  .callout-info { background: rgba(37,99,168,0.07); border-left: 3px solid var(--accent3); }
-  .callout-tip { background: rgba(124,58,237,0.07); border-left: 3px solid var(--accent); }
-  .callout-amber { background: rgba(245,158,11,0.07); border-left: 3px solid var(--napkin); }
-  .callout-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
-  .callout-text { flex: 1; }
-  .callout-text strong { color: var(--ink); display: block; margin-bottom: 4px; }
-  .callout-text p { margin: 0; font-size: 15px; color: var(--muted); }
-
-  /* CARD */
-  .card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 28px 32px; margin-bottom: 20px; box-shadow: var(--shadow); }
-  .card-title { font-family: 'DM Serif Display', serif; font-size: 1.15rem; color: var(--ink); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
-
-  /* NAPKIN INTRO */
-  .napkin-box { background: var(--ink); border-radius: 16px; padding: 36px; margin: 32px 0; position: relative; overflow: hidden; }
-  .napkin-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at 80% 30%, rgba(245,158,11,0.2) 0%, transparent 60%); pointer-events: none; }
-  .napkin-box-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #fcd34d; margin-bottom: 16px; position: relative; }
-  .napkin-box h3 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: #fff; margin-bottom: 16px; position: relative; font-style: italic; }
-  .napkin-box p { color: rgba(255,255,255,0.62); font-size: 15px; line-height: 1.75; margin-bottom: 14px; position: relative; }
-  .napkin-box p:last-of-type { margin-bottom: 0; }
-
-  .napkin-flow { display: flex; gap: 0; align-items: center; flex-wrap: wrap; gap: 8px; margin: 20px 0; position: relative; }
-  .napkin-flow-step { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; padding: 12px 16px; text-align: center; flex: 1; min-width: 100px; }
-  .napkin-flow-step-icon { font-size: 1.2rem; margin-bottom: 4px; display: block; }
-  .napkin-flow-step-text { font-size: 12px; color: #fcd34d; font-family: 'DM Mono', monospace; font-size: 11px; }
-  .napkin-flow-arrow { color: rgba(255,255,255,0.2); font-size: 1.1rem; }
-
-  .napkin-types { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 20px 0; position: relative; }
-  .napkin-type { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 14px; }
-  .napkin-type-icon { font-size: 1.1rem; margin-bottom: 4px; display: block; }
-  .napkin-type-name { font-family: 'DM Mono', monospace; font-size: 10px; color: #fcd34d; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
-  .napkin-type-desc { font-size: 12px; color: rgba(255,255,255,0.45); }
-
-  /* OUTPUT TEMPLATE */
-  .output-template { background: #0f0f1a; border: 1px solid rgba(245,158,11,0.2); border-radius: 12px; padding: 28px 32px; margin: 24px 0; }
-  .output-template-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #fcd34d; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-  .output-template-label::after { content: 'tämä menee Napkin.ai:hin'; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); border-radius: 3px; padding: 2px 8px; font-size: 9px; }
-  .output-template pre { font-family: 'DM Mono', monospace; font-size: 13px; color: rgba(255,255,255,0.75); line-height: 1.8; white-space: pre-wrap; }
-  .output-template .ot-comment { color: rgba(245,158,11,0.6); }
-  .output-copy-btn { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.22); border-radius: 4px; padding: 6px 14px; font-family: 'DM Mono', monospace; font-size: 10px; color: #fcd34d; cursor: pointer; margin-top: 16px; transition: background 0.15s; display: inline-block; }
-  .output-copy-btn:hover { background: rgba(245,158,11,0.22); }
-
-  /* REFLECTION */
-  .reflection { background: var(--warm); border-radius: 12px; padding: 28px 32px; margin: 32px 0; }
-  .reflection h3 { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--ink); margin-bottom: 14px; }
-  .reflection ul { list-style: none; padding: 0; }
-  .reflection ul li { padding: 8px 0; border-bottom: 1px solid rgba(26,26,46,0.08); font-size: 15px; color: var(--muted); padding-left: 20px; position: relative; }
-  .reflection ul li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
-  .reflection ul li:last-child { border-bottom: none; }
-
-  /* TOOL LINK */
-  .tool-link { display: inline-flex; align-items: center; gap: 8px; border-radius: 6px; padding: 8px 16px; font-family: 'DM Mono', monospace; font-size: 13px; text-decoration: none; transition: background 0.15s; margin: 4px 0; }
-  .tool-link-purple { background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.2); color: var(--accent); }
-  .tool-link-purple:hover { background: rgba(124,58,237,0.14); }
-  .tool-link-amber { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #b45309; }
-  .tool-link-amber:hover { background: rgba(245,158,11,0.14); }
-
-  /* PULL QUOTE */
-  .pull-quote { border-left: 3px solid var(--accent); padding: 12px 24px; margin: 28px 0; font-family: 'DM Serif Display', serif; font-size: 1.2rem; font-style: italic; color: var(--ink); line-height: 1.5; }
-
-  /* HIGHLIGHT */
-  .highlight-box { background: var(--ink); border-radius: 12px; padding: 32px; margin: 32px 0; position: relative; overflow: hidden; }
-  .highlight-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at 20% 50%, rgba(124,58,237,0.2) 0%, transparent 60%); pointer-events: none; }
-  .highlight-box h3 { font-family: 'DM Serif Display', serif; font-size: 1.35rem; color: #a78bfa; margin-bottom: 12px; font-style: italic; position: relative; }
-  .highlight-box p { color: rgba(255,255,255,0.62); margin: 0; font-size: 16px; position: relative; }
-
-  /* FINAL */
-  .final-section { background: var(--ink); background-image: radial-gradient(ellipse at 20% 50%, rgba(124,58,237,0.2) 0%, transparent 55%), radial-gradient(ellipse at 85% 20%, rgba(245,158,11,0.2) 0%, transparent 50%); padding: 96px 32px; text-align: center; }
-  .final-section h2 { font-family: 'DM Serif Display', serif; font-size: clamp(1.8rem, 3.5vw, 2.8rem); color: #fff; margin-bottom: 20px; }
-  .final-section h2 em { color: #fcd34d; }
-  .final-section > .section-inner > p { color: rgba(255,255,255,0.5); max-width: 560px; margin: 0 auto 48px; font-size: 17px; font-weight: 300; }
-  .final-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; max-width: 820px; margin: 0 auto 48px; text-align: left; }
-  .final-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; }
-  .final-card span { font-size: 1.5rem; margin-bottom: 12px; display: block; }
-  .final-card h4 { font-family: 'DM Serif Display', serif; font-size: 1rem; color: #fff; margin-bottom: 8px; }
-  .final-card p { font-size: 13px; color: rgba(255,255,255,0.4); margin: 0; }
-
-  .module-footer-nav {
-    position: static;
-    top: auto;
-    left: auto;
-    right: auto;
-    height: auto;
-    background: transparent;
-    backdrop-filter: none;
-    border-bottom: none;
-    padding: 0;
-    z-index: auto;
-    margin-top: 48px;
-    padding-top: 32px;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
-    align-items: center;
-  }
-  .btn-next {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--accent);
-    color: #fff;
-    padding: 13px 28px;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 15px;
-    text-decoration: none;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
-  }
-  .btn-next:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 22px rgba(124, 58, 237, 0.45);
-  }
-  .module-footer-nav .btn-back-light {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.85);
-    padding: 13px 20px;
-    border-radius: 6px;
-    font-weight: 500;
-    font-size: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    text-decoration: none;
-    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-  }
-  .module-footer-nav .btn-back-light:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.14);
-    border-color: rgba(255, 255, 255, 0.45);
-  }
-
-  @media (max-width: 640px) {
-    .top-nav { padding: 0 16px; }
-    .nav-title { display: none; }
-    .section { padding: 72px 20px; }
-    .hero { padding: 100px 20px 60px; }
-    .hero-flow { flex-direction: column; }
-    .hero-flow-arrow { transform: rotate(90deg); }
-    .napkin-types { grid-template-columns: 1fr 1fr; }
-    .final-grid { grid-template-columns: 1fr; }
-    .napkin-flow { flex-direction: column; }
-    .step-time { margin-left: 0; }
+  @media(max-width:640px){
+    .top-nav{padding:0 16px;}.nav-title{display:none;}.section{padding:72px 20px;}.hero{padding:100px 20px 60px;}
+    .hero-flow{flex-direction:column;}.hero-flow-arrow{transform:rotate(90deg);}
+    .final-grid{grid-template-columns:1fr;}.skills-reveal{grid-template-columns:1fr 1fr;}
   }
 </style>
 </head>
 <body>
 
 <div id="progress-bar"></div>
-
 <nav class="top-nav">
   <span class="nav-badge">Moduuli 10</span>
   <span class="nav-title">Urasuunnan kartta</span>
-  <span class="nav-time">~1 tunti</span>
+  <span class="nav-time">~60 min</span>
 </nav>
 
 <!-- HERO -->
@@ -260,119 +169,90 @@
   <div class="hero-inner">
     <div class="hero-label">HS Bridge AI — Tekoälykoulutus</div>
     <h1>Et aloita tyhjästä.<br/><em>Löydä mitä sinulla jo on.</em></h1>
-    <p class="hero-sub">Tunne "täytyy käydä yliopisto alusta asti" on lähes aina väärä. Tässä moduulissa käytät AI:ta löytääksesi mitä taidot sinulla jo on, mitä sinulta puuttuu — ja miten oppia se ilmaiseksi juuri nyt.</p>
-
+    <p class="hero-sub">Kirjoitat kolme lausetta itsestäsi. AI löytää taidot joita et itse näe. Rakennat visuaalin. Tiedät mitä tehdä tällä viikolla.</p>
     <div class="hero-flow">
-      <div class="hero-flow-step">
-        <span class="hero-flow-step-icon">📄</span>
-        <div class="hero-flow-step-label">Vaihe 1</div>
-        <div class="hero-flow-step-name">Lataa CV Claudeen</div>
-      </div>
+      <div class="hero-flow-step"><span class="hero-flow-step-icon">⚡</span><div class="hero-flow-step-label">Vaihe 1</div><div class="hero-flow-step-name">AI-analyysi nyt</div></div>
       <div class="hero-flow-arrow">→</div>
-      <div class="hero-flow-step">
-        <span class="hero-flow-step-icon">🔍</span>
-        <div class="hero-flow-step-label">Vaihe 2</div>
-        <div class="hero-flow-step-name">Löydä siirrettävät taidot</div>
-      </div>
+      <div class="hero-flow-step"><span class="hero-flow-step-icon">🔍</span><div class="hero-flow-step-label">Vaihe 2</div><div class="hero-flow-step-name">Aukot rehellisesti</div></div>
       <div class="hero-flow-arrow">→</div>
-      <div class="hero-flow-step">
-        <span class="hero-flow-step-icon">📚</span>
-        <div class="hero-flow-step-label">Vaihe 3</div>
-        <div class="hero-flow-step-name">Löydä oppimispolku</div>
-      </div>
+      <div class="hero-flow-step"><span class="hero-flow-step-icon">✨</span><div class="hero-flow-step-label">Vaihe 3</div><div class="hero-flow-step-name">Napkin-kartta</div></div>
       <div class="hero-flow-arrow">→</div>
-      <div class="hero-flow-step">
-        <span class="hero-flow-step-icon">✨</span>
-        <div class="hero-flow-step-label">Vaihe 4</div>
-        <div class="hero-flow-step-name">Rakenna visuaali Napkinilla</div>
-      </div>
+      <div class="hero-flow-step"><span class="hero-flow-step-icon">📅</span><div class="hero-flow-step-label">Vaihe 4</div><div class="hero-flow-step-name">7 päivää</div></div>
     </div>
-
-    <a href="#truth" class="hero-cta">Aloitetaan ↓</a>
+    <a href="#vaihe1" class="hero-cta">Aloita — näe itsesi eri tavalla ↓</a>
   </div>
 </section>
 
-<!-- THE TRUTH -->
-<section class="section" id="truth">
+<!-- VAIHE 1 — IN-MODULE AI ANALYSIS -->
+<section class="section section-alt" id="vaihe1">
   <div class="section-inner">
-    <span class="section-label">Ennen kuin aloitat</span>
-    <h2 class="section-h2">Miksi "täytyy käydä yliopisto" <em>on usein väärä tunne</em></h2>
+    <span class="section-label">Vaihe 1 · 10 min · Tapahtuu tässä</span>
+    <h2 class="section-h2">Kirjoita kolme lausetta — <em>AI analysoi heti</em></h2>
     <div class="section-divider"></div>
-    <p class="lead">Terveys- ja dataalat eivät rekrytoi vain biologeja ja datatieteilijöitä. Ne etsivät ihmisiä jotka ymmärtävät prosesseja, kommunikoivat selkeästi, organisoivat tietoa ja osaavat käyttää AI-työkaluja. Sinulla on jo paljon siitä.</p>
+    <p class="lead">Ei tarvitse avata Claude.ai erikseen. Kirjoita taustasi alle ja paina nappia. Analyysi tapahtuu tässä — suoraan sinulle.</p>
 
-    <div class="highlight-box">
-      <h3>"Sinä et ole vaihtelemassa alaa tyhjästä. Sinä olet laajentamassa sitä mitä olet."</h3>
-      <p>Jokainen taito jonka olet oppinut aiemmassa työssäsi on olemassa jossain toisessa muodossa kohdealassasi. AI:n tehtävä tänään on auttaa sinua näkemään nuo yhteydet — jotka olet itse oppinut olemaan näkemättä.</p>
-    </div>
-
-    <div class="callout callout-tip">
-      <div class="callout-icon">📄</div>
-      <div class="callout-text">
-        <strong>Tarvitset tähän moduuliin</strong>
-        <p>CV:si — Word, PDF tai pelkkä teksti kopioi-liitä muodossa. Jos sinulla ei ole ajantasaista CV:tä, kirjoita lyhyt lista: nykyinen työ, tehtävät joita teet, koulutus, muut kokemukset. Se riittää.</p>
-      </div>
-    </div>
-
-    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;">
-      <a href="https://claude.ai" target="_blank" class="tool-link tool-link-purple">🤖 claude.ai — avaa nyt</a>
-      <a href="https://napkin.ai" target="_blank" class="tool-link tool-link-amber">✨ napkin.ai — avaa nyt</a>
-    </div>
-  </div>
-</section>
-
-<!-- STEP 1: CV TO CLAUDE -->
-<section class="section section-alt" id="step1">
-  <div class="section-inner">
     <div class="exercise">
       <div class="step-header">
         <span class="step-number">Vaihe 1</span>
-        <span class="step-title">Lataa CV Claudeen — kerro mihin olet menossa</span>
+        <span class="step-title">Kerro taustasi — AI löytää mitä sinulla on</span>
         <span class="step-time">⏱ 10 min</span>
       </div>
       <div class="exercise-body">
-        <p style="color:var(--muted); margin-bottom:24px;">Tämä on perusta kaikelle muulle. Claude tarvitsee kolme asiaa: kuka olet nyt, mihin haluat mennä, ja mitä olet jo kokeillut tai oppinut. Mitä enemmän annat, sitä tarkemman analyysin saat.</p>
 
-        <ol class="exercise-steps">
-          <li>
-            <div class="step-content">
-              <strong>Avaa Claude ja aloita uusi keskustelu</strong>
-              Mene claude.ai. Avaa uusi chat. Tähän keskusteluun rakennat koko analyysisi — älä sulje sitä harjoitusten välissä.
-            </div>
-          </li>
-          <li>
-            <div class="step-content">
-              <strong>Liitä CV ja kerro kontekstisi — käytä tätä pohjaa</strong>
-              <div class="prompt-block">
-                <div class="prompt-block-label">Aloitusprompt — muokkaa omilla tiedoillasi</div>
-                <button class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
-                <p>Olen tekemässä alan vaihtoa ja tarvitsen apuasi analysoimaan tilannettani.
-
-Tässä on CV:ni / taustani:
-[<em>LIITÄ TÄHÄN CV TAI KIRJOITA TAUSTASI</em>]
-
-Nykyinen työtilanne: [<em>esim. hallintosihteeri, osa-aikainen</em>]
-Alan johon haluan siirtyä: [<em>esim. terveysdatan analysointi, digitaalinen terveys, biotekniikka</em>]
-Miksi tämä ala kiinnostaa: [<em>kirjoita omin sanoin — mitä olet jo tutkinut tai kokeillut</em>]
-Mitä olen jo oppinut tai rakentanut: [<em>esim. kursseilla opitut asiat, oma projekti</em>]
-
-Älä vielä tee analyysia. Kerro ensin mitä lisätietoja tarvitset minusta jotta voit tehdä tarkan analyysin.</p>
-              </div>
-              <p style="font-size:14px; color:var(--muted); margin-top:8px;">Claude saattaa kysyä lisäkysymyksiä. Vastaa niihin. Se tekee analyysistä paremman.</p>
-            </div>
-          </li>
-          <li>
-            <div class="step-content">
-              <strong>Vastaa Clauden kysymyksiin</strong>
-              Anna sille mitä se pyytää. Mitä enemmän kontekstia annat, sitä tarkempi ja henkilökohtaisempi analyysi on. Älä kiirehdi tähän vaiheeseen.
-            </div>
-          </li>
-        </ol>
-
-        <div class="callout callout-info">
-          <div class="callout-icon">🔒</div>
+        <div class="callout callout-tip" style="margin-bottom:24px;">
+          <div class="callout-icon">💡</div>
           <div class="callout-text">
-            <strong>Yksityisyys</strong>
-            <p>Claude ei tallenna keskustelujasi pysyvästi eikä käytä niitä muiden käyttäjien kouluttamiseen. Voit jakaa CV:si turvallisesti. Poista henkilötunnus, pankkitiedot tai muut erityisen arkaluonteiset tiedot ennen liittämistä.</p>
+            <strong>Ei tarvitse olla täydellinen</strong>
+            <p>Kirjoita omin sanoin. Ei muodollista kieltä. Mitä olet tehnyt, missä olet ollut, mihin haluat mennä. Kolme lausetta riittää — mutta mitä enemmän kerrot, sitä tarkemman analyysin saat.</p>
+          </div>
+        </div>
+
+        <div class="think-gate" id="tg1">
+          <div class="tg-label">✏️ Kirjoita ensin itse — ennen kuin AI analysoi</div>
+          <p class="tg-desc">Mitkä taitosi tai kokemuksesi ovat mielestäsi jo siirrettävissä uuteen suuntaan? Kirjoita rehellisesti omin sanoin — ei ammatillista kieltä. Vähintään 30 merkkiä.</p>
+          <textarea class="tg-input" id="tg1text" placeholder="Esim: Olen työskennellyt kassalla 3 vuotta. Olen hyvä kiireessä ja asiakkaiden kanssa. Haluaisin ehkä siirtyä terveydenhuoltoon tai toimistotyöhön..." oninput="checkGate(1,30)"></textarea>
+          <div class="tg-footer">
+            <span class="tg-count" id="tg1count">0 / 30 merkkiä</span>
+            <button class="tg-btn" id="tg1btn" onclick="openGate(1)" disabled>Hyvä — jatka taustatietoihin →</button>
+          </div>
+        </div>
+        <div class="gate-content" id="gc1">
+
+          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div>
+              <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Nykyinen tai viimeisin työ</label>
+              <input id="bg_current" type="text" style="width:100%;background:var(--paper2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;" placeholder="Esim. kassanhoitaja, siivooja, toimistotyöntekijä...">
+            </div>
+            <div>
+              <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Mihin haluaisit siirtyä?</label>
+              <input id="bg_target" type="text" style="width:100%;background:var(--paper2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;" placeholder="Esim. terveydenhuolto, IT-tuki, myynti, toimistotypö...">
+            </div>
+          </div>
+          <div style="margin-bottom:20px;">
+            <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;">Taustasi lyhyesti — kokemus, taidot, koulutus, harrastukset</label>
+            <textarea id="bg_story" rows="4" style="width:100%;background:var(--paper2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;resize:vertical;line-height:1.6;" placeholder="Esim: Kassatyö S-marketissa 3v. Ennen sitä siivoustyötä. Pidän ihmisistä, olen rauhallinen kiireessä. Oppinut nopeasti uusia järjestelmiä. Harrastan ensiapua vapaaehtoisena..."></textarea>
+          </div>
+
+          <button id="analyzeBtn" onclick="runAnalysis()" style="background:#7c3aed;color:#fff;border:none;padding:13px 28px;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;display:inline-flex;align-items:center;gap:8px;">
+            ✦ Analysoi taustani — näytä mitä minulla on
+          </button>
+
+          <div class="ai-result-panel" id="analysisResult">
+            <div class="ai-result-label">Mitä sinulla jo on</div>
+            <div class="ai-result-text" id="analysisText"></div>
+          </div>
+
+          <div id="afterAnalysis" style="display:none;margin-top:24px;">
+            <div class="callout callout-success">
+              <div class="callout-icon">✓</div>
+              <div class="callout-text">
+                <strong>Tallenna nämä havainnot</strong>
+                <p>Kopioi analyysi — tarvitset sen Napkin-vaiheessa. Klikkaa tekstiä ja valitse kaikki (Ctrl+A) tai kopioi manuaalisesti.</p>
+              </div>
+            </div>
+            <div style="text-align:center;margin-top:20px;">
+              <a href="#vaihe2" class="hero-cta">Vaihe 2 — katso mitä puuttuu →</a>
+            </div>
           </div>
         </div>
       </div>
@@ -380,397 +260,494 @@ Mitä olen jo oppinut tai rakentanut: [<em>esim. kursseilla opitut asiat, oma pr
   </div>
 </section>
 
-<!-- STEP 2: SKILLS YOU ALREADY HAVE -->
-<section class="section" id="step2">
+<!-- VAIHE 2 — GAP ANALYSIS -->
+<section class="section" id="vaihe2">
   <div class="section-inner">
-    <div class="exercise">
-      <div class="step-header">
-        <span class="step-number">Vaihe 2</span>
-        <span class="step-title">Löydä taidot jotka sinulla jo on — ja siirtyvät suoraan</span>
-        <span class="step-time">⏱ 15 min</span>
-      </div>
-      <div class="exercise-body">
-        <p style="color:var(--muted); margin-bottom:24px;">Tämä on moduulin tärkein hetki. Claude analysoi CV:si kohdealasi silmälasien läpi ja löytää yhteydet joita et itse näe. Jatka samassa Claude-keskustelussa.</p>
+    <span class="section-label">Vaihe 2 · Claude.ai · 15 min</span>
+    <h2 class="section-h2">Mitä puuttuu — <em>rehellisesti</em></h2>
+    <div class="section-divider"></div>
+    <p class="lead">Vaihe 1 näytti mitä sinulla on. Nyt katsotaan mitä puuttuu. Ei ylioptimistisesti, ei ylivoimaisesti — rehellisesti. Avaa Claude.ai ja käytä nämä kaksi promptia.</p>
 
-        <ol class="exercise-steps">
-          <li>
-            <div class="step-content">
-              <strong>Pyydä Claude tekemään siirrettävien taitojen analyysi</strong>
-              <div class="prompt-block">
-                <div class="prompt-block-label">Prompt 1 — siirrettävät taidot</div>
-                <button class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
-                <p>Analysoi nyt taustani kohdealani näkökulmasta. Tee seuraava analyysi:
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px;">
+      <a href="https://claude.ai" target="_blank" class="tool-link tool-link-purple">🤖 claude.ai — avaa uusi keskustelu</a>
+    </div>
 
-1. TAIDOT JOITA MINULLA JO ON: Lista taidoista joita käytän nykyisessä työssäni ja jotka siirtyvät suoraan kohdealalleni. Selitä jokaiselle: miten se ilmenee nykyisessä työssäni ja miten se on arvokasta kohdealalla. Ole konkreettinen — ei yleistyksiä.
-
-2. KOKEMUKSET JOTKA PUHUVAT PUOLESTANI: Mitkä asiat taustassani ovat suoraan relevantteja kohdealalle? Mikä saattaa yllättää rekrytoijan positiivisesti?
-
-3. VAHVUUTENI KILPAILIJOIHIN NÄHDEN: Mitä osaan tai olen kokenut jota puhtaalta alalta tulevilla hakijoilla ei ole?
-
-Muotoile vastaus luetteloina jotka voin myöhemmin kopioida visuaaliin.</p>
-              </div>
-            </div>
-          </li>
-          <li>
-            <div class="step-content">
-              <strong>Lue analyysi huolella — merkitse yllättävimmät kohdat</strong>
-              Todennäköisesti löydät taitoja joita et olisi itse listannut. Nämä ovat kultaa. Alleviivaa tai kopioi muistiinpanoihin ne kohdat jotka tuntuvat tärkeimmiltä.
-            </div>
-          </li>
-          <li>
-            <div class="step-content">
-              <strong>Pyydä Claude syventämään yhtä kohtaa</strong>
-              Jos jokin siirrettävä taito tuntuu erityisen vahvalta, kysy lisää:
-              <div class="prompt-block">
-                <div class="prompt-block-label">Jatkoprompt — syventäminen</div>
-                <button class="copy-btn" onclick="copyPrompt(this)">kopioi ja muokkaa</button>
-                <p>Mainitsit että [<em>kirjoita tähän kiinnostava kohta</em>] on siirrettävä taito. Miten tarkalleen voisin esittää tämän työnhaussa? Anna konkreettinen esimerkki miten kertoisin tästä haastattelussa yhdellä lauseella.</p>
-              </div>
-            </div>
-          </li>
-        </ol>
-
-        <div class="reflection">
-          <h3>💭 Mitä sinun pitäisi huomata tässä vaiheessa</h3>
-          <ul>
-            <li>Sinulla on enemmän relevanttia taustaa kuin luulit</li>
-            <li>Jotkut "hallinto-taidot" ovat datanalyysin esivaiheita eri nimellä</li>
-            <li>Kokemus ihmisistä ja prosesseista on arvokasta teknisessä ympäristössä</li>
-            <li>AI-kurssilla rakentamasi asiat ovat jo portfoliosi — eivät harjoituksia</li>
-          </ul>
-        </div>
+    <div class="callout callout-info" style="margin-bottom:28px;">
+      <div class="callout-icon">📋</div>
+      <div class="callout-text">
+        <strong>Aloita liittämällä Vaiheen 1 analyysi Claudeen</strong>
+        <p>Kopioi koko analyysi jonka sait Vaiheessa 1. Liitä se Claudeen ennen kuin käytät alla olevia prompteja. Muuten Claude ei tiedä kuka olet.</p>
       </div>
     </div>
-  </div>
-</section>
 
-<!-- STEP 3: SKILLS GAP + FREE LEARNING -->
-<section class="section section-alt" id="step3">
-  <div class="section-inner">
     <div class="exercise">
       <div class="step-header">
-        <span class="step-number">Vaihe 3</span>
-        <span class="step-title">Mitä puuttuu — ja miten oppia se ilmaiseksi nyt</span>
-        <span class="step-time">⏱ 15 min</span>
+        <span class="step-number">Prompt 1 / 2</span>
+        <span class="step-title">Mitä minulta oikeasti puuttuu?</span>
+        <span class="step-time">⏱ 7 min</span>
       </div>
       <div class="exercise-body">
-        <p style="color:var(--muted); margin-bottom:24px;">Nyt katsotaan rehellisesti mitä sinulta puuttuu — ja tärkeintä: missä järjestyksessä kannattaa oppia, ja mistä löydät resurssit ilmaiseksi tällä viikolla.</p>
+        <div class="think-gate" id="tg2">
+          <div class="tg-label">✏️ Ajattele ensin</div>
+          <p class="tg-desc">Mitä luulet puuttuvan eniten? Kirjoita 1–2 asiaa omin sanoin. Sitten katsotaan mitä Claude sanoo — onko se sama vai eri?</p>
+          <textarea class="tg-input" id="tg2text" placeholder="Esim: Luulen että minulta puuttuu koulutus. Tai: En osaa vielä englantia riittävän hyvin. Tai: Ei ole kokemusta juuri tältä alalta..." oninput="checkGate(2,20)"></textarea>
+          <div class="tg-footer">
+            <span class="tg-count" id="tg2count">0 / 20 merkkiä</span>
+            <button class="tg-btn" id="tg2btn" onclick="openGate(2)" disabled>Näytä prompti →</button>
+          </div>
+        </div>
+        <div class="gate-content" id="gc2">
+          <div style="display:flex;align-items:center;gap:10px;background:#1a1a2e;border-radius:10px 10px 0 0;padding:11px 16px;margin-top:4px;">
+            <span style="font-size:1rem;">🤖</span>
+            <div style="font-size:13.5px;color:#fff;font-weight:500;">Claude.ai → uusi keskustelu → liitä ensin Vaiheen 1 analyysi → sitten tämä</div>
+          </div>
+          <div class="prompt-block" style="border-radius:0 0 10px 10px;margin-top:0;border-top:none;">
+            <div class="prompt-block-label">📋 Kopioi Claudeen</div>
+            <p>Tee rehellinen osaamisaukon analyysi. Mitä minulta puuttuu päästäkseni kohdealaani?
 
-        <ol class="exercise-steps">
-          <li>
-            <div class="step-content">
-              <strong>Pyydä Claude tekemään osaamisaukon analyysi</strong>
-              <div class="prompt-block">
-                <div class="prompt-block-label">Prompt 2 — mitä puuttuu</div>
-                <button class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
-                <p>Tee nyt rehellinen osaamisaukon analyysi. Mitä minulta puuttuu päästäkseni kohdealalleni?
+Jaa puuttuvat taidot vain kahteen luokkaan:
 
-Jaa taidot kolmeen luokkaan:
+KRIITTINEN — ilman tätä en saa töitä alalta. Listaa max 3 asiaa.
+HYÖDYLLINEN — tämä nopeuttaa pääsyä alalle mutta ei estä. Listaa max 3 asiaa.
 
-KRIITTINEN — ilman tätä en pääse alalle. Mitä nämä ovat?
-TÄRKEÄ — tämä nopeuttaa merkittävästi pääsyä alalle. Mitä nämä ovat?  
-HYÖDYLLINEN MYÖHEMMIN — voin oppia tämän työn ohessa. Mitä nämä ovat?
-
-Jokaiselle kriittiselle ja tärkeälle taidolle: arvioi rehellisesti kuinka kauan sen oppiminen kestää jos opiskelen 5–10 tuntia viikossa.</p>
-              </div>
+Jokaiselle kriittiselle taidolle: kuinka kauan realistisesti kestää oppia 5h/viikossa opiskelulla? Älä ylioptimoi — sano suoraan jos jokin kestää vuosia.</p>
+            <button class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
+          </div>
+          <div class="callout callout-amber" style="margin-top:12px;">
+            <div class="callout-icon">⚖️</div>
+            <div class="callout-text">
+              <strong>Vertaa nyt</strong>
+              <p>Mitä sinä ajattelit puuttuvan — ja mitä Claude sanoi? Jos Claude löysi eri asioita kuin luulit, se on tärkeä havainto. Kirjaa ylös mikä yllätti.</p>
             </div>
-          </li>
-          <li>
-            <div class="step-content">
-              <strong>Pyydä oppimisresurssit — ilmaiseksi, nyt saatavilla</strong>
-              <div class="prompt-block">
-                <div class="prompt-block-label">Prompt 3 — ilmaiset resurssit</div>
-                <button class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
-                <p>Jokaiselle kriittiselle ja tärkeälle taidolle listaa:
-- Paras ilmainen YouTube-kanava tai -sarja tähän aiheeseen (nimi + miksi se on hyvä)
-- Paras ilmainen verkkokurssi (Coursera audit, edX, Google, Kaggle tai vastaava)
-- Yksi konkreettinen projekti tai harjoitus jonka voin tehdä itse harjoitellakseni
-
-Älä keksi resursseja — mainitse vain ne joista olet varma. Jos et tiedä tarkkaa lähdettä sano niin ja kuvaile millaista materiaalia etsiä.</p>
-              </div>
-            </div>
-          </li>
-          <li>
-            <div class="step-content">
-              <strong>Pyydä 6 kuukauden oppimispolku</strong>
-              <div class="prompt-block">
-                <div class="prompt-block-label">Prompt 4 — 6 kuukauden polku</div>
-                <button class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
-                <p>Rakenna minulle realistinen 6 kuukauden oppimispolku perustuen analyysiin. Oletan 5–10 tuntia viikossa opiskeluaikaa. 
-
-Muotoile se näin jotta voin kopioida sen visuaaliin:
-
-KUUKAUSI 1–2: [Fokus + mitä opit + mikä resurssi]
-KUUKAUSI 3–4: [Fokus + mitä opit + mikä resurssi]  
-KUUKAUSI 5–6: [Fokus + mitä opit + mikä projekti rakennat]
-
-TAVOITE 6 KK JÄLKEEN: [Mitä osaan, miltä profiilini näyttää, mihin pystyn hakemaan]</p>
-              </div>
-            </div>
-          </li>
-        </ol>
-
-        <div class="callout callout-amber">
-          <div class="callout-icon">⏱</div>
-          <div class="callout-text">
-            <strong>Tallenna koko keskustelu ennen kuin jatkat</strong>
-            <p>Kopioi Clauden vastaukset erilliseen dokumenttiin tai muistiinpanoon. Tarvitset ne Napkin-vaiheessa. Claude-keskustelu ei tallennu automaattisesti ellei sinulla ole Pro-tili.</p>
           </div>
         </div>
       </div>
     </div>
+
+    <div class="exercise">
+      <div class="step-header">
+        <span class="step-number">Prompt 2 / 2</span>
+        <span class="step-title">Yksi asia — tällä viikolla</span>
+        <span class="step-time">⏱ 5 min</span>
+      </div>
+      <div class="exercise-body">
+        <p style="color:var(--muted);margin-bottom:16px;">Ei 6 kuukauden suunnitelmaa. Ei kurssiliistaa. Yksi asia jonka voit aloittaa tänään tai huomenna.</p>
+        <div style="display:flex;align-items:center;gap:10px;background:#1a1a2e;border-radius:10px 10px 0 0;padding:11px 16px;">
+          <span style="font-size:1rem;">🤖</span>
+          <div style="font-size:13.5px;color:#fff;font-weight:500;">Sama Claude-keskustelu — kirjoita heti edellisen jälkeen</div>
+        </div>
+        <div class="prompt-block" style="border-radius:0 0 10px 10px;margin-top:0;border-top:none;">
+          <div class="prompt-block-label">📋 Kopioi samaan Claude-keskusteluun</div>
+          <p>Unohda pitkät suunnitelmat. Kerro minulle yksi asia jonka voin tehdä tällä viikolla — konkreettisesti, ilmaiseksi, max 2 tuntia. Sen pitää olla jotain josta näen itse onko se hyödyllistä. Ei "tutustu alaan" — joku tarkka teko. Yksi asia.</p>
+          <button class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
+        </div>
+
+        <div style="margin-top:20px;">
+          <label style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px;">Kirjoita Clauden antama yksi asia tähän</label>
+          <input id="oneAction" type="text" style="width:100%;background:var(--paper2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:16px;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;" placeholder="Esim: Katso yksi YouTube-video aiheesta X. Tai: Ota yhteyttä yhteen ihmiseen alalta...">
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:8px;">
+      <a href="#vaihe3" class="hero-cta" style="background:var(--napkin);">Vaihe 3 — rakenna Napkin-kartta →</a>
+    </div>
   </div>
 </section>
 
-<!-- NAPKIN INTRO -->
-<section class="section" id="napkin-intro">
+<!-- VAIHE 3 — NAPKIN -->
+<section class="section section-alt" id="vaihe3">
   <div class="section-inner">
-    <span class="section-label">Napkin.ai — mikä se on</span>
-    <h2 class="section-h2">Napkin: teksti muuttuu <em>visuaaliseksi kartaksi</em></h2>
+    <span class="section-label">Vaihe 3 · Napkin.ai · 20 min</span>
+    <h2 class="section-h2">Teksti muuttuu <em>kartaksi</em></h2>
     <div class="section-divider amber"></div>
-    <p class="lead">Sinulla on nyt Claudelta arvokas analyysi — mutta se on tekstiä. Napkin.ai muuttaa sen visuaaliseksi kartaksi ilman mitään suunnittelutaitoja. Et kirjoita prompteja. Kirjoitat tekstin ja painat yhtä nappia.</p>
+    <p class="lead">Sinulla on nyt analyysi tekstinä. Napkin.ai muuttaa sen visuaaliseksi kartaksi yhdellä klikkauksella. Ei suunnittelutaitoja. Ei prompteja. Vain teksti → salama-ikoni → kartta.</p>
 
-    <div class="napkin-box">
-      <div class="napkin-box-label">✨ napkin.ai</div>
-      <h3>"Kirjoita teksti — Napkin luo visuaalin."</h3>
-      <p>Napkinissa ei promptata. Ei valita templateja. Et tarvitse Canvaa tai PowerPointia. Kirjoitat tai liität tekstin — Napkin analysoi rakenteen automaattisesti ja ehdottaa useita eri visuaalivaihtoehtoja. Valitset parhaan ja muokkaat värit.</p>
-
-      <div class="napkin-flow">
-        <div class="napkin-flow-step">
-          <span class="napkin-flow-step-icon">📝</span>
-          <div class="napkin-flow-step-text">Liitä teksti</div>
-        </div>
-        <div class="napkin-flow-arrow">→</div>
-        <div class="napkin-flow-step">
-          <span class="napkin-flow-step-icon">⚡</span>
-          <div class="napkin-flow-step-text">Klikkaa salama-ikoni</div>
-        </div>
-        <div class="napkin-flow-arrow">→</div>
-        <div class="napkin-flow-step">
-          <span class="napkin-flow-step-icon">🎨</span>
-          <div class="napkin-flow-step-text">Valitse visuaali</div>
-        </div>
-        <div class="napkin-flow-arrow">→</div>
-        <div class="napkin-flow-step">
-          <span class="napkin-flow-step-icon">📤</span>
-          <div class="napkin-flow-step-text">Vie PNG tai PDF</div>
-        </div>
-      </div>
-
-      <div class="napkin-types">
-        <div class="napkin-type">
-          <span class="napkin-type-icon">🗺️</span>
-          <div class="napkin-type-name">Mind map</div>
-          <div class="napkin-type-desc">Taidot ja yhteydet</div>
-        </div>
-        <div class="napkin-type">
-          <span class="napkin-type-icon">➡️</span>
-          <div class="napkin-type-name">Aikajana</div>
-          <div class="napkin-type-desc">6 kk oppimispolku</div>
-        </div>
-        <div class="napkin-type">
-          <span class="napkin-type-icon">⚖️</span>
-          <div class="napkin-type-name">Vertailu</div>
-          <div class="napkin-type-desc">Nyt vs. tavoite</div>
-        </div>
-        <div class="napkin-type">
-          <span class="napkin-type-icon">📊</span>
-          <div class="napkin-type-name">Hierarkia</div>
-          <div class="napkin-type-desc">Kriittinen / tärkeä</div>
-        </div>
-        <div class="napkin-type">
-          <span class="napkin-type-icon">🔄</span>
-          <div class="napkin-type-name">Prosessi</div>
-          <div class="napkin-type-desc">Vaihe vaiheelta</div>
-        </div>
-        <div class="napkin-type">
-          <span class="napkin-type-icon">🏗️</span>
-          <div class="napkin-type-name">Kehikko</div>
-          <div class="napkin-type-desc">Osaamisen kartta</div>
-        </div>
-      </div>
-
-      <p style="margin-top:4px;"><strong style="color:#fcd34d;">Ilmainen tili:</strong> 500 krediittiä viikossa — palautuu automaattisesti joka viikko. Yksi visuaali kuluttaa 40–150 krediittiä. Riittää 3–10 visuaaliin viikossa. PNG- ja PDF-vienti ilmainen. Rekisteröityminen Google-tilillä.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+      <a href="https://napkin.ai" target="_blank" class="tool-link tool-link-amber">✨ napkin.ai — avaa ja luo ilmainen tili</a>
     </div>
 
-    <a href="https://napkin.ai" target="_blank" class="tool-link tool-link-amber" style="display:inline-flex;">✨ napkin.ai — avaa ja luo tili ennen seuraavaa vaihetta</a>
-  </div>
-</section>
+    <div class="callout callout-amber" style="margin-bottom:28px;">
+      <div class="callout-icon">✨</div>
+      <div class="callout-text">
+        <strong>Napkin.ai — miten se toimii</strong>
+        <p>Kirjoitat tai liität tekstin dokumenttiin. Klikkaat salama-ikonia (⚡) tekstin vieressä. Napkin analysoi rakenteen ja ehdottaa 4–6 visuaalivaihtoehtoa. Valitset parhaan. Lataat PNG. Ilmainen tili: 500 krediittiä/viikko — riittää useaan visuaaliin.</p>
+      </div>
+    </div>
 
-<!-- STEP 4: BUILD THE VISUAL -->
-<section class="section section-alt" id="step4">
-  <div class="section-inner">
+    <!-- SVG showing Napkin UI -->
+    <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:24px;box-shadow:var(--shadow);">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;">Näin käytät Napkinia — salama-ikoni on avain</div>
+      <svg viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:680px;border-radius:8px;display:block;">
+        <rect width="680" height="120" fill="#fafafa" rx="8"/>
+        <!-- Napkin editor area -->
+        <rect x="10" y="10" width="400" height="100" rx="8" fill="#fff" stroke="#e5e7eb" stroke-width="1"/>
+        <text x="24" y="38" font-family="Georgia,serif" font-size="14" fill="#111">Taidot joita minulla on:</text>
+        <text x="24" y="56" font-family="Georgia,serif" font-size="12" fill="#666">• Asiakaspalvelu 3 vuotta</text>
+        <text x="24" y="72" font-family="Georgia,serif" font-size="12" fill="#666">• Nopea uusien järjestelmien oppija</text>
+        <text x="24" y="88" font-family="Georgia,serif" font-size="12" fill="#666">• Kommunikointi paineen alla</text>
+        <!-- Lightning bolt button -->
+        <circle cx="430" cy="60" r="18" fill="#f59e0b"/>
+        <text x="430" y="66" font-family="sans-serif" font-size="16" fill="white" text-anchor="middle">⚡</text>
+        <!-- Arrow -->
+        <line x1="452" y1="60" x2="470" y2="60" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="4"/>
+        <polygon points="467,56 476,60 467,64" fill="#d1d5db"/>
+        <!-- Visual result -->
+        <rect x="478" y="20" width="190" height="80" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="573" y="48" font-family="sans-serif" font-size="11" fill="#92400e" text-anchor="middle" font-weight="600">Osaamiskarttasi</text>
+        <rect x="492" y="56" width="52" height="16" rx="4" fill="#f59e0b" opacity=".7"/>
+        <rect x="552" y="56" width="52" height="16" rx="4" fill="#f59e0b" opacity=".4"/>
+        <rect x="492" y="78" width="112" height="10" rx="3" fill="#f59e0b" opacity=".25"/>
+        <!-- Label -->
+        <text x="430" y="108" font-family="sans-serif" font-size="10" fill="#f59e0b" text-anchor="middle">Klikkaa tästä</text>
+      </svg>
+    </div>
+
     <div class="exercise">
       <div class="step-header">
-        <span class="step-number amber">Vaihe 4</span>
-        <span class="step-title">Rakenna visuaalinen urakartta Napkinissa</span>
-        <span class="step-time">⏱ 20 min</span>
+        <span class="step-number amber">Vaihe 3</span>
+        <span class="step-title">Pyydä ensin Claude muotoilemaan Napkin-tekstit</span>
+        <span class="step-time">⏱ 5 min</span>
       </div>
       <div class="exercise-body">
-        <p style="color:var(--muted); margin-bottom:24px;">Nyt muutetaan Clauden analyysi visuaaliseksi. Teet kaksi visuaalia: ensin osaamisen kartan, sitten oppimispolun. Napkin luo molemmat automaattisesti tekstistä.</p>
+        <p style="color:var(--muted);margin-bottom:16px;">Napkin toimii parhaiten lyhyellä, selkeällä rakenteella. Pyydä Claude pakkaamaan koko analyysi kahteen lyhyeen tekstiin.</p>
+        <div style="display:flex;align-items:center;gap:10px;background:#1a1a2e;border-radius:10px 10px 0 0;padding:11px 16px;">
+          <span style="font-size:1rem;">🤖</span>
+          <div style="font-size:13.5px;color:#fff;font-weight:500;">Sama Claude-keskustelu</div>
+        </div>
+        <div class="prompt-block" style="border-radius:0 0 10px 10px;margin-top:0;border-top:none;">
+          <div class="prompt-block-label">📋 Kopioi samaan Claude-keskusteluun</div>
+          <p>Muotoile koko analyysimme Napkin.ai-visuaalia varten. Luo kaksi lyhyttä tekstiä:
 
+TEKSTI 1 — OSAAMISEN KARTTA:
+Otsikko: Osaamiseni — [nimeni]
+Kolme kategoriaa: "Minulla jo on", "Kehitän nyt", "Hankin myöhemmin"
+Jokaisessa: 3–4 taitoa lyhyinä bullet-pisteinä
+Max 60 sanaa yhteensä.
+
+TEKSTI 2 — SEURAAVAT ASKELEET:
+Otsikko: Seuraavat askeleet
+Kolme kohtaa: "Tällä viikolla", "Tässä kuussa", "3 kuukauden kuluttua"
+Jokaisessa: yksi konkreettinen toimenpide
+Max 40 sanaa yhteensä.
+
+Pidä lyhyt — Napkin tuottaa paremman visuaalin lyhyestä tekstistä.</p>
+          <button class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="exercise">
+      <div class="step-header">
+        <span class="step-number amber">Napkin-vaihe</span>
+        <span class="step-title">Liitä tekstit Napkiniin — luo kaksi visuaalia</span>
+        <span class="step-time">⏱ 15 min</span>
+      </div>
+      <div class="exercise-body">
         <ol class="exercise-steps amber">
           <li>
             <div class="step-content">
-              <strong>Pyydä ensin Claude muotoilemaan teksti Napkinia varten</strong>
-              Napkin toimii parhaiten selkeästi strukturoidun tekstin kanssa. Pyydä Claude pakkaamaan analyysi oikeaan muotoon — tämä tekee visuaaleista paljon parempia:
-              <div class="prompt-block amber">
-                <div class="prompt-block-label">Prompt Claudelle — Napkin-formaatti</div>
-                <button class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
-                <p>Muotoile koko osaamisanalyysini Napkin.ai-visuaalia varten. Luo kaksi erillistä tekstiä:
-
-TEKSTI 1 — OSAAMISEN KARTTA:
-Otsikko: Minun osaamiseni — [nimesi] — [kohdealasi]
-Rakenne: kolme pääkategoriaa: "Taidot joita minulla on", "Taidot joita kehitän", "Pitkän tähtäimen taidot"
-Jokaisessa kategoriassa: 3–5 konkreettista taitoa lyhyinä bullet-pisteinä
-Käytä lyhyitä, selkeitä lauseita — ei pitkiä kappaleita
-
-TEKSTI 2 — 6 KUUKAUDEN OPPIMISPOLKU:
-Otsikko: Oppimispolkuni — [kohdealasi]
-Rakenne: aikajanamuoto — Kuukausi 1–2, Kuukausi 3–4, Kuukausi 5–6, Tavoite
-Jokaisessa: fokus + yksi päätoiminto + odotettu tulos
-Pidä lyhyenä — Napkin tekee paremman visuaalin lyhyestä tekstistä</p>
-              </div>
+              <strong>Avaa napkin.ai ja luo uusi dokumentti</strong>
+              Kirjaudu Google-tilillä. Paina <strong>+ New Napkin</strong>. Näet tyhjän editorin.
             </div>
           </li>
           <li>
             <div class="step-content">
-              <strong>Visuaali 1: Osaamisen kartta Napkinissa</strong>
-              Avaa napkin.ai. Luo uusi Napkin. Liitä Teksti 1 dokumenttiin. Klikkaa salama-ikonia (⚡) tekstin vieressä. Napkin ehdottaa useita visuaalivaihtoehtoja — selaa ja valitse se joka näyttää parhaiten osaamisesi rakenteen. Muokkaa värit ja vie PNG.
+              <strong>Liitä Teksti 1 — klikkaa ⚡</strong>
+              Kopioi Clauden kirjoittama Teksti 1 (Osaamisen kartta). Liitä se dokumenttiin. Klikkaa <strong>salama-ikonia (⚡)</strong> tekstin vieressä. Selaa vaihtoehdot — valitse mind map tai hierarkia.
             </div>
           </li>
           <li>
             <div class="step-content">
-              <strong>Visuaali 2: Oppimispolku</strong>
-              Lisää sama Napkin-dokumenttiin Teksti 2. Klikkaa salama-ikonia uudelleen. Nyt valitset aikajana- tai prosessityyppisen visuaalin. Napkin tunnistaa kuukausirakenneen automaattisesti.
+              <strong>Liitä Teksti 2 — klikkaa ⚡ uudelleen</strong>
+              Samaan dokumenttiin — alla. Liitä Teksti 2 (Seuraavat askeleet). Klikkaa ⚡. Valitse aikajana tai prosessi.
             </div>
           </li>
           <li>
             <div class="step-content">
-              <strong>Muokkaa ja vie</strong>
-              Vaihda värit mieleiseksesi — klikkaa elementtiä ja muuta väri. Vie molemmat visuaalit PNG-muodossa. Ilmaisella tilillä PNG-vienti on rajoittamaton.
-            </div>
-          </li>
-          <li>
-            <div class="step-content">
-              <strong>Lisää visuaalit Gamma-esitykseen tai LinkedIn-profiiliin</strong>
-              Nämä ovat sinun portfoliosi. Osaamisen kartta LinkedIn-profiiliin "Tietoja"-osioon. Oppimispolku Gamma-esitykseen jos haluat lähettää sen työnantajalle tai mentoroijalle.
+              <strong>Muokkaa värit ja lataa PNG</strong>
+              Klikkaa elementtiä → muuta väri. Vie molemmat PNG-muodossa: <strong>Share → Download → PNG</strong>.
             </div>
           </li>
         </ol>
-
-        <div class="callout callout-tip">
+        <div class="callout callout-warning">
           <div class="callout-icon">💡</div>
           <div class="callout-text">
-            <strong>Jos Napkin ei tuota hyvää visuaalia ensimmäisellä kerralla</strong>
-            <p>Napkin toimii parhaiten kun teksti on lyhyttä ja strukturoitua. Jos tulos on sekava: lyhennä tekstiä, lisää väliotsikot selkeästi, käytä bullet-pisteitä kappaleiden sijaan. Kokeile myös eri visuaalivaihtoehtoja — Napkin tarjoaa yleensä 4–6 vaihtoehtoa.</p>
+            <strong>Jos visuaali on sekava</strong>
+            <p>Lyhennä tekstiä. Napkin toimii parhaiten alle 60 sanan teksteillä. Jos Napkin ei tarjoa salama-ikonia — klikkaa tekstin sisään ja odota hetki, se ilmestyy.</p>
           </div>
         </div>
-
-        <div class="reflection">
-          <h3>🎯 Mitä sinulla on nyt</h3>
-          <ul>
-            <li>Selkeä kuva siirrettävistä taidoistasi — kirjallisena ja visuaalisena</li>
-            <li>Rehellinen osaamisaukon analyysi ilman ylilyöntejä</li>
-            <li>Konkreettinen 6 kuukauden polku resursseineen</li>
-            <li>Kaksi visuaalia jotka voit jakaa työnantajille, mentoreille tai LinkedInissä</li>
-            <li>Todiste siitä että osaat käyttää AI-työkaluja ammatillisesti</li>
-          </ul>
-        </div>
       </div>
+    </div>
+
+    <div style="text-align:center;margin-top:8px;">
+      <a href="#vaihe4" class="hero-cta">Vaihe 4 — 7 päivän suunnitelma →</a>
     </div>
   </div>
 </section>
 
-<!-- WHAT NEXT -->
-<section class="section" id="next">
+<!-- VAIHE 4 — 7 DAYS -->
+<section class="section" id="vaihe4">
   <div class="section-inner">
-    <span class="section-label">Mitä seuraavaksi</span>
-    <h2 class="section-h2">Kartta on valmis — nyt <em>käytetään sitä</em></h2>
+    <span class="section-label">Vaihe 4 · 7 päivää — ei enempää</span>
+    <h2 class="section-h2">Tällä viikolla — <em>kolme tekoa</em></h2>
     <div class="section-divider"></div>
-    <p class="lead">Visuaalit joita rakensit eivät ole harjoituksia. Ne ovat työkaluja. Tässä miten käytät niitä.</p>
+    <p class="lead">Ei 6 kuukauden suunnitelmaa. Kolme konkreettista tekoa tällä viikolla. Jos teet nämä, olet jo edellä 90% ihmisistä jotka "miettivät asiaa".</p>
 
-    <div class="card">
-      <div class="card-title">📋 Kolme konkreettista askelta tällä viikolla</div>
-      <table style="width:100%; border-collapse:collapse; font-size:15px;">
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:12px 0; font-weight:600; color:var(--ink); width:40%;">LinkedIn-profiilin päivitys</td>
-          <td style="padding:12px 0; color:var(--muted);">Käytä Clauden analyysiä kirjoittaaksesi uusi "Tietoja"-osio joka heijastaa uutta alaasi — ei vanhaa titteliäsi</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:12px 0; font-weight:600; color:var(--ink);">Yksi resurssi auki</td>
-          <td style="padding:12px 0; color:var(--muted);">Avaa se YouTube-kanava tai Coursera-kurssi jonka Claude suositteli. Katso ensimmäinen video tai lue ensimmäinen moduuli tänään.</td>
-        </tr>
-        <tr>
-          <td style="padding:12px 0; font-weight:600; color:var(--ink);">Jaa kartta yhdelle ihmiselle</td>
-          <td style="padding:12px 0; color:var(--muted);">Lähetä oppimispolkusi kuvana jollekin joka tietää kohdealastasi — mentori, tuttu, alan ihminen LinkedInissä. Pyydä 15 minuutin puhelu. Tämä yksi teko tekee muutoksen todelliseksi.</td>
-        </tr>
-      </table>
+    <div class="week-plan">
+      <div class="week-day">
+        <div class="week-day-num">Teko 1</div>
+        <div class="week-day-content">
+          <strong>Tee se yksi asia jonka Claude antoi</strong>
+          <span id="displayAction" style="color:var(--accent);">— kirjoita se Vaiheessa 2 ja se ilmestyy tähän</span>
+        </div>
+        <div class="week-day-time">15–30 min</div>
+      </div>
+      <div class="week-day">
+        <div class="week-day-num">Teko 2</div>
+        <div class="week-day-content">
+          <strong>Päivitä LinkedIn About-osio</strong>
+          <span>Käytä Clauden analyysiä kirjoittaaksesi uusi esittely joka heijastaa mihin olet menossa — ei vain mistä tulet. Yksi uusi lause riittää aluksi.</span>
+        </div>
+        <div class="week-day-time">20 min</div>
+      </div>
+      <div class="week-day">
+        <div class="week-day-num">Teko 3</div>
+        <div class="week-day-content">
+          <strong>Jaa karttasi yhdelle ihmiselle</strong>
+          <span>Lähetä Napkin-visuaali yhdelle henkilölle — tuttu, kollega, kuka tahansa joka tietää kohdealasta. Pyydä 10 minuutin mielipide. Ensimmäinen ulkopuolinen reaktio on arvokkaampi kuin kymmenen oma iteraatio.</span>
+        </div>
+        <div class="week-day-time">10 min</div>
+      </div>
     </div>
 
-    <div class="pull-quote">"Yliopisto opettaa tietoa. Sinä olet jo oppinut tekemään. Tekijöitä tarvitaan enemmän."</div>
+    <div style="background:var(--ink);border-radius:14px;padding:28px 32px;margin-top:28px;position:relative;overflow:hidden;">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 80% 20%,rgba(245,158,11,.18) 0%,transparent 60%);pointer-events:none;"></div>
+      <div style="position:relative;">
+        <h3 style="font-family:'DM Serif Display',serif;font-size:1.25rem;color:#fff;margin-bottom:8px;font-style:italic;">"Yliopisto opettaa tietoa. Sinä olet jo oppinut tekemään."</h3>
+        <p style="font-size:14.5px;color:rgba(255,255,255,.5);line-height:1.7;margin:0;">Tekijöitä tarvitaan enemmän kuin teoreetikkoja. Siirrettävät taitosi ovat oikeita taitoja — ne vain kutsutaan eri nimillä eri aloilla. AI auttoi sinua näkemään ne tänään.</p>
+      </div>
+    </div>
   </div>
 </section>
 
 <!-- FINAL -->
 <section class="final-section" id="final">
-  <div class="section-inner" style="max-width:820px; margin:0 auto;">
-    <span class="section-label" style="color:rgba(255,255,255,0.25);">Moduulin päätös</span>
+  <div class="section-inner">
+    <span class="section-label" style="color:rgba(255,255,255,.25);">Moduulin päätös</span>
     <h2>Sinulla on nyt <em>suunta.</em></h2>
-    <p>Et tarvinnut yliopistoa löytääksesi mitä sinulla on. Tarvitsit oikeat kysymykset. AI auttoi sinua näkemään itsesi selkeämmin kuin osasit itse.</p>
-
+    <p>Et tarvinnut yliopistoa löytääksesi mitä sinulla on. Tarvitsit oikeat kysymykset — ja rohkeuden kirjoittaa ne auki.</p>
     <div class="final-grid">
       <div class="final-card">
         <span>🗺️</span>
-        <h4>Kartta on sinun</h4>
-        <p>Osaamisen kartta ja oppimispolku ovat elävät dokumentit. Päivitä niitä joka kuukausi kun opit uutta.</p>
+        <h4>Kartta on elävä</h4>
+        <p>Päivitä Napkin-visuaaliasi kun opit uutta. Se kasvaa mukanasi.</p>
       </div>
       <div class="final-card">
-        <span>📚</span>
-        <h4>Oppiminen alkaa nyt</h4>
-        <p>Ei ensi kuussa. Ei kun on enemmän aikaa. Ensimmäinen video tai kurssimoduuli tänään.</p>
+        <span>📅</span>
+        <h4>Kolme tekoa — ei enempää</h4>
+        <p>Tee ne tällä viikolla. Pienin toimiva askel on parempi kuin täydellinen suunnitelma joka jää tekemättä.</p>
       </div>
       <div class="final-card">
         <span>🤖</span>
-        <h4>Claude on uracoachisi</h4>
-        <p>Palaa tähän keskusteluun joka kuukausi. Päivitä mitä opit. Pyydä uusi analyysi. Se muistaa kontekstin.</p>
+        <h4>Claude muistaa</h4>
+        <p>Palaa samaan Claude-keskusteluun kuukauden päästä. Kerro mitä opit. Pyydä uusi analyysi.</p>
       </div>
     </div>
-
-    <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:8px;">
-      <a href="https://claude.ai" target="_blank" class="tool-link tool-link-purple" style="border-radius:6px;">🤖 Jatka Claudessa</a>
-      <a href="https://napkin.ai" target="_blank" class="tool-link tool-link-amber" style="border-radius:6px;">✨ Avaa Napkin.ai</a>
-    </div>
-
-    <nav class="module-footer-nav" aria-label="Moduulin navigointi">
-      <a href="/module/palaute" class="btn-next">Kurssipalaute →</a>
+    <nav class="module-footer-nav">
+      <a href="/module/moduuli-ai-maisema" class="btn-next">Seuraava moduuli →</a>
+      <a href="/module/moduuli-ideasta-tuotteeksi" class="btn-back-light">← Edellinen moduuli</a>
       <a href="/" class="btn-back-light">Etusivu</a>
     </nav>
   </div>
 </section>
 
+<script src="/js/module-work.js"></script>
 <script>
-  window.addEventListener('scroll', () => {
-    const progress = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
-    document.getElementById('progress-bar').style.width = progress + '%';
-  });
+window.__MODULE_ID__ = window.__MODULE_ID__ || 'moduuli-alanavaihtajan-kartta';
+const ALANAVAIHTAJA_MODULE_ID = 'moduuli-alanavaihtajan-kartta';
+const ALANAVAIHTAJA_FIELD_IDS = ['tg1text', 'tg2text', 'bg_current', 'bg_target', 'bg_story', 'oneAction'];
+let alanavaihtajaWorkApi = null;
+let applyingAlanavaihtajaWork = false;
 
-  function copyPrompt(btn) {
-    const text = btn.closest('.prompt-block').querySelector('p').innerText;
-    navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = 'kopioitu ✓';
-      btn.style.color = '#4ade80';
-      setTimeout(() => { btn.textContent = 'kopioi'; btn.style.color = ''; }, 2000);
+window.addEventListener('scroll',()=>{
+  const p=(window.scrollY/(document.documentElement.scrollHeight-window.innerHeight))*100;
+  document.getElementById('progress-bar').style.width=p+'%';
+});
+
+// THINK GATES
+const gateMin={1:30,2:20};
+function checkGate(n,min){
+  min=min||gateMin[n]||20;
+  var ta=document.getElementById('tg'+n+'text');
+  var btn=document.getElementById('tg'+n+'btn');
+  var count=document.getElementById('tg'+n+'count');
+  var len=ta.value.trim().length;
+  count.textContent=len+' / '+min+' merkkiä';
+  if(len>=min){count.classList.add('ok');btn.disabled=false;btn.classList.add('unlocked');}
+  else{count.classList.remove('ok');btn.disabled=true;btn.classList.remove('unlocked');}
+  scheduleAlanavaihtajaSave();
+}
+function openGate(n,skipScroll){
+  var gate=document.getElementById('tg'+n);
+  var content=document.getElementById('gc'+n);
+  if(!content)return;
+  gate.style.borderColor='rgba(42,122,75,.4)';
+  gate.style.background='rgba(42,122,75,.03)';
+  var btn=document.getElementById('tg'+n+'btn');
+  btn.textContent='✓ Hyvä ajattelu!';
+  btn.classList.remove('unlocked');
+  btn.classList.add('done');
+  content.classList.add('open');
+  if(!skipScroll)setTimeout(()=>content.scrollIntoView({behavior:'smooth',block:'nearest'}),200);
+  scheduleAlanavaihtajaSave();
+}
+
+function collectAlanavaihtajaWork(){
+  var o={openedGates:[],analysisHtml:'',afterAnalysis:false};
+  ALANAVAIHTAJA_FIELD_IDS.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)o[id]=el.value;
+  });
+  [1,2].forEach(function(n){
+    var btn=document.getElementById('tg'+n+'btn');
+    if(btn&&btn.classList.contains('done'))o.openedGates.push(n);
+  });
+  var analysisText=document.getElementById('analysisText');
+  if(analysisText&&analysisText.innerHTML&&!analysisText.querySelector('.loading-dots'))o.analysisHtml=analysisText.innerHTML;
+  var after=document.getElementById('afterAnalysis');
+  if(after)o.afterAnalysis=after.style.display==='block';
+  return o;
+}
+
+function summarizeAlanavaihtajaWork(d){
+  if(!d)return'';
+  var parts=[];
+  if(d.bg_current)parts.push('Nyt: '+String(d.bg_current).slice(0,40));
+  if(d.bg_target)parts.push('Kohde: '+String(d.bg_target).slice(0,40));
+  if(d.oneAction)parts.push('Toimi: '+String(d.oneAction).slice(0,50));
+  return parts.join(' · ');
+}
+
+function applyAlanavaihtajaWork(d){
+  if(!d)return;
+  applyingAlanavaihtajaWork=true;
+  try{
+    ALANAVAIHTAJA_FIELD_IDS.forEach(function(id){
+      var el=document.getElementById(id);
+      if(el&&typeof d[id]==='string')el.value=d[id];
+    });
+    [1,2].forEach(function(n){checkGate(n,gateMin[n]);});
+    if(Array.isArray(d.openedGates)){
+      d.openedGates.forEach(function(n){openGate(n,true);});
+    }
+    if(d.analysisHtml){
+      var result=document.getElementById('analysisResult');
+      var text=document.getElementById('analysisText');
+      if(result&&text){
+        text.innerHTML=d.analysisHtml;
+        result.classList.add('show');
+      }
+    }
+    if(d.afterAnalysis){
+      var after=document.getElementById('afterAnalysis');
+      if(after)after.style.display='block';
+    }
+    var inp=document.getElementById('oneAction');
+    var disp=document.getElementById('displayAction');
+    if(inp&&disp){
+      disp.textContent=inp.value||'— kirjoita se Vaiheessa 2 ja se ilmestyy tähän';
+      disp.style.color=inp.value?'var(--ink)':'var(--accent)';
+    }
+  }finally{
+    applyingAlanavaihtajaWork=false;
+  }
+}
+
+function scheduleAlanavaihtajaSave(){
+  if(applyingAlanavaihtajaWork)return;
+  if(alanavaihtajaWorkApi)alanavaihtajaWorkApi.scheduleSave();
+}
+
+async function initAlanavaihtajaModuleWork(){
+  if(!window.moduleWork)return;
+  alanavaihtajaWorkApi=await window.moduleWork.initModuleWork(ALANAVAIHTAJA_MODULE_ID,{
+    collect:collectAlanavaihtajaWork,
+    apply:applyAlanavaihtajaWork,
+    summarize:summarizeAlanavaihtajaWork,
+    fieldIds:ALANAVAIHTAJA_FIELD_IDS,
+    debounceMs:900
+  });
+}
+
+// COPY PROMPT
+function copyPrompt(btn){
+  var block=btn.closest('.prompt-block');
+  var text=block.querySelector('p').innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='kopioitu ✓';
+    btn.style.color='#4ade80';
+    setTimeout(()=>{btn.textContent='kopioi';btn.style.color='';},2000);
+  });
+}
+
+// SYNC ACTION + MODULE WORK
+document.addEventListener('DOMContentLoaded',async function(){
+  await initAlanavaihtajaModuleWork();
+  var inp=document.getElementById('oneAction');
+  var disp=document.getElementById('displayAction');
+  if(inp&&disp){
+    inp.addEventListener('input',function(){
+      disp.textContent=inp.value||'— kirjoita se Vaiheessa 2 ja se ilmestyy tähän';
+      disp.style.color=inp.value?'var(--ink)':'var(--accent)';
     });
   }
+});
 
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      const t = document.querySelector(a.getAttribute('href'));
-      if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+// IN-MODULE AI ANALYSIS
+async function runAnalysis(){
+  var current=document.getElementById('bg_current').value.trim();
+  var target=document.getElementById('bg_target').value.trim();
+  var story=document.getElementById('bg_story').value.trim();
+  var selfNote=document.getElementById('tg1text').value.trim();
+  if(!current&&!story){alert('Kirjoita ensin taustasi.');return;}
+  var btn=document.getElementById('analyzeBtn');
+  btn.disabled=true;btn.innerHTML='<div class="loading-dots"><span></span><span></span><span></span></div> Analysoidaan...';
+  var result=document.getElementById('analysisResult');
+  var text=document.getElementById('analysisText');
+  result.classList.add('show');
+  text.innerHTML='<div class="loading-dots"><span></span><span></span><span></span></div>';
+
+  var base=(window.location.pathname.indexOf('/module/')>-1)?window.location.pathname.substring(0,window.location.pathname.indexOf('/module/')):'';
+  try{
+    var r=await fetch(base+'/api/ai/claude',{
+      method:'POST',credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        system:'Olet uravalmentaja joka löytää piilotettuja vahvuuksia. Kirjoitat suomeksi. Muotoilu: kolme osiota selkeillä otsikoilla. Osio 1: "✓ Mitä sinulla jo on" — lista 4–6 konkreettista taitoa jotka siirtyvät suoraan kohdealalle, jokainen yhdellä lauseella perusteluineen. Älä toista hakijan omia sanoja — löydä mitä hän EI itse maininnut. Osio 2: "💡 Yksi yllätys" — yksi taito tai kokemus jota hakija ei itse pitänyt arvokkaana mutta joka on. Perustele miksi. Osio 3: "→ Mitä kannattaa sanoa rekrytoijalle" — yksi konkreettinen lause jonka hakija voi sanoa haastattelussa, joka yhdistää heidän taustan ja kohdealansa. Pidä koko vastaus tiiviinä — max 220 sanaa.',
+        messages:[{role:'user',content:'Oma arvioni taidoistani: '+selfNote+'\n\nNykyinen työ: '+current+'\nKohdeala: '+(target||'ei määritelty')+'\nTausta: '+story}],
+        max_tokens:600
+      })
     });
+    var d=await r.json();
+    var t=d.text||'Analyysi ei saatavilla — tarkista yhteys.';
+    text.innerHTML=t.replace(/\n/g,'<br>').replace(/✓|💡|→/g,'<strong>$&</strong>');
+    document.getElementById('afterAnalysis').style.display='block';
+    scheduleAlanavaihtajaSave();
+  }catch(e){
+    text.innerHTML='Yhteysvirhe — tarkista yhteys ja yritä uudelleen.';
+  }
+  btn.disabled=false;
+  btn.innerHTML='✦ Analysoi uudelleen';
+}
+
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    var t=document.querySelector(a.getAttribute('href'));
+    if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
   });
+});
 </script>
 </body>
 </html>
