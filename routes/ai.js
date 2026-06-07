@@ -791,7 +791,7 @@ router.post('/cv-extract-text', (req, res) => {
           chars: 0,
           partial: true,
           stored: true,
-          message: 'Word-tiedosto tallennetaan, mutta tekstiä ei voi lukea automaattisesti. Täytä kentät käsin tai käytä PDF:ää.'
+          message: 'Emme voineet lukea Word-tiedostoa automaattisesti. Täytä alla oleva lomake, jotta portfolioosi tulee kaikki tarvittavat tiedot.'
         });
       } else {
         return res.status(400).json({ error: 'Tuetut tiedostot: PDF, TXT, DOC, DOCX' });
@@ -805,7 +805,7 @@ router.post('/cv-extract-text', (req, res) => {
           chars: (text || '').length,
           partial: true,
           stored: true,
-          message: 'CV tallennetaan, mutta siitä ei löytynyt riittävästi tekstiä (esim. skannattu kuva-PDF). Täytä kentät käsin — tiedosto on silti rekrytoijille ladattavissa.'
+          message: 'Emme voineet lukea CV:tä automaattisesti. Täytä alla oleva lomake, jotta portfolioosi tulee kaikki tarvittavat tiedot.'
         });
       }
 
@@ -918,6 +918,7 @@ router.post('/cv-portfolio-parse', async (req, res) => {
       'Extract structured portfolio data from a Finnish CV/resume.',
       'Reply with ONLY valid JSON (no markdown):',
       '{"name":"","city":"","target_role":"","bio":"2-3 sentence intro in Finnish","skills":["3-7 skills"],"experience":[{"role":"","company":"","years":"","desc":""}],"education":[{"degree":"","school":"","year":""}],"languages":[{"name":"","level":""}]}',
+      'Extract ALL work experience entries from the CV (up to 8), newest first. Each experience needs role, company, years/period, and a short desc if available in CV.',
       'Use only facts from the CV. Empty arrays/strings if missing. Finnish text for bio and desc.'
     ].join(' ');
 
@@ -933,7 +934,7 @@ router.post('/cv-portfolio-parse', async (req, res) => {
           { role: 'system', content: system },
           { role: 'user', content: text.slice(0, 12000) }
         ],
-        max_tokens: 1400,
+        max_tokens: 2200,
         temperature: 0.2,
         response_format: { type: 'json_object' }
       }),

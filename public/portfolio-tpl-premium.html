@@ -135,6 +135,15 @@ h2{font-family:'Instrument Serif',serif;font-size:clamp(2rem,4.5vw,3.25rem);line
 .contact-inner{position:relative;}
 .contact-h{font-family:'Instrument Serif',serif;font-size:clamp(1.8rem,4vw,3rem);line-height:1.1;max-width:600px;margin-bottom:1.5rem;}
 .contact-sub{font-size:.95rem;color:var(--fg2);max-width:460px;line-height:1.75;margin-bottom:2.25rem;font-weight:300;}
+.contact-form-box{margin-top:1.5rem;padding:1.5rem;background:var(--glass);border:1px solid var(--bd);border-radius:1rem;max-width:520px;}
+.contact-form-box label{font-size:.68rem;color:var(--fg3);margin-bottom:.25rem;display:block;text-transform:uppercase;letter-spacing:.12em;}
+.contact-form-field{width:100%;background:rgba(255,255,255,.55);border:1px solid var(--bd);border-radius:8px;padding:.65rem .85rem;font-size:.88rem;color:var(--fg);font-family:'DM Sans',sans-serif;box-sizing:border-box;margin-bottom:.75rem;}
+.theme-executive .contact-form-field{background:rgba(255,255,255,.06);color:#e8e6f0;}
+.contact-form-field:focus{outline:none;border-color:var(--v);}
+textarea.contact-form-field{min-height:88px;resize:vertical;}
+.contact-form-submit{padding:.75rem 1.5rem;border-radius:8px;background:var(--v);color:#fff;border:none;font-size:.88rem;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.contact-form-submit:disabled{opacity:.45;cursor:default;}
+.contact-form-ok{font-size:.82rem;margin-top:.65rem;display:none;}
 .info-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin-top:2.5rem;}
 .info-cell{background:var(--glass);border:1px solid var(--bd);border-radius:.875rem;padding:1rem 1.25rem;}
 .ic-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.18em;color:var(--fg3);margin-bottom:.3rem;display:flex;align-items:center;gap:.35rem;}
@@ -321,11 +330,11 @@ function buildLocalFaqAnswer(p,fn,nm){
     if(/kokemus|experience|ty\xf6|ura/.test(q)) return exTxt||'Katso Kokemus-osio sivulla.';
     if(/koulutus|education|opisk/.test(q)) return edTxt||'Katso Koulutus-osio sivulla.';
     if(/kieli|language/.test(q)) return laTxt||'Kielitaidot mainittu portfoliossa.';
-    if(/yhteys|email|s\xe4hk\xf6post|phone|puhelin|tavoita/.test(q)) return (p.email_public?'S\xe4hk\xf6posti: '+p.email_public+'. ':'')+(p.phone_public?'Puhelin: '+p.phone_public+'. ':'')+'Voit my\xf6s l\xe4hett\xe4 viestin Yhteydenotto-v\xe4lilehdelt\xe4.';
-    if(/cv|lataa|resume/.test(q)) return p.has_cv?'CV:n voi ladata sivun yl\xe4reunan Lataa CV -painikkeesta.':'CV ei ole ladattavissa — ota yhteytt\xe4 s\xe4hk\xf6postitse.';
+    if(/yhteys|email|s\xe4hk\xf6post|phone|puhelin|tavoita|haastattelu/.test(q)) return 'T\xe4yt\xe4 yhteydenottolomake sivun alaosassa (Ota yhteytt\xe4). '+(p.email_public?'Voit my\xf6s kirjoittaa suoraan: '+p.email_public+'.':'');
+    if(/cv|lataa|resume/.test(q)) return p.has_cv?'CV:n voi ladata sivun yl\xe4reunan Lataa CV -painikkeesta.':'CV ei ole ladattavissa — l\xe4het\xe4 viesti yhteydenottolomakkeella.';
     if(/rooli|teht\xe4v|ammatti/.test(q)) return p.target_role||'Avoin uusille mahdollisuuksille.';
     if(/kaupung|sijainti|city|miss\xe4/.test(q)) return p.city||'Sijainti mainittu portfoliossa.';
-    return p.bio||p.career_summary||('Lis\xe4tietoja henkil\xf6st\xe4 '+nm+' portfolio-sivulla. L\xe4het\xe4 viesti Yhteydenotto-v\xe4lilehdelt\xe4.');
+    return p.bio||p.career_summary||('Lis\xe4tietoja henkil\xf6st\xe4 '+nm+' portfolio-sivulla. L\xe4het\xe4 viesti yhteydenottolomakkeella sivun alaosassa.');
   };
 }
 function trackPortfolioVisit(slug){
@@ -342,7 +351,7 @@ function render(p){
 applyBrandTheme(p);
 var nm=esc(p.full_name||''),tl=esc(p.tagline||''),bio=esc(p.bio||''),ct=esc(p.city||''),rl=esc(p.target_role||''),em=esc(p.email_public||''),ph=esc(p.phone_public||''),li=esc(p.linkedin_url||'');
 var photo=p.has_photo?'/api/portfolio/photo/'+encodeURIComponent(p.slug):'';
-var sk=p.skills||[],ex=p.experience||[],ed=p.education||[],la=p.languages||[],certs=p.certificates||[],achiev=p.achievements||[];
+var sk=p.skills||[],ex=(p.experience||[]).filter(function(e){return e&&e.show!==false;}),ed=p.education||[],la=p.languages||[],certs=p.certificates||[],achiev=p.achievements||[];
 var cs=esc(p.career_summary||''),hs=esc(p.hidden_strengths||'');
 var I=ini(p.full_name),fn=nm.split(' ')[0];
 document.title=nm+' \u2014 Portfolio';
@@ -351,7 +360,7 @@ var h='';
 // NAV
 h+='<nav><a href="#top" class="nav-brand"><span class="dot"></span>'+nm+'</a><ul class="nav-links"><li><a href="#about">Tietoa</a></li><li><a href="#skills">Taidot</a></li><li><a href="#experience">Kokemus</a></li>';
 if(ed.length)h+='<li><a href="#education">Koulutus</a></li>';
-h+='<li><a href="#contact">Yhteystiedot</a></li></ul><a href="#contact" class="btn-pill">Ota yhteytt\xe4</a></nav>';
+h+='<li><a href="#contact">Yhteystiedot</a></li></ul><a href="#contact" class="btn-pill" onclick="scrollToContactForm(event)">Ota yhteytt\xe4</a></nav>';
 
 // HERO
 h+='<section id="top"><div id="hero"><div class="orb orb1"></div><div class="orb orb2"></div><div class="grid-bg"></div><div class="hero-inner"><div class="hero-left" id="heroLeft">';
@@ -359,9 +368,10 @@ h+='<div class="hero-pill">'+SVG.star+'Avoin uusille mahdollisuuksille'+(rl?' \x
 h+='<h1><span class="block">'+nm+'.</span>'+(tl?'<span class="block grad">'+tl+'</span>':'')+'</h1>';
 if(bio){var sb=bio.split('.').slice(0,2).join('.')+'.';h+='<p class="hero-sub">'+sb+'</p>';}
 h+='<div class="btn-row">';
-if(em)h+='<a href="mailto:'+em+'" class="btn-primary">'+SVG.mail+' Kutsu haastatteluun<span class="blink"></span></a>';
+h+='<button type="button" class="btn-primary" onclick="scrollToContactForm(event)">'+SVG.mail+' Kutsu haastatteluun<span class="blink"></span></button>';
 if(p.has_cv)h+='<a href="/api/portfolio/cv/'+encodeURIComponent(p.slug)+'" class="btn-outline" download>'+SVG.download+' Lataa CV</a>';
 if(li)h+='<a href="'+li+'" target="_blank" class="btn-outline">'+SVG.linkedin+' LinkedIn</a>';
+if(em)h+='<a href="mailto:'+em+'" class="btn-outline">'+SVG.mail+' S\xe4hk\xf6posti</a>';
 h+='</div>';
 h+='<div class="stats-grid"><div class="stat"><div class="stat-n">'+(ex.length?ex.length+'+':'\u2014')+'</div><div class="stat-l">Ty\xf6teht\xe4v\xe4t</div></div>';
 h+='<div class="stat"><div class="stat-n">'+(ct||'Global')+'</div><div class="stat-l">Sijainti</div></div>';
@@ -397,10 +407,12 @@ h+='</div></div><div class="divider"></div>';}
 // EXPERIENCE
 if(ex.length){h+='<div class="wrap" id="experience"><div class="reveal"><div class="eyebrow">Kokemus</div><h2>Aikajana <span class="grad">saavutuksista.</span></h2></div><div class="timeline"><div class="tl-rule"></div>';
 ex.forEach(function(e,i){h+='<div class="tl-item card reveal" style="transition-delay:'+(i*.12)+'s"><div class="tl-node"><div class="tl-gem"></div></div>';
-if(e.period)h+='<div class="tl-date">'+esc(e.period)+'</div>';
+var period=e.period||e.years||'';
+if(period)h+='<div class="tl-date">'+esc(period)+'</div>';
 h+='<div class="tl-role">'+esc(e.role||e.title||'')+'</div>';
 if(e.company)h+='<div class="tl-co">'+esc(e.company)+'</div>';
-if(e.description&&!e.bullets)h+='<p style="font-size:.84rem;color:var(--fg2);line-height:1.55;">'+esc(e.description)+'</p>';
+var desc=e.desc||e.description||'';
+if(desc&&!e.bullets)h+='<p style="font-size:.84rem;color:var(--fg2);line-height:1.55;">'+esc(desc)+'</p>';
 if(e.bullets&&e.bullets.length){h+='<ul class="tl-list">';e.bullets.forEach(function(b){h+='<li>'+esc(b)+'</li>';});h+='</ul>';}
 h+='</div>';});h+='</div></div><div class="divider"></div>';}
 
@@ -445,10 +457,18 @@ h+='</div></div></div><div class="divider"></div>';}
 
 // CONTACT
 h+='<div class="wrap" id="contact"><div class="contact-card reveal-scale"><div class="contact-inner"><div style="font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fg3);margin-bottom:1.5rem;">Ota yhteytt\xe4</div><h2 class="contact-h">Seuraava huippurekrytointisi on <span class="grad">yhden keskustelun</span> p\xe4\xe4ss\xe4.</h2><p class="contact-sub">Olen avoin uusille mahdollisuuksille'+(rl?' alalla '+rl:'')+(ct?' \u2014 sijainti '+ct:'')+'.</p><div class="btn-row">';
-if(em)h+='<a href="mailto:'+em+'" class="btn-primary">'+SVG.mail+' Kutsu haastatteluun</a>';
+h+='<button type="button" class="btn-primary" onclick="scrollToContactForm(event)">'+SVG.mail+' Kutsu haastatteluun</button>';
 if(p.has_cv)h+='<a href="/api/portfolio/cv/'+encodeURIComponent(p.slug)+'" class="btn-outline" download>'+SVG.download+' Lataa CV</a>';
 if(li)h+='<a href="'+li+'" target="_blank" class="btn-outline">'+SVG.linkedin+' LinkedIn</a>';
-h+='</div><div class="info-row">';
+if(em)h+='<a href="mailto:'+em+'" class="btn-outline">'+SVG.mail+' S\xe4hk\xf6posti</a>';
+h+='</div>';
+h+='<div class="contact-form-box" id="contactFormBox"><div style="font-size:.82rem;color:var(--fg2);margin-bottom:1rem;line-height:1.6;">J\xe4t\xe4 viesti — '+esc(fn)+' saa sen s\xe4hk\xf6postiinsa ja voi vastata sinulle.</div>';
+h+='<label for="contactName">Nimesi *</label><input class="contact-form-field" id="contactName" placeholder="Esim. Anna Rekrytoija">';
+h+='<label for="contactEmail">S\xe4hk\xf6postisi *</label><input class="contact-form-field" id="contactEmail" type="email" placeholder="nimi@yritys.fi">';
+h+='<label for="contactMsg">Viesti *</label><textarea class="contact-form-field" id="contactMsg" placeholder="Hei! N\xe4in portfoliosi ja haluaisin keskustella haastattelusta..."></textarea>';
+h+='<button type="button" class="contact-form-submit" id="contactSubmit" onclick="sendContact()">L\xe4het\xe4 viesti '+esc(fn)+':lle</button>';
+h+='<div class="contact-form-ok" id="contactOk"></div></div>';
+h+='<div class="info-row">';
 if(em)h+='<div class="info-cell"><div class="ic-label">'+SVG.at+' S\xe4hk\xf6posti</div><div class="ic-val" style="font-size:.78rem;word-break:break-all;">'+em+'</div></div>';
 if(ph)h+='<div class="info-cell"><div class="ic-label">'+SVG.phone+' Puhelin</div><div class="ic-val">'+ph+'</div></div>';
 if(ct)h+='<div class="info-cell"><div class="ic-label">'+SVG.pin+' Sijainti</div><div class="ic-val">'+ct+'</div></div>';
@@ -462,17 +482,11 @@ h+='<footer><span>\xa9 '+new Date().getFullYear()+' '+nm+'</span><div class="ava
 h+='<button id="chatBtn" onclick="toggleChat()">'+SVG.spark+' Kysy & ota yhteytt\xe4</button>';
 h+='<div id="chatPanel"><div class="cp-head"><div class="cp-av">'+I[0]+'</div><div><div class="cp-name">'+nm+'</div><div class="cp-sub">Portfolio & yhteydenotto</div></div><button class="cp-close" onclick="toggleChat()">'+SVG.x+'</button></div>';
 h+='<div class="cp-tabs"><button type="button" class="cp-tab active" id="tabFaq" onclick="showCpTab(\'faq\')">Vastaukset</button><button type="button" class="cp-tab" id="tabContact" onclick="showCpTab(\'contact\')">Yhteydenotto</button></div>';
-h+='<div class="cp-pane-faq" id="cpPaneFaq"><div class="cp-msgs" id="cpMsgs"><div class="msg ai">Hei! Voin vastata yleisiin kysymyksiin <strong>'+nm+'</strong>:n osaamisesta ja kokemuksesta portfolio-tietojen perusteella. Henkil\xf6kohtisiin asioihin voit ottaa yhteytt\xe4 toisella v\xe4lilehdell\xe4.</div></div>';
+h+='<div class="cp-pane-faq" id="cpPaneFaq"><div class="cp-msgs" id="cpMsgs"><div class="msg ai">Hei! Voin vastata yleisiin kysymyksiin <strong>'+nm+'</strong>:n osaamisesta ja kokemuksesta. Henkil\xf6kohtiseen yhteydenottoon k\xe4yt\xe4 lomaketta sivun alaosassa tai painiketta Yhteydenotto.</div></div>';
 h+='<div class="sugs" id="sugs"><button class="sug" onclick="quickAsk(this)">Mitk\xe4 ovat vahvuudet?</button><button class="sug" onclick="quickAsk(this)">Miksi palkata?</button>';
 if(rl)h+='<button class="sug" onclick="quickAsk(this)">Kokemus: '+esc(rl)+'?</button>';
 h+='<button class="sug" onclick="quickAsk(this)">Miten otan yhteytt\xe4?</button></div>';
-h+='<div class="cp-form"><input id="chatInput" placeholder="Kirjoita kysymys..." autocomplete="off" onkeydown="if(event.key===\'Enter\'){event.preventDefault();sendChat();}"><button id="chatSend" onclick="sendChat()" disabled>'+SVG.send+'</button></div></div>';
-h+='<div class="cp-contact" id="cpPaneContact"><p style="font-size:.78rem;color:var(--fg3);line-height:1.5;margin-bottom:.25rem;">Viesti l\xe4hetet\xe4\xe4n suoraan '+esc(fn)+':n s\xe4hk\xf6postiin. H\xe4n saa ilmoituksen ja voi vastata sinulle.</p>';
-h+='<div><label>Nimesi *</label><input class="cp-field" id="contactName" placeholder="Esim. Anna Rekrytoija"></div>';
-h+='<div><label>S\xe4hk\xf6postisi *</label><input class="cp-field" id="contactEmail" type="email" placeholder="nimi@yritys.fi"></div>';
-h+='<div><label>Viesti *</label><textarea class="cp-field" id="contactMsg" placeholder="Hei! N\xe4in portfoliosi ja haluaisin keskustella..."></textarea></div>';
-h+='<button type="button" class="cp-submit" id="contactSubmit" onclick="sendContact()">L\xe4het\xe4 viesti '+esc(fn)+':lle</button>';
-h+='<div class="cp-ok" id="contactOk" style="display:none;"></div></div></div>';
+h+='<div class="cp-form"><input id="chatInput" placeholder="Kirjoita kysymys..." autocomplete="off" onkeydown="if(event.key===\'Enter\'){event.preventDefault();sendChat();}"><button id="chatSend" onclick="sendChat()" disabled>'+SVG.send+'</button></div></div></div>';
 
 document.getElementById('app').innerHTML=h;
 hideLoad();
@@ -488,18 +502,29 @@ document.getElementById('chatInput').addEventListener('input',function(){documen
 
 var chatOpen=false;
 function toggleChat(){chatOpen=!chatOpen;document.getElementById('chatPanel').classList.toggle('open',chatOpen);}
+function scrollToContactForm(e){
+  if(e) e.preventDefault();
+  if(chatOpen){ chatOpen=false; document.getElementById('chatPanel').classList.remove('open'); }
+  var sec=document.getElementById('contact');
+  if(sec) sec.scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(function(){
+    var box=document.getElementById('contactFormBox');
+    if(box) box.style.boxShadow='0 0 0 2px var(--v)';
+    var n=document.getElementById('contactName');
+    if(n) n.focus();
+    setTimeout(function(){ if(box) box.style.boxShadow=''; }, 2200);
+  }, 420);
+}
 function showCpTab(which){
   var faq=document.getElementById('cpPaneFaq');
-  var con=document.getElementById('cpPaneContact');
   var tF=document.getElementById('tabFaq');
   var tC=document.getElementById('tabContact');
   if(which==='contact'){
-    faq.classList.add('hidden'); con.classList.add('open');
-    tF.classList.remove('active'); tC.classList.add('active');
-  }else{
-    faq.classList.remove('hidden'); con.classList.remove('open');
-    tF.classList.add('active'); tC.classList.remove('active');
+    scrollToContactForm();
+    return;
   }
+  faq.classList.remove('hidden');
+  tF.classList.add('active'); tC.classList.remove('active');
 }
 function addMsg(t,r){var m=document.getElementById('cpMsgs');var d=document.createElement('div');d.className='msg '+r;d.textContent=t;m.appendChild(d);m.scrollTop=m.scrollHeight;return d;}
 function quickAsk(b){document.getElementById('chatInput').value=b.textContent;document.getElementById('chatSend').disabled=false;sendChat();}
@@ -508,7 +533,7 @@ function sendChat(){
   inp.value=''; document.getElementById('chatSend').disabled=true;
   var s=document.getElementById('sugs'); if(s) s.style.display='none';
   addMsg(t,'user');
-  var rp=window._faqAnswer?window._faqAnswer(t):'Katso portfolio-sivua tai l\xe4het\xe4 viesti Yhteydenotto-v\xe4lilehdelt\xe4.';
+  var rp=window._faqAnswer?window._faqAnswer(t):'T\xe4yt\xe4 yhteydenottolomake sivun alaosassa (Ota yhteytt\xe4).';
   setTimeout(function(){ addMsg(rp,'ai'); document.getElementById('chatSend').disabled=false; }, 280);
 }
 async function sendContact(){

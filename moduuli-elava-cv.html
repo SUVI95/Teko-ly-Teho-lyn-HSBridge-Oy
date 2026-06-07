@@ -81,6 +81,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
 .upload-status{display:none;margin-top:1rem;font-size:.88rem;padding:.65rem 1rem;border-radius:8px;}
 .upload-status.ok{display:block;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#059669;}
 .upload-status.err{display:block;background:rgba(199,91,58,.1);border:1px solid rgba(199,91,58,.25);color:var(--accent2);}
+.upload-status.info{display:block;background:rgba(124,110,242,.08);border:1px solid rgba(124,110,242,.2);color:var(--ink2);}
+.upload-size-warn{text-align:left;}
+.upload-size-warn-title{font-weight:600;font-size:.9rem;margin-bottom:.45rem;color:var(--ink);}
+.upload-size-warn p{font-size:.84rem;color:var(--muted);line-height:1.6;margin:0 0 .85rem;}
+.upload-size-warn-actions{display:flex;gap:.55rem;flex-wrap:wrap;}
+.upload-size-warn-actions .btn-primary,.upload-size-warn-actions .btn-secondary{padding:8px 16px;font-size:.82rem;}
 
 /* ── CHAT ── */
 .chat-box{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.25rem;}
@@ -115,7 +121,17 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
 @media(max-width:580px){.field-row{grid-template-columns:1fr;}}
 .field-hint{font-size:.78rem;color:var(--muted);margin-top:.35rem;line-height:1.5;}
 
-/* ── PHOTO UPLOAD ── */
+/* ── EXPERIENCE EDITOR ── */
+.exp-item{border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;margin-bottom:.75rem;background:var(--paper2);}
+.exp-item-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.75rem;}
+.exp-item-head label{font-size:.78rem;color:var(--ink);display:flex;align-items:center;gap:.4rem;cursor:pointer;}
+.exp-item-head input[type=checkbox]{accent-color:var(--v);}
+.exp-remove{background:none;border:none;color:var(--accent2);font-size:.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;}
+@media(max-width:580px){.exp-grid{grid-template-columns:1fr;}}
+.exp-grid .field-input,.exp-grid .field-textarea{font-size:.84rem;padding:.65rem .85rem;}
+.exp-grid .full{grid-column:1/-1;}
+
 .photo-upload-area{display:flex;gap:1.75rem;align-items:center;padding:1.5rem;background:var(--paper2);border-radius:12px;border:1px solid var(--border);}
 .photo-preview{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,rgba(124,110,242,.2),rgba(124,110,242,.1));border:2px solid rgba(124,110,242,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;font-family:'Instrument Serif',serif;font-size:1.8rem;color:var(--v);}
 .photo-preview img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
@@ -256,7 +272,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
     <div class="upload-zone" id="cvDropZone" onclick="document.getElementById('cvFile').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleCVDrop(event)">
       <div class="upload-icon">📄</div>
       <div class="upload-title">Lataa CV tähän</div>
-      <div class="upload-sub">PDF, TXT, DOC tai DOCX · max 25 MB · useita sivuja ja kuvia ok</div>
+      <div class="upload-sub">PDF, TXT, DOC tai DOCX · koko näytetään valinnan jälkeen · suositeltu alle 4 MB</div>
       <input type="file" id="cvFile" accept=".pdf,.txt,.doc,.docx,application/pdf,text/plain" style="display:none" onchange="handleCVFile(this.files[0])">
     </div>
     <div class="upload-status" id="cvStatus"></div>
@@ -353,7 +369,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
         <div class="photo-preview" id="photoPreview"><span id="photoInitials">?</span></div>
         <div>
           <div style="font-size:.88rem;font-weight:500;color:var(--ink);margin-bottom:.35rem;">Lisää kuva portfolioon</div>
-          <div style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">JPG, PNG, WebP, HEIC, GIF, TIFF jne. · max 20 MB · Kasvokuva toimii parhaiten</div>
+          <div style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">JPG, PNG, WebP, HEIC, GIF, TIFF jne. · koko näytetään valinnan jälkeen · suositeltu alle 4 MB</div>
           <label class="photo-upload-btn" for="photoFile" style="display:inline-block;cursor:pointer;">Valitse kuva</label>
           <input type="file" id="photoFile" accept="image/*,.heic,.heif" style="display:none" onchange="handlePhoto(this.files[0])">
           <div id="photoStatus" style="font-size:.78rem;color:var(--accent3);margin-top:.5rem;display:none;"></div>
@@ -425,11 +441,19 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
       <textarea class="field-textarea" id="d_skills" rows="3" placeholder="Asiakaspalvelu, Excel, Myynti, Ongelmanratkaisu..." oninput="parseSkills(this.value)"></textarea>
     </div>
 
+    <!-- LANGUAGES -->
+    <div class="card">
+      <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;">🌍 Kielet</h3>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Yksi kieli per rivi tai pilkulla erotettuna. Esim. <code style="font-family:'DM Mono',monospace;font-size:.75rem;">Suomi (äidinkieli), Englanti (hyvä)</code></p>
+      <textarea class="field-textarea" id="d_languages" rows="3" placeholder="Suomi (äidinkieli)&#10;Englanti (hyvä)&#10;Ruotsi (perusteet)" oninput="parseLanguages(this.value)"></textarea>
+    </div>
+
     <!-- EXPERIENCE -->
     <div class="card">
       <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;">💼 Kokemus</h3>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Yksi rivi per tehtävä: "Rooli · Yritys · Vuodet · Kuvaus"</p>
-      <textarea class="field-textarea" id="d_experience" rows="5" placeholder="Kassanhoitaja · S-market · 2020–2023 · Palvelin 100+ asiakasta päivässä&#10;Vapaaehtoinen · Kela · 2019 · Asiakasneuvonta"></textarea>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">AI poimii työtehtäviä CV:stä. Valitse mitkä näkyvät portfoliossa — voit muokata ja lisätä rivejä.</p>
+      <div id="expEditorList"></div>
+      <button type="button" class="btn-secondary" style="padding:8px 16px;font-size:.82rem;margin-top:.25rem;" onclick="addExperienceRow()">+ Lisää työtehtävä</button>
     </div>
 
     <!-- THEME -->
@@ -572,6 +596,55 @@ function apiBase(){
   return i>0?p.substring(0,i):'';
 }
 
+var WEB_UPLOAD_WARN_BYTES = 4 * 1024 * 1024;
+
+function formatFileSize(bytes){
+  if(bytes == null || isNaN(bytes)) return '?';
+  if(bytes < 1024) return bytes + ' t';
+  if(bytes < 1024 * 1024) return (bytes / 1024).toFixed(1).replace(/\.0$/, '') + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1).replace(/\.0$/, '') + ' MB';
+}
+
+function filePickLabel(file){
+  return file.name + ' · ' + formatFileSize(file.size);
+}
+
+function clearFileInput(id){
+  var el = document.getElementById(id);
+  if(el) el.value = '';
+}
+
+function showLargeFilePrompt(file, statusEl, inputId, onContinue){
+  statusEl.className = 'upload-status info';
+  statusEl.style.display = 'block';
+  statusEl.innerHTML =
+    '<div class="upload-size-warn">' +
+      '<div class="upload-size-warn-title">⚠ ' + filePickLabel(file) + '</div>' +
+      '<p>Tiedosto on suuri. Lataus verkossa voi epäonnistua — kokeile pienempää tiedostoa tai jatka silti.</p>' +
+      '<div class="upload-size-warn-actions">' +
+        '<button type="button" class="btn-primary" data-action="continue">Jatka latausta</button>' +
+        '<button type="button" class="btn-secondary" data-action="cancel">Valitse toinen tiedosto</button>' +
+      '</div>' +
+    '</div>';
+  statusEl.querySelector('[data-action=continue]').onclick = function(){
+    statusEl.className = 'upload-status info';
+    statusEl.textContent = '📎 ' + filePickLabel(file) + ' — ladataan...';
+    onContinue();
+  };
+  statusEl.querySelector('[data-action=cancel]').onclick = function(){
+    statusEl.style.display = 'none';
+    statusEl.textContent = '';
+    statusEl.innerHTML = '';
+    clearFileInput(inputId);
+  };
+}
+
+function showFileSizeInfo(statusEl, file, loadingText){
+  statusEl.className = 'upload-status info';
+  statusEl.style.display = 'block';
+  statusEl.textContent = '📎 ' + filePickLabel(file) + (loadingText ? ' — ' + loadingText : '');
+}
+
 // ══════════════════════════════════════════
 // SCREEN NAVIGATION
 // ══════════════════════════════════════════
@@ -601,7 +674,7 @@ function showScreen(id){
   window.scrollTo({top:0,behavior:'smooth'});
   if(id==='s-preview') loadPreview();
   if(id==='s-publish'){ syncPayloadFromForm(); buildPublishChecklist(); }
-  if(id==='s-details'){ syncDetailsFields(); updateSlugUi(); }
+  if(id==='s-details'){ syncDetailsFields(); renderExperienceEditor(); updateSlugUi(); }
 }
 
 // ══════════════════════════════════════════
@@ -616,11 +689,21 @@ function handleCVDrop(e){
 
 async function handleCVFile(file){
   if(!file) return;
+  cvFilePending = file;
+  var status = document.getElementById('cvStatus');
+  if(file.size > WEB_UPLOAD_WARN_BYTES){
+    showLargeFilePrompt(file, status, 'cvFile', function(){ processCVFile(file); });
+    return;
+  }
+  showFileSizeInfo(status, file, 'luetaan');
+  await processCVFile(file);
+}
+
+async function processCVFile(file){
+  if(!file) return;
   var zone=document.getElementById('cvDropZone');
   var status=document.getElementById('cvStatus');
-  status.className='upload-status';
-  status.style.display='block';
-  status.textContent='Luetaan '+file.name+'...';
+  showFileSizeInfo(status, file, 'luetaan');
 
   cvFilePending=file;
   var fd=new FormData(); fd.append('file',file);
@@ -632,22 +715,29 @@ async function handleCVFile(file){
     zone.classList.add('uploaded');
     if(d.partial||!d.text){
       cvText=d.text||'';
-      zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' vastaanotettu</div><div style="font-size:.8rem;color:#047857;">'+(d.message||'Täytä tiedot alla käsin — CV tallennetaan rekrytoijille.')+'</div>';
+      var partialMsg=d.message||'Täytä alla oleva lomake, jotta portfolioosi tulee kaikki tarvittavat tiedot.';
+      zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' · '+formatFileSize(file.size)+'</div><div style="font-size:.8rem;color:#047857;">'+partialMsg+'</div>';
       status.className='upload-status ok';
-      status.textContent='✓ CV vastaanotettu. '+(d.message||'Täytä tiedot alla käsin ja jatka haastatteluun.');
+      status.textContent='✓ CV vastaanotettu. '+partialMsg;
     } else {
       cvText=d.text;
-      zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' luettu</div><div style="font-size:.8rem;color:#047857;">'+d.chars+' merkkiä · AI käyttää tätä portfolion rakentamiseen</div>';
+      zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' · '+formatFileSize(file.size)+'</div><div style="font-size:.8rem;color:#047857;">'+d.chars+' merkkiä · AI käyttää tätä portfolion rakentamiseen</div>';
       status.className='upload-status ok';
-      status.textContent='✓ CV luettu. Paina "Seuraava" jatkaaksesi haastatteluun.';
+      status.textContent='✓ CV luettu ('+formatFileSize(file.size)+'). Paina "Seuraava" jatkaaksesi haastatteluun.';
       await extractCVBasics();
     }
   }catch(e){
     cvFilePending=file;
     zone.classList.add('uploaded');
-    zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' vastaanotettu</div><div style="font-size:.8rem;color:#047857;">Tekstin luku epäonnistui — täytä kentät käsin</div>';
+    zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' · '+formatFileSize(file.size)+'</div><div style="font-size:.8rem;color:#047857;">Täytä alla oleva lomake, jotta portfolioosi tulee kaikki tarvittavat tiedot.</div>';
     status.className='upload-status ok';
-    status.textContent='✓ CV vastaanotettu. '+e.message+' — täytä tiedot alla käsin.';
+    var failMsg = e.message || 'Lataus epäonnistui';
+    if(file.size > WEB_UPLOAD_WARN_BYTES && /fetch|network|413|too large|liian suuri/i.test(failMsg)){
+      failMsg = 'Tiedosto saattaa olla liian suuri verkkolataukseen ('+formatFileSize(file.size)+'). Kokeile alle 4 MB tai täytä lomake alla.';
+    } else if(!/täytä/i.test(failMsg)){
+      failMsg = 'Täytä alla oleva lomake, jotta portfolioosi tulee kaikki tarvittavat tiedot.';
+    }
+    status.textContent='✓ CV vastaanotettu. '+failMsg;
   }
 }
 
@@ -665,15 +755,35 @@ async function uploadCvToPortfolio(file){
 async function handleRecruiterCv(file){
   if(!file) return;
   var status=document.getElementById('cvRecruiterStatus');
-  status.textContent='Tallennetaan...';
+  status.style.display='block';
+  if(file.size > WEB_UPLOAD_WARN_BYTES){
+    showLargeFilePrompt(file, status, 'cvRecruiterFile', function(){ processRecruiterCv(file); });
+    return;
+  }
+  showFileSizeInfo(status, file, 'tallennetaan');
+  await processRecruiterCv(file);
+}
+
+async function processRecruiterCv(file){
+  if(!file) return;
+  var status=document.getElementById('cvRecruiterStatus');
+  status.style.display='block';
+  status.className='upload-status info';
+  status.textContent='📎 '+filePickLabel(file)+' — tallennetaan...';
   cvFilePending=file;
   try{
     if(!portfolioSlug) await savePortfolioData();
     else await uploadCvToPortfolio(file);
-    status.textContent='✓ CV tallennettu: '+cvFilenameOnServer;
+    status.className='upload-status ok';
+    status.textContent='✓ CV tallennettu: '+cvFilenameOnServer+' ('+formatFileSize(file.size)+')';
     status.style.color='#059669';
   }catch(e){
-    status.textContent='⚠ '+e.message;
+    status.className='upload-status err';
+    var failMsg = e.message || 'CV:n tallennus epäonnistui';
+    if(file.size > WEB_UPLOAD_WARN_BYTES && /fetch|network|413|too large|liian suuri/i.test(failMsg)){
+      failMsg = 'Tiedosto saattaa olla liian suuri verkkolataukseen ('+formatFileSize(file.size)+'). Kokeile alle 4 MB.';
+    }
+    status.textContent='⚠ '+failMsg;
     status.style.color='var(--accent2)';
   }
 }
@@ -705,10 +815,14 @@ async function extractCVBasics(){
     if(parsed.target_role) P.target_role=parsed.target_role;
     if(parsed.bio) P.bio=parsed.bio;
     if(parsed.skills&&parsed.skills.length) P.skills=parsed.skills;
-    if(parsed.experience&&parsed.experience.length) P.experience=parsed.experience;
+    if(parsed.experience&&parsed.experience.length){
+      P.experience=parsed.experience.map(function(e){ e.show=true; return normalizeExperience(e); });
+    }
     if(parsed.education&&parsed.education.length) P.education=parsed.education;
     if(parsed.languages&&parsed.languages.length) P.languages=parsed.languages;
     syncFormFields();
+    syncDetailsFields();
+    renderExperienceEditor();
   }catch(e){
     console.warn('[cv-portfolio-parse]',e);
   }
@@ -839,6 +953,67 @@ document.addEventListener('DOMContentLoaded',function(){
 // ══════════════════════════════════════════
 // DETAILS
 // ══════════════════════════════════════════
+function normalizeExperience(e){
+  return {
+    role:(e&&e.role)||(e&&e.title)||'',
+    company:(e&&e.company)||'',
+    years:(e&&e.years)||(e&&e.period)||'',
+    desc:(e&&e.desc)||(e&&e.description)||'',
+    show:e&&e.show===false?false:true
+  };
+}
+
+function renderExperienceEditor(){
+  var box=document.getElementById('expEditorList');
+  if(!box) return;
+  if(!P.experience||!P.experience.length) P.experience=[normalizeExperience({})];
+  box.innerHTML=P.experience.map(function(e,i){
+    e=normalizeExperience(e); P.experience[i]=e;
+    return '<div class="exp-item" data-i="'+i+'">'
+      +'<div class="exp-item-head"><label><input type="checkbox" class="exp-show"'+(e.show?' checked':'')+'> Näytä portfoliossa</label>'
+      +'<button type="button" class="exp-remove" onclick="removeExperienceRow('+i+')">Poista</button></div>'
+      +'<div class="exp-grid">'
+      +'<input class="field-input exp-role" placeholder="Rooli / tehtävä" value="'+escAttr(e.role)+'">'
+      +'<input class="field-input exp-co" placeholder="Työnantaja" value="'+escAttr(e.company)+'">'
+      +'<input class="field-input exp-yrs" placeholder="Vuodet (esim. 2020–2023)" value="'+escAttr(e.years)+'">'
+      +'<textarea class="field-textarea exp-desc full" rows="2" placeholder="Lyhyt kuvaus">'+escAttr(e.desc)+'</textarea>'
+      +'</div></div>';
+  }).join('');
+}
+
+function escAttr(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function syncExperienceFromEditor(){
+  var box=document.getElementById('expEditorList');
+  if(!box) return;
+  var items=[];
+  box.querySelectorAll('.exp-item').forEach(function(row){
+    items.push(normalizeExperience({
+      role:(row.querySelector('.exp-role')||{}).value||'',
+      company:(row.querySelector('.exp-co')||{}).value||'',
+      years:(row.querySelector('.exp-yrs')||{}).value||'',
+      desc:(row.querySelector('.exp-desc')||{}).value||'',
+      show:(row.querySelector('.exp-show')||{}).checked!==false
+    }));
+  });
+  P.experience=items.filter(function(e){return e.role||e.company||e.years||e.desc;});
+}
+
+function addExperienceRow(){
+  syncExperienceFromEditor();
+  P.experience.push(normalizeExperience({}));
+  renderExperienceEditor();
+}
+
+function removeExperienceRow(i){
+  syncExperienceFromEditor();
+  P.experience.splice(i,1);
+  if(!P.experience.length) P.experience=[normalizeExperience({})];
+  renderExperienceEditor();
+}
+
 function syncDetailsFields(){
   var fields={d_name:'full_name',d_city:'city',d_role:'target_role',d_bio:'bio',d_email:'email_public',d_linkedin:'linkedin_url'};
   Object.keys(fields).forEach(function(id){
@@ -850,12 +1025,13 @@ function syncDetailsFields(){
   if(sk&&P.skills.length){
     sk.value=P.skills.map(function(s){return typeof s==='string'?s:(s.name||s);}).join(', ');
   }
-  // Experience
-  var ex=document.getElementById('d_experience');
-  if(ex&&P.experience.length){
-    ex.value=P.experience.map(function(e){
-      return [e.role||e.title||'',e.company||'',e.years||'',e.desc||''].filter(Boolean).join(' · ');
-    }).join('\n');
+  // Languages
+  var la=document.getElementById('d_languages');
+  if(la&&P.languages&&P.languages.length){
+    la.value=P.languages.map(function(l){
+      if(typeof l==='string') return l;
+      return l.level ? (l.name||'')+' ('+l.level+')' : (l.name||'');
+    }).join(', ');
   }
   var slugEl=document.getElementById('d_slug');
   if(slugEl&&portfolioSlug) slugEl.value=portfolioSlug;
@@ -956,6 +1132,15 @@ function parseSkills(txt){
   P.skills=txt.split(/[,;\n]+/).map(function(s){return s.trim();}).filter(Boolean);
 }
 
+function parseLanguages(txt){
+  var raw=String(txt||'').replace(/\n/g,',');
+  P.languages=raw.split(',').map(function(s){
+    s=s.trim(); if(!s) return null;
+    var m=s.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+    return m?{name:m[1].trim(),level:m[2].trim()}:{name:s,level:''};
+  }).filter(Boolean);
+}
+
 var selectedTheme={themeClass:'',color:'#7c6ef2',accent:'#3b82f6'};
 var THEME_PRESETS=[
   {cls:'',color:'#7c6ef2',accent:'#3b82f6',bg:'#faf9f6',template:'premium'},
@@ -996,7 +1181,21 @@ function restoreThemePicker(){
 async function handlePhoto(file){
   if(!file) return;
   var status=document.getElementById('photoStatus');
-  status.style.display='block'; status.textContent='Ladataan kuvaa...';
+  status.style.display='block';
+  if(file.size > WEB_UPLOAD_WARN_BYTES){
+    showLargeFilePrompt(file, status, 'photoFile', function(){ processPhoto(file); });
+    return;
+  }
+  showFileSizeInfo(status, file, 'ladataan kuvaa');
+  await processPhoto(file);
+}
+
+async function processPhoto(file){
+  if(!file) return;
+  var status=document.getElementById('photoStatus');
+  status.style.display='block';
+  status.className='upload-status info';
+  status.textContent='📎 '+filePickLabel(file)+' — ladataan kuvaa...';
 
   // Preview locally
   var reader=new FileReader();
@@ -1018,10 +1217,16 @@ async function handlePhoto(file){
     var d=await r.json();
     if(!r.ok) throw new Error(d.error||'Virhe');
     photoUploaded=true;
-    status.textContent='✓ Kuva tallennettu';
+    status.className='upload-status ok';
+    status.textContent='✓ Kuva tallennettu ('+formatFileSize(file.size)+')';
     status.style.color='#059669';
   }catch(e){
-    status.textContent='⚠ '+e.message;
+    status.className='upload-status err';
+    var failMsg = e.message || 'Kuvan lataus epäonnistui';
+    if(file.size > WEB_UPLOAD_WARN_BYTES && /fetch|network|413|too large|liian suuri/i.test(failMsg)){
+      failMsg = 'Kuva saattaa olla liian suuri verkkolataukseen ('+formatFileSize(file.size)+'). Kokeile alle 4 MB.';
+    }
+    status.textContent='⚠ '+failMsg;
     status.style.color='var(--accent2)';
   }
 }
@@ -1053,15 +1258,9 @@ function syncPayloadFromForm(){
   }
   var skEl=document.getElementById('d_skills');
   if(skEl) parseSkills(skEl.value);
-  var exTa=document.getElementById('d_experience');
-  if(exTa){
-    P.experience=exTa.value.trim()
-      ? exTa.value.trim().split('\n').filter(Boolean).map(function(line){
-          var parts=line.split('·').map(function(p){return p.trim();});
-          return {role:parts[0]||'',company:parts[1]||'',years:parts[2]||'',desc:parts[3]||''};
-        })
-      : [];
-  }
+  var laEl=document.getElementById('d_languages');
+  if(laEl) parseLanguages(laEl.value);
+  syncExperienceFromEditor();
   if(!slugManuallyEdited) suggestSlugFromName();
 }
 
@@ -1244,6 +1443,7 @@ document.addEventListener('DOMContentLoaded',async function(){
       }
       syncDetailsFields();
       syncFormFields();
+      renderExperienceEditor();
       restoreThemePicker();
       updateSlugUi();
       loadPortfolioNotifications();
