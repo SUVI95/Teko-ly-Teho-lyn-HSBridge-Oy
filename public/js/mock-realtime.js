@@ -1,18 +1,19 @@
 /**
- * Live mock interview — conversational gpt-realtime-2 via WebRTC.
- * Manual turn control: AI speaks only when triggered; waits for validated user answers.
+ * Live mock interview — 4 turns: intro (name+background) + 3 personalized behavioral Qs.
  */
 (function (global) {
   'use strict';
 
-  var DEFAULT_TURNS = 5;
+  var DEFAULT_TURNS = 4;
   var ECHO_GUARD_MS = 1500;
   var MIN_ANSWER_LEN = 2;
+  var MIN_INTRO_LEN = 12;
 
-  function isMeaningfulAnswer(text) {
+  function isMeaningfulAnswer(text, phaseId) {
     var t = String(text || '').trim();
     if (t.length < MIN_ANSWER_LEN) return false;
     if (/^(äh+|öh+|hm+|hmm+|mmm+|ja|joo|ok|okay|no|\.+|,+|!+|\?+)$/i.test(t)) return false;
+    if (phaseId === 'intro' && t.length < MIN_INTRO_LEN) return false;
     return true;
   }
 
@@ -50,6 +51,15 @@
     return this.phases[index] || { id: 'turn', label: 'Kysymys ' + (index + 1), tag: '' };
   };
 
+  MockRealtimeInterview.prototype.buildContext = function (lastAnswer) {
+    return {
+      lastAnswer: lastAnswer || '',
+      intro: this.userAnswers.intro || '',
+      q1: this.userAnswers.q1 || '',
+      q2: this.userAnswers.q2 || ''
+    };
+  };
+
   MockRealtimeInterview.prototype.sendEvent = function (event) {
     if (this.dc && this.dc.readyState === 'open') {
       this.dc.send(JSON.stringify(event));
@@ -66,46 +76,43 @@
   };
 
   MockRealtimeInterview.prototype.buildResponseInstructions = function (phase, ctx) {
+    var intro = ctx.intro || '';
     var last = ctx.lastAnswer || '';
-    var name = ctx.candidateName || last;
 
     if (phase === 0) {
       return [
-        'Tee lyhyt lämmin tervehdys suomeksi (max 1 lause).',
-        'Kysy VAIN hakijan nimi — ei mitään muuta.',
-        'Lopeta puheenvuoro heti kysymyksen jälkeen. Odota hiljaa vastausta.'
+        'Tee lyhyt lämmin tervehdys suomeksi (max 1 lause), esim. "Hei, tervetuloa — mukava tavata."',
+        'Kysy YHDESSÄ yhdessä kysymyksessä: mikä on hakijan nimi, ja pyydä häntä kertomaan lyhyesti itsestään ja taustastaan — mitä on tehnyt, opiskellut tai kokemusta.',
+        'Max 3 lausetta yhteensä. Älä esitä muita kysymyksiä. Lopeta — odota hiljaa pitkää vastausta.'
       ].join(' ');
     }
     if (phase === 1) {
       return [
-        'Hakija sanoi nimekseen: "' + last + '".',
-        'Sano lyhyesti "Mukava tutustua, ' + last + '." (tai vastaava).',
-        'Kysy VAIN yksi kysymys taustasta: mistä tulee, mitä on tehnyt tai opiskellut.',
-        'Max kaksi lausetta yhteensä. Lopeta — odota hiljaa.'
+        'Hakija esittäytyi ja kertoi taustastaan: "' + intro + '".',
+        'Analysoi mitä hän kertoi — työ, opiskelu, harrastukset, kokemus.',
+        'Anna 1 lyhyt luonnollinen reaktio ("kiitos, mukava kuulla").',
+        'Generoi YKSI vaikea STAR-kysymys joka liittyy suoraan hänen taustaansa.',
+        'Esim. "Mainitsit että olit [X] — kerro tilanteesta jossa tilanne kärjistyi tai paine kasvoi."',
+        'Pyydä tilanne, tehtävä, toiminta ja tulos. Vain yksi kysymys. Lopeta — odota.'
       ].join(' ');
     }
     if (phase === 2) {
       return [
-        'Hakijan nimi: ' + name + '. Tausta: "' + last + '".',
-        'Anna yksi lyhyt reaktio ("joo", "selvä", "mukava kuulla").',
-        'Kysy VAIN yksi vaikea STAR-kysymys joka liittyy hänen taustaan.',
-        'Lopeta — odota hiljaa vastausta.'
+        'Hakijan esittäytyminen: "' + intro + '".',
+        'Edellinen vastaus (STAR): "' + last + '".',
+        'Lyhyt reaktio (1 lause).',
+        'Generoi YKSI kysymys virheestä tai epäonnistumisesta joka liittyy hänen taustaan.',
+        'Esim. "Kun olit [X], kerro tilanteesta jossa asiat menivät pieleen — mitä tapahtui ja mitä opit."',
+        'Vain yksi kysymys. Lopeta — odota.'
       ].join(' ');
     }
     if (phase === 3) {
       return [
-        'Hakijan tausta: "' + (ctx.background || '') + '". Edellinen vastaus: "' + last + '".',
+        'Hakijan esittäytyminen: "' + intro + '".',
+        'Edellinen vastaus: "' + last + '".',
         'Lyhyt reaktio (1 lause).',
-        'Kysy VAIN yksi kysymys virheestä tai epäonnistumisesta taustaan liittyen.',
-        'Lopeta — odota hiljaa.'
-      ].join(' ');
-    }
-    if (phase === 4) {
-      return [
-        'Hakijan tausta: "' + (ctx.background || '') + '". Edellinen vastaus: "' + last + '".',
-        'Lyhyt reaktio (1 lause).',
-        'Kysy VAIN yksi kysymys paineen alla tai eri mieltä olemisesta.',
-        'Lopeta — odota hiljaa.'
+        'Generoi YKSI kysymys paineen alla tai eri mieltä olemisesta — esimiehen, kollegan tai asiakkaan kanssa.',
+        'Kytke kysymys siihen mitä hakija kertoi taustastaan. Vain yksi kysymys. Lopeta — odota.'
       ].join(' ');
     }
     return 'Hakija vastasi viimeiseen kysymykseen. Kiitä lyhyesti: "Kiitos — hyvä keskustelu." Älä kysy mitään lisää. Älä anna palautetta.';
@@ -134,19 +141,23 @@
   MockRealtimeInterview.prototype.handleUserTranscript = function (transcript) {
     if (!this.awaitingUserAnswer || this.aiResponding || this.awaitingWrapUp) return;
     if (Date.now() - this.responseDoneAt < ECHO_GUARD_MS) return;
-    if (!isMeaningfulAnswer(transcript)) {
-      this.onStatus('En kuullut selvästi — vastaa uudelleen kun olet valmis.');
-      return;
-    }
 
     var qIndex = this.answerCount;
     if (qIndex >= this.expectedTurns) return;
-
     var phase = this.phaseAt(qIndex);
-    var question = this.pendingRecruiterText || this.lastAssistantText || '';
 
+    if (!isMeaningfulAnswer(transcript, phase.id)) {
+      if (phase.id === 'intro') {
+        this.onStatus('Kerro nimesi ja vähän taustastasi — odota hetki ja vastaa uudelleen.');
+      } else {
+        this.onStatus('En kuullut selvästi — vastaa uudelleen kun olet valmis.');
+      }
+      return;
+    }
+
+    var question = this.pendingRecruiterText || this.lastAssistantText || '';
     this.userAnswers[phase.id] = transcript;
-    if (phase.id === 'name') this.userAnswers.candidateName = transcript;
+    if (phase.id === 'intro') this.userAnswers.intro = transcript;
 
     this.answerCount++;
     this.onUserTranscript({
@@ -159,12 +170,7 @@
     });
 
     this.pendingRecruiterText = '';
-
-    var ctx = {
-      lastAnswer: transcript,
-      candidateName: this.userAnswers.candidateName || this.userAnswers.name || '',
-      background: this.userAnswers.background || ''
-    };
+    var ctx = this.buildContext(transcript);
 
     if (this.answerCount >= this.expectedTurns) {
       this.awaitingWrapUp = true;
@@ -229,7 +235,10 @@
 
       this.awaitingUserAnswer = true;
       var waitingPhase = this.phaseAt(this.answerCount);
-      this.onStatus('Sinun vuoro — vastaa kun olet valmis. Ota aikaa miettiä.');
+      var waitMsg = waitingPhase.id === 'intro'
+        ? 'Sinun vuoro — kerro nimesi ja vähän itsestäsi sekä taustastasi. Ota aikaa.'
+        : 'Sinun vuoro — vastaa kun olet valmis. Ota aikaa miettiä.';
+      this.onStatus(waitMsg);
       this.onPhaseChange({
         phase: waitingPhase.id,
         label: waitingPhase.label,

@@ -970,7 +970,6 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
         <div class="mock-q-dot"></div>
         <div class="mock-q-dot"></div>
         <div class="mock-q-dot"></div>
-        <div class="mock-q-dot"></div>
       </div>
       <span class="mock-q-label" id="mockQLabel">Valmis aloittamaan</span>
       <span class="mock-q-tag" id="mockQTag" style="display:none"></span>
@@ -1010,7 +1009,7 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
       <span class="voice-timer" id="mockTimer">0:00</span>
     </div>
     <div style="padding:0 28px 16px">
-      <div class="voice-status" id="mockStatus">Paina "Aloita haastattelu" — rekrytoija kysyy ensin nimesi</div>
+      <div class="voice-status" id="mockStatus">Paina "Aloita haastattelu" — rekrytoija pyytää ensin esittäytymään</div>
       <div id="mockAudioMount" aria-hidden="true"></div>
     </div>
   </div>
@@ -2531,8 +2530,12 @@ function voiceStop(id) {
 // ══════════════════════════════════════════════════════
 // MOCK INTERVIEW — live conversation or classic fallback
 // ══════════════════════════════════════════════════════
-const MOCK_LIVE_TURNS = 5;
+const MOCK_LIVE_TURNS = 4;
 const MOCK_CLASSIC_QUESTIONS = [
+  {
+    tag: 'Esittäytyminen',
+    text: 'Kerro nimesi ja vähän itsestäsi — mistä tulet, mitä olet tehnyt tai opiskellut, ja mikä on taustasi.'
+  },
   {
     tag: 'STAR',
     text: 'Kerro tilanteesta, jossa tilanne kärjistyi — esimerkiksi tyytymätön asiakas, erimielisyys tiimin kanssa tai paine deadlinen alla. Käytä STAR-rakennetta: tilanne, tehtävä, mitä sinä teit, tulos.'
@@ -2615,7 +2618,7 @@ function resetMockSessionState() {
   updateMockDots();
   renderMockTimeline();
   if (mockLiveActive) {
-    updateMockLiveUI({ label: 'Valmis aloittamaan', recruiterText: 'Paina Aloita — rekrytoija kysyy ensin nimesi.' });
+    updateMockLiveUI({ label: 'Valmis aloittamaan', recruiterText: 'Paina Aloita — rekrytoija pyytää ensin esittäytymään.' });
   } else {
     updateMockQuestionUI(0);
   }
@@ -2701,7 +2704,7 @@ async function mockStartLive() {
         question: data.question,
         transcript: data.transcript
       };
-      if (data.phase === 'name') S.mockCandidateName = data.transcript;
+      if (data.phase === 'intro') S.mockCandidateName = data.transcript.split(/[\s,—–-]+/)[0] || data.transcript;
       mockDoneCount = data.index + 1;
       mockQ = mockDoneCount;
       updateMockDots();
@@ -2755,12 +2758,12 @@ function mockStopQuestionAudio() {
 function mockSpeechInput(plain, qIndex) {
   const last = MOCK_CLASSIC_QUESTIONS.length - 1;
   if (qIndex === 0) {
-    return ['Hei, tervetuloa — mukava tavata.', 'Mikä sinun nimesi on?', plain].join(' ');
+    return ['Hei, tervetuloa — mukava tavata.', plain].join(' ');
   }
   if (qIndex === last) {
     return ['Okei, viimeinen kysymys — tämä on vaikea.', plain].join(' ');
   }
-  return ['Kiitos.', 'Hetki...', 'Seuraava kysymys:', plain].join(' ');
+  return ['Kiitos.', 'Seuraava kysymys:', plain].join(' ');
 }
 
 function renderMockTimeline(activeIndex) {
