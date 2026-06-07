@@ -16,6 +16,7 @@
     this.onAssistantText = options.onAssistantText || function () {};
     this.onComplete = options.onComplete || function () {};
     this.onError = options.onError || function () {};
+    this.onRemoteAudio = options.onRemoteAudio || function () {};
 
     this.pc = null;
     this.dc = null;
@@ -29,7 +30,21 @@
     this.deliveryHint = options.deliveryHint || '';
     this.pendingRecruiterText = '';
     this.lastAssistantText = '';
+    this.remoteAudioStarted = false;
   }
+
+  MockRealtimeInterview.prototype.tryStartConversation = function () {
+    if (this.started) return;
+    this.started = true;
+    this.onStatus('Rekrytoija aloittaa — kuuntele...');
+    this.onPhaseChange({ phase: 'intro', label: 'Tutustuminen', recruiterText: '' });
+    this.sendEvent({
+      type: 'response.create',
+      response: {
+        instructions: 'Aloita lyhyellä lämpimällä tervehdyksellä ja kysy hakijan nimi. Vain yksi kysymys — odota vastausta.'
+      }
+    });
+  };
 
   MockRealtimeInterview.prototype.phaseAt = function (index) {
     return this.phases[index] || { id: 'turn', label: 'Kysymys ' + (index + 1), tag: '' };
@@ -44,18 +59,11 @@
   MockRealtimeInterview.prototype.handleServerEvent = function (event) {
     if (!event || !event.type) return;
 
-    if (event.type === 'session.created' || event.type === 'session.updated') {
-      if (!this.started) {
-        this.started = true;
-        this.onStatus('Rekrytoija aloittaa — kuuntele...');
-        this.onPhaseChange({ phase: 'intro', label: 'Tutustuminen', recruiterText: '' });
-        this.sendEvent({
-          type: 'response.create',
-          response: {
-            instructions: 'Aloita lyhyellä lämpimällä tervehdyksellä ja kysy hakijan nimi. Vain yksi kysymys — odota vastausta.'
-          }
-        });
-      }
+    if (event.type === 'session.created') {
+      this.tryStartConversation();
+      return;
+    }
+    if (event.type === 'session.updated') {
       return;
     }
 
@@ -136,7 +144,7 @@
         }
       });
     }
-    this.onStatus('Yhteys valmis — rekrytoija aloittaa pian...');
+    this.tryStartConversation();
   };
 
   MockRealtimeInterview.prototype.setupRemoteAudio = function (stream) {
@@ -145,6 +153,10 @@
     audio.srcObject = stream;
     audio.volume = 1;
     audio.muted = false;
+    if (!this.remoteAudioStarted) {
+      this.remoteAudioStarted = true;
+      this.onRemoteAudio();
+    }
     const playPromise = audio.play();
     if (playPromise && typeof playPromise.catch === 'function') {
       playPromise.catch(function () {});
@@ -160,16 +172,6 @@
     }
 
     this.onStatus('Yhdistetään live-rekrytoijaan...');
-
-    try {
-      const cfgRes = await fetch('/api/ai/realtime/config', { credentials: 'include' });
-      if (cfgRes.ok) {
-        const cfg = await cfgRes.json();
-        if (cfg.deliveryHint) this.deliveryHint = cfg.deliveryHint;
-        if (Array.isArray(cfg.phases)) this.phases = cfg.phases;
-        if (cfg.expectedTurns) this.expectedTurns = cfg.expectedTurns;
-      }
-    } catch (e) {}
 
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
@@ -191,7 +193,11 @@
       if (e.streams && e.streams[0]) self.setupRemoteAudio(e.streams[0]);
     };
 
-    const ms = await navigator.mediaDevices.getUserMedia({
+    const cfgPromise = fetch('/api/ai/realtime/config', { credentials: 'include' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+
+    const micPromise = navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
@@ -199,6 +205,15 @@
         channelCount: 1
       }
     });
+
+    const [cfg, ms] = await Promise.all([cfgPromise, micPromise]);
+
+    if (cfg) {
+      if (cfg.deliveryHint) this.deliveryHint = cfg.deliveryHint;
+      if (Array.isArray(cfg.phases)) this.phases = cfg.phases;
+      if (cfg.expectedTurns) this.expectedTurns = cfg.expectedTurns;
+    }
+
     this.mediaStream = ms;
     ms.getTracks().forEach(function (track) {
       pc.addTrack(track, ms);
