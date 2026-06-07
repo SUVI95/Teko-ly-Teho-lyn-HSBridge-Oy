@@ -471,6 +471,9 @@ app.get('/module/:moduleId', async (req, res) => {
     }
   }
   if (ADMIN_ONLY_MODULE_IDS.has(moduleId) && !viewerIsAdmin) {
+    if (moduleId === 'moduuli-ai-verkkosivustotyokalut') {
+      return res.redirect(302, '/module/moduuli-elava-cv');
+    }
     return res.redirect(302, '/');
   }
 

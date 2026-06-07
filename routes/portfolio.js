@@ -5,8 +5,20 @@ const { authenticateToken } = require('../middleware/auth');
 const { makePreviewToken, verifyPreviewToken } = require('../lib/preview-token');
 const { notifyVisit, notifyContact, notifyCvDownload } = require('../lib/portfolio-notify');
 const { portfolioPublicUrl } = require('../lib/portfolio-public-url');
+const { portfolioSourceMeta } = require('../lib/portfolio-source');
+
+/** Portfolio API — used exclusively by moduuli-elava-cv (student_portfolios table). */
 
 const router = express.Router();
+
+function withPortfolioUrls(row) {
+  if (!row) return row;
+  return {
+    ...row,
+    public_url: portfolioPublicUrl(row.slug),
+    ...portfolioSourceMeta()
+  };
+}
 
 const photoUpload = multer({
   storage: multer.memoryStorage(),
@@ -198,7 +210,8 @@ router.post('/save', authenticateToken, async (req, res) => {
       success: true,
       slug,
       preview_token: makePreviewToken(slug, userId),
-      public_url: portfolioPublicUrl(slug)
+      public_url: portfolioPublicUrl(slug),
+      ...portfolioSourceMeta()
     });
   } catch (e) {
     if (e.status) return res.status(e.status).json({ error: e.message });
@@ -220,7 +233,8 @@ router.post('/publish', authenticateToken, async (req, res) => {
       success: true,
       slug,
       published: !!req.body.published,
-      public_url: portfolioPublicUrl(slug)
+      public_url: portfolioPublicUrl(slug),
+      ...portfolioSourceMeta()
     });
   } catch (e) { console.error('Portfolio publish:', e); res.status(500).json({ error: 'Virhe' }); }
 });
@@ -257,10 +271,9 @@ router.get('/mine', authenticateToken, async (req, res) => {
        template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo,
        cv_filename, (cv_bytes IS NOT NULL) AS has_cv,
        created_at, updated_at FROM student_portfolios WHERE user_id=$1`, [req.user.id]);
-    const portfolio = r.rows[0] || null;
+    const portfolio = r.rows[0] ? withPortfolioUrls(r.rows[0]) : null;
     if (portfolio) {
       portfolio.preview_token = makePreviewToken(portfolio.slug, req.user.id);
-      portfolio.public_url = portfolioPublicUrl(portfolio.slug);
     }
     res.json({ portfolio });
   } catch (e) { res.status(500).json({ error: 'Virhe' }); }

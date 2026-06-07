@@ -1,4 +1,4 @@
-/* Elävä CV — portfolio-moduuli (moduuli-ai-verkkosivustotyokalut) */
+/* Legacy admin module (moduuli-ai-verkkosivustotyokalut) — localStorage + Lovable only; NOT student_portfolios API. */
 (function () {
   var portfolioData = {};
   try { portfolioData = JSON.parse(localStorage.getItem('portfolio_builder_data') || '{}'); } catch (e) { portfolioData = {}; }
