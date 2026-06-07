@@ -2740,7 +2740,12 @@ async function mockStartLive() {
   }, 1000);
 
   mockRealtime = new MockRealtimeInterview({
-    onStatus: (msg) => { document.getElementById('mockStatus').textContent = msg; },
+    onStatus: (msg) => {
+      document.getElementById('mockStatus').textContent = msg;
+      const waiting = /sinun vuoro/i.test(msg);
+      document.getElementById('mockQSpeaking')?.classList.toggle('hide', waiting);
+      document.getElementById('mockRipple')?.classList.toggle('active', !waiting);
+    },
     onRemoteAudio: () => { mockStopBridgeAudio(); },
     onPhaseChange: (info) => {
       mockQ = mockDoneCount;
@@ -2766,7 +2771,6 @@ async function mockStartLive() {
         tag: data.tag,
         recruiterText: data.transcript
       });
-      document.getElementById('mockStatus').textContent = 'Vastaus tallennettu ↑ — rekrytoija jatkaa...';
       try { saveProgress(); } catch (e) {}
     },
     onAssistantText: (text) => {
@@ -2776,7 +2780,6 @@ async function mockStartLive() {
         tag: document.getElementById('mockQTag')?.textContent || '',
         recruiterText: text
       });
-      document.getElementById('mockQSpeaking')?.classList.add('hide');
     },
     onComplete: () => { mockFinishLiveSession(); },
     onError: (err) => console.warn('[mock-live]', err)

@@ -129,7 +129,12 @@ function buildRealtimeSessionConfig() {
     output_modalities: ['audio', 'text'],
     audio: {
       input: {
-        turn_detection: { type: 'semantic_vad' },
+        turn_detection: {
+          type: 'semantic_vad',
+          eagerness: 'low',
+          create_response: false,
+          interrupt_response: false
+        },
         transcription: { model: 'gpt-4o-mini-transcribe', language: 'fi' }
       },
       output: {
@@ -594,8 +599,7 @@ router.get('/realtime/config', (req, res) => {
     classicQuestions: MOCK_CLASSIC_QUESTIONS,
     deliveryHint: [
       'Puhu selkeästi ja lämpimästi — kuin sama huone, ei puhelimesta eikä tunnelista.',
-      'Läheltä kuultava ääni, luonnollinen hengitys, ei robotti eikä uutistenlukija.',
-      'Keskustele reaaliaikaisesti: kysy nimi, sitten tausta, sitten kolme taustaan sidottua vaikeaa kysymystä.'
+      'Kysy yksi asia kerrallaan ja odota vastausta. Älä kiirehdi.'
     ].join(' ')
   });
 });
