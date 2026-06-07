@@ -415,8 +415,8 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
   <div id="cvUploadZone" style="border:2px dashed rgba(184,134,11,.35);border-radius:var(--r14);padding:16px 20px;text-align:center;cursor:pointer;margin-bottom:10px;transition:all .2s" onclick="document.getElementById('cvFileS2').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor='rgba(184,134,11,.35)'" ondrop="handleCVDropS2(event)">
     <div style="font-size:1.3rem;margin-bottom:4px">📄</div>
     <strong style="display:block;font-size:14px;color:var(--ink);margin-bottom:2px">Lataa CV (PDF tai TXT)</strong>
-    <span style="font-size:13px;color:var(--ink3)">Klikkaa tai vedä tiedosto tähän</span>
-    <input type="file" id="cvFileS2" accept=".pdf,.txt" style="display:none" onchange="uploadCVS2(this.files[0])">
+    <span style="font-size:13px;color:var(--ink3)">Klikkaa tai vedä tiedosto tähän · tekstipohjainen PDF toimii parhaiten</span>
+    <input type="file" id="cvFileS2" accept=".pdf,.txt,.doc,.docx,application/pdf,text/plain" style="display:none" onchange="uploadCVS2(this.files[0])">
   </div>
   <div id="cvS2Status" style="display:none;font-size:13.5px;padding:.6rem 1rem;border-radius:var(--r10);margin-bottom:12px;"></div>
 
@@ -1223,27 +1223,45 @@ function apiBasePath(){
 }
 
 function applyCVFieldsS2(fields,force){
-  if(!fields)return false;
   let filled=false;
-  const skills=Array.isArray(fields.skills)?fields.skills.filter(Boolean):[];
-  skills.slice(0,5).forEach((skill,i)=>{
-    const el=document.getElementById('sk'+(i+1));
-    if(el&&skill&&(force||!String(el.value||'').trim())){el.value=skill;filled=true;}
-  });
+  if(fields){
+    const skills=Array.isArray(fields.skills)?fields.skills.filter(Boolean):[];
+    skills.slice(0,5).forEach((skill,i)=>{
+      const el=document.getElementById('sk'+(i+1));
+      if(el&&skill&&(force||!String(el.value||'').trim())){el.value=skill;filled=true;}
+    });
+    const ta=document.getElementById('storyTa');
+    const storyParts=[
+      String(fields.bio||'').trim(),
+      String(fields.experience||'').trim(),
+      String(fields.pride||'').trim()
+    ].filter(Boolean);
+    const storyText=storyParts.join(' ');
+    if(ta&&storyText&&(force||!String(ta.value||'').trim())){
+      ta.value=storyText;
+      S.story=storyText;
+      filled=true;
+    }
+  }
   const ta=document.getElementById('storyTa');
-  const storyParts=[String(fields.experience||'').trim(),String(fields.pride||'').trim()].filter(Boolean);
-  const storyText=storyParts.join(' ');
-  if(ta&&storyText&&(force||!String(ta.value||'').trim())){
-    ta.value=storyText;
-    S.story=storyText;
-    filled=true;
-  } else if(ta&&!String(ta.value||'').trim()&&S.cvExtractedS2){
+  if(ta&&!String(ta.value||'').trim()&&S.cvExtractedS2){
     ta.value=S.cvExtractedS2.slice(0,1200);
     S.story=ta.value;
     filled=true;
   }
   checkStory();
   return filled;
+}
+
+function showCVS2Partial(fileName,message){
+  const zone=document.getElementById('cvUploadZone');
+  const status=document.getElementById('cvS2Status');
+  if(!zone||!status)return;
+  const msg=message||'Emme voineet lukea CV:tä automaattisesti. Kirjoita taustasi alle — se riittää.';
+  status.style.cssText='display:block;font-size:13.5px;padding:.6rem 1rem;border-radius:10px;margin-bottom:12px;background:var(--gold-lt);border:1px solid var(--gold);color:var(--gold-dk)';
+  status.innerHTML='✓ <strong>'+fileName+'</strong> vastaanotettu. '+msg;
+  zone.style.borderColor='var(--gold)';
+  zone.innerHTML='<div style="font-size:1rem;color:var(--gold-dk);font-weight:600">✓ '+fileName+' · täydennä tarina alle</div>';
 }
 
 function showCVS2Success(fileName,chars,parsed){
@@ -1274,15 +1292,33 @@ async function uploadCVS2(file){
   status.style.cssText='display:block;font-size:13.5px;padding:.6rem 1rem;border-radius:10px;margin-bottom:12px;background:var(--gold-lt);border:1px solid var(--gold);color:var(--gold-dk)';
   status.textContent='⏳ Luetaan '+file.name+'...';
   zone.style.borderColor='var(--gold)';
+  S.cvFileName=file.name;
   const fd=new FormData();fd.append('file',file);
+  const base=apiBasePath();
   try{
-    const base=apiBasePath();
     const r=await fetch((window.location.origin||'')+base+'/api/ai/cv-extract-text',{method:'POST',credentials:'include',body:fd});
-    const d=await r.json();
-    if(!r.ok||!d.text)throw new Error(d.error||'Lukeminen epäonnistui');
-    window._cvExtractedS2=d.text;
-    S.cvExtractedS2=d.text;
-    S.cvFileName=file.name;
+    let d={};
+    try{d=await r.json();}catch(jsonErr){
+      throw new Error('Palvelin ei vastannut odotetulla tavalla. Kokeile pienempää tiedostoa tai kirjoita tarina alle.');
+    }
+    if(!r.ok)throw new Error(d.error||d.message||('Virhe '+r.status));
+
+    const text=String(d.text||'').trim();
+    const plainLen=text.replace(/\s/g,'').length;
+    if(text){
+      window._cvExtractedS2=text;
+      S.cvExtractedS2=text;
+    }
+
+    if(!text||plainLen<40){
+      showCVS2Partial(file.name,d.message||'Skannattu tai kuva-PDF ei aina toimi — kirjoita taustasi alle, se riittää.');
+      applyCVFieldsS2(null,true);
+      try{saveProgress();}catch(e){}
+      if(polkuWorkApi&&typeof polkuWorkApi.saveNow==='function'){
+        try{await polkuWorkApi.saveNow();}catch(e2){}
+      }
+      return;
+    }
 
     status.textContent='⏳ AI poimii tiedot CV:stä...';
     let parsed=false;
@@ -1291,20 +1327,22 @@ async function uploadCVS2(file){
         method:'POST',
         credentials:'include',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({text:d.text})
+        body:JSON.stringify({text:text})
       });
       const pd=await pr.json();
       if(pr.ok&&pd.fields){
         applyCVFieldsS2(pd.fields,true);
         S.cvParsedAt=new Date().toISOString();
         parsed=true;
+      }else{
+        applyCVFieldsS2(null,true);
       }
     }catch(parseErr){
       console.warn('[cv-parse]',parseErr);
       applyCVFieldsS2(null,true);
     }
 
-    showCVS2Success(file.name,d.chars||d.text.length,parsed);
+    showCVS2Success(file.name,d.chars||text.length,parsed);
     try{saveProgress();}catch(e){}
     if(polkuWorkApi&&typeof polkuWorkApi.saveNow==='function'){
       try{await polkuWorkApi.saveNow();}catch(e2){}
