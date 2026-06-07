@@ -709,10 +709,10 @@ router.post('/mock-feedback', async (req, res) => {
   }
 });
 
-// OpenAI API endpoint for image generation (DALL-E 3)
+// OpenAI API endpoint for image generation (GPT Image — DALL-E 3 retired May 2026)
 router.post('/image', async (req, res) => {
   try {
-    const { prompt, size = '1024x1024', quality = 'standard' } = req.body;
+    const { prompt, size = '1024x1024', quality = 'medium' } = req.body;
 
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
       return res.status(400).json({ error: 'Prompt is required' });
@@ -724,6 +724,17 @@ router.post('/image', async (req, res) => {
       return res.status(500).json({ error: 'AI service not configured' });
     }
 
+    const qualityMap = {
+      standard: 'medium',
+      hd: 'high',
+      low: 'low',
+      medium: 'medium',
+      high: 'high',
+      auto: 'auto'
+    };
+    const mappedQuality = qualityMap[String(quality).toLowerCase()] || 'medium';
+    const model = envTrim('OPENAI_IMAGE_MODEL') || 'gpt-image-2';
+
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
@@ -731,30 +742,41 @@ router.post('/image', async (req, res) => {
         'Authorization': `Bearer ${openaiApiKey}`
       },
       body: JSON.stringify({
-        model: 'dall-e-3',
+        model,
         prompt: prompt.trim(),
         n: 1,
         size,
-        quality
+        quality: mappedQuality
       })
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error('OpenAI image API error:', errorData);
+      let errorPayload = null;
+      try {
+        errorPayload = await response.json();
+      } catch (_) {
+        errorPayload = { error: { message: await response.text() } };
+      }
+      const message = errorPayload?.error?.message || 'OpenAI image generation failed';
+      console.error('OpenAI image API error:', errorPayload);
       return res.status(response.status).json({
         error: 'AI image service error',
-        details: errorData
+        message,
+        details: errorPayload
       });
     }
 
     const data = await response.json();
-    const imageUrl = data?.data?.[0]?.url;
+    const item = data?.data?.[0];
+    let imageUrl = item?.url || '';
+    if (!imageUrl && item?.b64_json) {
+      imageUrl = 'data:image/png;base64,' + item.b64_json;
+    }
     if (!imageUrl) {
-      return res.status(502).json({ error: 'No image URL returned from OpenAI' });
+      return res.status(502).json({ error: 'No image returned from OpenAI' });
     }
 
-    res.json({ imageUrl });
+    res.json({ imageUrl, model });
   } catch (error) {
     console.error('Error calling OpenAI image API:', error);
     res.status(500).json({

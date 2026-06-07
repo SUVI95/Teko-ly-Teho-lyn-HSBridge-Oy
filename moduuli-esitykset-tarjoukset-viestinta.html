@@ -621,7 +621,7 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 
       <!-- DALL-E BANNER -->
       <div style="background:var(--ink);border-radius:12px;padding:1.5rem;margin-top:1.5rem;">
-        <div style="font-family:'DM Mono',monospace;font-size:.65rem;color:rgba(255,255,255,.3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:.75rem;">DALL-E 3 — bannerin taustakuva</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.65rem;color:rgba(255,255,255,.3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:.75rem;">AI-kuva — bannerin taustakuva</div>
         <p style="font-size:.88rem;color:rgba(255,255,255,.6);line-height:1.65;margin-bottom:1rem;">Generoi ammattimainen kuva LinkedIn-bannerin taustaksi. Lataat sen ja lisäät tekstin Canvassa päälle.</p>
         <div class="form-group" style="margin-bottom:.75rem;">
           <label style="display:block;font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.4rem;">Kuvaus bannerille (tai käytä AI:n ehdotusta)</label>
@@ -629,7 +629,7 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
         </div>
         <div style="display:flex;gap:.65rem;flex-wrap:wrap;">
           <button class="btn-ghost-light" id="suggestBannerBtn" onclick="suggestBannerPrompt()">💡 Ehdota kuvaus</button>
-          <button class="btn-primary" id="generateBannerImageBtn" onclick="generateBannerImage()" style="background:#c75b3a;">🎨 Generoi kuva DALL-E:llä</button>
+          <button class="btn-primary" id="generateBannerImageBtn" onclick="generateBannerImage()" style="background:#c75b3a;">🎨 Generoi bannerin taustakuva</button>
         </div>
         <div id="bannerImageResult" style="margin-top:1rem;display:none;">
           <img id="bannerImage" src="" alt="LinkedIn bannerin taustakuva" style="width:100%;border-radius:8px;display:block;margin-bottom:.75rem;">
@@ -1711,10 +1711,10 @@ async function generateBannerImage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ prompt: promptText + ', wide format, LinkedIn banner, no text, no faces, professional', size: '1792x1024', quality: 'standard' })
+      body: JSON.stringify({ prompt: promptText + ', wide format, LinkedIn banner, no text, no faces, professional', size: '1536x1024', quality: 'medium' })
     });
     var d = await r.json();
-    if (!r.ok || !d.imageUrl) throw new Error(d.error || 'Kuva ei generoitunut');
+    if (!r.ok || !d.imageUrl) throw new Error(d.message || d.error || 'Kuva ei generoitunut');
     var img = document.getElementById('bannerImage');
     var dl = document.getElementById('bannerDownloadLink');
     img.src = d.imageUrl;
@@ -1726,7 +1726,7 @@ async function generateBannerImage() {
     alert('Kuvan generointi epäonnistui: ' + (e.message || 'Tuntematon virhe'));
   }
   loading.style.display = 'none';
-  btn.disabled = false; btn.textContent = '🎨 Generoi kuva DALL-E:llä';
+  btn.disabled = false; btn.textContent = '🎨 Generoi bannerin taustakuva';
 }
 
 /* ── STORY BRIEF GATE (kept for compat) ── */
