@@ -114,11 +114,11 @@ function realtimeModel() {
 }
 
 function realtimeVoice() {
-  return envTrim('OPENAI_REALTIME_VOICE') || 'ballad';
+  return envTrim('OPENAI_REALTIME_VOICE') || 'marin';
 }
 
 function ttsVoice() {
-  return envTrim('OPENAI_TTS_VOICE') || 'ballad';
+  return envTrim('OPENAI_TTS_VOICE') || 'marin';
 }
 
 function buildRealtimeSessionConfig() {
@@ -597,7 +597,7 @@ router.get('/realtime/config', (req, res) => {
     phases: MOCK_INTERVIEW_PHASES,
     expectedTurns: MOCK_INTERVIEW_TURN_COUNT,
     classicQuestions: MOCK_CLASSIC_QUESTIONS,
-    deliveryHint: 'Puhu kuin aikuinen suomalainen mies samassa huoneessa — rauhallinen, lämmin, luonnollinen. Yksi kysymys kerrallaan, odota vastausta.'
+    deliveryHint: 'Puhu kuin aikuinen suomalainen nainen samassa huoneessa — rauhallinen, lämmin, luonnollinen. Yksi kysymys kerrallaan, odota vastausta.'
   });
 });
 
