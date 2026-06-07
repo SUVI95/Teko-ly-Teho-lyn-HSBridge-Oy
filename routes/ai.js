@@ -415,14 +415,15 @@ router.post('/voice-interview', audioUpload.single('file'), async (req, res) => 
   }
 });
 
-/** TTS for mock interview questions (natural recruiter voice). */
+/** TTS for mock interview — human recruiter delivery (gpt-4o-mini-tts instructions). */
 const DEFAULT_TTS_INSTRUCTIONS = [
-  'You are a warm, experienced Finnish recruiter in a real job interview.',
-  'Speak naturally like a human — not a robot or newsreader.',
-  'Use a friendly, calm tone with gentle energy and a slight smile in your voice.',
-  'Allow natural breathing pauses between phrases. Vary intonation.',
-  'Sound encouraging and present, as if you genuinely want to hear the answer.',
-  'Do not rush. Do not sound monotone. No exaggerated acting or fake laughter.',
+  'Role: adult male Finnish recruiter in a relaxed face-to-face job interview.',
+  'Tone: warm, upbeat, genuinely friendly — you like people and it shows.',
+  'Energy: medium-high — engaged and lively, but still calm and professional, never hyper or shouty.',
+  'Human speech: conversational Finnish, not read-aloud text. Use natural rhythm, micro-pauses, and audible breaths between phrases.',
+  'Voice texture: smile in your voice. On a warm greeting, a brief soft chuckle or breathy "heh" once is welcome — subtle, never cartoonish.',
+  'Intonation: vary pitch — gentle rise on hello, curious and open on the question. Never monotone or robotic.',
+  'Avoid: newsreader cadence, GPS voice, rushed reading, flat delivery, exaggerated acting, constant laughing.',
   'Language: Finnish.'
 ].join(' ');
 
@@ -440,8 +441,8 @@ router.post('/speech', async (req, res) => {
 
     const voice = envTrim('OPENAI_TTS_VOICE') || 'onyx';
     const instructions = envTrim('OPENAI_TTS_INSTRUCTIONS') || DEFAULT_TTS_INSTRUCTIONS;
-    const speedRaw = parseFloat(envTrim('OPENAI_TTS_SPEED') || '0.96');
-    const speed = Number.isFinite(speedRaw) ? Math.min(1.2, Math.max(0.8, speedRaw)) : 0.96;
+    const speedRaw = parseFloat(envTrim('OPENAI_TTS_SPEED') || '1.02');
+    const speed = Number.isFinite(speedRaw) ? Math.min(1.2, Math.max(0.8, speedRaw)) : 1.02;
 
     const primaryModel = envTrim('OPENAI_TTS_MODEL') || 'gpt-4o-mini-tts-2025-03-20';
     const fallbackModel = 'gpt-4o-mini-tts';
