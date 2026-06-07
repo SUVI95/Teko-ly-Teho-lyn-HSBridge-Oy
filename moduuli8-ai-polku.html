@@ -300,6 +300,13 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
   </div>
 </div>
 
+<div class="resume-banner" id="resumeBanner">
+  <div class="resume-banner-inner">
+    <div class="resume-banner-text" id="resumeBannerText"></div>
+    <button class="resume-banner-btn" id="resumeBannerBtn" type="button">Jatka →</button>
+  </div>
+</div>
+
 <!-- ══ S1 — ALOITUS ══ -->
 <div class="screen active" id="s1">
   <div class="hero">
@@ -404,9 +411,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
     </div>
   </div>
 
-  <span class="lbl">Kerro taustastasi</span>
+  <span class="lbl">Kerro taustastasi — mitä enemmän kirjoitat, sitä parempi analyysi</span>
   <textarea id="storyTa" placeholder="Kerro työkokemuksistasi, harrastuksistasi, arjestasi. Mainitse myös jos hoidat lapsia, olet auttanut naapuria, toiminut vapaaehtoisena, oppinut uuden kielen tai järjestelmän..." rows="7" oninput="S.story=this.value;checkStory()"></textarea>
-  <div style="margin-top:5px;font-size:13.5px;color:var(--ink3)">Mitä konkreettisempi, sitä parempi. Luvut, paikat, tilanteet — kaikki auttaa.</div>
+  <div id="storyHint" style="margin-top:5px;font-size:13.5px;color:var(--red)"></div>
+  <div style="margin-top:4px;font-size:13px;color:var(--ink3)">Luvut, paikat, konkreettiset tilanteet auttavat eniten — "8 vuotta" on parempi kuin "kauan".</div>
 
   <div style="margin-top:16px">
     <button class="btn btn-gold btn-lg" id="analyzeBtn" onclick="analyzeSkills()" disabled>Kerro mitä näet minussa →</button>
@@ -653,9 +661,15 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
   </div>
 
   <div class="reveal-block" id="gapReveal">
+    <div class="note-gold note" style="margin-top:14px">
+      <strong>Ennen kuin jatkat — kirjoita yksi asia:</strong> Mitä teet tällä tiedolla? Onko jotain mitä voit lisätä tai muotoilla eri tavalla hakemuksessa?
+    </div>
+    <span class="lbl" style="margin-top:12px">Yksi konkreettinen asia jonka muutan hakemuksessani</span>
+    <textarea id="gapAction" placeholder="Esim: Lisään sanan 'projektinhallinta' koska se toistuu ilmoituksessa kolme kertaa. Tai: Kerron konkreettisesti siitä tilanteesta jossa johdin tiimiä — en vain sano 'osaan johtaa'." rows="3" oninput="S.gapAction=this.value;checkGapAction()"></textarea>
+    <div id="gapActionHint" style="font-size:13px;color:var(--ink3);margin-top:4px">Kirjoita jotain ennen kuin jatkat — edes yksi lause.</div>
     <div class="nav-row">
       <button class="btn btn-outline" onclick="go(6)">← Takaisin</button>
-      <button class="btn btn-gold btn-lg" onclick="go(8)">Testaa itse Claudella →</button>
+      <button class="btn btn-gold btn-lg" id="gapNextBtn" onclick="go(8)" disabled>Testaa itse Claudella →</button>
     </div>
   </div>
   <div class="nav-row" style="margin-top:20px;padding-top:0;border:none">
@@ -821,33 +835,35 @@ OMA TAUSTA / CV:
   <div class="mission-header">
     <span class="mh-eye">Missio 03 · Vaihe 2 / 2</span>
     <div class="mh-title">Rekrytoija lukee hakemuksesi</div>
-    <div class="mh-sub">Hän haluaa tietää lisää. Kolme kysymystä joita kysytään usein työhaastatteluissa — kaikilla aloilla.</div>
+    <div class="mh-sub">Hän kutsuu sinut haastatteluun. Kolme kysymystä — juuri tähän rooliin.</div>
   </div>
 
   <p>Vastaa kaikkiin kolmeen. <strong>Älä kopioi hakemuksesta — sano se omin sanoin.</strong> Rekrytoija kuulee eron.</p>
 
-  <div class="interview-q">
-    <span class="iq-num">Kysymys 1 / 3</span>
-    <div class="iq-text">"Kerro tilanteesta jossa jotain meni pieleen tai oli vaikea. Mitä tarkalleen tapahtui ja mitä teit?"</div>
-    <span class="iq-toggle" onclick="toggleWhy('iqw1')">💡 Mitä rekrytoija oikeasti etsii tällä kysymyksellä?</span>
-    <div class="iq-why" id="iqw1">Rekrytoija ei halua tietää onko sinulla ollut hankalia asiakkaita — hän tietää että on. Hän haluaa nähdä: otitko vastuun, pysyitkö rauhallisena, löysitkö ratkaisun? Paras vastaus: konkreettinen tilanne, mitä teit askel askeleelta, mikä oli lopputulos.</div>
-    <textarea class="iq-ta" id="iqa1" placeholder="Kerro konkreettisesti — tilanne, mitä teit, mikä oli tulos..." rows="4" oninput="S.intQ[0]=this.value;checkInt()"></textarea>
-  </div>
+  <div id="intQLoading" class="note-blue note">Ladataan haastattelukysymyksiä juuri tähän ilmoitukseen... <span class="dots"><span></span><span></span><span></span></span></div>
 
-  <div class="interview-q">
-    <span class="iq-num">Kysymys 2 / 3</span>
-    <div class="iq-text">"Kerro tilanteesta jossa oli kiire tai painetta. Miten priorisoit ja mitä teit?"</div>
-    <span class="iq-toggle" onclick="toggleWhy('iqw2')">💡 Mitä rekrytoija oikeasti etsii?</span>
-    <div class="iq-why" id="iqw2">Tällä testataan paineensietokykyä ja priorisointia. Kukaan ei odota ihmettä — rekrytoija haluaa kuulla että tiedät mitä teet kun kaikki tapahtuu yhtä aikaa. Kerro konkreettinen järjestys: ensin tämä, sitten tämä. Näytä että pysyt rauhallisena.</div>
-    <textarea class="iq-ta" id="iqa2" placeholder="Kerro mitä tekisit — konkreettinen järjestys..." rows="4" oninput="S.intQ[1]=this.value;checkInt()"></textarea>
-  </div>
-
-  <div class="interview-q">
-    <span class="iq-num">Kysymys 3 / 3</span>
-    <div class="iq-text">"Miksi haluat juuri tämän roolin — ei se mikä kuulostaa hyvältä, vaan rehellinen syy?"</div>
-    <span class="iq-toggle" onclick="toggleWhy('iqw3')">💡 Miksi tämä kysymys on vaikea?</span>
-    <div class="iq-why" id="iqw3">Useimmat sanovat "pidän ihmisistä" — se on tyhjä vastaus. Rekrytoija haluaa nähdä: onko tämä sinulle oikeasti luonteva ala? Rehellinen vastaus on parempi kuin klisee. Yleiset lauseet kuulostavat ulkoa opetelluilta.</div>
-    <textarea class="iq-ta" id="iqa3" placeholder="Anna rehellinen vastaus — ei kliseitä kuten 'pidän ihmisistä'..." rows="4" oninput="S.intQ[2]=this.value;checkInt()"></textarea>
+  <div id="intQContainer" style="display:none">
+    <div class="interview-q">
+      <span class="iq-num">Kysymys 1 / 3</span>
+      <div class="iq-text" id="iqText1">"Kerro tilanteesta jossa jotain meni pieleen tai oli vaikea. Mitä tarkalleen tapahtui ja mitä teit?"</div>
+      <span class="iq-toggle" onclick="toggleWhy('iqw1')">💡 Mitä rekrytoija oikeasti etsii tällä kysymyksellä?</span>
+      <div class="iq-why" id="iqw1">Rekrytoija ei halua tietää onko sinulla ollut hankalia tilanteita — hän tietää että on. Hän haluaa nähdä: otitko vastuun, pysyitkö rauhallisena, löysitkö ratkaisun? Paras vastaus: konkreettinen tilanne, mitä teit askel askeleelta, mikä oli lopputulos.</div>
+      <textarea class="iq-ta" id="iqa1" placeholder="Kerro konkreettisesti — tilanne, mitä teit, mikä oli tulos..." rows="4" oninput="S.intQ[0]=this.value;checkInt()"></textarea>
+    </div>
+    <div class="interview-q">
+      <span class="iq-num">Kysymys 2 / 3</span>
+      <div class="iq-text" id="iqText2">"Kerro tilanteesta jossa oli kiire tai painetta. Miten priorisoit ja mitä teit?"</div>
+      <span class="iq-toggle" onclick="toggleWhy('iqw2')">💡 Mitä rekrytoija oikeasti etsii?</span>
+      <div class="iq-why" id="iqw2">Tällä testataan paineensietokykyä ja priorisointia. Kukaan ei odota ihmettä — rekrytoija haluaa kuulla että tiedät mitä teet kun kaikki tapahtuu yhtä aikaa. Kerro konkreettinen järjestys: ensin tämä, sitten tämä.</div>
+      <textarea class="iq-ta" id="iqa2" placeholder="Kerro mitä tekisit — konkreettinen järjestys..." rows="4" oninput="S.intQ[1]=this.value;checkInt()"></textarea>
+    </div>
+    <div class="interview-q">
+      <span class="iq-num">Kysymys 3 / 3</span>
+      <div class="iq-text" id="iqText3">"Miksi haluat juuri tämän roolin — ei se mikä kuulostaa hyvältä, vaan rehellinen syy?"</div>
+      <span class="iq-toggle" onclick="toggleWhy('iqw3')">💡 Miksi tämä kysymys on vaikea?</span>
+      <div class="iq-why" id="iqw3">Useimmat sanovat "pidän ihmisistä" — se on tyhjä vastaus. Rekrytoija haluaa nähdä: onko tämä sinulle oikeasti luonteva ala? Rehellinen vastaus on parempi kuin klisee.</div>
+      <textarea class="iq-ta" id="iqa3" placeholder="Anna rehellinen vastaus — ei kliseitä kuten 'pidän ihmisistä'..." rows="4" oninput="S.intQ[2]=this.value;checkInt()"></textarea>
+    </div>
   </div>
 
   <div style="margin-top:16px">
@@ -1064,9 +1080,9 @@ const S = {
   pre:[5,5,5], post:[5,5,5],
   skills:[], story:'', aiFbT:'',
   strengths:[], evidence:['','',''],
-  jobPosting:'', manualKW:{hard:[],soft:[],phrases:[]}, atsAIT:'', gapAIT:'', atsInsight:'',
+  jobPosting:'', manualKW:{hard:[],soft:[],phrases:[]}, atsAIT:'', gapAIT:'', atsInsight:'', gapAction:'',
   appText:'', extResult:'', extFb:'',
-  intQ:['','',''], intFbT:'',
+  intQ:['','',''], intFbT:'', intQTexts:null,
   promptResult:''
 };
 const TOTAL=12;
@@ -1123,6 +1139,7 @@ function go(n){
   document.getElementById('navTitle').textContent=T[n]||'AI Polku';
   window.scrollTo({top:0,behavior:'smooth'});
   if(n===12)buildCompass();
+  if(n===10)generateIntQuestions();
   try{saveProgress();}catch(e){}
 }
 
@@ -1188,13 +1205,22 @@ const AI_COACH_SYS='Olet rennonlainen uravalmentaja. Kirjoitat suomeksi. Enintä
 function checkStory(){
   S.skills=[1,2,3,4,5].map(i=>document.getElementById('sk'+i)?.value.trim()).filter(Boolean);
   S.story=document.getElementById('storyTa')?.value||'';
-  document.getElementById('analyzeBtn').disabled=S.skills.length<3||S.story.length<30;
+  const storyWords=S.story.trim().split(/\s+/).filter(Boolean).length;
+  const btn=document.getElementById('analyzeBtn');
+  const hint=document.getElementById('storyHint');
+  if(S.skills.length<3||storyWords<25){
+    btn.disabled=true;
+    if(hint) hint.textContent=storyWords<25?`Kirjoita enemmän — ${storyWords} sanaa, tarvitaan vähintään 25 jotta analyysi toimii oikein.`:'Listaa vähintään 3 taitoa ensin.';
+  } else {
+    btn.disabled=false;
+    if(hint) hint.textContent='';
+  }
 }
 async function analyzeSkills(){
   document.getElementById('analyzeBtn').disabled=true;
   load('skillFbT');
-  const sys=AI_COACH_SYS+' Tehtävä: 2–3 piilotettua vahvuutta joita ei ole listassa — yksi lause per vahvuus, miksi se näkyy tarinassa. Ei roolilistoja, ei ylistystä.';
-  const txt=await ai(`Hakijan taidot: ${S.skills.join(', ')}.\nTarina: ${S.story}`,sys,280);
+  const sys='Olet rekrytoija joka tekee taitokarttoituksen. Kirjoitat suomeksi. Tehtävä: anna täsmälleen 5–7 riviä, yksi vahvuus per rivi muodossa "Vahvuuden nimi — lyhyt perustelu miksi se näkyy juuri tässä tarinassa (1 lause)". Vahvuuden nimi: 2–5 sanaa, täsmällinen, konkreettinen — ei "tiimityö" ellei tarina todella tue sitä. Ota huomioon ala jonka tarinan perusteella päättelet. Ei johdantoa, ei lopetusta, ei ylistystä — vain lista.';
+  const txt=await ai(`Henkilön listamat taidot: ${S.skills.join(', ')}.\n\nHenkilön kertomus omin sanoin:\n${S.story}`,sys,420);
   document.getElementById('skillFbT').textContent=txt||'Analyysiä ei saatavilla — tarkista yhteys.';
   S.aiFbT=txt;
   document.getElementById('skillFb').classList.add('show');
@@ -1204,22 +1230,40 @@ async function analyzeSkills(){
   document.getElementById('analyzeBtn').disabled=false;
   try{saveProgress();}catch(e){}
 }
-function buildStrengths(){
-  const defaults=[
-    ...S.skills.map(s=>({t:s,sub:'Oma arvio'})),
-    {t:'Paineensietokyky',sub:'Tekoäly löysi tarinastasi'},
-    {t:'Luotettavuus arjessa',sub:'Tekoäly löysi tarinastasi'},
-    {t:'Ongelmien ratkaisu itsenäisesti',sub:'Tekoäly löysi tarinastasi'},
-    {t:'Sopeutumiskyky uusiin tilanteisiin',sub:'Tekoäly löysi tarinastasi'},
-    {t:'Luotettavuus ja tarkkuus',sub:'Tekoäly löysi tarinastasi'},
-    {t:'Empatia vaikeissa tilanteissa',sub:'Tekoäly löysi tarinastasi'},
+function buildStrengths(aiText){
+  // Parse AI response into real strength items — fallback to skills if parsing fails
+  const aiItems=[];
+  if(aiText){
+    // Extract lines that look like strengths — bullets, numbered, or plain lines
+    const lines=aiText.split('\n').map(l=>l.replace(/^[\s•\-\*\d\.\)]+/,'').trim()).filter(l=>l.length>5&&l.length<120);
+    lines.forEach(line=>{
+      // Take first sentence as the label, rest as sub
+      const dot=line.indexOf('—');
+      const colon=line.indexOf(':');
+      const split=dot>0?dot:colon>0?colon:-1;
+      if(split>3){
+        aiItems.push({t:line.substring(0,split).trim(),sub:line.substring(split+1).trim().substring(0,90)||'Tekoäly löysi tarinastasi'});
+      } else {
+        aiItems.push({t:line.substring(0,60).trim(),sub:'Tekoäly löysi tarinastasi'});
+      }
+    });
+  }
+  // Deduplicate against user-listed skills
+  const userSkills=S.skills.map(s=>({t:s,sub:'Oma arvio — listasit itse'}));
+  const allItems=[
+    ...userSkills,
+    ...aiItems.slice(0,6).filter(ai=>!userSkills.some(u=>u.t.toLowerCase()===ai.t.toLowerCase()))
   ];
   const c=document.getElementById('strengthList');
-  c.innerHTML='<p style="font-size:15.5px;color:var(--ink2);margin-bottom:12px;font-weight:300">Valitse kolme — ne jotka tuntuvat todelta sinulle.</p>';
-  defaults.forEach((d)=>{
+  c.innerHTML='<p style="font-size:15.5px;color:var(--ink2);margin-bottom:12px;font-weight:300">Valitse täsmälleen kolme — ne jotka tuntuvat todelta sinulle. Älä valitse niitä jotka kuulostavat hyviltä — valitse ne jotka <em>ovat totta</em>.</p>';
+  if(allItems.length===0){
+    c.innerHTML+='<p style="color:var(--red);font-size:15px">Analyysi ei onnistunut — tarkista yhteys ja yritä uudelleen.</p>';
+    return;
+  }
+  allItems.forEach((d)=>{
     const div=document.createElement('div');
     div.className='strength-item';
-    div.innerHTML=`<div class="si-box"></div><div><div class="si-text">${d.t}</div><div class="si-sub">${d.sub}</div></div>`;
+    div.innerHTML=`<div class="si-box"></div><div><div class="si-text">${d.t}</div><div class="si-sub">${d.sub||''}</div></div>`;
     div.onclick=()=>selStrength(div,d.t);
     c.appendChild(div);
   });
@@ -1269,19 +1313,71 @@ async function runATS(){
   try{saveProgress();}catch(e){}
 }
 
-// S7
+function checkGapAction(){
+  S.gapAction=document.getElementById('gapAction')?.value||'';
+  const btn=document.getElementById('gapNextBtn');
+  const hint=document.getElementById('gapActionHint');
+  if(S.gapAction.trim().length>10){
+    if(btn) btn.disabled=false;
+    if(hint) hint.textContent='✓ Hyvä — jatka eteenpäin.';
+  } else {
+    if(btn) btn.disabled=true;
+    if(hint) hint.textContent='Kirjoita jotain ennen kuin jatkat — edes yksi lause.';
+  }
+}
 async function runGap(){
   document.getElementById('gapBtn').disabled=true;
   load('gapFbT');
-  const sys=AI_COACH_SYS+' Tehtävä: kolme bulletia — • sopii ilmoitukseen (yksi asia), • puuttuu tai heikko (yksi asia), • miten muotoilla yhden asian ilmoituksen sanoin. Älä listaa uudestaan vahvuuksia sellaisenaan.';
-  const prompt=`Hakijan vahvuudet: ${S.strengths.join(', ')}\nTarina: ${S.story}\nOma avainsanalista: ${[...S.manualKW.hard,...S.manualKW.soft].join(', ')}\n\nIlmoitus:\n${S.jobPosting}`;
-  const txt=await ai(prompt,sys,280);
+  const sys='Olet rekrytoija Suomessa. Kirjoitat suomeksi. Tee rehellinen vertailu hakijan ja ilmoituksen välillä. Rakenne täsmälleen näin — kolme osiota:\n\n✓ SOPII HYVIN (2–3 kohtaa): mitä hakijalla on joka istuu ilmoitukseen — perustele miksi\n⚠ PUUTTUU TAI HEIKKO (2–3 kohtaa): mitä ilmoituksessa vaaditaan mitä hakijalla ei ole tai ei sanonut riittävän selkeästi\n→ MITEN MUOTOILISIT (2–3 kohtaa): konkreettinen ohje miten kirjoittaa jokin puuttuva asia hakemukseen ilmoituksen sanoilla — älä keksi taitoja joita ei ole, muotoile vain ne joita on\n\nOle täsmällinen. Käytä ilmoituksen sanoja. Älä käytä yritysjargonaa.';
+  const prompt=`Hakijan vahvuudet: ${S.strengths.join(', ')}\nHakijan tarina: ${S.story}\nHakijan löytämät avainsanat: ${[...S.manualKW.hard,...S.manualKW.soft,...S.manualKW.phrases].join(', ')}\n\nTyöpaikkailmoitus:\n${S.jobPosting}`;
+  const txt=await ai(prompt,sys,480);
   document.getElementById('gapFbT').textContent=txt||'Analyysi ei saatavilla.';
   S.gapAIT=txt;
   document.getElementById('gapFb').classList.add('show');
   document.getElementById('gapReveal').classList.add('show');
   document.getElementById('gapBtn').disabled=false;
   try{saveProgress();}catch(e){}
+}
+
+// S10 — generate tailored questions from job posting
+let intQGenerated=false;
+function restoreIntQuestionsFromState(){
+  if(!S.intQTexts||S.intQTexts.length<3) return;
+  ['iqText1','iqText2','iqText3'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el&&S.intQTexts[i]){
+      const q=S.intQTexts[i];
+      el.textContent=q.startsWith('"')?q:'"'+q+'"';
+    }
+  });
+  intQGenerated=true;
+  const loading=document.getElementById('intQLoading');
+  const container=document.getElementById('intQContainer');
+  if(loading) loading.style.display='none';
+  if(container) container.style.display='block';
+}
+async function generateIntQuestions(){
+  if(intQGenerated&&S.intQTexts) return; // already done
+  if(!S.jobPosting||S.jobPosting.length<50){
+    document.getElementById('intQLoading').style.display='none';
+    document.getElementById('intQContainer').style.display='block';
+    return;
+  }
+  document.getElementById('intQLoading').style.display='block';
+  document.getElementById('intQContainer').style.display='none';
+  const sys='Olet suomalainen rekrytoija. Luo kolme haastattelukysymystä juuri tähän rooliin. Muoto: anna täsmälleen 3 riviä, yksi kysymys per rivi, alkaen sitaatilla. Kysymykset sopivat juuri tähän rooliin — ei yleisiä kysymyksiä. Ei numeroita, ei muuta tekstiä. Suomi.';
+  const txt=await ai(`Luo kolme haastattelukysymystä juuri tähän ilmoitukseen:\n\n${S.jobPosting.slice(0,900)}`,sys,280);
+  const lines=txt?txt.split('\n').map(l=>l.trim()).filter(l=>l.length>10):[];
+  if(lines.length>=3){
+    ['iqText1','iqText2','iqText3'].forEach((id,i)=>{
+      const el=document.getElementById(id);
+      if(el&&lines[i]) el.textContent=lines[i].startsWith('"')?lines[i]:'"'+lines[i]+'"';
+    });
+    S.intQTexts=lines.slice(0,3);
+    intQGenerated=true;
+  }
+  document.getElementById('intQLoading').style.display='none';
+  document.getElementById('intQContainer').style.display='block';
 }
 
 // S8
@@ -1558,10 +1654,12 @@ function applyPolkuData(d){
     }
   }
   try{checkStory();}catch(e){}
+  try{checkGapAction();}catch(e){}
   try{checkEvidence();}catch(e){}
   try{checkJob();}catch(e){}
   try{checkInt();}catch(e){}
   try{updateScore();}catch(e){}
+  try{restoreIntQuestionsFromState();}catch(e){}
   const screen=Math.min(TOTAL,Math.max(1,Number(d.curScreen)||1));
   go(screen);
   if(screen===12) buildCompass();
