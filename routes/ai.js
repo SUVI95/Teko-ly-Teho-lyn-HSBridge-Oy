@@ -4,11 +4,24 @@ const router = express.Router();
 const { fetch } = require('undici');
 const { extractPdfTextFromBuffer } = require('../lib/pdf-extract');
 const { buildMultipartForm } = require('../lib/multipart-form');
+const {
+  CV_MAX_BYTES,
+  isAllowedCvUpload,
+  multerErrorMessage
+} = require('../lib/portfolio-upload-limits');
 const { MOCK_INTERVIEW_PHASES, MOCK_INTERVIEW_TURN_COUNT, MOCK_CLASSIC_QUESTIONS, buildMockRealtimeInstructions } = require('../lib/mock-interview-questions');
 
 const cvUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024 }
+  limits: { fileSize: CV_MAX_BYTES },
+  fileFilter: (req, file, cb) => {
+    const check = isAllowedCvUpload({
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size
+    });
+    cb(check.ok ? null : new Error(check.error), check.ok);
+  }
 });
 
 const audioUpload = multer({
@@ -747,43 +760,66 @@ router.post('/image', async (req, res) => {
 });
 
 /** Extract plain text from CV upload (PDF or .txt) for Minna / portfolio modules. */
-router.post('/cv-extract-text', cvUpload.single('file'), async (req, res) => {
-  try {
-    if (!req.file || !req.file.buffer) {
-      return res.status(400).json({ error: 'Tiedosto puuttuu' });
+router.post('/cv-extract-text', (req, res) => {
+  cvUpload.single('file')(req, res, async (err) => {
+    if (err) {
+      const msg = err instanceof multer.MulterError
+        ? multerErrorMessage(err, 'cv')
+        : (err.message || 'CV:n lataus epäonnistui');
+      return res.status(err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({ error: msg });
     }
-    const name = (req.file.originalname || '').toLowerCase();
-    const mime = (req.file.mimetype || '').toLowerCase();
-    let text = '';
+    try {
+      if (!req.file || !req.file.buffer) {
+        return res.status(400).json({ error: 'Tiedosto puuttuu' });
+      }
+      const name = (req.file.originalname || '').toLowerCase();
+      const mime = (req.file.mimetype || '').toLowerCase();
+      let text = '';
 
-    if (mime === 'text/plain' || name.endsWith('.txt')) {
-      text = req.file.buffer.toString('utf8').trim();
-    } else if (mime === 'application/pdf' || name.endsWith('.pdf')) {
-      text = await extractPdfTextFromBuffer(req.file.buffer);
-    } else if (name.endsWith('.doc') || name.endsWith('.docx')) {
-      return res.status(400).json({
-        error: 'Word-tiedostoa ei voi lukea automaattisesti. Tallenna CV PDF-muodossa tai täytä kentät käsin.'
+      if (mime === 'text/plain' || name.endsWith('.txt')) {
+        text = req.file.buffer.toString('utf8').trim();
+      } else if (mime === 'application/pdf' || name.endsWith('.pdf')) {
+        try {
+          text = await extractPdfTextFromBuffer(req.file.buffer);
+        } catch (extractErr) {
+          console.warn('cv-extract-text PDF parse:', extractErr.message);
+          text = '';
+        }
+      } else if (name.endsWith('.doc') || name.endsWith('.docx')) {
+        return res.status(200).json({
+          text: '',
+          chars: 0,
+          partial: true,
+          stored: true,
+          message: 'Word-tiedosto tallennetaan, mutta tekstiä ei voi lukea automaattisesti. Täytä kentät käsin tai käytä PDF:ää.'
+        });
+      } else {
+        return res.status(400).json({ error: 'Tuetut tiedostot: PDF, TXT, DOC, DOCX' });
+      }
+
+      const minChars = 40;
+      const plainLen = (text || '').replace(/\s/g, '').length;
+      if (!text || plainLen < minChars) {
+        return res.status(200).json({
+          text: text || '',
+          chars: (text || '').length,
+          partial: true,
+          stored: true,
+          message: 'CV tallennetaan, mutta siitä ei löytynyt riittävästi tekstiä (esim. skannattu kuva-PDF). Täytä kentät käsin — tiedosto on silti rekrytoijille ladattavissa.'
+        });
+      }
+
+      const maxLen = 20000;
+      res.json({
+        text: text.length > maxLen ? text.slice(0, maxLen) + '\n…' : text,
+        chars: text.length,
+        partial: false
       });
-    } else {
-      return res.status(400).json({ error: 'Tuetut tiedostot: PDF ja TXT' });
+    } catch (err) {
+      console.error('cv-extract-text error:', err);
+      res.status(500).json({ error: 'CV:n lukeminen epäonnistui. Täytä kentät käsin.' });
     }
-
-    if (!text || text.replace(/\s/g, '').length < 40) {
-      return res.status(422).json({
-        error: 'CV:stä ei löytynyt riittävästi tekstiä. Käytä tekstipohjaista PDF:ää (ei skannattua kuvaa), tai täytä kentät käsin.',
-        text: text || ''
-      });
-    }
-
-    const maxLen = 20000;
-    res.json({
-      text: text.length > maxLen ? text.slice(0, maxLen) + '\n…' : text,
-      chars: text.length
-    });
-  } catch (err) {
-    console.error('cv-extract-text error:', err);
-    res.status(500).json({ error: 'CV:n lukeminen epäonnistui. Täytä kentät käsin.' });
-  }
+  });
 });
 
 /** Parse CV plain text into structured fields (name, city, experience, etc.). */

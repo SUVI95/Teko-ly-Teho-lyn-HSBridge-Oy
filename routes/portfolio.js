@@ -6,6 +6,13 @@ const { makePreviewToken, verifyPreviewToken } = require('../lib/preview-token')
 const { notifyVisit, notifyContact, notifyCvDownload } = require('../lib/portfolio-notify');
 const { portfolioPublicUrl } = require('../lib/portfolio-public-url');
 const { portfolioSourceMeta } = require('../lib/portfolio-source');
+const {
+  CV_MAX_BYTES,
+  PHOTO_MAX_BYTES,
+  isAllowedCvUpload,
+  isAllowedPhotoUpload,
+  multerErrorMessage
+} = require('../lib/portfolio-upload-limits');
 
 /** Portfolio API — used exclusively by moduuli-elava-cv (student_portfolios table). */
 
@@ -22,22 +29,27 @@ function withPortfolioUrls(row) {
 
 const photoUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: PHOTO_MAX_BYTES },
   fileFilter: (req, file, cb) => {
-    const ok = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.mimetype);
-    cb(ok ? null : new Error('Vain JPG, PNG tai WebP'), ok);
+    const check = isAllowedPhotoUpload({
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size
+    });
+    cb(check.ok ? null : new Error(check.error), check.ok);
   }
 });
 
 const cvUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024 },
+  limits: { fileSize: CV_MAX_BYTES },
   fileFilter: (req, file, cb) => {
-    const name = (file.originalname || '').toLowerCase();
-    const mime = (file.mimetype || '').toLowerCase();
-    const ok = mime === 'application/pdf' || mime === 'text/plain'
-      || name.endsWith('.pdf') || name.endsWith('.txt');
-    cb(ok ? null : new Error('Vain PDF tai TXT'), ok);
+    const check = isAllowedCvUpload({
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size
+    });
+    cb(check.ok ? null : new Error(check.error), check.ok);
   }
 });
 
@@ -71,6 +83,8 @@ async function ensureTable() {
   await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS cv_bytes BYTEA`);
   await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS cv_mime VARCHAR(100)`);
   await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS cv_filename VARCHAR(255)`);
+  await pool.query(`ALTER TABLE student_portfolios ALTER COLUMN photo_mime TYPE VARCHAR(128)`);
+  await pool.query(`ALTER TABLE student_portfolios ALTER COLUMN cv_mime TYPE VARCHAR(128)`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS portfolio_events (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -278,7 +292,12 @@ router.post('/publish', authenticateToken, async (req, res) => {
 // Upload photo
 router.post('/photo', authenticateToken, (req, res) => {
   photoUpload.single('photo')(req, res, async (err) => {
-    if (err) return res.status(400).json({ error: err.message });
+    if (err) {
+      const msg = err instanceof multer.MulterError
+        ? multerErrorMessage(err, 'photo')
+        : (err.message || 'Kuvan lataus epäonnistui');
+      return res.status(err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({ error: msg });
+    }
     if (!req.file) return res.status(400).json({ error: 'Ei kuvaa' });
     try {
       await ready();
@@ -388,7 +407,12 @@ router.get('/photo/:slug', async (req, res) => {
 // Upload CV file for recruiters (auth)
 router.post('/cv', authenticateToken, (req, res) => {
   cvUpload.single('cv')(req, res, async (err) => {
-    if (err) return res.status(400).json({ error: err.message });
+    if (err) {
+      const msg = err instanceof multer.MulterError
+        ? multerErrorMessage(err, 'cv')
+        : (err.message || 'CV:n lataus epäonnistui');
+      return res.status(err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({ error: msg });
+    }
     if (!req.file) return res.status(400).json({ error: 'Ei tiedostoa' });
     try {
       await ready();

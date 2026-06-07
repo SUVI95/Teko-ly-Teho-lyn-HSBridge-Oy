@@ -71,7 +71,7 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json({ limit: '8mb' }));
+app.use(express.json({ limit: '30mb' }));
 app.use(cookieParser());
 app.use(
   '/uploads',

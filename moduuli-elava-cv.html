@@ -256,8 +256,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
     <div class="upload-zone" id="cvDropZone" onclick="document.getElementById('cvFile').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleCVDrop(event)">
       <div class="upload-icon">📄</div>
       <div class="upload-title">Lataa CV tähän</div>
-      <div class="upload-sub">PDF tai TXT · Klikkaa tai vedä tiedosto</div>
-      <input type="file" id="cvFile" accept=".pdf,.txt" style="display:none" onchange="handleCVFile(this.files[0])">
+      <div class="upload-sub">PDF, TXT, DOC tai DOCX · max 25 MB · useita sivuja ja kuvia ok</div>
+      <input type="file" id="cvFile" accept=".pdf,.txt,.doc,.docx,application/pdf,text/plain" style="display:none" onchange="handleCVFile(this.files[0])">
     </div>
     <div class="upload-status" id="cvStatus"></div>
 
@@ -353,9 +353,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
         <div class="photo-preview" id="photoPreview"><span id="photoInitials">?</span></div>
         <div>
           <div style="font-size:.88rem;font-weight:500;color:var(--ink);margin-bottom:.35rem;">Lisää kuva portfolioon</div>
-          <div style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">JPG, PNG tai WebP · Max 5 MB · Kasvokuva toimii parhaiten</div>
+          <div style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">JPG, PNG, WebP, HEIC, GIF, TIFF jne. · max 20 MB · Kasvokuva toimii parhaiten</div>
           <label class="photo-upload-btn" for="photoFile" style="display:inline-block;cursor:pointer;">Valitse kuva</label>
-          <input type="file" id="photoFile" accept=".jpg,.jpeg,.png,.webp" style="display:none" onchange="handlePhoto(this.files[0])">
+          <input type="file" id="photoFile" accept="image/*,.heic,.heif" style="display:none" onchange="handlePhoto(this.files[0])">
           <div id="photoStatus" style="font-size:.78rem;color:var(--accent3);margin-top:.5rem;display:none;"></div>
         </div>
       </div>
@@ -366,8 +366,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
       <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;">📄 CV rekrytoijille</h3>
       <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Rekrytoija voi ladata CV:si suoraan portfoliosivulta. Jos latasit CV:n vaiheessa 1, se tallentuu automaattisesti kun rakennat esikatselun.</p>
       <div id="cvDownloadStatus" style="display:none;font-size:.84rem;color:#059669;margin-bottom:.75rem;"></div>
-      <label class="photo-upload-btn" for="cvRecruiterFile" style="display:inline-block;cursor:pointer;">Vaihda / lataa CV (PDF tai TXT)</label>
-      <input type="file" id="cvRecruiterFile" accept=".pdf,.txt" style="display:none" onchange="handleRecruiterCv(this.files[0])">
+      <label class="photo-upload-btn" for="cvRecruiterFile" style="display:inline-block;cursor:pointer;">Vaihda / lataa CV (PDF, TXT, DOC, DOCX)</label>
+      <input type="file" id="cvRecruiterFile" accept=".pdf,.txt,.doc,.docx,application/pdf,text/plain" style="display:none" onchange="handleRecruiterCv(this.files[0])">
       <div id="cvRecruiterStatus" style="font-size:.78rem;color:var(--muted);margin-top:.5rem;"></div>
     </div>
 
@@ -622,22 +622,32 @@ async function handleCVFile(file){
   status.style.display='block';
   status.textContent='Luetaan '+file.name+'...';
 
+  cvFilePending=file;
   var fd=new FormData(); fd.append('file',file);
   try{
     var r=await fetch(apiBase()+'/api/ai/cv-extract-text',{method:'POST',credentials:'include',body:fd});
     var d=await r.json();
-    if(!r.ok||!d.text) throw new Error(d.error||'Lukeminen epäonnistui');
-    cvText=d.text;
+    if(!r.ok) throw new Error(d.error||'Lukeminen epäonnistui');
+
+    zone.classList.add('uploaded');
+    if(d.partial||!d.text){
+      cvText=d.text||'';
+      zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' vastaanotettu</div><div style="font-size:.8rem;color:#047857;">'+(d.message||'Täytä tiedot alla käsin — CV tallennetaan rekrytoijille.')+'</div>';
+      status.className='upload-status ok';
+      status.textContent='✓ CV vastaanotettu. '+(d.message||'Täytä tiedot alla käsin ja jatka haastatteluun.');
+    } else {
+      cvText=d.text;
+      zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' luettu</div><div style="font-size:.8rem;color:#047857;">'+d.chars+' merkkiä · AI käyttää tätä portfolion rakentamiseen</div>';
+      status.className='upload-status ok';
+      status.textContent='✓ CV luettu. Paina "Seuraava" jatkaaksesi haastatteluun.';
+      await extractCVBasics();
+    }
+  }catch(e){
     cvFilePending=file;
     zone.classList.add('uploaded');
-    zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' luettu</div><div style="font-size:.8rem;color:#047857;">'+d.chars+' merkkiä · AI käyttää tätä portfolion rakentamiseen</div>';
+    zone.innerHTML='<div style="font-size:1.5rem;margin-bottom:.4rem;">✓</div><div style="font-size:.95rem;font-weight:500;color:#059669;">'+file.name+' vastaanotettu</div><div style="font-size:.8rem;color:#047857;">Tekstin luku epäonnistui — täytä kentät käsin</div>';
     status.className='upload-status ok';
-    status.textContent='✓ CV luettu. Paina "Seuraava" jatkaaksesi haastatteluun.';
-    // Pre-extract basic info silently
-    await extractCVBasics();
-  }catch(e){
-    status.className='upload-status err';
-    status.textContent='⚠ '+e.message+' — täytä tiedot alla käsin.';
+    status.textContent='✓ CV vastaanotettu. '+e.message+' — täytä tiedot alla käsin.';
   }
 }
 
