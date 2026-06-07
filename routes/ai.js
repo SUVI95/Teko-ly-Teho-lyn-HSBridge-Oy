@@ -9,6 +9,11 @@ const cvUpload = multer({
   limits: { fileSize: 8 * 1024 * 1024 }
 });
 
+const audioUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 }
+});
+
 /** Read env var and trim whitespace/newlines (common copy-paste issue). */
 function envTrim(name) {
   const v = process.env[name];
@@ -229,6 +234,60 @@ async function handleDuunijobsAi(req, res) {
 }
 router.post('/duunijobs', handleDuunijobsAi);
 router.post('/claude', handleDuunijobsAi);
+
+/** Whisper transcription proxy for interview voice exercises (moduuli9). */
+router.post('/transcribe', audioUpload.single('file'), async (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ error: 'Audio file required' });
+    }
+
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return res.status(503).json({ error: 'Transcription service not configured' });
+    }
+
+    const language = String(req.body.language || 'fi').trim() || 'fi';
+    const model = String(req.body.model || 'whisper-1').trim() || 'whisper-1';
+    const filename = req.file.originalname || 'recording.webm';
+    const mime = req.file.mimetype || 'audio/webm';
+
+    const formData = new FormData();
+    formData.append('file', new Blob([req.file.buffer], { type: mime }), filename);
+    formData.append('model', model);
+    formData.append('language', language);
+
+    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${openaiApiKey}`
+      },
+      body: formData,
+      signal: timeoutSignal(30000)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text().catch(() => '');
+      console.error('Whisper API error:', errorData);
+      return res.status(response.status).json({
+        error: 'Transcription failed',
+        details: errorData
+      });
+    }
+
+    const data = await response.json();
+    res.json({
+      text: data.text || '',
+      transcript: data.text || ''
+    });
+  } catch (error) {
+    console.error('Transcribe error:', error);
+    res.status(500).json({
+      error: 'Failed to transcribe audio',
+      message: error.message
+    });
+  }
+});
 
 // OpenAI API endpoint for image generation (DALL-E 3)
 router.post('/image', async (req, res) => {
