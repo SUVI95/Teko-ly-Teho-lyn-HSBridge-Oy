@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const pool = require('../database/db');
 const { authenticateToken } = require('../middleware/auth');
+const { makePreviewToken, verifyPreviewToken } = require('../lib/preview-token');
 
 const router = express.Router();
 
@@ -45,6 +46,22 @@ async function ensureTable() {
 
 let _ready = false;
 async function ready() { if (!_ready) { await ensureTable(); _ready = true; } }
+
+const PORTFOLIO_FIELDS = `slug, full_name, tagline, bio, city, target_role,
+       email_public, phone_public, linkedin_url, experience, education, skills,
+       achievements, languages, certificates, brand_color, brand_accent, brand_bg,
+       template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo`;
+
+async function resolveSessionUser(req) {
+  const token = req.cookies?.session_token || req.headers.authorization?.split(' ')[1];
+  if (!token) return null;
+  const r = await pool.query(
+    `SELECT u.id FROM sessions s JOIN users u ON s.user_id = u.id
+     WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE`,
+    [token]
+  );
+  return r.rows[0]?.id ?? null;
+}
 
 function makeSlug(name) {
   return name.toLowerCase()
@@ -94,7 +111,8 @@ router.post('/save', authenticateToken, async (req, res) => {
       ) VALUES ($1,$22,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)`,
         [...vals, slug]);
     }
-    res.json({ success: true, slug });
+    const userId = uid;
+    res.json({ success: true, slug, preview_token: makePreviewToken(slug, userId) });
   } catch (e) { console.error('Portfolio save:', e); res.status(500).json({ error: 'Tallennus epäonnistui' }); }
 });
 
@@ -141,7 +159,11 @@ router.get('/mine', authenticateToken, async (req, res) => {
        achievements, languages, certificates, brand_color, brand_accent, brand_bg,
        template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo,
        created_at, updated_at FROM student_portfolios WHERE user_id=$1`, [req.user.id]);
-    res.json({ portfolio: r.rows[0] || null });
+    const portfolio = r.rows[0] || null;
+    if (portfolio) {
+      portfolio.preview_token = makePreviewToken(portfolio.slug, req.user.id);
+    }
+    res.json({ portfolio });
   } catch (e) { res.status(500).json({ error: 'Virhe' }); }
 });
 
@@ -160,19 +182,43 @@ router.get('/view/:slug', async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Virhe' }); }
 });
 
-// Preview own portfolio before publish (auth — ignores published flag)
-router.get('/preview/:slug', authenticateToken, async (req, res) => {
+// Preview own portfolio before publish (session cookie OR signed preview token)
+router.get('/preview/:slug', async (req, res) => {
   try {
     await ready();
-    const r = await pool.query(
-      `SELECT slug, full_name, tagline, bio, city, target_role,
-       email_public, phone_public, linkedin_url, experience, education, skills,
-       achievements, languages, certificates, brand_color, brand_accent, brand_bg,
-       template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo
-       FROM student_portfolios WHERE slug=$1 AND user_id=$2`, [req.params.slug, req.user.id]);
+    const slug = req.params.slug;
+    const pt = String(req.query.pt || '').trim();
+    const sessionUserId = await resolveSessionUser(req);
+
+    let r;
+    if (sessionUserId) {
+      r = await pool.query(
+        `SELECT ${PORTFOLIO_FIELDS} FROM student_portfolios WHERE slug=$1 AND user_id=$2`,
+        [slug, sessionUserId]
+      );
+    } else if (pt) {
+      r = await pool.query(
+        `SELECT user_id, ${PORTFOLIO_FIELDS} FROM student_portfolios WHERE slug=$1`,
+        [slug]
+      );
+      if (r.rows.length && !verifyPreviewToken(slug, r.rows[0].user_id, pt)) {
+        return res.status(403).json({ error: 'Esikatselulinkki vanhentunut' });
+      }
+      if (r.rows.length) {
+        const row = { ...r.rows[0] };
+        delete row.user_id;
+        return res.json({ portfolio: row });
+      }
+    } else {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
     if (!r.rows.length) return res.status(404).json({ error: 'Ei löydy' });
     res.json({ portfolio: r.rows[0] });
-  } catch (e) { res.status(500).json({ error: 'Virhe' }); }
+  } catch (e) {
+    console.error('Portfolio preview:', e);
+    res.status(500).json({ error: 'Virhe' });
+  }
 });
 
 // Serve photo by slug (PUBLIC)

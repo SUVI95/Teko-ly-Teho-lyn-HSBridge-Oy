@@ -218,9 +218,15 @@ footer{max-width:1100px;margin:0 auto;padding:1.5rem 2.5rem;display:flex;justify
 var slug=location.pathname.split('/portfolio/')[1];
 if(!slug){show404();}else{
 slug=slug.replace(/\/+$/,'').split('?')[0];
-var isPreview=new URLSearchParams(location.search).get('preview')==='1';
+var qs=new URLSearchParams(location.search);
+var isPreview=qs.get('preview')==='1';
+var pt=qs.get('pt')||'';
 var apiUrl=isPreview?'/api/portfolio/preview/'+encodeURIComponent(slug):'/api/portfolio/view/'+encodeURIComponent(slug);
-fetch(apiUrl,{credentials:isPreview?'include':'same-origin'}).then(function(r){return r.json();}).then(function(d){if(!d.portfolio)return show404();render(d.portfolio);}).catch(show404);}
+if(isPreview&&pt) apiUrl+='?pt='+encodeURIComponent(pt);
+fetch(apiUrl,{credentials:isPreview&&!pt?'include':'same-origin'}).then(function(r){
+  if(!r.ok) throw new Error('fetch failed');
+  return r.json();
+}).then(function(d){if(!d.portfolio)return show404();render(d.portfolio);}).catch(show404);}
 function show404(){hideLoad();document.getElementById('app').innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:2rem;"><div><h1 style="font-family:Instrument Serif,serif;font-size:2rem;margin-bottom:1rem;">Portfoliota ei l\xf6ytynyt</h1><p style="margin-bottom:1rem;">T\xe4m\xe4 portfolio voi olla piilotettu tai sit\xe4 ei ole viel\xe4 julkaistu.</p><a href="/" style="color:var(--v);font-weight:600;text-decoration:none;">Etusivu &rarr;</a></div></div>';}
 function hideLoad(){var l=document.getElementById('loadingScreen');if(l){l.classList.add('hide');setTimeout(function(){l.remove();},500);}}
 function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}

@@ -529,6 +529,7 @@ var interviewDone = false;
 var selectedThemeClass = '';
 var photoUploaded = false;
 var portfolioSlug = '';
+var previewToken = '';
 
 function apiBase(){
   var p=window.location.pathname;
@@ -858,6 +859,7 @@ async function savePortfolioData(){
   var d=await r.json();
   if(!r.ok) throw new Error(d.error||'Tallennusvirhe');
   portfolioSlug=d.slug;
+  if(d.preview_token) previewToken=d.preview_token;
   return d.slug;
 }
 
@@ -879,11 +881,22 @@ function loadPreview(){
   var loading=document.getElementById('previewLoading');
   if(!portfolioSlug){loading.innerHTML='<span style="font-size:.9rem;color:var(--muted);">Täytä tiedot ensin ja paina "Rakenna esikatselu".</span>';return;}
   loading.style.display='flex'; frame.style.display='none';
-  // Update URL bar
   var urlBar=document.getElementById('previewUrlBar');
   if(urlBar) urlBar.textContent=(window.location.host||'duunijobs.fi')+'/portfolio/'+portfolioSlug;
   frame.onload=function(){loading.style.display='none';frame.style.display='block';};
-  frame.src=apiBase()+'/portfolio/'+portfolioSlug+'?preview=1&t='+Date.now();
+  function openPreviewFrame(){
+    var previewQs='preview=1&t='+Date.now();
+    if(previewToken) previewQs+='&pt='+encodeURIComponent(previewToken);
+    frame.src=apiBase()+'/portfolio/'+portfolioSlug+'?'+previewQs;
+  }
+  if(previewToken){ openPreviewFrame(); return; }
+  fetch(apiBase()+'/api/portfolio/mine',{credentials:'include'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.portfolio&&d.portfolio.preview_token) previewToken=d.portfolio.preview_token;
+      openPreviewFrame();
+    })
+    .catch(function(){ openPreviewFrame(); });
 }
 
 // ══════════════════════════════════════════
@@ -958,6 +971,7 @@ document.addEventListener('DOMContentLoaded',async function(){
     if(d.portfolio){
       var pf=d.portfolio;
       portfolioSlug=pf.slug;
+      if(pf.preview_token) previewToken=pf.preview_token;
       Object.keys(pf).forEach(function(k){if(P.hasOwnProperty(k)&&pf[k]!=null)P[k]=pf[k];});
       if(pf.has_photo){
         photoUploaded=true;
