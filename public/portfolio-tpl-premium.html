@@ -248,15 +248,53 @@ grad2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="
 img:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>'
 };
 
+function hexRgb(hex){
+  hex=String(hex||'').replace('#','').trim();
+  if(hex.length===3) hex=hex.split('').map(function(c){return c+c;}).join('');
+  if(hex.length!==6) return null;
+  return [parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)];
+}
+function rgbaHex(hex,a){
+  var c=hexRgb(hex); if(!c) return 'rgba(124,110,242,'+a+')';
+  return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')';
+}
+function shadeHex(hex,f){
+  var c=hexRgb(hex); if(!c) return hex||'#7c6ef2';
+  return 'rgb('+c.map(function(x){return Math.max(0,Math.min(255,Math.round(f<0?x*(1+f):x+(255-x)*f)));}).join(',')+')';
+}
+function applyBrandTheme(p){
+  document.body.classList.remove('theme-executive');
+  var old=document.getElementById('brandThemeStyle');
+  if(old) old.remove();
+  if(p.template==='executive'){
+    document.body.classList.add('theme-executive');
+    return;
+  }
+  var v=p.brand_color||'#7c6ef2';
+  var b=p.brand_accent||'#3b82f6';
+  var bg=p.brand_bg||'#faf9f6';
+  var style=document.createElement('style');
+  style.id='brandThemeStyle';
+  style.textContent=':root{'
+    +'--v:'+v+';--v2:'+shadeHex(v,-0.18)+';--b:'+b+';--em:'+v+';'
+    +'--bg:'+bg+';--bg2:'+shadeHex(bg,-0.05)+';'
+    +'--hero-bg:linear-gradient(135deg,'+rgbaHex(v,0.14)+' 0%,'+rgbaHex(b,0.11)+' 38%,'+rgbaHex(v,0.08)+' 65%,'+bg+' 100%);'
+    +'--orb1:'+rgbaHex(v,0.28)+';--orb2:'+rgbaHex(b,0.22)+';'
+    +'--photo-grad:linear-gradient(145deg,'+rgbaHex(v,0.16)+' 0%,'+rgbaHex(v,0.34)+' 45%,'+rgbaHex(v,0.48)+' 100%);'
+    +'--contact-bg:linear-gradient(135deg,'+rgbaHex(v,0.12)+' 0%,'+rgbaHex(b,0.1)+' 50%,'+rgbaHex(v,0.08)+' 100%);'
+    +'--nav-bg:'+rgbaHex(bg,0.92)+';'
+    +'}';
+  document.head.appendChild(style);
+}
+
 function render(p){
+applyBrandTheme(p);
 var nm=esc(p.full_name||''),tl=esc(p.tagline||''),bio=esc(p.bio||''),ct=esc(p.city||''),rl=esc(p.target_role||''),em=esc(p.email_public||''),ph=esc(p.phone_public||''),li=esc(p.linkedin_url||'');
 var photo=p.has_photo?'/api/portfolio/photo/'+encodeURIComponent(p.slug):'';
 var sk=p.skills||[],ex=p.experience||[],ed=p.education||[],la=p.languages||[],certs=p.certificates||[],achiev=p.achievements||[];
 var cs=esc(p.career_summary||''),hs=esc(p.hidden_strengths||'');
 var I=ini(p.full_name),fn=nm.split(' ')[0];
-var isExec=(p.template==='executive');
 document.title=nm+' \u2014 Portfolio';
-if(isExec)document.body.classList.add('theme-executive');
 var h='';
 
 // NAV
