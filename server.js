@@ -23,7 +23,7 @@ const {
   isGiftRecipient
 } = require('./config/personal-gift-access');
 const { resetKuopioDemoUserData } = require('./lib/reset-kuopio-demo-user-data');
-const { portfolioPublicUrl, isPortfolioSubdomain } = require('./lib/portfolio-public-url');
+const { portfolioPublicUrl, isPortfolioSubdomain, portfolioUseSubdomain } = require('./lib/portfolio-public-url');
 
 const KUOPIO_DEMO_LS_CLEAR = '<script>(function(){try{if(/(?:^|;\\s*)kuopio_demo=1(?:;|$)/.test(document.cookie))localStorage.clear();}catch(e){}})();</script>';
 
@@ -400,11 +400,14 @@ function sendPortfolioTemplate(req, res) {
   return res.sendFile(templatePath);
 }
 
-// Legacy aipolku path — public visits redirect to portfolio.duunijobs.fi/slug
+// Legacy aipolku path — serve portfolio or redirect to subdomain when enabled
 app.get('/portfolio/:slug', (req, res) => {
   const slug = req.params.slug;
   if (req.query.preview === '1') return sendPortfolioTemplate(req, res);
-  return res.redirect(301, portfolioPublicUrl(slug));
+  if (portfolioUseSubdomain()) {
+    return res.redirect(301, portfolioPublicUrl(slug));
+  }
+  return sendPortfolioTemplate(req, res);
 });
 
 // portfolio.duunijobs.fi/etunimi-sukunimi

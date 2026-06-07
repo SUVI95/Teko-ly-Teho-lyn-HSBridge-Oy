@@ -230,9 +230,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
     </button>
     <div id="resumePortfolioBanner" style="display:none;margin-top:2rem;padding:1.25rem 1.5rem;background:var(--card);border:1px solid var(--border);border-radius:14px;">
       <div style="font-size:.95rem;font-weight:600;color:var(--ink);margin-bottom:.35rem;">Sinulla on portfolio jo tallennettuna</div>
-      <div style="font-size:.84rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Voit muokata tietoja, vaihtaa osoitetta (ennen julkaisua tai alla olevalla kentällä) ja julkaista uudelleen.</div>
+      <div style="font-size:.84rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Voit muokata tietoja, vaihtaa osoitetta ja julkaista uudelleen.</div>
       <button class="btn-primary" type="button" onclick="showScreen('s-details')" style="margin-right:.5rem;">Muokkaa portfolioa</button>
       <button class="btn-secondary" type="button" onclick="showScreen('s-preview')">Esikatselu</button>
+      <div id="portfolioNotifications" style="display:none;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);"></div>
     </div>
   </div>
 </div>
@@ -881,6 +882,8 @@ function suggestSlugFromName(){
 }
 
 var PORTFOLIO_PUBLIC_HOST='portfolio.duunijobs.fi';
+var PORTFOLIO_USE_SUBDOMAIN=false;
+var PORTFOLIO_APP_ORIGIN='https://aipolku.duunijobs.fi';
 
 function isLocalDev(){
   var h=window.location.hostname||'';
@@ -889,12 +892,14 @@ function isLocalDev(){
 
 function portfolioPublicUrl(slug){
   if(isLocalDev()) return (window.location.origin||'')+'/portfolio/'+slug;
-  return 'https://'+PORTFOLIO_PUBLIC_HOST+'/'+slug;
+  if(PORTFOLIO_USE_SUBDOMAIN) return 'https://'+PORTFOLIO_PUBLIC_HOST+'/'+slug;
+  return PORTFOLIO_APP_ORIGIN.replace(/\/+$/,'')+'/portfolio/'+slug;
 }
 
 function portfolioPreviewUrl(slug,previewQs){
   if(isLocalDev()) return (apiBase()||window.location.origin||'')+'/portfolio/'+slug+'?'+previewQs;
-  return 'https://'+PORTFOLIO_PUBLIC_HOST+'/'+slug+'?'+previewQs;
+  if(PORTFOLIO_USE_SUBDOMAIN) return 'https://'+PORTFOLIO_PUBLIC_HOST+'/'+slug+'?'+previewQs;
+  return PORTFOLIO_APP_ORIGIN.replace(/\/+$/,'')+'/portfolio/'+slug+'?'+previewQs;
 }
 
 function updateSlugUi(){
@@ -902,7 +907,7 @@ function updateSlugUi(){
   if(prefix){
     prefix.textContent=isLocalDev()
       ? (window.location.host||'localhost')+'/portfolio/'
-      : PORTFOLIO_PUBLIC_HOST+'/';
+      : (PORTFOLIO_USE_SUBDOMAIN ? PORTFOLIO_PUBLIC_HOST+'/' : PORTFOLIO_APP_ORIGIN.replace(/^https?:\/\//,'')+'/portfolio/');
   }
   var el=document.getElementById('d_slug');
   if(el&&portfolioSlug&&!el.value) el.value=portfolioSlug;
@@ -1124,6 +1129,29 @@ function copyPublishedUrl(){
   });
 }
 
+function formatPortfolioEvent(ev){
+  var when=ev.created_at?new Date(ev.created_at).toLocaleString('fi-FI'):'';
+  if(ev.event_type==='contact') return '📩 Yhteydenotto: '+(ev.visitor_name||'Rekrytoija')+(ev.visitor_email?' ('+ev.visitor_email+')':'')+' — '+when;
+  if(ev.event_type==='visit') return '👀 Portfolio katsottu — '+when;
+  if(ev.event_type==='cv_download') return '📄 CV ladattu — '+when;
+  return ev.event_type+' — '+when;
+}
+
+async function loadPortfolioNotifications(){
+  try{
+    var r=await fetch(apiBase()+'/api/portfolio/notifications',{credentials:'include'});
+    var d=await r.json();
+    if(!r.ok||!d.events||!d.events.length) return;
+    var box=document.getElementById('portfolioNotifications');
+    if(!box) return;
+    box.style.display='block';
+    box.innerHTML='<div style="font-size:.82rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;">Viimeisimmät ilmoitukset</div>'
+      +d.events.slice(0,5).map(function(ev){
+        return '<div style="font-size:.78rem;color:var(--muted);margin-bottom:.35rem;line-height:1.5;">'+formatPortfolioEvent(ev)+'</div>';
+      }).join('');
+  }catch(e){}
+}
+
 // ══════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════
@@ -1152,6 +1180,7 @@ document.addEventListener('DOMContentLoaded',async function(){
       syncFormFields();
       restoreThemePicker();
       updateSlugUi();
+      loadPortfolioNotifications();
     }
   }catch(e){}
 });

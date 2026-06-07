@@ -3,6 +3,7 @@ const multer = require('multer');
 const pool = require('../database/db');
 const { authenticateToken } = require('../middleware/auth');
 const { makePreviewToken, verifyPreviewToken } = require('../lib/preview-token');
+const { notifyVisit, notifyContact, notifyCvDownload } = require('../lib/portfolio-notify');
 
 const router = express.Router();
 
@@ -57,6 +58,19 @@ async function ensureTable() {
   await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS cv_bytes BYTEA`);
   await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS cv_mime VARCHAR(100)`);
   await pool.query(`ALTER TABLE student_portfolios ADD COLUMN IF NOT EXISTS cv_filename VARCHAR(255)`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS portfolio_events (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      slug VARCHAR(120) NOT NULL,
+      event_type VARCHAR(40) NOT NULL,
+      visitor_name VARCHAR(255),
+      visitor_email VARCHAR(255),
+      message TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_portfolio_events_user ON portfolio_events(user_id, created_at DESC);
+  `);
 }
 
 let _ready = false;
@@ -345,6 +359,7 @@ router.get('/cv/:slug', async (req, res) => {
       [req.params.slug]
     );
     if (!r.rows.length) return res.status(404).send('CV:tä ei löydy');
+    notifyCvDownload(req.params.slug).catch((e) => console.error('CV download event:', e));
     const row = r.rows[0];
     const filename = row.cv_filename || 'cv.pdf';
     res.set('Content-Type', row.cv_mime || 'application/pdf');
@@ -354,6 +369,62 @@ router.get('/cv/:slug', async (req, res) => {
   } catch (e) {
     console.error('CV download:', e);
     res.status(500).send('Virhe');
+  }
+});
+
+// Track portfolio page visit (public — debounced email to student)
+router.post('/event/visit', async (req, res) => {
+  try {
+    const slug = String(req.body.slug || '').trim();
+    if (!slug) return res.status(400).json({ error: 'Slug puuttuu' });
+    await ready();
+    notifyVisit(slug).catch((e) => console.error('Visit notify:', e));
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Virhe' });
+  }
+});
+
+// Recruiter contact form (public — emails portfolio owner)
+router.post('/contact', async (req, res) => {
+  try {
+    const slug = String(req.body.slug || '').trim();
+    const name = String(req.body.name || '').trim().slice(0, 200);
+    const email = String(req.body.email || '').trim().slice(0, 255);
+    const message = String(req.body.message || '').trim().slice(0, 5000);
+
+    if (!slug || !name || !email || !message) {
+      return res.status(400).json({ error: 'Täytä nimi, sähköposti ja viesti.' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Virheellinen sähköpostiosoite.' });
+    }
+
+    await ready();
+    const result = await notifyContact(slug, { name, email, message });
+    if (!result.ok) return res.status(404).json({ error: result.error || 'Virhe' });
+    res.json({ ok: true, message: 'Viesti lähetetty!' });
+  } catch (e) {
+    console.error('Portfolio contact:', e);
+    res.status(500).json({ error: 'Viestin lähetys epäonnistui.' });
+  }
+});
+
+// Student: recent portfolio activity (auth)
+router.get('/notifications', authenticateToken, async (req, res) => {
+  try {
+    await ready();
+    const r = await pool.query(
+      `SELECT event_type, slug, visitor_name, visitor_email, message, created_at
+       FROM portfolio_events
+       WHERE user_id = $1 AND event_type IN ('visit', 'contact', 'cv_download')
+       ORDER BY created_at DESC
+       LIMIT 20`,
+      [req.user.id]
+    );
+    res.json({ events: r.rows });
+  } catch (e) {
+    res.status(500).json({ error: 'Virhe' });
   }
 });
 
