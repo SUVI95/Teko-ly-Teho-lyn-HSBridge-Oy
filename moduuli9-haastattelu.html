@@ -42,27 +42,35 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 }
 .step-bar::-webkit-scrollbar{display:none}
 .step-bar-inner{
-  display:flex;align-items:stretch;justify-content:center;
-  gap:4px;min-width:min(100%,max-content);
-  margin:0 auto;padding:0 20px;height:44px;
+  display:flex;align-items:stretch;justify-content:flex-start;
+  gap:0;width:max-content;min-width:100%;
+  margin:0;padding:0 20px;height:44px;
+  box-sizing:border-box;
+}
+@media(min-width:869px){
+  .step-bar-inner{
+    padding-left:max(24px, calc((100vw - 820px) / 2 + 24px));
+    padding-right:max(24px, calc((100vw - 820px) / 2 + 24px));
+  }
 }
 .sb{
   flex:0 0 auto;display:flex;align-items:center;justify-content:center;
-  gap:6px;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
-  letter-spacing:.04em;text-transform:uppercase;color:var(--ink3);
+  gap:4px;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;
+  letter-spacing:.03em;text-transform:uppercase;color:var(--ink3);
   border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;
-  text-align:center;padding:0 14px;white-space:nowrap;
+  text-align:center;padding:0 10px;white-space:nowrap;
+  scroll-margin-inline:20px;
 }
 .sb:hover{color:var(--ink2);background:rgba(26,26,26,.03)}
 .sb.active{color:var(--coral);border-bottom-color:var(--coral)}
 .sb.done{color:var(--forest);border-bottom-color:var(--forest)}
 @media(max-width:900px){
-  .step-bar-inner{justify-content:flex-start;padding:0 16px}
-  .sb{padding:0 11px;font-size:10px;gap:5px}
+  .step-bar-inner{padding:0 16px}
+  .sb{padding:0 8px;font-size:10px}
 }
 @media(max-width:680px){
   .sb-lbl{display:none}
-  .sb{padding:0 12px}
+  .sb{padding:0 10px}
 }
 @media(min-width:681px){.sb-lbl{display:inline}}
 .resume-banner{
@@ -433,11 +441,11 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
     <div class="sb" id="sb3" onclick="go(3)">02<span class="sb-lbl"> STAR</span></div>
     <div class="sb" id="sb4" onclick="go(4)">03<span class="sb-lbl"> Decoder</span></div>
     <div class="sb" id="sb5" onclick="go(5)">04<span class="sb-lbl"> Kirjoita</span></div>
-    <div class="sb" id="sb5b" onclick="go('5b')">🎙<span class="sb-lbl"> Puhu ääneen</span></div>
+    <div class="sb" id="sb5b" onclick="go('5b')">🎙<span class="sb-lbl"> Puhu</span></div>
     <div class="sb" id="sb6" onclick="go(6)">05<span class="sb-lbl"> Vastaväite</span></div>
     <div class="sb" id="sb7" onclick="go(7)">06<span class="sb-lbl"> Spot flaw</span></div>
     <div class="sb" id="sb8" onclick="go(8)">07<span class="sb-lbl"> Hissipuhe</span></div>
-    <div class="sb" id="sb8b" onclick="go('8b')">🎙<span class="sb-lbl"> Mock haastattelu</span></div>
+    <div class="sb" id="sb8b" onclick="go('8b')">🎙<span class="sb-lbl"> Mock</span></div>
     <div class="sb" id="sb9" onclick="go(9)">08<span class="sb-lbl"> Yritys</span></div>
     <div class="sb" id="sb10" onclick="go(10)">09<span class="sb-lbl"> Tilanteet</span></div>
     <div class="sb" id="sb11" onclick="go(11)">10<span class="sb-lbl"> Vaikeat</span></div>
@@ -1424,10 +1432,12 @@ function go(n){
   // Voice screen step bars
   ['5b','8b'].forEach(id=>{const el=document.getElementById('sb'+id);if(!el)return;const pos=id==='5b'?5.5:8.5;el.className='sb'+(n===id?' active':numN>pos?' done':'');});
   const activeStep=document.getElementById('sb'+n);
-  if(activeStep){activeStep.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}
+  if(activeStep){activeStep.scrollIntoView({inline:'nearest',block:'nearest',behavior:'smooth'});}
   const T={1:'Haastattelu',2:'Ymmärrys',3:'STAR-metodi',4:'Decoder',5:'Kirjoita','5b':'Puhu ääneen',6:'Vastaväite',7:'Spot Flaw',8:'Hissipuhe','8b':'Mock haastattelu',9:'Yrityshaku',10:'Tilanteet',11:'Vaikeat',12:'Ansaitse'};
   document.getElementById('navTitle').textContent=T[n]||'Haastattelu';
   window.scrollTo({top:0,behavior:'smooth'});
+  const stepBar=document.querySelector('.step-bar');
+  if(stepBar&&n===1)stepBar.scrollTo({left:0,behavior:'smooth'});
   if(n===6&&!abBuilt)buildAB();
   if(n===6)initVastav();
   if(n===7&&!abBuilt)buildAB();
