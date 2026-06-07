@@ -405,8 +405,17 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
         <input class="field-input" id="d_role" placeholder="Esim. Asiakaspalvelija · myynti" oninput="P.target_role=this.value">
       </div>
       <div class="field-group">
+        <label class="field-label">Iskulause (tagline)</label>
+        <input class="field-input" id="d_tagline" placeholder="Esim. Muutos syntyy ihmisten uskomisesta itseensä" oninput="P.tagline=this.value">
+        <p class="field-hint">Näkyy nimen alla portfoliossa — AI täyttää haastattelun jälkeen.</p>
+      </div>
+      <div class="field-group">
         <label class="field-label">Esittely</label>
-        <textarea class="field-textarea" id="d_bio" rows="3" oninput="P.bio=this.value"></textarea>
+        <textarea class="field-textarea" id="d_bio" rows="4" oninput="P.bio=this.value"></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Piilotetut vahvuudet</label>
+        <textarea class="field-textarea" id="d_strengths" rows="3" placeholder="Mitä kollegat arvostavat sinussa — AI täyttää haastattelusta" oninput="P.hidden_strengths=this.value"></textarea>
       </div>
       <div class="field-row">
         <div class="field-group">
@@ -902,6 +911,12 @@ async function sendInterview(){
   interviewAnswers.push(txt);
   addTyping();
 
+  if(interviewAnswers.length >= 4){
+    document.getElementById('typingIndicator')?.remove();
+    await finalizeInterview(null);
+    return;
+  }
+
   var sys = INTERVIEW_SYSTEM.replace('{CV_TEXT}', cvText ? cvText.slice(0,1500) : 'Ei CV:tä.');
   try{
     var r=await fetch(apiBase()+'/api/ai/claude',{
@@ -913,22 +928,7 @@ async function sendInterview(){
     var reply=d.text||'Kiitos vastauksesta!';
     document.getElementById('typingIndicator')?.remove();
     if(reply.includes('VALMIS')){
-      // Extract JSON from reply
-      var jsonMatch=reply.match(/\{[\s\S]*\}/);
-      if(jsonMatch){
-        try{
-          var extracted=JSON.parse(jsonMatch[0]);
-          if(extracted.career_summary) P.career_summary=extracted.career_summary;
-          if(extracted.hidden_strengths) P.hidden_strengths=extracted.hidden_strengths;
-          if(extracted.achievements&&extracted.achievements.length) P.achievements=extracted.achievements;
-          if(extracted.tagline) P.tagline=extracted.tagline;
-        }catch(e){}
-      }
-      addInterviewMsg('ai','Täydellistä! Olen kerännyt tietosi portfoliota varten. Jatka seuraavaan vaiheeseen. ✓');
-      interviewDone=true;
-      document.getElementById('interviewDone').style.display='block';
-      document.getElementById('interviewInput').disabled=true;
-      send.disabled=true;
+      await finalizeInterview(reply);
     } else {
       interviewHistory.push({role:'assistant',content:reply});
       addInterviewMsg('ai',reply);
@@ -941,6 +941,106 @@ async function sendInterview(){
     addInterviewMsg('ai','Yhteysvirhe — yritä uudelleen.');
     inp.disabled=false; send.disabled=false;
   }
+}
+
+function tryParseInlineInterviewJson(reply){
+  var jsonMatch=(reply||'').match(/\{[\s\S]*\}/);
+  if(!jsonMatch) return false;
+  try{
+    applyInterviewPortfolioFields(JSON.parse(jsonMatch[0]));
+    return true;
+  }catch(e){ return false; }
+}
+
+function mergeUniqueStrings(a,b){
+  var out=[], seen={};
+  (a||[]).concat(b||[]).forEach(function(s){
+    var v=typeof s==='string'?s.trim():(s&&s.name)||'';
+    if(!v) return;
+    var k=v.toLowerCase();
+    if(seen[k]) return;
+    seen[k]=true;
+    out.push(v);
+  });
+  return out;
+}
+
+function mergeExperienceLists(existing,incoming){
+  var out=(existing||[]).map(normalizeExperience);
+  (incoming||[]).forEach(function(raw){
+    var inc=normalizeExperience(raw);
+    if(!inc.role&&!inc.company&&!inc.desc) return;
+    var match=out.find(function(e){
+      return (inc.role&&e.role&&e.role.toLowerCase()===inc.role.toLowerCase())
+        || (inc.company&&e.company&&e.company.toLowerCase()===inc.company.toLowerCase());
+    });
+    if(match){
+      if(inc.years&&!match.years) match.years=inc.years;
+      if(inc.desc){
+        match.desc=match.desc?(match.desc+' '+inc.desc).trim():inc.desc;
+      }
+      if(inc.role&&!match.role) match.role=inc.role;
+      if(inc.company&&!match.company) match.company=inc.company;
+      match.show=match.show!==false;
+    } else {
+      out.push(inc);
+    }
+  });
+  return out.filter(function(e){return e.role||e.company||e.years||e.desc;});
+}
+
+function applyInterviewPortfolioFields(f){
+  if(!f) return;
+  if(f.tagline) P.tagline=f.tagline;
+  if(f.career_summary) P.career_summary=f.career_summary;
+  if(f.hidden_strengths) P.hidden_strengths=f.hidden_strengths;
+  if(f.bio){
+    if(!P.bio||P.bio.length<f.bio.length*0.6) P.bio=f.bio;
+    else if(P.bio.indexOf(f.bio.slice(0,40))<0) P.bio=(P.bio+'\n\n'+f.bio).trim();
+  } else if(f.career_summary&&!P.bio){
+    P.bio=f.career_summary;
+  }
+  if(f.skills&&f.skills.length){
+    P.skills=mergeUniqueStrings(P.skills,f.skills);
+  }
+  if(f.languages&&f.languages.length){
+    P.languages=f.languages;
+  }
+  if(f.experience&&f.experience.length){
+    P.experience=mergeExperienceLists(P.experience,f.experience);
+  }
+  if(f.achievements&&f.achievements.length){
+    P.achievements=mergeUniqueStrings(P.achievements,f.achievements);
+  }
+}
+
+async function finalizeInterview(reply){
+  var inp=document.getElementById('interviewInput');
+  var send=document.getElementById('interviewSend');
+  addInterviewMsg('ai','Analysoin vastauksiasi ja täytän portfolio-lomakkeen...');
+  var ok=false;
+  try{
+    var r=await fetch(apiBase()+'/api/ai/interview-portfolio-parse',{
+      method:'POST',credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({answers:interviewAnswers,cvText:cvText,existing:P})
+    });
+    var d=await r.json();
+    if(r.ok&&d.fields){
+      applyInterviewPortfolioFields(d.fields);
+      ok=true;
+    }
+  }catch(e){
+    console.warn('[interview-portfolio-parse]',e);
+  }
+  if(!ok&&reply) tryParseInlineInterviewJson(reply);
+  syncDetailsFields();
+  renderExperienceEditor();
+  addInterviewMsg('ai','Valmis! Haastattelun tiedot on siirretty portfolio-lomakkeeseen. Tarkista vaiheessa Täydennä tiedot ennen julkaisua. ✓');
+  interviewDone=true;
+  document.getElementById('interviewDone').style.display='block';
+  if(inp) inp.disabled=true;
+  if(send) send.disabled=true;
 }
 
 document.addEventListener('DOMContentLoaded',function(){
@@ -1015,11 +1115,16 @@ function removeExperienceRow(i){
 }
 
 function syncDetailsFields(){
-  var fields={d_name:'full_name',d_city:'city',d_role:'target_role',d_bio:'bio',d_email:'email_public',d_linkedin:'linkedin_url'};
+  var fields={d_name:'full_name',d_city:'city',d_role:'target_role',d_bio:'bio',d_email:'email_public',d_linkedin:'linkedin_url',d_tagline:'tagline',d_strengths:'hidden_strengths'};
   Object.keys(fields).forEach(function(id){
     var el=document.getElementById(id);
-    if(el&&P[fields[id]]) el.value=P[fields[id]];
+    var key=fields[id];
+    if(el&&P[key]) el.value=P[key];
   });
+  var bioEl=document.getElementById('d_bio');
+  if(bioEl&&!bioEl.value&&(P.bio||P.career_summary)){
+    bioEl.value=P.bio||P.career_summary;
+  }
   // Skills
   var sk=document.getElementById('d_skills');
   if(sk&&P.skills.length){
@@ -1235,7 +1340,7 @@ async function processPhoto(file){
 // SAVE & PREVIEW
 // ══════════════════════════════════════════
 function syncPayloadFromForm(){
-  var fieldMap={d_name:'full_name',d_city:'city',d_role:'target_role',d_bio:'bio',d_email:'email_public',d_linkedin:'linkedin_url'};
+  var fieldMap={d_name:'full_name',d_city:'city',d_role:'target_role',d_bio:'bio',d_email:'email_public',d_linkedin:'linkedin_url',d_tagline:'tagline',d_strengths:'hidden_strengths'};
   Object.keys(fieldMap).forEach(function(id){
     var el=document.getElementById(id);
     if(el) P[fieldMap[id]]=el.value.trim();

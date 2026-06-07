@@ -964,4 +964,86 @@ router.post('/cv-portfolio-parse', async (req, res) => {
   }
 });
 
+/** Merge AI interview answers into portfolio fields (moduuli-elava-cv). */
+router.post('/interview-portfolio-parse', async (req, res) => {
+  try {
+    const answers = Array.isArray(req.body.answers) ? req.body.answers.filter(Boolean) : [];
+    const cvText = String(req.body.cvText || '').trim();
+    const existing = req.body.existing || {};
+
+    if (answers.length < 1 && cvText.replace(/\s/g, '').length < 40) {
+      return res.status(400).json({ error: 'Haastatteluvastauksia ei ole riittävästi.' });
+    }
+
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return res.status(503).json({ error: 'Tekoälypalvelu ei ole käytössä.' });
+    }
+
+    const qLabels = [
+      'Onnistumistilanne (työ/opiskelu/arki)',
+      'Mitä kollegat/esimies arvostavat',
+      'Milloin olet parhaimmillasi',
+      'Ura ja tavoitteet'
+    ];
+    const transcript = answers.map((a, i) => `${qLabels[i] || 'Vastaus ' + (i + 1)}:\n${String(a).trim()}`).join('\n\n');
+
+    const system = [
+      'You build a Finnish job-seeker portfolio from an AI interview transcript and optional CV text.',
+      'Reply with ONLY valid JSON (no markdown):',
+      '{"tagline":"max 8 words in Finnish","bio":"3-5 sentences combining CV facts and interview — rich, personal, for portfolio About section","career_summary":"2-3 sentences — why hire this person","hidden_strengths":"3-5 bullet points as plain text lines separated by newline — strengths others see","skills":["5-10 concrete skills in Finnish"],"languages":[{"name":"","level":""}],"experience":[{"role":"","company":"","years":"","desc":"1-2 sentences from CV and interview","show":true}],"achievements":["3-6 concrete achievements from interview answers in Finnish"]}',
+      'Rules: Use facts from transcript and CV only. Extract ALL work roles mentioned (up to 8) with descriptions from interview stories. Infer languages if stated (e.g. Finnish native, English good). Merge with existing data — do not drop employers already in CV. Finnish text. show:true for each experience unless clearly minor.'
+    ].join(' ');
+
+    const userContent = [
+      cvText ? 'CV TEXT:\n' + cvText.slice(0, 8000) : '',
+      existing.bio ? 'EXISTING BIO:\n' + String(existing.bio).slice(0, 1500) : '',
+      Array.isArray(existing.experience) && existing.experience.length
+        ? 'EXISTING EXPERIENCE JSON:\n' + JSON.stringify(existing.experience).slice(0, 3000)
+        : '',
+      'INTERVIEW TRANSCRIPT:\n' + transcript.slice(0, 12000)
+    ].filter(Boolean).join('\n\n');
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${openaiApiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: userContent }
+        ],
+        max_tokens: 2800,
+        temperature: 0.25,
+        response_format: { type: 'json_object' }
+      }),
+      signal: timeoutSignal(60000)
+    });
+
+    if (!response.ok) {
+      const details = await response.text().catch(() => '');
+      console.error('interview-portfolio-parse OpenAI error:', details);
+      return res.status(502).json({ error: 'Haastattelun analysointi epäonnistui.' });
+    }
+
+    const data = await response.json();
+    const raw = String(data.choices?.[0]?.message?.content || '').trim();
+    let fields;
+    try {
+      fields = JSON.parse(raw.replace(/^```json\s*|\s*```$/g, '').trim());
+    } catch (parseErr) {
+      console.error('interview-portfolio-parse JSON parse failed:', raw.slice(0, 200));
+      return res.status(502).json({ error: 'Haastattelun tietojen jäsentäminen epäonnistui.' });
+    }
+
+    res.json({ fields });
+  } catch (err) {
+    console.error('interview-portfolio-parse error:', err);
+    res.status(500).json({ error: 'Haastattelun analysointi epäonnistui.' });
+  }
+});
+
 module.exports = router;
