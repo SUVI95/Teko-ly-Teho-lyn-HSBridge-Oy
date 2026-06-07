@@ -693,6 +693,31 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
     <div class="mh-goal"><strong>Miksi tämä on tärkeä:</strong> Useimmat ihmiset harjoittelevat vain kirjoittamalla. Mutta haastattelussa puhuminen on eri taito — ääni, rytmi, hermostuminen. Kun kuulet itsesi ensin täällä, olet valmistautunut oikeaan haastatteluun.</div>
   </div>
 
+  <div class="context-box">
+    <strong>Mihin kysymykseen vastaat?</strong> Valitse yksi alla olevista — tai puhu sama tarina jonka kirjoitit edellisessä osiossa. Vastaa aina <strong>STAR-rakenteella</strong> (Situation → Task → Action → Result): tilanne, tehtävä, toiminta, tulos.
+  </div>
+
+  <div class="vinkki"><span class="vinkki-icon">🎯</span><div>
+    <strong>Kaksi kysymystä joihin voit vastata:</strong>
+    <ol style="margin:10px 0 0 18px;line-height:1.85">
+      <li><em>"Kerro tilanteesta jossa asiakas oli selvästi tyytymätön. Mitä tapahtui ja mitä teit?"</em> — sama kysymys kuin kirjoitusosiossa</li>
+      <li><em>"Kerro tilanteesta jossa jouduit ratkaisemaan ongelman paineen alla. Mitä teit?"</em> — yleinen haastattelukysymys, toimii samalla STAR-rakenteella</li>
+    </ol>
+  </div></div>
+
+  <div class="vinkki"><span class="vinkki-icon">⭐</span><div>
+    <strong>STAR-muistilista — mitä sanoa ääneen (60–90 s):</strong>
+    <ul style="margin:10px 0 0 18px;line-height:1.85">
+      <li><strong>S — Tilanne:</strong> Missä olit? Mitä tapahtui? <em>(1 lause, esim. "Olin töissä kaupassa ja asiakas tuli valittamaan...")</em></li>
+      <li><strong>T — Tehtävä:</strong> Mikä oli sinun vastuusi? <em>(1 lause, esim. "Minun piti ratkaista tilanne niin että asiakas lähtee tyytyväisenä.")</em></li>
+      <li><strong>A — Toiminta:</strong> Mitä <em>sinä</em> teit — askel askeleelta? <em>(2–3 lausetta, sano "minä" — älä "me")</em></li>
+      <li><strong>R — Tulos:</strong> Miten loppui? Opitko jotain? <em>(1 lause, mielellään konkreettinen, esim. "Asiakas kiitti ja tuli takaisin.")</em></li>
+    </ul>
+    <p style="margin-top:12px;margin-bottom:0"><strong>Vinkki:</strong> Voit katsoa kirjoittamaasi vastausta muistilistanasi — mutta älä lue sitä sanasta sanaan. Haastattelussa kuulostaa luonnollisemmalta kun puhut omin sanoin.</p>
+  </div></div>
+
+  <div class="note-gold note" id="starVoiceWrittenHint" style="display:none;margin-bottom:16px"></div>
+
   <div class="voice-zone">
     <span class="vz-label">🎙 Nauhoita STAR-vastauksesi</span>
     <div class="vz-title">Kerro vastauksesi ääneen — aivan kuten haastattelussa</div>
@@ -1447,6 +1472,7 @@ function go(n){
   if(n===7&&!abBuilt)buildAB();
   if(n===10&&!scenBuilt)buildScen();
   if(n===12)buildEarn();
+  if(n==='5b')updateStarVoicePrompt();
   try{saveProgress();}catch(e){}
 }
 
@@ -1502,6 +1528,26 @@ function assignDL(sent){
 }
 
 function checkWrite(){document.getElementById('evalWriteBtn').disabled=![S.w_s,S.w_t,S.w_a,S.w_r].every(v=>v.trim().length>10);}
+
+function updateStarVoicePrompt(){
+  const el=document.getElementById('starVoiceWrittenHint');
+  if(!el)return;
+  const has=[S.w_s,S.w_t,S.w_a,S.w_r].some(v=>String(v||'').trim().length>8);
+  if(!has){
+    el.style.display='none';
+    el.innerHTML='';
+    return;
+  }
+  el.style.display='block';
+  el.innerHTML='<strong>Kirjoittamasi STAR on tallennettu — voit puhua sen ääneen:</strong><br><br>'
+    +'<span style="color:#2B5B8A;font-weight:500">S:</span> '+escHtml(S.w_s.trim())+'<br>'
+    +'<span style="color:#6B3FA0;font-weight:500">T:</span> '+escHtml(S.w_t.trim())+'<br>'
+    +'<span style="color:var(--forest);font-weight:500">A:</span> '+escHtml(S.w_a.trim())+'<br>'
+    +'<span style="color:var(--coral);font-weight:500">R:</span> '+escHtml(S.w_r.trim());
+}
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 async function evalWrite(){
   document.getElementById('evalWriteBtn').disabled=true;load('writeFbT');
   const sys='Olet kokenut rekrytoija. Arvioit STAR-vastauksen asiakaspalvelun haastatteluun. Arvioi: (1) onko S/T/A/R siellä, (2) onko Action konkreettinen ja henkilökohtainen, (3) yksi parannus. Max 3 lausetta. Suomi. Kannustava mutta rehellinen.';
@@ -1511,6 +1557,7 @@ async function evalWrite(){
   S.starAnswer=`S: ${S.w_s}\nT: ${S.w_t}\nA: ${S.w_a}\nR: ${S.w_r}`;
   document.getElementById('writeReveal').classList.add('show');
   document.getElementById('evalWriteBtn').disabled=false;
+  updateStarVoicePrompt();
   try{saveProgress();}catch(e){}
 }
 
@@ -2167,6 +2214,7 @@ async function initHaPersistence(){
     const localTs=Number(local.ts||0);
     if(localTs>remoteTs)applyHaData(local);
   }
+  updateStarVoicePrompt();
 }
 document.addEventListener('input',saveProgress,true);
 document.addEventListener('change',saveProgress,true);
