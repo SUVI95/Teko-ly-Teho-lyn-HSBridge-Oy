@@ -1557,7 +1557,6 @@ function go(n){
   if(n===10&&!scenBuilt)buildScen();
   if(n===12)buildEarn();
   if(n==='5b')updateStarVoicePrompt();
-  if(n==='8b')mockPrefetchGreeting();
   updateStfGate();
   try{saveProgress();}catch(e){}
 }
@@ -2562,73 +2561,16 @@ let mockBusy = false;
 let mockLiveActive = false;
 let mockRealtime = null;
 let mockLiveTimerInt = null;
-let mockBridgeAudio = null;
-let mockGreetingBlobUrl = null;
-let mockGreetingPrefetching = false;
-
-const MOCK_INSTANT_GREETING = 'Hei, tervetuloa! Hetki pieni — yhdistän sinut rekrytoijaan.';
-const MOCK_INSTANT_GREETING_TTS = 'Lyhyt lämmin tervehdys suomeksi. Nopea luonnollinen tahti — kuin huoneessa, ei puhelimessa. Yksi lause.';
-
-function mockStopBridgeAudio() {
-  if (mockBridgeAudio) {
-    try { mockBridgeAudio.pause(); } catch (e) {}
-    mockBridgeAudio = null;
-  }
-}
-
-async function mockPrefetchGreeting() {
-  if (mockGreetingBlobUrl || mockGreetingPrefetching) return;
-  mockGreetingPrefetching = true;
-  try {
-    const r = await fetch('/api/ai/speech', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        text: MOCK_INSTANT_GREETING,
-        instructions: MOCK_INSTANT_GREETING_TTS
-      }),
-      signal: AbortSignal.timeout(25000)
-    });
-    if (!r.ok) return;
-    const blob = await r.blob();
-    mockGreetingBlobUrl = URL.createObjectURL(blob);
-  } catch (e) {
-    console.warn('[mock] greeting prefetch', e);
-  } finally {
-    mockGreetingPrefetching = false;
-  }
-}
 
 function mockShowInstantConnectingUI() {
   document.getElementById('mockTopStatus').textContent = 'Yhdistetään...';
-  document.getElementById('mockStatus').textContent = 'Rekrytoija aloittaa — kuuntele kaiutinta';
+  document.getElementById('mockStatus').textContent = 'Odotetaan rekrytoijaa — yhteys muodostuu hetken';
   document.getElementById('mockRipple').classList.add('active');
-  document.getElementById('mockQSpeaking')?.classList.remove('hide');
+  document.getElementById('mockQSpeaking')?.classList.add('hide');
   updateMockLiveUI({
     label: 'Tutustuminen',
     tag: '',
-    recruiterText: MOCK_INSTANT_GREETING
-  });
-}
-
-function mockPlayInstantGreeting() {
-  mockStopBridgeAudio();
-  mockShowInstantConnectingUI();
-
-  function playUrl(url) {
-    mockBridgeAudio = new Audio(url);
-    mockBridgeAudio.volume = 1;
-    mockBridgeAudio.play().catch(() => {});
-  }
-
-  if (mockGreetingBlobUrl) {
-    playUrl(mockGreetingBlobUrl);
-    return;
-  }
-
-  mockPrefetchGreeting().then(() => {
-    if (mockGreetingBlobUrl) playUrl(mockGreetingBlobUrl);
+    recruiterText: 'Rekrytoija aloittaa heti kun yhteys on valmis.'
   });
 }
 
@@ -2689,7 +2631,6 @@ function resetMockSessionState() {
 async function mockFinishLiveSession() {
   if (mockBusy) return;
   mockBusy = true;
-  mockStopBridgeAudio();
   mockLiveActive = false;
   clearInterval(mockLiveTimerInt);
   document.getElementById('mockRipple').classList.remove('active');
@@ -2746,7 +2687,6 @@ async function mockStartLive() {
       document.getElementById('mockQSpeaking')?.classList.toggle('hide', waiting);
       document.getElementById('mockRipple')?.classList.toggle('active', !waiting);
     },
-    onRemoteAudio: () => { mockStopBridgeAudio(); },
     onPhaseChange: (info) => {
       mockQ = mockDoneCount;
       updateMockLiveUI(info);
@@ -3016,19 +2956,17 @@ async function mockStart() {
   if (mockBusy) return;
   if (!navigator.mediaDevices) { alert('Selaimesi ei tue äänittämistä.'); return; }
   if (mockRealtime) { try { mockRealtime.stop(); } catch (e) {} mockRealtime = null; }
-  mockStopBridgeAudio();
   resetMockSessionState();
 
   if (typeof MockRealtimeInterview !== 'undefined' && typeof RTCPeerConnection !== 'undefined') {
     mockLiveActive = true;
     updateMockDots();
-    mockPlayInstantGreeting();
+    mockShowInstantConnectingUI();
     try {
       await mockStartLive();
       return;
     } catch (e) {
       console.warn('[mock] live mode unavailable, falling back', e);
-      mockStopBridgeAudio();
       if (mockRealtime) { try { mockRealtime.stop(); } catch (err) {} mockRealtime = null; }
       mockLiveActive = false;
       showMockLiveBadge(false);
@@ -3067,7 +3005,6 @@ function startMockRecording(stream) {
 
 function mockStop() {
   if (mockBusy) return;
-  mockStopBridgeAudio();
   if (mockLiveActive && mockRealtime) {
     const answered = (S.mockSession || []).filter(Boolean).length;
     mockRealtime.stop();

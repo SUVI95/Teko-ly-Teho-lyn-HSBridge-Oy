@@ -114,11 +114,11 @@ function realtimeModel() {
 }
 
 function realtimeVoice() {
-  return envTrim('OPENAI_REALTIME_VOICE') || 'cedar';
+  return envTrim('OPENAI_REALTIME_VOICE') || 'echo';
 }
 
 function ttsVoice() {
-  return envTrim('OPENAI_TTS_VOICE') || 'cedar';
+  return envTrim('OPENAI_TTS_VOICE') || 'echo';
 }
 
 function buildRealtimeSessionConfig() {
