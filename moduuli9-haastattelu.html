@@ -1759,21 +1759,36 @@ function copyHP(){
 
 
 // ── VASTAVÄITE ────────────────────────────────────
+const VASTA_LOADING = 'Ladataan kysymystä...';
+const VASTA_QUESTIONS = [
+  '"Sanoit rauhoittaneesi tilanteen — mutta miten tarkalleen? Mitä sait asiakkaan tekemään eri tavalla?"',
+  '"Kerroit toimineesi näin — onko se yrityksen virallinen käytäntö vai oma päätöksesi?"',
+  '"Mitä olisit tehnyt toisin jos sama tilanne tulisi tänään uudelleen?"',
+  '"Ymmärsit asiakkaan tarpeen — miten varmistit että ymmärsit oikein eikä vain luullut ymmärtäväsi?"'
+];
+
+function pickVastaQuestion() {
+  return VASTA_QUESTIONS[Math.floor(Math.random() * VASTA_QUESTIONS.length)];
+}
+
+function isValidVastaQuestion(q) {
+  const s = String(q || '').trim();
+  return s.length >= 10 && s !== VASTA_LOADING;
+}
+
+function ensureVastaQuestion() {
+  if (!isValidVastaQuestion(S.vastaQuestion)) {
+    S.vastaQuestion = pickVastaQuestion();
+  }
+  const el = document.getElementById('vastaquestion');
+  if (el) el.textContent = S.vastaQuestion;
+}
+
 function initVastav(){
   const star=S.w_s&&S.w_t&&S.w_a&&S.w_r;
   const ctx=document.getElementById('vastaBoxContext');
   if(ctx&&star){ctx.innerHTML='<strong>Vastauksesi STAR:</strong> '+S.w_s.slice(0,80)+'... Toiminta: '+S.w_a.slice(0,80)+'...';}
-  const questions=[
-    '"Sanoit rauhoittaneesi tilanteen — mutta miten tarkalleen? Mitä sait asiakkaan tekemään eri tavalla?"',
-    '"Kerroit toimineesi näin — onko se yrityksen virallinen käytäntö vai oma päätöksesi?"',
-    '"Mitä olisit tehnyt toisin jos sama tilanne tulisi tänään uudelleen?"',
-    '"Ymmärsit asiakkaan tarpeen — miten varmistit että ymmärsit oikein eikä vain luullut ymmärtäväsi?"'
-  ];
-  const q=document.getElementById('vastaquestion');
-  if(!S.vastaQuestion){
-    S.vastaQuestion=questions[Math.floor(Math.random()*questions.length)];
-  }
-  if(q)q.textContent=S.vastaQuestion;
+  ensureVastaQuestion();
 }
 function checkVastav(){document.getElementById('evalVastavBtn').disabled=!S.w_vastav||S.w_vastav.trim().length<30;}
 async function evalVastav(){
@@ -1908,7 +1923,7 @@ function haSnapshot(){
     companyChosen,
     scenBuilt,scenDone,
     starExpanded,checkDone,
-    vastaQuestion:S.vastaQuestion||txt('vastaquestion'),
+    vastaQuestion:isValidVastaQuestion(S.vastaQuestion)?S.vastaQuestion:'',
     shown:{
       startReveal:panelShown('startReveal'),
       tfDoneMsg:panelShown('tfDoneMsg'),
@@ -2080,10 +2095,10 @@ function applyHaData(d){
     if(d.display.starRetryBtn){const rb=document.getElementById('starRetryBtn');if(rb)rb.style.display=d.display.starRetryBtn;}
     if(d.display.hpRetryBtn){const rb=document.getElementById('hpRetryBtn');if(rb)rb.style.display=d.display.hpRetryBtn;}
   }
-  if(d.vastaQuestion){
+  if(isValidVastaQuestion(d.vastaQuestion)){
     S.vastaQuestion=d.vastaQuestion;
-    const q=document.getElementById('vastaquestion');
-    if(q)q.textContent=d.vastaQuestion;
+  }else{
+    S.vastaQuestion='';
   }
   if(Array.isArray(d.tfItems)){
     const items=document.querySelectorAll('#tfItems .tf-item');
