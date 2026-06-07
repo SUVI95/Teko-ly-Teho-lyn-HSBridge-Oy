@@ -108,6 +108,14 @@ function voiceFeedbackModel() {
   return envTrim('OPENAI_VOICE_MODEL') || 'gpt-realtime-2';
 }
 
+function realtimeModel() {
+  return envTrim('OPENAI_REALTIME_MODEL') || voiceFeedbackModel();
+}
+
+function realtimeVoice() {
+  return envTrim('OPENAI_REALTIME_VOICE') || 'ash';
+}
+
 /** Transcribe audio buffer via OpenAI Whisper (multipart body built manually for Node fetch). */
 async function whisperTranscribeBuffer(openaiApiKey, buffer, opts = {}) {
   const language = opts.language || 'fi';
@@ -503,6 +511,77 @@ router.post('/speech', async (req, res) => {
     console.error('Speech error:', error);
     res.status(500).json({ error: 'Failed to generate speech', message: error.message });
   }
+});
+
+const { MOCK_INTERVIEW_QUESTIONS, buildMockRealtimeInstructions } = require('../lib/mock-interview-questions');
+
+/** WebRTC Realtime session for live mock interview (gpt-realtime-2). */
+router.post('/realtime/session', express.text({ type: ['application/sdp', 'text/plain'], limit: '512kb' }), async (req, res) => {
+  try {
+    const sdp = String(req.body || '').trim();
+    if (!sdp) {
+      return res.status(400).json({ error: 'SDP offer required' });
+    }
+
+    const openaiApiKey = envTrim('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return res.status(503).json({ error: 'Live-haastattelu ei ole käytössä. Ota yhteyttä opettajaan.' });
+    }
+
+    const sessionConfig = {
+      type: 'realtime',
+      model: realtimeModel(),
+      instructions: buildMockRealtimeInstructions(MOCK_INTERVIEW_QUESTIONS),
+      output_modalities: ['audio', 'text'],
+      audio: {
+        input: {
+          turn_detection: { type: 'semantic_vad' },
+          transcription: { model: 'gpt-4o-mini-transcribe', language: 'fi' }
+        },
+        output: {
+          voice: realtimeVoice()
+        }
+      }
+    };
+
+    const fd = new FormData();
+    fd.set('sdp', sdp);
+    fd.set('session', JSON.stringify(sessionConfig));
+
+    const response = await fetch('https://api.openai.com/v1/realtime/calls', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${openaiApiKey}`
+      },
+      body: fd,
+      signal: timeoutSignal(30000)
+    });
+
+    if (!response.ok) {
+      const details = await response.text().catch(() => '');
+      console.error('Realtime session error:', response.status, details);
+      return res.status(response.status >= 500 ? 502 : response.status).json({
+        error: 'Live-yhteys epäonnistui',
+        details
+      });
+    }
+
+    const answerSdp = await response.text();
+    res.set('Content-Type', 'application/sdp');
+    res.send(answerSdp);
+  } catch (error) {
+    console.error('Realtime session error:', error.message);
+    res.status(500).json({ error: 'Live-yhteys epäonnistui', message: error.message });
+  }
+});
+
+/** Mock interview question list (for client sync). */
+router.get('/realtime/config', (req, res) => {
+  res.json({
+    model: realtimeModel(),
+    voice: realtimeVoice(),
+    questions: MOCK_INTERVIEW_QUESTIONS
+  });
 });
 
 const MOCK_REACTION_TTS_INSTRUCTIONS = [
