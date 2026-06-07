@@ -415,7 +415,17 @@ router.post('/voice-interview', audioUpload.single('file'), async (req, res) => 
   }
 });
 
-/** TTS for mock interview questions (male recruiter voice). */
+/** TTS for mock interview questions (natural recruiter voice). */
+const DEFAULT_TTS_INSTRUCTIONS = [
+  'You are a warm, experienced Finnish recruiter in a real job interview.',
+  'Speak naturally like a human — not a robot or newsreader.',
+  'Use a friendly, calm tone with gentle energy and a slight smile in your voice.',
+  'Allow natural breathing pauses between phrases. Vary intonation.',
+  'Sound encouraging and present, as if you genuinely want to hear the answer.',
+  'Do not rush. Do not sound monotone. No exaggerated acting or fake laughter.',
+  'Language: Finnish.'
+].join(' ');
+
 router.post('/speech', async (req, res) => {
   try {
     const text = String(req.body.text || '').trim();
@@ -429,33 +439,63 @@ router.post('/speech', async (req, res) => {
     }
 
     const voice = envTrim('OPENAI_TTS_VOICE') || 'onyx';
-    const model = envTrim('OPENAI_TTS_MODEL') || 'tts-1-hd';
+    const instructions = envTrim('OPENAI_TTS_INSTRUCTIONS') || DEFAULT_TTS_INSTRUCTIONS;
+    const speedRaw = parseFloat(envTrim('OPENAI_TTS_SPEED') || '0.96');
+    const speed = Number.isFinite(speedRaw) ? Math.min(1.2, Math.max(0.8, speedRaw)) : 0.96;
 
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${openaiApiKey}`
-      },
-      body: JSON.stringify({
+    const primaryModel = envTrim('OPENAI_TTS_MODEL') || 'gpt-4o-mini-tts-2025-03-20';
+    const fallbackModel = 'gpt-4o-mini-tts';
+    const legacyModel = 'tts-1-hd';
+
+    const models = [primaryModel, fallbackModel, legacyModel].filter(
+      (m, i, arr) => m && arr.indexOf(m) === i
+    );
+
+    let lastError = '';
+    for (const model of models) {
+      const payload = {
         model,
         voice,
         input: text.slice(0, 4096),
         response_format: 'mp3'
-      }),
-      signal: timeoutSignal(30000)
-    });
+      };
+      if (model.startsWith('gpt-4o-mini-tts')) {
+        payload.instructions = instructions;
+      }
+      if (model !== legacyModel) {
+        payload.speed = speed;
+      }
 
-    if (!response.ok) {
-      const errorData = await response.text().catch(() => '');
-      console.error('OpenAI TTS error:', errorData);
-      return res.status(response.status).json({ error: 'Speech generation failed', details: errorData });
+      try {
+        const response = await fetch('https://api.openai.com/v1/audio/speech', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${openaiApiKey}`
+          },
+          body: JSON.stringify(payload),
+          signal: timeoutSignal(45000)
+        });
+
+        if (!response.ok) {
+          lastError = await response.text().catch(() => '');
+          console.warn('OpenAI TTS model failed:', model, lastError);
+          continue;
+        }
+
+        const audio = Buffer.from(await response.arrayBuffer());
+        res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('X-TTS-Model', model);
+        return res.send(audio);
+      } catch (err) {
+        lastError = err.message;
+        console.warn('OpenAI TTS error:', model, err.message);
+      }
     }
 
-    const audio = Buffer.from(await response.arrayBuffer());
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Cache-Control', 'no-store');
-    res.send(audio);
+    console.error('OpenAI TTS all models failed:', lastError);
+    return res.status(502).json({ error: 'Speech generation failed', details: lastError });
   } catch (error) {
     console.error('Speech error:', error);
     res.status(500).json({ error: 'Failed to generate speech', message: error.message });
