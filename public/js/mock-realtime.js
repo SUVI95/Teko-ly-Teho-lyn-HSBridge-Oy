@@ -1,14 +1,17 @@
 /**
- * Live mock interview via OpenAI Realtime API + WebRTC (gpt-realtime-2).
+ * Live mock interview — conversational gpt-realtime-2 via WebRTC.
+ * Flow: greet → name → background → 3 AI-generated behavioral questions.
  */
 (function (global) {
   'use strict';
 
+  var DEFAULT_TURNS = 5;
+
   function MockRealtimeInterview(options) {
-    this.questions = options.questions || [];
-    this.totalQuestions = this.questions.length;
+    this.phases = options.phases || [];
+    this.expectedTurns = options.expectedTurns || DEFAULT_TURNS;
     this.onStatus = options.onStatus || function () {};
-    this.onQuestionChange = options.onQuestionChange || function () {};
+    this.onPhaseChange = options.onPhaseChange || function () {};
     this.onUserTranscript = options.onUserTranscript || function () {};
     this.onAssistantText = options.onAssistantText || function () {};
     this.onComplete = options.onComplete || function () {};
@@ -23,9 +26,14 @@
     this.answerCount = 0;
     this.awaitingWrapUp = false;
     this.wrapUpTimer = null;
-    this.sessionStartedAt = 0;
     this.deliveryHint = options.deliveryHint || '';
+    this.pendingRecruiterText = '';
+    this.lastAssistantText = '';
   }
+
+  MockRealtimeInterview.prototype.phaseAt = function (index) {
+    return this.phases[index] || { id: 'turn', label: 'Kysymys ' + (index + 1), tag: '' };
+  };
 
   MockRealtimeInterview.prototype.sendEvent = function (event) {
     if (this.dc && this.dc.readyState === 'open') {
@@ -40,11 +48,32 @@
       if (!this.started) {
         this.started = true;
         this.onStatus('Rekrytoija aloittaa — kuuntele...');
+        this.onPhaseChange({ phase: 'intro', label: 'Tutustuminen', recruiterText: '' });
         this.sendEvent({
           type: 'response.create',
           response: {
-            instructions: 'Aloita haastattelu lämpimällä tervehdyksellä ja esitä ensimmäinen kysymys listalta. Puhu selkeästi — kuin sama huone.'
+            instructions: 'Aloita lyhyellä lämpimällä tervehdyksellä ja kysy hakijan nimi. Vain yksi kysymys — odota vastausta.'
           }
+        });
+      }
+      return;
+    }
+
+    if (
+      event.type === 'response.output_audio_transcript.done' ||
+      event.type === 'response.audio_transcript.done' ||
+      event.type === 'response.output_text.done'
+    ) {
+      const text = String(event.transcript || event.text || '').trim();
+      if (text) {
+        this.lastAssistantText = text;
+        this.pendingRecruiterText = text;
+        this.onAssistantText(text);
+        var phase = this.phaseAt(this.answerCount);
+        this.onPhaseChange({
+          phase: phase.id,
+          label: phase.label,
+          recruiterText: text
         });
       }
       return;
@@ -55,33 +84,32 @@
       if (!transcript) return;
 
       const qIndex = this.answerCount;
-      if (qIndex >= this.totalQuestions) return;
+      if (qIndex >= this.expectedTurns) return;
 
-      const q = this.questions[qIndex] || {};
+      const phase = this.phaseAt(qIndex);
+      const question = this.pendingRecruiterText || this.lastAssistantText || '';
+
       this.answerCount++;
       this.onUserTranscript({
         index: qIndex,
-        tag: q.tag || '',
-        question: q.text || '',
-        transcript
+        phase: phase.id,
+        tag: phase.tag,
+        label: phase.label,
+        question: question,
+        transcript: transcript
       });
-      this.onQuestionChange(Math.min(this.answerCount, this.totalQuestions - 1));
 
-      if (this.answerCount >= this.totalQuestions) {
+      this.pendingRecruiterText = '';
+
+      if (this.answerCount >= this.expectedTurns) {
         this.awaitingWrapUp = true;
         this.onStatus('Viimeinen vastaus kuultu — rekrytoija päättää...');
+        this.onPhaseChange({ phase: 'done', label: 'Valmis', recruiterText: '' });
       } else {
-        this.onStatus('Rekrytoija reagoi — vastaa seuraavaan kysymykseen kun kuulet sen.');
+        const next = this.phaseAt(this.answerCount);
+        this.onStatus('Rekrytoija jatkaa — kuuntele seuraavaa kysymystä.');
+        this.onPhaseChange({ phase: next.id, label: next.label, recruiterText: '' });
       }
-      return;
-    }
-
-    if (
-      event.type === 'response.output_audio_transcript.done' ||
-      event.type === 'response.audio_transcript.done'
-    ) {
-      const text = String(event.transcript || '').trim();
-      if (text) this.onAssistantText(text);
       return;
     }
 
@@ -89,7 +117,7 @@
       clearTimeout(this.wrapUpTimer);
       this.wrapUpTimer = setTimeout(() => {
         this.finish('complete');
-      }, 1800);
+      }, 2200);
       return;
     }
 
@@ -108,7 +136,7 @@
         }
       });
     }
-    this.onStatus('Yhteys valmis — odota rekrytoijaa...');
+    this.onStatus('Yhteys valmis — rekrytoija aloittaa pian...');
   };
 
   MockRealtimeInterview.prototype.setupRemoteAudio = function (stream) {
@@ -132,13 +160,14 @@
     }
 
     this.onStatus('Yhdistetään live-rekrytoijaan...');
-    this.sessionStartedAt = Date.now();
 
     try {
       const cfgRes = await fetch('/api/ai/realtime/config', { credentials: 'include' });
       if (cfgRes.ok) {
         const cfg = await cfgRes.json();
         if (cfg.deliveryHint) this.deliveryHint = cfg.deliveryHint;
+        if (Array.isArray(cfg.phases)) this.phases = cfg.phases;
+        if (cfg.expectedTurns) this.expectedTurns = cfg.expectedTurns;
       }
     } catch (e) {}
 
@@ -209,7 +238,7 @@
     const answerSdp = await sdpResponse.text();
     await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
     this.connected = true;
-    this.onStatus('● Live — puhu normaalisti kun rekrytoija on kysynyt');
+    this.onStatus('● Live — rekrytoija kysyy nimesi');
   };
 
   MockRealtimeInterview.prototype.finish = function (reason) {

@@ -4,7 +4,7 @@ const router = express.Router();
 const { fetch } = require('undici');
 const { extractPdfTextFromBuffer } = require('../lib/pdf-extract');
 const { buildMultipartForm } = require('../lib/multipart-form');
-const { MOCK_INTERVIEW_QUESTIONS, buildMockRealtimeInstructions } = require('../lib/mock-interview-questions');
+const { MOCK_INTERVIEW_PHASES, MOCK_INTERVIEW_TURN_COUNT, MOCK_CLASSIC_QUESTIONS, buildMockRealtimeInstructions } = require('../lib/mock-interview-questions');
 
 const cvUpload = multer({
   storage: multer.memoryStorage(),
@@ -125,7 +125,7 @@ function buildRealtimeSessionConfig() {
   return {
     type: 'realtime',
     model: realtimeModel(),
-    instructions: buildMockRealtimeInstructions(MOCK_INTERVIEW_QUESTIONS),
+    instructions: buildMockRealtimeInstructions(),
     output_modalities: ['audio', 'text'],
     audio: {
       input: {
@@ -589,10 +589,13 @@ router.get('/realtime/config', (req, res) => {
   res.json({
     model: realtimeModel(),
     voice: realtimeVoice(),
-    questions: MOCK_INTERVIEW_QUESTIONS,
+    phases: MOCK_INTERVIEW_PHASES,
+    expectedTurns: MOCK_INTERVIEW_TURN_COUNT,
+    classicQuestions: MOCK_CLASSIC_QUESTIONS,
     deliveryHint: [
       'Puhu selkeästi ja lämpimästi — kuin sama huone, ei puhelimesta eikä tunnelista.',
-      'Läheltä kuultava ääni, luonnollinen hengitys, ei robotti eikä uutistenlukija.'
+      'Läheltä kuultava ääni, luonnollinen hengitys, ei robotti eikä uutistenlukija.',
+      'Keskustele reaaliaikaisesti: kysy nimi, sitten tausta, sitten kolme taustaan sidottua vaikeaa kysymystä.'
     ].join(' ')
   });
 });
@@ -656,19 +659,22 @@ router.post('/mock-feedback', async (req, res) => {
     }
 
     const block = sessions.map((s, i) => {
-      const q = String(s.question || '').trim();
+      const q = String(s.question || s.recruiterText || '').trim();
       const a = String(s.transcript || s.answer || '').trim();
-      const tag = String(s.tag || '').trim();
-      return `--- Kysymys ${i + 1}${tag ? ' (' + tag + ')' : ''} ---\n${q}\n\nHakijan vastaus:\n${a}`;
+      const tag = String(s.tag || s.phase || '').trim();
+      const label = String(s.label || '').trim();
+      const header = label || (tag ? tag : 'Vaihe ' + (i + 1));
+      return `--- ${header}${tag && label ? ' (' + tag + ')' : ''} ---\nRekrytoija: ${q || '(ei tallennettu)'}\n\nHakijan vastaus:\n${a}`;
     }).join('\n\n');
 
     const system = [
-      'Olet kokenut suomalainen rekrytoija. Mock-haastattelu (3 vaikeaa kysymystä) on päättynyt.',
+      'Olet kokenut suomalainen rekrytoija. Live mock-haastattelu on päättynyt.',
+      'Haastattelu sisälsi tutustumisen (nimi, tausta) ja kolme taustaan sidottua käytöskysymystä.',
       'Anna kokonaispalaute kaikista vastauksista. Merkitse täsmälleen:',
       '✓ TOIMI:',
       '⚠ PARANNA:',
       '→ MUUTOS:',
-      'Suomi. Konkreettinen. Max 8 lausetta yhteensä. Ensimmäisessä kysymyksessä piti käyttää STAR-rakennetta — mainitse jos puuttui.'
+      'Suomi. Konkreettinen. Max 10 lausetta. Mainitse jos STAR-rakenne puuttui käytöskysymyksistä.'
     ].join(' ');
 
     const feedback = await voiceInterviewFeedback(openaiApiKey, {

@@ -953,8 +953,8 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
   <div class="mission-hdr">
     <span class="mh-eye">Bonusosio — Live Mock Haastattelu</span>
     <div class="mh-title">Oikea haastattelu — AI-rekrytoijana</div>
-    <div class="mh-sub">Kolme vaikeaa rekrytoijan kysymystä — rooliin tai yritykseen sidomatta. Live-tilassa puhut suoraan AI-rekrytoijan kanssa (gpt-realtime-2) — kuin puhelu. Lopuksi saat kirjallisen palautteen.</div>
-    <div class="mh-goal"><strong>Miten tämä toimii:</strong> Paina Aloita — rekrytoija puhuu suoraan kaiuttimesta ja kuulee sinut livenä. Vastaa normaalisti kun hän on kysynyt. Hän reagoi luonnollisesti ja siirtyy seuraavaan kysymykseen. Kolmen vastauksen jälkeen saat palautteen.</div>
+    <div class="mh-sub">Live-haastattelu gpt-realtime-2:lla — rekrytoija kysyy nimesi ja taustasi, sitten luo sinulle kolme vaikeaa kysymystä vastauksiesi perusteella. Kuin oikea keskustelu edestakaisin.</div>
+    <div class="mh-goal"><strong>Miten tämä toimii:</strong> Paina Aloita — rekrytoija tervehtii ja kysyy nimesi. Sitten taustasi. Sitten kolme henkilökohtaista käytöskysymystä. Vastaa normaalisti ääneen. Lopuksi saat kirjallisen palautteen.</div>
   </div>
 
   <div class="context-box"><strong>Ennen kuin aloitat:</strong> Varmista että olet rauhallisessa paikassa. Puhu normaalisti — ei tarvitse olla täydellinen. Tavoite on kuulla miltä sinä kuulostat, ei esittää täydellistä vastausta. Useimmat ihmiset parantavat merkittävästi jo toisella kierroksella.</div>
@@ -969,8 +969,10 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
         <div class="mock-q-dot active"></div>
         <div class="mock-q-dot"></div>
         <div class="mock-q-dot"></div>
+        <div class="mock-q-dot"></div>
+        <div class="mock-q-dot"></div>
       </div>
-      <span class="mock-q-label" id="mockQLabel">Kysymys 1 / 3</span>
+      <span class="mock-q-label" id="mockQLabel">Valmis aloittamaan</span>
       <span class="mock-q-tag" id="mockQTag" style="display:none"></span>
       <div class="mock-q-text" id="mockQText">Paina "Aloita haastattelu" kun olet valmis</div>
       <div class="mock-q-speaking hide" id="mockQSpeaking">🔊 Rekrytoija kysyy...</div>
@@ -1008,7 +1010,7 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
       <span class="voice-timer" id="mockTimer">0:00</span>
     </div>
     <div style="padding:0 28px 16px">
-      <div class="voice-status" id="mockStatus">Paina "Aloita haastattelu" — ensimmäinen kysymys ilmestyy</div>
+      <div class="voice-status" id="mockStatus">Paina "Aloita haastattelu" — rekrytoija kysyy ensin nimesi</div>
       <div id="mockAudioMount" aria-hidden="true"></div>
     </div>
   </div>
@@ -1456,7 +1458,7 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
 <script src="/js/mock-realtime.js"></script>
 <script src="/js/ai-helper.js"></script>
 <script>
-const S={pre:[],w_s:'',w_t:'',w_a:'',w_r:'',w_weak:'',w_why:'',w_vastav:'',companyName:'',companyUrl:'',companyFact:'',w_company:'',w_palkka:'',abResults:[],hp1:'',hp2:'',hp3:'',hpBuilt:'',hpFinal:'',startKey:'',nextKey:'',scenPicks:{},stfAnswers:[],vastaQuestion:'',mockSession:[]};
+const S={pre:[],w_s:'',w_t:'',w_a:'',w_r:'',w_weak:'',w_why:'',w_vastav:'',companyName:'',companyUrl:'',companyFact:'',w_company:'',w_palkka:'',abResults:[],hp1:'',hp2:'',hp3:'',hpBuilt:'',hpFinal:'',startKey:'',nextKey:'',scenPicks:{},stfAnswers:[],vastaQuestion:'',mockSession:[],mockCandidateName:''};
 const COMPANY_HOME_URLS={'Elisa':'https://www.elisa.fi/','S-ryhmä':'https://www.s-ryhma.fi/','OP Ryhmä':'https://www.op.fi/','DNA':'https://www.dna.fi/','Mehiläinen':'https://www.mehilainen.fi/','Kesko':'https://www.kesko.fi/'};
 const TOTAL=12;
 const MODULE9_ID='moduuli9-haastattelu';
@@ -2527,9 +2529,10 @@ function voiceStop(id) {
 }
 
 // ══════════════════════════════════════════════════════
-// MOCK INTERVIEW — 3 hard recruiter questions, voice-to-voice
+// MOCK INTERVIEW — live conversation or classic fallback
 // ══════════════════════════════════════════════════════
-const MOCK_QUESTIONS = [
+const MOCK_LIVE_TURNS = 5;
+const MOCK_CLASSIC_QUESTIONS = [
   {
     tag: 'STAR',
     text: 'Kerro tilanteesta, jossa tilanne kärjistyi — esimerkiksi tyytymätön asiakas, erimielisyys tiimin kanssa tai paine deadlinen alla. Käytä STAR-rakennetta: tilanne, tehtävä, mitä sinä teit, tulos.'
@@ -2543,6 +2546,7 @@ const MOCK_QUESTIONS = [
     text: 'Kerro tilanteesta, jossa jouduit sanomaan omasi tai olemaan eri mieltä — vaikka esimiehen, kollegan tai asiakkaan kanssa. Miten toimit?'
   }
 ];
+const MOCK_QUESTIONS = MOCK_CLASSIC_QUESTIONS;
 const MOCK_REACTION_TTS = 'Spontaneous brief Finnish recruiter reaction — warm, light energy, smile in voice. A soft chuckle or breathy heh is fine. Sound like you genuinely heard them. One or two short sentences. Finnish.';
 
 let mockQ = 0;
@@ -2562,7 +2566,25 @@ function showMockLiveBadge(show) {
   document.getElementById('mockLiveBadge')?.classList.toggle('show', !!show);
 }
 
+function mockTotalSteps() {
+  return mockLiveActive ? MOCK_LIVE_TURNS : MOCK_CLASSIC_QUESTIONS.length;
+}
+
+function updateMockLiveUI(info) {
+  const label = info?.label || 'Live-haastattelu';
+  const tag = info?.tag || '';
+  const text = info?.recruiterText || 'Kuuntele rekrytoijaa — vastaa kun hän on lopettanut.';
+  const tagEl = document.getElementById('mockQTag');
+  if (tagEl) {
+    tagEl.textContent = tag;
+    tagEl.style.display = tag ? 'inline-block' : 'none';
+  }
+  document.getElementById('mockQLabel').textContent = label;
+  document.getElementById('mockQText').textContent = text;
+}
+
 function updateMockQuestionUI(qIndex) {
+  if (mockLiveActive) return;
   const tagEl = document.getElementById('mockQTag');
   const tag = mockQuestionTag(qIndex);
   if (tagEl) {
@@ -2570,16 +2592,21 @@ function updateMockQuestionUI(qIndex) {
     tagEl.style.display = tag ? 'inline-block' : 'none';
   }
   document.getElementById('mockQText').textContent = mockQuestionPlain(qIndex);
-  document.getElementById('mockQLabel').textContent = 'Kysymys ' + (qIndex + 1) + ' / ' + MOCK_QUESTIONS.length;
+  document.getElementById('mockQLabel').textContent = 'Kysymys ' + (qIndex + 1) + ' / ' + MOCK_CLASSIC_QUESTIONS.length;
 }
 
 function resetMockSessionState() {
   mockQ = 0;
   mockDoneCount = 0;
   S.mockSession = [];
+  S.mockCandidateName = '';
   updateMockDots();
   renderMockTimeline();
-  updateMockQuestionUI(0);
+  if (mockLiveActive) {
+    updateMockLiveUI({ label: 'Valmis aloittamaan', recruiterText: 'Paina Aloita — rekrytoija kysyy ensin nimesi.' });
+  } else {
+    updateMockQuestionUI(0);
+  }
   document.getElementById('mockDone').classList.remove('show');
   document.getElementById('mockFbArea').classList.remove('show');
   document.getElementById('mockTimer').textContent = '0:00';
@@ -2626,6 +2653,7 @@ async function mockFinishLiveSession() {
 
 async function mockStartLive() {
   mockLiveActive = true;
+  updateMockDots();
   showMockLiveBadge(true);
   document.getElementById('mockRecBtn').style.display = 'none';
   document.getElementById('mockStopBtn').style.display = 'inline-flex';
@@ -2642,34 +2670,42 @@ async function mockStartLive() {
   }, 1000);
 
   mockRealtime = new MockRealtimeInterview({
-    questions: MOCK_QUESTIONS,
     onStatus: (msg) => { document.getElementById('mockStatus').textContent = msg; },
-    onQuestionChange: (qIndex) => {
-      mockQ = qIndex;
-      updateMockQuestionUI(qIndex);
+    onPhaseChange: (info) => {
+      mockQ = mockDoneCount;
+      updateMockLiveUI(info);
       updateMockDots();
     },
     onUserTranscript: (data) => {
       if (!Array.isArray(S.mockSession)) S.mockSession = [];
-      S.mockSession[data.index] = { question: data.question, transcript: data.transcript, tag: data.tag };
+      S.mockSession[data.index] = {
+        phase: data.phase,
+        label: data.label,
+        tag: data.tag,
+        question: data.question,
+        transcript: data.transcript
+      };
+      if (data.phase === 'name') S.mockCandidateName = data.transcript;
       mockDoneCount = data.index + 1;
-      mockQ = Math.min(data.index + 1, MOCK_QUESTIONS.length - 1);
+      mockQ = mockDoneCount;
       updateMockDots();
-      updateMockQuestionUI(mockQ);
       renderMockTimeline(data.index);
-      document.getElementById('mockStatus').textContent = 'Vastaus tallennettu ↑ — lue se yllä olevasta listasta.';
+      updateMockLiveUI({
+        label: data.label + ' ✓',
+        tag: data.tag,
+        recruiterText: data.transcript
+      });
+      document.getElementById('mockStatus').textContent = 'Vastaus tallennettu ↑ — rekrytoija jatkaa...';
       try { saveProgress(); } catch (e) {}
     },
     onAssistantText: (text) => {
-      const idx = Math.max(0, mockDoneCount - 1);
-      if (!S.mockSession[idx]) return;
-      const t = String(text || '').trim();
-      if (!t) return;
-      S.mockSession[idx].reaction = S.mockSession[idx].reaction
-        ? (S.mockSession[idx].reaction + ' ' + t).trim()
-        : t;
-      renderMockTimeline();
-      try { saveProgress(); } catch (e) {}
+      document.getElementById('mockQSpeaking')?.classList.remove('hide');
+      updateMockLiveUI({
+        label: document.getElementById('mockQLabel')?.textContent || 'Rekrytoija puhuu',
+        tag: document.getElementById('mockQTag')?.textContent || '',
+        recruiterText: text
+      });
+      document.getElementById('mockQSpeaking')?.classList.add('hide');
     },
     onComplete: () => { mockFinishLiveSession(); },
     onError: (err) => console.warn('[mock-live]', err)
@@ -2687,11 +2723,11 @@ function mockStartClassic() {
 }
 
 function mockQuestionPlain(i) {
-  return String(MOCK_QUESTIONS[i]?.text || '').trim();
+  return String(MOCK_CLASSIC_QUESTIONS[i]?.text || '').trim();
 }
 
 function mockQuestionTag(i) {
-  return String(MOCK_QUESTIONS[i]?.tag || '').trim();
+  return String(MOCK_CLASSIC_QUESTIONS[i]?.tag || '').trim();
 }
 
 function mockStopQuestionAudio() {
@@ -2703,16 +2739,9 @@ function mockStopQuestionAudio() {
 }
 
 function mockSpeechInput(plain, qIndex) {
-  const last = MOCK_QUESTIONS.length - 1;
+  const last = MOCK_CLASSIC_QUESTIONS.length - 1;
   if (qIndex === 0) {
-    return [
-      'Hei! Hauska tavata — kiitos kun tulit.',
-      'Tänään kysyn kolme vaikeaa kysymystä, ihan yleisiä rekrytoijan kysymyksiä.',
-      'Ei tarvitse tietää roolia tai yritystä — vastaa omasta elämästäsi.',
-      'Hetki...',
-      'Ensimmäinen kysymys — muista STAR-rakenne: tilanne, tehtävä, toiminta, tulos.',
-      plain
-    ].join(' ');
+    return ['Hei, tervetuloa — mukava tavata.', 'Mikä sinun nimesi on?', plain].join(' ');
   }
   if (qIndex === last) {
     return ['Okei, viimeinen kysymys — tämä on vaikea.', plain].join(' ');
@@ -2739,24 +2768,23 @@ function renderMockTimeline(activeIndex) {
   cards.innerHTML = indices.map((i) => {
     const s = sessions[i];
     const tag = s.tag || mockQuestionTag(i);
+    const label = s.label || ('Vaihe ' + (i + 1));
     const question = s.question || mockQuestionPlain(i);
     const transcript = s.transcript || '';
     const reaction = s.reaction || '';
-    const isActive = typeof activeIndex === 'number' && activeIndex === i && transcript && !reaction;
     const isDone = !!transcript;
-
     const reactionBlock = reaction
       ? '<div class="mock-card-r"><span class="mock-card-who">Rekrytoija</span>' + escapeHtml(reaction) + '</div>'
       : '';
 
     return [
-      '<div class="mock-card' + (isDone ? ' done' : '') + (isActive ? ' active' : '') + '" data-q="' + i + '">',
+      '<div class="mock-card' + (isDone ? ' done' : '') + '" data-q="' + i + '">',
       '<div class="mock-card-hdr">',
-      '<span class="mock-card-num">Kysymys ' + (i + 1) + ' / ' + MOCK_QUESTIONS.length + '</span>',
+      '<span class="mock-card-num">' + escapeHtml(label) + '</span>',
       tag ? '<span class="mock-card-tag">' + escapeHtml(tag) + '</span>' : '',
       isDone ? '<span class="mock-card-done">✓</span>' : '',
       '</div>',
-      '<div class="mock-card-q">' + escapeHtml(question) + '</div>',
+      question ? '<div class="mock-card-q">' + escapeHtml(question) + '</div>' : '',
       transcript ? '<div class="mock-card-a"><span class="mock-card-who">Sinä</span>' + escapeHtml(transcript) + '</div>' : '',
       reactionBlock,
       '</div>'
@@ -2900,7 +2928,7 @@ async function presentMockQuestion(qIndex) {
     tagEl.style.display = tag ? 'inline-block' : 'none';
   }
   document.getElementById('mockQText').textContent = plain;
-  document.getElementById('mockQLabel').textContent = 'Kysymys ' + (qIndex + 1) + ' / ' + MOCK_QUESTIONS.length;
+  document.getElementById('mockQLabel').textContent = 'Kysymys ' + (qIndex + 1) + ' / ' + MOCK_CLASSIC_QUESTIONS.length;
   document.getElementById('mockRecBtn').style.display = 'none';
   document.getElementById('mockStopBtn').style.display = 'none';
   await speakMockQuestion(plain, qIndex);
@@ -3009,7 +3037,7 @@ async function processMockAnswer(blob) {
     updateMockDots();
     try { saveProgress(); } catch (e) {}
 
-    const isLast = qIndex >= MOCK_QUESTIONS.length - 1;
+    const isLast = qIndex >= MOCK_CLASSIC_QUESTIONS.length - 1;
 
     if (!isLast) {
       document.getElementById('mockTopStatus').textContent = 'Rekrytoija reagoi...';
@@ -3056,8 +3084,14 @@ async function processMockAnswer(blob) {
 }
 
 function updateMockDots() {
+  const total = mockTotalSteps();
   const dots = document.querySelectorAll('#mockQDots .mock-q-dot');
   dots.forEach((d, i) => {
+    if (i >= total) {
+      d.style.display = 'none';
+      return;
+    }
+    d.style.display = '';
     d.className = 'mock-q-dot' + (i === mockQ ? ' active' : i < mockDoneCount ? ' done' : '');
   });
 }
