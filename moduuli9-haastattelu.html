@@ -236,6 +236,10 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
 .badge-wrong{background:var(--coral-lt);color:var(--coral);border-color:var(--coral)}
 
 /* ── STAR SCAFFOLD ── */
+.star-q-section+.star-q-section{margin-top:32px;padding-top:28px;border-top:1px solid var(--line)}
+.star-q-section.star-q-locked{display:none}
+.star-q-label{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--coral);margin-bottom:6px;display:block}
+.star-q-title{font-family:'Cormorant Garamond',serif;font-size:clamp(19px,2.8vw,24px);font-weight:500;color:var(--ink);margin:0 0 12px;line-height:1.35}
 .star-scaffold{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
 @media(max-width:540px){.star-scaffold{grid-template-columns:1fr}}
 .ss-field{border-radius:var(--r14);padding:16px 18px;background:var(--paper);box-shadow:var(--shadow-sm)}
@@ -697,9 +701,8 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
 <div class="wrap">
   <div class="mission-hdr">
     <span class="mh-eye">Osio 04 / 08 — Kirjoita</span>
-    <div class="mh-title">Yksi vastaus — oikeaan kysymykseen</div>
-    <div class="mh-sub">Tärkein asiakaspalvelun haastattelukysymys. Kirjoita STAR-rakennetta käyttäen — jokaiselle osalle oma kenttä.</div>
-    <div class="mh-goal"><strong>Kysymys:</strong> "Kerro tilanteesta jossa asiakas oli selvästi tyytymätön. Mitä tapahtui ja mitä teit?"</div>
+    <div class="mh-title">Kolme vastausta — kolmeen kysymykseen</div>
+    <div class="mh-sub">Kirjoita STAR-rakennetta käyttäen. Seuraava kysymys avautuu kun olet täyttänyt edellisen ja pyytänyt arvion.</div>
   </div>
 
   <p>Käytä omaa oikeaa kokemustasi — kassalta, ravintolasta, puhelimesta, arjesta. Jos ei ole työkokemusta: koulu, harrastus tai kotitilanne kelpaa täysin.</p>
@@ -755,16 +758,48 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
     <span>Kirjoita jokaiseen kenttään <strong>yhdellä sanalla</strong> — älä kirjoita täydellisiä lauseita ensin. Täydennät myöhemmin. Action-kohdassa: käytä <strong>minä</strong> — älä "me" tai "tiimi".</span>
   </div>
 
-  <div class="star-scaffold">
-    <div class="ss-field ss-s"><div class="ss-letter">S</div><div class="ss-title">Tilanne — missä ja milloin?</div><textarea id="w_s" placeholder="Olin töissä / koulussa / harrastuksessa..." rows="3" oninput="S.w_s=this.value;checkWrite()"></textarea></div>
-    <div class="ss-field ss-t"><div class="ss-letter">T</div><div class="ss-title">Tehtävä — mikä oli vastuusi?</div><textarea id="w_t" placeholder="Minun piti / vastuullani oli..." rows="3" oninput="S.w_t=this.value;checkWrite()"></textarea></div>
-    <div class="ss-field ss-a"><div class="ss-letter">A</div><div class="ss-title">Toiminta — mitä SINÄ teit?</div><textarea id="w_a" placeholder="Ensin tein... sitten... pyysin..." rows="3" oninput="S.w_a=this.value;checkWrite()"></textarea></div>
-    <div class="ss-field ss-r"><div class="ss-letter">R</div><div class="ss-title">Tulos — mitä tapahtui?</div><textarea id="w_r" placeholder="Tilanne ratkesi kun... Opin..." rows="3" oninput="S.w_r=this.value;checkWrite()"></textarea></div>
+  <div class="star-q-section" id="starQ1">
+    <span class="star-q-label">Kysymys 1 / 3</span>
+    <p class="star-q-title">"Kerro tilanteesta jossa asiakas oli selvästi tyytymätön. Mitä tapahtui ja mitä teit?"</p>
+    <div class="star-scaffold">
+      <div class="ss-field ss-s"><div class="ss-letter">S</div><div class="ss-title">Tilanne — missä ja milloin?</div><textarea id="w_s" placeholder="Olin töissä / koulussa / harrastuksessa..." rows="3" oninput="S.w_s=this.value;checkWrite(1)"></textarea></div>
+      <div class="ss-field ss-t"><div class="ss-letter">T</div><div class="ss-title">Tehtävä — mikä oli vastuusi?</div><textarea id="w_t" placeholder="Minun piti / vastuullani oli..." rows="3" oninput="S.w_t=this.value;checkWrite(1)"></textarea></div>
+      <div class="ss-field ss-a"><div class="ss-letter">A</div><div class="ss-title">Toiminta — mitä SINÄ teit?</div><textarea id="w_a" placeholder="Ensin tein... sitten... pyysin..." rows="3" oninput="S.w_a=this.value;checkWrite(1)"></textarea></div>
+      <div class="ss-field ss-r"><div class="ss-letter">R</div><div class="ss-title">Tulos — mitä tapahtui?</div><textarea id="w_r" placeholder="Tilanne ratkesi kun... Opin..." rows="3" oninput="S.w_r=this.value;checkWrite(1)"></textarea></div>
+    </div>
+    <button class="btn btn-coral btn-lg" id="evalWriteBtn" onclick="evalWrite(1)" disabled>Arvioi vastaukseni →</button>
+    <div class="ai-fb" id="writeFb"><span class="ai-lbl">Rekrytoijan silmin</span><span id="writeFbT"></span></div>
   </div>
 
-<button class="btn btn-coral btn-lg" id="evalWriteBtn" onclick="evalWrite()" disabled>Arvioi vastaukseni →</button>
-  <div class="ai-fb" id="writeFb"><span class="ai-lbl">Rekrytoijan silmin</span><span id="writeFbT"></span></div>
+  <div class="star-q-section star-q-locked" id="starQ2">
+    <span class="star-q-label">Kysymys 2 / 3</span>
+    <p class="star-q-title">"Kerro tilanteesta jossa jouduit ratkaisemaan ongelman paineen alla. Mitä teit?"</p>
+    <div class="star-scaffold">
+      <div class="ss-field ss-s"><div class="ss-letter">S</div><div class="ss-title">Tilanne — missä ja milloin?</div><textarea id="w2_s" placeholder="Olin töissä / koulussa / harrastuksessa..." rows="3" oninput="S.w2_s=this.value;checkWrite(2)"></textarea></div>
+      <div class="ss-field ss-t"><div class="ss-letter">T</div><div class="ss-title">Tehtävä — mikä oli vastuusi?</div><textarea id="w2_t" placeholder="Minun piti / vastuullani oli..." rows="3" oninput="S.w2_t=this.value;checkWrite(2)"></textarea></div>
+      <div class="ss-field ss-a"><div class="ss-letter">A</div><div class="ss-title">Toiminta — mitä SINÄ teit?</div><textarea id="w2_a" placeholder="Ensin tein... sitten... pyysin..." rows="3" oninput="S.w2_a=this.value;checkWrite(2)"></textarea></div>
+      <div class="ss-field ss-r"><div class="ss-letter">R</div><div class="ss-title">Tulos — mitä tapahtui?</div><textarea id="w2_r" placeholder="Tilanne ratkesi kun... Opin..." rows="3" oninput="S.w2_r=this.value;checkWrite(2)"></textarea></div>
+    </div>
+    <button class="btn btn-coral btn-lg" id="evalWriteBtn2" onclick="evalWrite(2)" disabled>Arvioi vastaukseni →</button>
+    <div class="ai-fb" id="writeFb2"><span class="ai-lbl">Rekrytoijan silmin</span><span id="writeFb2T"></span></div>
+  </div>
+
+  <div class="star-q-section star-q-locked" id="starQ3">
+    <span class="star-q-label">Kysymys 3 / 3</span>
+    <p class="star-q-title">"Kerro tilanteesta jossa teit virheen. Mitä tapahtui ja mitä teit sen jälkeen?"</p>
+    <div class="star-scaffold">
+      <div class="ss-field ss-s"><div class="ss-letter">S</div><div class="ss-title">Tilanne — missä ja milloin?</div><textarea id="w3_s" placeholder="Olin töissä / koulussa / harrastuksessa..." rows="3" oninput="S.w3_s=this.value;checkWrite(3)"></textarea></div>
+      <div class="ss-field ss-t"><div class="ss-letter">T</div><div class="ss-title">Tehtävä — mikä oli vastuusi?</div><textarea id="w3_t" placeholder="Minun piti / vastuullani oli..." rows="3" oninput="S.w3_t=this.value;checkWrite(3)"></textarea></div>
+      <div class="ss-field ss-a"><div class="ss-letter">A</div><div class="ss-title">Toiminta — mitä SINÄ teit?</div><textarea id="w3_a" placeholder="Ensin tein... sitten... pyysin..." rows="3" oninput="S.w3_a=this.value;checkWrite(3)"></textarea></div>
+      <div class="ss-field ss-r"><div class="ss-letter">R</div><div class="ss-title">Tulos — mitä tapahtui?</div><textarea id="w3_r" placeholder="Tilanne ratkesi kun... Opin..." rows="3" oninput="S.w3_r=this.value;checkWrite(3)"></textarea></div>
+    </div>
+    <button class="btn btn-coral btn-lg" id="evalWriteBtn3" onclick="evalWrite(3)" disabled>Arvioi vastaukseni →</button>
+    <div class="ai-fb" id="writeFb3"><span class="ai-lbl">Rekrytoijan silmin</span><span id="writeFb3T"></span></div>
+  </div>
+
   <div class="reveal-block" id="writeReveal">
+    <div class="reveal-divider"><span>Kaikki kolme STAR-vastausta valmiit</span></div>
+    <div class="note-forest note" style="margin-bottom:14px">Hyvä — sinulla on nyt kolme eri tarinaa joita voit käyttää haastattelussa. Seuraavaksi harjoittelet sanomaan ne ääneen.</div>
     <div class="nav-row"><button class="btn btn-outline" onclick="go(4)">← Takaisin</button><button class="btn btn-coral btn-lg" onclick="go('5b')">🎙 Puhu ääneen →</button></div>
   </div>
   <div class="nav-row" style="margin-top:20px;padding-top:0;border:none"><button class="btn btn-outline" onclick="go(4)">← Takaisin</button></div>
@@ -786,10 +821,11 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
   </div>
 
   <div class="vinkki"><span class="vinkki-icon">🎯</span><div>
-    <strong>Kaksi kysymystä joihin voit vastata:</strong>
+    <strong>Kolme kysymystä joihin voit vastata:</strong>
     <ol style="margin:10px 0 0 18px;line-height:1.85">
-      <li><em>"Kerro tilanteesta jossa asiakas oli selvästi tyytymätön. Mitä tapahtui ja mitä teit?"</em> — sama kysymys kuin kirjoitusosiossa</li>
-      <li><em>"Kerro tilanteesta jossa jouduit ratkaisemaan ongelman paineen alla. Mitä teit?"</em> — yleinen haastattelukysymys, toimii samalla STAR-rakenteella</li>
+      <li><em>"Kerro tilanteesta jossa asiakas oli selvästi tyytymätön..."</em> — kysymys 1 kirjoitusosiossa</li>
+      <li><em>"Kerro tilanteesta jossa jouduit ratkaisemaan ongelman paineen alla..."</em> — kysymys 2</li>
+      <li><em>"Kerro tilanteesta jossa teit virheen..."</em> — kysymys 3</li>
     </ol>
   </div></div>
 
@@ -1217,7 +1253,10 @@ Käytä tuoreita lähteitä: uutiset, LinkedIn, Kauppalehti, Google News.</div>
     <div class="note-forest note"><strong>Yhteinen teema:</strong> Kaikissa tilanteissa voittava vastaus on sama — rehellinen, rauhallinen ja ratkaisukeskeinen. Ei teatteri, ei selittely. Vain selkeä toiminta.</div>
     <div class="nav-row"><button class="btn btn-outline" onclick="go(9)">← Takaisin</button><button class="btn btn-coral btn-lg" onclick="go(11)">Vaikeat kysymykset →</button></div>
   </div>
-  <div class="nav-row" style="margin-top:20px;padding-top:0;border:none"><button class="btn btn-outline" onclick="go(9)">← Takaisin</button></div>
+  <div class="nav-row" style="margin-top:20px;padding-top:0;border:none">
+    <button class="btn btn-outline" onclick="go(9)">← Takaisin</button>
+    <button class="btn btn-coral btn-lg" onclick="go(11)">Vaikeat kysymykset →</button>
+  </div>
 </div>
 </div>
 
@@ -1319,7 +1358,10 @@ Käytä tuoreita lähteitä: uutiset, LinkedIn, Kauppalehti, Google News.</div>
       <button class="btn btn-coral btn-lg" onclick="go(12)">Ansaitse — vastaukset kotiin →</button>
     </div>
   </div>
-  <div class="nav-row" style="margin-top:20px;padding-top:0;border:none"><button class="btn btn-outline" onclick="go(10)">← Takaisin</button></div>
+  <div class="nav-row" style="margin-top:20px;padding-top:0;border:none">
+    <button class="btn btn-outline" onclick="go(10)">← Takaisin</button>
+    <button class="btn btn-coral btn-lg" onclick="go(12)">Ansaitse — vastaukset kotiin →</button>
+  </div>
 </div>
 </div>
 
@@ -1466,7 +1508,7 @@ Käytä tuoreita lähteitä: uutiset, LinkedIn, Kauppalehti, Google News.</div>
       </div>
       <div class="earn-acc" id="earnAccStar">
         <button type="button" class="earn-acc-hdr" onclick="toggleEarnAcc('earnAccStar')" aria-expanded="false">
-          <span class="earn-acc-title">✦ STAR-vastauksesi — vaikea asiakas</span>
+          <span class="earn-acc-title">✦ STAR-vastaukset (3 kpl)</span>
           <span class="earn-acc-preview" id="earnPrevStar">—</span>
           <span class="earn-acc-chevron" aria-hidden="true">▼</span>
         </button>
@@ -1565,7 +1607,7 @@ Käytä tuoreita lähteitä: uutiset, LinkedIn, Kauppalehti, Google News.</div>
 <script src="/js/mock-realtime.js"></script>
 <script src="/js/ai-helper.js"></script>
 <script>
-const S={pre:[],w_s:'',w_t:'',w_a:'',w_r:'',w_weak:'',w_why:'',w_vastav:'',companyName:'',companyUrl:'',companyFact:'',w_company:'',w_palkka:'',abResults:[],hp1:'',hp2:'',hp3:'',hpBuilt:'',hpFinal:'',startKey:'',nextKey:'',scenPicks:{},stfAnswers:[],vastaQuestion:'',mockSession:[],mockCandidateName:''};
+const S={pre:[],w_s:'',w_t:'',w_a:'',w_r:'',w2_s:'',w2_t:'',w2_a:'',w2_r:'',w3_s:'',w3_t:'',w3_a:'',w3_r:'',w_weak:'',w_why:'',w_vastav:'',companyName:'',companyUrl:'',companyFact:'',w_company:'',w_palkka:'',abResults:[],hp1:'',hp2:'',hp3:'',hpBuilt:'',hpFinal:'',startKey:'',nextKey:'',scenPicks:{},stfAnswers:[],vastaQuestion:'',mockSession:[],mockCandidateName:''};
 const COMPANY_HOME_URLS={'Elisa':'https://www.elisa.fi/','S-ryhmä':'https://www.s-ryhma.fi/','OP Ryhmä':'https://www.op.fi/','DNA':'https://www.dna.fi/','Mehiläinen':'https://www.mehilainen.fi/','Kesko':'https://www.kesko.fi/'};
 const TOTAL=12;
 const MODULE9_ID='moduuli9-haastattelu';
@@ -1635,6 +1677,10 @@ function updateStfGate(){
 
 function go(n){
   const targetNum=screenNum(n);
+  if(n==='5b'&&!allStarWriteDone()){
+    alert('Täytä ja arvioi kaikki kolme STAR-vastausta ensin.');
+    n=5;
+  }
   if(targetNum>=8&&!isStfComplete()){
     alert('Suorita ensin kaikki viisi Spot Flaw -kierrosta (Osio 06).');
     n=7;
@@ -1719,7 +1765,33 @@ function assignDL(sent){
   selectedDL=null;document.querySelectorAll('.decoder-label').forEach(b=>b.classList.remove('selected'));
 }
 
-function checkWrite(){document.getElementById('evalWriteBtn').disabled=![S.w_s,S.w_t,S.w_a,S.w_r].every(v=>v.trim().length>10);}
+function getStarKeys(q){
+  if(q===2)return ['w2_s','w2_t','w2_a','w2_r'];
+  if(q===3)return ['w3_s','w3_t','w3_a','w3_r'];
+  return ['w_s','w_t','w_a','w_r'];
+}
+function getStarValues(q){return getStarKeys(q).map(k=>S[k]||'');}
+function starEvalBtnId(q){return q===1?'evalWriteBtn':'evalWriteBtn'+q;}
+function starFbIds(q){
+  if(q===1)return {fb:'writeFb',txt:'writeFbT'};
+  return {fb:'writeFb'+q,txt:'writeFb'+q+'T'};
+}
+function isStarEvaluated(q){return !!document.getElementById(starFbIds(q).fb)?.classList.contains('show');}
+function syncStarUnlockFromProgress(){
+  const q1=isStarEvaluated(1),q2=isStarEvaluated(2),q3=isStarEvaluated(3);
+  document.getElementById('starQ2')?.classList.toggle('star-q-locked',!q1);
+  document.getElementById('starQ3')?.classList.toggle('star-q-locked',!q2);
+  const reveal=document.getElementById('writeReveal');
+  if(reveal)reveal.classList.toggle('show',q1&&q2&&q3);
+}
+function allStarWriteDone(){return [1,2,3].every(isStarEvaluated);}
+function checkWrite(q){
+  q=q||1;
+  const btn=document.getElementById(starEvalBtnId(q));
+  if(!btn)return;
+  btn.disabled=!getStarValues(q).every(v=>String(v).trim().length>10);
+}
+function checkWriteAll(){[1,2,3].forEach(checkWrite);}
 
 function updateStarVoicePrompt(){
   const el=document.getElementById('starVoiceWrittenHint');
@@ -1740,16 +1812,21 @@ function updateStarVoicePrompt(){
 function escHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-async function evalWrite(){
-  document.getElementById('evalWriteBtn').disabled=true;load('writeFbT');
+async function evalWrite(q){
+  q=q||1;
+  const ids=starFbIds(q);
+  const btn=document.getElementById(starEvalBtnId(q));
+  btn.disabled=true;
+  load(ids.txt);
+  const [s,t,a,r]=getStarValues(q);
   const sys='Olet kokenut rekrytoija. Arvioit STAR-vastauksen asiakaspalvelun haastatteluun. Arvioi: (1) onko S/T/A/R siellä, (2) onko Action konkreettinen ja henkilökohtainen, (3) yksi parannus. Max 3 lausetta. Suomi. Kannustava mutta rehellinen.';
-  const txt=await ai(`S: ${S.w_s}\nT: ${S.w_t}\nA: ${S.w_a}\nR: ${S.w_r}`,sys,400);
-  document.getElementById('writeFbT').textContent=txt||'Hyvä vastaus.';
-  document.getElementById('writeFb').classList.add('show');
-  S.starAnswer=`S: ${S.w_s}\nT: ${S.w_t}\nA: ${S.w_a}\nR: ${S.w_r}`;
-  document.getElementById('writeReveal').classList.add('show');
-  document.getElementById('evalWriteBtn').disabled=false;
-  updateStarVoicePrompt();
+  const txt=await ai(`S: ${s}\nT: ${t}\nA: ${a}\nR: ${r}`,sys,400);
+  document.getElementById(ids.txt).textContent=txt||'Hyvä vastaus.';
+  document.getElementById(ids.fb).classList.add('show');
+  if(q===1)S.starAnswer=`S: ${s}\nT: ${t}\nA: ${a}\nR: ${r}`;
+  syncStarUnlockFromProgress();
+  btn.disabled=false;
+  if(q===1)updateStarVoicePrompt();
   try{saveProgress();}catch(e){}
 }
 
@@ -1893,8 +1970,13 @@ function setEarnField(textId,prevId,text){
   if(prev)prev.textContent=earnPreview(val);
 }
 function buildEarn(){
-  const star=[S.w_s,S.w_t,S.w_a,S.w_r].filter(Boolean);
-  const starTxt=star.length>0?'S: '+S.w_s+'\nT: '+S.w_t+'\nA: '+S.w_a+'\nR: '+S.w_r:'—';
+  const starLabels=['Vaikea asiakas','Paineen alla','Virhe'];
+  const starBlocks=[1,2,3].map((n,i)=>{
+    const [s,t,a,r]=getStarValues(n);
+    if(![s,t,a,r].every(v=>String(v).trim()))return '';
+    return (i+1)+'. '+starLabels[i]+'\nS: '+s+'\nT: '+t+'\nA: '+a+'\nR: '+r;
+  }).filter(Boolean);
+  const starTxt=starBlocks.length?starBlocks.join('\n\n'):'—';
   setEarnField('earnStar','earnPrevStar',starTxt);
   setEarnField('earnWeak','earnPrevWeak',S.w_weak);
   setEarnField('earnCompany','earnPrevCompany',S.w_company);
@@ -2086,7 +2168,7 @@ async function ai(prompt,sys,tok=400){
 function load(id){const el=document.getElementById(id);if(el)el.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';const fb=el?.closest('.ai-fb');if(fb)fb.classList.add('show');}
 
 function syncSFromDom(){
-  ['w_s','w_t','w_a','w_r','w_weak','w_why','w_vastav','w_company','w_palkka','companyFact','hp1','hp2','hp3','hpFinal'].forEach(id=>{
+  ['w_s','w_t','w_a','w_r','w2_s','w2_t','w2_a','w2_r','w3_s','w3_t','w3_a','w3_r','w_weak','w_why','w_vastav','w_company','w_palkka','companyFact','hp1','hp2','hp3','hpFinal'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el||!('value' in el))return;
     if(id in S)S[id]=el.value;
@@ -2134,6 +2216,8 @@ function haSnapshot(){
       tfDoneMsg:panelShown('tfDoneMsg'),
       decoderReveal:panelShown('decoderReveal'),
       writeFb:panelShown('writeFb'),
+      writeFb2:panelShown('writeFb2'),
+      writeFb3:panelShown('writeFb3'),
       writeReveal:panelShown('writeReveal'),
       vastavFb:panelShown('vastavFb'),
       vastavReveal:panelShown('vastavReveal'),
@@ -2165,6 +2249,8 @@ function haSnapshot(){
     texts:{
       startMsg:txt('startMsg'),
       writeFbT:txt('writeFbT'),
+      writeFb2T:txt('writeFb2T'),
+      writeFb3T:txt('writeFb3T'),
       vastavFbT:txt('vastavFbT'),
       weakFbT:txt('weakFbT'),
       whyFbT:txt('whyFbT'),
@@ -2330,8 +2416,9 @@ function applyHaData(d){
   }
   if(d.shown){
     if(d.shown.finished)finish();
-    const showIds=['startReveal','tfDoneMsg','decoderReveal','writeFb','writeReveal','vastavFb','vastavReveal','abDone','hpFb','hpReveal','hpFilterFb','hpFixReveal','companyReveal','company2','companyFb','companyDone','scenDone','weakFb','whyFb','palkkaFb','palkkaDone','nextReveal','mockDone'];
+    const showIds=['startReveal','tfDoneMsg','decoderReveal','writeFb','writeFb2','writeFb3','writeReveal','vastavFb','vastavReveal','abDone','hpFb','hpReveal','hpFilterFb','hpFixReveal','companyReveal','company2','companyFb','companyDone','scenDone','weakFb','whyFb','palkkaFb','palkkaDone','nextReveal','mockDone'];
     showIds.forEach(id=>{if(!d.shown[id])return;const el=document.getElementById(id);if(el)el.classList.add('show');});
+    syncStarUnlockFromProgress();
     checkHardSectionDone();
   }
   if(d.display){
@@ -2382,7 +2469,7 @@ function applyHaData(d){
     if(!document.getElementById('scenContainer')?.children.length)buildScen();
     restoreScenPicks();
   }
-  try{checkWrite();}catch(e){}
+  try{checkWriteAll();}catch(e){}
   try{checkWeak();}catch(e){}
   try{checkHP();}catch(e){}
   try{checkVastav();}catch(e){}
