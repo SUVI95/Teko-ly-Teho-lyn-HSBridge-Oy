@@ -72,6 +72,13 @@ h1.hero-title em{font-style:italic;color:#f0b060;}
 .company-field.full{grid-column:1/-1;}
 .fill-prompts-btn{padding:9px 18px;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;background:var(--accent3);color:#fff;font-family:'DM Sans',sans-serif;transition:all .2s;}
 .fill-prompts-btn:hover{background:#1f5c38;}
+.company-fill-status{font-size:.78rem;color:var(--accent3);margin-top:.5rem;min-height:1.2em;}
+.prompt-howto.ready{color:var(--accent3);}
+.prompt-vinkki{background:rgba(16,163,127,.07);border:1px solid rgba(16,163,127,.2);border-radius:10px;padding:1rem 1.15rem;margin-bottom:1rem;font-size:.84rem;color:var(--ink);line-height:1.65;}
+.prompt-vinkki strong{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gpt);margin-bottom:.5rem;}
+.prompt-vinkki ul{margin:.5rem 0 0 1.1rem;}
+.prompt-vinkki li{margin-bottom:.35rem;}
+.prompt-vinkki em{color:var(--muted);font-style:normal;font-size:.8rem;}
 .prompt-callout{background:rgba(37,99,168,.06);border:1px solid rgba(37,99,168,.15);border-radius:10px;padding:1rem 1.15rem;margin-bottom:1.5rem;font-size:.88rem;color:var(--ink);line-height:1.6;}
 .prompt-callout strong{display:block;margin-bottom:.25rem;}
 .teams-box{background:rgba(199,91,58,.06);border:1px solid rgba(199,91,58,.15);border-radius:10px;padding:1.25rem;margin-top:1rem;}
@@ -160,8 +167,8 @@ h1.hero-title em{font-style:italic;color:#f0b060;}
       </div>
     </div>
     <div class="prompt-callout" style="margin-top:1.5rem;">
-      <strong>Promptit ovat muokattavia — älä kopioi sellaisenaan</strong>
-      Jokaisessa projektissa näet valmiin pohjan. <strong>Muokkaa se ensin omaksi</strong> (korvaa [HAKASULUT] oikeilla tiedoillasi), sitten paina Kopioi ja liitä ChatGPT:hen, Claudeen tai Copilotiin.
+      <strong>Täytä yritystiedot kerran — promptit päivittyvät automaattisesti</strong>
+      Projektissa 1 kirjoitat yrityksesi tiedot ylhäällä. Kaikki promptit täyttyvät itse — kopioi suoraan AI-työkaluun.
     </div>
   </div>
 </section>
@@ -193,7 +200,7 @@ h1.hero-title em{font-style:italic;color:#f0b060;}
         <div class="project-step"><div class="project-step-num">Vaihe 1 — Keksi yritys (5 min)</div><div class="project-step-text">Keksi kuvitteellinen yritys tai palvelu. Se voi olla mitä tahansa: kahvila, siivouspalvelu, verkkokauppa, konsultointi. <strong>Kirjoita ylös: nimi, mitä se tekee, kenelle.</strong></div></div>
         <div class="company-fill" id="companyFill">
           <h4>Yrityksesi tiedot — täytä kerran</h4>
-          <p>Näitä käytetään kaikissa sprintin prompteissa. Voit täyttää kentät tähän ja painaa alla olevaa nappia — tai muokata jokaista promptia erikseen.</p>
+          <p>Kun täytät nämä, kaikki sprintin promptit päivittyvät automaattisesti. Sen jälkeen voit kopioida suoraan — ei tarvitse muokata uudelleen.</p>
           <div class="company-fill-grid">
             <div class="company-field"><label for="cfNimi">Yrityksen nimi</label><input type="text" id="cfNimi" placeholder="Esim. Kahvila Aamu"></div>
             <div class="company-field"><label for="cfKenelle">Kenelle (kohderyhmä)</label><input type="text" id="cfKenelle" placeholder="Esim. kiireiset aamukahvilaa etsivät"></div>
@@ -201,12 +208,53 @@ h1.hero-title em{font-style:italic;color:#f0b060;}
             <div class="company-field"><label for="cfTunnelma">Tunnelma / värit</label><input type="text" id="cfTunnelma" placeholder="Esim. lämmin, luotettava, luonnonläheinen"></div>
             <div class="company-field"><label for="cfSijainti">Missä toimii</label><input type="text" id="cfSijainti" placeholder="Esim. Kuopio keskusta"></div>
             <div class="company-field full"><label for="cfEtu">Miksi asiakas valitsisi tämän</label><textarea id="cfEtu" rows="2" placeholder="Esim. nopea palvelu, laadukkaat raaka-aineet, lämmin tunnelma"></textarea></div>
+            <div class="company-field"><label for="cfLogoKuvio">Logo-kuvio / symboli</label><input type="text" id="cfLogoKuvio" placeholder="Esim. kahvipapu ja höyryävä kuppi"></div>
+            <div class="company-field"><label for="cfFontti">Fonttityyli logossa</label><input type="text" id="cfFontti" placeholder="Esim. pyöreä sans-serif, pehmeä ja lämmin"></div>
           </div>
-          <button type="button" class="fill-prompts-btn" onclick="applyCompanyToPrompts()">↘ Täytä kaikkiin prompteihin</button>
+          <div class="company-fill-status" id="companyFillStatus"></div>
         </div>
-        <div class="project-step"><div class="project-step-num">Vaihe 2 — Logo/kuva ChatGPT:llä (10 min)</div><div class="project-step-text">Muokkaa alla oleva prompti omaksi (korvaa [HAKASULUT]), kopioi se ja liitä ChatGPT:hen:</div></div>
-        <div class="prompt-block" style="border-left-color:var(--gpt);"><div class="prompt-label" style="color:var(--gpt);">ChatGPT-prompti</div><div class="prompt-text">Luo ammattimainen logo yritykselle nimeltä [NIMI]. Yritys tekee [KUVAUS]. Kohderyhmä on [KENELLE]. Tyyli: moderni, minimalistinen, luotettava. Käytä värejä jotka viestivät [TUNNELMA]. Tausta valkoinen.</div><button class="copy-btn" onclick="copyText(this,'Luo ammattimainen logo yritykselle nimeltä [NIMI]. Yritys tekee [KUVAUS]. Kohderyhmä on [KENELLE]. Tyyli: moderni, minimalistinen, luotettava. Käytä värejä jotka viestivät [TUNNELMA]. Tausta valkoinen.')">📋 Kopioi</button></div>
-        <div class="project-step"><div class="project-step-num">Vaihe 3 — Pitchteksti Claudella (10 min)</div><div class="project-step-text">Muokkaa prompti, kopioi ja liitä Claudeen:</div></div>
+        <div class="project-step"><div class="project-step-num">Vaihe 2 — Logo/kuva ChatGPT:llä (10 min)</div><div class="project-step-text">Prompti täyttyy automaattisesti — <strong>lisää vielä yksityiskohtia</strong> ennen kopiointia. Mitä tarkemmin kuvaat, sitä parempi logo ChatGPT tekee.</div></div>
+        <div class="prompt-vinkki">
+          <strong>Vinkki — kirjoita promptiin mahdollisimman paljon yksityiskohtia</strong>
+          Lyhyt prompti tuottaa geneerisen logon. Hyvä logo vaatii tarkkuutta. Lisää promptiin esimerkiksi:
+          <ul>
+            <li><strong>Symboli:</strong> <em>“Yksinkertainen kahvipapu ja höyryävä kuppi, ei liian monimutkainen”</em></li>
+            <li><strong>Värit tarkasti:</strong> <em>“Tummanruskea #3D2314, lämpimän beige tausta #F5E6D3, vihreä korostus”</em></li>
+            <li><strong>Fontti:</strong> <em>“Pyöreä sans-serif, pehmeä mutta luettava — ei koristeellista”</em></li>
+            <li><strong>Muoto:</strong> <em>“Pyöreä badge tai neliö, tasapainoinen somessa ja kyltissä”</em></li>
+            <li><strong>Tunnelma:</strong> <em>“Luotettava, lämmin, skandinavinen — ei liian leikkisä”</em></li>
+            <li><strong>Missä käytetään:</strong> <em>“Instagram-profiili, nettisivujen header, käyntikortti”</em></li>
+          </ul>
+        </div>
+        <div class="prompt-block" style="border-left-color:var(--gpt);"><div class="prompt-label" style="color:var(--gpt);">ChatGPT-prompti — logo</div><div class="prompt-text">Luo ammattimainen, moderni logo yritykselle nimeltä [NIMI].
+
+YRITYKSESTÄ:
+- Mitä tekee: [KUVAUS]
+- Kohderyhmä: [KENELLE]
+- Miksi asiakas valitsee tämän: [MIKSI ASIAKAS VALITSISI TÄMÄN]
+- Toimialue: [MISSÄ TOIMII]
+
+LOGON TYYLI JA VÄRIT:
+- Brändin tunnelma: [TUNNELMA]
+- Väripaletti: 2–3 väriä jotka viestivät [TUNNELMA] — kerro värit tarkasti (esim. tummanvihreä + kulta + valkoinen)
+- Yleisilme: moderni, minimalistinen, luotettava, skaalautuva
+
+SYMBOLI TAI KUVIO:
+- [LOGO-KUVIO]
+- Yksinkertainen muoto — tunnistettava myös pienenä profiilikuvana, ei liian monimutkainen
+
+Typografia:
+- Näytä yrityksen nimi "[NIMI]" logossa selkeästi luettavana
+- Fonttityyli: [FONTTITYYLI]
+
+KÄYTTÖ JA TEKNISET VAATIMUKSET:
+- Toimii nettisivuilla, somessa, käyntikortissa ja kyltissä
+- Tausta valkoinen tai läpinäkyvä
+- Selkeä flat/modern-tyyli — ei sekavaa 3D:tä tai varjoja
+- Korkea resoluutio, ammattimainen lopputulos
+
+Tee logosta sellainen jota oikea yritys voisi käyttää heti brändinä.</div><button class="copy-btn" onclick="copyText(this,'')">📋 Kopioi</button></div>
+        <div class="project-step"><div class="project-step-num">Vaihe 3 — Pitchteksti Claudella (10 min)</div><div class="project-step-text">Kopioi prompti ja liitä Claudeen:</div></div>
         <div class="prompt-block" style="border-left-color:var(--claude);"><div class="prompt-label" style="color:var(--claude);">Claude-prompti</div><div class="prompt-text">Olet markkinointiasiantuntija. Kirjoita 3 kappaleen pitchteksti yritykselle:
 
 Nimi: [NIMI]
@@ -558,18 +606,59 @@ sections.forEach((s,i)=>{const p=document.createElement('div');p.className='step
 function updateProgress(){const st=window.scrollY,dh=document.documentElement.scrollHeight-window.innerHeight;progressBar.style.width=(dh>0?(st/dh)*100:0)+'%';const pips=navSteps.querySelectorAll('.step-pip');let ai=0;sections.forEach((s,i)=>{if(s.getBoundingClientRect().top<=window.innerHeight*0.5)ai=i;});pips.forEach((p,i)=>{p.classList.remove('active','done');if(i===ai)p.classList.add('active');else if(i<ai)p.classList.add('done');});}
 window.addEventListener('scroll',updateProgress,{passive:true});
 
+function getCompanyReplacements(){
+  const nimi=(document.getElementById('cfNimi')||{}).value||'';
+  const kuvaus=(document.getElementById('cfKuvaus')||{}).value||'';
+  const kenelle=(document.getElementById('cfKenelle')||{}).value||'';
+  const tunnelma=(document.getElementById('cfTunnelma')||{}).value||'';
+  const sijainti=(document.getElementById('cfSijainti')||{}).value||'';
+  const etu=(document.getElementById('cfEtu')||{}).value||'';
+  const logoKuvio=(document.getElementById('cfLogoKuvio')||{}).value||'';
+  const fontti=(document.getElementById('cfFontti')||{}).value||'';
+  return[
+    ['[NIMI]',nimi],['[PROJEKTI 1:N YRITYKSEN NIMI]',nimi],
+    ['[KUVAUS]',kuvaus],['[MITÄ TEKEE]',kuvaus],['[MITÄ]',kuvaus],['[YRITYKSESI ALA]',kuvaus],
+    ['[KENELLE]',kenelle],['[TUNNELMA]',tunnelma],['[YRITYKSEN VÄRIT TAI TUNNELMA]',tunnelma],
+    ['[MISSÄ TOIMII]',sijainti],['[MIKSI ASIAKAS VALITSISI TÄMÄN]',etu],['[MIKSI VALITA TÄMÄ]',etu],
+    ['[LOGO-KUVIO]',logoKuvio],['[FONTTITYYLI]',fontti]
+  ];
+}
+
+function fillTemplate(template,reps){
+  let t=template;
+  reps.forEach(([k,v])=>{if(v)t=t.split(k).join(v);});
+  return t;
+}
+
+function updatePromptHowto(ta){
+  const howto=ta.closest('.prompt-block')&&ta.closest('.prompt-block').querySelector('.prompt-howto');
+  if(!howto)return;
+  if(ta.dataset.locked==='1'){
+    howto.textContent='Muokattu käsin — kopioi kun valmis.';
+    howto.classList.remove('ready');
+    return;
+  }
+  if(/\[[^\]]+\]/.test(ta.value)){
+    howto.textContent='Täydennä vielä jäljellä olevat kohdat (esim. hinnat tai Geminin vastaus), sitten kopioi.';
+    howto.classList.remove('ready');
+  }else{
+    howto.textContent='Valmis — kopioi suoraan AI-työkaluun.';
+    howto.classList.add('ready');
+  }
+}
+
 function copyPrompt(btn){
   const block=btn.closest('.prompt-block');
   const ta=block&&block.querySelector('.prompt-edit');
   const text=ta?ta.value.trim():'';
-  if(!text){alert('Prompti on tyhjä — kirjoita tai muokkaa teksti ensin.');return;}
+  if(!text){alert('Prompti on tyhjä.');return;}
   if(/\[[^\]]+\]/.test(text)){
-    if(!confirm('Promptissa on vielä [hakasulku]-kohtia täyttämättä. Haluatko silti kopioida?'))return;
+    if(!confirm('Promptissa on vielä täyttämättä olevia kohtia. Haluatko silti kopioida?'))return;
   }
   navigator.clipboard.writeText(text).then(()=>{
     btn.textContent='✓ Kopioitu!';
     btn.classList.add('ok');
-    setTimeout(()=>{btn.textContent='📋 Kopioi valmis prompti';btn.classList.remove('ok');},1800);
+    setTimeout(()=>{btn.textContent='📋 Kopioi';btn.classList.remove('ok');},1800);
   });
 }
 
@@ -579,18 +668,20 @@ function initPromptEditors(){
     const block=textEl.closest('.prompt-block');
     const howto=document.createElement('p');
     howto.className='prompt-howto';
-    howto.textContent='Muokkaa tekstiä alla — korvaa [HAKASULUT] omilla tiedoillasi. Kopioi vasta sitten oikeaan AI-työkaluun.';
+    howto.textContent='Täyttyy automaattisesti yritystiedoistasi.';
     const ta=document.createElement('textarea');
     ta.className='prompt-edit';
     ta.id='promptEdit'+(++n);
-    ta.value=textEl.textContent.trim();
+    ta.dataset.template=textEl.textContent.trim();
+    ta.value=ta.dataset.template;
+    ta.addEventListener('input',()=>{ta.dataset.locked='1';updatePromptHowto(ta);});
     textEl.parentNode.insertBefore(howto,textEl);
     textEl.replaceWith(ta);
     const btn=block.querySelector('.copy-btn');
     if(btn){
       const actions=document.createElement('div');
       actions.className='prompt-actions';
-      btn.textContent='📋 Kopioi valmis prompti';
+      btn.textContent='📋 Kopioi';
       btn.onclick=function(){copyPrompt(this);};
       btn.parentNode.insertBefore(actions,btn);
       actions.appendChild(btn);
@@ -599,26 +690,34 @@ function initPromptEditors(){
 }
 
 function applyCompanyToPrompts(){
-  const nimi=(document.getElementById('cfNimi')||{}).value||'';
-  const kuvaus=(document.getElementById('cfKuvaus')||{}).value||'';
-  const kenelle=(document.getElementById('cfKenelle')||{}).value||'';
-  const tunnelma=(document.getElementById('cfTunnelma')||{}).value||'';
-  const sijainti=(document.getElementById('cfSijainti')||{}).value||'';
-  const etu=(document.getElementById('cfEtu')||{}).value||'';
-  if(!nimi&&!kuvaus&&!kenelle){alert('Täytä vähintään nimi, kuvaus tai kohderyhmä ensin.');return;}
-  const reps=[
-    ['[NIMI]',nimi],['[PROJEKTI 1:N YRITYKSEN NIMI]',nimi],
-    ['[KUVAUS]',kuvaus],['[MITÄ TEKEE]',kuvaus],['[MITÄ]',kuvaus],['[YRITYKSESI ALA]',kuvaus],
-    ['[KENELLE]',kenelle],['[TUNNELMA]',tunnelma],['[YRITYKSEN VÄRIT TAI TUNNELMA]',tunnelma],
-    ['[MISSÄ TOIMII]',sijainti],['[MIKSI ASIAKAS VALITSISI TÄMÄN]',etu],['[MIKSI VALITA TÄMÄ]',etu]
-  ];
+  const reps=getCompanyReplacements();
+  const hasData=reps.some(([,v])=>v);
+  if(!hasData){
+    const status=document.getElementById('companyFillStatus');
+    if(status)status.textContent='';
+    return;
+  }
+  let updated=0;
   document.querySelectorAll('.prompt-edit').forEach(ta=>{
-    let t=ta.value;
-    reps.forEach(([k,v])=>{if(v)t=t.split(k).join(v);});
-    ta.value=t;
+    if(ta.dataset.locked==='1'||!ta.dataset.template)return;
+    ta.value=fillTemplate(ta.dataset.template,reps);
+    updatePromptHowto(ta);
+    updated++;
   });
-  const btn=document.querySelector('.fill-prompts-btn');
-  if(btn){const old=btn.textContent;btn.textContent='✓ Täytetty kaikkiin prompteihin';setTimeout(()=>{btn.textContent=old;},2000);}
+  const status=document.getElementById('companyFillStatus');
+  if(status&&updated)status.textContent='✓ Promptit päivitetty — voit kopioida suoraan';
+}
+
+function setupCompanyAutoFill(){
+  let timer;
+  ['cfNimi','cfKenelle','cfKuvaus','cfTunnelma','cfSijainti','cfEtu','cfLogoKuvio','cfFontti'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.addEventListener('input',()=>{
+      clearTimeout(timer);
+      timer=setTimeout(applyCompanyToPrompts,350);
+    });
+  });
 }
 
 function copyText(btn,text){copyPrompt(btn);}
@@ -643,6 +742,8 @@ function toggleTimer(id,minutes){
 async function saveReflection(){try{await window.saveReflectionToAPI('m5sprint');const c=document.getElementById('reflConfirm');if(c){c.style.display='block';setTimeout(()=>c.style.display='none',3000);}}catch(e){alert('Virhe tallennuksessa.');}}
 document.addEventListener('DOMContentLoaded',()=>{
   initPromptEditors();
+  setupCompanyAutoFill();
+  applyCompanyToPrompts();
   if(window.loadReflection)window.loadReflection('m5sprint');
   else{try{const s=localStorage.getItem('m5sprint');if(s)document.getElementById('reflectionText').value=s;}catch(e){}}
 });
