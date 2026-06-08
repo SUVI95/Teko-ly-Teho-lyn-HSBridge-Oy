@@ -408,6 +408,8 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
 .star-voice-q-opt{display:block;width:100%;text-align:left;padding:14px 16px;border-radius:var(--r14);border:1.5px solid var(--line);background:var(--paper);cursor:pointer;transition:all .15s;font-family:inherit}
 .star-voice-q-opt:hover{border-color:var(--coral);background:var(--coral-lt)}
 .star-voice-q-opt.selected{border-color:var(--coral);background:var(--coral-lt);box-shadow:0 0 0 2px rgba(200,92,60,.15)}
+.star-voice-q-opt.done{border-color:var(--forest);background:var(--forest-lt)}
+.star-voice-q-opt.done .star-voice-q-num::after{content:' ✓ palaute saatu';color:var(--forest)}
 .star-voice-q-num{display:block;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--coral);margin-bottom:6px}
 .star-voice-q-text{display:block;font-family:'Cormorant Garamond',serif;font-size:18px;line-height:1.4;color:var(--ink);font-weight:500}
 .star-voice-active-q{background:rgba(255,255,255,.08);border:1.5px solid rgba(245,196,168,.45);border-radius:var(--r14);padding:16px 18px;margin-bottom:16px}
@@ -872,9 +874,11 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
 
   <div class="vinkki"><span class="vinkki-icon">💡</span><div><strong>Jos äänitys ei toimi:</strong> Selain pyytää lupaa mikrofoniin — paina "Salli". Toimii Chrome ja Firefox -selaimissa. Varmista että olet rauhallisessa paikassa ennen nauhoitusta.</div></div>
 
+  <div id="starVoiceNavWait" class="note-gold note" style="margin-top:14px">Nauhoita vastaus jokaiselle kolmelle kysymykselle ja odota palaute. Vastaväite avautuu kun kaikki 3 palautetta on saatu. Valmiina: <strong id="starVoiceProgress">0/3</strong></div>
+
   <div class="nav-row">
     <button class="btn btn-outline" onclick="go(5)">← Takaisin</button>
-    <button class="btn btn-coral btn-lg" onclick="go(6)">Vastaväite →</button>
+    <button class="btn btn-coral btn-lg" id="starVoiceNextBtn" onclick="go(6)" disabled>Vastaväite →</button>
   </div>
 </div>
 </div>
@@ -1615,7 +1619,7 @@ Käytä tuoreita lähteitä: uutiset, LinkedIn, Kauppalehti, Google News.</div>
 <script src="/js/mock-realtime.js"></script>
 <script src="/js/ai-helper.js"></script>
 <script>
-const S={pre:[],w_s:'',w_t:'',w_a:'',w_r:'',w2_s:'',w2_t:'',w2_a:'',w2_r:'',w3_s:'',w3_t:'',w3_a:'',w3_r:'',w_weak:'',w_why:'',w_vastav:'',companyName:'',companyUrl:'',companyFact:'',w_company:'',w_palkka:'',abResults:[],hp1:'',hp2:'',hp3:'',hpBuilt:'',hpFinal:'',startKey:'',nextKey:'',scenPicks:{},stfAnswers:[],vastaQuestion:'',mockSession:[],mockCandidateName:'',starVoiceQ:1};
+const S={pre:[],w_s:'',w_t:'',w_a:'',w_r:'',w2_s:'',w2_t:'',w2_a:'',w2_r:'',w3_s:'',w3_t:'',w3_a:'',w3_r:'',w_weak:'',w_why:'',w_vastav:'',companyName:'',companyUrl:'',companyFact:'',w_company:'',w_palkka:'',abResults:[],hp1:'',hp2:'',hp3:'',hpBuilt:'',hpFinal:'',startKey:'',nextKey:'',scenPicks:{},stfAnswers:[],vastaQuestion:'',mockSession:[],mockCandidateName:'',starVoiceQ:1,starVoiceDone:{1:false,2:false,3:false},starVoiceRecordings:{}};
 const COMPANY_HOME_URLS={'Elisa':'https://www.elisa.fi/','S-ryhmä':'https://www.s-ryhma.fi/','OP Ryhmä':'https://www.op.fi/','DNA':'https://www.dna.fi/','Mehiläinen':'https://www.mehilainen.fi/','Kesko':'https://www.kesko.fi/'};
 const TOTAL=12;
 const MODULE9_ID='moduuli9-haastattelu';
@@ -1655,7 +1659,32 @@ function showResumeBanner(screen,ts){
   }
 }
 let haWorkApi=null;
-let haSaveTimer=null;
+
+function mergeHaData(a,b){
+  if(!a)return b;
+  if(!b)return a;
+  return Number(a.ts||0)>=Number(b.ts||0)?a:b;
+}
+function loadBestHaData(serverData){
+  let best=serverData&&serverData.v===1?serverData:null;
+  best=mergeHaData(best,loadLocalHaData());
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(!k||!k.startsWith('mw_')||k.indexOf(MODULE9_ID)<0)continue;
+      const raw=localStorage.getItem(k);
+      if(!raw)continue;
+      const p=JSON.parse(raw);
+      const d=p&&p.data;
+      if(d&&d.v===1)best=mergeHaData(best,d);
+    }
+  }catch(e){}
+  return best;
+}
+function flushHaProgress(){
+  try{saveLocalHaData(haSnapshot());}catch(e){}
+  try{if(haWorkApi?.saveNow)haWorkApi.saveNow();}catch(e){}
+}
 
 function screenNum(n){
   if(n==='5b')return 5.5;
@@ -1689,6 +1718,10 @@ function go(n){
     alert('Täytä ja arvioi kaikki kolme STAR-vastausta ensin.');
     n=5;
   }
+  if((n===6||screenNum(n)>5.5)&&n!=='5b'&&!allStarVoiceDone()){
+    alert('Nauhoita vastaus kaikille kolmelle kysymykselle ja odota palaute ennen Vastaväite-osioon siirtymistä.');
+    n='5b';
+  }
   if(targetNum>=8&&!isStfComplete()){
     alert('Suorita ensin kaikki viisi Spot Flaw -kierrosta (Osio 06).');
     n=7;
@@ -1718,6 +1751,7 @@ function go(n){
   if(n===10&&!scenBuilt)buildScen();
   if(n===12)buildEarn();
   if(n==='5b')initStarVoiceScreen();
+  updateStarVoiceGate();
   updateStfGate();
   try{saveProgress();}catch(e){}
 }
@@ -1806,12 +1840,76 @@ function getStarQuestionText(q){
   if(!el)return '';
   return el.textContent.replace(/^[\s"']+|[\s"']+$/g,'').trim();
 }
+function ensureStarVoiceState(){
+  if(!S.starVoiceDone||typeof S.starVoiceDone!=='object'){
+    S.starVoiceDone={1:false,2:false,3:false};
+  }
+  [1,2,3].forEach(q=>{if(S.starVoiceDone[q]==null)S.starVoiceDone[q]=false;});
+  if(!S.starVoiceRecordings||typeof S.starVoiceRecordings!=='object')S.starVoiceRecordings={};
+}
+function markStarVoiceComplete(q,transcript,fbHtml){
+  ensureStarVoiceState();
+  S.starVoiceDone[q]=true;
+  S.starVoiceRecordings[q]={transcript:transcript||'',fb:fbHtml||''};
+  updateStarVoicePickerDone();
+  updateStarVoiceGate();
+  return true;
+}
+function allStarVoiceDone(){
+  ensureStarVoiceState();
+  return [1,2,3].every(q=>!!S.starVoiceDone[q]);
+}
+function starVoiceDoneCount(){
+  ensureStarVoiceState();
+  return [1,2,3].filter(q=>!!S.starVoiceDone[q]).length;
+}
+function updateStarVoiceGate(){
+  ensureStarVoiceState();
+  const locked=!allStarVoiceDone();
+  const sb6=document.getElementById('sb6');
+  if(sb6)sb6.classList.toggle('locked',locked);
+  const btn=document.getElementById('starVoiceNextBtn');
+  const wait=document.getElementById('starVoiceNavWait');
+  const prog=document.getElementById('starVoiceProgress');
+  if(prog)prog.textContent=starVoiceDoneCount()+'/3';
+  if(btn)btn.disabled=locked;
+  if(wait)wait.style.display=locked?'block':'none';
+}
+function updateStarVoicePickerDone(){
+  ensureStarVoiceState();
+  document.querySelectorAll('.star-voice-q-opt').forEach(btn=>{
+    const q=Number(btn.dataset.q);
+    btn.classList.toggle('done',!!S.starVoiceDone[q]);
+  });
+}
+function showStarVoiceRecordingForQ(q){
+  const rec=S.starVoiceRecordings&&S.starVoiceRecordings[q];
+  const tr=document.getElementById('starTranscript');
+  const fb=document.getElementById('starVoiceFb');
+  const fbT=document.getElementById('starVoiceFbT');
+  const retry=document.getElementById('starRetryBtn');
+  const status=document.getElementById('starStatus');
+  if(rec){
+    if(tr){tr.textContent=rec.transcript||'';tr.classList.toggle('show',!!rec.transcript);}
+    if(fbT&&rec.fb){fbT.innerHTML=rec.fb;fb?.classList.add('show');}
+    else if(rec.fb===undefined&&rec.transcript){fb?.classList.add('show');}
+    if(retry)retry.style.display='inline-flex';
+    if(status)status.textContent='Palaute saatu — voit nauhoittaa uudestaan tarvittaessa';
+  }else{
+    if(tr){tr.textContent='';tr.classList.remove('show');}
+    fb?.classList.remove('show');
+    if(fbT)fbT.innerHTML='';
+    if(retry)retry.style.display='none';
+    if(status)status.textContent='Paina nauhoita ja kerro STAR-vastauksesi ääneen';
+  }
+}
 function selectStarVoiceQuestion(q){
   S.starVoiceQ=q;
   document.querySelectorAll('.star-voice-q-opt').forEach(btn=>{
     btn.classList.toggle('selected',Number(btn.dataset.q)===q);
   });
   renderStarVoiceActiveQuestion();
+  showStarVoiceRecordingForQ(q);
   updateStarVoicePrompt();
   try{saveProgress();}catch(e){}
 }
@@ -1844,7 +1942,10 @@ function buildStarVoiceQuestionPicker(){
 }
 function initStarVoiceScreen(){
   buildStarVoiceQuestionPicker();
+  ensureStarVoiceState();
+  updateStarVoicePickerDone();
   selectStarVoiceQuestion(S.starVoiceQ||1);
+  updateStarVoiceGate();
 }
 function updateStarVoicePrompt(){
   const el=document.getElementById('starVoiceWrittenHint');
@@ -2692,7 +2793,14 @@ function voiceRetry(id) {
   tr.classList.remove('show');
   document.getElementById(cfg.fb).classList.remove('show');
   document.getElementById(cfg.fbT).innerHTML = '';
-  if(id==='star')renderStarVoiceActiveQuestion();
+  if(id==='star'){
+    ensureStarVoiceState();
+    const q=S.starVoiceQ||1;
+    S.starVoiceDone[q]=false;
+    delete S.starVoiceRecordings[q];
+    updateStarVoicePickerDone();
+    updateStarVoiceGate();
+  }
   try { saveProgress(); } catch (e) {}
 }
 
@@ -2746,9 +2854,19 @@ function voiceStart(id) {
       const fbEl = document.getElementById(cfg.fb);
       document.getElementById(cfg.fbT).innerHTML = `<span class="voice-timing ${timingClass}">${timingMsg}</span><br><br>${txt || (result.error ? 'Palaute ei saatavilla.' : 'Palaute ei saatavilla — yritä uudelleen.')}`;
       fbEl.classList.add('show');
-      document.getElementById(cfg.status).textContent = 'Valmis — paina "Yritä uudelleen" tai nauhoita uudelleen';
       document.getElementById(cfg.recBtn).style.display = 'inline-flex';
       document.getElementById(cfg.retryBtn).style.display = 'inline-flex';
+      if (id === 'star') {
+        const q = S.starVoiceQ || 1;
+        const fbHtml = document.getElementById(cfg.fbT).innerHTML;
+        markStarVoiceComplete(q, transcript, fbHtml);
+        document.getElementById(cfg.status).textContent = `Kysymys ${q}/3 — palaute saatu (${starVoiceDoneCount()}/3)`;
+        const next = [1, 2, 3].find(n => !S.starVoiceDone[n]);
+        if (next && next !== q) setTimeout(() => selectStarVoiceQuestion(next), 900);
+        else if (allStarVoiceDone()) document.getElementById(cfg.status).textContent = 'Kaikki 3 palautetta saatu — voit jatkaa Vastaväite-osioon';
+      } else {
+        document.getElementById(cfg.status).textContent = 'Valmis — paina "Yritä uudelleen" tai nauhoita uudelleen';
+      }
       try { saveProgress(); } catch (e) {}
     };
     voiceState[id] = mr;
