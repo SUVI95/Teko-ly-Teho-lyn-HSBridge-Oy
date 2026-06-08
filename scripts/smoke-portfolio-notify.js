@@ -4,7 +4,6 @@
  * Usage:
  *   node scripts/smoke-portfolio-notify.js
  *   node scripts/smoke-portfolio-notify.js --slug suvi-soppinen --send
- *   node scripts/smoke-portfolio-notify.js --slug dvasdv --send --dry-run
  */
 require('dotenv').config();
 
@@ -13,7 +12,7 @@ const { sendEmail } = require('../lib/send-email');
 const { notifyContact, notifyVisit, isDeliverableEmail, notifyEmailFor } = require('../lib/portfolio-notify');
 
 const args = process.argv.slice(2);
-const slugArg = args.find((a, i) => args[i - 1] === '--slug') || process.env.SMOKE_PORTFOLIO_SLUG || 'dvasdv';
+const slugArg = args.find((a, i) => args[i - 1] === '--slug') || process.env.SMOKE_PORTFOLIO_SLUG || 'suvi-soppinen';
 const doSend = args.includes('--send');
 const dryRun = args.includes('--dry-run');
 

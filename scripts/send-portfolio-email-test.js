@@ -1,23 +1,67 @@
 #!/usr/bin/env node
 /**
  * Send sample portfolio notification emails (visit + contact) for preview.
- * Usage: node scripts/send-portfolio-email-test.js [to@email.com]
+ * Usage: node scripts/send-portfolio-email-test.js [to@email.com] [slug]
+ *
+ * Slug must be a published portfolio (default: suvi-soppinen).
  */
 require('dotenv').config();
 const { sendEmail } = require('../lib/send-email');
-const { portfolioPublicUrl } = require('../lib/portfolio-public-url');
+const { portfolioPublicUrl, portfolioAppOrigin } = require('../lib/portfolio-public-url');
 const { escapeHtml, duuniJobsEmail, quoteBlock, infoRow } = require('../lib/email-template');
 
+const DEFAULT_SLUG = 'suvi-soppinen';
+const FALLBACK_SLUGS = ['suvi-soppinen', 'dvasdv'];
+
+async function fetchPublishedPortfolio(slug) {
+  const origin = portfolioAppOrigin().replace(/\/+$/, '');
+  const r = await fetch(
+    origin + '/api/portfolio/view/' + encodeURIComponent(slug),
+    { headers: { Accept: 'application/json' } }
+  );
+  if (!r.ok) return null;
+  const d = await r.json();
+  return d && d.portfolio ? d.portfolio : null;
+}
+
+async function resolveTestPortfolio(requestedSlug) {
+  const candidates = [];
+  if (requestedSlug) candidates.push(String(requestedSlug).trim());
+  if (process.env.SMOKE_PORTFOLIO_SLUG) candidates.push(String(process.env.SMOKE_PORTFOLIO_SLUG).trim());
+  candidates.push(DEFAULT_SLUG);
+  FALLBACK_SLUGS.forEach((s) => {
+    if (!candidates.includes(s)) candidates.push(s);
+  });
+
+  for (const slug of candidates) {
+    if (!slug) continue;
+    const portfolio = await fetchPublishedPortfolio(slug);
+    if (portfolio) {
+      return {
+        slug: portfolio.slug || slug,
+        url: portfolioPublicUrl(portfolio.slug || slug),
+        studentName: portfolio.full_name || 'Etunimi Sukunimi'
+      };
+    }
+  }
+
+  throw new Error(
+    'No published portfolio found for test email. Pass a valid slug: node scripts/send-portfolio-email-test.js you@email.com etunimi-sukunimi'
+  );
+}
+
 const to = (process.argv[2] || 'suvi@duunijobs.com').trim();
-const slug = (process.argv[3] || 'dvasdv').trim();
+const slugArg = (process.argv[3] || '').trim();
 const recruiterName = 'Anna Rekrytoija';
 const recruiterEmail = 'rekry@yritys.fi';
-const url = portfolioPublicUrl(slug);
-const studentName = slug === 'dvasdv' ? 'Suvi Soppinen' : 'Etunimi Sukunimi';
-const firstName = studentName.split(/\s+/)[0];
 
 async function main() {
+  const { slug, url, studentName } = await resolveTestPortfolio(slugArg);
+  const firstName = String(studentName).trim().split(/\s+/)[0] || studentName;
+
   console.log('Sending branded portfolio email previews to:', to);
+  console.log('Portfolio slug:', slug);
+  console.log('Button URL:', url);
 
   const visit = await sendEmail({
     to,
