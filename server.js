@@ -41,7 +41,9 @@ function injectModulePersistenceScripts(html, moduleId) {
   if (needsModuleWork) tags.push('<script src="/js/module-work.js"></script>');
   if (needsAutoSave) tags.push('<script src="/js/module-autosave.js"></script>');
   const inject = tags.join('');
-  if (html.includes('</body>')) return html.replace('</body>', inject + '</body>');
+  const bodyClose = '</body>';
+  const idx = html.lastIndexOf(bodyClose);
+  if (idx !== -1) return html.slice(0, idx) + inject + html.slice(idx);
   return html + inject;
 }
 
