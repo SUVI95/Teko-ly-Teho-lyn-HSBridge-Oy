@@ -619,6 +619,121 @@ var slugManuallyEdited = false;
 var portfolioAutosaveTimer = null;
 var portfolioAutosaveInFlight = false;
 var portfolioAutosaveDirty = false;
+var cachedAuthUser = null;
+var PORTFOLIO_DRAFT_PREFIX = 'ecv_draft_';
+
+async function loadAuthUser(){
+  if(cachedAuthUser) return cachedAuthUser;
+  try{
+    var r=await fetch(apiBase()+'/api/auth/me',{credentials:'include'});
+    if(r.ok){
+      var d=await r.json();
+      if(d.user) cachedAuthUser=d.user;
+    }
+  }catch(e){}
+  return cachedAuthUser;
+}
+
+function portfolioDraftStorageKey(){
+  var uid=cachedAuthUser&&cachedAuthUser.id?String(cachedAuthUser.id):'anon';
+  return PORTFOLIO_DRAFT_PREFIX+uid;
+}
+
+function migrateAnonPortfolioDraft(){
+  if(!cachedAuthUser||!cachedAuthUser.id) return;
+  var userKey=portfolioDraftStorageKey();
+  var anonKey=PORTFOLIO_DRAFT_PREFIX+'anon';
+  try{
+    var anonRaw=localStorage.getItem(anonKey);
+    if(!anonRaw) return;
+    var userRaw=localStorage.getItem(userKey);
+    if(!userRaw){
+      localStorage.setItem(userKey,anonRaw);
+    }else{
+      var anon=JSON.parse(anonRaw);
+      var user=JSON.parse(userRaw);
+      if(Number(anon&&anon.ts||0)>Number(user&&user.ts||0)) localStorage.setItem(userKey,anonRaw);
+    }
+    localStorage.removeItem(anonKey);
+  }catch(e){}
+}
+
+function draftTimestamp(draft){
+  if(!draft) return 0;
+  if(draft.ts) return Number(draft.ts);
+  if(draft.savedAt){
+    var t=Date.parse(draft.savedAt);
+    if(!isNaN(t)) return t;
+  }
+  return 0;
+}
+
+function buildLocalDraft(){
+  syncPayloadFromForm();
+  return {
+    v:1,
+    ts:Date.now(),
+    savedAt:new Date().toISOString(),
+    P:JSON.parse(JSON.stringify(P)),
+    cvText:cvText||'',
+    cvFilenameOnServer:cvFilenameOnServer||'',
+    interviewAnswers:interviewAnswers.slice(),
+    interviewDone:!!interviewDone,
+    portfolioSlug:portfolioSlug||'',
+    portfolioPublished:!!portfolioPublished,
+    slugManuallyEdited:!!slugManuallyEdited,
+    lastScreen:getCurrentScreenId()
+  };
+}
+
+function saveLocalDraft(){
+  try{
+    localStorage.setItem(portfolioDraftStorageKey(),JSON.stringify(buildLocalDraft()));
+  }catch(e){}
+}
+
+function loadLocalDraft(){
+  try{
+    var raw=localStorage.getItem(portfolioDraftStorageKey());
+    if(!raw) return null;
+    var d=JSON.parse(raw);
+    return d&&d.v===1?d:null;
+  }catch(e){ return null; }
+}
+
+function applyLocalDraft(draft){
+  if(!draft||draft.v!==1) return;
+  if(draft.P&&typeof draft.P==='object'){
+    Object.keys(P).forEach(function(k){
+      if(draft.P[k]!=null&&draft.P[k]!=='') P[k]=draft.P[k];
+    });
+  }
+  if(draft.cvText) cvText=draft.cvText;
+  if(draft.cvFilenameOnServer) cvFilenameOnServer=draft.cvFilenameOnServer;
+  if(Array.isArray(draft.interviewAnswers)) interviewAnswers=draft.interviewAnswers.slice();
+  if(typeof draft.interviewDone==='boolean') interviewDone=draft.interviewDone;
+  if(draft.portfolioSlug) portfolioSlug=draft.portfolioSlug;
+  if(typeof draft.portfolioPublished==='boolean') portfolioPublished=draft.portfolioPublished;
+  if(typeof draft.slugManuallyEdited==='boolean') slugManuallyEdited=draft.slugManuallyEdited;
+}
+
+function resolvePortfolioSaveName(){
+  syncPayloadFromForm();
+  var name=(P.full_name||'').trim();
+  if(!name){
+    var fn=document.getElementById('f_name');
+    if(fn&&fn.value.trim()) name=fn.value.trim();
+  }
+  if(!name){
+    var dn=document.getElementById('d_name');
+    if(dn&&dn.value.trim()) name=dn.value.trim();
+  }
+  if(!name&&cachedAuthUser&&cachedAuthUser.name) name=String(cachedAuthUser.name).trim();
+  if(!name&&cachedAuthUser&&cachedAuthUser.email){
+    name=cachedAuthUser.email.split('@')[0].replace(/[._+]/g,' ').trim();
+  }
+  return name||'Luonnos';
+}
 
 var INTERVIEW_QUESTIONS = [
   'Kerro yhdestä tilanteesta jossa onnistuit työssä, opiskelussa tai arjessa. Mitä tapahtui ja mikä oli sinun roolisi?',
@@ -769,6 +884,7 @@ async function processCVFile(file){
     } else {
       status.textContent='✓ CV vastaanotettu. Täytä kentät alla tai jatka haastatteluun — AI täyttää lisätiedot.';
     }
+    schedulePortfolioAutosave();
   }catch(e){
     cvFilePending=file;
     zone.classList.add('uploaded');
@@ -781,6 +897,7 @@ async function processCVFile(file){
       failMsg = 'Täytä alla oleva lomake, jotta portfolioosi tulee kaikki tarvittavat tiedot.';
     }
     status.textContent='✓ CV vastaanotettu. '+failMsg;
+    schedulePortfolioAutosave();
   }
 }
 
@@ -1314,6 +1431,7 @@ function buildWorkspaceDraft(){
 
 function schedulePortfolioAutosave(){
   portfolioAutosaveDirty=true;
+  saveLocalDraft();
   if(portfolioAutosaveTimer) clearTimeout(portfolioAutosaveTimer);
   portfolioAutosaveTimer=setTimeout(function(){
     portfolioAutosaveTimer=null;
@@ -1322,6 +1440,7 @@ function schedulePortfolioAutosave(){
 }
 
 function flushPortfolioAutosave(){
+  saveLocalDraft();
   if(portfolioAutosaveTimer){
     clearTimeout(portfolioAutosaveTimer);
     portfolioAutosaveTimer=null;
@@ -1330,9 +1449,7 @@ function flushPortfolioAutosave(){
 }
 
 async function savePortfolioDraft(preferBeacon){
-  syncPayloadFromForm();
-  var name=P.full_name||(document.getElementById('f_name')||{}).value.trim()||(document.getElementById('d_name')||{}).value.trim();
-  if(!name) return;
+  var name=resolvePortfolioSaveName();
   if(portfolioAutosaveInFlight) return;
   portfolioAutosaveInFlight=true;
   try{
@@ -1344,11 +1461,22 @@ async function savePortfolioDraft(preferBeacon){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(payload)
     };
-    if(preferBeacon&&navigator.sendBeacon){
-      var ok=navigator.sendBeacon(apiBase()+'/api/portfolio/save',new Blob([opts.body],{type:'application/json'}));
-      if(ok){
-        portfolioAutosaveDirty=false;
-        return;
+    if(preferBeacon){
+      try{
+        var kr=await fetch(apiBase()+'/api/portfolio/save',Object.assign({keepalive:true},opts));
+        if(kr.ok){
+          portfolioAutosaveDirty=false;
+          var kd=await kr.json();
+          await applySaveResponse(kd);
+          return;
+        }
+      }catch(e){}
+      if(navigator.sendBeacon){
+        var ok=navigator.sendBeacon(apiBase()+'/api/portfolio/save',new Blob([opts.body],{type:'application/json'}));
+        if(ok){
+          portfolioAutosaveDirty=false;
+          return;
+        }
       }
     }
     var r=await fetch(apiBase()+'/api/portfolio/save',Object.assign({keepalive:!!preferBeacon},opts));
@@ -1356,6 +1484,9 @@ async function savePortfolioDraft(preferBeacon){
     if(r.ok){
       portfolioAutosaveDirty=false;
       await applySaveResponse(d);
+      if(cvFilePending){
+        try{ await uploadCvToPortfolio(cvFilePending); }catch(e){ console.warn('[cv-upload]',e); }
+      }
     }
   }catch(e){
     console.warn('[portfolio-autosave]',e);
@@ -1713,6 +1844,7 @@ async function applySaveResponse(d){
 
 async function savePortfolioData(){
   var payload=buildSavePayload();
+  payload.full_name=resolvePortfolioSaveName();
   var r=await fetch(apiBase()+'/api/portfolio/save',{
     method:'POST',credentials:'include',
     headers:{'Content-Type':'application/json'},
@@ -1861,7 +1993,11 @@ document.addEventListener('DOMContentLoaded',async function(){
     if(document.visibilityState==='hidden') flushPortfolioAutosave();
   });
 
+  await loadAuthUser();
+  migrateAnonPortfolioDraft();
+  var localDraft=loadLocalDraft();
   var resumeScreen = null;
+
   try{
     var r=await fetch(apiBase()+'/api/portfolio/mine',{credentials:'include'});
     var d=await r.json();
@@ -1875,8 +2011,15 @@ document.addEventListener('DOMContentLoaded',async function(){
         if(k==='workspace_draft') return;
         if(P.hasOwnProperty(k)&&pf[k]!=null) P[k]=pf[k];
       });
-      applyWorkspaceDraft(pf.workspace_draft);
-      if(pf.workspace_draft&&pf.workspace_draft.lastScreen) resumeScreen=pf.workspace_draft.lastScreen;
+      var serverDraft=pf.workspace_draft;
+      var useLocal=localDraft&&draftTimestamp(localDraft)>draftTimestamp(serverDraft);
+      if(useLocal){
+        applyLocalDraft(localDraft);
+        if(localDraft.lastScreen) resumeScreen=localDraft.lastScreen;
+      }else{
+        applyWorkspaceDraft(serverDraft);
+        if(serverDraft&&serverDraft.lastScreen) resumeScreen=serverDraft.lastScreen;
+      }
       if(pf.has_cv&&pf.cv_filename) cvFilenameOnServer=pf.cv_filename;
       updateCvStatusUi();
       var banner=document.getElementById('resumePortfolioBanner');
@@ -1894,8 +2037,30 @@ document.addEventListener('DOMContentLoaded',async function(){
       if((pf.has_cv||cvText)&&(!P.skills.length||!P.experience.length)) ensureCvDataInForm();
       updateSlugUi();
       loadPortfolioNotifications();
+    }else if(localDraft){
+      applyLocalDraft(localDraft);
+      if(localDraft.lastScreen) resumeScreen=localDraft.lastScreen;
+      syncDetailsFields();
+      syncFormFields(true);
+      renderExperienceEditor();
+      restoreThemePicker();
+      restoreInterviewFromDraft();
+      updateCvStatusUi();
+      updateSlugUi();
     }
-  }catch(e){}
+  }catch(e){
+    if(localDraft){
+      applyLocalDraft(localDraft);
+      if(localDraft.lastScreen) resumeScreen=localDraft.lastScreen;
+      syncDetailsFields();
+      syncFormFields(true);
+      renderExperienceEditor();
+      restoreThemePicker();
+      restoreInterviewFromDraft();
+      updateCvStatusUi();
+      updateSlugUi();
+    }
+  }
 
   if(resumeScreen&&screenOrder.indexOf(resumeScreen)>=0){
     showScreen(resumeScreen);

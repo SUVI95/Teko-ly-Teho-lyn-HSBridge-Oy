@@ -138,6 +138,24 @@ function sanitizePortfolioBody(raw) {
   return { d, workspaceDraft };
 }
 
+function resolvePortfolioFullName(d, user) {
+  const raw = d && d.full_name ? String(d.full_name).trim() : '';
+  if (raw && raw.toLowerCase() !== 'luonnos') return raw;
+  const accountName = user && user.name ? String(user.name).trim() : '';
+  if (accountName) return accountName;
+  const email = user && user.email ? String(user.email).trim() : '';
+  if (email) {
+    const local = email.split('@')[0].replace(/[._+]/g, ' ').trim();
+    if (local) return local;
+  }
+  return 'Luonnos';
+}
+
+function isPlaceholderPortfolioName(name) {
+  const n = makeSlug(name || '');
+  return !n || n === 'luonnos' || n === 'opiskelija' || n === 'portfolio';
+}
+
 function portfolioFieldValues(d, workspaceDraft) {
   return [
     d.full_name,
@@ -209,8 +227,9 @@ async function resolveSlugForSave(uid, d, existingSlug, isPublished) {
     return requested;
   }
   if (!existingSlug) {
-    const fromName = makeSlug(d.full_name) || 'portfolio';
-    return uniqueSlug(fromName, uid);
+    let fromName = makeSlug(d.full_name);
+    if (isPlaceholderPortfolioName(d.full_name)) fromName = 'user-' + uid;
+    return uniqueSlug(fromName || ('user-' + uid), uid);
   }
   const fromName = makeSlug(d.full_name);
   if (fromName && fromName !== existingSlug) {
@@ -225,7 +244,7 @@ router.post('/save', authenticateToken, async (req, res) => {
     await ready();
     const uid = req.user.id;
     const { d, workspaceDraft } = sanitizePortfolioBody(req.body);
-    if (!d.full_name) return res.status(400).json({ error: 'Nimi puuttuu' });
+    d.full_name = resolvePortfolioFullName(d, req.user);
 
     const existing = await pool.query(
       'SELECT slug, published FROM student_portfolios WHERE user_id=$1', [uid]
