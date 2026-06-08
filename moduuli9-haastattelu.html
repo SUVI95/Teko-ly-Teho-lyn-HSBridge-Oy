@@ -399,6 +399,9 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
 .voice-fb.show{display:block;animation:fadeUp .3s ease}
 .voice-fb-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#F5D76E;margin-bottom:8px;display:block}
 .voice-fb-text{font-size:16px;color:#fff;line-height:1.75;font-weight:400}
+.star-voice-continue-wrap{margin-top:16px;display:none}
+.star-voice-continue-btn{display:flex;width:100%;justify-content:center;align-items:center;gap:8px;padding:14px 22px;border-radius:var(--r10);border:1.5px solid #F5D76E;background:rgba(245,215,110,.12);color:#F5D76E;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .15s}
+.star-voice-continue-btn:hover{background:rgba(245,215,110,.22)}
 .voice-timing{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:100px;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;margin-top:8px}
 .voice-timing.good{background:rgba(45,90,74,.4);color:#7EC8A4}
 .voice-timing.short{background:rgba(200,92,60,.3);color:#FFB8A0}
@@ -869,6 +872,9 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
     <div class="voice-fb" id="starVoiceFb">
       <span class="voice-fb-label">Palautetta äänestä</span>
       <div class="voice-fb-text" id="starVoiceFbT"></div>
+    </div>
+    <div class="star-voice-continue-wrap" id="starVoiceContinueWrap">
+      <button type="button" class="star-voice-continue-btn" id="starVoiceContinueBtn" onclick="starVoiceContinueNext()">Lue palaute rauhassa — sitten seuraava kysymys →</button>
     </div>
   </div>
 
@@ -1847,12 +1853,31 @@ function ensureStarVoiceState(){
   [1,2,3].forEach(q=>{if(S.starVoiceDone[q]==null)S.starVoiceDone[q]=false;});
   if(!S.starVoiceRecordings||typeof S.starVoiceRecordings!=='object')S.starVoiceRecordings={};
 }
+function nextStarVoiceQuestion(){
+  ensureStarVoiceState();
+  return [1,2,3].find(q=>!S.starVoiceDone[q])||null;
+}
+function updateStarVoiceContinueBtn(){
+  const wrap=document.getElementById('starVoiceContinueWrap');
+  const btn=document.getElementById('starVoiceContinueBtn');
+  if(!wrap||!btn)return;
+  const q=S.starVoiceQ||1;
+  const next=nextStarVoiceQuestion();
+  const show=!!S.starVoiceDone[q]&&next!=null;
+  wrap.style.display=show?'block':'none';
+  if(show)btn.textContent='Lue palaute rauhassa — sitten kysymys '+next+'/3 →';
+}
+function starVoiceContinueNext(){
+  const next=nextStarVoiceQuestion();
+  if(next)selectStarVoiceQuestion(next);
+}
 function markStarVoiceComplete(q,transcript,fbHtml){
   ensureStarVoiceState();
   S.starVoiceDone[q]=true;
   S.starVoiceRecordings[q]={transcript:transcript||'',fb:fbHtml||''};
   updateStarVoicePickerDone();
   updateStarVoiceGate();
+  updateStarVoiceContinueBtn();
   return true;
 }
 function allStarVoiceDone(){
@@ -1894,7 +1919,7 @@ function showStarVoiceRecordingForQ(q){
     if(fbT&&rec.fb){fbT.innerHTML=rec.fb;fb?.classList.add('show');}
     else if(rec.fb===undefined&&rec.transcript){fb?.classList.add('show');}
     if(retry)retry.style.display='inline-flex';
-    if(status)status.textContent='Palaute saatu — voit nauhoittaa uudestaan tarvittaessa';
+    if(status)status.textContent='Palaute saatu — lue transkriptio ja palaute, sitten jatka kun olet valmis';
   }else{
     if(tr){tr.textContent='';tr.classList.remove('show');}
     fb?.classList.remove('show');
@@ -1902,6 +1927,7 @@ function showStarVoiceRecordingForQ(q){
     if(retry)retry.style.display='none';
     if(status)status.textContent='Paina nauhoita ja kerro STAR-vastauksesi ääneen';
   }
+  updateStarVoiceContinueBtn();
 }
 function selectStarVoiceQuestion(q){
   S.starVoiceQ=q;
@@ -1946,6 +1972,7 @@ function initStarVoiceScreen(){
   updateStarVoicePickerDone();
   selectStarVoiceQuestion(S.starVoiceQ||1);
   updateStarVoiceGate();
+  updateStarVoiceContinueBtn();
 }
 function updateStarVoicePrompt(){
   const el=document.getElementById('starVoiceWrittenHint');
@@ -2800,6 +2827,7 @@ function voiceRetry(id) {
     delete S.starVoiceRecordings[q];
     updateStarVoicePickerDone();
     updateStarVoiceGate();
+    updateStarVoiceContinueBtn();
   }
   try { saveProgress(); } catch (e) {}
 }
@@ -2860,10 +2888,11 @@ function voiceStart(id) {
         const q = S.starVoiceQ || 1;
         const fbHtml = document.getElementById(cfg.fbT).innerHTML;
         markStarVoiceComplete(q, transcript, fbHtml);
-        document.getElementById(cfg.status).textContent = `Kysymys ${q}/3 — palaute saatu (${starVoiceDoneCount()}/3)`;
-        const next = [1, 2, 3].find(n => !S.starVoiceDone[n]);
-        if (next && next !== q) setTimeout(() => selectStarVoiceQuestion(next), 900);
-        else if (allStarVoiceDone()) document.getElementById(cfg.status).textContent = 'Kaikki 3 palautetta saatu — voit jatkaa Vastaväite-osioon';
+        if (allStarVoiceDone()) {
+          document.getElementById(cfg.status).textContent = 'Kaikki 3 palautetta saatu — lue vielä rauhassa, sitten Vastaväite →';
+        } else {
+          document.getElementById(cfg.status).textContent = `Kysymys ${q}/3 — palaute valmis. Lue transkriptio ja palaute, sitten paina jatka (${starVoiceDoneCount()}/3)`;
+        }
       } else {
         document.getElementById(cfg.status).textContent = 'Valmis — paina "Yritä uudelleen" tai nauhoita uudelleen';
       }
