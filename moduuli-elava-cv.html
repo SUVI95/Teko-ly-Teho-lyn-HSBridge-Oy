@@ -712,6 +712,7 @@ function showScreen(id){
   if(id==='s-preview') loadPreview();
   if(id==='s-publish'){ syncPayloadFromForm(); buildPublishChecklist(); }
   if(id==='s-details'){ syncDetailsFields(); ensureCvDataInForm(); updateSlugUi(); }
+  if(id==='s-interview') ensureInterviewStarted();
   schedulePortfolioAutosave();
 }
 
@@ -1028,7 +1029,23 @@ function goToInterview(){
   if(document.getElementById('f_bio').value) P.bio=document.getElementById('f_bio').value;
   if(cvFilePending&&!P.skills.length) parseCvFileToPortfolio(cvFilePending);
   showScreen('s-interview');
-  if(!interviewHistory.length) startInterview();
+}
+
+function ensureInterviewStarted(){
+  if(interviewDone) return;
+  var msgsEl=document.getElementById('interviewMsgs');
+  if(!msgsEl) return;
+  if(interviewAnswers.length>=4){
+    var doneEl=document.getElementById('interviewDone');
+    if(doneEl) doneEl.style.display='block';
+    return;
+  }
+  if(msgsEl.children.length>0) return;
+  if(interviewAnswers.length>0){
+    restoreInterviewFromDraft();
+    return;
+  }
+  startInterview();
 }
 
 // ══════════════════════════════════════════
@@ -1094,30 +1111,15 @@ async function sendInterview(){
     return;
   }
 
-  var sys = INTERVIEW_SYSTEM.replace('{CV_TEXT}', cvText ? cvText.slice(0,1500) : 'Ei CV:tä.');
-  try{
-    var r=await fetch(apiBase()+'/api/ai/claude',{
-      method:'POST',credentials:'include',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:sys,messages:interviewHistory,max_tokens:600})
-    });
-    var d=await r.json();
-    var reply=d.text||'Kiitos vastauksesta!';
-    document.getElementById('typingIndicator')?.remove();
-    if(reply.includes('VALMIS')){
-      await finalizeInterview(reply);
-    } else {
-      interviewHistory.push({role:'assistant',content:reply});
-      addInterviewMsg('ai',reply);
-      inp.disabled=false;
-      send.disabled=false;
-      inp.focus();
-    }
-  }catch(e){
-    document.getElementById('typingIndicator')?.remove();
-    addInterviewMsg('ai','Yhteysvirhe — yritä uudelleen.');
-    inp.disabled=false; send.disabled=false;
+  document.getElementById('typingIndicator')?.remove();
+  var nextQ=INTERVIEW_QUESTIONS[interviewAnswers.length];
+  if(nextQ){
+    interviewHistory.push({role:'assistant',content:nextQ});
+    addInterviewMsg('ai',nextQ);
   }
+  inp.disabled=false;
+  send.disabled=false;
+  inp.focus();
 }
 
 function tryParseInlineInterviewJson(reply){
@@ -1897,6 +1899,7 @@ document.addEventListener('DOMContentLoaded',async function(){
 
   if(resumeScreen&&screenOrder.indexOf(resumeScreen)>=0){
     showScreen(resumeScreen);
+    if(resumeScreen==='s-interview') ensureInterviewStarted();
   }
 });
 </script>
