@@ -403,6 +403,17 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
 .voice-timing.good{background:rgba(45,90,74,.4);color:#7EC8A4}
 .voice-timing.short{background:rgba(200,92,60,.3);color:#FFB8A0}
 .voice-timing.long{background:rgba(154,123,58,.3);color:#F5D76E}
+.star-voice-q-pick{margin:0 0 18px;display:flex;flex-direction:column;gap:10px}
+.star-voice-q-pick-label{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.star-voice-q-opt{display:block;width:100%;text-align:left;padding:14px 16px;border-radius:var(--r14);border:1.5px solid var(--line);background:var(--paper);cursor:pointer;transition:all .15s;font-family:inherit}
+.star-voice-q-opt:hover{border-color:var(--coral);background:var(--coral-lt)}
+.star-voice-q-opt.selected{border-color:var(--coral);background:var(--coral-lt);box-shadow:0 0 0 2px rgba(200,92,60,.15)}
+.star-voice-q-num{display:block;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--coral);margin-bottom:6px}
+.star-voice-q-text{display:block;font-family:'Cormorant Garamond',serif;font-size:18px;line-height:1.4;color:var(--ink);font-weight:500}
+.star-voice-active-q{background:rgba(255,255,255,.08);border:1.5px solid rgba(245,196,168,.45);border-radius:var(--r14);padding:16px 18px;margin-bottom:16px}
+.star-voice-active-q.live{background:rgba(200,92,60,.22);border-color:#ff9966;box-shadow:0 0 0 1px rgba(255,153,102,.25)}
+.star-voice-active-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#F5C4A8;display:block;margin-bottom:8px}
+.star-voice-active-text{font-family:'Cormorant Garamond',serif;font-size:clamp(19px,3vw,24px);line-height:1.4;color:#fff;margin:0;font-weight:500}
 /* MOCK INTERVIEW */
 .mock-screen{background:var(--ink);border-radius:var(--r20);overflow:hidden;box-shadow:var(--shadow-lg);margin:14px 0;color:#fff}
 .mock-topbar{padding:14px 22px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -817,17 +828,10 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
   </div>
 
   <div class="context-box">
-    <strong>Mihin kysymykseen vastaat?</strong> Valitse yksi alla olevista — tai puhu sama tarina jonka kirjoitit edellisessä osiossa. Vastaa aina <strong>STAR-rakenteella</strong> (Situation → Task → Action → Result): tilanne, tehtävä, toiminta, tulos.
+    <strong>Valitse kysymys</strong> — sama kolme kuin kirjoitusosiossa. Kysymys näkyy nauhoituslaatikossa koko äänityksen ajan, jotta muistat mitä vastaat.
   </div>
 
-  <div class="vinkki"><span class="vinkki-icon">🎯</span><div>
-    <strong>Kolme kysymystä joihin voit vastata:</strong>
-    <ol style="margin:10px 0 0 18px;line-height:1.85">
-      <li><em>"Kerro tilanteesta jossa asiakas oli selvästi tyytymätön..."</em> — kysymys 1 kirjoitusosiossa</li>
-      <li><em>"Kerro tilanteesta jossa jouduit ratkaisemaan ongelman paineen alla..."</em> — kysymys 2</li>
-      <li><em>"Kerro tilanteesta jossa teit virheen..."</em> — kysymys 3</li>
-    </ol>
-  </div></div>
+  <div class="star-voice-q-pick" id="starVoiceQPick"></div>
 
   <div class="vinkki"><span class="vinkki-icon">⭐</span><div>
     <strong>STAR-muistilista — mitä sanoa ääneen (60–90 s):</strong>
@@ -845,7 +849,11 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
   <div class="voice-zone">
     <span class="vz-label">🎙 Nauhoita STAR-vastauksesi</span>
     <div class="vz-title">Kerro vastauksesi ääneen — aivan kuten haastattelussa</div>
-    <div class="vz-sub">Paina nauhoita, kerro STAR-vastauksesi (tilanne, tehtävä, toiminta, tulos), paina lopeta. AI transkriboi ja antaa palautteen. Tavoite: 60–90 sekuntia.</div>
+    <div class="vz-sub">Valitse kysymys yllä. Paina nauhoita — kysymys pysyy näkyvissä koko äänityksen ajan. Kerro STAR-vastauksesi (tilanne, tehtävä, toiminta, tulos). Tavoite: 60–90 sekuntia.</div>
+    <div class="star-voice-active-q" id="starVoiceActiveQ">
+      <span class="star-voice-active-label">Vastaa tähän kysymykseen:</span>
+      <p class="star-voice-active-text" id="starVoiceActiveQText"></p>
+    </div>
     <div class="voice-controls">
       <div class="ripple-indicator" id="starRipple">🎙</div>
       <button class="voice-btn voice-btn-rec" id="starRecBtn" onclick="voiceStart('star')">● Aloita nauhoitus</button>
@@ -1607,7 +1615,7 @@ Käytä tuoreita lähteitä: uutiset, LinkedIn, Kauppalehti, Google News.</div>
 <script src="/js/mock-realtime.js"></script>
 <script src="/js/ai-helper.js"></script>
 <script>
-const S={pre:[],w_s:'',w_t:'',w_a:'',w_r:'',w2_s:'',w2_t:'',w2_a:'',w2_r:'',w3_s:'',w3_t:'',w3_a:'',w3_r:'',w_weak:'',w_why:'',w_vastav:'',companyName:'',companyUrl:'',companyFact:'',w_company:'',w_palkka:'',abResults:[],hp1:'',hp2:'',hp3:'',hpBuilt:'',hpFinal:'',startKey:'',nextKey:'',scenPicks:{},stfAnswers:[],vastaQuestion:'',mockSession:[],mockCandidateName:''};
+const S={pre:[],w_s:'',w_t:'',w_a:'',w_r:'',w2_s:'',w2_t:'',w2_a:'',w2_r:'',w3_s:'',w3_t:'',w3_a:'',w3_r:'',w_weak:'',w_why:'',w_vastav:'',companyName:'',companyUrl:'',companyFact:'',w_company:'',w_palkka:'',abResults:[],hp1:'',hp2:'',hp3:'',hpBuilt:'',hpFinal:'',startKey:'',nextKey:'',scenPicks:{},stfAnswers:[],vastaQuestion:'',mockSession:[],mockCandidateName:'',starVoiceQ:1};
 const COMPANY_HOME_URLS={'Elisa':'https://www.elisa.fi/','S-ryhmä':'https://www.s-ryhma.fi/','OP Ryhmä':'https://www.op.fi/','DNA':'https://www.dna.fi/','Mehiläinen':'https://www.mehilainen.fi/','Kesko':'https://www.kesko.fi/'};
 const TOTAL=12;
 const MODULE9_ID='moduuli9-haastattelu';
@@ -1709,7 +1717,7 @@ function go(n){
   if(n===7&&!abBuilt)buildAB();
   if(n===10&&!scenBuilt)buildScen();
   if(n===12)buildEarn();
-  if(n==='5b')updateStarVoicePrompt();
+  if(n==='5b')initStarVoiceScreen();
   updateStfGate();
   try{saveProgress();}catch(e){}
 }
@@ -1793,21 +1801,65 @@ function checkWrite(q){
 }
 function checkWriteAll(){[1,2,3].forEach(checkWrite);}
 
+function getStarQuestionText(q){
+  const el=document.querySelector('#starQ'+q+' .star-q-title');
+  if(!el)return '';
+  return el.textContent.replace(/^[\s"']+|[\s"']+$/g,'').trim();
+}
+function selectStarVoiceQuestion(q){
+  S.starVoiceQ=q;
+  document.querySelectorAll('.star-voice-q-opt').forEach(btn=>{
+    btn.classList.toggle('selected',Number(btn.dataset.q)===q);
+  });
+  renderStarVoiceActiveQuestion();
+  updateStarVoicePrompt();
+  try{saveProgress();}catch(e){}
+}
+function renderStarVoiceActiveQuestion(){
+  const box=document.getElementById('starVoiceActiveQ');
+  const txt=document.getElementById('starVoiceActiveQText');
+  if(!box||!txt)return;
+  const q=S.starVoiceQ||1;
+  txt.textContent=getStarQuestionText(q)||'Valitse kysymys yllä.';
+  const rec=voiceState.star&&voiceState.star.state==='recording';
+  box.classList.toggle('live',!!rec);
+}
+function buildStarVoiceQuestionPicker(){
+  const wrap=document.getElementById('starVoiceQPick');
+  if(!wrap||wrap.dataset.built)return;
+  const label=document.createElement('div');
+  label.className='star-voice-q-pick-label';
+  label.textContent='Valitse kysymys — näkyy nauhoituksen aikana:';
+  wrap.appendChild(label);
+  [1,2,3].forEach(q=>{
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='star-voice-q-opt';
+    btn.dataset.q=String(q);
+    btn.onclick=()=>selectStarVoiceQuestion(q);
+    btn.innerHTML='<span class="star-voice-q-num">Kysymys '+q+' / 3</span><span class="star-voice-q-text">'+escHtml(getStarQuestionText(q))+'</span>';
+    wrap.appendChild(btn);
+  });
+  wrap.dataset.built='1';
+}
+function initStarVoiceScreen(){
+  buildStarVoiceQuestionPicker();
+  selectStarVoiceQuestion(S.starVoiceQ||1);
+}
 function updateStarVoicePrompt(){
   const el=document.getElementById('starVoiceWrittenHint');
   if(!el)return;
-  const has=[S.w_s,S.w_t,S.w_a,S.w_r].some(v=>String(v||'').trim().length>8);
+  const q=S.starVoiceQ||1;
+  const vals=getStarKeys(q).map(k=>String(S[k]||'').trim());
+  const has=vals.some(v=>v.length>8);
   if(!has){
     el.style.display='none';
     el.innerHTML='';
     return;
   }
   el.style.display='block';
-  el.innerHTML='<strong>Kirjoittamasi STAR on tallennettu — voit puhua sen ääneen:</strong><br><br>'
-    +'<span style="color:#2B5B8A;font-weight:500">S:</span> '+escHtml(S.w_s.trim())+'<br>'
-    +'<span style="color:#6B3FA0;font-weight:500">T:</span> '+escHtml(S.w_t.trim())+'<br>'
-    +'<span style="color:var(--forest);font-weight:500">A:</span> '+escHtml(S.w_a.trim())+'<br>'
-    +'<span style="color:var(--coral);font-weight:500">R:</span> '+escHtml(S.w_r.trim());
+  el.innerHTML='<strong>Kirjoittamasi vastaus kysymykseen '+q+' — voit puhua tämän ääneen:</strong><br><br>'
+    +['S','T','A','R'].map((letter,i)=>'<span style="color:var(--gold-dk);font-weight:600">'+letter+':</span> '+escHtml(vals[i])).join('<br>');
 }
 function escHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -2640,6 +2692,7 @@ function voiceRetry(id) {
   tr.classList.remove('show');
   document.getElementById(cfg.fb).classList.remove('show');
   document.getElementById(cfg.fbT).innerHTML = '';
+  if(id==='star')renderStarVoiceActiveQuestion();
   try { saveProgress(); } catch (e) {}
 }
 
@@ -2650,6 +2703,11 @@ function voiceStart(id) {
   }
   const cfg = voiceCfg(id);
   if (!cfg) return;
+  if (id === 'star') {
+    if (!S.starVoiceQ) S.starVoiceQ = 1;
+    renderStarVoiceActiveQuestion();
+    document.getElementById('starVoiceActiveQ')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
     const mr = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg' });
@@ -2664,6 +2722,7 @@ function voiceStart(id) {
       document.getElementById(cfg.retryBtn).style.display = 'none';
       document.getElementById(cfg.recBtn).classList.remove('recording');
       document.getElementById(cfg.ripple).classList.remove('active');
+      if (id === 'star') renderStarVoiceActiveQuestion();
       const blob = new Blob(chunks, { type: mr.mimeType });
       const elapsed = voiceState[id + '_elapsed'] || 0;
       const type = id === 'star' ? 'STAR-vastauksesta' : 'hissipuheesta';
@@ -2700,7 +2759,12 @@ function voiceStart(id) {
     document.getElementById(cfg.stopBtn).style.display = 'inline-flex';
     document.getElementById(cfg.retryBtn).style.display = 'none';
     document.getElementById(cfg.ripple).classList.add('active');
-    document.getElementById(cfg.status).textContent = 'Nauhoitetaan...';
+    if (id === 'star') {
+      renderStarVoiceActiveQuestion();
+      document.getElementById(cfg.status).textContent = 'Nauhoitetaan — vastaa kysymykseen yllä ↑';
+    } else {
+      document.getElementById(cfg.status).textContent = 'Nauhoitetaan...';
+    }
     document.getElementById(cfg.timer).textContent = '0:00';
     document.getElementById(cfg.timer).className = 'voice-timer';
     voiceClearTimer(id);
