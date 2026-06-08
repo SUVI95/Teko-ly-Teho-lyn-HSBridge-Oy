@@ -31,6 +31,51 @@
     return { v: 1, data: text, summary: String(text).slice(0, 500) };
   }
 
+  function dataTimestamp(data) {
+    if (!data || typeof data !== 'object') return 0;
+    return Number(data.ts || 0);
+  }
+
+  function readStoredModuleData(moduleId, userKeySuffix) {
+    try {
+      var raw = localStorage.getItem('mw_' + userKeySuffix + '_' + moduleId);
+      if (!raw) return null;
+      var p = parsePayload(raw);
+      return p && p.data && p.data.v === 1 ? p.data : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function mergeModuleData(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    return dataTimestamp(a) >= dataTimestamp(b) ? a : b;
+  }
+
+  function migrateAnonModuleWork(moduleId) {
+    if (!cachedUserId) return;
+    var anonKey = 'mw_anon_' + moduleId;
+    var userKey = localStorageKey(moduleId);
+    try {
+      var anonRaw = localStorage.getItem(anonKey);
+      if (!anonRaw) return;
+      var userRaw = localStorage.getItem(userKey);
+      if (!userRaw) {
+        localStorage.setItem(userKey, anonRaw);
+      } else {
+        var anonParsed = parsePayload(anonRaw);
+        var userParsed = parsePayload(userRaw);
+        var anonData = anonParsed && anonParsed.data;
+        var userData = userParsed && userParsed.data;
+        if (dataTimestamp(anonData) > dataTimestamp(userData)) {
+          localStorage.setItem(userKey, anonRaw);
+        }
+      }
+      localStorage.removeItem(anonKey);
+    } catch (e) {}
+  }
+
   async function saveModuleWork(moduleId, data, summary) {
     var payload = JSON.stringify({
       v: 1,
@@ -38,19 +83,12 @@
       summary: summary || '',
       savedAt: new Date().toISOString()
     });
-    var initialKey = localStorageKey(moduleId);
+    await getUserId();
+    migrateAnonModuleWork(moduleId);
+    var key = localStorageKey(moduleId);
     try {
-      localStorage.setItem(initialKey, payload);
+      localStorage.setItem(key, payload);
     } catch (e) {}
-    try {
-      await getUserId();
-      var resolvedKey = localStorageKey(moduleId);
-      if (resolvedKey !== initialKey) {
-        try {
-          localStorage.setItem(resolvedKey, payload);
-        } catch (e2) {}
-      }
-    } catch (e3) {}
     try {
       await fetch('/api/reflections/save', {
         method: 'POST',
@@ -66,6 +104,8 @@
 
   async function loadModuleWork(moduleId) {
     await getUserId();
+    migrateAnonModuleWork(moduleId);
+    var best = null;
     try {
       var r = await fetch(
         '/api/reflections/module/' + encodeURIComponent(workModuleId(moduleId)),
@@ -75,21 +115,21 @@
         var d = await r.json();
         if (d.reflection && d.reflection.reflection_text) {
           var parsed = parsePayload(d.reflection.reflection_text);
-          try {
-            localStorage.setItem(localStorageKey(moduleId), d.reflection.reflection_text);
-          } catch (e) {}
-          return parsed ? parsed.data : null;
+          var serverData = parsed ? parsed.data : null;
+          if (serverData && serverData.v === 1) {
+            best = mergeModuleData(best, serverData);
+            try {
+              localStorage.setItem(localStorageKey(moduleId), d.reflection.reflection_text);
+            } catch (e) {}
+          }
         }
       }
     } catch (e) {}
-    try {
-      var local = localStorage.getItem(localStorageKey(moduleId));
-      if (local) {
-        var p = parsePayload(local);
-        return p ? p.data : null;
-      }
-    } catch (e) {}
-    return null;
+    best = mergeModuleData(best, readStoredModuleData(moduleId, cachedUserId || 'anon'));
+    if (cachedUserId) {
+      best = mergeModuleData(best, readStoredModuleData(moduleId, 'anon'));
+    }
+    return best;
   }
 
   function clearLegacyPrefix(prefix) {

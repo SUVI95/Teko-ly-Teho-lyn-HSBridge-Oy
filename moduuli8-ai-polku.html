@@ -1129,7 +1129,32 @@ const POLKU_STEP_LABELS={
 };
 let curScreen=1;
 let polkuWorkApi=null;
-let polkuSaveTimer=null;
+
+function mergePolkuData(a,b){
+  if(!a)return b;
+  if(!b)return a;
+  return Number(a.ts||0)>=Number(b.ts||0)?a:b;
+}
+function loadBestPolkuData(serverData){
+  let best=serverData&&serverData.v===1?serverData:null;
+  best=mergePolkuData(best,loadLocalPolkuData());
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(!k||!k.startsWith('mw_')||k.indexOf(MODULE8_ID)<0)continue;
+      const raw=localStorage.getItem(k);
+      if(!raw)continue;
+      const p=JSON.parse(raw);
+      const d=p&&p.data;
+      if(d&&d.v===1)best=mergePolkuData(best,d);
+    }
+  }catch(e){}
+  return best;
+}
+function flushPolkuProgress(){
+  try{saveLocalPolkuData(polkuSnapshot());}catch(e){}
+  try{if(polkuWorkApi?.saveNow)polkuWorkApi.saveNow();}catch(e){}
+}
 
 function formatResumeSavedWhen(ts){
   if(!ts)return '';
@@ -1965,15 +1990,12 @@ function saveLocalPolkuData(data){
 }
 
 function saveProgress(){
+  try{saveLocalPolkuData(polkuSnapshot());}catch(e){}
   try{
     if(polkuWorkApi&&typeof polkuWorkApi.scheduleSave==='function'){
       polkuWorkApi.scheduleSave();
     }
   }catch(e){}
-  clearTimeout(polkuSaveTimer);
-  polkuSaveTimer=setTimeout(()=>{
-    try{saveLocalPolkuData(polkuSnapshot());}catch(e){}
-  },400);
 }
 
 async function initPolkuWorkPersistence(){
@@ -1984,19 +2006,12 @@ async function initPolkuWorkPersistence(){
       summarize:summarizePolkuData,
       debounceMs:800,
       apply:function(remoteData){
-        if(!remoteData||remoteData.v!==1) return;
-        const localData=loadLocalPolkuData();
-        const localTs=localData&&Number(localData.ts||0);
-        const remoteTs=Number(remoteData.ts||0);
-        const newest=(localTs&&localTs>remoteTs)?localData:remoteData;
-        if(applyPolkuData(newest)){
+        const newest=loadBestPolkuData(remoteData);
+        if(newest&&applyPolkuData(newest)){
           saveLocalPolkuData(newest);
         }
       }
     });
-    if(polkuWorkApi&&typeof polkuWorkApi.saveNow==='function'){
-      polkuWorkApi.saveNow();
-    }
   }catch(e){
     console.warn('[ai-polku] module-work persistence init failed:',e);
   }
@@ -2004,17 +2019,15 @@ async function initPolkuWorkPersistence(){
 
 async function initPolkuPersistence(){
   await initPolkuWorkPersistence();
-  const local=loadLocalPolkuData();
-  if(local){
-    const remoteTs=polkuWorkApi&&polkuWorkApi.data?Number(polkuWorkApi.data.ts||0):0;
-    const localTs=Number(local.ts||0);
-    if(localTs>remoteTs) applyPolkuData(local);
-  }
+  const best=loadBestPolkuData(polkuWorkApi&&polkuWorkApi.data);
+  if(best) applyPolkuData(best);
 }
 
 document.addEventListener('input',saveProgress,true);
 document.addEventListener('change',saveProgress,true);
 document.addEventListener('click',()=>setTimeout(saveProgress,400),true);
+window.addEventListener('beforeunload',flushPolkuProgress);
+window.addEventListener('pagehide',flushPolkuProgress);
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',()=>setTimeout(initPolkuPersistence,80));
 }else{
