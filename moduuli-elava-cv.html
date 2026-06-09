@@ -217,6 +217,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
   </a>
   <span class="nav-tag">Elävä CV</span>
   <span class="nav-title" id="navTitle">Portfolio</span>
+  <span id="saveStatusPill" style="display:none;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--accent3);letter-spacing:.06em;white-space:nowrap;">✓ Tallennettu</span>
   <div class="nav-right">
     <button class="btn-secondary" style="padding:7px 16px;font-size:.8rem;" id="navPreviewBtn" onclick="showScreen('s-preview')" style="display:none">👁 Esikatsele</button>
   </div>
@@ -252,7 +253,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
     </button>
     <div id="resumePortfolioBanner" style="display:none;margin-top:2rem;padding:1.25rem 1.5rem;background:var(--card);border:1px solid var(--border);border-radius:14px;">
       <div style="font-size:.95rem;font-weight:600;color:var(--ink);margin-bottom:.35rem;">Sinulla on portfolio jo tallennettuna</div>
-      <div style="font-size:.84rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Tietosi tallentuvat automaattisesti palvelimelle — voit poistua ja jatkaa myöhemmin siitä mihin jäit.</div>
+      <div style="font-size:.84rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Tietosi tallentuvat automaattisesti (selain + palvelin). Voit päivittää sivun tai poistua — jatkat siitä mihin jäit.</div>
       <button class="btn-primary" type="button" onclick="showScreen('s-details')" style="margin-right:.5rem;">Muokkaa portfolioa</button>
       <button class="btn-secondary" type="button" onclick="showScreen('s-preview')">Esikatselu</button>
       <div id="portfolioNotifications" style="display:none;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);"></div>
@@ -668,6 +669,22 @@ function draftTimestamp(draft){
   return 0;
 }
 
+function serverPortfolioTimestamp(pf){
+  if(!pf) return 0;
+  var wsTs=draftTimestamp(pf.workspace_draft);
+  var upd=pf.updated_at?Date.parse(pf.updated_at):0;
+  return Math.max(wsTs,isNaN(upd)?0:upd);
+}
+
+var saveStatusTimer=null;
+function flashSaveStatus(){
+  var pill=document.getElementById('saveStatusPill');
+  if(!pill) return;
+  pill.style.display='inline';
+  if(saveStatusTimer) clearTimeout(saveStatusTimer);
+  saveStatusTimer=setTimeout(function(){ pill.style.display='none'; },2800);
+}
+
 function buildLocalDraft(){
   syncPayloadFromForm();
   return {
@@ -689,6 +706,7 @@ function buildLocalDraft(){
 function saveLocalDraft(){
   try{
     localStorage.setItem(portfolioDraftStorageKey(),JSON.stringify(buildLocalDraft()));
+    flashSaveStatus();
   }catch(e){}
 }
 
@@ -701,20 +719,72 @@ function loadLocalDraft(){
   }catch(e){ return null; }
 }
 
-function applyLocalDraft(draft){
+function applyLocalDraft(draft, fullMerge){
   if(!draft||draft.v!==1) return;
   if(draft.P&&typeof draft.P==='object'){
     Object.keys(P).forEach(function(k){
-      if(draft.P[k]!=null&&draft.P[k]!=='') P[k]=draft.P[k];
+      if(!draft.P.hasOwnProperty(k)) return;
+      var v=draft.P[k];
+      if(fullMerge){
+        if(Array.isArray(v)) P[k]=v.slice();
+        else if(v&&typeof v==='object') P[k]=JSON.parse(JSON.stringify(v));
+        else P[k]=v;
+      }else if(v!=null&&v!==''){
+        P[k]=v;
+      }
     });
   }
-  if(draft.cvText) cvText=draft.cvText;
+  if(draft.cvText!=null) cvText=draft.cvText;
   if(draft.cvFilenameOnServer) cvFilenameOnServer=draft.cvFilenameOnServer;
   if(Array.isArray(draft.interviewAnswers)) interviewAnswers=draft.interviewAnswers.slice();
   if(typeof draft.interviewDone==='boolean') interviewDone=draft.interviewDone;
   if(draft.portfolioSlug) portfolioSlug=draft.portfolioSlug;
   if(typeof draft.portfolioPublished==='boolean') portfolioPublished=draft.portfolioPublished;
   if(typeof draft.slugManuallyEdited==='boolean') slugManuallyEdited=draft.slugManuallyEdited;
+}
+
+function applyServerPortfolioMeta(pf){
+  if(!pf) return;
+  portfolioSlug=pf.slug||portfolioSlug;
+  portfolioPublished=!!pf.published;
+  if(pf.preview_token) previewToken=pf.preview_token;
+  if(pf.public_url&&pf.published) applyPublishedUrlUi(pf.public_url);
+  if(pf.has_cv&&pf.cv_filename) cvFilenameOnServer=pf.cv_filename;
+  if(pf.has_photo){
+    photoUploaded=true;
+    var prev=document.getElementById('photoPreview');
+    if(prev) prev.innerHTML='<img src="'+apiBase()+'/api/portfolio/photo/'+pf.slug+'" alt="Profiilikuva">';
+  }
+}
+
+function applyServerPortfolioFields(pf){
+  if(!pf) return;
+  Object.keys(pf).forEach(function(k){
+    if(k==='workspace_draft'||k==='updated_at'||k==='created_at'||k==='id'||k==='published'||k==='slug'||k==='preview_token'||k==='public_url'||k==='has_photo'||k==='has_cv'||k==='cv_filename'||k==='photo_mime') return;
+    if(P.hasOwnProperty(k)&&pf[k]!=null) P[k]=pf[k];
+  });
+}
+
+function restorePortfolioUiAfterState(){
+  updateCvStatusUi();
+  var banner=document.getElementById('resumePortfolioBanner');
+  if(banner&&(portfolioSlug||P.full_name||interviewAnswers.length||cvText)) banner.style.display='block';
+  syncDetailsFields();
+  syncFormFields(true);
+  renderExperienceEditor();
+  restoreThemePicker();
+  restoreInterviewFromDraft();
+  if((cvFilenameOnServer||cvText)&&(!P.skills.length||!P.experience.length)) ensureCvDataInForm();
+  updateSlugUi();
+}
+
+function pickResumeScreen(localDraft, serverDraft){
+  var localTs=localDraft?draftTimestamp(localDraft):0;
+  var serverTs=draftTimestamp(serverDraft);
+  if(localDraft&&localDraft.lastScreen&&localTs>=serverTs) return localDraft.lastScreen;
+  if(serverDraft&&serverDraft.lastScreen) return serverDraft.lastScreen;
+  if(localDraft&&localDraft.lastScreen) return localDraft.lastScreen;
+  return null;
 }
 
 function resolvePortfolioSaveName(){
@@ -803,6 +873,7 @@ function showFileSizeInfo(statusEl, file, loadingText){
 var screenOrder = ['s-hero','s-cv','s-interview','s-details','s-preview','s-publish'];
 
 function showScreen(id){
+  saveLocalDraft();
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.querySelectorAll('.step-tab').forEach(function(t){t.classList.remove('active');});
   var sc = document.getElementById(id);
@@ -1072,6 +1143,8 @@ function syncFormFields(force){
   if(P.city){ setVal('f_city',P.city,force); setVal('d_city',P.city,force); }
   if(P.target_role){ setVal('f_role',P.target_role,force); setVal('d_role',P.target_role,force); }
   if(P.bio){ setVal('f_bio',P.bio,force); setVal('d_bio',P.bio,force); }
+  if(P.email_public!=null) setVal('d_email',P.email_public,force);
+  if(P.linkedin_url!=null) setVal('d_linkedin',P.linkedin_url,force);
   if(P.tagline) setVal('d_tagline',P.tagline,force);
   if(P.hidden_strengths) setVal('d_strengths',P.hidden_strengths,force);
 }
@@ -1219,6 +1292,7 @@ async function sendInterview(){
   addInterviewMsg('user',txt);
   interviewHistory.push({role:'user',content:txt});
   interviewAnswers.push(txt);
+  saveLocalDraft();
   schedulePortfolioAutosave();
   addTyping();
 
@@ -1435,7 +1509,7 @@ function schedulePortfolioAutosave(){
   portfolioAutosaveTimer=setTimeout(function(){
     portfolioAutosaveTimer=null;
     savePortfolioDraft();
-  },1500);
+  },800);
 }
 
 function flushPortfolioAutosave(){
@@ -1466,6 +1540,7 @@ async function savePortfolioDraft(preferBeacon){
         if(kr.ok){
           portfolioAutosaveDirty=false;
           var kd=await kr.json();
+          saveLocalDraft();
           await applySaveResponse(kd);
           return;
         }
@@ -1482,6 +1557,7 @@ async function savePortfolioDraft(preferBeacon){
     var d=await r.json();
     if(r.ok){
       portfolioAutosaveDirty=false;
+      saveLocalDraft();
       await applySaveResponse(d);
       if(cvFilePending){
         try{ await uploadCvToPortfolio(cvFilePending); }catch(e){ console.warn('[cv-upload]',e); }
@@ -1570,7 +1646,7 @@ function syncDetailsFields(){
   Object.keys(fields).forEach(function(id){
     var el=document.getElementById(id);
     var key=fields[id];
-    if(el&&P[key]) el.value=P[key];
+    if(el&&P[key]!=null&&P[key]!==undefined) el.value=P[key];
   });
   var bioEl=document.getElementById('d_bio');
   if(bioEl&&!bioEl.value&&(P.bio||P.career_summary)){
@@ -2019,71 +2095,43 @@ document.addEventListener('DOMContentLoaded',async function(){
   await loadAuthUser();
   migrateAnonPortfolioDraft();
   var localDraft=loadLocalDraft();
-  var resumeScreen = null;
+  var resumeScreen=null;
+  var shouldSyncServer=false;
 
   try{
     var r=await fetch(apiBase()+'/api/portfolio/mine',{credentials:'include'});
     var d=await r.json();
     if(d.portfolio){
       var pf=d.portfolio;
-      portfolioSlug=pf.slug;
-      portfolioPublished=!!pf.published;
-      if(pf.preview_token) previewToken=pf.preview_token;
-      if(pf.public_url&&pf.published) applyPublishedUrlUi(pf.public_url);
-      Object.keys(pf).forEach(function(k){
-        if(k==='workspace_draft') return;
-        if(P.hasOwnProperty(k)&&pf[k]!=null) P[k]=pf[k];
-      });
       var serverDraft=pf.workspace_draft;
-      var useLocal=localDraft&&draftTimestamp(localDraft)>draftTimestamp(serverDraft);
-      if(useLocal){
-        applyLocalDraft(localDraft);
-        if(localDraft.lastScreen) resumeScreen=localDraft.lastScreen;
+      var preferLocal=localDraft&&draftTimestamp(localDraft)>=serverPortfolioTimestamp(pf);
+      applyServerPortfolioMeta(pf);
+      if(preferLocal){
+        applyLocalDraft(localDraft,true);
+        shouldSyncServer=true;
       }else{
+        applyServerPortfolioFields(pf);
         applyWorkspaceDraft(serverDraft);
-        if(serverDraft&&serverDraft.lastScreen) resumeScreen=serverDraft.lastScreen;
       }
-      if(pf.has_cv&&pf.cv_filename) cvFilenameOnServer=pf.cv_filename;
-      updateCvStatusUi();
-      var banner=document.getElementById('resumePortfolioBanner');
-      if(banner) banner.style.display='block';
-      if(pf.has_photo){
-        photoUploaded=true;
-        var prev=document.getElementById('photoPreview');
-        if(prev) prev.innerHTML='<img src="'+apiBase()+'/api/portfolio/photo/'+pf.slug+'" alt="Profiilikuva">';
-      }
-      syncDetailsFields();
-      syncFormFields(true);
-      renderExperienceEditor();
-      restoreThemePicker();
-      restoreInterviewFromDraft();
-      if((pf.has_cv||cvText)&&(!P.skills.length||!P.experience.length)) ensureCvDataInForm();
-      updateSlugUi();
+      resumeScreen=pickResumeScreen(localDraft,serverDraft);
+      restorePortfolioUiAfterState();
       loadPortfolioNotifications();
     }else if(localDraft){
-      applyLocalDraft(localDraft);
-      if(localDraft.lastScreen) resumeScreen=localDraft.lastScreen;
-      syncDetailsFields();
-      syncFormFields(true);
-      renderExperienceEditor();
-      restoreThemePicker();
-      restoreInterviewFromDraft();
-      updateCvStatusUi();
-      updateSlugUi();
+      applyLocalDraft(localDraft,true);
+      resumeScreen=localDraft.lastScreen||null;
+      restorePortfolioUiAfterState();
+      shouldSyncServer=!!cachedAuthUser;
     }
   }catch(e){
     if(localDraft){
-      applyLocalDraft(localDraft);
-      if(localDraft.lastScreen) resumeScreen=localDraft.lastScreen;
-      syncDetailsFields();
-      syncFormFields(true);
-      renderExperienceEditor();
-      restoreThemePicker();
-      restoreInterviewFromDraft();
-      updateCvStatusUi();
-      updateSlugUi();
+      applyLocalDraft(localDraft,true);
+      resumeScreen=localDraft.lastScreen||null;
+      restorePortfolioUiAfterState();
     }
   }
+
+  saveLocalDraft();
+  if(shouldSyncServer&&cachedAuthUser) schedulePortfolioAutosave();
 
   if(resumeScreen&&screenOrder.indexOf(resumeScreen)>=0){
     showScreen(resumeScreen);
