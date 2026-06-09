@@ -539,6 +539,7 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
             <p id="studioQuestionText">Valitse aihe yllä aloittaaksesi.</p>
           </div>
           <div class="studio-answer-row">
+            <label class="form-label" id="studioAnswerLabel" for="studioAnswerInput" style="display:none;">Kirjoita aiheesi tähän</label>
             <textarea class="form-textarea" id="studioAnswerInput" placeholder="Kirjoita vastauksesi tähän..." rows="3" oninput="updateStudioAnswerGate()"></textarea>
             <div style="display:flex;gap:.65rem;flex-wrap:wrap;">
               <button class="btn-primary" id="studioAnswerBtn" onclick="submitStudioAnswer()" disabled>Vastaa →</button>
@@ -1601,9 +1602,9 @@ function setStudioPanelMode(mode) {
     return;
   }
   if (gpt) gpt.style.display = 'none';
-  if (sticky) sticky.style.display = '';
+  if (sticky) sticky.style.display = (mode === 'gpt-seed') ? 'none' : '';
   if (prog) prog.style.display = '';
-  if (chat && mode !== 'pick') chat.style.display = mode === 'chat' ? 'block' : 'none';
+  if (chat && mode !== 'pick') chat.style.display = (mode === 'chat' || mode === 'gpt-seed') ? 'block' : 'none';
   if (prev) prev.style.display = mode === 'chat' || mode === 'gpt-seed' ? 'block' : 'none';
 }
 
@@ -1902,7 +1903,9 @@ function selectStudioTopic(topic) {
   if (topic === 'gpt') {
     window._gammaStudioAwaitingSeed = true;
     var qGpt = document.getElementById('studioQuestionText');
-    if (qGpt) qGpt.textContent = 'Kirjoita aiheesi alle — yksi lause riittää. Saat heti valmiit promptit ChatGPT:hen (sinun tarvitsee vain tarkistaa että aihe on oikein).';
+    var ansLbl = document.getElementById('studioAnswerLabel');
+    if (qGpt) qGpt.textContent = 'Kirjoita aiheesi alla olevaan kenttään — yksi lause riittää. Paina sitten «Näytä ChatGPT-promptit».';
+    if (ansLbl) ansLbl.style.display = 'block';
     if (inp) { inp.placeholder = 'Esim. Miksi kahvilatyö on paras koulu elämälle'; }
     updateStudioAnswerGate();
     renderStudioHistory();
@@ -1910,6 +1913,9 @@ function selectStudioTopic(topic) {
     if (wizard) wizard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
   }
+
+  var ansLblReset = document.getElementById('studioAnswerLabel');
+  if (ansLblReset && topic !== 'gpt') ansLblReset.style.display = 'none';
 
   if (topic === 'random') {
     window._gammaStudioSeed = STUDIO_RANDOM_TOPICS[Math.floor(Math.random() * STUDIO_RANDOM_TOPICS.length)];
@@ -2133,10 +2139,10 @@ function restoreStudioFromState(d) {
   } else if (isStudioGptPath() && !window._gammaStudioSeed) {
     window._gammaStudioAwaitingSeed = true;
     setStudioPanelMode('gpt-seed');
-    var chat = document.getElementById('studioChatArea');
-    if (chat) chat.style.display = 'block';
     var qGpt = document.getElementById('studioQuestionText');
-    if (qGpt) qGpt.textContent = 'Kirjoita aiheesi alle — yksi lause riittää. Saat heti valmiit promptit ChatGPT:hen.';
+    var ansLbl = document.getElementById('studioAnswerLabel');
+    if (qGpt) qGpt.textContent = 'Kirjoita aiheesi alla olevaan kenttään — yksi lause riittää. Paina sitten «Näytä ChatGPT-promptit».';
+    if (ansLbl) ansLbl.style.display = 'block';
   } else if (window._gammaStudioAnswers.length >= window._gammaStudioQuestions.length && window._gammaStudioQuestions.length) {
     setStudioPanelMode('chat');
     showStudioReady();
