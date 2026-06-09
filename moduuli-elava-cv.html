@@ -391,7 +391,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
     <!-- CV FOR RECRUITERS -->
     <div class="card">
       <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.5rem;">📄 CV rekrytoijille</h3>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Rekrytoija voi ladata CV:si suoraan portfoliosivulta. Jos latasit CV:n vaiheessa 1, se tallentuu automaattisesti kun rakennat esikatselun.</p>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Rekrytoija voi ladata CV:si suoraan portfoliosivulta «Lataa CV» -painikkeesta. CV tallentuu automaattisesti kun lataat sen vaiheessa 1.</p>
       <div id="cvDownloadStatus" style="display:none;font-size:.84rem;color:#059669;margin-bottom:.75rem;"></div>
       <label class="photo-upload-btn" for="cvRecruiterFile" style="display:inline-block;cursor:pointer;">Vaihda / lataa CV (PDF, TXT, DOC, DOCX)</label>
       <input type="file" id="cvRecruiterFile" accept=".pdf,.txt,.doc,.docx,application/pdf,text/plain" style="display:none" onchange="handleRecruiterCv(this.files[0])">
@@ -950,10 +950,11 @@ async function processCVFile(file){
       status.textContent='✓ CV luettu ('+formatFileSize(file.size)+'). Poimitaan tietoja...';
     }
     await parseCvFileToPortfolio(file);
+    var cvStored=await ensureCvUploadedToServer(file);
     if(P.skills.length||P.experience.length){
-      status.textContent='✓ CV luettu ja tiedot poimittu. Paina "Seuraava" jatkaaksesi haastatteluun.';
+      status.textContent='✓ CV luettu ja tiedot poimittu.'+(cvStored?' Rekrytoija voi ladata CV:si julkaistusta portfoliosta.':'')+' Paina "Seuraava" jatkaaksesi haastatteluun.';
     } else {
-      status.textContent='✓ CV vastaanotettu. Täytä kentät alla tai jatka haastatteluun — AI täyttää lisätiedot.';
+      status.textContent='✓ CV vastaanotettu.'+(cvStored?' Rekrytoija voi ladata CV:si julkaistusta portfoliosta.':'')+' Täytä kentät alla tai jatka haastatteluun.';
     }
     schedulePortfolioAutosave();
   }catch(e){
@@ -968,6 +969,8 @@ async function processCVFile(file){
       failMsg = 'Täytä alla oleva lomake, jotta portfolioosi tulee kaikki tarvittavat tiedot.';
     }
     status.textContent='✓ CV vastaanotettu. '+failMsg;
+    var cvStoredCatch=await ensureCvUploadedToServer(file);
+    if(cvStoredCatch) status.textContent='✓ CV tallennettu rekrytoijille. '+failMsg;
     schedulePortfolioAutosave();
   }
 }
@@ -981,6 +984,31 @@ async function uploadCvToPortfolio(file){
   cvFilePending=null;
   cvFilenameOnServer=d.filename||file.name;
   updateCvStatusUi();
+  saveLocalDraft();
+}
+
+async function ensureCvUploadedToServer(file){
+  if(!file) return false;
+  try{
+    if(!portfolioSlug){
+      var payload=buildSavePayload();
+      payload.full_name=resolvePortfolioSaveName();
+      var r=await fetch(apiBase()+'/api/portfolio/save',{
+        method:'POST',credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      var d=await r.json();
+      if(!r.ok) throw new Error(d.error||'Portfolio-tallennus epäonnistui');
+      await applySaveResponse(d);
+    }
+    if(!cvFilenameOnServer) await uploadCvToPortfolio(file);
+    return true;
+  }catch(e){
+    console.warn('[cv-upload-early]',e);
+    cvFilePending=file;
+    return false;
+  }
 }
 
 async function handleRecruiterCv(file){
@@ -2004,6 +2032,7 @@ function buildPublishChecklist(){
     {label:'Esittely kirjoitettu', ok:!!P.bio||!!P.career_summary, hint:'Lisää lyhyt esittely'},
     {label:'Taidot lisätty', ok:P.skills.length>0, hint:'Lisää taidot pilkulla erotettuna'},
     {label:'Portfolio esikatselu nähty', ok:!!portfolioSlug, hint:'Käy Esikatselu-vaiheessa'},
+    {label:'CV ladattu rekrytoijille', ok:!!cvFilenameOnServer||!!cvFilePending, hint:'Lataa CV vaiheessa 1 (Lataa CV)'},
   ];
   var c=document.getElementById('pubChecklist');
   c.innerHTML='';
@@ -2023,6 +2052,8 @@ async function publishPortfolio(){
   var btn=document.getElementById('publishBtn');
   btn.disabled=true; btn.textContent='Julkaistaan...';
   try{
+    await savePortfolioData();
+    if(cvFilePending) await ensureCvUploadedToServer(cvFilePending);
     var payload=buildSavePayload();
     payload.published=true;
     var r=await fetch(apiBase()+'/api/portfolio/publish',{
