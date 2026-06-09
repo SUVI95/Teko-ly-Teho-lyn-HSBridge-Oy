@@ -439,7 +439,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
         </div>
         <div class="field-group">
           <label class="field-label">LinkedIn URL (valinnainen)</label>
-          <input class="field-input" id="d_linkedin" placeholder="linkedin.com/in/..." oninput="P.linkedin_url=this.value">
+          <input class="field-input" id="d_linkedin" placeholder="https://www.linkedin.com/in/nimesi" oninput="P.linkedin_url=this.value" onblur="normalizeLinkedInField()">
+          <p class="field-hint">Kopioi osoite LinkedIn-profiilistasi (Oma profiili → linkki). Voit liittää myös ilman https:// — korjaamme sen automaattisesti.</p>
         </div>
       </div>
     </div>
@@ -1789,11 +1790,35 @@ async function processPhoto(file){
 // ══════════════════════════════════════════
 // SAVE & PREVIEW
 // ══════════════════════════════════════════
+function normalizeLinkedInUrl(raw){
+  var u=String(raw||'').trim();
+  if(!u) return '';
+  if(/^https?:\/\//i.test(u)) return u;
+  if(/^\/\//.test(u)) return 'https:'+u;
+  return 'https://'+u.replace(/^\/+/,'');
+}
+
+function normalizeLinkedInField(){
+  var el=document.getElementById('d_linkedin');
+  if(!el) return;
+  var fixed=normalizeLinkedInUrl(el.value);
+  if(fixed&&fixed!==el.value.trim()){
+    el.value=fixed;
+    P.linkedin_url=fixed;
+    schedulePortfolioAutosave();
+  } else if(fixed){
+    P.linkedin_url=fixed;
+  }
+}
+
 function syncPayloadFromForm(){
   var fieldMap={d_name:'full_name',d_city:'city',d_role:'target_role',d_bio:'bio',d_email:'email_public',d_linkedin:'linkedin_url',d_tagline:'tagline',d_strengths:'hidden_strengths'};
   Object.keys(fieldMap).forEach(function(id){
     var el=document.getElementById(id);
-    if(el) P[fieldMap[id]]=el.value.trim();
+    if(!el) return;
+    var val=el.value.trim();
+    if(id==='d_linkedin') val=normalizeLinkedInUrl(val);
+    P[fieldMap[id]]=val;
   });
   if(!P.full_name){
     var fn=document.getElementById('f_name');

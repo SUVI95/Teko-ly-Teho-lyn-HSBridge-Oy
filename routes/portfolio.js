@@ -15,6 +15,7 @@ const {
 } = require('../lib/portfolio-upload-limits');
 const { extractTextFromCvFile, extractPortfolioFieldsFromCvText } = require('../lib/cv-portfolio-parse');
 const { sanitizePortfolioNarratives } = require('../lib/portfolio-text-dedupe');
+const { normalizeExternalUrl } = require('../lib/normalize-external-url');
 const { fetch } = require('undici');
 
 /** Portfolio API — used exclusively by moduuli-elava-cv (student_portfolios table). */
@@ -28,6 +29,12 @@ function withPortfolioUrls(row) {
     public_url: portfolioPublicUrl(row.slug),
     ...portfolioSourceMeta()
   };
+}
+
+function withNormalizedLinks(row) {
+  if (!row) return row;
+  const linkedin_url = row.linkedin_url ? normalizeExternalUrl(row.linkedin_url) : row.linkedin_url;
+  return linkedin_url === row.linkedin_url ? row : { ...row, linkedin_url };
 }
 
 const photoUpload = multer({
@@ -133,6 +140,11 @@ function sanitizePortfolioBody(raw) {
   });
   d.bio = narratives.bio || null;
   d.career_summary = narratives.career_summary || null;
+  if (d.linkedin_url != null && String(d.linkedin_url).trim()) {
+    d.linkedin_url = normalizeExternalUrl(d.linkedin_url);
+  } else {
+    d.linkedin_url = null;
+  }
   const workspaceDraft =
     d.workspace_draft && typeof d.workspace_draft === 'object' ? d.workspace_draft : null;
   return { d, workspaceDraft };
@@ -394,7 +406,7 @@ router.get('/view/:slug', async (req, res) => {
        template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo
        FROM student_portfolios WHERE slug=$1 AND published=TRUE`, [req.params.slug]);
     if (!r.rows.length) return res.status(404).json({ error: 'Ei löydy' });
-    res.json({ portfolio: r.rows[0] });
+    res.json({ portfolio: withNormalizedLinks(r.rows[0]) });
   } catch (e) { res.status(500).json({ error: 'Virhe' }); }
 });
 
@@ -423,14 +435,14 @@ router.get('/preview/:slug', async (req, res) => {
       if (r.rows.length) {
         const row = { ...r.rows[0] };
         delete row.user_id;
-        return res.json({ portfolio: row });
+        return res.json({ portfolio: withNormalizedLinks(row) });
       }
     } else {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
     if (!r.rows.length) return res.status(404).json({ error: 'Ei löydy' });
-    res.json({ portfolio: r.rows[0] });
+    res.json({ portfolio: withNormalizedLinks(r.rows[0]) });
   } catch (e) {
     console.error('Portfolio preview:', e);
     res.status(500).json({ error: 'Virhe' });

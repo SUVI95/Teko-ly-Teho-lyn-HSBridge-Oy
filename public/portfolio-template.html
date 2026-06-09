@@ -158,6 +158,13 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   }
 
   function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+  function hrefUrl(raw) {
+    var u = String(raw || '').trim();
+    if (!u) return '';
+    if (/^https?:\/\//i.test(u)) return u;
+    if (/^\/\//.test(u)) return 'https:' + u;
+    return 'https://' + u.replace(/^\/+/, '');
+  }
 
   function render(p) {
     // Apply brand colors
@@ -310,7 +317,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     html += '<div class="cta-links">';
     if (p.email_public) html += '<a class="cta-btn primary" href="mailto:' + esc(p.email_public) + '">\u2709\ufe0f L\u00e4het\u00e4 viesti</a>';
     if (p.phone_public) html += '<a class="cta-btn secondary" href="tel:' + esc(p.phone_public) + '">\ud83d\udcde Soita</a>';
-    if (p.linkedin_url) html += '<a class="cta-btn secondary" href="' + esc(p.linkedin_url) + '" target="_blank">LinkedIn</a>';
+    if (p.linkedin_url) html += '<a class="cta-btn secondary" href="' + esc(hrefUrl(p.linkedin_url)) + '" target="_blank" rel="noopener noreferrer">LinkedIn</a>';
     if (!p.email_public && !p.phone_public && !p.linkedin_url) {
       html += '<span style="color:rgba(255,255,255,.5)">Yhteystiedot lis\u00e4t\u00e4\u00e4n pian</span>';
     }

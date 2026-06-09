@@ -260,6 +260,7 @@ fetch(apiUrl,{credentials:isPreview&&!pt?'include':'same-origin'}).then(function
 function show404(){hideLoad();document.getElementById('app').innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:2rem;"><div><h1 style="font-family:Instrument Serif,serif;font-size:2rem;margin-bottom:1rem;">Portfoliota ei l\xf6ytynyt</h1><p style="margin-bottom:1rem;">T\xe4m\xe4 portfolio voi olla piilotettu tai sit\xe4 ei ole viel\xe4 julkaistu.</p><a href="/" style="color:var(--v);font-weight:600;text-decoration:none;">Etusivu &rarr;</a></div></div>';}
 function hideLoad(){var l=document.getElementById('loadingScreen');if(l){l.classList.add('hide');setTimeout(function(){l.remove();},500);}}
 function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function hrefUrl(raw){var u=String(raw||'').trim();if(!u)return'';if(/^https?:\/\//i.test(u))return u;if(/^\/\//.test(u))return'https:'+u;return'https://'+u.replace(/^\/+/,'');}
 function ini(n){return(n||'').split(/\s+/).map(function(w){return w[0]||'';}).join('').substring(0,2).toUpperCase();}
 var SVG={star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
 grid:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
@@ -390,7 +391,7 @@ function trackPortfolioVisit(slug){
 
 function render(p){
 applyBrandTheme(p);
-var nm=esc(p.full_name||''),bio=esc(p.bio||''),ct=esc(p.city||''),rl=esc(p.target_role||''),em=esc(p.email_public||''),ph=esc(p.phone_public||''),li=esc(p.linkedin_url||'');
+var nm=esc(p.full_name||''),bio=esc(p.bio||''),ct=esc(p.city||''),rl=esc(p.target_role||''),em=esc(p.email_public||''),ph=esc(p.phone_public||''),li=p.linkedin_url?esc(hrefUrl(p.linkedin_url)):'';
 var photo=p.has_photo?'/api/portfolio/photo/'+encodeURIComponent(p.slug):'';
 var sk=p.skills||[],ex=(p.experience||[]).filter(function(e){return e&&e.show!==false;}),ed=p.education||[],la=p.languages||[],certs=p.certificates||[],achiev=p.achievements||[];
 var csRaw=String(p.career_summary||'').trim(),bioRaw=dedupeParagraphs(p.bio||''),hs=esc(p.hidden_strengths||'');
@@ -423,7 +424,7 @@ if(achiev.length){
 h+='<div class="btn-row">';
 h+='<button type="button" class="btn-primary" onclick="scrollToContactForm(event)">'+SVG.mail+' Kutsu haastatteluun<span class="blink"></span></button>';
 if(p.has_cv)h+='<a href="/api/portfolio/cv/'+encodeURIComponent(p.slug)+'" class="btn-outline" download>'+SVG.download+' Lataa CV</a>';
-if(li)h+='<a href="'+li+'" target="_blank" class="btn-outline">'+SVG.linkedin+' LinkedIn</a>';
+if(li)h+='<a href="'+li+'" target="_blank" rel="noopener noreferrer" class="btn-outline">'+SVG.linkedin+' LinkedIn</a>';
 if(em)h+='<a href="mailto:'+em+'" class="btn-outline">'+SVG.mail+' S\xe4hk\xf6posti</a>';
 h+='</div>';
 h+='<div class="stats-grid"><div class="stat"><div class="stat-n">'+(ex.length?ex.length+'+':'\u2014')+'</div><div class="stat-l">Ty\xf6teht\xe4v\xe4t</div></div>';
@@ -518,7 +519,7 @@ h+='</div></div></div><div class="divider"></div>';}
 h+='<div class="wrap" id="contact"><div class="contact-card reveal-scale"><div class="contact-inner"><div style="font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fg3);margin-bottom:1.5rem;">Ota yhteytt\xe4</div><h2 class="contact-h">Seuraava huippurekrytointisi on <span class="grad">yhden keskustelun</span> p\xe4\xe4ss\xe4.</h2><p class="contact-sub">Olen avoin uusille mahdollisuuksille'+(rl?' alalla '+rl:'')+(ct?' \u2014 sijainti '+ct:'')+'.</p><div class="btn-row">';
 h+='<button type="button" class="btn-primary" onclick="scrollToContactForm(event)">'+SVG.mail+' Kutsu haastatteluun</button>';
 if(p.has_cv)h+='<a href="/api/portfolio/cv/'+encodeURIComponent(p.slug)+'" class="btn-outline" download>'+SVG.download+' Lataa CV</a>';
-if(li)h+='<a href="'+li+'" target="_blank" class="btn-outline">'+SVG.linkedin+' LinkedIn</a>';
+if(li)h+='<a href="'+li+'" target="_blank" rel="noopener noreferrer" class="btn-outline">'+SVG.linkedin+' LinkedIn</a>';
 if(em)h+='<a href="mailto:'+em+'" class="btn-outline">'+SVG.mail+' S\xe4hk\xf6posti</a>';
 h+='</div>';
 h+='<div class="contact-form-box" id="contactFormBox"><div style="font-size:.82rem;color:var(--fg2);margin-bottom:1rem;line-height:1.6;">J\xe4t\xe4 viesti — '+esc(fn)+' saa sen s\xe4hk\xf6postiinsa ja voi vastata sinulle.</div>';
