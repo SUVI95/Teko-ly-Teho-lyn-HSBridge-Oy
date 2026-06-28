@@ -23,13 +23,25 @@ const {
   isGiftRecipient
 } = require('./config/personal-gift-access');
 const { resetKuopioDemoUserData } = require('./lib/reset-kuopio-demo-user-data');
-const { portfolioPublicUrl, isPortfolioSubdomain, portfolioUseSubdomain } = require('./lib/portfolio-public-url');
+const { portfolioPublicUrl, isPortfolioSubdomain, portfolioUseSubdomain, portfolioAppOrigin, portfolioPublicHost } = require('./lib/portfolio-public-url');
 
 const KUOPIO_DEMO_LS_CLEAR = '<script>(function(){try{if(/(?:^|;\\s*)kuopio_demo=1(?:;|$)/.test(document.cookie))localStorage.clear();}catch(e){}})();</script>';
 
 function injectKuopioDemoLocalClear(html) {
   if (html.includes('<head>')) return html.replace('<head>', '<head>' + KUOPIO_DEMO_LS_CLEAR);
   return KUOPIO_DEMO_LS_CLEAR + html;
+}
+
+function injectPortfolioPublicConfig(html) {
+  if (!html || typeof html !== 'string') return html;
+  const cfg = {
+    useSubdomain: portfolioUseSubdomain(),
+    appOrigin: portfolioAppOrigin(),
+    publicHost: portfolioPublicHost()
+  };
+  const tag = `<script>window.__PORTFOLIO_PUBLIC_CONFIG__=${JSON.stringify(cfg)};</script>`;
+  if (html.includes('<head>')) return html.replace('<head>', '<head>' + tag);
+  return tag + html;
 }
 
 function injectModulePersistenceScripts(html, moduleId) {
@@ -403,9 +415,23 @@ function sendPortfolioTemplate(req, res) {
 }
 
 // Legacy aipolku path — serve portfolio or redirect to subdomain when enabled
-app.get('/portfolio/:slug', (req, res) => {
+app.get('/portfolio/:slug', async (req, res) => {
   const slug = req.params.slug;
   if (req.query.preview === '1') return sendPortfolioTemplate(req, res);
+
+  // Recover slugs mangled by CV fonts/PDF export (e.g. ligatures: kurtti->kurƫti).
+  // Only pay for a lookup when the slug isn't already a clean ascii slug.
+  let decoded = slug;
+  try { decoded = decodeURIComponent(slug); } catch (_) { /* keep raw */ }
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(decoded)) {
+    try {
+      const canonical = await findUniquePublishedSlugByKey(fuzzyPortfolioKey(decoded));
+      if (canonical && canonical !== slug) {
+        return res.redirect(301, portfolioPublicUrl(canonical));
+      }
+    } catch (e) { console.error('portfolio slug recovery:', e.message); }
+  }
+
   if (portfolioUseSubdomain()) {
     return res.redirect(301, portfolioPublicUrl(slug));
   }
@@ -536,11 +562,76 @@ app.get('/module/:moduleId', async (req, res) => {
   res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   let html = fs.readFileSync(modulePath, 'utf8');
   html = injectModulePersistenceScripts(html, moduleId);
+  if (moduleId === 'moduuli-elava-cv') {
+    html = injectPortfolioPublicConfig(html);
+  }
   if (viewerIsKuopioDemo) {
     html = injectKuopioDemoLocalClear(html);
   }
   return res.type('html').send(html);
 });
+
+/**
+ * Forgiving portfolio link recovery.
+ * Real-world CVs/PDFs mangle share links: decorative fonts swap letters for
+ * Unicode lookalikes/ligatures (e.g. "portfolio"->"porƞolio", "kurtti"->"kurƫti"),
+ * and people mistype the path ("portifolio") or drop a doubled letter.
+ * This catch-all maps a damaged URL back to a real published portfolio and
+ * 301-redirects to the canonical link, so shared links keep working even when broken.
+ */
+function fuzzyPortfolioKey(segment) {
+  let s = String(segment || '');
+  try { s = decodeURIComponent(s); } catch (_) { /* keep raw */ }
+  return s
+    .normalize('NFKD')                 // split accents where possible
+    .replace(/[\u0300-\u036f]/g, '')   // drop combining marks
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '')        // keep only ascii alphanumerics (drops ƞ, ƫ, -, etc.)
+    .replace(/(.)\1+/g, '$1');         // collapse doubled letters (kurtti -> kurti)
+}
+
+/** Return the canonical published slug whose fuzzy key uniquely matches, else null. */
+async function findUniquePublishedSlugByKey(key) {
+  if (!key || key.length < 3) return null;
+  const r = await pool.query('SELECT slug FROM student_portfolios WHERE published = TRUE');
+  let match = null;
+  let matchCount = 0;
+  for (const row of r.rows) {
+    if (fuzzyPortfolioKey(row.slug) === key) { match = row.slug; matchCount++; }
+  }
+  return matchCount === 1 ? match : null;
+}
+
+async function recoverPortfolioRedirect(req, res, next) {
+  try {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+    if (/\.[a-z0-9]{2,6}$/i.test(req.path)) return next(); // looks like a static file
+    const segs = req.path.split('/').filter(Boolean);
+    if (segs.length < 1 || segs.length > 2) return next();
+
+    const first = decodeURIComponent(segs[0] || '').toLowerCase();
+    // Don't hijack real app sections (api, module, admin, login, ...). 'portfolio' itself
+    // is already handled by its own route, so it never reaches here.
+    if (PORTFOLIO_RESERVED.has(first)) return next();
+
+    // If there are two segments, the first should at least resemble "portfolio"
+    // (por…olio) to avoid hijacking unrelated two-segment paths.
+    if (segs.length === 2) {
+      const fk = fuzzyPortfolioKey(segs[0]);
+      const looksPortfolio = /^por.*(olio|oli|olo)$/.test(fk) || fk === fuzzyPortfolioKey('portfolio');
+      if (!looksPortfolio) return next();
+    }
+
+    const match = await findUniquePublishedSlugByKey(fuzzyPortfolioKey(segs[segs.length - 1]));
+    if (match) {
+      return res.redirect(301, portfolioPublicUrl(match));
+    }
+  } catch (e) {
+    console.error('recoverPortfolioRedirect:', e.message);
+  }
+  return next();
+}
+app.use(recoverPortfolioRedirect);
 
 // Only start server if not in Vercel environment
 if (require.main === module) {

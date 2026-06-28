@@ -4,7 +4,7 @@ const pool = require('../database/db');
 const { authenticateToken } = require('../middleware/auth');
 const { makePreviewToken, verifyPreviewToken } = require('../lib/preview-token');
 const { notifyVisit, notifyContact, notifyCvDownload } = require('../lib/portfolio-notify');
-const { portfolioPublicUrl } = require('../lib/portfolio-public-url');
+const { portfolioPublicUrl, normalizePortfolioSlug } = require('../lib/portfolio-public-url');
 const { portfolioSourceMeta } = require('../lib/portfolio-source');
 const {
   CV_MAX_BYTES,
@@ -294,7 +294,7 @@ router.post('/save', authenticateToken, async (req, res) => {
       slug,
       published,
       preview_token: makePreviewToken(slug, userId),
-      public_url: portfolioPublicUrl(slug),
+      public_url: published ? portfolioPublicUrl(slug) : null,
       ...portfolioSourceMeta()
     });
   } catch (e) {
@@ -395,19 +395,48 @@ router.get('/mine', authenticateToken, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Virhe' }); }
 });
 
+function resolvePublicPortfolioSlug(raw) {
+  const slug = normalizePortfolioSlug(raw);
+  if (!slug || !validateSlug(slug)) return null;
+  return slug;
+}
+
+// Runtime URL config for moduuli-elava-cv (keeps share links aligned with server env)
+router.get('/public-config', (req, res) => {
+  const { portfolioAppOrigin, portfolioPublicHost, portfolioUseSubdomain } = require('../lib/portfolio-public-url');
+  res.json({
+    use_subdomain: portfolioUseSubdomain(),
+    app_origin: portfolioAppOrigin(),
+    public_host: portfolioPublicHost()
+  });
+});
+
 // Get portfolio by slug (PUBLIC — published only)
 router.get('/view/:slug', async (req, res) => {
   try {
     await ready();
+    const slug = resolvePublicPortfolioSlug(req.params.slug);
+    if (!slug) return res.status(404).json({ error: 'not_found', message: 'Portfoliota ei löydy.' });
+
     const r = await pool.query(
-      `SELECT slug, full_name, tagline, bio, city, target_role,
+      `SELECT published, slug, full_name, tagline, bio, city, target_role,
        email_public, phone_public, linkedin_url, experience, education, skills,
        achievements, languages, certificates, brand_color, brand_accent, brand_bg,
        template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo,
        cv_filename, (cv_bytes IS NOT NULL) AS has_cv
-       FROM student_portfolios WHERE slug=$1 AND published=TRUE`, [req.params.slug]);
-    if (!r.rows.length) return res.status(404).json({ error: 'Ei löydy' });
-    res.json({ portfolio: withNormalizedLinks(r.rows[0]) });
+       FROM student_portfolios WHERE slug=$1`, [slug]);
+    if (!r.rows.length) {
+      return res.status(404).json({ error: 'not_found', message: 'Portfoliota ei löydy.' });
+    }
+    if (r.rows[0].published !== true) {
+      return res.status(403).json({
+        error: 'not_published',
+        message: 'Portfolioa ei ole vielä julkaistu. Julkaise se Elävä CV -moduulissa (vaihe Julkaise).'
+      });
+    }
+    const row = { ...r.rows[0] };
+    delete row.published;
+    res.json({ portfolio: withNormalizedLinks(row) });
   } catch (e) { res.status(500).json({ error: 'Virhe' }); }
 });
 
@@ -415,7 +444,8 @@ router.get('/view/:slug', async (req, res) => {
 router.get('/preview/:slug', async (req, res) => {
   try {
     await ready();
-    const slug = req.params.slug;
+    const slug = resolvePublicPortfolioSlug(req.params.slug);
+    if (!slug) return res.status(404).json({ error: 'Ei löydy' });
     const pt = String(req.query.pt || '').trim();
     const sessionUserId = await resolveSessionUser(req);
 
@@ -454,10 +484,12 @@ router.get('/preview/:slug', async (req, res) => {
 router.get('/photo/:slug', async (req, res) => {
   try {
     await ready();
+    const slug = resolvePublicPortfolioSlug(req.params.slug);
+    if (!slug) return res.status(404).send('Ei kuvaa');
     const r = await pool.query(
       `SELECT photo_bytes, photo_mime FROM student_portfolios
        WHERE slug=$1 AND published=TRUE AND photo_bytes IS NOT NULL`,
-      [req.params.slug]);
+      [slug]);
     if (!r.rows.length) return res.status(404).send('Ei kuvaa');
     const row = r.rows[0];
     res.set('Content-Type', row.photo_mime);
@@ -557,13 +589,15 @@ router.post('/cv/parse-mine', authenticateToken, async (req, res) => {
 router.get('/cv/:slug', async (req, res) => {
   try {
     await ready();
+    const slug = resolvePublicPortfolioSlug(req.params.slug);
+    if (!slug) return res.status(404).send('CV:tä ei löydy');
     const r = await pool.query(
       `SELECT cv_bytes, cv_mime, cv_filename FROM student_portfolios
        WHERE slug=$1 AND published=TRUE AND cv_bytes IS NOT NULL`,
-      [req.params.slug]
+      [slug]
     );
     if (!r.rows.length) return res.status(404).send('CV:tä ei löydy');
-    notifyCvDownload(req.params.slug).catch((e) => console.error('CV download event:', e));
+    notifyCvDownload(slug).catch((e) => console.error('CV download event:', e));
     const row = r.rows[0];
     const filename = row.cv_filename || 'cv.pdf';
     res.set('Content-Type', row.cv_mime || 'application/pdf');

@@ -512,7 +512,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
   <div class="wrap">
     <span class="eyebrow">Vaihe 4 / 5</span>
     <h2 class="section-h">Esikatselusi — <em>tältä se näyttää</em></h2>
-    <p class="section-sub" style="margin-bottom:1.5rem;">Tältä rekrytoija näkee portfoliosi. Voit palata muokkaamaan tai jatkaa julkaisuun.</p>
+    <p class="section-sub" style="margin-bottom:1rem;">Tältä rekrytoija näkee portfoliosi. Voit palata muokkaamaan tai jatkaa julkaisuun.</p>
+    <div class="alert-warn" id="previewNotLiveBanner" style="margin-bottom:1.25rem;">
+      <strong>⚠️ Tämä on vain esikatselu.</strong> Linkki toimii muille vasta kun painat <strong>Julkaise portfolio</strong> (vaihe 5). Älä jaa tätä osoitetta ennen julkaisua.
+    </div>
 
     <div class="progress-steps">
       <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">CV</div></div>
@@ -548,7 +551,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
   <div class="wrap">
     <span class="eyebrow">Vaihe 5 / 5</span>
     <h2 class="section-h">Julkaise — <em>saat oman URL:n</em></h2>
-    <p class="section-sub" style="margin-bottom:2rem;">Portfolio julkaistaan osoitteessa <strong id="publishUrlExample">aipolku.duunijobs.fi/portfolio/etunimi-sukunimi</strong>. Voit lisätä linkin CV:hen, LinkedIniin tai hakemukseen.</p>
+    <p class="section-sub" style="margin-bottom:2rem;">Portfolio julkaistaan osoitteessa <strong id="publishUrlExample">aipolku.duunijobs.fi/portfolio/etunimi-sukunimi</strong>. Käytä aina tätä osoitetta — <em>älä</em> jaa portfolio.duunijobs.fi-linkkiä. Voit lisätä linkin CV:hen, LinkedIniin tai hakemukseen.</p>
 
     <div class="progress-steps">
       <div class="ps-item done"><div class="ps-circle">✓</div><div class="ps-label">CV</div></div>
@@ -1732,6 +1735,14 @@ var PORTFOLIO_PUBLIC_HOST='portfolio.duunijobs.fi';
 var PORTFOLIO_USE_SUBDOMAIN=false;
 var PORTFOLIO_APP_ORIGIN='https://aipolku.duunijobs.fi';
 
+(function applyPortfolioPublicConfig(){
+  var c=window.__PORTFOLIO_PUBLIC_CONFIG__;
+  if(!c) return;
+  if(typeof c.useSubdomain==='boolean') PORTFOLIO_USE_SUBDOMAIN=c.useSubdomain;
+  if(c.appOrigin) PORTFOLIO_APP_ORIGIN=c.appOrigin;
+  if(c.publicHost) PORTFOLIO_PUBLIC_HOST=c.publicHost;
+})();
+
 function isLocalDev(){
   var h=window.location.hostname||'';
   return h==='localhost'||h==='127.0.0.1';
@@ -1963,10 +1974,19 @@ async function applySaveResponse(d){
   var slugEl=document.getElementById('d_slug');
   if(slugEl) slugEl.value=d.slug;
   if(d.preview_token) previewToken=d.preview_token;
-  if(d.public_url) applyPublishedUrlUi(d.public_url);
-  else if(d.slug) applyPublishedUrlUi(portfolioPublicUrl(d.slug));
+  if(portfolioPublished){
+    if(d.public_url) applyPublishedUrlUi(d.public_url);
+    else if(d.slug) applyPublishedUrlUi(portfolioPublicUrl(d.slug));
+  }
   updateSlugUi();
+  updatePreviewLiveBanner();
   return d.slug;
+}
+
+function updatePreviewLiveBanner(){
+  var banner=document.getElementById('previewNotLiveBanner');
+  if(!banner) return;
+  banner.style.display=portfolioPublished?'none':'block';
 }
 
 async function savePortfolioData(){
@@ -2005,7 +2025,12 @@ function loadPreview(){
   if(!portfolioSlug){loading.innerHTML='<span style="font-size:.9rem;color:var(--muted);">Täytä tiedot ensin ja paina "Rakenna esikatselu".</span>';return;}
   loading.style.display='flex'; frame.style.display='none';
   var urlBar=document.getElementById('previewUrlBar');
-  if(urlBar) urlBar.textContent=portfolioPublicUrlDisplay(portfolioSlug);
+  if(urlBar){
+    urlBar.textContent=portfolioPublished
+      ? portfolioPublicUrlDisplay(portfolioSlug)
+      : 'Esikatselu (ei vielä julkinen — julkaise vaiheessa 5)';
+  }
+  updatePreviewLiveBanner();
   frame.onload=function(){loading.style.display='none';frame.style.display='block';};
   function openPreviewFrame(){
     var previewQs='preview=1&t='+Date.now();
@@ -2032,13 +2057,13 @@ function buildPublishChecklist(){
     {label:'Esittely kirjoitettu', ok:!!P.bio||!!P.career_summary, hint:'Lisää lyhyt esittely'},
     {label:'Taidot lisätty', ok:P.skills.length>0, hint:'Lisää taidot pilkulla erotettuna'},
     {label:'Portfolio esikatselu nähty', ok:!!portfolioSlug, hint:'Käy Esikatselu-vaiheessa'},
-    {label:'CV ladattu rekrytoijille', ok:!!cvFilenameOnServer||!!cvFilePending, hint:'Lataa CV vaiheessa 1 (Lataa CV)'},
+    {label:'CV ladattu rekrytoijille (suositeltu)', ok:!!cvFilenameOnServer||!!cvFilePending, hint:'Lataa CV vaiheessa 1', optional:true},
   ];
   var c=document.getElementById('pubChecklist');
   c.innerHTML='';
   var allOk=true;
   items.forEach(function(item){
-    if(!item.ok) allOk=false;
+    if(!item.optional&&!item.ok) allOk=false;
     var d=document.createElement('div');
     d.style.cssText='display:flex;align-items:center;gap:.65rem;font-size:.88rem;';
     d.innerHTML='<span style="font-size:1rem;">'+(item.ok?'✅':'⬜')+'</span><span style="color:'+(item.ok?'var(--ink)':'var(--muted)')+'">'+item.label+(item.ok?'':'<span style="font-size:.78rem;color:var(--muted);"> — '+item.hint+'</span>')+'</span>';
@@ -2076,6 +2101,10 @@ async function publishPortfolio(){
 }
 
 function copyPublishedUrl(){
+  if(!portfolioPublished){
+    alert('Portfolioa ei ole vielä julkaistu. Paina ensin "Julkaise portfolio" (vaihe 5).');
+    return;
+  }
   var url=window._publishedUrl||portfolioPublicUrl(portfolioSlug);
   if(url&&!/^https?:\/\//i.test(url)) url='https://'+String(url).replace(/^\/+/,'');
   navigator.clipboard.writeText(url).then(function(){

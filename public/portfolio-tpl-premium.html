@@ -253,11 +253,34 @@ var isPreview=qs.get('preview')==='1';
 var pt=qs.get('pt')||'';
 var apiUrl=isPreview?'/api/portfolio/preview/'+encodeURIComponent(slug):'/api/portfolio/view/'+encodeURIComponent(slug);
 if(isPreview&&pt) apiUrl+='?pt='+encodeURIComponent(pt);
-fetch(apiUrl,{credentials:isPreview&&!pt?'include':'same-origin'}).then(function(r){
-  if(!r.ok) throw new Error('fetch failed');
-  return r.json();
-}).then(function(d){if(!d.portfolio)return show404();render(d.portfolio);}).catch(show404);}
-function show404(){hideLoad();document.getElementById('app').innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:2rem;"><div><h1 style="font-family:Instrument Serif,serif;font-size:2rem;margin-bottom:1rem;">Portfoliota ei l\xf6ytynyt</h1><p style="margin-bottom:1rem;">T\xe4m\xe4 portfolio voi olla piilotettu tai sit\xe4 ei ole viel\xe4 julkaistu.</p><a href="/" style="color:var(--v);font-weight:600;text-decoration:none;">Etusivu &rarr;</a></div></div>';}
+function loadPortfolio(apiPath,useCreds){
+  return fetch(apiPath,{credentials:useCreds?'include':'same-origin'}).then(function(r){
+    return r.json().then(function(d){return {ok:r.ok,status:r.status,data:d};});
+  });
+}
+loadPortfolio(apiUrl,isPreview&&!pt).then(function(o){
+  if(o.ok&&o.data.portfolio) return render(o.data.portfolio);
+  if(isPreview&&o.status===401){
+    return loadPortfolio('/api/portfolio/view/'+encodeURIComponent(slug),false).then(function(pub){
+      if(pub.ok&&pub.data.portfolio) return render(pub.data.portfolio);
+      return showPortfolioError(pub);
+    });
+  }
+  return showPortfolioError(o);
+}).catch(function(){show404();});
+function showPortfolioError(o){
+  hideLoad();
+  var msg='Tämä portfolio voi olla piilotettu tai sitä ei ole vielä julkaistu.';
+  var hint='Omistajan täytyy painaa <strong>Julkaise portfolio</strong> Elävä CV -moduulissa ennen linkin jakamista.';
+  if(o&&o.status===403&&o.data&&o.data.error==='not_published'){
+    msg='Portfolioa ei ole vielä julkaistu.';
+  }else if(o&&o.status===404){
+    msg='Portfoliota ei löytynyt.';
+    hint='Tarkista että linkki on muotoa <strong>aipolku.duunijobs.fi/portfolio/nimi-sukunimi</strong> (ei portfolio.duunijobs.fi).';
+  }
+  document.getElementById('app').innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:2rem;"><div><h1 style="font-family:Instrument Serif,serif;font-size:2rem;margin-bottom:1rem;">'+msg+'</h1><p style="margin-bottom:1rem;max-width:420px;line-height:1.6;">'+hint+'</p><a href="https://aipolku.duunijobs.fi" style="color:var(--v);font-weight:600;text-decoration:none;">AI Polku etusivu &rarr;</a></div></div>';
+}
+function show404(){showPortfolioError({status:404,data:{}});}
 function hideLoad(){var l=document.getElementById('loadingScreen');if(l){l.classList.add('hide');setTimeout(function(){l.remove();},500);}}
 function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 function hrefUrl(raw){var u=String(raw||'').trim();if(!u)return'';if(/^https?:\/\//i.test(u))return u;if(/^\/\//.test(u))return'https:'+u;return'https://'+u.replace(/^\/+/,'');}
