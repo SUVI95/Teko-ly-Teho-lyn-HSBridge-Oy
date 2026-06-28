@@ -590,16 +590,28 @@ function fuzzyPortfolioKey(segment) {
     .replace(/(.)\1+/g, '$1');         // collapse doubled letters (kurtti -> kurti)
 }
 
-/** Return the canonical published slug whose fuzzy key uniquely matches, else null. */
+/**
+ * Return the canonical published slug whose fuzzy key uniquely matches, else null.
+ * Tries exact key match first; then a unique prefix match, which recovers links
+ * where a font ligature swallowed trailing letters (e.g. "kurtti" -> "kurƫ" -> key "kur").
+ */
 async function findUniquePublishedSlugByKey(key) {
   if (!key || key.length < 3) return null;
   const r = await pool.query('SELECT slug FROM student_portfolios WHERE published = TRUE');
-  let match = null;
-  let matchCount = 0;
-  for (const row of r.rows) {
-    if (fuzzyPortfolioKey(row.slug) === key) { match = row.slug; matchCount++; }
+  const rows = r.rows.map((row) => ({ slug: row.slug, key: fuzzyPortfolioKey(row.slug) }));
+
+  // 1. Exact fuzzy-key match
+  const exact = rows.filter((x) => x.key === key);
+  if (exact.length === 1) return exact[0].slug;
+  if (exact.length > 1) return null; // ambiguous — don't guess
+
+  // 2. Unique prefix match (one side is a prefix of the other), for keys long enough
+  //    to be confident (avoids matching very short fragments).
+  if (key.length >= 5) {
+    const prefix = rows.filter((x) => x.key.startsWith(key) || key.startsWith(x.key));
+    if (prefix.length === 1) return prefix[0].slug;
   }
-  return matchCount === 1 ? match : null;
+  return null;
 }
 
 async function recoverPortfolioRedirect(req, res, next) {
