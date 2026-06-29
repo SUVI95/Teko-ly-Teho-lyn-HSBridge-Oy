@@ -183,7 +183,10 @@ router.post('/login', async (req, res) => {
         santeri_m2_gift: isGiftRecipient('santeri_m2', user),
         santeri_m3_gift: isGiftRecipient('santeri_m3', user),
         santeri_interview_gift: isGiftRecipient('santeri_interview', user),
-        santeri_automaatio_gift: isGiftRecipient('santeri_automaatio', user)
+        santeri_automaatio_gift: isGiftRecipient('santeri_automaatio', user),
+        anne_gift: isGiftRecipient('anne', user),
+        karpo_gift: isGiftRecipient('karpo', user),
+        jani_gift: isGiftRecipient('jani', user)
       }
     });
   } catch (error) {
@@ -291,7 +294,10 @@ router.get('/me', async (req, res) => {
         santeri_m2_gift: isGiftRecipient('santeri_m2', user),
         santeri_m3_gift: isGiftRecipient('santeri_m3', user),
         santeri_interview_gift: isGiftRecipient('santeri_interview', user),
-        santeri_automaatio_gift: isGiftRecipient('santeri_automaatio', user)
+        santeri_automaatio_gift: isGiftRecipient('santeri_automaatio', user),
+        anne_gift: isGiftRecipient('anne', user),
+        karpo_gift: isGiftRecipient('karpo', user),
+        jani_gift: isGiftRecipient('jani', user)
       }
     });
   } catch (error) {

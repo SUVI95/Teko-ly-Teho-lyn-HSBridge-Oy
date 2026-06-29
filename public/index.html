@@ -1786,6 +1786,9 @@
         const santeriGiftModuleM1 = modules.find(m => m.id === 'santeri-m1-rakenna') || null;
         const santeriGiftModuleM2 = modules.find(m => m.id === 'santeri-m2-tutki') || null;
         const santeriGiftModuleM3 = modules.find(m => m.id === 'santeri-m3-video') || null;
+        const anneGiftModule = modules.find(m => m.id === 'moduuli-anne-tyonhaku-2026') || null;
+        const karpoGiftModule = modules.find(m => m.id === 'moduuli-karpo-tutkimus-2026') || null;
+        const janiGiftModule = modules.find(m => m.id === 'moduuli-jani-tutkimus-kirjoitus-2026') || null;
         const automatioModuleA = modules.find(m => m.id === 'moduuli1-ai-automaatio') || null;
         const automatioModuleB = modules.find(m => m.id === 'moduuli1b-ai-automaatio') || null;
         const palauteModule = modules.find(m => m.id === 'palaute') || null;
@@ -1852,6 +1855,9 @@
             santeriGiftModuleM1,
             santeriGiftModuleM2,
             santeriGiftModuleM3,
+            anneGiftModule,
+            karpoGiftModule,
+            janiGiftModule,
             automatioModuleA,
             automatioModuleB,
             palauteModule
@@ -1950,7 +1956,10 @@
       'moduuli-ai-verkkosivustotyokalut',
       'moduuli7-ai-tyonhaussa',
       'moduuli-tyonhaku',
-      'moduuli5-ai-creation-sprint-legacy'
+      'moduuli5-ai-creation-sprint-legacy',
+      'moduuli-anne-tyonhaku-2026',
+      'moduuli-karpo-tutkimus-2026',
+      'moduuli-jani-tutkimus-kirjoitus-2026'
     ]);
 
     /** Osaamistaidot moduulikorteilla — näytetään "Opit"-chipseinä kuvauksen sijaan. */
@@ -2110,6 +2119,9 @@
       if (m.santeriM1GiftOnly || m.id === 'santeri-m1-rakenna') return 'santeri_m1';
       if (m.santeriM2GiftOnly || m.id === 'santeri-m2-tutki') return 'santeri_m2';
       if (m.santeriM3GiftOnly || m.id === 'santeri-m3-video') return 'santeri_m3';
+      if (m.id === 'moduuli-anne-tyonhaku-2026') return 'anne';
+      if (m.id === 'moduuli-karpo-tutkimus-2026') return 'karpo';
+      if (m.id === 'moduuli-jani-tutkimus-kirjoitus-2026') return 'jani';
       return null;
     }
 
@@ -2130,20 +2142,25 @@
       if (giftKey === 'santeri_m2') return u.santeri_m2_gift === true || u.santeri_m2_gift === 'true';
       if (giftKey === 'santeri_m3') return u.santeri_m3_gift === true || u.santeri_m3_gift === 'true';
       if (giftKey === 'santeri_automaatio') return u.santeri_automaatio_gift === true || u.santeri_automaatio_gift === 'true';
+      if (giftKey === 'anne') return u.anne_gift === true || u.anne_gift === 'true';
+      if (giftKey === 'karpo') return u.karpo_gift === true || u.karpo_gift === 'true';
+      if (giftKey === 'jani') return u.jani_gift === true || u.jani_gift === 'true';
       return false;
     }
 
     function shouldShowPersonalGiftModule(m) {
       if (isAdminUser()) return true;
+      if (adminOnlyModuleIds.has(m.id) || m.adminOnly === true) return false;
       const key = getPersonalGiftKey(m);
       return key ? isPersonalGiftRecipient(key) : false;
     }
 
     function isModuleHiddenFromStudent(m) {
-      if (isPersonalGiftModule(m)) return !shouldShowPersonalGiftModule(m);
       if (isAdminUser()) return false;
+      if (adminOnlyModuleIds.has(m.id) || m.adminOnly === true) return true;
+      if (isPersonalGiftModule(m)) return !shouldShowPersonalGiftModule(m);
       if (temporarilyLockedModuleIds.has(m.id)) return true;
-      return adminOnlyModuleIds.has(m.id) || m.adminOnly === true;
+      return false;
     }
 
     function personalGiftReady(giftKey, completedModules, allModules) {
