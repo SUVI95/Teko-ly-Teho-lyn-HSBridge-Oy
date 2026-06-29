@@ -453,6 +453,7 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli7-ai-tyonhaussa',
   'moduuli-tyonhaku',
   'moduuli5-ai-creation-sprint-legacy',
+  'moduuli-esitykset-tarjoukset-viestinta-gamma-studio',
 ]);
 
 /** Soft-locked modules: visible on dashboard with lock badge but only admin can open. */
