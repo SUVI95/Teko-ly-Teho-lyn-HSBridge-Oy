@@ -80,6 +80,21 @@ const GIFTS = {
     moduleId: 'ville-ai-opas-2025',
     firstName: 'ville',
     emails: parseEmailList(process.env.VILLE_GIFT_EMAIL, ['ville.koponen134@gmail.com'])
+  },
+  anne: {
+    moduleId: 'moduuli-anne-tyonhaku-2026',
+    firstName: 'anne',
+    emails: parseEmailList(process.env.ANNE_GIFT_EMAIL, ['anne.must2@gmail.com'])
+  },
+  karpo: {
+    moduleId: 'moduuli-karpo-tutkimus-2026',
+    firstName: 'karpo',
+    emails: parseEmailList(process.env.KARPO_GIFT_EMAIL, ['karpo.arenmaa3@gmail.com'])
+  },
+  jani: {
+    moduleId: 'moduuli-jani-tutkimus-kirjoitus-2026',
+    firstName: 'jani',
+    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com'])
   }
 };
 

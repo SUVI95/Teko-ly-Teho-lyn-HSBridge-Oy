@@ -143,6 +143,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
 .theme-swatch{width:36px;height:36px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s;position:relative;}
 .theme-swatch.selected{border-color:var(--ink);box-shadow:0 0 0 3px rgba(15,15,26,.15);}
 .theme-swatch:hover{transform:scale(1.12);}
+.theme-swatch.theme-swatch-minimal{border:2px solid #e5e7eb;box-shadow:inset 0 0 0 2px #fff;}
+.theme-swatch.theme-swatch-minimal.selected{border-color:var(--ink);box-shadow:0 0 0 3px rgba(15,15,26,.12),inset 0 0 0 2px #fff;}
+.theme-mode-hint{font-size:.72rem;color:var(--muted);margin-top:.85rem;line-height:1.55;}
 
 /* ── BUTTONS ── */
 .btn-primary{padding:12px 28px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;border:none;background:var(--v);color:#fff;transition:all .2s;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:6px;}
@@ -487,15 +490,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;background:rgba(
     <!-- THEME -->
     <div class="card">
       <h3 style="font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:.75rem;">🎨 Värimaailma</h3>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Valitse portfolion teema:</p>
-      <div class="theme-picker">
-        <div class="theme-swatch selected" style="background:linear-gradient(135deg,#7c6ef2,#3b82f6)" title="Violetti" onclick="setTheme('','#7c6ef2','#3b82f6',this)"></div>
-        <div class="theme-swatch" style="background:linear-gradient(135deg,#10b981,#065f46)" title="Vihreä (executive)" onclick="setTheme('theme-executive','#10b981','#065f46',this)"></div>
-        <div class="theme-swatch" style="background:linear-gradient(135deg,#ef4444,#dc2626)" title="Punainen" onclick="setTheme('','#ef4444','#dc2626',this)"></div>
-        <div class="theme-swatch" style="background:linear-gradient(135deg,#f59e0b,#d97706)" title="Kulta" onclick="setTheme('','#f59e0b','#d97706',this)"></div>
-        <div class="theme-swatch" style="background:linear-gradient(135deg,#0891b2,#0e7490)" title="Turkoosi" onclick="setTheme('','#0891b2','#0e7490',this)"></div>
-        <div class="theme-swatch" style="background:linear-gradient(135deg,#1a1a2e,#2d2d44)" title="Tummanharmaa" onclick="setTheme('','#374151','#1f2937',this)"></div>
-      </div>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Valitse portfolion teema — 11 väriä, kolme tyyliä (Premium / Executive / Minimal):</p>
+      <div class="theme-picker" id="themePicker"></div>
+      <p class="theme-mode-hint"><strong>Premium</strong> — värikäs gradientti · <strong>Executive</strong> — tumma vihreä · <strong>Minimal</strong> — valkoinen + aksenttiväri</p>
     </div>
 
     <div class="btn-row">
@@ -614,7 +611,6 @@ var cvFilenameOnServer = '';
 var interviewHistory = [];
 var interviewAnswers = [];
 var interviewDone = false;
-var selectedThemeClass = '';
 var photoUploaded = false;
 var portfolioSlug = '';
 var previewToken = '';
@@ -1812,23 +1808,49 @@ function parseLanguages(txt){
   }).filter(Boolean);
 }
 
-var selectedTheme={themeClass:'',color:'#7c6ef2',accent:'#3b82f6'};
+var selectedThemeIdx=0;
 var THEME_PRESETS=[
-  {cls:'',color:'#7c6ef2',accent:'#3b82f6',bg:'#faf9f6',template:'premium'},
-  {cls:'theme-executive',color:'#10b981',accent:'#065f46',bg:'#0b1512',template:'executive'},
-  {cls:'',color:'#ef4444',accent:'#dc2626',bg:'#faf9f6',template:'premium'},
-  {cls:'',color:'#f59e0b',accent:'#d97706',bg:'#faf9f6',template:'premium'},
-  {cls:'',color:'#0891b2',accent:'#0e7490',bg:'#faf9f6',template:'premium'},
-  {cls:'',color:'#374151',accent:'#1f2937',bg:'#f3f4f6',template:'premium'}
+  {cls:'',color:'#7c6ef2',accent:'#3b82f6',bg:'#faf9f6',template:'premium',label:'Violetti'},
+  {cls:'theme-executive',color:'#10b981',accent:'#065f46',bg:'#0b1512',template:'executive',label:'Vihreä (executive)'},
+  {cls:'',color:'#ef4444',accent:'#dc2626',bg:'#faf9f6',template:'premium',label:'Punainen'},
+  {cls:'',color:'#f59e0b',accent:'#d97706',bg:'#faf9f6',template:'premium',label:'Kulta'},
+  {cls:'',color:'#0891b2',accent:'#0e7490',bg:'#faf9f6',template:'premium',label:'Turkoosi'},
+  {cls:'',color:'#374151',accent:'#1f2937',bg:'#f3f4f6',template:'premium',label:'Tummanharmaa'},
+  {cls:'',color:'#1e3a5f',accent:'#3d5a80',bg:'#f7f8fa',template:'premium',label:'Laivastonsininen'},
+  {cls:'theme-minimal',color:'#1d4ed8',accent:'#1e40af',bg:'#ffffff',template:'minimal',label:'Minimal — sininen'},
+  {cls:'theme-minimal',color:'#374151',accent:'#1f2937',bg:'#ffffff',template:'minimal',label:'Minimal — harmaa'},
+  {cls:'theme-minimal',color:'#1e3a5f',accent:'#172554',bg:'#ffffff',template:'minimal',label:'Minimal — laivasto'},
+  {cls:'theme-minimal',color:'#9f1239',accent:'#881337',bg:'#ffffff',template:'minimal',label:'Minimal — viininpunainen'}
 ];
 
-function setTheme(cls,color,accent,el,silent){
-  selectedTheme={themeClass:cls,color:color,accent:accent};
-  P.brand_color=color; P.brand_accent=accent;
-  P.brand_bg=cls==='theme-executive'?'#0b1512':(color==='#374151'?'#f3f4f6':'#faf9f6');
-  P.template=cls==='theme-executive'?'executive':'premium';
-  document.querySelectorAll('.theme-swatch').forEach(function(s){s.classList.remove('selected');});
+function initThemePicker(){
+  var box=document.getElementById('themePicker');
+  if(!box) return;
+  box.innerHTML='';
+  THEME_PRESETS.forEach(function(t,i){
+    var d=document.createElement('div');
+    d.className='theme-swatch'+(t.template==='minimal'?' theme-swatch-minimal':'')+(i===selectedThemeIdx?' selected':'');
+    d.title=t.label||('Teema '+(i+1));
+    d.style.background='linear-gradient(135deg,'+t.color+','+t.accent+')';
+    d.onclick=function(){ setThemeFromPreset(i,this); };
+    box.appendChild(d);
+  });
+}
+
+function setThemeFromPreset(idx,el,silent){
+  var t=THEME_PRESETS[idx];
+  if(!t) return;
+  selectedThemeIdx=idx;
+  P.brand_color=t.color;
+  P.brand_accent=t.accent;
+  P.brand_bg=t.bg;
+  P.template=t.template;
+  document.querySelectorAll('.theme-swatch').forEach(function(s){ s.classList.remove('selected'); });
   if(el) el.classList.add('selected');
+  else{
+    var swatches=document.querySelectorAll('.theme-swatch');
+    if(swatches[idx]) swatches[idx].classList.add('selected');
+  }
   if(silent) return;
   var previewScreen=document.getElementById('s-preview');
   if(previewScreen&&previewScreen.classList.contains('active')&&portfolioSlug){
@@ -1837,15 +1859,15 @@ function setTheme(cls,color,accent,el,silent){
 }
 
 function restoreThemePicker(){
-  var swatches=document.querySelectorAll('.theme-swatch');
+  if(!document.getElementById('themePicker')) initThemePicker();
   var idx=0;
-  if(P.template==='executive') idx=1;
-  else{
-    var bc=(P.brand_color||'').toLowerCase();
-    THEME_PRESETS.forEach(function(t,i){ if(t.color.toLowerCase()===bc) idx=i; });
-  }
-  var t=THEME_PRESETS[idx];
-  if(t&&swatches[idx]) setTheme(t.cls,t.color,t.accent,swatches[idx],true);
+  var tpl=String(P.template||'premium').toLowerCase();
+  var bc=String(P.brand_color||'').toLowerCase();
+  var ba=String(P.brand_accent||'').toLowerCase();
+  THEME_PRESETS.forEach(function(t,i){
+    if(t.template===tpl&&t.color.toLowerCase()===bc&&t.accent.toLowerCase()===ba) idx=i;
+  });
+  setThemeFromPreset(idx,null,true);
 }
 
 // PHOTO
@@ -2140,6 +2162,7 @@ async function loadPortfolioNotifications(){
 // INIT
 // ══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',async function(){
+  initThemePicker();
   document.addEventListener('input',function(ev){
     if(ev.target&&(ev.target.closest('.screen')||ev.target.id==='interviewInput')) schedulePortfolioAutosave();
   },true);
