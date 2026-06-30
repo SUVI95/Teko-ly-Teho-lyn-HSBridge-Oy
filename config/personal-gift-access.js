@@ -100,6 +100,11 @@ const GIFTS = {
     moduleId: 'moduuli-ai-tietosuoja',
     firstName: 'jani',
     emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com'])
+  },
+  jani_m3: {
+    moduleId: 'moduuli-tekoaly-kirjoituskumppanina',
+    firstName: 'jani',
+    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com'])
   }
 };
 
