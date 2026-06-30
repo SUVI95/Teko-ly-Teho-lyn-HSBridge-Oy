@@ -496,6 +496,7 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli1b-ai-automaatio',
   'moduuli-jani-tutkimus-kirjoitus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
   'moduuli-karpo-tutkimus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
+  'moduuli-anne-tyonhaku-2026', // removed from dashboard — kept on disk for admin reference only
 ]);
 
 /** Soft-locked modules: visible on dashboard with lock badge but only admin can open. */

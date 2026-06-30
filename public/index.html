@@ -1710,18 +1710,6 @@
             requireGiftCompletion: false
           },
           {
-            id: 'moduuli-anne-tyonhaku-2026',
-            title: 'Anne — Henkilökohtainen työnhakumoduuli',
-            description: '5 h polku tradenomi-työnhakuun: ChatGPT, CV, hakemus, haastattelu ja seuranta — kartoutuksen mukaan.',
-            icon: 'sparkles',
-            part: 2,
-            day: 'bridge',
-            cardBadge: 'Sinulle',
-            statusLine: 'Henkilökohtainen polku 🎁',
-            personalGiftKey: 'anne',
-            requireGiftCompletion: false
-          },
-          {
             id: 'moduuli-ai-tietosuoja',
             title: 'Jani — Moduuli 1: Suojaa ennen kuin syötät',
             description: 'Tietoturva tutkimustyössä: mitä saa syöttää, anonymisointi, turvallinen prompti ja 5 tekoälyarvioidusta harjoituksesta.',
@@ -1860,12 +1848,11 @@
         const santeriGiftModuleM1 = modules.find(m => m.id === 'santeri-m1-rakenna') || null;
         const santeriGiftModuleM2 = modules.find(m => m.id === 'santeri-m2-tutki') || null;
         const santeriGiftModuleM3 = modules.find(m => m.id === 'santeri-m3-video') || null;
-        const anneGiftModule = modules.find(m => m.id === 'moduuli-anne-tyonhaku-2026') || null;
         const janiM1Module = modules.find(m => m.id === 'moduuli-ai-tietosuoja') || null;
         const automatioModuleA = modules.find(m => m.id === 'moduuli1-ai-automaatio') || null;
         const automatioModuleB = modules.find(m => m.id === 'moduuli1b-ai-automaatio') || null;
         const palauteModule = modules.find(m => m.id === 'palaute') || null;
-        const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti', 'tuomioistuin', 'tyokalurakentaja', 'sonja-ai-opas-2025', 'satu-ai-opas-2025', 'soile-ai-opas-2025', 'ville-ai-opas-2025', 'moduuli-minna-a', 'moduuli-minna-b', 'santeri-m1-rakenna', 'santeri-m2-tutki', 'santeri-m3-video', 'moduuli-anne-tyonhaku-2026', 'moduuli-ai-tietosuoja', 'moduuli1-ai-automaatio', 'moduuli1b-ai-automaatio', 'palaute']);
+        const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti', 'tuomioistuin', 'tyokalurakentaja', 'sonja-ai-opas-2025', 'satu-ai-opas-2025', 'soile-ai-opas-2025', 'ville-ai-opas-2025', 'moduuli-minna-a', 'moduuli-minna-b', 'santeri-m1-rakenna', 'santeri-m2-tutki', 'santeri-m3-video', 'moduuli-ai-tietosuoja', 'moduuli1-ai-automaatio', 'moduuli1b-ai-automaatio', 'palaute']);
 
         // Piilota admin-only ja temporarilyLockedModuleIds (sama näkymä live-opiskelijoille ja videokuvaus-demolle).
         // Kun moduuli avataan opiskelijoille, poista id temporarilyLockedModuleIds-listasta.
@@ -1928,10 +1915,10 @@
             santeriGiftModuleM1,
             santeriGiftModuleM2,
             santeriGiftModuleM3,
-            // anne/jani-m1 personal modules are grouped into one "Oma polku"
-            // section below instead of being inlined here (avoids each recipient
-            // seeing their own modules scattered across two separate spots).
-            ...(viewerIsAdmin ? [anneGiftModule, janiM1Module] : []),
+            // jani-m1 personal module is grouped into one "Oma polku" section
+            // below instead of being inlined here (avoids the recipient seeing
+            // their own modules scattered across two separate spots).
+            ...(viewerIsAdmin ? [janiM1Module] : []),
             automatioModuleA,
             automatioModuleB,
             palauteModule
@@ -1946,7 +1933,7 @@
           // "Oma polku" — every personal gift module the CURRENT viewer is the
           // recipient of, grouped under one header. Admin keeps the old inline
           // view (each card shows its own "Vain X · admin-esikatselu" caption).
-          const omaPolkuModules = viewerIsAdmin ? [] : [anneGiftModule, janiM1Module].filter(function(m) {
+          const omaPolkuModules = viewerIsAdmin ? [] : [janiM1Module].filter(function(m) {
             if (!m) return false;
             return shouldShowPersonalGiftModule(m);
           });
@@ -2082,7 +2069,7 @@
       'santeri-m1-rakenna',
       'santeri-m2-tutki',
       'santeri-m3-video',
-      'moduuli-anne-tyonhaku-2026',
+      'moduuli-anne-tyonhaku-2026', // removed from dashboard — kept on disk for admin reference only
       'moduuli-karpo-tutkimus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
       'moduuli-ai-tietosuoja',
       // Pyydetty piilotettavaksi opiskelijoilta — admin-esikatselu vain
@@ -2158,7 +2145,6 @@
       'santeri-m1-rakenna': ['AI-haastattelu', 'Sovellusidean kirkastus', 'No-code rakennus', 'Julkaisu'],
       'santeri-m2-tutki': ['Tutkimus ja analyysi', 'Sisällön rakenne', 'Esitystaidot', 'Idean validointi'],
       'santeri-m3-video': ['Visuaalinen tuotanto', 'AI-video', 'Portfolioajattelu', 'Valmis esitys'],
-      'moduuli-anne-tyonhaku-2026': ['ChatGPT perusteet', 'CV & hakemus', 'Haastattelu', 'Työnhakuseuranta'],
       'moduuli-ai-tietosuoja': ['Arkaluonteinen tieto', 'Anonymisointi', 'Turvallinen prompti', 'Dummy-versio', 'AI-arviointi']
     };
 
@@ -2172,7 +2158,6 @@
       'santeri-m1-rakenna',
       'santeri-m2-tutki',
       'santeri-m3-video',
-      'moduuli-anne-tyonhaku-2026',
       'palaute',
       'loppumoduuli-sina-ja-tekoaly',
       'myytinmurtaja',
@@ -2253,7 +2238,6 @@
       if (m.santeriM1GiftOnly || m.id === 'santeri-m1-rakenna') return 'santeri_m1';
       if (m.santeriM2GiftOnly || m.id === 'santeri-m2-tutki') return 'santeri_m2';
       if (m.santeriM3GiftOnly || m.id === 'santeri-m3-video') return 'santeri_m3';
-      if (m.id === 'moduuli-anne-tyonhaku-2026') return 'anne';
       if (m.id === 'moduuli-ai-tietosuoja') return 'jani_m1';
       return null;
     }
