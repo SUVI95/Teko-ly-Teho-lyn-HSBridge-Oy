@@ -492,6 +492,9 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
 
 /** Soft-locked modules: visible on dashboard with lock badge but only admin can open. */
 const STUDENT_LOCKED_MODULE_IDS = new Set([
+  'moduuli8-ai-polku',
+  'moduuli9-haastattelu',
+  'moduuli-elava-cv',
 ]);
 
 // Personal gift HTML only via /module/:id (recipient + admin gate)
