@@ -107,6 +107,22 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
+// Set a temporary preview password for a student (admin only)
+router.post('/users/:userId/set-password', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { password } = req.body;
+    if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    const bcrypt = require('bcrypt');
+    const hash = await bcrypt.hash(password, 10);
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2 AND is_admin = FALSE', [hash, userId]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Set password error:', error);
+    res.status(500).json({ error: 'Failed to set password' });
+  }
+});
+
 // Approve a student
 router.post('/users/:userId/approve', authenticateToken, requireAdmin, async (req, res) => {
   try {
