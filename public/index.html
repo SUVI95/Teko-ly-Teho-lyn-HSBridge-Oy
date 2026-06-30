@@ -1967,7 +1967,39 @@
           });
           if (finals.length === 0) return '';
           let out = '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
+
+          // "Oma polku" modules — shown for Jani, Karpo (and admin preview)
+          const omaPolkuModules = [janiM1Module].filter(function(m) {
+            if (!m) return false;
+            return shouldShowPersonalGiftModule(m);
+          });
+          const hasOmaPolku = omaPolkuModules.length > 0;
+
+          // Determine first name for the section header
+          let omaPolkuFirstName = '';
+          if (hasOmaPolku) {
+            const u = window.currentUser;
+            if (u && u.name) {
+              omaPolkuFirstName = u.name.trim().split(/\s+/)[0];
+            }
+          }
+
           finals.forEach(function (m, i) {
+            // Inject "Oma polku" section header right before palaute
+            if (hasOmaPolku && m.id === 'palaute') {
+              const label = omaPolkuFirstName ? omaPolkuFirstName + ' — Oma polku' : 'Oma polku';
+              out += `<div style="grid-column:1 / -1;width:100%;margin:2.5rem 0 0.5rem;padding:0;">
+                <div style="display:flex;align-items:center;gap:14px;">
+                  <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,.25));"></div>
+                  <span style="font-size:0.72rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#6366f1;white-space:nowrap;padding:5px 14px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:999px;">✦ ${label}</span>
+                  <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(99,102,241,.25),transparent);"></div>
+                </div>
+                <p style="text-align:center;font-size:0.82rem;color:var(--muted);margin:8px 0 0;">Sinulle räätälöidyt moduulit – rakennettu kartoutuksesi perusteella.</p>
+              </div>`;
+              omaPolkuModules.forEach(function(pm, pi) {
+                out += renderModuleCard(pm, idxBase + finals.length + pi, modules, summary, completedModules, module4Completed, allPart1Completed);
+              });
+            }
             out += renderModuleCard(m, idxBase + i, modules, summary, completedModules, module4Completed, allPart1Completed);
           });
           return out;
