@@ -97,7 +97,7 @@ const GIFTS = {
     emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com'])
   },
   jani_m1: {
-    moduleId: 'jani-moduuli1',
+    moduleId: 'moduuli-ai-tietosuoja',
     firstName: 'jani',
     emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com'])
   }
