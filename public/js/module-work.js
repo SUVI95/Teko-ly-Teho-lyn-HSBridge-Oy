@@ -41,7 +41,8 @@
       var raw = localStorage.getItem('mw_' + userKeySuffix + '_' + moduleId);
       if (!raw) return null;
       var p = parsePayload(raw);
-      return p && p.data && p.data.v === 1 ? p.data : null;
+      // v:1 is on the outer wrapper (p.v), not on the collected data (p.data)
+      return (p && p.v === 1 && p.data && typeof p.data === 'object') ? p.data : null;
     } catch (e) {
       return null;
     }
@@ -115,9 +116,9 @@
         var d = await r.json();
         if (d.reflection && d.reflection.reflection_text) {
           var parsed = parsePayload(d.reflection.reflection_text);
-          var serverData = parsed ? parsed.data : null;
-          if (serverData && serverData.v === 1) {
-            best = mergeModuleData(best, serverData);
+          // v:1 is on the outer wrapper (parsed.v), not on the collected data (parsed.data)
+          if (parsed && parsed.v === 1 && parsed.data && typeof parsed.data === 'object') {
+            best = mergeModuleData(best, parsed.data);
             try {
               localStorage.setItem(localStorageKey(moduleId), d.reflection.reflection_text);
             } catch (e) {}
