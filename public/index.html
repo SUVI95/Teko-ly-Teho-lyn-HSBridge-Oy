@@ -2307,15 +2307,18 @@
 
     function shouldShowPersonalGiftModule(m) {
       if (isAdminUser()) return true;
-      if (adminOnlyModuleIds.has(m.id) || m.adminOnly === true) return false;
+      // Note: adminOnlyModuleIds intentionally NOT checked here — personal gift
+      // modules are listed there only to drive the admin-preview badge, not to
+      // block the actual gift recipient from seeing their own module.
+      if (m.adminOnly === true) return false;
       const key = getPersonalGiftKey(m);
       return key ? isPersonalGiftRecipient(key) : false;
     }
 
     function isModuleHiddenFromStudent(m) {
       if (isAdminUser()) return false;
-      if (adminOnlyModuleIds.has(m.id) || m.adminOnly === true) return true;
       if (isPersonalGiftModule(m)) return !shouldShowPersonalGiftModule(m);
+      if (adminOnlyModuleIds.has(m.id) || m.adminOnly === true) return true;
       if (temporarilyLockedModuleIds.has(m.id)) return true;
       return false;
     }
