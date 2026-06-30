@@ -1941,8 +1941,10 @@
             santeriGiftModuleM1,
             santeriGiftModuleM2,
             santeriGiftModuleM3,
-            anneGiftModule,
-            karpoGiftModule,
+            // anne/karpo/jani-m1 personal modules are grouped into one "Oma polku"
+            // section below instead of being inlined here (avoids each recipient
+            // seeing their own modules scattered across two separate spots).
+            ...(viewerIsAdmin ? [anneGiftModule, karpoGiftModule, janiM1Module] : []),
             automatioModuleA,
             automatioModuleB,
             palauteModule
@@ -1954,8 +1956,10 @@
           if (finals.length === 0) return '';
           let out = '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
 
-          // "Oma polku" modules — shown for Jani, Karpo (and admin preview)
-          const omaPolkuModules = [janiM1Module].filter(function(m) {
+          // "Oma polku" — every personal gift module the CURRENT viewer is the
+          // recipient of, grouped under one header. Admin keeps the old inline
+          // view (each card shows its own "Vain X · admin-esikatselu" caption).
+          const omaPolkuModules = viewerIsAdmin ? [] : [anneGiftModule, karpoGiftModule, janiM1Module].filter(function(m) {
             if (!m) return false;
             return shouldShowPersonalGiftModule(m);
           });
