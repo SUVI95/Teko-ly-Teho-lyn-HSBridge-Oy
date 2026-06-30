@@ -260,6 +260,27 @@
   .reflect-q textarea{background:#fff;color:var(--ink);border:1px solid var(--rule);min-height:64px;}
   .reflect-q textarea:focus{outline:2px solid var(--rust);}
 
+  /* ---------- CALIBRATION (before AI) ---------- */
+  .calibration{margin:16px 0;padding:14px 16px;background:var(--gold-bg);border:1px dashed #D9BD7E;border-radius:6px;}
+  .calibration .calib-q{font-size:14px;color:var(--ink);margin:0 0 10px;}
+  .calib-radios{display:flex;flex-wrap:wrap;gap:10px;}
+  .calib-radios label{font-size:14px;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .calib-radios input{accent-color:var(--gold);}
+
+  /* ---------- QUIZ RECALL ---------- */
+  .quiz-recall-prompt{font-size:14px;color:var(--ink);margin:0 0 8px;font-weight:500;}
+  .quiz-recall-input{width:100%;min-height:52px;border:1px solid var(--rule);border-radius:6px;padding:10px 12px;font:inherit;font-size:14px;margin-bottom:10px;resize:vertical;}
+  .quiz-reveal-btn{font-family:var(--mono);font-size:12px;background:#fff;border:1px solid var(--teal-line);color:var(--teal);padding:8px 14px;border-radius:6px;cursor:pointer;margin-bottom:12px;}
+  .quiz-reveal-btn:hover{background:var(--teal-bg);}
+  .quiz-opts.hidden{display:none;}
+  .quiz-opts.revealed{display:flex;}
+
+  /* ---------- CAPSTONE ---------- */
+  .capstone-decision{margin-bottom:18px;padding:16px;background:var(--paper);border:1px solid var(--rule);border-radius:6px;}
+  .capstone-decision .dec-head{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);margin:0 0 10px;}
+  .dec-choice{display:flex;gap:16px;margin:10px 0;}
+  .dec-choice label{font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+
   /* ---------- FOOTER ---------- */
   footer{margin-top:70px;padding-top:36px;border-top:1px solid var(--rule);}
   footer p{font-size:15px;color:var(--ink-muted);}
@@ -378,11 +399,14 @@
 
     <div class="mini-ex">
       <span class="mini-label">Mini-harjoitus · Tunnista tyyppi</span>
-      <p style="font-size:14px;color:var(--ink);margin:0 0 4px;">Valitse jokaiseen tilanteeseen oikea työkalutyyppi.</p>
+      <p style="font-size:14px;color:var(--ink);margin:0 0 12px;">Mieti ensin omin sanoin — vastausvaihtoehdot avautuvat vasta sen jälkeen.</p>
 
       <div class="quiz-q">
         <p class="qtext">1. Haluat nopeasti luonnostella johdannon.</p>
-        <div class="quiz-opts" data-answer="01">
+        <p class="quiz-recall-prompt">Minkä työkalutyypin valitsisit?</p>
+        <textarea class="quiz-recall-input" id="quiz-recall-1" placeholder="Kirjoita valintasi ja perustelusi lyhyesti..."></textarea>
+        <button type="button" class="quiz-reveal-btn" data-target="quiz-opts-1">Näytä vaihtoehdot →</button>
+        <div class="quiz-opts hidden" id="quiz-opts-1" data-answer="01">
           <button type="button" class="quiz-opt" data-val="01">01 Yleiskäyttöinen</button>
           <button type="button" class="quiz-opt" data-val="02">02 Lähdeavusteinen</button>
           <button type="button" class="quiz-opt" data-val="03">03 Tutkimusnäyttö</button>
@@ -392,7 +416,10 @@
 
       <div class="quiz-q">
         <p class="qtext">2. Sinulla on jo viisi lähdettä, ja haluat kirjoittaa niistä kirjallisuuskatsauksen.</p>
-        <div class="quiz-opts" data-answer="02">
+        <p class="quiz-recall-prompt">Minkä työkalutyypin valitsisit?</p>
+        <textarea class="quiz-recall-input" id="quiz-recall-2" placeholder="Kirjoita valintasi ja perustelusi lyhyesti..."></textarea>
+        <button type="button" class="quiz-reveal-btn" data-target="quiz-opts-2">Näytä vaihtoehdot →</button>
+        <div class="quiz-opts hidden" id="quiz-opts-2" data-answer="02">
           <button type="button" class="quiz-opt" data-val="01">01 Yleiskäyttöinen</button>
           <button type="button" class="quiz-opt" data-val="02">02 Lähdeavusteinen</button>
           <button type="button" class="quiz-opt" data-val="03">03 Tutkimusnäyttö</button>
@@ -402,7 +429,10 @@
 
       <div class="quiz-q">
         <p class="qtext">3. Haluat tarkistaa, mitä tutkimus oikeasti sanoo aiheestasi ennen kuin väität jotain.</p>
-        <div class="quiz-opts" data-answer="03">
+        <p class="quiz-recall-prompt">Minkä työkalutyypin valitsisit?</p>
+        <textarea class="quiz-recall-input" id="quiz-recall-3" placeholder="Kirjoita valintasi ja perustelusi lyhyesti..."></textarea>
+        <button type="button" class="quiz-reveal-btn" data-target="quiz-opts-3">Näytä vaihtoehdot →</button>
+        <div class="quiz-opts hidden" id="quiz-opts-3" data-answer="03">
           <button type="button" class="quiz-opt" data-val="01">01 Yleiskäyttöinen</button>
           <button type="button" class="quiz-opt" data-val="02">02 Lähdeavusteinen</button>
           <button type="button" class="quiz-opt" data-val="03">03 Tutkimusnäyttö</button>
@@ -437,9 +467,9 @@
     <p style="margin-top:16px;">Käytä samaa aihetta molemmissa harjoituksissa. Näin näet selvästi, miten työkalujen toimintatavat eroavat.</p>
   </section>
 
-  <!-- HARJOITUS 1 -->
+  <!-- RAKENTAMINEN -->
   <section id="harjoitus1">
-    <div class="comment"><span class="who">Harjoitus 1</span><span class="what">tavoite: pidä teksti kiinni lähteissä</span></div>
+    <div class="comment"><span class="who">Rakentaminen</span><span class="what">tavoite: pidä teksti kiinni lähteissä</span></div>
     <h2>Lähteet kiinni tekstissä</h2>
     <div class="card edge-rust">
       <h3>Tee tämä Paperguidessa</h3>
@@ -464,11 +494,22 @@
     <div class="ai-panel opponent">
       <div class="panel-head">
         <span class="badge-ai">AI</span>
-        <h4>Tekoäly etsii heikoimman kohdan</h4>
+        <h4>Tekoäly haastaa — sinä puolustat</h4>
       </div>
-      <p style="font-size:14px;margin-bottom:16px;">Liitä lopullinen tekstisi (Paperguide-osio + oma uudelleenkirjoitettu virke). Tekoäly merkitsee väitteet, etsii niistä heikoimman ja yrittää kumota sen.</p>
+      <p style="font-size:14px;margin-bottom:16px;">Liitä lopullinen tekstisi (Paperguide-osio + oma uudelleenkirjoitettu virke). Tekoäly merkitsee väitteet, etsii heikoimman ja haastaa sinut perustelemaan.</p>
       <label class="field-label" for="h1-input">Tekstisi</label>
       <textarea id="h1-input" placeholder="Liitä tähän osio, jonka Paperguide tuotti, sekä virke jonka kirjoitit itse uudelleen..."></textarea>
+      <div class="calibration">
+        <label class="field-label">Ennen kuin painat</label>
+        <p class="calib-q">Kuinka varma olet, että tekstissäsi on hyvin perustellut väitteet?</p>
+        <div class="calib-radios">
+          <label><input type="radio" name="h1-confidence" value="1"> 1</label>
+          <label><input type="radio" name="h1-confidence" value="2"> 2</label>
+          <label><input type="radio" name="h1-confidence" value="3"> 3</label>
+          <label><input type="radio" name="h1-confidence" value="4"> 4</label>
+          <label><input type="radio" name="h1-confidence" value="5"> 5</label>
+        </div>
+      </div>
       <button class="run-btn" id="h1-btn" onclick="checkClaims()">Tarkista väitteet</button>
 
       <div class="ai-output" id="h1-output"></div>
@@ -489,9 +530,9 @@
     </div>
   </section>
 
-  <!-- HARJOITUS 2 -->
+  <!-- MUOKKAAMINEN -->
   <section id="harjoitus2">
-    <div class="comment ai"><span class="who">Harjoitus 2</span><span class="what">tavoite: pidä merkitys hallinnassa</span></div>
+    <div class="comment ai"><span class="who">Muokkaaminen</span><span class="what">tavoite: pidä merkitys hallinnassa</span></div>
     <h2>Sävy ja merkitys</h2>
     <div class="card edge-teal">
       <h3>Tee tämä ensin itse</h3>
@@ -515,24 +556,38 @@
           <li>Osaatko selittää, mikä muuttui ja miksi?</li>
         </ul>
       </div>
+      <label class="field-label" for="h2-metacog" style="margin-top:16px;display:block;">Metacognition — vastaa ennen tekoälyä</label>
+      <p style="font-size:14px;color:var(--ink);margin:0 0 8px;">Jos merkitys muuttui: miksi luulet tekoälyn muuttaneen juuri tämän kohdan?</p>
+      <textarea id="h2-metacog" placeholder="Vastauksesi..."></textarea>
     </div>
 
     <div class="ai-panel opponent">
       <div class="panel-head">
         <span class="badge-ai">AI</span>
-        <h4>Tekoäly etsii liian vahvan kohdan</h4>
+        <h4>Tekoäly haastaa — perustele muutoksesi</h4>
       </div>
-      <p style="font-size:14px;margin-bottom:16px;">Liitä oma luonnoksesi ja Jennin hiomam (mahdollisimman vakuuttava) versio. Tekoäly etsii kohdan, jossa vakuuttavuus alkoi ohittaa näytön, ja kysyy, hyväksytkö sen.</p>
+      <p style="font-size:14px;margin-bottom:16px;">Liitä oma luonnoksesi ja Jennin hiomam versio. Tekoäly etsii kohdan, jossa vakuuttavuus alkoi ohittaa näytön, ja haastaa sinut perustelemaan.</p>
       <label class="field-label" for="h2-original">Oma luonnos</label>
       <textarea id="h2-original" placeholder="Liitä tähän oma alkuperäinen kappaleesi..."></textarea>
       <label class="field-label" for="h2-revised">Jennin hiomam versio</label>
       <textarea id="h2-revised" placeholder="Liitä tähän Jennin hiomam versio..."></textarea>
+      <div class="calibration">
+        <label class="field-label">Ennen kuin painat</label>
+        <p class="calib-q">Kuinka varma olet, että merkitys säilyi Jennin muokkauksessa?</p>
+        <div class="calib-radios">
+          <label><input type="radio" name="h2-confidence" value="1"> 1</label>
+          <label><input type="radio" name="h2-confidence" value="2"> 2</label>
+          <label><input type="radio" name="h2-confidence" value="3"> 3</label>
+          <label><input type="radio" name="h2-confidence" value="4"> 4</label>
+          <label><input type="radio" name="h2-confidence" value="5"> 5</label>
+        </div>
+      </div>
       <button class="run-btn" id="h2-btn" onclick="compareMeaning()">Vertaile merkitys</button>
 
       <div class="ai-output" id="h2-output"></div>
 
       <div class="followup" id="h2-followup">
-        <label class="field-label" for="h2-reply">Vastaa tekoälyn haasteeseen</label>
+        <label class="field-label" for="h2-reply">Perustele ratkaisusi</label>
         <textarea id="h2-reply" placeholder="Hyväksytkö muutoksen? Perustele..."></textarea>
         <div class="panel-foot">
           <button class="run-btn" id="h2-reply-btn" onclick="replyH2()">Lähetä vastaus</button>
@@ -547,17 +602,17 @@
     </div>
   </section>
 
-  <!-- HARJOITUS 3 -->
+  <!-- PERUSTELEMINEN -->
   <section id="harjoitus3">
-    <div class="comment"><span class="who">Harjoitus 3</span><span class="what">tavoite: erota faktan, tulkinnan ja olettamuksen ero</span></div>
+    <div class="comment"><span class="who">Perusteleminen</span><span class="what">tavoite: erota faktan, tulkinnan ja olettamuksen ero</span></div>
     <h2>Väite vai tulkinta?</h2>
     <div class="card edge-rust">
-      <p class="lead">Tekoäly ei paljasta oikeaa vastausta — se kyseenalaistaa luokittelusi.</p>
+      <p class="lead">Tekoäly ei paljasta oikeaa vastausta — se haastaa luokittelusi ja pyytää sinua perustelemaan.</p>
       <h3>Tee tämä ensin itse</h3>
       <ol class="steps">
         <li>Ota teksti jommastakummasta harjoituksesta, tai kirjoita uusi lyhyt kappale (4–6 virkettä) omasta aiheestasi.</li>
         <li>Käy kappale läpi virke kerrallaan. Merkitse jokaisen viereen omin sanoin: <b>fakta</b>, <b>tulkinta</b> vai <b>olettamus</b>.</li>
-        <li class="extra">Valitse yksi omista olettamuksistasi. Lisää siihen yksi virke, joka muuttaa sen faktaksi todisteen avulla.</li>
+        <li class="extra">Valitse yksi omista olettamuksistasi. Lisää <b>lähde tai todiste</b>, joka tukee väitettä.</li>
       </ol>
       <div class="eval-box">
         <span class="eval-label">Muista ero</span>
@@ -572,21 +627,32 @@
     <div class="ai-panel opponent">
       <div class="panel-head">
         <span class="badge-ai">AI</span>
-        <h4>Haasta oma luokittelusi</h4>
+        <h4>Puolusta luokittelusi</h4>
       </div>
-      <p style="font-size:14px;margin-bottom:16px;">Liitä teksti, oma luokittelusi ja virke jolla vahvistit yhden olettamuksen todisteella.</p>
+      <p style="font-size:14px;margin-bottom:16px;">Liitä teksti, oma luokittelusi ja lähde tai todiste, jolla tuet valitsemaasi olettamusta.</p>
       <label class="field-label" for="h3-text">Teksti</label>
       <textarea id="h3-text" placeholder="Liitä tähän tarkistettava kappale..."></textarea>
       <label class="field-label" for="h3-classification">Oma luokittelusi</label>
       <textarea id="h3-classification" placeholder="Esim. Virke 1: fakta, koska... / Virke 2: tulkinta, koska..."></textarea>
-      <label class="field-label" for="h3-strengthen">Olettamuksen vahvistus todisteella</label>
-      <textarea id="h3-strengthen" placeholder="Valitsemasi olettamus + lisävirke, joka muuttaa sen faktaksi..."></textarea>
+      <label class="field-label" for="h3-strengthen">Lähde tai todiste olettamuksen tueksi</label>
+      <textarea id="h3-strengthen" placeholder="Valitsemasi olettamus + lähde tai todiste, joka tukee väitettä..."></textarea>
+      <div class="calibration">
+        <label class="field-label">Ennen kuin painat</label>
+        <p class="calib-q">Kuinka varma olet luokittelussasi (fakta / tulkinta / olettamus)?</p>
+        <div class="calib-radios">
+          <label><input type="radio" name="h3-confidence" value="1"> 1</label>
+          <label><input type="radio" name="h3-confidence" value="2"> 2</label>
+          <label><input type="radio" name="h3-confidence" value="3"> 3</label>
+          <label><input type="radio" name="h3-confidence" value="4"> 4</label>
+          <label><input type="radio" name="h3-confidence" value="5"> 5</label>
+        </div>
+      </div>
       <button class="run-btn" id="h3-btn" onclick="checkClassification()">Tarkista luokittelu</button>
 
       <div class="ai-output" id="h3-output"></div>
 
       <div class="followup" id="h3-followup">
-        <label class="field-label" for="h3-reply">Vastaa tekoälyn kysymykseen</label>
+        <label class="field-label" for="h3-reply">Perustele ratkaisusi</label>
         <textarea id="h3-reply" placeholder="Perustele luokittelusi tarkemmin..."></textarea>
         <div class="panel-foot">
           <button class="run-btn" id="h3-reply-btn" onclick="replyH3()">Lähetä vastaus</button>
@@ -601,16 +667,16 @@
     </div>
   </section>
 
-  <!-- HARJOITUS 4 -->
+  <!-- KORJAAMINEN -->
   <section id="harjoitus4">
-    <div class="comment"><span class="who">Harjoitus 4</span><span class="what">tavoite: opi sanomaan ei tekoälylle</span></div>
+    <div class="comment"><span class="who">Korjaaminen</span><span class="what">tavoite: opi sanomaan ei tekoälylle</span></div>
     <h2>Korjaa tekoäly</h2>
     <div class="card edge-rust">
       <p class="lead">Tämä on tärkein harjoitus. Oikea työ ei ole tekoälyn käyttäminen — se on tekoälyn korjaaminen.</p>
       <h3>Näin se toimii</h3>
       <ol class="steps">
-        <li>Pyydä tekoälyä kirjoittamaan kappale aiheestasi. Se kätkee tekstiin tarkoituksella ainakin viisi ongelmaa.</li>
-        <li>Löydä vähintään viisi ongelmaa itse.</li>
+        <li>Pyydä tekoälyä kirjoittamaan kappale aiheestasi <b>normaalisti</b> — kuten oikeassa työssä.</li>
+        <li>Etsi tekstistä itse vähintään viisi kohtaa, joita voisi parantaa.</li>
         <li>Kirjoita korjattu versio.</li>
       </ol>
       <div class="eval-box">
@@ -628,16 +694,27 @@
     <div class="ai-panel opponent">
       <div class="panel-head">
         <span class="badge-ai">AI</span>
-        <h4>Tekoäly kirjoittaa — sinä korjaat</h4>
+        <h4>Tekoäly kirjoittaa — sinä arvioit ja korjaat</h4>
       </div>
-      <p style="font-size:14px;margin-bottom:16px;">Aloita pyytämällä kappale. Etsi ongelmat itse ennen kuin luet tekoälyn vihjeitä.</p>
-      <button class="run-btn" id="h4-btn" onclick="generateFlawed()">Pyydä tekoälyä kirjoittamaan kappale</button>
+      <p style="font-size:14px;margin-bottom:16px;">Pyydä ensin tavallinen luonnoskappale. Arvioi se itse ennen kuin pyydät tekoälyltä palautetta korjauksistasi.</p>
+      <div class="calibration">
+        <label class="field-label">Ennen kuin painat</label>
+        <p class="calib-q">Kuinka varma olet, että löydät tekstistä parannettavat kohdat?</p>
+        <div class="calib-radios">
+          <label><input type="radio" name="h4-confidence" value="1"> 1</label>
+          <label><input type="radio" name="h4-confidence" value="2"> 2</label>
+          <label><input type="radio" name="h4-confidence" value="3"> 3</label>
+          <label><input type="radio" name="h4-confidence" value="4"> 4</label>
+          <label><input type="radio" name="h4-confidence" value="5"> 5</label>
+        </div>
+      </div>
+      <button class="run-btn" id="h4-btn" onclick="generateParagraph()">Pyydä tekoälyä kirjoittamaan kappale</button>
 
       <div class="ai-output" id="h4-output"></div>
 
       <div class="followup" id="h4-followup">
-        <label class="field-label" for="h4-problems">Löytämäsi ongelmat (vähintään viisi)</label>
-        <textarea id="h4-problems" placeholder="Listaa löytämäsi ongelmat..."></textarea>
+        <label class="field-label" for="h4-problems">Löytämäsi parannettavat kohdat (vähintään viisi)</label>
+        <textarea id="h4-problems" placeholder="Listaa kohdat, joita voisit parantaa..."></textarea>
         <label class="field-label" for="h4-fixed">Korjattu teksti</label>
         <textarea id="h4-fixed" placeholder="Kirjoita korjattu versio..."></textarea>
         <div class="panel-foot">
@@ -713,6 +790,11 @@
         <input type="range" min="1" max="5" value="3" oninput="updateSA(this,'sa6')">
         <span class="sa-val" id="sa6">3</span>
       </div>
+      <div class="sa-row">
+        <span class="sa-text">Osaan perustella, miksi en hyväksy tekoälyn ehdotusta.</span>
+        <input type="range" min="1" max="5" value="3" oninput="updateSA(this,'sa7')">
+        <span class="sa-val" id="sa7">3</span>
+      </div>
       <p class="sa-summary">Keskiarvo: <b id="sa-avg">3.0</b> / 5</p>
     </div>
   </section>
@@ -739,6 +821,10 @@
         <p class="q">Miten oma kirjoittamisesi muuttui tämän moduulin aikana?</p>
         <textarea id="r-mod-4" placeholder="Vastauksesi..."></textarea>
       </div>
+      <div class="reflect-q">
+        <p class="q">Mikä oli moduulin vaikein päätös?</p>
+        <textarea id="r-mod-5" placeholder="Vastauksesi..."></textarea>
+      </div>
 
       <p class="reflect-sub">Paperguidesta ja Jennistä</p>
       <div class="reflect-q">
@@ -760,12 +846,62 @@
 
       <p class="reflect-sub">Faktasta, tulkinnasta ja korjaamisesta</p>
       <div class="reflect-q">
-        <p class="q">Mistä virkkeestä sinun ja tekoälyn näkemykset erosivat eniten Harjoituksessa 3 — ja kumpi oli lopulta oikeassa?</p>
+        <p class="q">Mistä virkkeestä sinun ja tekoälyn näkemykset erosivat eniten Perusteleminen-osiossa — ja kumpi oli lopulta oikeassa?</p>
         <textarea id="r-fact-1" placeholder="Vastauksesi..."></textarea>
       </div>
       <div class="reflect-q" style="margin-bottom:0;">
-        <p class="q">Mikä oli vaikeinta tekoälyn kirjoittaman tekstin korjaamisessa Harjoituksessa 4?</p>
+        <p class="q">Mikä oli vaikeinta tekoälyn kirjoittaman tekstin korjaamisessa Korjaaminen-osiossa?</p>
         <textarea id="r-fact-2" placeholder="Vastauksesi..."></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOPPUTEHTÄVÄ -->
+  <section id="lopputehtava">
+    <p class="section-num">Lopputehtävä</p>
+    <h2>Hyväksy tai hylkää — perustellen</h2>
+    <p>Kirjoita yksi tutkimuskappale aiheestasi. Saat käyttää tekoälyä niin paljon kuin haluat — mutta jokaisen tekoälyn ehdottaman muutoksen kohdalla sinun täytyy päättää ja perustella.</p>
+    <div class="card edge-teal">
+      <label class="field-label" for="capstone-text">Lopullinen tutkimuskappaleesi</label>
+      <textarea id="capstone-text" placeholder="Kirjoita tai liitä lopullinen kappale tähän..."></textarea>
+
+      <p class="reflect-sub" style="margin-top:24px;">Tekoälyn muutokset — päätökset</p>
+      <p style="font-size:14px;color:var(--ink-muted);margin:0 0 16px;">Täytä vähintään kolme merkittävää tekoälyn ehdottamaa muutosta.</p>
+
+      <div class="capstone-decision">
+        <p class="dec-head">Muutos 1</p>
+        <label class="field-label" for="cap-d1-change">Mitä tekoäly ehdotti?</label>
+        <textarea id="cap-d1-change" placeholder="Kuvaile muutos lyhyesti..."></textarea>
+        <div class="dec-choice">
+          <label><input type="radio" name="cap-d1-decision" value="accept"> ✓ Hyväksyn</label>
+          <label><input type="radio" name="cap-d1-decision" value="reject"> ✗ Hylkään</label>
+        </div>
+        <label class="field-label" for="cap-d1-rationale">Perustelu</label>
+        <textarea id="cap-d1-rationale" placeholder="Miksi hyväksyit tai hylkäsit?"></textarea>
+      </div>
+
+      <div class="capstone-decision">
+        <p class="dec-head">Muutos 2</p>
+        <label class="field-label" for="cap-d2-change">Mitä tekoäly ehdotti?</label>
+        <textarea id="cap-d2-change" placeholder="Kuvaile muutos lyhyesti..."></textarea>
+        <div class="dec-choice">
+          <label><input type="radio" name="cap-d2-decision" value="accept"> ✓ Hyväksyn</label>
+          <label><input type="radio" name="cap-d2-decision" value="reject"> ✗ Hylkään</label>
+        </div>
+        <label class="field-label" for="cap-d2-rationale">Perustelu</label>
+        <textarea id="cap-d2-rationale" placeholder="Miksi hyväksyit tai hylkäsit?"></textarea>
+      </div>
+
+      <div class="capstone-decision">
+        <p class="dec-head">Muutos 3</p>
+        <label class="field-label" for="cap-d3-change">Mitä tekoäly ehdotti?</label>
+        <textarea id="cap-d3-change" placeholder="Kuvaile muutos lyhyesti..."></textarea>
+        <div class="dec-choice">
+          <label><input type="radio" name="cap-d3-decision" value="accept"> ✓ Hyväksyn</label>
+          <label><input type="radio" name="cap-d3-decision" value="reject"> ✗ Hylkään</label>
+        </div>
+        <label class="field-label" for="cap-d3-rationale">Perustelu</label>
+        <textarea id="cap-d3-rationale" placeholder="Miksi hyväksyit tai hylkäsit?"></textarea>
       </div>
     </div>
   </section>
@@ -827,7 +963,18 @@
     return parts.length ? (parts.join('\n') + '\n\n') : '';
   }
 
-  // ---------- MINI QUIZ (VAIHE 2) ----------
+  // ---------- MINI QUIZ (VAIHE 2) — recall first, then reveal options ----------
+  document.querySelectorAll('.quiz-reveal-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.target);
+      if(!target) return;
+      target.classList.remove('hidden');
+      target.classList.add('revealed');
+      btn.style.display = 'none';
+      if(mwApi) mwApi.scheduleSave();
+    });
+  });
+
   document.querySelectorAll('.quiz-opts').forEach(group => {
     const answer = group.dataset.answer;
     const feedback = group.nextElementSibling;
@@ -844,8 +991,28 @@
         feedback.textContent = 'Oikea vastaus on merkitty vihreällä. Mieti, miksi se sopii paremmin.';
       }
       feedback.classList.add('show');
+      if(mwApi) mwApi.scheduleSave();
     });
   });
+
+  function getConfidence(name){
+    const el = document.querySelector('input[name="'+name+'"]:checked');
+    return el ? el.value : null;
+  }
+
+  function requireConfidence(name, id){
+    const val = getConfidence(name);
+    if(val) return val;
+    const { output } = getEls(id);
+    output.innerHTML = '<div class="turn from-ai error"><span class="src">Huomio</span>Arvioi ensin oma varmuutesi (1–5) ennen tekoälyä.</div>';
+    output.classList.add('show');
+    return null;
+  }
+
+  function confidenceNote(name, label){
+    const val = getConfidence(name);
+    return val ? (label + ': ' + val + '/5\n\n') : '';
+  }
 
   // ---------- VERSION HISTORY WORD COUNT ----------
   function countWords(id){
@@ -857,7 +1024,7 @@
   // ---------- SELF ASSESSMENT ----------
   function updateSA(input, id){
     document.getElementById(id).textContent = input.value;
-    const vals = ['sa1','sa2','sa3','sa4','sa5','sa6'].map(k => Number(document.getElementById(k).textContent));
+    const vals = ['sa1','sa2','sa3','sa4','sa5','sa6','sa7'].map(k => Number(document.getElementById(k).textContent));
     const avg = vals.reduce((a,b)=>a+b,0) / vals.length;
     document.getElementById('sa-avg').textContent = avg.toFixed(1);
   }
@@ -866,8 +1033,8 @@
   const panels = {
     h1: { system: "Olet tiukka mutta reilu tutkimuskirjoittamisen ohjaaja. Saat opiskelijan Paperguide-työkalulla tuottaman tekstin (sisältää myös opiskelijan itse uudelleenkirjoittaman virkkeen), mahdollisesti aiheen ja tutkimuskysymyksen. Tee näin: 1) käy väitteet läpi ja merkitse jokainen lyhyesti (a) lähteeseen sidottu, (b) liian yleinen, tai (c) oma tulkinta ilman lähdettä, 2) kommentoi lyhyesti, vahvistuiko opiskelijan itse uudelleenkirjoittama virke alkuperäiseen verrattuna, 3) valitse koko tekstistä YKSI heikoin jäljellä oleva väite ja haasta opiskelija: esitä yksi tarkka kysymys, johon hänen on vastattava ennen kuin hyväksyt väitteen. Vastaa lyhyesti suomeksi. Kun opiskelija vastaa haasteeseesi, arvioi vastauksen vahvuus rehellisesti: joko hyväksy se perustellen miksi, tai esitä uusi, tarkempi vastakysymys. Älä koskaan kirjoita tekstiä opiskelijan puolesta.", history: [] },
     h2: { system: "Olet kirjoittamisen kriitikko. Saat opiskelijan oman luonnoksen, Jenni AI:lla mahdollisimman vakuuttavaksi muokatun version sekä mahdollisesti aiheen ja tutkimuskysymyksen. Tee näin: 1) nosta esiin lyhyesti, mikä tekstissä selkeytyi, 2) etsi YKSI kohta, jossa vakuuttavuus alkoi ohittaa näytön — eli teksti kuulostaa vahvemmalta kuin todisteet oikeuttavat — ja kysy opiskelijalta, hyväksyykö hän tämän muutoksen ja miksi. Vastaa lyhyesti suomeksi. Kun opiskelija vastaa, arvioi perustelun vahvuus rehellisesti: hyväksy se tai haasta tarkemmin. Älä koskaan kirjoita tekstiä opiskelijan puolesta.", history: [] },
-    h3: { system: "Olet akateemisen tekstin tarkistaja, joka opettaa erottamaan faktan, tulkinnan ja olettamuksen. Saat opiskelijan tekstin, hänen oman luokittelunsa virkkeistä (fakta / tulkinta / olettamus) sekä virkkeen, jolla hän yritti vahvistaa yhden olettamuksensa todisteeksi. Tee näin: 1) vertaa luokittelua tekstiin tarkasti — jos olet eri mieltä jostain virkkeestä, nosta juuri se virke esiin ja kysy, miksi opiskelija luokitteli sen niin, älä vielä paljasta omaa näkemystäsi, 2) arvioi, muuttiko opiskelijan lisävirke olettamuksen oikeasti faktaksi vai onko se yhä todistamaton. Vastaa lyhyesti suomeksi. Kun opiskelija perustelee vastauksensa, arvioi perustelu rehellisesti: hyväksy se tai haasta uudelleen tarkemmalla kysymyksellä.", history: [] },
-    h4: { system: "Olet harjoitustekstin kirjoittaja ja sen jälkeen tarkka tarkistaja. Kun opiskelija pyytää kappaletta, kirjoita 5-7 virkkeen pituinen kappale hänen aiheestaan (tai yleisesti tutkimuskirjoittamisesta, jos aihetta ei ole annettu). Upota tekstiin tarkoituksella nämä viisi ongelmaa, paljastamatta niitä: liian yleinen väite, puuttuva lähde, epäselvä perustelu, toistava kohta, liian itsevarma ilmaus. Kirjoita vain kappale, ei muuta — älä listaa ongelmia tässä vaiheessa. Kun opiskelija myöhemmin lähettää löytämänsä ongelmat ja korjatun version, vertaa niitä alkuperäiseen kappaleeseesi: kerro lyhyesti, mitkä viidestä ongelmasta opiskelija löysi, mitkä jäivät huomaamatta, ja onko korjaus vahva. Jos opiskelija jätti ongelmia löytämättä, älä paljasta niitä suoraan — anna vihje ja kysy uudelleen. Vastaa aina lyhyesti suomeksi.", history: [] }
+    h3: { system: "Olet akateemisen tekstin tarkistaja, joka opettaa erottamaan faktan, tulkinnan ja olettamuksen. Saat opiskelijan tekstin, hänen oman luokittelunsa virkkeistä (fakta / tulkinta / olettamus) sekä lähteen tai todisteen, jolla hän yrittää tukea valitsemaansa olettamusta. Tee näin: 1) vertaa luokittelua tekstiin tarkasti — jos olet eri mieltä jostain virkkeestä, nosta juuri se virke esiin ja kysy, miksi opiskelija luokitteli sen niin, älä vielä paljasta omaa näkemystäsi, 2) arvioi, tukeeko opiskelijan lähde tai todiste väitettä riittävästi — muista että yksi virke ei tee olettamuksesta automaattisesti faktaa, vaan todiste tekee sen. Vastaa lyhyesti suomeksi. Kun opiskelija perustelee vastauksensa, arvioi perustelu rehellisesti: hyväksy se tai haasta uudelleen tarkemmalla kysymyksellä.", history: [] },
+    h4: { system: "Olet tutkimuskirjoittamisen sparraaja. Kun opiskelija pyytää kappaletta, kirjoita 5–7 virkkeen pituinen akateeminen luonnoskappale hänen aiheestaan normaalisti — kuten oikea tekoäly kirjoittaisi, ilman tarkoituksellisia virheitä. Kirjoita vain kappale, ei muuta. Kun opiskelija myöhemmin lähettää löytämänsä parannettavat kohdat ja korjatun version, arvioi rehellisesti: mitkä huomiot olivat osuvia, mitä hän jätti huomaamatta, ja onko korjattu versio vahvempi. Jos jotain jäi huomaamatta, anna vihje — älä luettelo suoraan kaikkia puutteita. Vastaa aina lyhyesti suomeksi.", history: [] }
   };
 
   function getEls(id){
@@ -967,10 +1134,11 @@
   // ---------- HARJOITUS 1 ----------
   function checkClaims(){
     const input = document.getElementById('h1-input').value.trim();
+    const conf = requireConfidence('h1-confidence', 'h1');
     const { btn } = getEls('h1');
-    if(!requireFields('h1', [input])) return;
+    if(!conf || !requireFields('h1', [input])) return;
 
-    panels.h1.history = [{ role: 'user', content: contextPrefix() + 'TEKSTI (PAPERGUIDE + OMA UUDELLEENKIRJOITUS):\n' + input, shortLabel: 'Liitin tekstin tarkistettavaksi.' }];
+    panels.h1.history = [{ role: 'user', content: confidenceNote('h1-confidence', 'Opiskelijan arvio omasta varmuudestaan ennen tarkistusta') + contextPrefix() + 'TEKSTI (PAPERGUIDE + OMA UUDELLEENKIRJOITUS):\n' + input, shortLabel: 'Liitin tekstin tarkistettavaksi (varmuus: '+conf+'/5).' }];
     renderThread('h1');
     runTurn('h1', btn);
   }
@@ -992,11 +1160,13 @@
   function compareMeaning(){
     const original = document.getElementById('h2-original').value.trim();
     const revised = document.getElementById('h2-revised').value.trim();
+    const metacog = document.getElementById('h2-metacog').value.trim();
+    const conf = requireConfidence('h2-confidence', 'h2');
     const { btn } = getEls('h2');
-    if(!requireFields('h2', [original, revised])) return;
+    if(!conf || !requireFields('h2', [original, revised])) return;
 
-    const userText = contextPrefix() + 'ALKUPERÄINEN LUONNOS:\n' + original + '\n\nJENNIN VAKUUTTAVAKSI MUOKKAAMA VERSIO:\n' + revised;
-    panels.h2.history = [{ role: 'user', content: userText, shortLabel: 'Liitin alkuperäisen ja vakuuttavaksi muokatun version vertailtavaksi.' }];
+    const userText = confidenceNote('h2-confidence', 'Opiskelijan arvio ennen vertailua') + contextPrefix() + 'ALKUPERÄINEN LUONNOS:\n' + original + '\n\nJENNIN MUOKKAAMA VERSIO:\n' + revised + (metacog ? ('\n\nOPISKELIJAN METACOGNITIO (miksi tekoäly muutti):\n' + metacog) : '');
+    panels.h2.history = [{ role: 'user', content: userText, shortLabel: 'Liitin versiot vertailtavaksi (varmuus: '+conf+'/5).' }];
     renderThread('h2');
     runTurn('h2', btn);
   }
@@ -1019,11 +1189,12 @@
     const text = document.getElementById('h3-text').value.trim();
     const classification = document.getElementById('h3-classification').value.trim();
     const strengthen = document.getElementById('h3-strengthen').value.trim();
+    const conf = requireConfidence('h3-confidence', 'h3');
     const { btn } = getEls('h3');
-    if(!requireFields('h3', [text, classification])) return;
+    if(!conf || !requireFields('h3', [text, classification])) return;
 
-    const userText = contextPrefix() + 'TEKSTI:\n' + text + '\n\nOPISKELIJAN LUOKITTELU:\n' + classification + (strengthen ? ('\n\nOLETTAMUKSEN VAHVISTUS TODISTEELLA:\n' + strengthen) : '');
-    panels.h3.history = [{ role: 'user', content: userText, shortLabel: 'Liitin tekstin, luokitteluni ja vahvistusyritykseni tarkistettavaksi.' }];
+    const userText = confidenceNote('h3-confidence', 'Opiskelijan arvio luokittelustaan') + contextPrefix() + 'TEKSTI:\n' + text + '\n\nOPISKELIJAN LUOKITTELU:\n' + classification + (strengthen ? ('\n\nLÄHDE TAI TODISTE:\n' + strengthen) : '');
+    panels.h3.history = [{ role: 'user', content: userText, shortLabel: 'Liitin luokitteluni tarkistettavaksi (varmuus: '+conf+'/5).' }];
     renderThread('h3');
     runTurn('h3', btn);
   }
@@ -1042,9 +1213,12 @@
   }
 
   // ---------- HARJOITUS 4 ----------
-  function generateFlawed(){
+  function generateParagraph(){
+    const conf = requireConfidence('h4-confidence', 'h4');
     const { btn } = getEls('h4');
-    panels.h4.history = [{ role: 'user', content: contextPrefix() + 'Kirjoita harjoituskappale aiheestani.', shortLabel: 'Pyysin tekoälyä kirjoittamaan harjoituskappaleen.' }];
+    if(!conf) return;
+
+    panels.h4.history = [{ role: 'user', content: confidenceNote('h4-confidence', 'Opiskelijan arvio ennen luonnoksen pyytämistä') + contextPrefix() + 'Kirjoita normaali akateeminen luonnoskappale aiheestani.', shortLabel: 'Pyysin tekoälyä kirjoittamaan kappaleen (varmuus: '+conf+'/5).' }];
     renderThread('h4');
     runTurn('h4', btn);
   }
@@ -1058,7 +1232,7 @@
       output.classList.add('show');
       return;
     }
-    const content = 'LÖYTÄMÄNI ONGELMAT:\n' + problems + '\n\nKORJATTU TEKSTI:\n' + fixed;
+    const content = 'LÖYTÄMÄNI PARANNETTAVAT KOHDAT:\n' + problems + '\n\nKORJATTU TEKSTI:\n' + fixed;
     panels.h4.history.push({ role: 'user', content: content, shortLabel: 'Lähetin löytämäni ongelmat ja korjatun tekstin.' });
     renderThread('h4');
     runTurn('h4', replyBtn);
@@ -1070,20 +1244,44 @@
 <script>
 (function(){
   var MODULE_ID = 'moduuli-tekoaly-kirjoituskumppanina';
-  var FIELD_IDS = ['research-question','h1-input','h1-reply','h1-rejected','h2-original','h2-revised','h2-reply','h2-rejected','h3-text','h3-classification','h3-strengthen','h3-reply','h3-rejected','h4-problems','h4-fixed','h4-rejected','v1','v2','v3','v-changes','r-mod-1','r-mod-2','r-mod-3','r-mod-4','r-tools-1','r-tools-2','r-tools-3','r-tools-4','r-fact-1','r-fact-2'];
+  var FIELD_IDS = ['research-question','quiz-recall-1','quiz-recall-2','quiz-recall-3','h1-input','h1-reply','h1-rejected','h2-metacog','h2-original','h2-revised','h2-reply','h2-rejected','h3-text','h3-classification','h3-strengthen','h3-reply','h3-rejected','h4-problems','h4-fixed','h4-rejected','v1','v2','v3','v-changes','r-mod-1','r-mod-2','r-mod-3','r-mod-4','r-mod-5','r-tools-1','r-tools-2','r-tools-3','r-tools-4','r-fact-1','r-fact-2','capstone-text','cap-d1-change','cap-d1-rationale','cap-d2-change','cap-d2-rationale','cap-d3-change','cap-d3-rationale'];
 
   function collectQuizState(){
     var out = [];
-    document.querySelectorAll('.quiz-opts').forEach(function(group){
-      var sel = group.querySelector('.quiz-opt.correct, .quiz-opt.wrong');
-      out.push({ answer: group.dataset.answer, selected: sel ? sel.dataset.val : null });
+    document.querySelectorAll('.quiz-q').forEach(function(q){
+      var group = q.querySelector('.quiz-opts');
+      var recall = q.querySelector('.quiz-recall-input');
+      var sel = group ? group.querySelector('.quiz-opt.correct, .quiz-opt.wrong') : null;
+      out.push({
+        answer: group ? group.dataset.answer : null,
+        selected: sel ? sel.dataset.val : null,
+        recall: recall ? recall.value : '',
+        revealed: group ? group.classList.contains('revealed') : false
+      });
     });
     return out;
   }
 
+  function collectConfidence(){
+    return {
+      h1: (document.querySelector('input[name="h1-confidence"]:checked') || {}).value || null,
+      h2: (document.querySelector('input[name="h2-confidence"]:checked') || {}).value || null,
+      h3: (document.querySelector('input[name="h3-confidence"]:checked') || {}).value || null,
+      h4: (document.querySelector('input[name="h4-confidence"]:checked') || {}).value || null
+    };
+  }
+
+  function collectCapstoneDecisions(){
+    return {
+      d1: (document.querySelector('input[name="cap-d1-decision"]:checked') || {}).value || null,
+      d2: (document.querySelector('input[name="cap-d2-decision"]:checked') || {}).value || null,
+      d3: (document.querySelector('input[name="cap-d3-decision"]:checked') || {}).value || null
+    };
+  }
+
   function collectSA(){
     var out = {};
-    ['sa1','sa2','sa3','sa4','sa5','sa6'].forEach(function(id){
+    ['sa1','sa2','sa3','sa4','sa5','sa6','sa7'].forEach(function(id){
       var el = document.getElementById(id);
       if(el) out[id] = el.textContent;
     });
@@ -1114,6 +1312,8 @@
       customTopicVisible: document.getElementById('topic-custom-wrap').classList.contains('show'),
       fields: fields,
       quiz: collectQuizState(),
+      confidence: collectConfidence(),
+      capstoneDecisions: collectCapstoneDecisions(),
       sa: collectSA(),
       panels: {
         h1: panels.h1.history,
@@ -1127,9 +1327,19 @@
 
   function applyQuizState(quiz){
     if(!quiz || !quiz.length) return;
-    document.querySelectorAll('.quiz-opts').forEach(function(group, i){
+    document.querySelectorAll('.quiz-q').forEach(function(q, i){
       var state = quiz[i];
-      if(!state || !state.selected) return;
+      if(!state) return;
+      var group = q.querySelector('.quiz-opts');
+      var recall = q.querySelector('.quiz-recall-input');
+      var revealBtn = q.querySelector('.quiz-reveal-btn');
+      if(recall && state.recall !== undefined) recall.value = state.recall;
+      if(group && state.revealed){
+        group.classList.remove('hidden');
+        group.classList.add('revealed');
+        if(revealBtn) revealBtn.style.display = 'none';
+      }
+      if(!state.selected || !group) return;
       var feedback = group.nextElementSibling;
       [...group.children].forEach(function(c){ c.classList.remove('correct','wrong'); });
       var btn = [...group.children].find(function(c){ return c.dataset.val === state.selected; });
@@ -1143,6 +1353,24 @@
         if(correct) correct.classList.add('correct');
         if(feedback){ feedback.textContent = 'Oikea vastaus on merkitty vihreällä. Mieti, miksi se sopii paremmin.'; feedback.classList.add('show'); }
       }
+    });
+  }
+
+  function applyConfidence(conf){
+    if(!conf) return;
+    Object.keys(conf).forEach(function(key){
+      if(!conf[key]) return;
+      var el = document.querySelector('input[name="'+key+'-confidence"][value="'+conf[key]+'"]');
+      if(el) el.checked = true;
+    });
+  }
+
+  function applyCapstoneDecisions(dec){
+    if(!dec) return;
+    ['d1','d2','d3'].forEach(function(k){
+      if(!dec[k]) return;
+      var el = document.querySelector('input[name="cap-'+k+'-decision"][value="'+dec[k]+'"]');
+      if(el) el.checked = true;
     });
   }
 
@@ -1167,8 +1395,10 @@
     }
     if(typeof renderTopic === 'function') renderTopic();
     if(d.quiz) applyQuizState(d.quiz);
+    if(d.confidence) applyConfidence(d.confidence);
+    if(d.capstoneDecisions) applyCapstoneDecisions(d.capstoneDecisions);
     if(d.sa){
-      ['sa1','sa2','sa3','sa4','sa5','sa6'].forEach(function(id){
+      ['sa1','sa2','sa3','sa4','sa5','sa6','sa7'].forEach(function(id){
         var val = d.sa[id];
         var label = document.getElementById(id);
         var range = label && label.previousElementSibling;
@@ -1213,10 +1443,13 @@
       debounceMs: 1500,
       fieldIds: FIELD_IDS
     });
-    ['sa1','sa2','sa3','sa4','sa5','sa6'].forEach(function(id){
+    ['sa1','sa2','sa3','sa4','sa5','sa6','sa7'].forEach(function(id){
       var label = document.getElementById(id);
       var range = label && label.previousElementSibling;
       if(range) range.addEventListener('input', function(){ mwApi.scheduleSave(); });
+    });
+    document.querySelectorAll('.calib-radios input, .dec-choice input').forEach(function(el){
+      el.addEventListener('change', function(){ if(mwApi) mwApi.scheduleSave(); });
     });
     hookSave();
   });
