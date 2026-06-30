@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moduuli – Rakenna oikea nettisivu Lovablella</title>
+<style>
+  :root{
+    --ink:#1c2a33;
+    --ink-soft:#52646f;
+    --paper:#f7f6f2;
+    --card:#ffffff;
+    --line:#e4e2d9;
+    --teal:#1f7a72;
+    --teal-deep:#155e57;
+    --teal-soft:#e6f1ef;
+    --amber:#d98a2b;
+    --amber-soft:#fbf0df;
+    --rose:#c0566a;
+    --rose-soft:#f7e9eb;
+    --ink-shadow:0 1px 2px rgba(28,42,51,.06),0 4px 14px rgba(28,42,51,.05);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.62;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:clamp(20px,5vw,48px) clamp(18px,5vw,30px);}
+
+  /* HERO */
+  .hero{
+    background:linear-gradient(150deg,#1f7a72 0%,#124e48 100%);
+    color:#fff;border-radius:20px;
+    padding:clamp(30px,6vw,52px);
+    position:relative;overflow:hidden;
+  }
+  .hero::after{
+    content:"";position:absolute;right:-60px;top:-60px;width:240px;height:240px;
+    background:radial-gradient(circle,rgba(255,255,255,.10),transparent 70%);border-radius:50%;
+  }
+  .hero .kicker{font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.8);margin:0 0 14px;}
+  .hero h1{font-size:clamp(28px,5.4vw,44px);line-height:1.12;margin:0 0 14px;font-weight:800;letter-spacing:-.02em;max-width:20ch;}
+  .hero p{font-size:clamp(16px,2.3vw,18.5px);max-width:52ch;margin:0 0 24px;color:rgba(255,255,255,.92);}
+  .hero .meta{display:flex;flex-wrap:wrap;gap:10px;position:relative;}
+  .chip{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);padding:7px 14px;border-radius:999px;font-size:13.5px;font-weight:600;}
+
+  /* OUTCOME BANNER */
+  .outcome{
+    display:flex;gap:16px;align-items:flex-start;
+    background:var(--teal-soft);border:1px solid #c4e0db;border-radius:16px;
+    padding:20px 22px;margin:24px 0 8px;
+  }
+  .outcome .big{flex:none;font-size:30px;line-height:1;}
+  .outcome h2{margin:0 0 5px;font-size:18px;font-weight:800;color:var(--teal-deep);}
+  .outcome p{margin:0;font-size:15px;color:var(--ink);}
+  .outcome p b{color:var(--teal-deep);}
+
+  /* DAY MAP */
+  .daymap{margin:22px 0 6px;}
+  .daymap h3{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#94a2ab;margin:0 0 12px;font-weight:700;}
+  .daymap ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;counter-reset:dm;}
+  .daymap li{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-size:13.5px;font-weight:600;display:flex;gap:9px;align-items:center;counter-increment:dm;}
+  .daymap li::before{content:counter(dm);flex:none;width:24px;height:24px;border-radius:7px;background:var(--teal-soft);color:var(--teal-deep);font-size:12px;font-weight:800;display:grid;place-items:center;}
+  .daymap li.peak{background:var(--amber-soft);border-color:#f0dcb8;}
+  .daymap li.peak::before{background:var(--amber);color:#fff;}
+
+  /* STEPS */
+  .step{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(22px,4vw,32px);margin:18px 0;box-shadow:var(--ink-shadow);}
+  .step-head{display:flex;align-items:center;gap:15px;margin-bottom:4px;}
+  .step-num{flex:none;width:46px;height:46px;display:grid;place-items:center;border-radius:12px;font-size:20px;font-weight:800;color:#fff;background:var(--teal);}
+  .step.plan .step-num{background:#3a7a86;}
+  .step.peak .step-num{background:var(--amber);}
+  .step.reflect .step-num{background:var(--rose);}
+  .step-head h2{font-size:clamp(20px,3.2vw,26px);margin:0;font-weight:800;letter-spacing:-.01em;}
+  .step-head .ph{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a7b3ba;display:block;margin-bottom:2px;}
+  .step-time{font-size:13px;font-weight:600;color:#94a2ab;margin:2px 0 0;}
+  .step-body{font-size:15.5px;margin-top:14px;}
+  .step-body p:first-child{margin-top:0;}
+  .step-body h4{font-size:15.5px;margin:18px 0 6px;color:var(--teal-deep);}
+
+  /* WORKSHEET (planning) */
+  .sheet{background:#fcfbf8;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0;}
+  .sheet .sheet-h{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#a7846a;font-weight:700;margin-bottom:12px;}
+  .sheet ol{margin:0;padding-left:0;list-style:none;counter-reset:ws;}
+  .sheet li{counter-increment:ws;margin:0 0 13px;padding-left:34px;position:relative;font-size:14.5px;}
+  .sheet li:last-child{margin-bottom:0;}
+  .sheet li::before{content:counter(ws);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--amber-soft);color:#a8650f;font-weight:800;font-size:12.5px;display:grid;place-items:center;}
+  .sheet li b{color:var(--ink);}
+  .sheet .hint{color:var(--ink-soft);font-size:13px;}
+
+  /* CHOICE CARDS */
+  .choose-lede{font-size:15.5px;margin:14px 0 4px;}
+  .choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0;}
+  .choice{border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;background:#fcfbf8;}
+  .choice .ico{font-size:22px;margin-bottom:8px;display:block;}
+  .choice h3{margin:0 0 6px;font-size:16.5px;font-weight:800;color:var(--teal);}
+  .choice p{margin:0 0 10px;font-size:14px;color:var(--ink-soft);line-height:1.5;}
+  .choice .egs{font-size:13px;color:#7b8890;border-top:1px solid var(--line);padding-top:9px;}
+  .choice .egs b{color:var(--ink);font-weight:600;}
+  .choice.own{background:var(--teal-soft);border-color:#bfded8;}
+  .choice.own h3{color:var(--teal-deep);}
+
+  /* PROMPT */
+  .prompt{background:#17242b;color:#e7eef0;border-radius:13px;padding:18px 18px 16px;margin:14px 0;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.6;position:relative;}
+  .prompt::before{content:"ESIMERKKI";position:absolute;top:-10px;left:16px;background:var(--amber);color:#fff;font-weight:700;font-size:10px;letter-spacing:.1em;padding:3px 9px;border-radius:6px;font-family:-apple-system,sans-serif;}
+  .prompt.alt::before{content:"JATKO-OHJEITA";}
+  .prompt .you{color:#7fd6cc;}
+  .prompt .row{display:block;margin-bottom:7px;}
+  .prompt .row:last-child{margin-bottom:0;}
+  .prompt .lab{color:#9fb4ba;}
+  .prompt .blank{color:#ffd98a;border-bottom:1px dashed rgba(255,217,138,.5);padding:0 2px;}
+  .prompt .group{margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,.1);}
+
+  /* TIP / NOTE */
+  .tip{background:var(--amber-soft);border-left:4px solid var(--amber);border-radius:0 11px 11px 0;padding:13px 16px;margin:16px 0;font-size:14.5px;}
+  .tip b{color:#a8650f;}
+  .note{background:var(--teal-soft);border-left:4px solid var(--teal);border-radius:0 11px 11px 0;padding:13px 16px;margin:16px 0;font-size:14.5px;}
+  .note b{color:var(--teal-deep);}
+
+  /* CHECKLIST */
+  .check{list-style:none;margin:14px 0;padding:0;display:grid;gap:9px;}
+  .check li{background:#fcfbf8;border:1px solid var(--line);border-radius:10px;padding:11px 14px 11px 42px;position:relative;font-size:14.5px;}
+  .check li::before{content:"";position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;border:2px solid var(--teal);border-radius:4px;}
+
+  /* PUBLISH (peak) */
+  .publish-card{background:linear-gradient(150deg,#fbf0df 0%,#f6ede1 100%);border:1px solid #f0dcb8;border-radius:16px;padding:clamp(20px,4vw,28px);margin:14px 0;}
+  .publish-card h4{margin:0 0 6px;color:#a8650f;font-size:17px;}
+  .publish-card p{margin:0 0 10px;font-size:14.5px;color:var(--ink);}
+  .publish-card ol{margin:6px 0 0;padding-left:20px;}
+  .publish-card li{margin:0 0 7px;font-size:14.5px;}
+
+  /* REFLECT */
+  .reflect-card{background:var(--rose-soft);border:1px solid #eccfd4;border-radius:16px;padding:clamp(20px,4vw,28px);margin:14px 0;}
+  .reflect-card h4{margin:0 0 6px;color:#9c3d52;font-size:17px;}
+  .reflect-card p{margin:0 0 14px;font-size:14.5px;color:var(--ink);}
+  .reflect-list{list-style:none;margin:0;padding:0;display:grid;gap:10px;}
+  .reflect-list li{background:rgba(255,255,255,.75);border-radius:11px;padding:13px 16px;font-size:14.5px;display:flex;gap:11px;align-items:flex-start;}
+  .reflect-list .q{flex:none;font-weight:800;color:var(--rose);}
+  .ideas{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin:14px 0 0;}
+  .ideas span{background:rgba(255,255,255,.7);border:1px solid #eccfd4;border-radius:9px;padding:9px 12px;font-size:13px;color:var(--ink);}
+
+  .rules{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 26px;margin:18px 0;box-shadow:var(--ink-shadow);}
+  .rules h3{margin:0 0 12px;font-size:18px;}
+  .rules ol{margin:0;padding-left:20px;}
+  .rules li{margin:0 0 9px;font-size:15px;}
+  .rules li::marker{color:var(--teal);font-weight:700;}
+
+  .closer{text-align:center;margin:32px 0 8px;font-size:16.5px;color:var(--ink-soft);}
+  .closer strong{color:var(--teal);font-size:18.5px;display:block;margin-top:4px;}
+
+  a.link{color:var(--teal);font-weight:700;text-decoration:none;border-bottom:2px solid var(--teal-soft);}
+  a.link:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
+
+  @media (hover:hover){.choice:hover{border-color:#bfded8;}}
+
+  /* TOP NAV BAR */
+  .topbar{
+    position:sticky;top:0;z-index:50;
+    background:rgba(247,246,242,.88);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar .inner{
+    max-width:860px;margin:0 auto;
+    padding:10px clamp(18px,5vw,30px);
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .topbar a.back{
+    display:inline-flex;align-items:center;gap:7px;
+    color:var(--teal-deep);font-weight:700;font-size:14.5px;
+    text-decoration:none;padding:6px 12px;border-radius:9px;
+    border:1px solid transparent;
+  }
+  .topbar a.back:hover{background:var(--teal-soft);border-color:#c4e0db;}
+  .topbar a.back:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
+  .topbar .crumb{font-size:13px;color:#94a2ab;font-weight:600;}
+
+  /* LOVABLE INTRO CARD */
+  .toolcard{
+    display:flex;gap:16px;align-items:center;flex-wrap:wrap;
+    background:#fff;border:1px solid var(--line);border-radius:16px;
+    padding:18px 22px;margin:24px 0 8px;box-shadow:var(--ink-shadow);
+  }
+  .toolcard .tc-text{flex:1;min-width:230px;}
+  .toolcard h2{margin:0 0 4px;font-size:17px;font-weight:800;}
+  .toolcard p{margin:0;font-size:14.5px;color:var(--ink-soft);}
+  .toolcard .tc-cta{
+    display:inline-flex;align-items:center;gap:8px;
+    background:var(--teal);color:#fff;font-weight:700;font-size:15px;
+    text-decoration:none;padding:12px 20px;border-radius:11px;white-space:nowrap;
+    box-shadow:0 2px 0 rgba(21,94,87,.3);
+  }
+  .toolcard .tc-cta:hover{background:var(--teal-deep);}
+  .toolcard .tc-cta:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
+
+  /* BACK TO TOP */
+  .totop{
+    position:fixed;right:clamp(16px,4vw,28px);bottom:clamp(16px,4vw,28px);z-index:60;
+    width:48px;height:48px;border-radius:50%;
+    background:var(--teal);color:#fff;border:none;cursor:pointer;
+    font-size:22px;line-height:1;display:grid;place-items:center;
+    box-shadow:0 4px 14px rgba(28,42,51,.25);
+    opacity:0;visibility:hidden;transform:translateY(8px);
+    transition:opacity .2s ease,transform .2s ease,visibility .2s ease;
+  }
+  .totop.show{opacity:1;visibility:visible;transform:translateY(0);}
+  .totop:hover{background:var(--teal-deep);}
+  .totop:focus-visible{outline:3px solid #fff;outline-offset:2px;}
+
+  .footer-top{
+    text-align:center;margin:8px 0 30px;
+  }
+  .footer-top a{
+    display:inline-flex;align-items:center;gap:7px;
+    color:var(--teal-deep);font-weight:700;font-size:14.5px;
+    text-decoration:none;padding:9px 18px;border-radius:10px;border:1px solid #c4e0db;
+    background:var(--teal-soft);
+  }
+  .footer-top a:hover{background:#d7ebe7;}
+  .footer-top a:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
+
+  @media (prefers-reduced-motion:reduce){.totop{transition:none;}}
+</style>
+</head>
+<body>
+
+<nav class="topbar" id="top">
+  <div class="inner">
+    <a class="back" href="/">← Takaisin hallintapaneeliin</a>
+    <span class="crumb">Moduuli · Lovable</span>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">Moduuli · Lovable · Koko päivä</p>
+    <h1>Rakenna oikea nettisivu – ja julkaise se</h1>
+    <p>Suunnittelet, rakennat ja julkaiset oikean, monisivuisen nettisivun sinulle tärkeästä aiheesta. Ilman koodia. Päivän päätteeksi sinulla on toimiva sivu ja oma linkki, jonka voit jakaa.</p>
+    <div class="meta">
+      <span class="chip">⏱️ koko päivä</span>
+      <span class="chip">🛠️ Lovable</span>
+      <span class="chip">🌐 julkaistu sivu + linkki</span>
+      <span class="chip">✓ Ei kokemusta tarvita</span>
+    </div>
+  </header>
+
+  <div class="toolcard">
+    <div class="tc-text">
+      <h2>🛠️ Mikä on Lovable?</h2>
+      <p>Lovable on tekoälytyökalu, joka rakentaa nettisivun puolestasi: kerrot tavallisin sanoin, mitä haluat, ja se tekee toimivan sivun – ilman koodia. Avaa se nyt uuteen välilehteen, niin se on valmiina, kun aloitat.</p>
+    </div>
+    <a class="tc-cta" href="https://lovable.dev" target="_blank" rel="noopener">Avaa Lovable →</a>
+  </div>
+
+  <div class="outcome">
+    <span class="big">🎯</span>
+    <div>
+      <h2>Mitä sinulla on illalla</h2>
+      <p>Oma <b>monisivuinen nettisivu</b> (etusivu, galleria, yhteystiedot), joka on <b>julkaistu verkossa</b> ja jolla on <b>oma osoite</b>. Et opettele koodia – opit ohjaamaan työkalua niin, että se rakentaa ideasi sivuksi.</p>
+    </div>
+  </div>
+
+  <div class="daymap">
+    <h3>Päivän kulku</h3>
+    <ol>
+      <li>Suunnittele</li>
+      <li>Valitse aihe</li>
+      <li>Rakenna runko</li>
+      <li>Lisää sivut &amp; sisältö</li>
+      <li>Hio ja arvioi</li>
+      <li class="peak">Julkaise 🌐</li>
+      <li>Missä muualla?</li>
+    </ol>
+  </div>
+
+  <!-- STEP 1 — PLAN -->
+  <section class="step plan">
+    <div class="step-head">
+      <div class="step-num">1</div>
+      <div><span class="ph">Vaihe 1 · Ajattele</span><h2>Suunnittele ennen kuin rakennat</h2><p class="step-time">⏱️ 30 min</p></div>
+    </div>
+    <div class="step-body">
+      <p>Hyvä sivu syntyy ajatuksesta, ei sattumasta. Ennen kuin avaat työkalun, vastaa neljään kysymykseen. Kirjoita vastaukset ylös – tarvitset niitä pian, kun ohjaat Lovablea.</p>
+      <div class="sheet">
+        <div class="sheet-h">Suunnittelupohja – täytä omin sanoin</div>
+        <ol>
+          <li><b>Mistä sivu kertoo?</b> <span class="hint">Yksi lause. Esim. ”paikallinen lukupiiri, joka etsii uusia jäseniä”.</span></li>
+          <li><b>Kenelle se on?</b> <span class="hint">Kuka sen näkee ja mitä hän etsii? Mitä selkeämpi kohderyhmä, sitä parempi sivu.</span></li>
+          <li><b>Mitä haluat, että kävijä tekee tai tuntee?</b> <span class="hint">Esim. ottaa yhteyttä, ilmoittautuu, ihastuu aiheeseen.</span></li>
+          <li><b>Mitä sisältöä sinulla jo on?</b> <span class="hint">Tekstiä, kuvia, yhteystiedot, esimerkkejä. Listaa, mitä löytyy – loput keksitään matkalla.</span></li>
+        </ol>
+      </div>
+      <div class="note"><b>Miksi tämä kannattaa:</b> kun tiedät, kenelle ja miksi, osaat pyytää työkalulta oikeaa asiaa etkä tyydy siihen, mitä se ensin tarjoaa. Sama ajattelu toimii kaikessa tekoälyn käytössä.</div>
+    </div>
+  </section>
+
+  <!-- STEP 2 — CHOOSE -->
+  <section class="step">
+    <div class="step-head">
+      <div class="step-num">2</div>
+      <div><span class="ph">Vaihe 2 · Ajattele</span><h2>Valitse aihe</h2><p class="step-time">⏱️ 15 min</p></div>
+    </div>
+    <div class="step-body">
+      <p class="choose-lede">Valitse aihe, joka on sinulle aidosti merkityksellinen. Päivä on pitkä – on mukavampaa rakentaa jotain, mistä välität. Kaikki vaihtoehdot johtavat samaan: omaan julkaistuun sivuun.</p>
+      <div class="choices">
+        <div class="choice">
+          <span class="ico">🏪</span>
+          <h3>Idea tai pieni yritys</h3>
+          <p>Liikeidea, jota olet miettinyt, tai palvelu jonka voisit tarjota.</p>
+          <p class="egs"><b>Esim.</b> kahvila, korjausapu, leivonnaiset, valmennus, pieni verkkokauppa.</p>
+        </div>
+        <div class="choice">
+          <span class="ico">🎨</span>
+          <h3>Harrastus tai yhteisö</h3>
+          <p>Jokin mistä pidät tai jonka parissa toimit. Tee sille koti verkkoon.</p>
+          <p class="egs"><b>Esim.</b> lukupiiri, urheiluseura, käsityöt, bändi, puutarha, yhdistys.</p>
+        </div>
+        <div class="choice">
+          <span class="ico">📣</span>
+          <h3>Asia tai tapahtuma</h3>
+          <p>Jokin, mistä haluat kertoa muille tai jolle haluat näkyvyyttä.</p>
+          <p class="egs"><b>Esim.</b> tapahtuma, kerho, hyväntekeväisyys, oma projekti.</p>
+        </div>
+        <div class="choice own">
+          <span class="ico">💡</span>
+          <h3>Ihan oma valintasi</h3>
+          <p>Mikä tahansa, mikä kiinnostaa juuri sinua. Tämä on sinun päiväsi.</p>
+          <p class="egs"><b>Täysin vapaa</b> – sinä päätät aiheen.</p>
+        </div>
+      </div>
+      <div class="tip"><b>💡 Vinkki:</b> Anna aiheellesi <b>nimi</b> ja <b>yksi lause</b> siitä, mitä se tarjoaa. Esim. ”Lukupiiri Sivu &amp; Sana – yhdessä lukemisen ilo.” Kirjoita se suunnittelupohjaasi.</div>
+    </div>
+  </section>
+
+  <!-- STEP 3 — BUILD -->
+  <section class="step">
+    <div class="step-head">
+      <div class="step-num">3</div>
+      <div><span class="ph">Vaihe 3 · Rakenna</span><h2>Rakenna sivun runko</h2><p class="step-time">⏱️ 45 min</p></div>
+    </div>
+    <div class="step-body">
+      <p>Mene osoitteeseen <a class="link" href="https://lovable.dev" target="_blank" rel="noopener">lovable.dev</a>, kirjaudu sisään ja aloita uusi projekti. Nyt käytät suunnitelmaasi: mitä tarkemmin kerrot, sitä parempi sivu. Käytä tätä pohjaa ja vaihda <span style="color:#b8860b;font-weight:700;">keltaiset kohdat</span> omiksi teksteiksesi:</p>
+      <div class="prompt">
+        <span class="row"><span class="lab">Tee nettisivu nimelle</span> <span class="blank">”Lukupiiri Sivu &amp; Sana”</span>.</span>
+        <span class="row"><span class="lab">Mikä se on:</span> <span class="blank">paikallinen lukupiiri, joka kokoontuu kerran kuussa</span>.</span>
+        <span class="row"><span class="lab">Kenelle:</span> <span class="blank">lukemisesta kiinnostuneille, jotka etsivät seuraa ja uusia kirjoja</span>.</span>
+        <span class="row"><span class="lab">Tunnelma ja värit:</span> <span class="blank">lämmin ja kutsuva, pehmeät sävyt</span>.</span>
+        <span class="group">
+          <span class="row"><span class="lab">Tee monisivuinen sivusto, jossa on nämä sivut:</span></span>
+          <span class="row">– <span class="lab">Etusivu</span> (<span class="blank">iso otsikko, iskulause, lyhyt esittely</span>)</span>
+          <span class="row">– <span class="lab">Galleria</span> (<span class="blank">kuvia tapaamisista ja kirjoista</span>)</span>
+          <span class="row">– <span class="lab">Yhteystiedot</span> (<span class="blank">miten tulla mukaan, sähköposti, tapaamispaikka</span>)</span>
+          <span class="row"><span class="lab">Lisää ylävalikko, josta pääsee sivulta toiselle.</span></span>
+        </span>
+        <span class="group">
+          <span class="row"><span class="lab">Kuvat:</span> lisää aiheeseen sopivia kuvia – <span class="blank">iso tunnelmakuva kirjoista yläosaan</span>.</span>
+          <span class="row"><span class="lab">Liike:</span> lisää pientä eloa – <span class="blank">tekstit ilmestyvät pehmeästi ja napit reagoivat, kun hiiri menee niiden päälle</span>.</span>
+        </span>
+      </div>
+      <p>Lähetä viesti ja katso: sivusto rakentuu itsestään näytölle valikkoineen ja sivuineen. Tämän teit juuri sinä.</p>
+      <div class="note"><b>Hyvä tietää kuvista:</b> Lovable ei piirrä valokuvia tyhjästä, vaan valitsee sopivia kuvia kuvauksesi perusteella. Mitä tarkemmin kuvailet, sitä paremmin se osuu – ja voit aina pyytää vaihtamaan kuvan toiseksi.</div>
+    </div>
+  </section>
+
+  <!-- STEP 4 — CONTENT -->
+  <section class="step">
+    <div class="step-head">
+      <div class="step-num">4</div>
+      <div><span class="ph">Vaihe 4 · Rakenna</span><h2>Täytä omalla sisällölläsi</h2><p class="step-time">⏱️ 60 min</p></div>
+    </div>
+    <div class="step-body">
+      <p>Nyt sivusta tulee oikeasti sinun. Runko on valmis – täytä se todellisella sisällöllä. Pyydä muutoksia yksi kerrallaan ja katso, mikä toimii:</p>
+      <div class="prompt alt">
+        <span class="row">Vaihda etusivun esittelyteksti tähän: <span class="blank">”Olemme kahdeksan hengen lukupiiri…”</span></span>
+        <span class="row">Lisää galleriaan kuvatekstit.</span>
+        <span class="row">Lisää etusivulle osio <span class="blank">”Seuraava tapaaminen”</span>.</span>
+        <span class="row">Vaihda napin teksti muotoon <span class="blank">”Tule mukaan”</span>.</span>
+        <span class="row">Lisää alalaitaan <span class="blank">some-linkit</span>.</span>
+      </div>
+      <h4>Tee siitä rikkaampi.</h4>
+      <p>Kun perusta on kunnossa, lisää syvyyttä: uusi sivu (esim. ”Usein kysytyt kysymykset” tai ”Tarina”), lisää kuvia, listoja tai kortteja, kartta. Pyydä rohkeasti – jos et pidä tuloksesta, pyydä toisenlaista.</p>
+      <div class="tip"><b>💡 Kokeile</b> pyytää Lovablea ehdottamaan sivullesi iskulauseen, esittelytekstin tai värimaailman. Saat usein hyvän pohjan, jota voit muokata omaksesi.</div>
+    </div>
+  </section>
+
+  <!-- STEP 5 — REFINE & CRITIQUE -->
+  <section class="step">
+    <div class="step-head">
+      <div class="step-num">5</div>
+      <div><span class="ph">Vaihe 5 · Arvioi</span><h2>Hio ja arvioi</h2><p class="step-time">⏱️ 40 min</p></div>
+    </div>
+    <div class="step-body">
+      <p>Palaa vaiheessa 1 tekemääsi suunnitelmaan. Katso sivuasi kävijän silmin ja kysy: <b>tekeekö se sen, mitä halusit?</b> Käy tämä lista läpi ja korjaa sen, mikä ontuu:</p>
+      <ul class="check">
+        <li>Ymmärtääkö kävijä viidessä sekunnissa, mistä sivu kertoo?</li>
+        <li>Näkeekö hän heti, mitä häneltä toivotaan (yhteydenotto, ilmoittautuminen…)?</li>
+        <li>Toimiiko valikko, ja pääseekö jokaiselle sivulle?</li>
+        <li>Ovatko tekstit omiasi – ei täytettä?</li>
+        <li>Näyttääkö sivu hyvältä myös puhelimella?</li>
+      </ul>
+      <p>Korjaa pyytämällä. Esimerkiksi: ”tee otsikosta selkeämpi”, ”siirrä yhteystiedot ylemmäs”, ”tarkista, että sivu toimii puhelimella”. Sinä päätät, milloin sivu on riittävän hyvä – täydellistä ei tarvita.</p>
+      <div class="note"><b>Tämä on tärkein taito:</b> arvioida lopputulosta ja ohjata sitä paremmaksi. Sama pätee mihin tahansa tekoälyyn – kone ehdottaa, sinä päätät ja korjaat.</div>
+    </div>
+  </section>
+
+  <!-- STEP 6 — PUBLISH (peak) -->
+  <section class="step peak">
+    <div class="step-head">
+      <div class="step-num">6</div>
+      <div><span class="ph">Vaihe 6 · Julkaise</span><h2>Vie sivu maailmalle 🌐</h2><p class="step-time">⏱️ 20 min</p></div>
+    </div>
+    <div class="step-body">
+      <p>Tämä on päivän huipentuma. Sivusi ei jää näytölle – se tulee oikeasti verkkoon, omalla osoitteella, jonka voit jakaa kenelle tahansa.</p>
+      <div class="publish-card">
+        <h4>Julkaise näin</h4>
+        <ol>
+          <li>Etsi Lovablen yläreunasta <b>Publish</b>-painike ja paina sitä.</li>
+          <li>Lovable luo sivullesi <b>oman osoitteen</b> (linkin).</li>
+          <li>Avaa linkki uudessa välilehdessä – nyt katsot omaa sivuasi verkossa, kuten kuka tahansa muukin.</li>
+          <li><b>Kopioi linkki talteen.</b> Tämän sinä teit tänään.</li>
+        </ol>
+      </div>
+      <div class="tip"><b>💡 Testaa:</b> avaa linkki myös puhelimellasi. Kun se toimii pienelläkin näytöllä, sivu on aidosti julkaistu ja valmis jaettavaksi.</div>
+    </div>
+  </section>
+
+  <!-- STEP 7 — REFLECT / TRANSFER -->
+  <section class="step reflect">
+    <div class="step-head">
+      <div class="step-num">7</div>
+      <div><span class="ph">Vaihe 7 · Ajattele eteenpäin</span><h2>Missä muualla voisit käyttää tätä?</h2><p class="step-time">⏱️ 20 min</p></div>
+    </div>
+    <div class="step-body">
+      <p>Tänään opit taidon, et vain tehnyt yhtä sivua. Ota hetki ja mieti, mihin voisit hyödyntää sitä elämässäsi tai työssäsi. Vastaa itsellesi – ja jaa halutessasi muille.</p>
+      <div class="reflect-card">
+        <h4>Pohdi näitä</h4>
+        <ul class="reflect-list">
+          <li><span class="q">1</span><span>Mitä rakensit tänään ja mikä siinä yllätti sinut?</span></li>
+          <li><span class="q">2</span><span>Mainitse <b>kolme tilannetta</b>, joissa voisit käyttää tätä taitoa.</span></li>
+          <li><span class="q">3</span><span>Mikä olisi seuraava sivu, jonka haluaisit tehdä?</span></li>
+        </ul>
+        <div class="ideas">
+          <span>🔎 Työnhaku: portfolio tai näytesivu</span>
+          <span>🤝 Harrastus tai yhdistys</span>
+          <span>🎉 Tapahtuma tai juhlat</span>
+          <span>💼 Oma palvelu tai sivutoimi</span>
+          <span>👪 Perheen tai ystäväporukan projekti</span>
+          <span>📚 Oppiminen ja kokeilu</span>
+        </div>
+      </div>
+      <div class="note"><b>Muista:</b> et tarvitse lupaa tai budjettia kokeillaksesi. Idean voi viedä verkkoon saman tien – juuri niin kuin tänään teit.</div>
+    </div>
+  </section>
+
+  <div class="rules">
+    <h3>Pari periaatetta:</h3>
+    <ol>
+      <li><b>Ei vääriä valintoja.</b> Mikä tahansa aihe käy – tärkeintä on, että pääset rakentamaan.</li>
+      <li><b>Keskeneräinen on ok.</b> Sivun ei tarvitse olla täydellinen ollakseen valmis ja julkaistavissa.</li>
+      <li><b>Sinä ohjaat työkalua.</b> Jos tulos ei miellytä, pyydä uutta. Vastuu on sinulla, ei koneella.</li>
+      <li><b>Kysy rohkeasti.</b> Jos jokin jää epäselväksi, kysy – ja kokeile pelkäämättä.</li>
+    </ol>
+  </div>
+
+  <p class="closer">
+    Tänään suunnittelit, rakensit ja julkaisit oikean nettisivun ilman koodia.
+    <strong>Saman taidon voit ottaa käyttöön mihin tahansa ideaan, milloin vain.</strong>
+  </p>
+
+  <div class="footer-top" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:12px;">
+    <a href="/module/moduuli-esitykset-tarjoukset-viestinta">← Edellinen moduuli</a>
+    <a href="/module/moduuli-visibility-growth-automation">Seuraava moduuli →</a>
+  </div>
+  <div class="footer-top">
+    <a href="#top">↑ Takaisin alkuun</a>
+  </div>
+
+</div>
+
+<button class="totop" id="totop" aria-label="Takaisin sivun alkuun" title="Takaisin alkuun">↑</button>
+
+<script>
+  (function(){
+    var btn = document.getElementById('totop');
+    function onScroll(){
+      if (window.scrollY > 600){ btn.classList.add('show'); }
+      else { btn.classList.remove('show'); }
+    }
+    window.addEventListener('scroll', onScroll, {passive:true});
+    btn.addEventListener('click', function(){
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+    onScroll();
+  })();
+</script>
+</body>
+</html>
