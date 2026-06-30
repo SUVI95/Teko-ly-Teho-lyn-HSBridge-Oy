@@ -1025,6 +1025,16 @@ function buildOfflineInterviewFollowup() {
   return promptsByStep[S.questionCount] || 'Jatka yhdella konkreettisella esimerkillä kayttajan arjesta.';
 }
 
+function completeInterview() {
+  if (S.interviewDone) return;
+  S.interviewDone = true;
+  document.getElementById('chatInputRow').style.display = 'none';
+  document.getElementById('toPromptBtn').classList.remove('hidden');
+  document.getElementById('startInterviewBtn').classList.add('hidden');
+  updateDots(true);
+  appWorkSaveNow();
+}
+
 async function askDuunijobsAI(){
   showTyping();
   try{
@@ -1033,24 +1043,20 @@ async function askDuunijobsAI(){
     const display=formatChatDisplay(t.replace('INTERVIEW_COMPLETE — ',''));
     addBubble('ai',display);
     S.chatHistory.push({role:'assistant',content:t});
-    if(t.includes('INTERVIEW_COMPLETE')){
-      S.interviewDone=true;
-      document.getElementById('chatInputRow').style.display='none';
-      document.getElementById('toPromptBtn').classList.remove('hidden');
-      updateDots(true);
+    // Force-complete after the 5th answer regardless of AI wording
+    if(t.includes('INTERVIEW_COMPLETE') || S.questionCount >= 5){
+      completeInterview();
     }
     appWorkSaveNow();
   }catch(e){
     hideTyping();
     const fallbackRaw = buildOfflineInterviewFollowup();
-    const fallbackDisplay = formatChatDisplay(fallbackRaw.replace('INTERVIEW_COMPLETE — ', '')) + '\n\n(Varatila kaytossa: AI-yhteys katkesi, mutta vastaukset tallentuivat.)';
+    const fallbackDisplay = formatChatDisplay(fallbackRaw.replace('INTERVIEW_COMPLETE — ', ''))
+      + (S.questionCount < 5 ? '\n\n(AI-yhteys katkesi hetkeksi — kirjoita vastauksesi ja jatka.)' : '');
     addBubble('ai', fallbackDisplay);
     S.chatHistory.push({ role: 'assistant', content: fallbackRaw });
-    if (fallbackRaw.includes('INTERVIEW_COMPLETE')) {
-      S.interviewDone = true;
-      document.getElementById('chatInputRow').style.display = 'none';
-      document.getElementById('toPromptBtn').classList.remove('hidden');
-      updateDots(true);
+    if (fallbackRaw.includes('INTERVIEW_COMPLETE') || S.questionCount >= 5) {
+      completeInterview();
     }
     appWorkSaveNow();
     document.getElementById('chatSendBtn').disabled=false;
@@ -1385,7 +1391,10 @@ function restoreInterviewFromWork(d) {
   if (!d.chatHistory || !d.chatHistory.length) return;
   document.getElementById('startInterviewBtn').classList.add('hidden');
   document.getElementById('chatEmpty').style.display = 'none';
-  if (d.interviewDone) {
+  // Also treat as done if 5+ answers were given, even if flag wasn't saved correctly
+  var isDone = !!d.interviewDone || (d.questionCount >= 5);
+  if (isDone) {
+    S.interviewDone = true;
     document.getElementById('chatInputRow').style.display = 'none';
     document.getElementById('toPromptBtn').classList.remove('hidden');
   } else {
@@ -1397,7 +1406,7 @@ function restoreInterviewFromWork(d) {
     if (m.role === 'user') addBubble('user', m.content);
     else addBubble('ai', m.content);
   });
-  updateDots(!!d.interviewDone);
+  updateDots(isDone);
 }
 
 function applyAppBuilderWork(d) {
@@ -1409,7 +1418,8 @@ function applyAppBuilderWork(d) {
   S.appName = d.appName || '';
   S.chatHistory = d.chatHistory || [];
   S.questionCount = d.questionCount || 0;
-  S.interviewDone = !!d.interviewDone;
+  // Backfill interviewDone in case it was never saved correctly (e.g. old sessions)
+  S.interviewDone = !!d.interviewDone || S.questionCount >= 5;
   S.generatedPrompt = d.generatedPrompt || '';
   S.finalPrompt = d.finalPrompt || S.generatedPrompt || '';
   S.appUrl = d.appUrl || '';
