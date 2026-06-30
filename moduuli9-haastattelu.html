@@ -3274,8 +3274,11 @@ async function speakMockText(text, instructions) {
     });
     if (!r.ok) throw new Error('speech ' + r.status);
     const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
+    const mime = r.headers.get('Content-Type') || blob.type || 'audio/mpeg';
+    const url = URL.createObjectURL(new Blob([blob], { type: mime }));
     mockQuestionAudio = new Audio(url);
+    mockQuestionAudio.setAttribute('playsinline', 'true');
+    mockQuestionAudio.preload = 'auto';
     await new Promise((resolve, reject) => {
       mockQuestionAudio.onended = () => { URL.revokeObjectURL(url); mockQuestionAudio = null; resolve(); };
       mockQuestionAudio.onerror = () => reject(new Error('playback failed'));

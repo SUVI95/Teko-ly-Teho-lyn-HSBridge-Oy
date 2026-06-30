@@ -147,6 +147,7 @@ function buildRealtimeSessionConfig() {
     output_modalities: ['audio', 'text'],
     audio: {
       input: {
+        format: { type: 'audio/pcm', rate: 24000 },
         turn_detection: {
           type: 'semantic_vad',
           eagerness: 'low',

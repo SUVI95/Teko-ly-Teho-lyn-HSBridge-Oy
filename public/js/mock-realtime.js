@@ -43,6 +43,9 @@
     this.pendingRecruiterText = '';
     this.lastAssistantText = '';
     this.remoteAudioStarted = false;
+    this.remoteAudioPlaying = false;
+    this.pendingResponseDone = false;
+    this.responseAudioFallbackTimer = null;
     this.eventQueue = [];
     this.userAnswers = {};
   }
@@ -186,6 +189,54 @@
     this.requestRecruiterResponse(this.answerCount, ctx);
   };
 
+  MockRealtimeInterview.prototype.clearResponseAudioFallback = function () {
+    if (this.responseAudioFallbackTimer) {
+      clearTimeout(this.responseAudioFallbackTimer);
+      this.responseAudioFallbackTimer = null;
+    }
+  };
+
+  MockRealtimeInterview.prototype.scheduleResponseAudioFallback = function (ms) {
+    var self = this;
+    this.clearResponseAudioFallback();
+    this.responseAudioFallbackTimer = setTimeout(function () {
+      self.responseAudioFallbackTimer = null;
+      if (!self.pendingResponseDone) return;
+      self.pendingResponseDone = false;
+      self.setRemoteAudioMuted(true);
+      self.onResponseAudioFinished();
+    }, ms || 12000);
+  };
+
+  MockRealtimeInterview.prototype.setRemoteAudioMuted = function (muted) {
+    if (this.audioEl) this.audioEl.muted = !!muted;
+  };
+
+  MockRealtimeInterview.prototype.onResponseAudioFinished = function () {
+    this.clearResponseAudioFallback();
+    this.responseDoneAt = Date.now();
+
+    if (this.awaitingWrapUp) {
+      clearTimeout(this.wrapUpTimer);
+      this.wrapUpTimer = setTimeout(function (self) {
+        self.finish('complete');
+      }, 1200, this);
+      return;
+    }
+
+    this.awaitingUserAnswer = true;
+    var waitingPhase = this.phaseAt(this.answerCount);
+    var waitMsg = waitingPhase.id === 'intro'
+      ? 'Sinun vuoro — kerro nimesi ja vähän itsestäsi sekä taustastasi. Ota aikaa.'
+      : 'Sinun vuoro — vastaa kun olet valmis. Ota aikaa miettiä.';
+    this.onStatus(waitMsg);
+    this.onPhaseChange({
+      phase: waitingPhase.id,
+      label: waitingPhase.label,
+      recruiterText: this.pendingRecruiterText || this.lastAssistantText || ''
+    });
+  };
+
   MockRealtimeInterview.prototype.handleServerEvent = function (event) {
     if (!event || !event.type) return;
 
@@ -194,9 +245,28 @@
       return;
     }
 
+    if (event.type === 'output_audio_buffer.started') {
+      this.remoteAudioPlaying = true;
+      this.setRemoteAudioMuted(false);
+      this.ensureRemoteAudioPlaying();
+      return;
+    }
+
+    if (event.type === 'output_audio_buffer.stopped') {
+      this.remoteAudioPlaying = false;
+      this.setRemoteAudioMuted(true);
+      if (this.pendingResponseDone) {
+        this.pendingResponseDone = false;
+        this.onResponseAudioFinished();
+      }
+      return;
+    }
+
     if (event.type === 'response.created') {
       this.aiResponding = true;
       this.awaitingUserAnswer = false;
+      this.setRemoteAudioMuted(false);
+      this.ensureRemoteAudioPlaying();
       this.onStatus('Rekrytoija puhuu — kuuntele...');
       return;
     }
@@ -223,27 +293,14 @@
 
     if (event.type === 'response.done') {
       this.aiResponding = false;
-      this.responseDoneAt = Date.now();
-
-      if (this.awaitingWrapUp) {
-        clearTimeout(this.wrapUpTimer);
-        this.wrapUpTimer = setTimeout(function (self) {
-          self.finish('complete');
-        }, 2800, this);
+      this.pendingResponseDone = true;
+      if (this.remoteAudioPlaying) {
+        this.scheduleResponseAudioFallback(15000);
         return;
       }
-
-      this.awaitingUserAnswer = true;
-      var waitingPhase = this.phaseAt(this.answerCount);
-      var waitMsg = waitingPhase.id === 'intro'
-        ? 'Sinun vuoro — kerro nimesi ja vähän itsestäsi sekä taustastasi. Ota aikaa.'
-        : 'Sinun vuoro — vastaa kun olet valmis. Ota aikaa miettiä.';
-      this.onStatus(waitMsg);
-      this.onPhaseChange({
-        phase: waitingPhase.id,
-        label: waitingPhase.label,
-        recruiterText: this.pendingRecruiterText || this.lastAssistantText || ''
-      });
+      this.pendingResponseDone = false;
+      this.setRemoteAudioMuted(true);
+      this.onResponseAudioFinished();
       return;
     }
 
@@ -262,20 +319,47 @@
     this.tryStartConversation();
   };
 
-  MockRealtimeInterview.prototype.setupRemoteAudio = function (stream) {
+  MockRealtimeInterview.prototype.ensureRemoteAudioPlaying = function () {
     var audio = this.audioEl;
-    if (!audio || !stream) return;
-    audio.srcObject = stream;
-    audio.volume = 1;
-    audio.muted = false;
-    if (!this.remoteAudioStarted) {
-      this.remoteAudioStarted = true;
-      this.onRemoteAudio();
-    }
+    if (!audio || !audio.srcObject) return;
     var playPromise = audio.play();
     if (playPromise && typeof playPromise.catch === 'function') {
       playPromise.catch(function () {});
     }
+  };
+
+  MockRealtimeInterview.prototype.setupRemoteAudio = function (stream) {
+    var audio = this.audioEl;
+    if (!audio || !stream) return;
+
+    var track = stream.getAudioTracks()[0];
+    if (!track) return;
+
+    if (!audio.srcObject) {
+      audio.srcObject = new MediaStream();
+    }
+
+    var existing = audio.srcObject.getAudioTracks();
+    var hasTrack = false;
+    existing.forEach(function (t) {
+      if (t === track) {
+        hasTrack = true;
+        return;
+      }
+      audio.srcObject.removeTrack(t);
+      try { t.stop(); } catch (e) {}
+    });
+    if (!hasTrack) {
+      audio.srcObject.addTrack(track);
+    }
+
+    audio.volume = 1;
+    audio.muted = true;
+    if (!this.remoteAudioStarted) {
+      this.remoteAudioStarted = true;
+      this.onRemoteAudio();
+    }
+    this.ensureRemoteAudioPlaying();
   };
 
   MockRealtimeInterview.prototype.start = async function () {
@@ -382,6 +466,7 @@
   };
 
   MockRealtimeInterview.prototype.stop = function () {
+    this.clearResponseAudioFallback();
     clearTimeout(this.wrapUpTimer);
     this.wrapUpTimer = null;
     this.connected = false;
