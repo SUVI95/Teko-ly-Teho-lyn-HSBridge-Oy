@@ -407,8 +407,36 @@ const PORTFOLIO_RESERVED = new Set([
   'reset-password', 'ai-simulation-lab', 'favicon.ico', 'robots.txt'
 ]);
 
-function sendPortfolioTemplate(req, res) {
-  const templatePath = path.join(__dirname, 'public', 'portfolio-tpl-premium.html');
+async function sendPortfolioTemplate(req, res, slugOverride) {
+  let templateFile = 'portfolio-tpl-premium.html';
+  const slug = slugOverride || req.params?.slug || '';
+  if (req.query.tpl === 'editorial') {
+    templateFile = 'portfolio-tpl-editorial.html';
+  } else if (req.query.tpl === 'veyssette') {
+    templateFile = 'portfolio-tpl-veyssette.html';
+  } else if (req.query.tpl === 'femia') {
+    templateFile = 'portfolio-tpl-femia.html';
+  } else if (req.query.tpl === 'shane') {
+    templateFile = 'portfolio-tpl-shane.html';
+  } else if (req.query.tpl === 'callum') {
+    templateFile = 'portfolio-tpl-callum.html';
+  } else if (req.query.tpl === 'reeni') {
+    templateFile = 'portfolio-tpl-reeni.html';
+  } else if (slug) {
+    try {
+      const r = await pool.query(
+        'SELECT template FROM student_portfolios WHERE slug = $1 LIMIT 1',
+        [String(slug).toLowerCase()]
+      );
+      if (r.rows[0]?.template === 'editorial') templateFile = 'portfolio-tpl-editorial.html';
+      else if (r.rows[0]?.template === 'veyssette') templateFile = 'portfolio-tpl-veyssette.html';
+      else if (r.rows[0]?.template === 'femia') templateFile = 'portfolio-tpl-femia.html';
+      else if (r.rows[0]?.template === 'shane') templateFile = 'portfolio-tpl-shane.html';
+      else if (r.rows[0]?.template === 'callum') templateFile = 'portfolio-tpl-callum.html';
+      else if (r.rows[0]?.template === 'reeni') templateFile = 'portfolio-tpl-reeni.html';
+    } catch (e) { /* keep premium */ }
+  }
+  const templatePath = path.join(__dirname, 'public', templateFile);
   if (!fs.existsSync(templatePath)) return res.status(404).send('Portfolio-sivua ei löydy.');
   res.set('Cache-Control', 'public, max-age=60');
   return res.sendFile(templatePath);
@@ -417,7 +445,7 @@ function sendPortfolioTemplate(req, res) {
 // Legacy aipolku path — serve portfolio or redirect to subdomain when enabled
 app.get('/portfolio/:slug', async (req, res) => {
   const slug = req.params.slug;
-  if (req.query.preview === '1') return sendPortfolioTemplate(req, res);
+  if (req.query.preview === '1') return sendPortfolioTemplate(req, res, slug);
 
   // Recover slugs mangled by CV fonts/PDF export (e.g. ligatures: kurtti->kurƫti).
   // Only pay for a lookup when the slug isn't already a clean ascii slug.
@@ -435,7 +463,7 @@ app.get('/portfolio/:slug', async (req, res) => {
   if (portfolioUseSubdomain()) {
     return res.redirect(301, portfolioPublicUrl(slug));
   }
-  return sendPortfolioTemplate(req, res);
+  return sendPortfolioTemplate(req, res, slug);
 });
 
 // portfolio.duunijobs.fi/etunimi-sukunimi
@@ -444,7 +472,7 @@ app.get('/:slug', (req, res, next) => {
   const slug = String(req.params.slug || '').toLowerCase();
   if (!slug || PORTFOLIO_RESERVED.has(slug) || slug.includes('.')) return next();
   if (req.path !== `/${req.params.slug}`) return next();
-  return sendPortfolioTemplate(req, res);
+  return sendPortfolioTemplate(req, res, slug);
 });
 
 /** Modules hidden from students; only admins may open (see adminOnlyModuleIds in public/index.html). */
@@ -454,6 +482,12 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-tyonhaku',
   'moduuli5-ai-creation-sprint-legacy',
   'moduuli-esitykset-tarjoukset-viestinta-gamma-studio',
+  'moduuli-elava-cv-editorial',
+  'moduuli-elava-cv-veyssette',
+  'moduuli-elava-cv-femia',
+  'moduuli-elava-cv-shane',
+  'moduuli-elava-cv-callum',
+  'moduuli-elava-cv-reeni',
 ]);
 
 /** Soft-locked modules: visible on dashboard with lock badge but only admin can open. */

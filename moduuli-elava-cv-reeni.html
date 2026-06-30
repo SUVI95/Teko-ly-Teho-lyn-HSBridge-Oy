@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elävä CV — Reeni (admin)</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#141414;--paper:#f6f6f9;--v:#ff014f;--border:rgba(20,20,20,.1);--muted:#717178;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:#141414;color:var(--paper);height:100vh;overflow:hidden;}
+.test-banner{background:linear-gradient(90deg,#ff014f,#ff6b35);color:#fff;text-align:center;padding:.45rem;font-size:.72rem;font-weight:600;}
+.test-banner a{color:#fff;text-decoration:underline;margin:0 .35rem;}
+.layout{display:flex;height:calc(100vh - 28px);}
+.editor{width:420px;min-width:320px;max-width:45vw;background:var(--paper);color:var(--ink);overflow-y:auto;border-right:1px solid var(--border);display:flex;flex-direction:column;}
+.editor-head{padding:1rem 1.25rem;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:10;}
+.editor-head h1{font-size:1rem;font-weight:700;margin-bottom:.25rem;}
+.editor-head p{font-size:.75rem;color:var(--muted);line-height:1.5;}
+.tabs{display:flex;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:72px;z-index:9;}
+.tab{flex:1;padding:.65rem .5rem;font-size:.72rem;font-weight:600;text-align:center;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;}
+.tab.active{color:var(--v);border-bottom-color:var(--v);}
+.panel{display:none;padding:1rem 1.25rem 2rem;}
+.panel.active{display:block;}
+.field{margin-bottom:1rem;}
+.field label{display:block;font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--v);margin-bottom:.35rem;}
+.field input,.field textarea{width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:.6rem .75rem;font-size:.84rem;font-family:'DM Sans',sans-serif;color:var(--ink);}
+.field textarea{min-height:70px;resize:vertical;line-height:1.55;}
+.field-hint{font-size:.7rem;color:var(--muted);margin-top:.3rem;line-height:1.45;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;}
+.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:1rem;}
+.style-chip{padding:.5rem;border:2px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;font-size:.68rem;font-weight:600;background:#fff;}
+.style-chip.selected{border-color:var(--v);box-shadow:0 0 0 2px rgba(255,1,79,.2);}
+.style-chip .swatch{width:100%;height:24px;border-radius:4px;margin-bottom:.35rem;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.82rem;}
+.toggle-row input{accent-color:var(--v);}
+.color-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.65rem;}
+.color-row input[type=color]{width:36px;height:32px;border:none;padding:0;cursor:pointer;background:none;}
+.color-row span{font-size:.78rem;flex:1;}
+.btn{padding:.65rem 1.25rem;border-radius:999px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;}
+.btn-primary{background:var(--v);color:#fff;}
+.btn-secondary{background:#fff;border:2px solid var(--border);color:var(--ink);}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem;}
+.preview{flex:1;position:relative;background:#111;}
+.preview iframe{width:100%;height:100%;border:none;background:#fff;}
+.preview-bar{position:absolute;top:0;left:0;right:0;height:36px;background:rgba(0,0,0,.75);display:flex;align-items:center;padding:0 1rem;gap:.5rem;z-index:5;font-size:.72rem;color:rgba(255,255,255,.6);}
+.pb-dot{width:10px;height:10px;border-radius:50%;}
+@media(max-width:900px){.layout{flex-direction:column;height:auto;overflow:auto;}.editor{width:100%;max-width:none;height:auto;max-height:50vh;}.preview{height:70vh;min-height:400px;}}
+</style>
+</head>
+<body>
+<div class="test-banner">👤 Admin — Reeni CV ·
+  <a href="/module/moduuli-elava-cv-callum">Callum</a>
+  <a href="/module/moduuli-elava-cv-shane">Shane</a>
+  <a href="/module/moduuli-elava-cv-femia">Femia</a>
+  <a href="/module/moduuli-elava-cv-veyssette">Veyssette</a>
+  <a href="/module/moduuli-elava-cv-editorial">Editorial</a>
+  <a href="/module/moduuli-elava-cv">Klassinen</a>
+</div>
+<div class="layout">
+  <aside class="editor">
+    <div class="editor-head">
+      <h1>Elävä CV — Reeni</h1>
+      <p>Valkoinen moderni layout + gradient-aksentti (Reeni-inspiroitu). Taidot kontekstilla, ei prosentteja.</p>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="content" type="button">Sisältö</button>
+      <button class="tab" data-tab="visual" type="button">Visuaali</button>
+      <button class="tab" data-tab="sections" type="button">Osiot</button>
+    </div>
+    <div class="panel active" id="panel-content">
+      <div class="field"><label>Nimi</label><input id="f_name" oninput="syncField('full_name',this.value)"></div>
+      <div class="row2">
+        <div class="field"><label>Paikkakunta</label><input id="f_city" oninput="syncField('city',this.value)"></div>
+        <div class="field"><label>Tavoiterooli</label><input id="f_role" oninput="syncField('target_role',this.value)"></div>
+      </div>
+      <div class="field"><label>Esittely</label><textarea id="f_bio" rows="3" oninput="syncField('bio',this.value)"></textarea></div>
+      <div class="field"><label>Ura-yhteenveto (hero)</label><textarea id="f_summary" rows="2" oninput="syncField('career_summary',this.value)"></textarea></div>
+      <div class="field"><label>Vahvuudet (yksi per rivi)</label><textarea id="f_strengths" rows="3" oninput="syncField('hidden_strengths',this.value)"></textarea></div>
+      <div class="row2">
+        <div class="field"><label>Sähköposti</label><input id="f_email" oninput="syncField('email_public',this.value)"></div>
+        <div class="field"><label>LinkedIn</label><input id="f_linkedin" oninput="syncField('linkedin_url',this.value)"></div>
+      </div>
+      <div class="field"><label>Taidot + missä käytit</label><textarea id="f_skills" rows="8" oninput="parseSkills(this.value)"></textarea><p class="field-hint">Taito | Missä käytit sitä (yksi lyhyt lause)</p></div>
+      <div class="field"><label>Kielet</label><textarea id="f_langs" rows="2" oninput="parseLangs(this.value)"></textarea></div>
+      <div class="field"><label>Saavutukset (yksi per rivi)</label><textarea id="f_achiev" rows="3" oninput="parseAchiev(this.value)"></textarea></div>
+      <div class="field"><label>Kokemus</label><textarea id="f_exp" rows="5" oninput="parseExpSimple(this.value)"></textarea><p class="field-hint">Rooli | Yritys | Vuodet | Kuvaus</p></div>
+      <div class="field"><label>Koulutus</label><textarea id="f_edu" rows="3" oninput="parseEduSimple(this.value)"></textarea><p class="field-hint">Tutkinto | Oppilaitos | Vuosi</p></div>
+    </div>
+    <div class="panel" id="panel-visual">
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Reeni-tyyliset gradient-paletit (pinkki oletus).</p>
+      <div class="style-grid" id="paletteGrid"></div>
+      <div class="color-row"><input type="color" id="c_accent" value="#ff014f" oninput="setColor('accent',this.value)"><span>Aksentti</span></div>
+      <div class="color-row"><input type="color" id="c_accent2" value="#ff6b35" oninput="setColor('accent2',this.value)"><span>Aksentti 2 (gradient)</span></div>
+      <div class="color-row"><input type="color" id="c_ink" value="#141414" oninput="setColor('ink',this.value)"><span>Teksti</span></div>
+      <div class="color-row"><input type="color" id="c_bg" value="#ffffff" oninput="setColor('bg',this.value)"><span>Tausta</span></div>
+    </div>
+    <div class="panel" id="panel-sections">
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Valitse näkyvät osiot.</p>
+      <div id="sectionToggles"></div>
+    </div>
+    <div style="padding:0 1.25rem 1.5rem;">
+      <div class="btn-row">
+        <button class="btn btn-primary" type="button" onclick="saveDraft()">Tallenna luonnos</button>
+        <button class="btn btn-secondary" type="button" onclick="resetDemo()">Demo-data</button>
+      </div>
+      <p class="field-hint" id="saveStatus"></p>
+    </div>
+  </aside>
+  <div class="preview">
+    <div class="preview-bar">
+      <div class="pb-dot" style="background:#ff5f57"></div>
+      <div class="pb-dot" style="background:#febc2e"></div>
+      <div class="pb-dot" style="background:#28c840"></div>
+      <span style="margin-left:.5rem;">Live-esikatselu — Reeni</span>
+    </div>
+    <iframe id="previewFrame" title="Portfolio preview"></iframe>
+  </div>
+</div>
+<script src="/portfolio-reeni-preview.js"></script>
+<script>
+var PALETTES=[
+  {label:'Pinkki',accent:'#ff014f',accent2:'#ff6b35',ink:'#141414',bg:'#ffffff'},
+  {label:'Violetti',accent:'#7c3aed',accent2:'#ec4899',ink:'#141414',bg:'#ffffff'},
+  {label:'Sininen',accent:'#2563eb',accent2:'#06b6d4',ink:'#141414',bg:'#ffffff'},
+  {label:'Vihreä',accent:'#059669',accent2:'#34d399',ink:'#141414',bg:'#ffffff'},
+  {label:'Oranssi',accent:'#ea580c',accent2:'#fbbf24',ink:'#141414',bg:'#fffaf5'},
+  {label:'Musta',accent:'#141414',accent2:'#525252',ink:'#141414',bg:'#ffffff'}
+];
+var SECTION_KEYS=[
+  {key:'about',label:'Tietoa + laskurit'},
+  {key:'skills',label:'Taidot (kortit + lista)'},
+  {key:'experience',label:'Kokemus'},
+  {key:'education',label:'Koulutus'},
+  {key:'achievements',label:'Saavutukset / portfolio'}
+];
+var P={
+  full_name:'Maria Korhonen',city:'Helsinki',target_role:'Projektipäällikkö · digitaaliset palvelut',
+  bio:'Rakennan tiimejä ja prosesseja, joilla digitaaliset palvelut toimivat oikeasti — ei vain slidessa. Uskon, että hyvä johtaminen yhdistää struktuurin ja empatian.',
+  career_summary:'Yli 8 vuotta projektinhallintaa ja asiakastyötä. Yhdistän strukturoidun ajattelun ja empatian — valmis tuomaan tuloksia seuraavaan tiimiisi.',
+  hidden_strengths:'Rauhallinen paineen alla\nNopea oppimaan uusia työkaluja\nRakentaa luottamusta tiimin sisällä',
+  email_public:'maria.korhonen@email.fi',linkedin_url:'https://linkedin.com/in/mariakorhonen',
+  skills:[
+    {name:'Projektinhallinta',context:'Johdin 4 rinnakkaista projektia Nordic Digital Oy:ssa budjeteilla 200k–1M€.'},
+    {name:'Agile/Scrum',context:'Certified Scrum Master — otin sprintit käyttöön ensimmäisenä omassa yksikössäni.'},
+    {name:'Stakeholder-viestintä',context:'Sovitin asiakas- ja tuotevelvoitteet kuukausittaisissa status-kokouksissa.'},
+    {name:'Excel & Power BI',context:'Rakensin budjetin seurannan raportit, joilla johto seurasi projektien etenemistä.'},
+    {name:'Asiakaspalvelu',context:'Johdin 15 hengen tiimiä ServiceHub Finlandilla — NPS nousi 42 → 71.'},
+    {name:'Prosessikehitys',context:'Uudistin asiakaspalveluprosessin kahdessa kvartaalissa mitattavilla tuloksilla.'}
+  ],
+  languages:[{name:'Suomi',level:'äidinkieli'},{name:'Englanti',level:'erinomainen'},{name:'Ruotsi',level:'hyvä'}],
+  achievements:[
+    'Johdin 12 hengen tiimiä — toimitus aikataulussa ja 15% alle budjetin.',
+    'Uudistin asiakaspalveluprosessin: NPS nousi 42 → 71 kahdessa kvartaalissa.',
+    'Certified Scrum Master 2024 — sovellin metodit ensimmäisenä omassa yksikössä.'
+  ],
+  experience:[
+    {role:'Projektipäällikkö',company:'Nordic Digital Oy',period:'2021–',desc:'Digitaalisten palveluiden kehitysprojektit, budjetit 200k–1M€. Johdin 4 rinnakkaista projektia.',show:true},
+    {role:'Asiakaspalveluvastaava',company:'ServiceHub Finland',period:'2018–2021',desc:'15 hengen tiimin esimiestyö ja prosessien kehitys.',show:true},
+    {role:'Asiakaspalvelija',company:'Retail Plus',period:'2016–2018',desc:'B2B-asiakaspalvelu ja myyntituki.',show:true}
+  ],
+  education:[
+    {degree:'Tradenomi, liiketalous',school:'Metropolia AMK',year:'2016'},
+    {degree:'Projektinhallinnan sertifiointi',school:'PMI Finland',year:'2022'}
+  ],
+  brand_color:'#141414',brand_accent:'#ff014f',brand_bg:'#ffffff',
+  template:'reeni',slug:'demo-reeni',has_photo:false,has_cv:false,
+  visual_style:{bg:'#ffffff',bg2:'#f6f6f9',ink:'#141414',accent:'#ff014f',accent2:'#ff6b35',dark:'#141414',
+    sections:{about:true,skills:true,experience:true,education:true,achievements:true}}
+};
+
+function syncField(k,v){P[k]=v;debouncePreview();}
+var tmr;
+function debouncePreview(){clearTimeout(tmr);tmr=setTimeout(renderPreview,180);}
+function parseSkills(v){
+  P.skills=v.split(/\n+/).map(function(l){
+    l=l.trim();if(!l)return null;
+    var p=l.split('|').map(function(x){return x.trim();});
+    if(p.length>=2)return{name:p[0],context:p.slice(1).join(' | ')};
+    return{name:p[0],context:''};
+  }).filter(Boolean);
+  debouncePreview();
+}
+function skillLine(s){if(typeof s==='string')return s;return[s.name,s.context].filter(Boolean).join(' | ');}
+function parseLangs(v){P.languages=v.split(/\n+/).map(function(l){l=l.trim();if(!l)return null;var m=l.match(/^(.+?)\s*[\(\—\-–]\s*(.+)\)?$/);return m?{name:m[1].trim(),level:m[2].trim()}:{name:l,level:''};}).filter(Boolean);debouncePreview();}
+function parseAchiev(v){P.achievements=v.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);debouncePreview();}
+function parseExpSimple(v){P.experience=v.split(/\n+/).map(function(l){l=l.trim();if(!l)return null;var p=l.split('|').map(function(x){return x.trim();});return{role:p[0]||'',company:p[1]||'',period:p[2]||'',desc:p[3]||'',show:true};}).filter(Boolean);debouncePreview();}
+function parseEduSimple(v){P.education=v.split(/\n+/).map(function(l){l=l.trim();if(!l)return null;var p=l.split('|').map(function(x){return x.trim();});return{degree:p[0]||'',school:p[1]||'',year:p[2]||''};}).filter(Boolean);debouncePreview();}
+function setColor(k,v){P.visual_style[k]=v;if(k==='bg')P.brand_bg=v;if(k==='ink')P.brand_color=v;if(k==='accent')P.brand_accent=v;renderPreview();}
+function renderPreview(){if(typeof renderReeniPreview==='function')document.getElementById('previewFrame').srcdoc=renderReeniPreview(P);}
+
+function fillForm(){
+  document.getElementById('f_name').value=P.full_name;
+  document.getElementById('f_city').value=P.city;
+  document.getElementById('f_role').value=P.target_role;
+  document.getElementById('f_bio').value=P.bio;
+  document.getElementById('f_summary').value=P.career_summary;
+  document.getElementById('f_strengths').value=P.hidden_strengths;
+  document.getElementById('f_email').value=P.email_public;
+  document.getElementById('f_linkedin').value=P.linkedin_url||'';
+  document.getElementById('f_skills').value=P.skills.map(skillLine).join('\n');
+  document.getElementById('f_langs').value=P.languages.map(function(l){return l.name+(l.level?' ('+l.level+')':'');}).join('\n');
+  document.getElementById('f_achiev').value=P.achievements.join('\n');
+  document.getElementById('f_exp').value=P.experience.map(function(e){return [e.role,e.company,e.period,e.desc].filter(Boolean).join(' | ');}).join('\n');
+  document.getElementById('f_edu').value=P.education.map(function(e){return [e.degree,e.school,e.year].filter(Boolean).join(' | ');}).join('\n');
+  var vs=P.visual_style;
+  document.getElementById('c_accent').value=vs.accent||'#ff014f';
+  document.getElementById('c_accent2').value=vs.accent2||'#ff6b35';
+  document.getElementById('c_ink').value=vs.ink||'#141414';
+  document.getElementById('c_bg').value=vs.bg||'#ffffff';
+}
+function initPalettes(){
+  var g=document.getElementById('paletteGrid');
+  PALETTES.forEach(function(p,i){
+    var d=document.createElement('div');
+    d.className='style-chip'+(i===0?' selected':'');
+    d.innerHTML='<div class="swatch" style="background:linear-gradient(135deg,'+p.accent+' 50%,'+p.accent2+' 50%)"></div>'+p.label;
+    d.onclick=function(){
+      g.querySelectorAll('.style-chip').forEach(function(c){c.classList.remove('selected');});
+      d.classList.add('selected');
+      P.visual_style.bg=p.bg;P.visual_style.ink=p.ink;P.visual_style.accent=p.accent;P.visual_style.accent2=p.accent2;
+      P.brand_bg=p.bg;P.brand_color=p.ink;P.brand_accent=p.accent;
+      document.getElementById('c_accent').value=p.accent;
+      document.getElementById('c_accent2').value=p.accent2;
+      document.getElementById('c_ink').value=p.ink;
+      document.getElementById('c_bg').value=p.bg;
+      renderPreview();
+    };
+    g.appendChild(d);
+  });
+}
+function initSections(){
+  var c=document.getElementById('sectionToggles');
+  SECTION_KEYS.forEach(function(s){
+    var row=document.createElement('div');row.className='toggle-row';
+    var cb=document.createElement('input');cb.type='checkbox';cb.checked=P.visual_style.sections[s.key]!==false;
+    cb.onchange=function(){P.visual_style.sections[s.key]=cb.checked;renderPreview();};
+    row.innerHTML='<span>'+s.label+'</span>';row.appendChild(cb);c.appendChild(row);
+  });
+}
+document.querySelectorAll('.tab').forEach(function(t){
+  t.onclick=function(){
+    document.querySelectorAll('.tab,.panel').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  };
+});
+function saveDraft(){try{localStorage.setItem('ecv_reeni_draft',JSON.stringify({P:P,ts:Date.now()}));document.getElementById('saveStatus').textContent='✓ Luonnos tallennettu';}catch(e){}}
+function loadDraft(){try{var r=localStorage.getItem('ecv_reeni_draft');if(r){var d=JSON.parse(r);if(d.P){P=d.P;fillForm();}}}catch(e){}}
+function resetDemo(){localStorage.removeItem('ecv_reeni_draft');location.reload();}
+loadDraft();initPalettes();initSections();fillForm();renderPreview();
+</script>
+</body>
+</html>
