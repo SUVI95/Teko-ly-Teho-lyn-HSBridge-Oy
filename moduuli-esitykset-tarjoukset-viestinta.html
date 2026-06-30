@@ -249,7 +249,7 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 .tool-table tr:last-child td{border-bottom:none;}
 .tool-table td:first-child{font-weight:500;color:var(--ink);}
 
-.path-pick{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0;}
+.path-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.5rem 0;}
 @media(max-width:640px){.path-pick{grid-template-columns:1fr;}}
 .path-card{background:#fff;border:2px solid var(--border);border-radius:14px;padding:1.35rem 1.5rem;cursor:pointer;transition:border-color .2s,box-shadow .2s;text-align:left;}
 .path-card:hover{border-color:rgba(37,99,168,.35);}
@@ -259,6 +259,22 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
 .path-card .path-tag{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.4rem;display:block;}
 .teams-box{background:var(--paper);border:1px solid var(--border);border-radius:10px;padding:1.1rem 1.25rem;margin-top:1rem;}
 .teams-box strong{display:block;color:var(--ink);margin-bottom:.4rem;font-size:.88rem;}
+
+.gpt-path-panel{display:none;margin-bottom:2rem;}
+.gpt-steps{margin:1rem 0 1.25rem;padding-left:1.25rem;display:flex;flex-direction:column;gap:.65rem;}
+.gpt-steps li{font-size:.88rem;line-height:1.65;color:var(--text);}
+.gpt-steps li strong{color:var(--ink);}
+.gpt-question-list{display:flex;flex-direction:column;gap:.5rem;margin:1rem 0;}
+.gpt-q-item{display:flex;gap:.65rem;align-items:flex-start;padding:.65rem .85rem;background:rgba(107,70,193,.05);border:1px solid rgba(107,70,193,.12);border-radius:8px;font-size:.84rem;line-height:1.55;color:var(--text);}
+.gpt-q-num{font-family:'DM Mono',monospace;font-size:.62rem;font-weight:600;color:var(--purple);flex-shrink:0;margin-top:.1rem;}
+.gpt-prompt-card{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:1.15rem 1.25rem;margin-bottom:1rem;}
+.gpt-prompt-card h4{font-size:.92rem;font-weight:600;color:var(--ink);margin:0 0 .35rem;}
+.gpt-prompt-card .gpt-prompt-desc{font-size:.82rem;color:var(--muted);line-height:1.6;margin:0 0 .75rem;}
+.gpt-prompt-card textarea{width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;font-family:'DM Mono',monospace;font-size:.74rem;line-height:1.65;color:var(--ink2);resize:vertical;min-height:140px;}
+.gpt-prompt-actions{display:flex;gap:.65rem;flex-wrap:wrap;margin-top:.75rem;align-items:center;}
+.gpt-slide-pick{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;margin:1rem 0 .5rem;}
+.gpt-slide-pick label{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
+.gpt-slide-pick select{background:#fff;border:1px solid var(--border);border-radius:8px;padding:.5rem .75rem;font-size:.85rem;font-family:'DM Sans',sans-serif;}
 
 @media(max-width:768px){nav{padding:0 1rem;}.section{padding:72px 1rem 4rem;}.tool-hero{padding:1.5rem;}.finale-card{padding:2rem;}}
 </style>
@@ -307,7 +323,7 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
     <div class="section-label">Valitse aihe</div>
     <h2 class="section-h2">Mistä <em>lähdet?</em></h2>
     <div class="divider"></div>
-    <p class="lead">Valitse yksi. Sama lomake molemmissa: täytät kentät, generoit Gamma-promptin, teet Canva-kuvan, jaat Teamsissä.</p>
+    <p class="lead">Valitse yksi polku. Vaihtoehto C on helpoin jos et tiedä miten aloittaa — ChatGPT haastattelee sinut valmiilla promptilla.</p>
 
     <div class="path-pick">
       <button type="button" class="path-card selected" id="pathCardA" onclick="setModulePath('a')">
@@ -319,6 +335,11 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
         <span class="path-tag">Vaihtoehto B</span>
         <h4>Joku asia josta olet ylpeä</h4>
         <p>Harrastus, yhdistys, oma projekti tai keksitty tapahtuma. Gamma: esitä idea. Canva: yksi mainos siihen.</p>
+      </button>
+      <button type="button" class="path-card" id="pathCardC" onclick="setModulePath('c')">
+        <span class="path-tag">Vaihtoehto C · suositus</span>
+        <h4>Kehitä idea ChatGPT:n kanssa</h4>
+        <p>Liitä valmis prompti ChatGPT:hen — se kysyy sinulta 3 asiaa yksi kerrallaan. Lopuksi saat valmiin Gamma-promptin ~10 dialle kuvioineen ja grafiikoineen.</p>
       </button>
     </div>
     <p id="pathHint" style="font-size:.88rem;color:var(--muted);margin-top:.5rem;">Valittu: Moduulin 5 yritys. Täytä alla olevat kentät sen tiedoilla.</p>
@@ -359,9 +380,61 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
       </div>
     </div>
 
-    <!-- PITCH DECK BUILDER — 4 INTERACTIVE PHASES -->
+    <div class="info-card gpt-path-panel" id="gptPathPanel" style="border-left:4px solid var(--purple);">
+      <h3>ChatGPT haastattelee — sinä vastaat — saat Gamma-promptin</h3>
+      <p style="font-size:.88rem;color:var(--muted);margin-bottom:1rem;line-height:1.65;">Kopioi valmis ohje ChatGPT:hen, vastaa sen kysymyksiin omilla sanoillasi, ja pyydä lopuksi valmis esitysprompti Gamma.app:iin.</p>
 
-    <!-- PHASE 1: ABOUT THE JOB -->
+      <div class="form-group">
+        <label class="form-label">Aiheesi (yksi lause riittää)</label>
+        <input class="form-input" id="gptTopicTopic" placeholder="Esim. Kuopion kahvifestivaali / Moduulin 5 yritys / Harrastukseni valokuvaus" oninput="saveLocal('gptTopicTopic',this.value);updateGptPromptTexts()">
+      </div>
+
+      <div class="gpt-slide-pick">
+        <label for="gptSlideCount">Diojen määrä Gammaan</label>
+        <select id="gptSlideCount" onchange="saveLocal('gptSlideCount',this.value);updateGptPromptTexts()">
+          <option value="7">7 diaa</option>
+          <option value="10" selected>10 diaa</option>
+          <option value="12">12 diaa</option>
+        </select>
+      </div>
+
+      <p style="font-size:.82rem;color:var(--muted);margin:.75rem 0 .35rem;">ChatGPT kysyy sinulta nämä kolme asiaa — yksi kerrallaan:</p>
+      <div class="gpt-question-list">
+        <div class="gpt-q-item"><span class="gpt-q-num">1</span><span><strong>Tarina</strong> — yksi konkreettinen tilanne: missä, kuka, mitä tapahtui?</span></div>
+        <div class="gpt-q-item"><span class="gpt-q-num">2</span><span><strong>Kohderyhmä</strong> — kenelle puhut ja mitä heidän pitäisi tehdä tai ajatella esityksen jälkeen?</span></div>
+        <div class="gpt-q-item"><span class="gpt-q-num">3</span><span><strong>Fakta</strong> — yksi numero, saavutus tai asia josta olet ylpeä.</span></div>
+      </div>
+
+      <ol class="gpt-steps">
+        <li><strong>Avaa ChatGPT</strong> — <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">chatgpt.com ↗</a> (ilmainen tili riittää).</li>
+        <li><strong>Kopioi Prompt 1</strong> alle → liitä uuteen keskusteluun. Vastaa jokaiseen kysymykseen omilla sanoillasi.</li>
+        <li><strong>Kun olet vastannut kaikkiin 3 kysymykseen</strong>, kopioi Prompt 2 samaan keskusteluun. ChatGPT antaa valmiin Gamma-promptin — diat, kuvat, layout ja värit.</li>
+        <li><strong>Kopioi ChatGPT:n vastaus</strong> → liitä gamma.app Generate-kenttään (ohjeet alempana).</li>
+      </ol>
+
+      <div class="gpt-prompt-card">
+        <h4>Prompt 1 — ChatGPT aloittaa haastattelun</h4>
+        <p class="gpt-prompt-desc" id="gptPrompt1Desc">Täytä aihe yllä olevaan kenttään — prompt täyttyy automaattisesti. Kopioi vasta kun aihe on kirjoitettu.</p>
+        <textarea id="gptPrompt1" readonly rows="10"></textarea>
+        <div class="gpt-prompt-actions">
+          <button class="btn-primary" type="button" id="copyGptPrompt1Btn" onclick="copyGptPrompt(1)" disabled>📋 Kopioi Prompt 1</button>
+          <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer" class="btn-secondary">Avaa ChatGPT ↗</a>
+        </div>
+      </div>
+
+      <div class="gpt-prompt-card" style="border-color:rgba(107,70,193,.25);">
+        <h4>Prompt 2 — Pyydä valmis Gamma-prompt grafiikoineen</h4>
+        <p class="gpt-prompt-desc">Kun olet vastannut kaikkiin 3 kysymykseen, liitä tämä <strong>samaan keskusteluun</strong>.</p>
+        <textarea id="gptPrompt2" readonly rows="14"></textarea>
+        <div class="gpt-prompt-actions">
+          <button class="btn-primary" type="button" onclick="copyGptPrompt(2)" style="background:var(--purple);box-shadow:0 2px 12px rgba(107,70,193,.35);">📋 Kopioi Prompt 2 — Gamma-prompt</button>
+        </div>
+      </div>
+
+      <div class="step-tip">Jos Gamma-prompt tuntuu liian lyhyeltä, sano ChatGPT:lle: «Lisää jokaiselle dialle [KUVA: ...] -kuvaus englanniksi ja layout-ohje.»</div>
+    </div>
+
+    <div id="manualGammaBuilder">
     <div class="info-card" style="border-left:4px solid var(--accent);">
       <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
         <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:700;flex-shrink:0;">1</div>
@@ -464,6 +537,7 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
         </div>
       </div>
     </div>
+    </div><!-- /manualGammaBuilder -->
 
     <!-- HOW TO USE IN GAMMA -->
     <div class="info-card">
@@ -981,7 +1055,7 @@ function collectVisualsWork() {
   var ids = [
     'canvaName', 'canvaRole', 'canvaTagline', 'canvaFormat', 'gammaLink', 'modulePath',
     'pdCompany', 'pdRole', 'pdCompanyKnowledge', 'pdName', 'pdAchievements', 'pdFit',
-    'pdProblem', 'pdValue', 'canvaReflection'
+    'pdProblem', 'pdValue', 'canvaReflection', 'gptTopicTopic', 'gptSlideCount'
   ];
   var o = { pitchPromptData: pitchPromptData || '' };
   ids.forEach(function (id) {
@@ -996,6 +1070,7 @@ function summarizeVisualsWork(d) {
   if (!d) return '';
   var parts = [];
   if (d.pdCompany) parts.push('Aihe: ' + d.pdCompany);
+  if (d.gptTopicTopic && d.modulePath === 'c') parts.push('GPT-aihe: ' + d.gptTopicTopic);
   if (d.pdRole) parts.push('Ongelma: ' + d.pdRole);
   if (d.gammaLink) parts.push('Gamma: ' + d.gammaLink);
   if (d.canvaName) parts.push('Canva: ' + d.canvaName);
@@ -1084,11 +1159,23 @@ var PATH_COPY = {
 };
 
 function setModulePath(path) {
-  modulePath = path === 'b' ? 'b' : 'a';
+  modulePath = path === 'b' ? 'b' : path === 'c' ? 'c' : 'a';
   saveLocal('modulePath', modulePath);
   document.getElementById('pathCardA').classList.toggle('selected', modulePath === 'a');
   document.getElementById('pathCardB').classList.toggle('selected', modulePath === 'b');
-  applyPathCopy();
+  document.getElementById('pathCardC').classList.toggle('selected', modulePath === 'c');
+  var manual = document.getElementById('manualGammaBuilder');
+  var gpt = document.getElementById('gptPathPanel');
+  if (manual) manual.style.display = modulePath === 'c' ? 'none' : '';
+  if (gpt) gpt.style.display = modulePath === 'c' ? 'block' : 'none';
+  if (modulePath === 'c') {
+    if (document.getElementById('pathHint')) {
+      document.getElementById('pathHint').textContent = 'Valittu: ChatGPT haastattelee sinut → saat valmiin Gamma-promptin. Kirjoita aihe alle.';
+    }
+    updateGptPromptTexts();
+  } else {
+    applyPathCopy();
+  }
 }
 
 function applyPathCopy() {
@@ -1201,6 +1288,83 @@ function copyText(btn,text){
     var orig=btn.textContent;
     btn.textContent='✓ Kopioitu!';btn.classList.add('ok');
     setTimeout(function(){btn.textContent=orig;btn.classList.remove('ok');},2000);
+  });
+}
+
+function getGptSlideCount() {
+  var sel = document.getElementById('gptSlideCount');
+  return sel ? parseInt(sel.value, 10) || 10 : 10;
+}
+
+function buildGptInterviewPrompt(topic, slides) {
+  return (
+    'Haluan luoda ammattimaisen esityksen Gamma.app:iin.\n\n' +
+    'AIHEENI ON: «' + topic + '»\n' +
+    'DIOJEN MÄÄRÄ: ' + slides + '\n\n' +
+    'TEHTÄVÄSI NYT:\n' +
+    '1. Kysy minulta TÄSMÄLLEEN 3 konkreettista kysymystä — yksi kerrallaan, älä kaikkia kerralla.\n' +
+    '2. Kysymysten pitää olla erilaisia:\n' +
+    '   • yksi tarinasta tai konkreettisesta tilanteesta (paikka, mitä tapahtui)\n' +
+    '   • yksi kohderyhmästä ja siitä mitä heidän pitäisi tehdä tai ajatella esityksen jälkeen\n' +
+    '   • yksi numerosta, faktasta tai asiasta josta olen ylpeä\n' +
+    '3. Älä kirjoita vielä Gamma-promptia.\n' +
+    '4. Aloita nyt — kysy vain ENSIMMÄINEN kysymys.'
+  );
+}
+
+function buildGptFinalPrompt(slides) {
+  return (
+    'Nyt perustuen KAIKKIIN vastauksiini yllä olevassa keskustelussa, kirjoita minulle valmis COPY-PASTE-prompt suomeksi joka liitän suoraan Gamma.app Generate-kenttään.\n\n' +
+    'Promptin pitää luoda TARKALLEEN ' + slides + ' diaa ja sisältää jokaiselle dialle:\n' +
+    '• Otsikko (max 6 sanaa)\n' +
+    '• Pääsisältö (max 3 lausetta tai 3 bulletia — vain minun antamia faktoja, ei kliseitä)\n' +
+    '• Layout-ohje (esim. full-bleed photo, two columns, icon row, big number)\n' +
+    '• [KUVA: tarkka englanninkielinen kuvaus mitä Gammassa pitää näyttää]\n' +
+    '• Ikoni tai graafinen elementti jos sopii\n\n' +
+    'Lisäksi määrittele promptissa:\n' +
+    '• Teema: tumma, ammattimainen\n' +
+    '• Fonttipari (esim. DM Sans + serif-otsikot)\n' +
+    '• Väripaletti: 3 hex-koodia\n' +
+    '• Gamma-asetukset: Generate mode, 16:9, minimal text per slide\n\n' +
+    'Käytä VAIN tietoja joita olen kertonut. Tee promptista niin yksityiskohtainen että Gamma ei joudu arvaamaan kuvia tai grafiikoita.\n\n' +
+    'Vastaa VAIN valmiina Gamma-promptina — ei selityksiä, ei "tässä on promptisi".'
+  );
+}
+
+function getGptTopic() {
+  var topicEl = document.getElementById('gptTopicTopic');
+  return topicEl ? topicEl.value.trim() : '';
+}
+
+function updateGptPromptTexts() {
+  var topic = getGptTopic();
+  var slides = getGptSlideCount();
+  var p1 = document.getElementById('gptPrompt1');
+  var p2 = document.getElementById('gptPrompt2');
+  var desc = document.getElementById('gptPrompt1Desc');
+  var copyBtn = document.getElementById('copyGptPrompt1Btn');
+  if (p1) {
+    p1.value = buildGptInterviewPrompt(topic || '— kirjoita aihe yllä olevaan kenttään —', slides);
+    p1.style.opacity = topic ? '1' : '0.65';
+  }
+  if (p2) p2.value = buildGptFinalPrompt(slides);
+  if (desc) {
+    desc.innerHTML = topic
+      ? 'Liitä tämä <strong>ensimmäisenä</strong> ChatGPT:hen. Aihe on valmiiksi mukana — älä muuta promptia.'
+      : 'Täytä aihe yllä olevaan kenttään — prompt täyttyy automaattisesti. Kopioi vasta kun aihe on kirjoitettu.';
+  }
+  if (copyBtn) copyBtn.disabled = !topic;
+}
+
+function copyGptPrompt(n) {
+  if (n === 1 && !getGptTopic()) { alert('Kirjoita ensin aiheesi yllä olevaan kenttään.'); return; }
+  var el = document.getElementById(n === 1 ? 'gptPrompt1' : 'gptPrompt2');
+  var text = el ? el.value : '';
+  if (!text) { alert('Promptia ei voitu lukea — päivitä sivu ja yritä uudelleen.'); return; }
+  navigator.clipboard.writeText(text).then(function () {
+    alert(n === 1
+      ? 'Prompt 1 kopioitu! Liitä ChatGPT:hen ja vastaa 3 kysymykseen.'
+      : 'Prompt 2 kopioitu! Liitä samaan ChatGPT-keskusteluun kun olet vastannut kaikkiin kysymyksiin.');
   });
 }
 
@@ -1377,14 +1541,16 @@ document.addEventListener('DOMContentLoaded',async function(){
       fieldIds:[
         'canvaName','canvaRole','canvaTagline','canvaFormat','gammaLink',
         'pdCompany','pdRole','pdCompanyKnowledge','pdName','pdAchievements',
-        'pdFit','pdProblem','pdValue','canvaReflection'
+        'pdFit','pdProblem','pdValue','canvaReflection','gptTopicTopic','gptSlideCount'
       ]
     });
     modulePath=(collectVisualsWork().modulePath)||'a';
+    setModulePath(modulePath);
   } else {
     setModulePath('a');
   }
-  applyPathCopy();
+  if (modulePath !== 'c') applyPathCopy();
+  else updateGptPromptTexts();
   updateCanvaFormatHint();
   updateMockup();
   updatePdPreview();
