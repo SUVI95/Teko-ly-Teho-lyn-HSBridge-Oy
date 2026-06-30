@@ -488,6 +488,12 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-elava-cv-shane',
   'moduuli-elava-cv-callum',
   'moduuli-elava-cv-reeni',
+  'moduuli-perplexity-notebooklm',
+  'moduuli-ideasta-tuotteeksi',
+  'moduuli-alanavaihtajan-kartta',
+  'moduuli-ai-maisema',
+  'moduuli1-ai-automaatio',
+  'moduuli1b-ai-automaatio',
 ]);
 
 /** Soft-locked modules: visible on dashboard with lock badge but only admin can open. */
