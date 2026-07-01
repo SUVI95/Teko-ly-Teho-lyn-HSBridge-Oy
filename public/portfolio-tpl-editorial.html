@@ -177,6 +177,8 @@ textarea.contact-field{min-height:88px;resize:vertical;}
 <body>
 <div class="loading-screen" id="loadingScreen"><div class="ldsp"></div></div>
 <div id="app"></div>
+<script src="/js/portfolio-public-features.js"></script>
+<script src="/js/portfolio-public-runtime.js"></script>
 <script>
 function portfolioSlugFromPath(){
   var path=location.pathname.replace(/^\/+|\/+$/g,'');
@@ -420,6 +422,19 @@ function render(p){
   document.getElementById('app').innerHTML=h;
   hideLoad();
   window._portfolioSlug=p.slug;
+  if(typeof PortfolioPublicFeatures!=='undefined'){
+    var chatEl=document.createElement('div');
+    chatEl.innerHTML=PortfolioPublicFeatures.chatWidget(p);
+    document.body.appendChild(chatEl);
+  }
+  if(typeof PortfolioPublic!=='undefined'){
+    PortfolioPublic.init({
+      slug:p.slug,full_name:p.full_name,has_cv:!!p.has_cv,target_role:p.target_role||'',
+      city:p.city||'',email_public:p.email_public||'',career_summary:p.career_summary||'',
+      bio:p.bio||'',hidden_strengths:p.hidden_strengths||'',skills:p.skills||[],
+      experience:p.experience||[],education:p.education||[],languages:p.languages||[]
+    });
+  }
   initScrollEffects();
 }
 

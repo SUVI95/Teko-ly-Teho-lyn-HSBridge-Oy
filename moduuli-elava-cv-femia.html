@@ -67,6 +67,7 @@ body{font-family:'DM Sans',sans-serif;background:#2a2226;color:var(--paper);heig
       <button class="tab active" data-tab="content" type="button">Sisältö</button>
       <button class="tab" data-tab="visual" type="button">Visuaali</button>
       <button class="tab" data-tab="sections" type="button">Osiot</button>
+      <button class="tab" data-tab="publish" type="button">Linkki</button>
     </div>
     <div class="panel active" id="panel-content">
       <div class="field"><label>Nimi</label><input id="f_name" oninput="syncField('full_name',this.value)"></div>
@@ -79,12 +80,12 @@ body{font-family:'DM Sans',sans-serif;background:#2a2226;color:var(--paper);heig
       <div class="field"><label>Vahvuudet (yksi per rivi)</label><textarea id="f_strengths" rows="3" oninput="syncField('hidden_strengths',this.value)"></textarea></div>
       <div class="row2">
         <div class="field"><label>Sähköposti</label><input id="f_email" oninput="syncField('email_public',this.value)"></div>
-        <div class="field"><label>LinkedIn</label><input id="f_linkedin" oninput="syncField('linkedin_url',this.value)"></div>
+        <div class="field"><label>LinkedIn</label><input id="f_linkedin" oninput="syncField('linkedin_url',this.value)" onblur=\"normalizeLinkedInField()\" placeholder=\"https://linkedin.com/in/nimesi\"></div>
       </div>
       <div class="field"><label>Taidot + missä käytit</label><textarea id="f_skills" rows="8" oninput="parseSkills(this.value)"></textarea><p class="field-hint">Yksi taito per rivi: Taito | Missä käytit sitä (yksi lyhyt lause)</p></div>
       <div class="field"><label>Kielet</label><textarea id="f_langs" rows="2" oninput="parseLangs(this.value)"></textarea></div>
       <div class="field"><label>Saavutukset (yksi per rivi)</label><textarea id="f_achiev" rows="3" oninput="parseAchiev(this.value)"></textarea></div>
-      <div class="field"><label>Kokemus</label><textarea id="f_exp" rows="5" oninput="parseExpSimple(this.value)"></textarea><p class="field-hint">Rooli | Yritys | Vuodet | Kuvaus</p></div>
+      <div class="field"><label>Kokemus</label><div id="expEditorList"></div><button type="button" class="btn btn-secondary exp-add-btn" onclick="PortfolioExperienceEditor.addRow()">+ Lisää työtehtävä</button></div>
       <div class="field"><label>Koulutus</label><textarea id="f_edu" rows="3" oninput="parseEduSimple(this.value)"></textarea><p class="field-hint">Tutkinto | Oppilaitos | Vuosi</p></div>
     </div>
     <div class="panel" id="panel-visual">
@@ -98,6 +99,25 @@ body{font-family:'DM Sans',sans-serif;background:#2a2226;color:var(--paper);heig
     <div class="panel" id="panel-sections">
       <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Valitse näkyvät osiot.</p>
       <div id="sectionToggles"></div>
+    </div>
+    <div class="panel" id="panel-publish">
+      <div class="url-box" style="border:1px solid var(--border);border-radius:10px;padding:1rem;background:#fff;margin-bottom:.85rem;">
+        <h3 style="font-size:.88rem;margin-bottom:.45rem;">🔗 Portfolio-osoite <span id="publishedBadge" class="badge-live" style="display:none;font-size:.62rem;background:#2a7a4b;color:#fff;padding:.2rem .5rem;border-radius:999px;">Julkaistu</span></h3>
+        <p style="font-size:.74rem;color:var(--muted);margin-bottom:.75rem;">Julkinen linkki, CV ja sähköposti-ilmoitukset — sama backend kuin klassisessa Elävä CV:ssä.</p>
+        <div class="url-row" style="display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:.65rem;">
+          <span class="url-prefix" id="slugHostPrefix" style="font-family:'DM Mono',monospace;font-size:.65rem;padding:.65rem;background:var(--paper,#f6f6f9);border-right:1px solid var(--border);">…/portfolio/</span>
+          <input id="f_slug" placeholder="maria-korhonen" oninput="onSlugInput(this.value)" style="border:none;flex:1;padding:.65rem;font-size:.82rem;">
+        </div>
+        <div class="url-live pending" id="publicUrlBox" style="font-family:'DM Mono',monospace;font-size:.72rem;padding:.65rem;border-radius:8px;background:rgba(166,124,82,.08);margin-bottom:.65rem;">Tallenna ja julkaise</div>
+        <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.75rem;">
+          <button class="btn btn-secondary" type="button" onclick="copyPublicUrl()">Kopioi linkki</button>
+          <button class="btn btn-primary" type="button" onclick="savePortfolioData()">Tallenna</button>
+          <button class="btn btn-green" type="button" onclick="publishPortfolio()">Julkaise</button>
+        </div>
+        <p class="field-hint" id="cvServerStatus">Lataa CV rekrytoijille:</p>
+        <label class="btn btn-secondary" style="cursor:pointer;display:inline-block;margin-top:.35rem;"><input type="file" accept=".pdf,.doc,.docx" style="display:none" onchange="handleEditorCvUpload(this)"> Lataa CV</label>
+      </div>
+      <div id="portfolioNotifications" style="display:none;padding:.75rem;background:rgba(42,122,75,.06);border-radius:8px;font-size:.72rem;"></div>
     </div>
     <div style="padding:0 1.25rem 1.5rem;">
       <div class="btn-row">
@@ -117,7 +137,10 @@ body{font-family:'DM Sans',sans-serif;background:#2a2226;color:var(--paper);heig
     <iframe id="previewFrame" title="Portfolio preview"></iframe>
   </div>
 </div>
+<script src="/js/portfolio-public-features.js"></script>
 <script src="/portfolio-femia-preview.js"></script>
+<script src="/js/portfolio-editor-shared.js"></script>
+<script src="/js/portfolio-experience-editor.js"></script>
 <script>
 var PALETTES=[
   {label:'Femia',blush:'#FFF5F2',ink:'#2D2428',rose:'#C17B8B'},
@@ -184,10 +207,9 @@ function parseSkills(v){
 function skillLine(s){if(typeof s==='string')return s;return[s.name,s.context].filter(Boolean).join(' | ');}
 function parseLangs(v){P.languages=v.split(/\n+/).map(function(l){l=l.trim();if(!l)return null;var m=l.match(/^(.+?)\s*[\(\—\-–]\s*(.+)\)?$/);return m?{name:m[1].trim(),level:m[2].trim()}:{name:l,level:''};}).filter(Boolean);debouncePreview();}
 function parseAchiev(v){P.achievements=v.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);debouncePreview();}
-function parseExpSimple(v){P.experience=v.split(/\n+/).map(function(l){l=l.trim();if(!l)return null;var p=l.split('|').map(function(x){return x.trim();});return{role:p[0]||'',company:p[1]||'',period:p[2]||'',desc:p[3]||'',show:true};}).filter(Boolean);debouncePreview();}
 function parseEduSimple(v){P.education=v.split(/\n+/).map(function(l){l=l.trim();if(!l)return null;var p=l.split('|').map(function(x){return x.trim();});return{degree:p[0]||'',school:p[1]||'',year:p[2]||''};}).filter(Boolean);debouncePreview();}
 function setColor(k,v){P.visual_style[k]=v;if(k==='blush')P.brand_bg=v;if(k==='ink')P.brand_color=v;if(k==='rose')P.brand_accent=v;renderPreview();}
-function renderPreview(){if(typeof renderFemiaPreview==='function')document.getElementById('previewFrame').srcdoc=renderFemiaPreview(P);}
+function renderPreview(){if(typeof PortfolioEditor!=='undefined'&&PortfolioEditor.getSlug())P.slug=PortfolioEditor.getSlug();if(typeof renderFemiaPreview==='function')document.getElementById('previewFrame').srcdoc=renderFemiaPreview(P);}
 
 function fillForm(){
   document.getElementById('f_name').value=P.full_name;
@@ -201,8 +223,8 @@ function fillForm(){
   document.getElementById('f_skills').value=P.skills.map(skillLine).join('\n');
   document.getElementById('f_langs').value=P.languages.map(function(l){return l.name+(l.level?' ('+l.level+')':'');}).join('\n');
   document.getElementById('f_achiev').value=P.achievements.join('\n');
-  document.getElementById('f_exp').value=P.experience.map(function(e){return [e.role,e.company,e.period,e.desc].filter(Boolean).join(' | ');}).join('\n');
   document.getElementById('f_edu').value=P.education.map(function(e){return [e.degree,e.school,e.year].filter(Boolean).join(' | ');}).join('\n');
+  if(typeof PortfolioExperienceEditor!=='undefined') PortfolioExperienceEditor.render();
   var vs=P.visual_style;
   document.getElementById('c_blush').value=vs.blush||'#FFF5F2';
   document.getElementById('c_ink').value=vs.ink||'#2D2428';
@@ -246,7 +268,16 @@ document.querySelectorAll('.tab').forEach(function(t){
 function saveDraft(){try{localStorage.setItem('ecv_femia_draft',JSON.stringify({P:P,ts:Date.now()}));document.getElementById('saveStatus').textContent='✓ Luonnos tallennettu';}catch(e){}}
 function loadDraft(){try{var r=localStorage.getItem('ecv_femia_draft');if(r){var d=JSON.parse(r);if(d.P){P=d.P;fillForm();}}}catch(e){}}
 function resetDemo(){localStorage.removeItem('ecv_femia_draft');location.reload();}
-loadDraft();initPalettes();initSections();fillForm();renderPreview();
+loadDraft();initPalettes();initSections();fillForm();
+PortfolioExperienceEditor.init({containerId:'expEditorList',periodField:'period',getExperience:function(){return P.experience;},setExperience:function(arr){P.experience=arr;},onChange:debouncePreview});
+renderPreview();
+PortfolioEditor.init({
+  template:'femia',
+  getP:function(){return P;},
+  fillForm:fillForm,
+  renderPreview:renderPreview
+});
+
 </script>
 </body>
 </html>

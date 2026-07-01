@@ -7,118 +7,233 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#2C2419;--paper:#F8F4EE;--v:#A67C52;--border:rgba(44,36,25,.1);--muted:#6B6358;}
+:root{--ink:#2C2419;--paper:#F8F4EE;--v:#A67C52;--border:rgba(44,36,25,.12);--muted:#6B6358;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'DM Sans',sans-serif;background:#1a1612;color:var(--paper);height:100vh;overflow:hidden;}
-.test-banner{background:linear-gradient(90deg,#A67C52,#8B6914);color:#fff;text-align:center;padding:.45rem;font-size:.72rem;font-weight:600;}
-.test-banner a{color:#fff;text-decoration:underline;margin:0 .5rem;}
-.layout{display:flex;height:calc(100vh - 28px);}
-.editor{width:420px;min-width:320px;max-width:45vw;background:var(--paper);color:var(--ink);overflow-y:auto;border-right:1px solid var(--border);display:flex;flex-direction:column;}
-.editor-head{padding:1rem 1.25rem;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:10;}
-.editor-head h1{font-size:1rem;font-weight:600;margin-bottom:.25rem;font-family:Georgia,serif;}
-.editor-head p{font-size:.75rem;color:var(--muted);line-height:1.5;}
-.tabs{display:flex;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:72px;z-index:9;}
-.tab{flex:1;padding:.65rem .5rem;font-size:.72rem;font-weight:600;text-align:center;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;}
-.tab.active{color:var(--v);border-bottom-color:var(--v);}
-.panel{display:none;padding:1rem 1.25rem 2rem;}
+.test-banner{background:linear-gradient(90deg,#A67C52,#8B6914);color:#fff;text-align:center;padding:.4rem;font-size:.7rem;font-weight:600;flex-shrink:0;}
+.test-banner a{color:#fff;text-decoration:underline;margin:0 .45rem;}
+.app{display:flex;flex-direction:column;height:100vh;}
+.layout{display:flex;flex:1;min-height:0;}
+.editor-pane,.preview-pane{flex:1 1 50%;width:50%;min-width:0;height:100%;display:flex;flex-direction:column;}
+.editor-pane{background:var(--paper);color:var(--ink);border-right:2px solid rgba(44,36,25,.08);}
+.editor-toolbar{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.75rem 1rem;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0;}
+.toolbar-title h1{font-size:.95rem;font-weight:700;font-family:Georgia,serif;line-height:1.2;}
+.toolbar-title span{font-size:.68rem;color:var(--muted);}
+.toolbar-actions{display:flex;gap:.4rem;flex-shrink:0;}
+.toolbar-actions .btn{padding:.45rem .7rem;font-size:.72rem;border-radius:6px;}
+.tab-nav{display:flex;gap:.35rem;padding:.55rem 1rem;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;}
+.tab{padding:.45rem .85rem;font-size:.74rem;font-weight:600;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s;}
+.tab:hover{border-color:var(--v);color:var(--ink);}
+.tab.active{background:var(--v);border-color:var(--v);color:#fff;}
+.editor-scroll{flex:1;overflow-y:auto;min-height:0;padding:1rem 1.1rem 1.5rem;-webkit-overflow-scrolling:touch;}
+.panel{display:none;}
 .panel.active{display:block;}
-.field{margin-bottom:1rem;}
-.field label{display:block;font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--v);margin-bottom:.35rem;}
-.field input,.field textarea,.field select{width:100%;background:#fff;border:1px solid var(--border);border-radius:6px;padding:.6rem .75rem;font-size:.84rem;font-family:'DM Sans',sans-serif;color:var(--ink);}
-.field textarea{min-height:70px;resize:vertical;line-height:1.55;}
+.acc{border:1px solid var(--border);border-radius:10px;margin-bottom:.65rem;background:#fff;overflow:hidden;}
+.acc summary{padding:.75rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;background:rgba(166,124,82,.05);}
+.acc summary::-webkit-details-marker{display:none;}
+.acc summary::after{content:'+';font-size:1rem;color:var(--v);font-weight:400;}
+.acc[open] summary::after{content:'−';}
+.acc[open] summary{border-bottom:1px solid var(--border);}
+.acc-body{padding:1rem;}
+.field{margin-bottom:.9rem;}
+.field:last-child{margin-bottom:0;}
+.field label{display:block;font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--v);margin-bottom:.35rem;}
+.field input,.field textarea{width:100%;background:#fff;border:1px solid var(--border);border-radius:8px;padding:.6rem .75rem;font-size:.84rem;font-family:inherit;color:var(--ink);line-height:1.45;}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--v);box-shadow:0 0 0 2px rgba(166,124,82,.12);}
+.field textarea{min-height:64px;resize:vertical;}
 .field-hint{font-size:.7rem;color:var(--muted);margin-top:.3rem;line-height:1.45;}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;}
-.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:1rem;}
-.style-chip{padding:.5rem;border-radius:6px;border:2px solid var(--border);cursor:pointer;text-align:center;font-size:.68rem;font-weight:600;background:#fff;}
-.style-chip.selected{border-color:var(--v);box-shadow:0 0 0 2px rgba(166,124,82,.25);}
-.style-chip .swatch{width:100%;height:24px;border-radius:4px;margin-bottom:.35rem;}
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.82rem;}
-.toggle-row input{accent-color:var(--v);}
-.color-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.65rem;}
-.color-row input[type=color]{width:36px;height:32px;border:none;padding:0;cursor:pointer;background:none;}
-.color-row span{font-size:.78rem;flex:1;}
-.btn{padding:.65rem 1.25rem;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;}
+.style-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.55rem;margin:.75rem 0 1rem;}
+.style-chip{padding:.55rem;border-radius:8px;border:2px solid var(--border);cursor:pointer;text-align:center;font-size:.7rem;font-weight:600;background:#fff;}
+.style-chip.selected{border-color:var(--v);}
+.style-chip .swatch{width:100%;height:24px;border-radius:4px;margin-bottom:.3rem;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid var(--border);font-size:.82rem;}
+.toggle-row input{accent-color:var(--v);width:16px;height:16px;}
+.color-row{display:flex;align-items:center;gap:.55rem;margin-bottom:.65rem;}
+.color-row input[type=color]{width:36px;height:32px;border:none;padding:0;cursor:pointer;}
+.color-row span{font-size:.78rem;}
+.btn{padding:.55rem .9rem;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;border:none;font-family:inherit;}
 .btn-primary{background:var(--v);color:#fff;}
 .btn-secondary{background:#fff;border:1.5px solid var(--border);color:var(--ink);}
-.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem;}
-.preview{flex:1;position:relative;background:#222;}
-.preview iframe{width:100%;height:100%;border:none;background:#F8F4EE;}
-.preview-bar{position:absolute;top:0;left:0;right:0;height:36px;background:rgba(0,0,0,.6);display:flex;align-items:center;padding:0 1rem;gap:.5rem;z-index:5;font-size:.72rem;color:rgba(255,255,255,.6);}
-.pb-dot{width:10px;height:10px;border-radius:50%;}
-@media(max-width:900px){.layout{flex-direction:column;height:auto;overflow:auto;}.editor{width:100%;max-width:none;height:auto;max-height:50vh;}.preview{height:70vh;min-height:400px;}}
+.btn-dark{background:var(--ink);color:#fff;}
+.btn-green{background:#2a7a4b;color:#fff;}
+.panel-intro{font-size:.78rem;color:var(--muted);margin-bottom:.85rem;line-height:1.5;padding:.65rem .85rem;background:rgba(166,124,82,.07);border-radius:8px;}
+.img-slot{border:1px solid var(--border);border-radius:8px;padding:.85rem;margin-bottom:.65rem;background:#fff;}
+.img-slot-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.4rem;}
+.img-slot-head strong{font-size:.8rem;}
+.img-slot-hint{font-size:.68rem;color:var(--muted);margin-bottom:.5rem;}
+.img-thumb,.img-ph-mini{width:100%;height:72px;border-radius:6px;margin-bottom:.5rem;}
+.img-thumb{object-fit:cover;display:block;}
+.img-ph-mini{background:linear-gradient(135deg,#F0EBE3,rgba(166,124,82,.12));display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--muted);text-align:center;padding:.4rem;}
+.img-slot-actions{display:flex;gap:.4rem;}
+.img-slot-actions .btn{padding:.4rem .6rem;font-size:.68rem;flex:1;}
+.status-line{font-size:.68rem;color:var(--muted);padding:0 1rem .55rem;min-height:1.1rem;}
+.url-box{border:1px solid var(--border);border-radius:10px;padding:1rem;background:#fff;margin-bottom:.85rem;}
+.url-box h3{font-size:.88rem;margin-bottom:.45rem;}
+.url-box p{font-size:.74rem;color:var(--muted);line-height:1.5;margin-bottom:.75rem;}
+.url-row{display:flex;align-items:stretch;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff;margin-bottom:.65rem;}
+.url-prefix{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);padding:.65rem .6rem;background:var(--paper);border-right:1px solid var(--border);white-space:nowrap;display:flex;align-items:center;}
+.url-row input{border:none;flex:1;padding:.65rem .75rem;font-size:.82rem;font-family:inherit;min-width:0;}
+.url-live{font-family:'DM Mono',monospace;font-size:.72rem;background:rgba(42,122,75,.08);border:1px solid rgba(42,122,75,.2);color:#1a5c32;padding:.65rem .75rem;border-radius:8px;word-break:break-all;line-height:1.45;}
+.url-live.pending{background:rgba(166,124,82,.08);border-color:rgba(166,124,82,.2);color:var(--muted);}
+.url-actions{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.65rem;}
+.url-actions .btn{flex:1;min-width:7rem;}
+.badge-live{display:inline-block;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:#2a7a4b;color:#fff;padding:.2rem .5rem;border-radius:999px;margin-left:.35rem;vertical-align:middle;}
+.preview-pane{background:#1e1e1e;}
+.preview-toolbar{display:flex;align-items:center;justify-content:space-between;padding:.55rem 1rem;background:#2a2a2a;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;}
+.preview-toolbar span{font-size:.74rem;color:rgba(255,255,255,.65);font-weight:600;}
+.preview-toolbar .btn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);padding:.4rem .75rem;font-size:.72rem;}
+.preview-frame-wrap{flex:1;min-height:0;background:#F8F4EE;}
+.preview-frame-wrap iframe{width:100%;height:100%;border:none;display:block;}
+@media(max-width:960px){
+  .layout{flex-direction:column;}
+  .editor-pane,.preview-pane{width:100%;flex:1 1 auto;}
+  .editor-pane{max-height:52vh;}
+  .preview-pane{min-height:40vh;}
+}
 </style>
 </head>
 <body>
-<div class="test-banner">👤 Admin-esikatselu — Veyssette CV · ei vielä opiskelijoilla ·
+<div class="app">
+<div class="test-banner">👤 Admin-esikatselu — Veyssette CV ·
   <a href="/module/moduuli-elava-cv-reeni">Reeni</a>
   <a href="/module/moduuli-elava-cv-callum">Callum</a>
   <a href="/module/moduuli-elava-cv-shane">Shane</a>
   <a href="/module/moduuli-elava-cv-femia">Femia</a>
   <a href="/module/moduuli-elava-cv-editorial">Editorial</a>
-  <a href="/module/moduuli-elava-cv">Klassinen Elävä CV</a>
+  <a href="/module/moduuli-elava-cv">Klassinen</a>
 </div>
 <div class="layout">
-  <aside class="editor">
-    <div class="editor-head">
-      <h1>Elävä CV — Veyssette</h1>
-      <p>Lämmin luxury-tyyli (Elementor/Veyssette-inspiroitu). Demo-data mukana — muokkaa ja katso live-esikatselu.</p>
-    </div>
-    <div class="tabs">
+  <aside class="editor-pane">
+    <header class="editor-toolbar">
+      <div class="toolbar-title">
+        <h1>Elävä CV — Veyssette</h1>
+        <span>Muokkaa vasemmalla · esikatselu oikealla</span>
+      </div>
+      <div class="toolbar-actions">
+        <button class="btn btn-secondary" type="button" onclick="saveDraft()" title="Tallenna luonnos">Tallenna</button>
+        <button class="btn btn-dark" type="button" onclick="openFullPagePreview()" title="Avaa koko sivu uuteen välilehteen">Koko sivu ↗</button>
+        <button class="btn btn-green" type="button" onclick="publishLocalPreview()" title="Julkaise paikallisesti">Julkaise</button>
+      </div>
+    </header>
+    <nav class="tab-nav">
       <button class="tab active" data-tab="content" type="button">Sisältö</button>
       <button class="tab" data-tab="visual" type="button">Visuaali</button>
+      <button class="tab" data-tab="images" type="button">Kuvat</button>
       <button class="tab" data-tab="sections" type="button">Osiot</button>
-    </div>
+      <button class="tab" data-tab="publish" type="button">Linkki</button>
+      <button class="tab" type="button" style="margin-left:auto;border-style:dashed;" onclick="resetDemo()">Demo-data</button>
+    </nav>
+    <p class="status-line" id="saveStatus"></p>
+    <div class="editor-scroll">
     <div class="panel active" id="panel-content">
-      <div class="field"><label>Nimi</label><input id="f_name" oninput="syncField('full_name',this.value)"></div>
-      <div class="row2">
-        <div class="field"><label>Paikkakunta</label><input id="f_city" oninput="syncField('city',this.value)"></div>
-        <div class="field"><label>Tavoiterooli</label><input id="f_role" oninput="syncField('target_role',this.value)"></div>
-      </div>
-      <div class="field"><label>Esittely</label><textarea id="f_bio" rows="3" oninput="syncField('bio',this.value)"></textarea></div>
-      <div class="field"><label>Ura-yhteenveto (hero)</label><textarea id="f_summary" rows="2" oninput="syncField('career_summary',this.value)"></textarea></div>
-      <div class="field"><label>Vahvuudet (yksi per rivi)</label><textarea id="f_strengths" rows="3" oninput="syncField('hidden_strengths',this.value)"></textarea></div>
-      <div class="row2">
-        <div class="field"><label>Sähköposti</label><input id="f_email" oninput="syncField('email_public',this.value)"></div>
-        <div class="field"><label>LinkedIn</label><input id="f_linkedin" oninput="syncField('linkedin_url',this.value)"></div>
-      </div>
-      <div class="field"><label>Taidot + missä käytit</label><textarea id="f_skills" rows="8" oninput="parseSkills(this.value)"></textarea><p class="field-hint">Yksi taito per rivi: Taito | Missä käytit sitä (yksi lyhyt lause)</p></div>
-      <div class="field"><label>Kielet</label><textarea id="f_langs" rows="2" oninput="parseLangs(this.value)"></textarea></div>
-      <div class="field"><label>Saavutukset (yksi per rivi)</label><textarea id="f_achiev" rows="3" oninput="parseAchiev(this.value)"></textarea></div>
-      <div class="field"><label>Kokemus</label><textarea id="f_exp" rows="5" oninput="parseExpSimple(this.value)"></textarea><p class="field-hint">Rooli | Yritys | Vuodet | Kuvaus</p></div>
-      <div class="field"><label>Koulutus</label><textarea id="f_edu" rows="3" oninput="parseEduSimple(this.value)"></textarea><p class="field-hint">Tutkinto | Oppilaitos | Vuosi</p></div>
+      <details class="acc" open>
+        <summary>Perustiedot</summary>
+        <div class="acc-body">
+          <div class="field"><label>Nimi</label><input id="f_name" oninput="syncField('full_name',this.value);suggestSlugFromName();updateSlugUi();"></div>
+          <div class="row2">
+            <div class="field"><label>Paikkakunta</label><input id="f_city" oninput="syncField('city',this.value)"></div>
+            <div class="field"><label>Tavoiterooli</label><input id="f_role" oninput="syncField('target_role',this.value)"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Sähköposti</label><input id="f_email" oninput="syncField('email_public',this.value)"></div>
+            <div class="field"><label>LinkedIn</label><input id="f_linkedin" oninput="syncField('linkedin_url',this.value)" onblur="normalizeLinkedInField()" placeholder="https://linkedin.com/in/nimesi"></div>
+          </div>
+        </div>
+      </details>
+      <details class="acc" open>
+        <summary>Esittely &amp; hero</summary>
+        <div class="acc-body">
+          <div class="field"><label>Esittely</label><textarea id="f_bio" rows="3" oninput="syncField('bio',this.value)"></textarea></div>
+          <div class="field"><label>Ura-yhteenveto (hero)</label><textarea id="f_summary" rows="2" oninput="syncField('career_summary',this.value)"></textarea></div>
+          <div class="field"><label>Vahvuudet (yksi per rivi)</label><textarea id="f_strengths" rows="3" oninput="syncField('hidden_strengths',this.value)"></textarea></div>
+        </div>
+      </details>
+      <details class="acc">
+        <summary>Taidot &amp; kielet</summary>
+        <div class="acc-body">
+          <div class="field"><label>Taidot + missä käytit</label><textarea id="f_skills" rows="6" oninput="parseSkills(this.value)"></textarea><p class="field-hint">Taito | Missä käytit (yksi lyhyt lause)</p></div>
+          <div class="field"><label>Kielet</label><textarea id="f_langs" rows="2" oninput="parseLangs(this.value)"></textarea></div>
+          <div class="field"><label>Saavutukset</label><textarea id="f_achiev" rows="3" oninput="parseAchiev(this.value)"></textarea></div>
+        </div>
+      </details>
+      <details class="acc">
+        <summary>Kokemus &amp; koulutus</summary>
+        <div class="acc-body">
+          <div class="field"><label>Kokemus</label><div id="expEditorList"></div><button type="button" class="btn btn-secondary exp-add-btn" onclick="PortfolioExperienceEditor.addRow()">+ Lisää työtehtävä</button></div>
+          <div class="field"><label>Koulutus</label><textarea id="f_edu" rows="3" oninput="parseEduSimple(this.value)"></textarea><p class="field-hint">Tutkinto | Oppilaitos | Vuosi</p></div>
+        </div>
+      </details>
     </div>
     <div class="panel" id="panel-visual">
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Veyssette-tyyliset lämpimät paletit — cream, gold, tumma teksti.</p>
+      <p class="panel-intro">Veyssette-tyyliset lämpimät paletit — cream, gold, tumma teksti.</p>
       <label style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--v);">Paletti</label>
       <div class="style-grid" id="paletteGrid"></div>
       <div class="color-row"><input type="color" id="c_cream" value="#F8F4EE" oninput="setColor('cream',this.value)"><span>Tausta (cream)</span></div>
       <div class="color-row"><input type="color" id="c_ink" value="#2C2419" oninput="setColor('ink',this.value)"><span>Teksti (ink)</span></div>
       <div class="color-row"><input type="color" id="c_gold" value="#A67C52" oninput="setColor('gold',this.value)"><span>Aksentti (gold)</span></div>
     </div>
+    <div class="panel" id="panel-images">
+      <p class="panel-intro">Kuvat ovat vapaaehtoisia. Kytke päälle/pois, lataa oma kuva tai jätä tyhjäksi.</p>
+      <div id="imageSlots"></div>
+    </div>
     <div class="panel" id="panel-sections">
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;">Valitse näkyvät osiot.</p>
+      <p class="panel-intro">Valitse mitkä osiot näkyvät rekrytoijan näkymässä.</p>
       <div id="sectionToggles"></div>
     </div>
-    <div style="padding:0 1.25rem 1.5rem;">
-      <div class="btn-row">
-        <button class="btn btn-primary" type="button" onclick="saveDraft()">Tallenna luonnos</button>
-        <button class="btn btn-secondary" type="button" onclick="resetDemo()">Demo-data</button>
+    <div class="panel" id="panel-publish">
+      <div class="url-box">
+        <h3>🔗 Portfolio-osoite <span id="publishedBadge" class="badge-live" style="display:none;">Julkaistu</span></h3>
+        <p>Tämä on julkinen linkkisi rekrytoijille — sama logiikka kuin klassisessa Elävä CV:ssä. Julkaise ennen jakamista.</p>
+        <label class="field" style="margin-bottom:.5rem;"><span style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--v);">URL-polku</span></label>
+        <div class="url-row">
+          <span class="url-prefix" id="slugHostPrefix">…/portfolio/</span>
+          <input id="f_slug" placeholder="maria-korhonen" oninput="onSlugInput(this.value)">
+        </div>
+        <p class="field-hint" id="slugHint">Vain pienet kirjaimet, numerot ja väliviiva.</p>
+        <label style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--v);display:block;margin:.75rem 0 .35rem;">Jaettava linkki</label>
+        <div class="url-live pending" id="publicUrlBox">Tallenna ja julkaise saadaksesi linkin</div>
+        <div class="url-actions">
+          <button class="btn btn-secondary" type="button" onclick="copyPublicUrl()">Kopioi linkki</button>
+          <button class="btn btn-primary" type="button" onclick="savePortfolioData()">Tallenna palvelimelle</button>
+          <button class="btn btn-green" type="button" onclick="publishPortfolio()">Julkaise portfolio</button>
+        </div>
+        <div style="margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--border);">
+          <label style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--v);">CV rekrytoijalle (PDF/DOCX)</label>
+          <p class="field-hint" id="cvServerStatus" style="margin:.4rem 0 .55rem;">Lataa CV — rekrytoija näkee Lataa CV -painikkeen portfoliossa</p>
+          <label class="btn btn-secondary" style="cursor:pointer;display:inline-block;"><input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword" style="display:none" onchange="handleEditorCvUpload(this)"> Lataa CV palvelimelle</label>
+        </div>
       </div>
-      <p class="field-hint" id="saveStatus"></p>
+      <div id="portfolioNotifications" style="display:none;margin-top:.75rem;padding:.75rem;background:rgba(42,122,75,.06);border-radius:8px;border:1px solid rgba(42,122,75,.15);"></div>
+    </div>
     </div>
   </aside>
-  <div class="preview">
-    <div class="preview-bar">
-      <div class="pb-dot" style="background:#ff5f57"></div>
-      <div class="pb-dot" style="background:#febc2e"></div>
-      <div class="pb-dot" style="background:#28c840"></div>
-      <span style="margin-left:.5rem;">Live-esikatselu — Veyssette</span>
+  <section class="preview-pane">
+    <header class="preview-toolbar">
+      <span>Live-esikatselu — näet muutokset heti</span>
+      <button class="btn" type="button" onclick="openFullPagePreview()">Avaa koko sivu ↗</button>
+    </header>
+    <div class="preview-frame-wrap">
+      <iframe id="previewFrame" title="Portfolio preview"></iframe>
     </div>
-    <iframe id="previewFrame" title="Portfolio preview"></iframe>
-  </div>
+  </section>
 </div>
+</div>
+<script src="/js/portfolio-public-features.js"></script>
 <script src="/portfolio-veyssette-preview.js"></script>
+<script src="/js/portfolio-editor-shared.js"></script>
+<script src="/js/portfolio-experience-editor.js"></script>
 <script>
+var DEMO_STOCK={
+  hero:'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800',
+  about_1:'https://images.unsplash.com/photo-1556767542-5948888a9908?w=500',
+  about_2:'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=500',
+  exp_0:'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600',
+  exp_1:'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
+  exp_2:'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600'
+};
+var LOCAL_PUBLISH_KEY='ecv_veyssette_publish';
+function setStatus(msg){var el=document.getElementById('saveStatus');if(el)el.textContent=msg||'';}
 var PALETTES=[
   {label:'Veyssette',cream:'#F8F4EE',ink:'#2C2419',gold:'#A67C52'},
   {label:'Espresso',cream:'#F5F0EB',ink:'#1C1410',gold:'#8B6914'},
@@ -165,6 +280,14 @@ var P={
   ],
   brand_color:'#2C2419',brand_accent:'#A67C52',brand_bg:'#F8F4EE',
   template:'veyssette',slug:'demo-veyssette',has_photo:false,has_cv:false,
+  images:{
+    hero:{enabled:true,src:DEMO_STOCK.hero,dataUrl:''},
+    about_1:{enabled:false,dataUrl:'',src:''},
+    about_2:{enabled:false,dataUrl:'',src:''},
+    exp_0:{enabled:false,dataUrl:'',src:''},
+    exp_1:{enabled:false,dataUrl:'',src:''},
+    exp_2:{enabled:false,dataUrl:'',src:''}
+  },
   visual_style:{cream:'#F8F4EE',cream2:'#F0EBE3',ink:'#2C2419',gold:'#A67C52',gold_light:'#C4A574',
     sections:{about:true,skills:true,experience:true,education:true,achievements:true}}
 };
@@ -184,10 +307,80 @@ function parseSkills(v){
 function skillLine(s){if(typeof s==='string')return s;return[s.name,s.context].filter(Boolean).join(' | ');}
 function parseLangs(v){P.languages=v.split(/\n+/).map(function(l){l=l.trim();if(!l)return null;var m=l.match(/^(.+?)\s*[\(\—\-–]\s*(.+)\)?$/);return m?{name:m[1].trim(),level:m[2].trim()}:{name:l,level:''};}).filter(Boolean);debouncePreview();}
 function parseAchiev(v){P.achievements=v.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);debouncePreview();}
-function parseExpSimple(v){P.experience=v.split(/\n+/).map(function(l){l=l.trim();if(!l)return null;var p=l.split('|').map(function(x){return x.trim();});return{role:p[0]||'',company:p[1]||'',period:p[2]||'',desc:p[3]||'',show:true};}).filter(Boolean);debouncePreview();}
 function parseEduSimple(v){P.education=v.split(/\n+/).map(function(l){l=l.trim();if(!l)return null;var p=l.split('|').map(function(x){return x.trim();});return{degree:p[0]||'',school:p[1]||'',year:p[2]||''};}).filter(Boolean);debouncePreview();}
+function ensureImagesObj(){if(!P.images)P.images={};}
+function ensureExpImageSlots(){
+  ensureImagesObj();
+  var n=(P.experience||[]).length;
+  for(var i=0;i<n;i++){
+    var k='exp_'+i;
+    if(!P.images[k]) P.images[k]={enabled:false,dataUrl:'',src:''};
+  }
+}
+function getImageSlotDefs(){
+  var base=(typeof VEY_IMAGE_SLOTS!=='undefined'?VEY_IMAGE_SLOTS:[
+    {id:'hero',label:'Hero — pääkuva',hint:'Iso kuva hero-osiossa oikealla'},
+    {id:'about_1',label:'Tietoa minusta — iso kuva',hint:'Korkea kuva'},
+    {id:'about_2',label:'Tietoa minusta — pieni kuva',hint:'Pienempi kuva vieressä'}
+  ]).slice();
+  (P.experience||[]).forEach(function(e,i){
+    base.push({id:'exp_'+i,label:'Kokemus '+(i+1)+' — '+((e.role||e.company||'kortti').substring(0,40)),hint:'Kortin yläreunan kuva'});
+  });
+  return base;
+}
+function renderImageSlots(){
+  ensureImagesObj(); ensureExpImageSlots();
+  var c=document.getElementById('imageSlots'); if(!c)return;
+  c.innerHTML='';
+  getImageSlotDefs().forEach(function(def){
+    var im=P.images[def.id]||{enabled:false,dataUrl:'',src:''};
+    P.images[def.id]=im;
+    var slot=document.createElement('div'); slot.className='img-slot';
+    var prev='';
+    if(im.enabled&&(im.dataUrl||im.src)) prev='<img class="img-thumb" src="'+(im.dataUrl||im.src)+'" alt="">';
+    else if(im.enabled) prev='<div class="img-ph-mini">Kuva päällä — lataa tai jätä tyhjäksi</div>';
+    else prev='<div class="img-ph-mini">Kuva pois päältä</div>';
+    slot.innerHTML='<div class="img-slot-head"><strong>'+def.label+'</strong><label style="font-size:.72rem;display:flex;align-items:center;gap:.35rem;"><input type="checkbox" '+(im.enabled?'checked':'')+'> Näytä</label></div>'
+      +'<p class="img-slot-hint">'+def.hint+'</p>'+prev
+      +'<div class="img-slot-actions"><label class="btn btn-secondary" style="cursor:pointer;margin:0;"><input type="file" accept="image/*" style="display:none"> Lataa kuva</label>'
+      +'<button type="button" class="btn btn-secondary btn-rm">Poista kuva</button></div>';
+    var cb=slot.querySelector('input[type=checkbox]');
+    cb.onchange=function(){im.enabled=cb.checked; if(!im.enabled){im.dataUrl='';im.src='';} renderImageSlots(); renderPreview(); saveDraftQuiet();};
+    var fileIn=slot.querySelector('input[type=file]');
+    fileIn.onchange=function(){ if(fileIn.files[0]) handleImageUpload(def.id,fileIn.files[0]); };
+    slot.querySelector('.btn-rm').onclick=function(){ im.dataUrl=''; im.src=''; renderImageSlots(); renderPreview(); saveDraftQuiet(); };
+    c.appendChild(slot);
+  });
+}
+function handleImageUpload(id,file){
+  if(!file||!file.type.match(/^image\//)){ alert('Valitse kuvatiedosto (JPG, PNG…)'); return; }
+  if(file.size>2.5*1024*1024){ alert('Kuva on liian suuri paikalliseen luonnokseen (max ~2,5 MB). Pienennä kuvaa ja yritä uudelleen.'); return; }
+  var r=new FileReader();
+  r.onload=function(){
+    ensureImagesObj();
+    P.images[id]={enabled:true,dataUrl:r.result,src:''};
+    renderImageSlots(); renderPreview(); saveDraftQuiet();
+    document.getElementById('saveStatus').textContent='✓ Kuva tallennettu luonnokseen';
+  };
+  r.readAsDataURL(file);
+}
+function saveDraftQuiet(){try{localStorage.setItem('ecv_veyssette_draft',JSON.stringify({P:P,ts:Date.now()}));}catch(e){}}
+function localPreviewUrl(){ return location.origin+'/portfolio-veyssette-local.html'; }
+function pushToLocalPublish(){
+  saveDraftQuiet();
+  try{
+    localStorage.setItem(LOCAL_PUBLISH_KEY, JSON.stringify({P:P,ts:Date.now()}));
+    return true;
+  }catch(e){
+    alert('Portfolio on liian suuri selaimen muistiin — poista joitain kuvia tai pienennä niitä.');
+    return false;
+  }
+}
 function setColor(k,v){P.visual_style[k]=v;if(k==='cream')P.brand_bg=v;if(k==='ink')P.brand_color=v;if(k==='gold')P.brand_accent=v;renderPreview();}
-function renderPreview(){if(typeof renderVeyssettePreview==='function')document.getElementById('previewFrame').srcdoc=renderVeyssettePreview(P);}
+function renderPreview(){
+  if(typeof PortfolioEditor!=='undefined'&&PortfolioEditor.getSlug())P.slug=PortfolioEditor.getSlug();
+  if(typeof renderVeyssettePreview==='function')document.getElementById('previewFrame').srcdoc=renderVeyssettePreview(P);
+}
 
 function fillForm(){
   document.getElementById('f_name').value=P.full_name;
@@ -201,8 +394,8 @@ function fillForm(){
   document.getElementById('f_skills').value=P.skills.map(skillLine).join('\n');
   document.getElementById('f_langs').value=P.languages.map(function(l){return l.name+(l.level?' ('+l.level+')':'');}).join('\n');
   document.getElementById('f_achiev').value=P.achievements.join('\n');
-  document.getElementById('f_exp').value=P.experience.map(function(e){return [e.role,e.company,e.period,e.desc].filter(Boolean).join(' | ');}).join('\n');
   document.getElementById('f_edu').value=P.education.map(function(e){return [e.degree,e.school,e.year].filter(Boolean).join(' | ');}).join('\n');
+  if(typeof PortfolioExperienceEditor!=='undefined') PortfolioExperienceEditor.render();
   var vs=P.visual_style;
   document.getElementById('c_cream').value=vs.cream||'#F8F4EE';
   document.getElementById('c_ink').value=vs.ink||'#2C2419';
@@ -236,17 +429,34 @@ function initSections(){
     row.innerHTML='<span>'+s.label+'</span>';row.appendChild(cb);c.appendChild(row);
   });
 }
-document.querySelectorAll('.tab').forEach(function(t){
+document.querySelectorAll('.tab[data-tab]').forEach(function(t){
   t.onclick=function(){
-    document.querySelectorAll('.tab,.panel').forEach(function(x){x.classList.remove('active');});
+    document.querySelectorAll('.tab[data-tab],.panel').forEach(function(x){x.classList.remove('active');});
     t.classList.add('active');
     document.getElementById('panel-'+t.dataset.tab).classList.add('active');
   };
 });
-function saveDraft(){try{localStorage.setItem('ecv_veyssette_draft',JSON.stringify({P:P,ts:Date.now()}));document.getElementById('saveStatus').textContent='✓ Luonnos tallennettu';}catch(e){}}
+function saveDraft(){try{localStorage.setItem('ecv_veyssette_draft',JSON.stringify({P:P,ts:Date.now()}));setStatus('✓ Luonnos tallennettu');}catch(e){}}
 function loadDraft(){try{var r=localStorage.getItem('ecv_veyssette_draft');if(r){var d=JSON.parse(r);if(d.P){P=d.P;fillForm();}}}catch(e){}}
-function resetDemo(){localStorage.removeItem('ecv_veyssette_draft');location.reload();}
-loadDraft();initPalettes();initSections();fillForm();renderPreview();
+function resetDemo(){localStorage.removeItem('ecv_veyssette_draft');localStorage.removeItem(LOCAL_PUBLISH_KEY);sessionStorage.removeItem(LOCAL_PUBLISH_KEY);location.reload();}
+loadDraft();initPalettes();initSections();renderImageSlots();fillForm();
+PortfolioExperienceEditor.init({
+  containerId:'expEditorList',
+  periodField:'period',
+  getExperience:function(){return P.experience;},
+  setExperience:function(arr){P.experience=arr;},
+  onChange:function(){ensureExpImageSlots();renderImageSlots();debouncePreview();}
+});
+renderPreview();
+PortfolioEditor.init({
+  template:'veyssette',
+  getP:function(){return P;},
+  fillForm:fillForm,
+  renderPreview:renderPreview,
+  onLoaded:function(){renderImageSlots();},
+  onSaved:pushToLocalPublish,
+  fallbackPreview:function(){if(pushToLocalPublish())window.open(localPreviewUrl(),'_blank');}
+});
 </script>
 </body>
 </html>

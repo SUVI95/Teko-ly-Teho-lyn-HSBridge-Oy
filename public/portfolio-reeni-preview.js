@@ -197,5 +197,8 @@ function buildReeniBody(p){
 function renderReeniPreview(p){
   p=p||{};
   var title=escR(p.full_name||'Portfolio')+' — Elävä CV';
-  return '<!DOCTYPE html><html lang="fi" style="'+themeR(p)+'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+title+'</title><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style>'+REE_CSS+'</style></head><body>'+buildReeniBody(p)+'</body></html>';
+  var head='<title>'+title+'</title><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style>'+REE_CSS+'</style>';
+  var body=buildReeniBody(p);
+  if(typeof PortfolioPublicFeatures!=='undefined') return PortfolioPublicFeatures.finishHtml(body,p,head);
+  return '<!DOCTYPE html><html lang="fi" style="'+themeR(p)+'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+head+'</head><body>'+body+'</body></html>';
 }

@@ -121,5 +121,8 @@ function buildShaneBody(p){
 function renderShanePreview(p){
   p=p||{};
   var title=escS(p.full_name||'Portfolio')+' — Elävä CV';
-  return '<!DOCTYPE html><html lang="fi" style="'+themeS(p)+'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+title+'</title><link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>'+SHA_CSS+'</style></head><body>'+buildShaneBody(p)+'</body></html>';
+  var head='<title>'+title+'</title><link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>'+SHA_CSS+'</style>';
+  var body=buildShaneBody(p);
+  if(typeof PortfolioPublicFeatures!=='undefined') return PortfolioPublicFeatures.finishHtml(body,p,head);
+  return '<!DOCTYPE html><html lang="fi" style="'+themeS(p)+'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+head+'</head><body>'+body+'</body></html>';
 }

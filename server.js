@@ -624,7 +624,7 @@ app.get('/module/:moduleId', async (req, res) => {
   res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
   let html = fs.readFileSync(modulePath, 'utf8');
   html = injectModulePersistenceScripts(html, moduleId);
-  if (moduleId === 'moduuli-elava-cv') {
+  if (moduleId === 'moduuli-elava-cv' || moduleId.startsWith('moduuli-elava-cv-')) {
     html = injectPortfolioPublicConfig(html);
   }
   if (viewerIsKuopioDemo) {

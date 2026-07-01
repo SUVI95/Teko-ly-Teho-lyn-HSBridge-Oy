@@ -34,7 +34,15 @@ function withPortfolioUrls(row) {
 function withNormalizedLinks(row) {
   if (!row) return row;
   const linkedin_url = row.linkedin_url ? normalizeExternalUrl(row.linkedin_url) : row.linkedin_url;
-  return linkedin_url === row.linkedin_url ? row : { ...row, linkedin_url };
+  let out = linkedin_url === row.linkedin_url ? row : { ...row, linkedin_url };
+  if (out.workspace_draft && typeof out.workspace_draft === 'object') {
+    const wd = out.workspace_draft;
+    out.workspace_draft = {
+      visual_style: wd.visual_style || null,
+      images: wd.images || null
+    };
+  }
+  return out;
 }
 
 const photoUpload = multer({
@@ -117,7 +125,7 @@ async function ready() { if (!_ready) { await ensureTable(); _ready = true; } }
 const PORTFOLIO_FIELDS = `slug, full_name, tagline, bio, city, target_role,
        email_public, phone_public, linkedin_url, experience, education, skills,
        achievements, languages, certificates, brand_color, brand_accent, brand_bg,
-       template, career_summary, hidden_strengths, cv_filename,
+       template, career_summary, hidden_strengths, cv_filename, workspace_draft,
        photo_mime IS NOT NULL AS has_photo,
        (cv_bytes IS NOT NULL) AS has_cv`;
 
@@ -423,7 +431,7 @@ router.get('/view/:slug', async (req, res) => {
        email_public, phone_public, linkedin_url, experience, education, skills,
        achievements, languages, certificates, brand_color, brand_accent, brand_bg,
        template, career_summary, hidden_strengths, photo_mime IS NOT NULL AS has_photo,
-       cv_filename, (cv_bytes IS NOT NULL) AS has_cv
+       cv_filename, (cv_bytes IS NOT NULL) AS has_cv, workspace_draft
        FROM student_portfolios WHERE slug=$1`, [slug]);
     if (!r.rows.length) {
       return res.status(404).json({ error: 'not_found', message: 'Portfoliota ei löydy.' });

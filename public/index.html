@@ -2039,9 +2039,15 @@
         }
 
         if (day1_5Modules.length > 0) {
+          const bridgeMainModules = viewerIsAdmin
+            ? day1_5Modules.filter(function (m) { return !PORTFOLIO_DESIGN_MODULE_IDS.has(m.id); })
+            : day1_5Modules;
+          const bridgeDesignModules = viewerIsAdmin
+            ? day1_5Modules.filter(function (m) { return PORTFOLIO_DESIGN_MODULE_IDS.has(m.id); })
+            : [];
           html += '<div class="part-section" id="section-bridge"><h2 class="part-title">Käytännön AI-taidot</h2><div class="modules-grid">';
           let finalsPlaced = false;
-          day1_5Modules.forEach((module, index) => {
+          bridgeMainModules.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
             if (!finalsPlaced && module.id === 'moduuli-ai-maisema') {
               html += renderFinalCluster(index + 1);
@@ -2049,7 +2055,16 @@
             }
           });
           if (!finalsPlaced) {
-            html += renderFinalCluster(day1_5Modules.length);
+            html += renderFinalCluster(bridgeMainModules.length);
+          }
+          if (bridgeDesignModules.length > 0) {
+            html += '<div style="grid-column:1/-1;margin-top:1.25rem;padding-top:1.25rem;border-top:1px dashed var(--border);">';
+            html += '<h3 style="font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:.35rem;text-align:center;">Portfolio-mallit (admin-testaus)</h3>';
+            html += '<p style="max-width:720px;margin:0 auto 1.25rem;color:var(--muted);font-size:.88rem;line-height:1.55;text-align:center;">Erilliset editorit uusille portfolio-designeille — vain admin-testaus ennen opiskelijajulkaisua.</p>';
+            html += '</div>';
+            bridgeDesignModules.forEach(function (module, index) {
+              html += renderModuleCard(module, 800 + index, modules, summary, completedModules, module4Completed, allPart1Completed);
+            });
           }
           html += '</div></div>';
         } else {
@@ -2118,6 +2133,16 @@
       }
     }
     
+    /** Portfolio-design admin-moduulit — näytetään erillisessä alaosiossa adminille. */
+    const PORTFOLIO_DESIGN_MODULE_IDS = new Set([
+      'moduuli-elava-cv-veyssette',
+      'moduuli-elava-cv-editorial',
+      'moduuli-elava-cv-femia',
+      'moduuli-elava-cv-shane',
+      'moduuli-elava-cv-callum',
+      'moduuli-elava-cv-reeni'
+    ]);
+
     /** Piilotettu opiskelijoilta — vain admin voi nähdä ja avata (poista id kun haluat julkaista). */
     const adminOnlyModuleIds = new Set([
       'moduuli-ai-verkkosivustotyokalut',
