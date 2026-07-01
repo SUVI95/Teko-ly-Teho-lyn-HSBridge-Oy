@@ -1665,6 +1665,7 @@ function showResumeBanner(screen,ts){
   }
 }
 let haWorkApi=null;
+let haSaveTimer=null;
 
 function mergeHaData(a,b){
   if(!a)return b;
@@ -2675,9 +2676,11 @@ function saveLocalHaData(data){
   try{localStorage.setItem(HA_KEY,JSON.stringify(data));}catch(e){}
 }
 function saveProgress(){
-  try{if(haWorkApi?.scheduleSave)haWorkApi.scheduleSave();}catch(e){}
-  clearTimeout(haSaveTimer);
-  haSaveTimer=setTimeout(()=>{try{saveLocalHaData(haSnapshot());}catch(e){}},400);
+  try{
+    if(haWorkApi?.scheduleSave)haWorkApi.scheduleSave();
+    clearTimeout(haSaveTimer);
+    haSaveTimer=setTimeout(()=>{try{saveLocalHaData(haSnapshot());}catch(e){}},400);
+  }catch(e){console.warn('[haastattelu] saveProgress',e);}
 }
 async function initHaWorkPersistence(){
   if(!window.moduleWork?.initModuleWork)return;
