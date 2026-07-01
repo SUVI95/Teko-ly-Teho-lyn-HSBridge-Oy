@@ -577,16 +577,18 @@ router.post('/realtime/session', express.text({ type: ['application/sdp', 'text/
 
     const sessionConfig = buildRealtimeSessionConfig();
 
-    const fd = new FormData();
-    fd.set('sdp', sdp);
-    fd.set('session', JSON.stringify(sessionConfig));
+    const { body, contentType } = buildMultipartForm([
+      { name: 'sdp', value: sdp, contentType: 'application/sdp' },
+      { name: 'session', value: JSON.stringify(sessionConfig), contentType: 'application/json' }
+    ]);
 
     const response = await fetch('https://api.openai.com/v1/realtime/calls', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${openaiApiKey}`
+        Authorization: `Bearer ${openaiApiKey}`,
+        'Content-Type': contentType
       },
-      body: fd,
+      body,
       signal: timeoutSignal(30000)
     });
 
