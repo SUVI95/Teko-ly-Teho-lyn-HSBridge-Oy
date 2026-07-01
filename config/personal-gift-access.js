@@ -20,6 +20,9 @@ function parseEmailList(envRaw, defaults) {
   return [...new Set(merged)];
 }
 
+/** Test student account — sees Jani/Karpo gift modules for QA (see scripts/create-test-accounts.js). */
+const TEST_STUDENT_EMAIL = 'testi.opiskelija@example.com';
+
 function nameMatchesFirstName(name, firstName) {
   const n = normalizeName(name);
   const first = normalizeName(firstName);
@@ -94,22 +97,22 @@ const GIFTS = {
   jani: {
     moduleId: 'moduuli-jani-tutkimus-kirjoitus-2026',
     firstName: 'jani',
-    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com'])
+    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', TEST_STUDENT_EMAIL])
   },
   jani_m1: {
     moduleId: 'moduuli-ai-tietosuoja',
     firstName: 'jani',
-    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com'])
+    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com', TEST_STUDENT_EMAIL])
   },
   jani_m2: {
     moduleId: 'moduuli-tutkimusnaytto',
     firstName: 'jani',
-    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com'])
+    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com', TEST_STUDENT_EMAIL])
   },
   jani_m3: {
     moduleId: 'moduuli-tekoaly-kirjoituskumppanina',
     firstName: 'jani',
-    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com'])
+    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com', TEST_STUDENT_EMAIL])
   }
 };
 

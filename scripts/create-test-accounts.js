@@ -32,7 +32,7 @@ async function createTestAccounts() {
       // Update password
       const hashPassword = await bcrypt.hash(testStudent.password, 10);
       await pool.query(
-        'UPDATE users SET password_hash = $1, name = $2 WHERE email = $3',
+        'UPDATE users SET password_hash = $1, name = $2, is_approved = TRUE WHERE email = $3',
         [hashPassword, testStudent.name, testStudent.email]
       );
       console.log(`✅ Updated test student: ${testStudent.email}`);
@@ -40,7 +40,7 @@ async function createTestAccounts() {
       // Create new test student
       const hashPassword = await bcrypt.hash(testStudent.password, 10);
       await pool.query(
-        'INSERT INTO users (email, password_hash, name, is_admin) VALUES ($1, $2, $3, FALSE)',
+        'INSERT INTO users (email, password_hash, name, is_admin, is_approved) VALUES ($1, $2, $3, FALSE, TRUE)',
         [testStudent.email, hashPassword, testStudent.name]
       );
       console.log(`✅ Created test student: ${testStudent.email}`);

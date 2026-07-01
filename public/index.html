@@ -1885,6 +1885,10 @@
         const viewerIsAdmin = isAdminUser();
         const isStudentHidden = (m) => isModuleHiddenFromStudent(m);
         const visibleForStudent = (list) => list.filter(m => !isStudentHidden(m));
+        const janiOmaPolkuModules = [janiM1Module, janiM2Module, janiM3Module].filter(function (m) {
+          return m && shouldShowPersonalGiftModule(m);
+        });
+        const hasJaniOmaPolku = janiOmaPolkuModules.length > 0;
 
         // Group Part 2 modules by day (loppuosi injektoidaan AI-maisema -kortin jälkeen)
         const day1_5Modules = visibleForStudent(part2Modules
@@ -1903,6 +1907,7 @@
         const sectionIds = [
           { id: 'section-day1', label: 'AI-taidot työelämään', show: part1RenderList.length > 0 },
           { id: 'section-bridge', label: 'Käytännön AI-taidot', show: day1_5Modules.length > 0 || (!!loppumoduuliModule && !isStudentHidden(loppumoduuliModule)) },
+          { id: 'section-oma-polku', label: viewerIsAdmin ? 'Jani / Karpo' : 'Oma polku', show: hasJaniOmaPolku },
           { id: 'section-day2', label: 'DAY 2', show: day2Modules.length > 0 },
           { id: 'section-day3', label: 'DAY 3', show: day3Modules.length > 0 },
           { id: 'section-day4', label: 'DAY 4', show: day4Modules.length > 0 },
@@ -1925,6 +1930,30 @@
         }
         
         // Render bridge section — Automaatio A/B ja muu loppuosa heti AI-maisema -kortin jälkeen
+        function renderOmaPolkuSection(cardIndexBase) {
+          if (!hasJaniOmaPolku) return '';
+          let firstName = '';
+          if (!viewerIsAdmin) {
+            const u = window.currentUser;
+            if (u && u.name) firstName = u.name.trim().split(/\s+/)[0];
+          }
+          const title = viewerIsAdmin
+            ? 'Jani / Karpo — Oma polku (admin-esikatselu)'
+            : (firstName ? firstName + ' — Oma polku' : 'Oma polku');
+          const subtitle = viewerIsAdmin
+            ? 'Henkilökohtaiset tutkimus- ja kirjoitusmoduulit. Opiskelijat näkevät nämä omassa Oma polku -osiossaan.'
+            : 'Sinulle räätälöidyt moduulit – rakennettu kartoutuksesi perusteella.';
+          let out = '<div class="part-section" id="section-oma-polku">';
+          out += '<h2 class="part-title">' + title + '</h2>';
+          out += '<p style="max-width:800px;margin:0 auto 1.5rem;color:var(--muted);line-height:1.6;text-align:center;">' + subtitle + '</p>';
+          out += '<div class="modules-grid">';
+          janiOmaPolkuModules.forEach(function (pm, pi) {
+            out += renderModuleCard(pm, cardIndexBase + pi, modules, summary, completedModules, module4Completed, allPart1Completed);
+          });
+          out += '</div></div>';
+          return out;
+        }
+
         function renderFinalCluster(idxBase) {
           const finals = [
             loppumoduuliModule,
@@ -1941,10 +1970,6 @@
             santeriGiftModuleM1,
             santeriGiftModuleM2,
             santeriGiftModuleM3,
-            // jani-m1 personal module is grouped into one "Oma polku" section
-            // below instead of being inlined here (avoids the recipient seeing
-            // their own modules scattered across two separate spots).
-            ...(viewerIsAdmin ? [janiM1Module, janiM2Module, janiM3Module] : []),
             automatioModuleA,
             automatioModuleB,
             palauteModule
@@ -1955,41 +1980,7 @@
           });
           if (finals.length === 0) return '';
           let out = '<div id="section-loppu" class="loppu-jump-target" style="grid-column:1 / -1;width:100%;min-height:1px;scroll-margin-top:5rem" aria-hidden="true"></div>';
-
-          // "Oma polku" — every personal gift module the CURRENT viewer is the
-          // recipient of, grouped under one header. Admin keeps the old inline
-          // view (each card shows its own "Vain X · admin-esikatselu" caption).
-          const omaPolkuModules = viewerIsAdmin ? [] : [janiM1Module, janiM2Module, janiM3Module].filter(function(m) {
-            if (!m) return false;
-            return shouldShowPersonalGiftModule(m);
-          });
-          const hasOmaPolku = omaPolkuModules.length > 0;
-
-          // Determine first name for the section header
-          let omaPolkuFirstName = '';
-          if (hasOmaPolku) {
-            const u = window.currentUser;
-            if (u && u.name) {
-              omaPolkuFirstName = u.name.trim().split(/\s+/)[0];
-            }
-          }
-
           finals.forEach(function (m, i) {
-            // Inject "Oma polku" section header right before palaute
-            if (hasOmaPolku && m.id === 'palaute') {
-              const label = omaPolkuFirstName ? omaPolkuFirstName + ' — Oma polku' : 'Oma polku';
-              out += `<div style="grid-column:1 / -1;width:100%;margin:2.5rem 0 0.5rem;padding:0;">
-                <div style="display:flex;align-items:center;gap:14px;">
-                  <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,.25));"></div>
-                  <span style="font-size:0.72rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#6366f1;white-space:nowrap;padding:5px 14px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:999px;">✦ ${label}</span>
-                  <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(99,102,241,.25),transparent);"></div>
-                </div>
-                <p style="text-align:center;font-size:0.82rem;color:var(--muted);margin:8px 0 0;">Sinulle räätälöidyt moduulit – rakennettu kartoutuksesi perusteella.</p>
-              </div>`;
-              omaPolkuModules.forEach(function(pm, pi) {
-                out += renderModuleCard(pm, idxBase + finals.length + pi, modules, summary, completedModules, module4Completed, allPart1Completed);
-              });
-            }
             out += renderModuleCard(m, idxBase + i, modules, summary, completedModules, module4Completed, allPart1Completed);
           });
           return out;
@@ -2014,6 +2005,8 @@
           html += renderFinalCluster(0);
           html += '</div></div>';
         }
+
+        html += renderOmaPolkuSection(900);
         
         // Render DAY 2 — "Rakenna hakemuksesi"
         if (day2Modules.length > 0) {
