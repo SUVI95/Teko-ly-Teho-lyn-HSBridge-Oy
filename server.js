@@ -547,7 +547,25 @@ app.get('/module/:moduleId', async (req, res) => {
     if (moduleId === 'moduuli-ai-verkkosivustotyokalut') {
       return res.redirect(302, '/module/moduuli-elava-cv');
     }
-    return res.redirect(302, '/');
+    let giftUser = { email: '', name: '' };
+    if (token) {
+      try {
+        const r = await pool.query(
+          `SELECT u.email, u.name FROM sessions s JOIN users u ON s.user_id = u.id
+           WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE`,
+          [token]
+        );
+        if (r.rows.length) {
+          giftUser = { email: r.rows[0].email, name: r.rows[0].name };
+        }
+      } catch (e) {
+        console.error('Personal gift admin-only bypass:', e);
+      }
+    }
+    const giftKey = getGiftKeyForModuleId(moduleId);
+    if (!giftKey || !isGiftRecipient(giftKey, giftUser)) {
+      return res.redirect(302, '/');
+    }
   }
 
   if (STUDENT_LOCKED_MODULE_IDS.has(moduleId) && !viewerIsAdmin) {

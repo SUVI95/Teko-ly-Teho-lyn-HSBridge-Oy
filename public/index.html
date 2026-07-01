@@ -1132,7 +1132,10 @@
             order: 5.05,
             part: 2,
             day: 'bridge',
-            cardBadge: '★'
+            cardBadge: 'Sinulle',
+            statusLine: 'Henkilökohtainen polku 🎁',
+            personalGiftKey: 'anne_m1',
+            requireGiftCompletion: false
           },
           {
             id: 'moduuli9-haastattelu',
@@ -1142,7 +1145,10 @@
             order: 5.08,
             part: 2,
             day: 'bridge',
-            cardBadge: '★'
+            cardBadge: 'Sinulle',
+            statusLine: 'Henkilökohtainen polku 🎁',
+            personalGiftKey: 'anne_m2',
+            requireGiftCompletion: false
           },
           {
             id: 'moduuli-elava-cv',
@@ -1151,7 +1157,11 @@
             icon: 'sparkles',
             order: 5.09,
             part: 2,
-            day: 'bridge'
+            day: 'bridge',
+            cardBadge: 'Sinulle',
+            statusLine: 'Henkilökohtainen polku 🎁',
+            personalGiftKey: 'anne_m3',
+            requireGiftCompletion: false
           },
           {
             id: 'moduuli-elava-cv-veyssette',
@@ -1311,7 +1321,11 @@
             icon: 'sparkles',
             order: 8,
             part: 2,
-            day: 'bridge'
+            day: 'bridge',
+            cardBadge: 'Sinulle',
+            statusLine: 'Henkilökohtainen polku 🎁',
+            personalGiftKey: 'anne_m4',
+            requireGiftCompletion: false
           },
           {
             id: 'moduuli-ideasta-tuotteeksi',
@@ -1875,10 +1889,14 @@
         const janiM1Module = modules.find(m => m.id === 'moduuli-ai-tietosuoja') || null;
         const janiM2Module = modules.find(m => m.id === 'moduuli-tutkimusnaytto') || null;
         const janiM3Module = modules.find(m => m.id === 'moduuli-tekoaly-kirjoituskumppanina') || null;
+        const anneM1Module = modules.find(m => m.id === 'moduuli8-ai-polku') || null;
+        const anneM2Module = modules.find(m => m.id === 'moduuli9-haastattelu') || null;
+        const anneM3Module = modules.find(m => m.id === 'moduuli-elava-cv') || null;
+        const anneM4Module = modules.find(m => m.id === 'moduuli-perplexity-notebooklm') || null;
         const automatioModuleA = modules.find(m => m.id === 'moduuli1-ai-automaatio') || null;
         const automatioModuleB = modules.find(m => m.id === 'moduuli1b-ai-automaatio') || null;
         const palauteModule = modules.find(m => m.id === 'palaute') || null;
-        const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti', 'tuomioistuin', 'tyokalurakentaja', 'sonja-ai-opas-2025', 'satu-ai-opas-2025', 'soile-ai-opas-2025', 'ville-ai-opas-2025', 'moduuli-minna-a', 'moduuli-minna-b', 'santeri-m1-rakenna', 'santeri-m2-tutki', 'santeri-m3-video', 'moduuli-ai-tietosuoja', 'moduuli-tutkimusnaytto', 'moduuli-tekoaly-kirjoituskumppanina', 'moduuli1-ai-automaatio', 'moduuli1b-ai-automaatio', 'palaute']);
+        const injectedIds = new Set(['loppumoduuli-sina-ja-tekoaly', 'myytinmurtaja', 'rikkinainen-prompti', 'tuomioistuin', 'tyokalurakentaja', 'sonja-ai-opas-2025', 'satu-ai-opas-2025', 'soile-ai-opas-2025', 'ville-ai-opas-2025', 'moduuli-minna-a', 'moduuli-minna-b', 'santeri-m1-rakenna', 'santeri-m2-tutki', 'santeri-m3-video', 'moduuli-ai-tietosuoja', 'moduuli-tutkimusnaytto', 'moduuli-tekoaly-kirjoituskumppanina', 'moduuli8-ai-polku', 'moduuli9-haastattelu', 'moduuli-elava-cv', 'moduuli-perplexity-notebooklm', 'moduuli1-ai-automaatio', 'moduuli1b-ai-automaatio', 'palaute']);
 
         // Piilota admin-only ja temporarilyLockedModuleIds (sama näkymä live-opiskelijoille ja videokuvaus-demolle).
         // Kun moduuli avataan opiskelijoille, poista id temporarilyLockedModuleIds-listasta.
@@ -1889,6 +1907,10 @@
           return m && shouldShowPersonalGiftModule(m);
         });
         const hasJaniOmaPolku = janiOmaPolkuModules.length > 0;
+        const anneOmaPolkuModules = [anneM1Module, anneM2Module, anneM3Module, anneM4Module].filter(function (m) {
+          return m && shouldShowPersonalGiftModule(m);
+        });
+        const hasAnneOmaPolku = anneOmaPolkuModules.length > 0;
 
         // Group Part 2 modules by day (loppuosi injektoidaan AI-maisema -kortin jälkeen)
         const day1_5Modules = visibleForStudent(part2Modules
@@ -1908,6 +1930,7 @@
           { id: 'section-day1', label: 'AI-taidot työelämään', show: part1RenderList.length > 0 },
           { id: 'section-bridge', label: 'Käytännön AI-taidot', show: day1_5Modules.length > 0 || (!!loppumoduuliModule && !isStudentHidden(loppumoduuliModule)) },
           { id: 'section-oma-polku', label: viewerIsAdmin ? 'Jani / Karpo' : 'Oma polku', show: hasJaniOmaPolku },
+          { id: 'section-oma-polku-anne', label: viewerIsAdmin ? 'Anne — Oma polku' : 'Oma polku', show: hasAnneOmaPolku },
           { id: 'section-day2', label: 'DAY 2', show: day2Modules.length > 0 },
           { id: 'section-day3', label: 'DAY 3', show: day3Modules.length > 0 },
           { id: 'section-day4', label: 'DAY 4', show: day4Modules.length > 0 },
@@ -1930,28 +1953,47 @@
         }
         
         // Render bridge section — Automaatio A/B ja muu loppuosa heti AI-maisema -kortin jälkeen
-        function renderOmaPolkuSection(cardIndexBase) {
-          if (!hasJaniOmaPolku) return '';
+        function renderPersonalPathSection(sectionId, pathModules, adminTitle, subtitle) {
+          if (!pathModules.length) return '';
           let firstName = '';
           if (!viewerIsAdmin) {
             const u = window.currentUser;
             if (u && u.name) firstName = u.name.trim().split(/\s+/)[0];
           }
           const title = viewerIsAdmin
-            ? 'Jani / Karpo — Oma polku (admin-esikatselu)'
+            ? adminTitle
             : (firstName ? firstName + ' — Oma polku' : 'Oma polku');
-          const subtitle = viewerIsAdmin
-            ? 'Henkilökohtaiset tutkimus- ja kirjoitusmoduulit. Opiskelijat näkevät nämä omassa Oma polku -osiossaan.'
-            : 'Sinulle räätälöidyt moduulit – rakennettu kartoutuksesi perusteella.';
-          let out = '<div class="part-section" id="section-oma-polku">';
+          let out = '<div class="part-section" id="' + sectionId + '">';
           out += '<h2 class="part-title">' + title + '</h2>';
           out += '<p style="max-width:800px;margin:0 auto 1.5rem;color:var(--muted);line-height:1.6;text-align:center;">' + subtitle + '</p>';
           out += '<div class="modules-grid">';
-          janiOmaPolkuModules.forEach(function (pm, pi) {
-            out += renderModuleCard(pm, cardIndexBase + pi, modules, summary, completedModules, module4Completed, allPart1Completed);
+          pathModules.forEach(function (pm, pi) {
+            out += renderModuleCard(pm, 900 + pi, modules, summary, completedModules, module4Completed, allPart1Completed);
           });
           out += '</div></div>';
           return out;
+        }
+
+        function renderOmaPolkuSection() {
+          return renderPersonalPathSection(
+            'section-oma-polku',
+            janiOmaPolkuModules,
+            'Jani / Karpo — Oma polku (admin-esikatselu)',
+            viewerIsAdmin
+              ? 'Henkilökohtaiset tutkimus- ja kirjoitusmoduulit. Opiskelijat näkevät nämä omassa Oma polku -osiossaan.'
+              : 'Sinulle räätälöidyt moduulit – rakennettu kartoutuksesi perusteella.'
+          );
+        }
+
+        function renderAnneOmaPolkuSection() {
+          return renderPersonalPathSection(
+            'section-oma-polku-anne',
+            anneOmaPolkuModules,
+            'Anne — Oma polku (admin-esikatselu)',
+            viewerIsAdmin
+              ? 'Anne näkee työnhaku-, haastattelu-, portfolio- ja Perplexity-moduulit vain tässä osiossa.'
+              : 'Sinulle räätälöity työnhakupolku – aloita AI Polku -työnhausta ja jatka Perplexityyn.'
+          );
         }
 
         function renderFinalCluster(idxBase) {
@@ -2006,7 +2048,8 @@
           html += '</div></div>';
         }
 
-        html += renderOmaPolkuSection(900);
+        html += renderOmaPolkuSection();
+        html += renderAnneOmaPolkuSection();
         
         // Render DAY 2 — "Rakenna hakemuksesi"
         if (day2Modules.length > 0) {
@@ -2093,6 +2136,9 @@
       'moduuli-ai-tietosuoja',
       'moduuli-tutkimusnaytto',
       'moduuli-tekoaly-kirjoituskumppanina',
+      'moduuli8-ai-polku',
+      'moduuli9-haastattelu',
+      'moduuli-elava-cv',
       // Pyydetty piilotettavaksi opiskelijoilta — admin-esikatselu vain
       'moduuli-perplexity-notebooklm',
       'moduuli-ideasta-tuotteeksi',
@@ -2191,7 +2237,7 @@
 
     /** Visible-but-locked: oppilas näkee kortin lukon kanssa mutta ei voi klikata. Admin voi avata. */
     const studentSoftLockedModuleIds = new Set([
-      // moduuli8-ai-polku, moduuli9-haastattelu, moduuli-elava-cv — avattu kaikille
+      // moduuli8-ai-polku, moduuli9-haastattelu, moduuli-elava-cv, moduuli-perplexity-notebooklm — Anne Oma polku
     ]);
 
     /** Piilotettu live-opiskelijoilta (admin näkee). Poista id listasta kun haluat julkaista. */
@@ -2262,6 +2308,10 @@
       if (m.id === 'moduuli-ai-tietosuoja') return 'jani_m1';
       if (m.id === 'moduuli-tutkimusnaytto') return 'jani_m2';
       if (m.id === 'moduuli-tekoaly-kirjoituskumppanina') return 'jani_m3';
+      if (m.id === 'moduuli8-ai-polku') return 'anne_m1';
+      if (m.id === 'moduuli9-haastattelu') return 'anne_m2';
+      if (m.id === 'moduuli-elava-cv') return 'anne_m3';
+      if (m.id === 'moduuli-perplexity-notebooklm') return 'anne_m4';
       return null;
     }
 
@@ -2283,6 +2333,9 @@
       if (giftKey === 'santeri_m3') return u.santeri_m3_gift === true || u.santeri_m3_gift === 'true';
       if (giftKey === 'santeri_automaatio') return u.santeri_automaatio_gift === true || u.santeri_automaatio_gift === 'true';
       if (giftKey === 'anne') return u.anne_gift === true || u.anne_gift === 'true';
+      if (giftKey === 'anne_m1' || giftKey === 'anne_m2' || giftKey === 'anne_m3' || giftKey === 'anne_m4') {
+        return u.anne_gift === true || u.anne_gift === 'true';
+      }
       if (giftKey === 'karpo') return u.karpo_gift === true || u.karpo_gift === 'true';
       if (giftKey === 'jani') return u.jani_gift === true || u.jani_gift === 'true';
       if (giftKey === 'jani_m1') return u.jani_gift === true || u.jani_gift === 'true' || u.karpo_gift === true || u.karpo_gift === 'true';
@@ -2543,7 +2596,7 @@
       } else if (isAdminOnlyModule && isAdminUser()) {
         progressBlock = '<div class="progress-text">Piilotettu opiskelijoilta · testaus</div>';
       } else if (personalGiftKey && isAdminUser()) {
-        progressBlock = '<div class="progress-text">Vain ' + ({ sonja: 'Sonjalle', satu: 'Satulle', soile: 'Soilelle', ville: 'Villelle', minna_a: 'Minnalle', minna_b: 'Minnalle', santeri_m1: 'Santerille', santeri_m2: 'Santerille', santeri_m3: 'Santerille', santeri_automaatio: 'Santerille', anne: 'Annelle', jani_m1: 'Janille/Karpolle', jani_m2: 'Janille/Karpolle', jani_m3: 'Janille/Karpolle' }[personalGiftKey] || '') + ' · admin-esikatselu</div>';
+        progressBlock = '<div class="progress-text">Vain ' + ({ sonja: 'Sonjalle', satu: 'Satulle', soile: 'Soilelle', ville: 'Villelle', minna_a: 'Minnalle', minna_b: 'Minnalle', santeri_m1: 'Santerille', santeri_m2: 'Santerille', santeri_m3: 'Santerille', santeri_automaatio: 'Santerille', anne: 'Annelle', anne_m1: 'Annelle', anne_m2: 'Annelle', anne_m3: 'Annelle', anne_m4: 'Annelle', jani_m1: 'Janille/Karpolle', jani_m2: 'Janille/Karpolle', jani_m3: 'Janille/Karpolle' }[personalGiftKey] || '') + ' · admin-esikatselu</div>';
       } else if (personalGiftLocked) {
         progressBlock = '<div class="progress-text">Avautuu kun muut moduulit on tehty</div>';
       } else if (isComingSoon) {

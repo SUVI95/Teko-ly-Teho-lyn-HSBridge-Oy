@@ -9,7 +9,7 @@ const {
   shouldAutoApproveStudent
 } = require('../config/demo-access');
 const { resetKuopioDemoUserData } = require('../lib/reset-kuopio-demo-user-data');
-const { isGiftRecipient, isSonjaGiftRecipient, isSatuGiftRecipient, isSoileGiftRecipient, isVilleGiftRecipient } = require('../config/personal-gift-access');
+const { isGiftRecipient, isSonjaGiftRecipient, isSatuGiftRecipient, isSoileGiftRecipient, isVilleGiftRecipient, isAnnePathRecipient } = require('../config/personal-gift-access');
 
 const router = express.Router();
 
@@ -184,7 +184,7 @@ router.post('/login', async (req, res) => {
         santeri_m3_gift: isGiftRecipient('santeri_m3', user),
         santeri_interview_gift: isGiftRecipient('santeri_interview', user),
         santeri_automaatio_gift: isGiftRecipient('santeri_automaatio', user),
-        anne_gift: isGiftRecipient('anne', user),
+        anne_gift: isAnnePathRecipient(user) || isGiftRecipient('anne', user),
         karpo_gift: isGiftRecipient('karpo', user),
         jani_gift: isGiftRecipient('jani', user)
       }
@@ -295,7 +295,7 @@ router.get('/me', async (req, res) => {
         santeri_m3_gift: isGiftRecipient('santeri_m3', user),
         santeri_interview_gift: isGiftRecipient('santeri_interview', user),
         santeri_automaatio_gift: isGiftRecipient('santeri_automaatio', user),
-        anne_gift: isGiftRecipient('anne', user),
+        anne_gift: isAnnePathRecipient(user) || isGiftRecipient('anne', user),
         karpo_gift: isGiftRecipient('karpo', user),
         jani_gift: isGiftRecipient('jani', user)
       }

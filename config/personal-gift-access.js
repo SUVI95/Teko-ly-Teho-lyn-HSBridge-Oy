@@ -87,7 +87,27 @@ const GIFTS = {
   anne: {
     moduleId: 'moduuli-anne-tyonhaku-2026',
     firstName: 'anne',
-    emails: parseEmailList(process.env.ANNE_GIFT_EMAIL, ['anne.must2@gmail.com'])
+    emails: parseEmailList(process.env.ANNE_GIFT_EMAIL, ['anne.must2@gmail.com', TEST_STUDENT_EMAIL])
+  },
+  anne_m1: {
+    moduleId: 'moduuli8-ai-polku',
+    firstName: 'anne',
+    emails: parseEmailList(process.env.ANNE_GIFT_EMAIL, ['anne.must2@gmail.com', TEST_STUDENT_EMAIL])
+  },
+  anne_m2: {
+    moduleId: 'moduuli9-haastattelu',
+    firstName: 'anne',
+    emails: parseEmailList(process.env.ANNE_GIFT_EMAIL, ['anne.must2@gmail.com', TEST_STUDENT_EMAIL])
+  },
+  anne_m3: {
+    moduleId: 'moduuli-elava-cv',
+    firstName: 'anne',
+    emails: parseEmailList(process.env.ANNE_GIFT_EMAIL, ['anne.must2@gmail.com', TEST_STUDENT_EMAIL])
+  },
+  anne_m4: {
+    moduleId: 'moduuli-perplexity-notebooklm',
+    firstName: 'anne',
+    emails: parseEmailList(process.env.ANNE_GIFT_EMAIL, ['anne.must2@gmail.com', TEST_STUDENT_EMAIL])
   },
   karpo: {
     moduleId: 'moduuli-karpo-tutkimus-2026',
@@ -163,6 +183,10 @@ function isVilleGiftRecipient(user) {
   return isGiftRecipient('ville', user);
 }
 
+function isAnnePathRecipient(user) {
+  return ['anne_m1', 'anne_m2', 'anne_m3', 'anne_m4'].some((key) => isGiftRecipient(key, user));
+}
+
 const SONJA_GIFT_MODULE_ID = GIFTS.sonja.moduleId;
 const SATU_GIFT_MODULE_ID = GIFTS.satu.moduleId;
 const SOILE_GIFT_MODULE_ID = GIFTS.soile.moduleId;
@@ -185,6 +209,7 @@ module.exports = {
   isSatuGiftRecipient,
   isSoileGiftRecipient,
   isVilleGiftRecipient,
+  isAnnePathRecipient,
   isSonjaGiftEmail,
   SONJA_GIFT_MODULE_ID,
   SATU_GIFT_MODULE_ID,
