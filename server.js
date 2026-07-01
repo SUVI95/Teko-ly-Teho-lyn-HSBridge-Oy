@@ -20,7 +20,8 @@ const { shouldAutoApproveStudent } = require('./config/demo-access');
 const {
   GIFTS,
   getGiftKeyForModuleId,
-  isGiftRecipient
+  isGiftRecipient,
+  isModuleGiftRecipient
 } = require('./config/personal-gift-access');
 const { resetKuopioDemoUserData } = require('./lib/reset-kuopio-demo-user-data');
 const { portfolioPublicUrl, isPortfolioSubdomain, portfolioUseSubdomain, portfolioAppOrigin, portfolioPublicHost } = require('./lib/portfolio-public-url');
@@ -562,8 +563,7 @@ app.get('/module/:moduleId', async (req, res) => {
         console.error('Personal gift admin-only bypass:', e);
       }
     }
-    const giftKey = getGiftKeyForModuleId(moduleId);
-    if (!giftKey || !isGiftRecipient(giftKey, giftUser)) {
+    if (!isModuleGiftRecipient(moduleId, giftUser)) {
       return res.redirect(302, '/');
     }
   }
@@ -572,8 +572,7 @@ app.get('/module/:moduleId', async (req, res) => {
     return res.redirect(302, '/');
   }
 
-  const personalGiftKey = getGiftKeyForModuleId(moduleId);
-  if (personalGiftKey && !viewerIsAdmin) {
+  if (getGiftKeyForModuleId(moduleId) && !viewerIsAdmin) {
     let giftUser = { email: '', name: '' };
     if (token) {
       try {
@@ -589,7 +588,7 @@ app.get('/module/:moduleId', async (req, res) => {
         console.error('Personal gift module gate:', e);
       }
     }
-    if (!isGiftRecipient(personalGiftKey, giftUser)) {
+    if (!isModuleGiftRecipient(moduleId, giftUser)) {
       return res.redirect(302, '/');
     }
   }

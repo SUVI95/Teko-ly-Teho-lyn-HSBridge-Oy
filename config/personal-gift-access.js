@@ -133,6 +133,21 @@ const GIFTS = {
     moduleId: 'moduuli-tekoaly-kirjoituskumppanina',
     firstName: 'jani',
     emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com', TEST_STUDENT_EMAIL])
+  },
+  jani_m4: {
+    moduleId: 'moduuli8-ai-polku',
+    firstName: 'jani',
+    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com', TEST_STUDENT_EMAIL])
+  },
+  jani_m5: {
+    moduleId: 'moduuli9-haastattelu',
+    firstName: 'jani',
+    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com', TEST_STUDENT_EMAIL])
+  },
+  jani_m6: {
+    moduleId: 'moduuli-elava-cv',
+    firstName: 'jani',
+    emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com', TEST_STUDENT_EMAIL])
   }
 };
 
@@ -144,14 +159,27 @@ function giftModuleIds(gift) {
 }
 
 const MODULE_TO_GIFT_KEY = {};
+const MODULE_TO_GIFT_KEYS = {};
 Object.entries(GIFTS).forEach(([key, gift]) => {
   giftModuleIds(gift).forEach((moduleId) => {
     MODULE_TO_GIFT_KEY[moduleId] = key;
+    if (!MODULE_TO_GIFT_KEYS[moduleId]) MODULE_TO_GIFT_KEYS[moduleId] = [];
+    MODULE_TO_GIFT_KEYS[moduleId].push(key);
   });
 });
 
+function getGiftKeysForModuleId(moduleId) {
+  return MODULE_TO_GIFT_KEYS[moduleId] || [];
+}
+
 function getGiftKeyForModuleId(moduleId) {
   return MODULE_TO_GIFT_KEY[moduleId] || null;
+}
+
+function isModuleGiftRecipient(moduleId, user) {
+  const keys = getGiftKeysForModuleId(moduleId);
+  if (!keys.length) return false;
+  return keys.some((key) => isGiftRecipient(key, user));
 }
 
 function isPersonalGiftModuleId(moduleId) {
@@ -187,6 +215,10 @@ function isAnnePathRecipient(user) {
   return ['anne_m1', 'anne_m2', 'anne_m3', 'anne_m4'].some((key) => isGiftRecipient(key, user));
 }
 
+function isJaniPathRecipient(user) {
+  return ['jani_m1', 'jani_m2', 'jani_m3', 'jani_m4', 'jani_m5', 'jani_m6'].some((key) => isGiftRecipient(key, user));
+}
+
 const SONJA_GIFT_MODULE_ID = GIFTS.sonja.moduleId;
 const SATU_GIFT_MODULE_ID = GIFTS.satu.moduleId;
 const SOILE_GIFT_MODULE_ID = GIFTS.soile.moduleId;
@@ -203,6 +235,8 @@ module.exports = {
   normalizeName,
   nameMatchesFirstName,
   getGiftKeyForModuleId,
+  getGiftKeysForModuleId,
+  isModuleGiftRecipient,
   isPersonalGiftModuleId,
   isGiftRecipient,
   isSonjaGiftRecipient,
@@ -210,6 +244,7 @@ module.exports = {
   isSoileGiftRecipient,
   isVilleGiftRecipient,
   isAnnePathRecipient,
+  isJaniPathRecipient,
   isSonjaGiftEmail,
   SONJA_GIFT_MODULE_ID,
   SATU_GIFT_MODULE_ID,
