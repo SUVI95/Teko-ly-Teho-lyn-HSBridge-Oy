@@ -359,6 +359,21 @@
     border-left:3px solid var(--verdigris);
     margin:12px 0;
   }
+  .consensus-claim-input{
+    width:100%;
+    font-family:'Fraunces',serif;
+    font-size:16px;
+    font-style:italic;
+    color:var(--ink);
+    padding:12px 14px;
+    background:rgba(47,109,98,0.08);
+    border:1px solid rgba(47,109,98,0.25);
+    border-left:3px solid var(--verdigris);
+    margin:12px 0;
+    border-radius:0;
+  }
+  .consensus-claim-input::placeholder{color:var(--ink-soft); font-style:italic; opacity:0.85;}
+  .consensus-claim-hint{font-size:13px; color:var(--ink-soft); margin:-4px 0 12px; line-height:1.5;}
   .external-link{font-size:13px; color:var(--verdigris-deep); font-weight:600;}
 
   /* ---------- WHY PULLQUOTE ---------- */
@@ -927,7 +942,7 @@
       <span class="stamp mid">Vaatii lähdekritiikkiä</span>
       <div>
         <h4>Onko kreatiini hyödyllinen kognitiolle?</h4>
-        <p>Sama väite kuin Harjoituksessa 1. Consensus voi näyttää Mixed — yksi tiivistelmä ei riitä ilman lähteiden avaamista.</p>
+        <p>Hyvä näyttökysymys, mutta Consensus voi näyttää Mixed — yksi tiivistelmä ei riitä ilman lähteiden avaamista.</p>
       </div>
     </div>
   </section>
@@ -940,8 +955,10 @@
     <details class="exercise open" id="exercise-consensus">
       <summary>Harjoitus 1 — Consensus: lue näyttömittari <span class="difficulty mono">PERUSTASO</span><span class="plus">+</span></summary>
       <div class="exercise-body">
-        <p>Avaa <a class="external-link" href="https://consensus.app" target="_blank" rel="noopener">consensus.app</a> ja hae englanniksi:</p>
-        <div class="consensus-claim">Does creatine improve cognitive function?</div>
+        <p>Valitse <strong>oma tutkimuskysymyksesi</strong> — sellainen, johon voi vastata kyllä/ei tai “todennäköisesti”. Kirjoita se englanniksi (Consensus toimii parhaiten englanniksi). Avaa sitten <a class="external-link" href="https://consensus.app" target="_blank" rel="noopener">consensus.app</a> ja hae juuri tällä kysymyksellä:</p>
+        <label for="ex2-question" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--verdigris-deep);margin-bottom:6px;">Oma hakukysymys (englanniksi)</label>
+        <input type="text" class="consensus-claim-input" id="ex2-question" placeholder="Esim. Does meditation reduce anxiety?" autocomplete="off"/>
+        <p class="consensus-claim-hint">Hyviä kysymyksiä: <em>Does cold exposure improve recovery?</em> · <em>Does screen time harm sleep quality in teens?</em> · <em>Does creatine improve cognitive function?</em> — vältä “How do I write…” -tyyppisiä ohjeita.</p>
         <p>Lue näyttömittari (Yes / Possibly / Mixed / No). Avaa vähintään yksi lähde ja tarkista, tukeeko se oikeasti väitettä.</p>
 
         <div class="ui-mockup">
@@ -978,7 +995,7 @@
 
     <div class="pn-part-divider">
       <h3 class="pn-part-title">Perplexity &amp; NotebookLM</h3>
-      <p class="pn-part-lead">Kun olet tehnyt Consensus-harjoituksen, valitse aihe ja jatka harjoituksilla 2–4.</p>
+      <p class="pn-part-lead">Kun olet tehnyt Consensus-harjoituksen, valitse aihe (tai sama aihe kuin yllä) ja jatka harjoituksilla 2–4.</p>
     </div>
 
     <div class="pn-topic-block" id="topic">
@@ -1403,6 +1420,7 @@ function restoreCheckboxes(container, data, prefix){
 
 // ---------- Harjoitus 1 — Consensus ----------
 const ex2Meter = document.getElementById('ex2-meter');
+const ex2Question = document.getElementById('ex2-question');
 const ex2Source = document.getElementById('ex2-source');
 const ex2Compare = document.getElementById('ex2-compare');
 const ex2Checks = document.getElementById('ex2-checks');
@@ -1424,7 +1442,7 @@ if(ex2Meter){
     updateNeedleFromEx2();
   });
 }
-[ex2Source, ex2Compare].forEach(function(el){
+[ex2Question, ex2Source, ex2Compare].forEach(function(el){
   if(!el) return;
   el.addEventListener('input', function(){
     state.ex2 = state.ex2 || {};
@@ -1830,6 +1848,7 @@ document.querySelectorAll('[data-reflect]').forEach(ta => {
         if(mb) mb.classList.add('active');
         updateNeedleFromEx2();
       }
+      if(ex2Question && state.ex2.question) ex2Question.value = state.ex2.question;
       if(ex2Source && state.ex2.source) ex2Source.value = state.ex2.source;
       if(ex2Compare && state.ex2.compare) ex2Compare.value = state.ex2.compare;
       restoreCheckboxes(ex2Checks, state.ex2, 'data-ex2-check');
