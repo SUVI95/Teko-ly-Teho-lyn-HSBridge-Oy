@@ -21,7 +21,8 @@ const {
   GIFTS,
   getGiftKeyForModuleId,
   isGiftRecipient,
-  isModuleGiftRecipient
+  isModuleGiftRecipient,
+  isPublicStudentModule
 } = require('./config/personal-gift-access');
 const { resetKuopioDemoUserData } = require('./lib/reset-kuopio-demo-user-data');
 const { portfolioPublicUrl, isPortfolioSubdomain, portfolioUseSubdomain, portfolioAppOrigin, portfolioPublicHost } = require('./lib/portfolio-public-url');
@@ -572,7 +573,7 @@ app.get('/module/:moduleId', async (req, res) => {
     return res.redirect(302, '/');
   }
 
-  if (getGiftKeyForModuleId(moduleId) && !viewerIsAdmin) {
+  if (getGiftKeyForModuleId(moduleId) && !viewerIsAdmin && !isPublicStudentModule(moduleId)) {
     let giftUser = { email: '', name: '' };
     if (token) {
       try {

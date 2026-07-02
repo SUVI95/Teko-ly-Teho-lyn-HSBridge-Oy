@@ -172,7 +172,19 @@ function getGiftKeysForModuleId(moduleId) {
   return MODULE_TO_GIFT_KEYS[moduleId] || [];
 }
 
+/** Open to all enrolled students — not gated by personal gift email/name. */
+const PUBLIC_STUDENT_MODULE_IDS = new Set([
+  'moduuli8-ai-polku',
+  'moduuli9-haastattelu',
+  'moduuli-elava-cv'
+]);
+
+function isPublicStudentModule(moduleId) {
+  return PUBLIC_STUDENT_MODULE_IDS.has(moduleId);
+}
+
 function getGiftKeyForModuleId(moduleId) {
+  if (isPublicStudentModule(moduleId)) return null;
   return MODULE_TO_GIFT_KEY[moduleId] || null;
 }
 
@@ -231,11 +243,13 @@ function isSonjaGiftEmail(email) {
 
 module.exports = {
   GIFTS,
+  PUBLIC_STUDENT_MODULE_IDS,
   normalizeEmail,
   normalizeName,
   nameMatchesFirstName,
   getGiftKeyForModuleId,
   getGiftKeysForModuleId,
+  isPublicStudentModule,
   isModuleGiftRecipient,
   isPersonalGiftModuleId,
   isGiftRecipient,
