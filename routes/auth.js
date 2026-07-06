@@ -186,7 +186,8 @@ router.post('/login', async (req, res) => {
         santeri_automaatio_gift: isGiftRecipient('santeri_automaatio', user),
         anne_gift: isAnnePathRecipient(user) || isGiftRecipient('anne', user),
         karpo_gift: isGiftRecipient('karpo', user),
-        jani_gift: isGiftRecipient('jani', user)
+        jani_gift: isGiftRecipient('jani', user),
+        ella_gift: isGiftRecipient('ella', user)
       }
     });
   } catch (error) {
@@ -297,7 +298,8 @@ router.get('/me', async (req, res) => {
         santeri_automaatio_gift: isGiftRecipient('santeri_automaatio', user),
         anne_gift: isAnnePathRecipient(user) || isGiftRecipient('anne', user),
         karpo_gift: isGiftRecipient('karpo', user),
-        jani_gift: isGiftRecipient('jani', user)
+        jani_gift: isGiftRecipient('jani', user),
+        ella_gift: isGiftRecipient('ella', user)
       }
     });
   } catch (error) {

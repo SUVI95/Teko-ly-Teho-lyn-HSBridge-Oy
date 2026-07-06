@@ -148,6 +148,11 @@ const GIFTS = {
     moduleId: 'moduuli-elava-cv',
     firstName: 'jani',
     emails: parseEmailList(process.env.JANI_GIFT_EMAIL, ['j.h.ruotsalainen@gmail.com', 'karpo.arenmaa3@gmail.com', TEST_STUDENT_EMAIL])
+  },
+  ella: {
+    moduleId: 'moduuli-ella-myyntisprintti',
+    firstName: 'ella',
+    emails: parseEmailList(process.env.ELLA_GIFT_EMAIL, ['ella.m.alexandra@gmail.com', TEST_STUDENT_EMAIL])
   }
 };
 

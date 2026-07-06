@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Myyntisprintti – Ensimmäinen kampanjasi tekoälyn kanssa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#14213d; --ink2:#1f2f52;
+  --paper:#f4f5f2; --paper2:#eceee8; --warm:#dde1d8;
+  --accent:#1d5fad; --accent2:#0e8a6d; --accent3:#2a7a4b; --gold:#c78a2e;
+  --text:#14213d; --muted:#5f6b82; --border:rgba(20,33,61,0.12);
+  --shadow:0 2px 20px rgba(20,33,61,0.08); --shadow-md:0 8px 40px rgba(20,33,61,0.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;overflow-x:hidden;line-height:1.7;}
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:200;transition:width 0.4s ease;width:0%;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;background:rgba(244,245,242,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2.5rem;justify-content:space-between;}
+.nav-left{display:flex;align-items:center;gap:1rem;}
+.nav-module{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;background:rgba(29,95,173,0.08);border:1px solid rgba(29,95,173,0.2);padding:4px 12px;border-radius:4px;}
+.nav-title{font-size:0.85rem;font-weight:500;color:var(--muted);}
+.nav-steps{display:flex;gap:5px;align-items:center;}
+.step-pip{width:28px;height:4px;border-radius:2px;background:var(--warm);transition:background 0.4s;cursor:pointer;}
+.step-pip.active{background:var(--accent);}
+.step-pip.done{background:var(--accent2);}
+.section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:96px 2rem 5rem;position:relative;}
+.section-inner{max-width:820px;width:100%;}
+.section-alt{background:var(--paper2);}
+.section-label{font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:500;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1rem;}
+.divider{width:48px;height:2px;background:var(--accent);margin-bottom:2rem;border-radius:1px;}
+h2.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4.5vw,3.2rem);font-weight:400;line-height:1.12;color:var(--ink);margin-bottom:1.5rem;}
+h2.section-h2 em{font-style:italic;color:var(--accent);}
+.prose{font-size:1.05rem;line-height:1.85;color:var(--text);}
+.prose p{margin-bottom:1.25rem;}
+.fade-up{opacity:1;transform:translateY(0);transition:opacity 0.65s ease,transform 0.65s ease;}
+.fade-up.in{opacity:1;transform:translateY(0);}
+#hero{background:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:96px 2rem 5rem;position:relative;overflow:hidden;}
+#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 60%,rgba(29,95,173,0.25) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 80% 20%,rgba(14,138,109,0.18) 0%,transparent 60%);}
+.hero-inner{max-width:820px;width:100%;position:relative;z-index:1;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;margin-bottom:2.5rem;}
+.eyebrow-num{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:#7fb2ec;letter-spacing:0.15em;text-transform:uppercase;}
+.eyebrow-line{width:40px;height:1px;background:rgba(127,178,236,0.5);}
+.eyebrow-label{font-family:'DM Mono',monospace;font-size:0.72rem;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;}
+h1.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.6rem,6.5vw,5rem);font-weight:400;line-height:1.06;color:#fff;margin-bottom:1.75rem;}
+h1.hero-title em{font-style:italic;color:#8ecfb8;}
+.hero-sub{font-size:1.15rem;color:rgba(255,255,255,0.6);max-width:560px;line-height:1.75;margin-bottom:2.5rem;font-weight:300;}
+.hero-cta{display:inline-flex;align-items:center;gap:12px;background:var(--accent);color:#fff;padding:16px 36px;border-radius:6px;font-weight:600;font-size:0.95rem;cursor:pointer;text-decoration:none;transition:all 0.25s;}
+.hero-cta:hover{background:#174c8c;transform:translateY(-2px);box-shadow:0 8px 24px rgba(29,95,173,0.4);}
+.hero-time{display:flex;align-items:center;gap:8px;margin-top:2rem;font-size:0.82rem;color:rgba(255,255,255,0.35);}
+.hero-time::before{content:'⏱';font-size:0.9rem;}
+.hero-deliverables{margin-top:2.5rem;display:grid;gap:0.6rem;}
+.hero-deliverable{display:flex;align-items:flex-start;gap:10px;font-size:0.92rem;color:rgba(255,255,255,0.75);}
+.hero-deliverable::before{content:'✓';color:#8ecfb8;font-weight:600;flex-shrink:0;}
+.chain{display:flex;flex-direction:column;gap:0;margin:2.5rem 0;}
+.chain-step{display:flex;gap:1.25rem;align-items:flex-start;}
+.chain-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.chain-num{width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;font-family:'DM Serif Display',serif;font-size:1.2rem;display:flex;align-items:center;justify-content:center;}
+.chain-line{width:2px;flex:1;min-height:36px;background:var(--warm);}
+.chain-body{padding-bottom:2rem;}
+.chain-body h4{font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;color:var(--ink);margin-bottom:0.3rem;}
+.chain-body p{font-size:0.9rem;color:var(--muted);line-height:1.65;margin:0;}
+.chain-body .chain-tool{display:inline-block;margin-top:0.5rem;font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent2);background:rgba(14,138,109,0.08);border:1px solid rgba(14,138,109,0.2);padding:3px 10px;border-radius:4px;}
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin:2rem 0;}
+.tool-card{background:#fff;border-radius:12px;padding:1.4rem;box-shadow:var(--shadow);border:1px solid var(--border);}
+.tool-card h4{font-family:'DM Serif Display',serif;font-size:1.05rem;font-weight:400;color:var(--ink);margin-bottom:0.4rem;}
+.tool-card .tool-role{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem;}
+.tool-card p{font-size:0.83rem;color:var(--muted);line-height:1.6;margin:0;}
+.exercise-header{display:flex;align-items:center;gap:14px;margin-bottom:1.25rem;}
+.exercise-num{width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;font-family:'DM Serif Display',serif;font-size:1.2rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.exercise-header-text h3{font-family:'DM Serif Display',serif;font-size:1.3rem;font-weight:400;color:var(--ink);margin-bottom:0.2rem;}
+.exercise-header-text p{font-size:0.85rem;color:var(--muted);}
+.meta-row{display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:1.75rem;}
+.meta-chip{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:5px 12px;border-radius:4px;border:1px solid var(--border);color:var(--muted);background:#fff;}
+.meta-chip.tool{color:var(--accent2);border-color:rgba(14,138,109,0.3);background:rgba(14,138,109,0.06);}
+.meta-chip.needs{color:var(--gold);border-color:rgba(199,138,46,0.35);background:rgba(199,138,46,0.07);}
+.step-list{counter-reset:step;margin:1.5rem 0;display:grid;gap:0.9rem;}
+.step-item{display:flex;gap:1rem;align-items:flex-start;background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;box-shadow:var(--shadow);}
+.step-item::before{counter-increment:step;content:counter(step);width:26px;height:26px;border-radius:50%;background:var(--paper2);color:var(--ink);font-family:'DM Mono',monospace;font-size:0.8rem;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.step-item p{font-size:0.92rem;line-height:1.65;margin:0;}
+.prompt-box{background:var(--ink);border-radius:12px;padding:1.5rem;margin:1.5rem 0;position:relative;}
+.prompt-box-label{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:0.75rem;}
+.prompt-box pre{font-family:'DM Mono',monospace;font-size:0.82rem;line-height:1.75;color:rgba(255,255,255,0.9);white-space:pre-wrap;word-break:break-word;}
+.prompt-box .ph{color:#f3c46b;}
+.prompt-copy{position:absolute;top:1rem;right:1rem;padding:7px 14px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.prompt-copy:hover{background:rgba(255,255,255,0.2);}
+.prompt-copy.ok{border-color:#8ecfb8;color:#8ecfb8;}
+.vinkki-box{background:rgba(14,138,109,0.08);border-left:3px solid var(--accent2);border-radius:8px;padding:1.25rem 1.5rem;margin:1.5rem 0;}
+.vinkki-box strong{display:block;margin-bottom:0.5rem;color:var(--accent2);font-size:0.9rem;}
+.vinkki-box p{font-size:0.88rem;color:var(--text);line-height:1.7;margin:0 0 0.5rem 0;}
+.vinkki-box p:last-child{margin-bottom:0;}
+.warn-box{background:rgba(199,138,46,0.1);border-left:3px solid var(--gold);border-radius:8px;padding:1.25rem 1.5rem;margin:1.5rem 0;}
+.warn-box strong{display:block;margin-bottom:0.5rem;color:var(--gold);font-size:0.9rem;}
+.warn-box p{font-size:0.88rem;color:var(--text);line-height:1.7;margin:0;}
+details.example{background:#fff;border:1px solid var(--border);border-radius:12px;margin:1.5rem 0;box-shadow:var(--shadow);overflow:hidden;}
+details.example summary{padding:1.1rem 1.5rem;cursor:pointer;font-weight:600;font-size:0.92rem;color:var(--accent);list-style:none;display:flex;align-items:center;gap:10px;}
+details.example summary::before{content:'▸';transition:transform 0.2s;}
+details.example[open] summary::before{transform:rotate(90deg);}
+details.example .example-body{padding:0 1.5rem 1.5rem;font-size:0.9rem;line-height:1.8;color:var(--text);}
+details.example .example-body p{margin-bottom:1rem;}
+details.example .example-body .ex-block{background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;margin:0.75rem 0;font-size:0.87rem;white-space:pre-wrap;}
+.save-wrap{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1.75rem 0 0;box-shadow:var(--shadow);}
+.save-wrap .save-label{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.65rem;}
+.save-textarea{width:100%;background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:0.9rem 1.1rem;font-size:0.92rem;font-family:'DM Sans',sans-serif;color:var(--text);resize:vertical;min-height:120px;outline:none;transition:border-color 0.2s;line-height:1.6;}
+.save-textarea:focus{border-color:rgba(29,95,173,0.4);}
+.save-btn{margin-top:0.75rem;padding:11px 26px;border-radius:6px;font-size:0.88rem;font-weight:600;cursor:pointer;border:none;background:var(--ink);color:#fff;transition:all 0.25s;font-family:'DM Sans',sans-serif;}
+.save-btn:hover{background:var(--ink2);}
+.save-confirm{display:none;font-size:0.83rem;color:var(--accent2);margin-top:0.6rem;}
+.check-grid{display:grid;gap:0.75rem;margin:2rem 0;}
+.check-item{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;box-shadow:var(--shadow);font-size:0.92rem;line-height:1.6;}
+.check-item::before{content:'✓';color:var(--accent2);font-weight:700;flex-shrink:0;}
+.cv-box{background:var(--ink);border-radius:16px;padding:2.5rem;color:#fff;margin:2rem 0;position:relative;}
+.cv-box::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 80% 20%,rgba(29,95,173,0.3) 0%,transparent 60%);pointer-events:none;border-radius:16px;}
+.cv-box h3{font-family:'DM Serif Display',serif;font-size:1.4rem;font-weight:400;margin-bottom:1rem;position:relative;z-index:1;}
+.cv-box p{font-size:0.92rem;color:rgba(255,255,255,0.6);line-height:1.75;margin-bottom:1rem;position:relative;z-index:1;}
+.cv-line{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:1rem 1.25rem;font-size:0.9rem;line-height:1.7;color:rgba(255,255,255,0.9);margin:0.75rem 0;position:relative;z-index:1;}
+.btn-back{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--muted);padding:15px 24px;border-radius:6px;font-weight:500;font-size:0.95rem;border:1px solid var(--border);text-decoration:none;transition:all 0.25s;}
+.btn-back:hover{color:var(--ink);border-color:rgba(20,33,61,0.3);}
+.copy-all-btn{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#fff;padding:14px 30px;border-radius:6px;font-weight:600;font-size:0.92rem;border:none;cursor:pointer;transition:all 0.25s;font-family:'DM Sans',sans-serif;}
+.copy-all-btn:hover{background:#174c8c;transform:translateY(-2px);}
+.copy-all-btn.ok{background:var(--accent2);}
+@media(max-width:768px){nav{padding:0 1.25rem;}.nav-title{display:none;}.section{padding:80px 1.25rem 4rem;}.prompt-copy{position:static;margin-top:1rem;}}
+.idea-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin:1.75rem 0;}
+.idea-card{background:#fff;border-radius:12px;padding:1.25rem 1.4rem;box-shadow:var(--shadow);border:1px solid var(--border);transition:transform 0.2s,box-shadow 0.2s;}
+.idea-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+.idea-card .idea-emoji{font-size:1.8rem;margin-bottom:0.5rem;}
+.idea-card h4{font-family:'DM Serif Display',serif;font-size:1.05rem;font-weight:400;color:var(--ink);margin-bottom:0.35rem;}
+.idea-card p{font-size:0.84rem;color:var(--muted);line-height:1.6;margin:0;}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav>
+  <div class="nav-left">
+    <a href="/" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:var(--muted);margin-right:1.5rem;">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      <span style="font-size:0.85rem;font-weight:500;">Etusivu</span>
+    </a>
+    <span class="nav-module">Myyntisprintti</span>
+    <span class="nav-title">Oma tuote — oikea markkina</span>
+  </div>
+  <div class="nav-steps" id="navSteps"></div>
+  <span id="saveStatus" style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);margin-left:1rem;white-space:nowrap;"></span>
+</nav>
+
+<section class="section" id="hero" data-index="0">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">
+      <span class="eyebrow-num">Sprintti</span>
+      <span class="eyebrow-line"></span>
+      <span class="eyebrow-label">Myynti &amp; tekoäly</span>
+    </div>
+    <h1 class="hero-title">Keksi tuote.<br><em>Myy se oikeille yrityksille.</em></h1>
+    <p class="hero-sub">Seuraavien tuntien aikana sinulla on oma tuote, oma hinta ja lista oikeista suomalaisista yrityksistä, jotka voisivat ostaa sen. Lopussa esittelet koko paketin — ja saat siitä työnäytteen hakemuksiin.</p>
+    <div class="hero-deliverables">
+      <div class="hero-deliverable">Oma tuoteidea ja siitä tehty kuva</div>
+      <div class="hero-deliverable">Kilpailijat ja hinnat — lähteet tarkistettuina</div>
+      <div class="hero-deliverable">Lista kymmenestä oikeasta yrityksestä, jotka voisivat ostaa</div>
+      <div class="hero-deliverable">Myyntiviestit ja harjoiteltu keskustelu epäilevän ostajan kanssa</div>
+      <div class="hero-deliverable">Valmis PDF-esitys ja tiivistelmä, jonka esität lopuksi</div>
+    </div>
+    <a href="#johdanto" class="hero-cta" style="margin-top:2.5rem;">Aloita <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></a>
+    <div class="hero-time">Noin 5 tuntia — 5 harjoitusta, jotka rakentuvat toistensa päälle</div>
+  </div>
+</section>
+
+<!-- JOHDANTO -->
+<section class="section" id="johdanto" data-index="1">
+  <div class="section-inner fade-up">
+    <div class="section-label">Miten tämä toimii</div>
+    <h2 class="section-h2">Sinä olet nyt<br><em>yrityksen perustaja</em></h2>
+    <div class="divider"></div>
+    <div class="prose">
+      <p>Unohda hetkeksi työnhaku. Seuraavat tunnit sinulla on oma tuote, ja sinun tehtäväsi on selvittää, kuka sen ostaisi ja mihin hintaan. Se on täsmälleen sama työ, jota myyjä tekee joka päivä — mutta nyt tuote on sinun, joten saat päättää kaikesta itse.</p>
+      <p>Tekoäly on työparisi koko matkan: ChatGPT ideoi, piirtää ja näyttelee, Perplexity hakee tietoa ja näyttää lähteet, Claude kirjoittaa ja kokoaa. Tärkein sääntö: <strong>tekoäly ehdottaa, sinä päätät.</strong> Jokaisessa harjoituksessa on kohta, jossa valinta on sinun.</p>
+
+      <div class="chain">
+        <div class="chain-step">
+          <div class="chain-left"><div class="chain-num">1</div><div class="chain-line"></div></div>
+          <div class="chain-body"><h4>Keksi tuote ja tee siitä kuva</h4><p>Valitse valmiista ideoista tai keksi oma. ChatGPT piirtää tuotteesi.</p><span class="chain-tool">ChatGPT</span></div>
+        </div>
+        <div class="chain-step">
+          <div class="chain-left"><div class="chain-num">2</div><div class="chain-line"></div></div>
+          <div class="chain-body"><h4>Kilpailijat ja hinnat</h4><p>Kuka Suomessa myy jotain samankaltaista ja millä hinnalla? Lähteet esiin.</p><span class="chain-tool">Perplexity</span></div>
+        </div>
+        <div class="chain-step">
+          <div class="chain-left"><div class="chain-num">3</div><div class="chain-line"></div></div>
+          <div class="chain-body"><h4>Asiakaslista</h4><p>10 oikeaa suomalaista yritystä, jotka voisivat ostaa tuotteesi. Jokainen tarkistetaan.</p><span class="chain-tool">Perplexity</span></div>
+        </div>
+        <div class="chain-step">
+          <div class="chain-left"><div class="chain-num">4</div><div class="chain-line"></div></div>
+          <div class="chain-body"><h4>Myyntiviestit ja epäilevä ostaja</h4><p>Claude auttaa kirjoittamaan viestit. Sitten ChatGPT näyttelee ostajaa, joka ei vakuutu helpolla.</p><span class="chain-tool">Claude + ChatGPT</span></div>
+        </div>
+        <div class="chain-step">
+          <div class="chain-left"><div class="chain-num">5</div></div>
+          <div class="chain-body"><h4>Esityspaketti</h4><p>Claude kokoaa kaikesta PDF:n — kansikuvana oma tuotekuvasi — ja tiivistelmän, jonka esität.</p><span class="chain-tool">Claude</span></div>
+        </div>
+      </div>
+
+      <div class="vinkki-box">
+        <strong>💡 Ennen kuin aloitat</strong>
+        <p>Pidä tämä sivu auki yhdellä välilehdellä ja työkalut toisilla. Jokaisen harjoituksen lopussa on kohta "Tallenna tulokseni" — liitä siihen paras tuloksesi ja paina Tallenna. Tallennuksesi siirtyvät automaattisesti viimeisen harjoituksen kehotteeseen: kun pääset perille, kehote on jo valmis. Kopioit sen Claudelle, ja Claude tekee PDF:n.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HARJOITUS 1: KEKSI TUOTE -->
+<section class="section section-alt" id="h1" data-index="2">
+  <div class="section-inner fade-up">
+    <div class="exercise-header">
+      <div class="exercise-num">1</div>
+      <div class="exercise-header-text">
+        <h3>HARJOITUS 1: Keksi tuote ja tee siitä kuva</h3>
+        <p>Ideoi ja kuvittele</p>
+      </div>
+    </div>
+    <div class="meta-row">
+      <span class="meta-chip">⏱ 45 min</span>
+      <span class="meta-chip tool">ChatGPT</span>
+      <span class="meta-chip needs">Tarvitset: mielikuvituksen — loppu on valmiina</span>
+    </div>
+    <div class="prose">
+      <p>Aloitetaan hauskimmasta päästä. Valitse alta tuoteidea — tai keksi ihan oma. Kaikki ideat ovat sellaisia, joita myydään yrityksille, koska yritysasiakkaita pääset etsimään ihan oikeasti harjoituksessa 3.</p>
+    </div>
+
+    <div class="idea-grid">
+      <div class="idea-card"><div class="idea-emoji">🥐</div><h4>Perjantaipulla</h4><p>Tuoreet pullat toimistolle joka perjantaiaamu — tilaus, joka pyörii itsestään.</p></div>
+      <div class="idea-card"><div class="idea-emoji">🌿</div><h4>Vihreä toimisto</h4><p>Viherkasvit yrityksiin vuokralle — kasvit, ruukut ja hoitokäynnit kuukausihintaan.</p></div>
+      <div class="idea-card"><div class="idea-emoji">🐕</div><h4>Toimistokoirapäivä</h4><p>Rauhallinen, koulutettu koira vierailulle työpaikan hyvinvointipäivään.</p></div>
+      <div class="idea-card"><div class="idea-emoji">☕</div><h4>Kahvihuolto</h4><p>Pientoimistojen kahvikoneen huolto ja paikallisen paahtimon pavut samassa paketissa.</p></div>
+      <div class="idea-card"><div class="idea-emoji">🎧</div><h4>Taukonurkka</h4><p>Siirrettävä rentoutumisnurkka toimistoon: säkkituolit, kuulokkeet ja pehmeä valo.</p></div>
+      <div class="idea-card"><div class="idea-emoji">🎁</div><h4>Paikallinen lahjapaketti</h4><p>Yritysten asiakas- ja joululahjat koottuna oman alueen pientuottajien tuotteista.</p></div>
+    </div>
+
+    <div class="step-list">
+      <div class="step-item"><p><strong>Valitse idea</strong> tai muokkaa jotain näistä omaksesi. Älä mieti liikaa — hyvä valinta on se, josta tulee hyvä mieli. Voit myös kysyä ChatGPT:ltä: "Anna kolme hauskaa tuoteideaa, joita pieni yritys voisi myydä toisille yrityksille Suomessa."</p></div>
+      <div class="step-item"><p><strong>Tee tuotteestasi kuva.</strong> Avaa ChatGPT ja liitä alla oleva kuvakehote. Vaihda hakasulkeisiin oma tuotteesi.</p></div>
+      <div class="step-item"><p><strong>Pyydä yksi muutos.</strong> Katso kuvaa ja pyydä jotain toisin: "vaihda tausta vaaleaksi", "lisää kuvaan ihminen", "tee tunnelmasta iloisempi". Näin opit ohjaamaan kuvia — ensimmäinen versio on harvoin paras.</p></div>
+      <div class="step-item"><p><strong>Lisää kuva tähän moduuliin.</strong> Kun kuva on valmis, lataa se ChatGPT:stä koneellesi ja lisää se alla olevasta napista "Lisää tuotekuvasi". Kuva kulkee mukana harjoitukseen 5 — siitä tulee esityksesi kansi.</p></div>
+      <div class="step-item"><p><strong>Tee tuotekortti.</strong> Liitä ChatGPT:lle toinen kehote (alla). Se kysyy sinulta neljä kysymystä ja kokoaa vastauksistasi tuotekortin: mitä myyt, kenelle, mihin hintaan suunnilleen ja miksi asiakas ostaisi.</p></div>
+    </div>
+
+    <div class="prompt-box">
+      <div class="prompt-box-label">Kopioi tämä ChatGPT:lle (kuva)</div>
+      <button class="prompt-copy" onclick="copyPrompt(this,'p1a')">📋 Kopioi</button>
+      <pre id="p1a">Tee kuva tuotteesta: <span class="ph">[kirjoita tuotteesi tähän, esim. "tuoreiden pullien tilauspalvelu toimistoille"]</span>.
+
+Tyyli: valoisa ja kutsuva, kuin pienen suomalaisen yrityksen mainoskuva. Näytä tuote käytössä oikeassa ympäristössä. Ei tekstiä kuvaan.</pre>
+    </div>
+
+    <div class="prompt-box">
+      <div class="prompt-box-label">Kopioi tämä ChatGPT:lle (tuotekortti)</div>
+      <button class="prompt-copy" onclick="copyPrompt(this,'p1b')">📋 Kopioi</button>
+      <pre id="p1b">Autat minua rakentamaan tuotekortin. Tuotteeni: <span class="ph">[tuotteesi yhdellä lauseella]</span>.
+
+Kysy minulta neljä kysymystä, yksi kerrallaan:
+1. Millaiselle yritykselle tämä sopisi parhaiten? (ala, koko, paikkakunta)
+2. Kuka siellä päättäisi ostamisesta?
+3. Mitä hyötyä asiakas saa — mitä ongelmaa tämä helpottaa?
+4. Paljonko tämä voisi maksaa? (Arvaus riittää, tarkistamme hinnan myöhemmin.)
+
+Jos en osaa vastata, ehdota kaksi vaihtoehtoa ja anna minun valita. Kokoa lopuksi vastauksistani selkeä tuotekortti suomeksi.</pre>
+    </div>
+
+    <div class="vinkki-box">
+      <strong>💡 Vinkki</strong>
+      <p>Kysymykseen 4 saa vastata "ei mitään hajua". Sano se ChatGPT:lle suoraan — se ehdottaa haarukan, ja harjoituksessa 2 tarkistat oikeat hinnat kilpailijoilta. Väärä arvaus, joka korjataan tiedolla, on täsmälleen se, miten hinnoittelu oikeasti tehdään.</p>
+    </div>
+
+    <details class="example">
+      <summary>Näytä esimerkki: miltä valmis tuotekortti näyttää</summary>
+      <div class="example-body">
+        <div class="ex-block">TUOTEKORTTI — Perjantaipulla
+
+Mitä myyn: tuoreiden pullien toimitus toimistolle joka perjantaiaamu, jatkuva tilaus
+Kenelle: 10–40 hengen toimistot enintään 20 km päässä, esimerkiksi tilitoimistot ja insinööritoimistot
+Kuka päättää: toimistopäällikkö tai assistentti
+Hyöty: perjantaista tulee viikon odotetuin aamu — ja kukaan ei joudu hakemaan pullia itse
+Hinta-arvaus: noin 3 € / henkilö / kerta</div>
+        <p>Huomaa: "kenelle"-kohta on tarkka. Ei "kaikki yritykset" vaan tunnistettava joukko. Sitä tarvitaan harjoituksessa 3, kun etsit oikeita yrityksiä.</p>
+      </div>
+    </details>
+
+    <div class="save-wrap">
+      <div class="save-label">Tuotekuvasi</div>
+      <input type="file" id="imgInput" accept="image/*" style="display:none;" onchange="handleImage(this)">
+      <button class="save-btn" style="background:var(--accent);" onclick="document.getElementById('imgInput').click()">📷 Lisää tuotekuvasi</button>
+      <div id="imgPreviewWrap" style="display:none;margin-top:1rem;">
+        <img id="imgPreview" alt="Tuotekuvasi" style="max-width:100%;max-height:260px;border-radius:10px;border:1px solid var(--border);box-shadow:var(--shadow);">
+      </div>
+      <div class="save-confirm" id="imgConfirm">✓ Kuva tallennettu. Se odottaa sinua harjoituksessa 5.</div>
+
+      <div class="save-label" style="margin-top:1.75rem;">Tallenna tulokseni: tuotekortti</div>
+      <textarea class="save-textarea" id="save1" placeholder="Liitä tähän ChatGPT:n kokoama tuotekortti (mitä myyt, kenelle, hinta-arvaus, hyöty)..."></textarea>
+      <button class="save-btn" onclick="saveResult(1)">Tallenna</button>
+      <div class="save-confirm" id="confirm1">✓ Tallennettu. Seuraavaksi katsotaan, kuka muu myy jotain tällaista.</div>
+    </div>
+  </div>
+</section>
+
+<!-- HARJOITUS 2: KILPAILIJAT JA HINNAT -->
+<section class="section" id="h2" data-index="3">
+  <div class="section-inner fade-up">
+    <div class="exercise-header">
+      <div class="exercise-num">2</div>
+      <div class="exercise-header-text">
+        <h3>HARJOITUS 2: Kilpailijat ja hinnat</h3>
+        <p>Tutki markkinaa</p>
+      </div>
+    </div>
+    <div class="meta-row">
+      <span class="meta-chip">⏱ 50 min</span>
+      <span class="meta-chip tool">Perplexity</span>
+      <span class="meta-chip needs">Tarvitset: tuotekortin (harjoitus 1)</span>
+    </div>
+    <div class="prose">
+      <p>Nyt selviää, oletko keksinyt jotain uutta vai onko sinulla kilpailijoita. Molemmat ovat hyviä uutisia: kilpailijat todistavat, että joku maksaa tästä — ja heidän hintansa kertovat, mitä sinä voisit pyytää.</p>
+      <p>Käytät Perplexityä, koska se näyttää, mistä tieto on peräisin. Se on tässä koko jutun ydin: <strong>hintatieto ilman lähdettä on arvaus.</strong> Myyjä, joka sanoo asiakkaalle "kilpailija maksaa tuplasti enemmän" ilman todistetta, jää siitä kiinni.</p>
+    </div>
+
+    <div class="step-list">
+      <div class="step-item"><p><strong>Avaa Perplexity</strong> (perplexity.ai — voit kirjautua Google-tilillä). Liitä alla oleva kehote ja täydennä oma tuotteesi.</p></div>
+      <div class="step-item"><p><strong>Avaa lähteet.</strong> Perplexityn vastauksessa on numeroita — ne ovat linkkejä lähteisiin. Avaa vähintään kolme ja tarkista: sanooko sivu oikeasti sen, mitä vastaus väittää? Erityisesti hinnat kannattaa katsoa lähteestä omin silmin.</p></div>
+      <div class="step-item"><p><strong>Kysy jatkokysymys.</strong> Perplexityssä voi jatkaa keskustelua. Kokeile esimerkiksi: "Mitkä näistä toimivat [oma paikkakuntasi] alueella?" tai "Miten näiden hinnat eroavat toisistaan?"</p></div>
+      <div class="step-item"><p><strong>Kokoa kilpailijakortti.</strong> Kirjaa 3 kilpailijaa: nimi, mitä myyvät, hinta ja lähde. Kirjoita loppuun omin sanoin yksi lause: <em>miksi minun tuotteeni on erilainen tai parempi.</em> Tämä lause on sinun — tekoäly ei saa kirjoittaa sitä puolestasi.</p></div>
+      <div class="step-item"><p><strong>Päätä hintasi.</strong> Katso hinta-arvaustasi harjoituksesta 1 ja kilpailijoiden hintoja. Aseta oma hintasi ja kirjoita yhdellä lauseella miksi: halvempi, samaa tasoa vai kalliimpi — ja millä perusteella.</p></div>
+    </div>
+
+    <div class="prompt-box">
+      <div class="prompt-box-label">Kopioi tämä Perplexitylle</div>
+      <button class="prompt-copy" onclick="copyPrompt(this,'p2')">📋 Kopioi</button>
+      <pre id="p2">Tutkin markkinaa tuotteelle: <span class="ph">[tuotteesi yhdellä lauseella]</span>.
+
+Ketkä Suomessa myyvät jotain samankaltaista? Listaa 5 yritystä tai palvelua. Kerro jokaisesta: nimi, mitä tarkalleen myyvät ja millä hinnalla, jos hinta on julkisesti saatavilla. Näytä jokaisen tiedon lähde. Jos tarkkaa hintaa ei löydy, kerro hintahaarukka ja mihin se perustuu. Älä keksi hintoja.</pre>
+    </div>
+
+    <div class="vinkki-box">
+      <strong>💡 Vinkki</strong>
+      <p>Jos kilpailijoita ei löydy, laajenna hakua: "Entä palvelut, jotka ratkaisevat saman ongelman eri tavalla?" Perjantaipullan kilpailija ei ole vain toinen pullapalvelu — se on myös marketin pakastepulla ja kahvilan noutopöytä.</p>
+      <p>Jos hinnat puuttuvat kaikilta, sekin on löydös: "alalla ei kerrota hintoja julkisesti" on hyvä huomio esitykseesi — ja mahdollisuus erottua kertomalla omat hinnat suoraan.</p>
+    </div>
+
+    <details class="example">
+      <summary>Näytä esimerkki: yksi rivi kilpailijakortista</summary>
+      <div class="example-body">
+        <div class="ex-block">2. Pulla &amp; Co (kuvitteellinen esimerkki) — Oulu
+Mitä myy: kokous- ja aamiaistarjoilut toimistoille tilauksesta
+Hinta: aamiaispaketti alkaen 6,50 € / henkilö (lähde: yrityksen hinnasto, tarkistettu 6.7.)
+Ero omaani: he toimittavat tilauksesta, minä joka perjantai ilman erillistä tilaamista — asiakkaan ei tarvitse muistaa mitään.</div>
+        <p>Huomaa viimeinen rivi: se ei ole tekoälyn lause vaan oma oivallus. Juuri sitä kysytään, kun esität tämän — "mikä teistä tekee erilaisen?"</p>
+      </div>
+    </details>
+
+    <div class="save-wrap">
+      <div class="save-label">Tallenna tulokseni: kilpailijakortti ja oma hinta</div>
+      <textarea class="save-textarea" id="save2" placeholder="Liitä tähän 3 kilpailijaa hintoineen ja lähteineen, oma erottautumislauseesi ja oma hintasi perusteluineen..."></textarea>
+      <button class="save-btn" onclick="saveResult(2)">Tallenna</button>
+      <div class="save-confirm" id="confirm2">✓ Tallennettu. Nyt tiedät markkinan — seuraavaksi etsitään ostajat.</div>
+    </div>
+  </div>
+</section>
+
+<!-- HARJOITUS 3: ASIAKASLISTA -->
+<section class="section section-alt" id="h3" data-index="4">
+  <div class="section-inner fade-up">
+    <div class="exercise-header">
+      <div class="exercise-num">3</div>
+      <div class="exercise-header-text">
+        <h3>HARJOITUS 3: Asiakaslista</h3>
+        <p>Etsi ja tarkista</p>
+      </div>
+    </div>
+    <div class="meta-row">
+      <span class="meta-chip">⏱ 50 min</span>
+      <span class="meta-chip tool">Perplexity</span>
+      <span class="meta-chip needs">Tarvitset: tuotekortin (harjoitus 1)</span>
+    </div>
+    <div class="prose">
+      <p>Nyt tuotekorttisi "kenelle"-kohta muuttuu nimiksi. Etsit kymmenen oikeaa suomalaista yritystä, jotka voisivat ostaa tuotteesi. Tämä on myyjän tärkein arkityö: mahdollisten asiakkaiden etsiminen.</p>
+      <p>Yksi asia ennen kuin aloitat: <strong>tekoäly voi keksiä yrityksiä, joita ei ole olemassa.</strong> Siksi jokainen nimi tarkistetaan. Myyjä, joka soittaa olemattomaan yritykseen, ei ole myyjä kauan.</p>
+    </div>
+
+    <div class="step-list">
+      <div class="step-item"><p><strong>Liitä kehote Perplexitylle</strong> ja täydennä siihen tuotekorttisi "kenelle"-kohdan tiedot: ala, koko ja alue.</p></div>
+      <div class="step-item"><p><strong>Tarkista jokainen yritys.</strong> Hae nimi osoitteessa ytj.fi (Yritys- ja yhteisötietojärjestelmä — sama paikka, josta pankki ja verottajakin tarkistavat yritykset). Jos yritystä ei löydy, se lentää listalta. Pyydä Perplexityltä tilalle uusi.</p></div>
+      <div class="step-item"><p><strong>Karsi viisitoista kymmeneen.</strong> Hylkää ne, jotka eivät oikeasti sovi: liian iso, liian kaukana, väärä ala. Karsiminen ei ole epäonnistumista — se on juuri sitä arviointikykyä, jota työnantaja hakee.</p></div>
+      <div class="step-item"><p><strong>Kirjoita jokaisesta "miksi juuri tämä".</strong> Yksi lause omin sanoin: miksi tämä yritys voisi ostaa tuotteesi. Tämä on listan arvokkain sarake — ja se on sinun, ei tekoälyn.</p></div>
+      <div class="step-item"><p><strong>Valitse kolme suosikkia.</strong> Merkitse tähdellä kolme yritystä, joihin uskot eniten. Niille kirjoitat viestit harjoituksessa 4.</p></div>
+    </div>
+
+    <div class="prompt-box">
+      <div class="prompt-box-label">Kopioi tämä Perplexitylle</div>
+      <button class="prompt-copy" onclick="copyPrompt(this,'p3')">📋 Kopioi</button>
+      <pre id="p3">Etsi suomalaisia yrityksiä, jotka voisivat olla asiakkaita tälle tuotteelle: <span class="ph">[tuotteesi yhdellä lauseella]</span>.
+
+Sopiva asiakas: <span class="ph">[ala tuotekortistasi]</span>, kooltaan <span class="ph">[koko tuotekortistasi]</span>, alueella <span class="ph">[paikkakunta tai alue]</span>.
+
+Listaa 15 yritystä. Kerro jokaisesta: virallinen nimi, paikkakunta ja lyhyesti mitä yritys tekee. Käytä vain oikeita, olemassa olevia yrityksiä ja näytä lähteet. Älä keksi yrityksiä.</pre>
+    </div>
+
+    <div class="vinkki-box">
+      <strong>💡 Vinkki</strong>
+      <p>Jos listalle tulee vain muutama yritys, "kenelle"-kohtasi on liian tiukka. Väljennä yhtä asiaa kerrallaan — ensin aluetta, sitten kokoa. Jos taas kaikki maailman yritykset tuntuvat sopivan, tiukenna: kysy itseltäsi, kuka ostaisi tämän <em>ensimmäisenä</em>.</p>
+    </div>
+
+    <div class="warn-box">
+      <strong>⚠️ Muista tämä työelämässäkin</strong>
+      <p>Etsi yrityksiä, älä ihmisten tietoja. Päättäjän tittelin saa katsoa yrityksen sivuilta, mutta yksityishenkilöiden tietoja ei kerätä listoiksi. Hyvä myyjä tuntee tämän rajan.</p>
+    </div>
+
+    <details class="example">
+      <summary>Näytä esimerkki: yksi rivi valmiista listasta</summary>
+      <div class="example-body">
+        <div class="ex-block">3. Insinööritoimisto Silta Oy (kuvitteellinen esimerkki) — Kuopio
+Mitä tekee: rakennesuunnittelua, noin 25 työntekijää
+Miksi juuri tämä: hakee parhaillaan kahta uutta suunnittelijaa — kasvava toimisto, jossa perjantaipullalle olisi tilausta. Ei omaa ruokalaa.
+Tarkistettu ytj.fi:stä ✓</div>
+      </div>
+    </details>
+
+    <div class="save-wrap">
+      <div class="save-label">Tallenna tulokseni: 10 yrityksen lista + kolme tähdellä</div>
+      <textarea class="save-textarea" id="save3" placeholder="Liitä tähän valmis lista. Merkitse kolme valittua tähdellä *"></textarea>
+      <button class="save-btn" onclick="saveResult(3)">Tallenna</button>
+      <div class="save-confirm" id="confirm3">✓ Tallennettu. Kolmelle tähtiyritykselle kirjoitetaan seuraavaksi viestit.</div>
+    </div>
+  </div>
+</section>
+
+<!-- HARJOITUS 4: MYYNTIVIESTIT JA EPÄILEVÄ OSTAJA -->
+<section class="section" id="h4" data-index="5">
+  <div class="section-inner fade-up">
+    <div class="exercise-header">
+      <div class="exercise-num">4</div>
+      <div class="exercise-header-text">
+        <h3>HARJOITUS 4: Myyntiviestit ja epäilevä ostaja</h3>
+        <p>Kirjoita ja puolusta</p>
+      </div>
+    </div>
+    <div class="meta-row">
+      <span class="meta-chip">⏱ 75 min</span>
+      <span class="meta-chip tool">Claude + ChatGPT</span>
+      <span class="meta-chip needs">Tarvitset: kolme tähtiyritystä (harjoitus 3) ja hintasi (harjoitus 2)</span>
+    </div>
+    <div class="prose">
+      <p>Tässä harjoituksessa on kaksi osaa. Ensin kirjoitat viestit kolmelle tähtiyrityksellesi Clauden kanssa. Sitten testaat, kestävätkö ne: ChatGPT näyttelee ostajaa, joka ei vakuutu helpolla.</p>
+      <p>Hyvän myyntiviestin salaisuus on yksinkertainen: <strong>huono viesti kertoo tuotteesta, hyvä kertoo asiakkaan arjesta.</strong> Kukaan ei osta pullia — ihmiset ostavat perjantaiaamun, jota koko toimisto odottaa.</p>
+    </div>
+
+    <div class="prose"><p><strong>Osa A — viestit (40 min)</strong></p></div>
+    <div class="step-list">
+      <div class="step-item"><p><strong>Hae taustatieto.</strong> Kysy Perplexityltä jokaisesta tähtiyrityksestä: "Mitä yritykselle <span style="color:var(--gold);">[nimi]</span> kuuluu juuri nyt? Uutiset, rekrytoinnit, muutokset. Näytä lähteet." Poimi jokaisesta yksi tuore, todellinen asia talteen.</p></div>
+      <div class="step-item"><p><strong>Avaa Claude</strong> ja liitä viestikehote. Täydennä ensimmäisen yrityksen tiedot ja taustatieto.</p></div>
+      <div class="step-item"><p><strong>Tee ensimmäisen lauseen testi.</strong> Peitä yrityksen nimi ja lue viesti. Jos et pysty päättelemään, mille yritykselle se on kirjoitettu, se ei ole valmis — pyydä Claudea aloittamaan taustatiedosta.</p></div>
+      <div class="step-item"><p><strong>Toista yrityksille 2 ja 3</strong> samalla kehotteella. Kolmannella kerralla huomaat jo itse, mikä viestissä toimii — se on tämän harjoituksen oikea tavoite.</p></div>
+    </div>
+
+    <div class="prompt-box">
+      <div class="prompt-box-label">Kopioi tämä Claudelle (viestit)</div>
+      <button class="prompt-copy" onclick="copyPrompt(this,'p4a')">📋 Kopioi</button>
+      <pre id="p4a">Autat minua kirjoittamaan ensimmäisen yhteydenoton yritykselle.
+
+Tuotteeni: <span class="ph">[tuotteesi yhdellä lauseella + hintasi]</span>
+Yritys: <span class="ph">[nimi ja paikkakunta]</span>
+Mitä yritykselle kuuluu: <span class="ph">[tuore asia, jonka löysit Perplexityllä]</span>
+Kenelle kirjoitan: <span class="ph">[esim. toimistopäällikkö]</span>
+
+Kirjoita kaksi versiota sähköpostista:
+Versio A — lämmin ja rauhallinen. Enintään 90 sanaa.
+Versio B — rohkeampi, alkaa suoraan siitä, mitä yritykselle kuuluu. Enintään 90 sanaa.
+
+Säännöt: ensimmäinen lause kertoo jotain TÄSTÄ yrityksestä, ei tuotteestani. Kirjoita niin kuin ihminen kirjoittaa ihmiselle — ei mainoskieltä. Lopussa yksi selkeä ehdotus: lyhyt puhelu tai kokeilu. Kirjoita selkeällä suomella.</pre>
+    </div>
+
+    <div class="prose" style="margin-top:2.5rem;"><p><strong>Osa B — epäilevä ostaja (35 min)</strong></p>
+    <p>Viestisi toimi: ostaja vastasi ja suostui puheluun. Nyt hän kysyy: "No, miksi me tarvitsisimme tätä?" Avaa ChatGPT ja käynnistä äänitila (kuulokemikrofonin kuvake) — puhu ääneen, sillä puhelimessa lausetta ei voi muokata jälkikäteen. Jos äänitila ei toimi, kirjoita, mutta vastaa nopeasti äläkä hio.</p></div>
+
+    <div class="step-list">
+      <div class="step-item"><p><strong>Liitä tai lue roolikehote</strong> ChatGPT:lle. Täydennä yhden tähtiyrityksesi tiedot.</p></div>
+      <div class="step-item"><p><strong>Käy kolme kierrosta.</strong> Vastaa jokaiseen vastaväitteeseen parhaasi mukaan. Saa mennä pieleen — juuri sitä varten harjoitellaan.</p></div>
+      <div class="step-item"><p><strong>Pyydä palaute.</strong> Sano lopuksi: "Lopeta rooli. Mikä vastauksissani toimi, mikä ei, ja miten vastaisit itse?"</p></div>
+      <div class="step-item"><p><strong>Kokoa vastaväitekortti.</strong> Pyydä: "Kokoa keskustelusta viisi yleisintä vastaväitettä ja hyvät vastaukset niihin." Tämä kortti kulkee mukanasi oikeisiin haastatteluihin.</p></div>
+    </div>
+
+    <div class="prompt-box">
+      <div class="prompt-box-label">Kopioi tai lue tämä ChatGPT:lle (roolipeli)</div>
+      <button class="prompt-copy" onclick="copyPrompt(this,'p4b')">📋 Kopioi</button>
+      <pre id="p4b">Näyttele epäilevää mutta asiallista ostajaa. Olet <span class="ph">[esim. toimistopäällikkö]</span> yrityksessä <span class="ph">[tähtiyrityksesi nimi]</span>. Minä myyn: <span class="ph">[tuotteesi ja hintasi]</span>. Otin sinuun yhteyttä ja suostuit lyhyeen puheluun.
+
+Esitä vastaväitteitä yksi kerrallaan — hinnasta, ajankohdasta tai siitä, ettei tarvetta ole. Ole realistinen: et tyly, mutta et helppo. Jos vastaukseni on hyvä, jatka luontevasti eteenpäin. Jos se on heikko, kysy tarkentava jatkokysymys. Pysy roolissa, kunnes sanon "lopeta rooli".</pre>
+    </div>
+
+    <div class="vinkki-box">
+      <strong>💡 Vinkki</strong>
+      <p>Paras vastaus vastaväitteeseen ei ole väite vaan kysymys. Kun ostaja sanoo "liian kallista", kokeile: "Mihin vertaat hintaa?" Kysymys pitää keskustelun auki — väittely sulkee sen.</p>
+      <p>Tee osa B kahdesti. Ensimmäinen kerta menee jännittäessä, toisella huomaat kehittyneesi. Kirjaa yksi asia, joka meni toisella kerralla paremmin — se on valmis vastaus haastattelukysymykseen "miten kehität itseäsi".</p>
+    </div>
+
+    <details class="example">
+      <summary>Näytä esimerkki: pätkä harjoituskeskustelusta</summary>
+      <div class="example-body">
+        <div class="ex-block">Ostaja: "Kuulostaa kivalta, mutta meillä assistentti hakee pullat marketista. Se on halvempaa."
+
+Heikko vastaus: "Mutta meidän pullat on paljon parempia."
+
+Parempi vastaus: "Varmasti onkin edullisempaa. Saanko kysyä — paljonko assistentin aikaa siihen menee joka viikko? Kysyn siksi, että monessa toimistossa se on se piilokustannus, ei pullat."</div>
+        <p>Parempi vastaus ei kiistä ostajan väitettä. Se myöntää sen — ja kääntää katseen asiaan, jota ostaja ei ollut ajatellut.</p>
+      </div>
+    </details>
+
+    <div class="save-wrap">
+      <div class="save-label">Tallenna tulokseni: paras viesti + vastaväitekortti</div>
+      <textarea class="save-textarea" id="save4" placeholder="Liitä tähän paras viestisi (muokattuna), viisi vastaväitettä vastauksineen ja yksi asia, jonka opit roolipelistä..."></textarea>
+      <button class="save-btn" onclick="saveResult(4)">Tallenna</button>
+      <div class="save-confirm" id="confirm4">✓ Tallennettu. Viimeinen harjoitus kokoaa kaiken esitykseksi.</div>
+    </div>
+  </div>
+</section>
+
+<!-- HARJOITUS 5: ESITYSPAKETTI -->
+<section class="section section-alt" id="h5" data-index="6">
+  <div class="section-inner fade-up">
+    <div class="exercise-header">
+      <div class="exercise-num">5</div>
+      <div class="exercise-header-text">
+        <h3>HARJOITUS 5: Esityspaketti</h3>
+        <p>Kokoa ja esitä</p>
+      </div>
+    </div>
+    <div class="meta-row">
+      <span class="meta-chip">⏱ 60 min</span>
+      <span class="meta-chip tool">Claude</span>
+      <span class="meta-chip needs">Tarvitset: kaikki tallennukset + tuotekuvan (harjoitus 1)</span>
+    </div>
+    <div class="prose">
+      <p>Nyt kaikki tekemäsi paketoidaan yhdeksi esitykseksi. Claude kokoaa PDF:n, jonka kannessa on oma tuotekuvasi — ja lyhyen tiivistelmän, jonka luet ääneen, kun esität työsi. Tämä paketti on työnäytteesi: sen voit liittää hakemukseen tai näyttää haastattelussa, kun kysytään "miten käyttäisit tekoälyä myyntityössä".</p>
+    </div>
+
+    <div class="step-list">
+      <div class="step-item"><p><strong>Katso kehotetta alla.</strong> Tuloksesi harjoituksista 1–4 ovat siinä jo valmiina — ne siirtyivät automaattisesti, kun painoit Tallenna. Jos jokin kohta puuttuu, palaa siihen harjoitukseen ja tallenna tulos.</p></div>
+      <div class="step-item"><p><strong>Kopioi kehote ja liitä Claudelle.</strong> Yksi nappi, yksi liittäminen — koko työsi on mukana.</p></div>
+      <div class="step-item"><p><strong>Liitä tuotekuvasi samaan keskusteluun.</strong> Kuvasi odottaa alla — lataa se napista koneellesi ja vedä Clauden keskusteluun ennen kuin lähetät.</p></div>
+      <div class="step-item"><p><strong>Tarkista PDF kuin ostaja.</strong> Lue se läpi: onko jokainen hinta ja yrityksen nimi oikein? Sinä esität tämän omalla nimelläsi — tekoäly ei vastaa virheistä, sinä vastaat.</p></div>
+      <div class="step-item"><p><strong>Harjoittele tiivistelmä ääneen.</strong> Claude tekee myös puhuttavan tiivistelmän. Lue se ääneen kaksi kertaa. Sitten esität: kerro minuutissa, mitä rakensit, mitä löysit ja mitä opit.</p></div>
+    </div>
+
+    <div class="save-wrap" id="imgPickup" style="display:none;">
+      <div class="save-label">Tuotekuvasi (harjoituksesta 1)</div>
+      <img id="imgPreview5" alt="Tuotekuvasi" style="max-width:100%;max-height:220px;border-radius:10px;border:1px solid var(--border);box-shadow:var(--shadow);display:block;margin-bottom:0.75rem;">
+      <button class="save-btn" style="background:var(--accent);" onclick="downloadImage()">⬇ Lataa kuva koneellesi</button>
+    </div>
+
+    <div class="prompt-box">
+      <div class="prompt-box-label">Kopioi tämä Claudelle (PDF + tiivistelmä)</div>
+      <button class="prompt-copy" onclick="copyPrompt(this,'p5')">📋 Kopioi</button>
+      <pre id="p5">Kokoa alla olevista materiaaleista kaksi asiaa.
+
+1. Yksisivuinen, ammattimainen PDF otsikolla "<span class="ph">[tuotteesi nimi]</span> — tuote ja markkinaselvitys". Käytä liittämääni kuvaa kannessa. Rakenne:
+- Tuote lyhyesti: mitä, kenelle, mihin hintaan
+- Kilpailijat ja hinnat (mainitse, että lähteet on tarkistettu)
+- Asiakaslista: 10 yritystä taulukkona (nimi, paikkakunta, miksi sopii)
+- Näyte myyntiviestistä
+- Kolme tärkeintä vastaväitettä ja vastaukseni
+- Mitä opin: 3 kohtaa
+
+2. Puhuttava tiivistelmä (noin 100 sanaa), jonka luen ääneen esittäessäni tämän: mitä rakensin, mitä löysin markkinasta ja mitä opin tekoälyn käytöstä. Kirjoita puhekielisesti mutta selkeästi — niin kuin kerron asiasta ihmiselle, en lue paperia.
+
+Älä liioittele äläkä lisää mitään, mitä materiaaleissa ei ole. Kirjoita selkeällä suomella. Tee lopuksi PDF-tiedosto.
+
+MATERIAALIT:
+<span id="finalMaterials" class="ph">[Tallenna harjoitusten 1–4 tulokset — ne ilmestyvät tähän automaattisesti.]</span></pre>
+    </div>
+
+    <div class="vinkki-box">
+      <strong>💡 Vinkki</strong>
+      <p>"Mitä opin" -kohta on paketin arvokkain osa. Kirjoita sinne myös yksi asia, joka meni pieleen ja miten korjasit sen — esimerkiksi yritys, joka lensi listalta tarkistuksessa. Se on uskottavampaa kuin pelkät onnistumiset, ja juuri siitä työnantaja näkee, että osaat käyttää tekoälyä järkevästi: tarkistat etkä usko sokeasti.</p>
+    </div>
+
+    <div class="save-wrap">
+      <div class="save-label">Tallenna tulokseni: puhuttava tiivistelmä</div>
+      <textarea class="save-textarea" id="save5" placeholder="Liitä tähän lopullinen tiivistelmäsi — se, jonka sanot ääneen esittäessäsi työsi..."></textarea>
+      <button class="save-btn" onclick="saveResult(5)">Tallenna</button>
+      <div class="save-confirm" id="confirm5">✓ Tallennettu. Sprintti on valmis — aika esittää!</div>
+    </div>
+  </div>
+</section>
+
+<!-- LOPETUS -->
+<section class="section" id="lopetus" data-index="7">
+  <div class="section-inner fade-up">
+    <div class="section-label">Sprintti valmis</div>
+    <h2 class="section-h2">Mitä sinulla<br><em>nyt on</em></h2>
+    <div class="divider"></div>
+
+    <div class="check-grid">
+      <div class="check-item">Oma tuote, jolla on kuva, hinta ja perusteltu ero kilpailijoihin</div>
+      <div class="check-item">Markkinaselvitys, jonka jokainen tieto on tarkistettu lähteestä</div>
+      <div class="check-item">10 oikeaa yritystä ja omat perustelusi, miksi juuri ne</div>
+      <div class="check-item">Myyntiviestit, jotka läpäisevät ensimmäisen lauseen testin</div>
+      <div class="check-item">Vastaväitekortti ja kokemus ostajasta, joka ei vakuutu helpolla</div>
+      <div class="check-item">PDF-esitys ja minuutin puhe — työnäyte, jota muilla hakijoilla ei ole</div>
+    </div>
+
+    <div class="cv-box">
+      <h3>Näin kirjoitat tämän ansioluetteloon</h3>
+      <p>Kopioi ja muokkaa omaan CV:hesi ja LinkedIn-profiiliisi. Vaihda hakasulkeet omiin tietoihisi.</p>
+      <div class="cv-line">Suunnittelin tuoteidean ja tein sille markkinaselvityksen tekoälytyökaluilla (ChatGPT, Claude, Perplexity): kilpailija- ja hintavertailu tarkistetuista lähteistä, 10 yrityksen asiakaslista ja personoidut myyntiviestit.</div>
+      <div class="cv-line">Harjoittelin myyntikeskustelua ja vastaväitteiden käsittelyä tekoälyn kanssa ja kokosin työstä esityksen [linkki, jos jaat PDF:n].</div>
+      <div class="cv-line">LinkedIn-otsikkoon: Asiakaspalvelun ammattilainen matkalla myyntityöhön · tekoäly työkaluna arjessa</div>
+    </div>
+
+    <div class="vinkki-box">
+      <strong>💡 Viimeinen vinkki</strong>
+      <p>Kun haastattelija kysyy "miten käyttäisit tekoälyä myynnissä", älä vastaa mielipiteellä. Avaa PDF ja sano: "Näin. Tein tämän itse." Yksikään toinen hakija ei tee samaa.</p>
+    </div>
+
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:3rem;">
+      <a href="/" class="btn-back">← Palaa etusivulle</a>
+    </div>
+  </div>
+</section>
+
+<script src="/js/module-work.js"></script>
+<script>
+const MODULE_ID = 'moduuli-ella-myyntisprintti';
+const sections = document.querySelectorAll('.section[data-index]');
+const navSteps = document.getElementById('navSteps');
+const progressBar = document.getElementById('progress-bar');
+const saveStatusEl = document.getElementById('saveStatus');
+let sprintWorkApi = null;
+let applyingState = false;
+
+sections.forEach((s,i) => {
+  const pip = document.createElement('div');
+  pip.className = 'step-pip'+(i===0?' active':'');
+  pip.addEventListener('click', () => s.scrollIntoView({behavior:'smooth'}));
+  navSteps.appendChild(pip);
+});
+function updateProgress() {
+  const st=window.scrollY,dh=document.documentElement.scrollHeight-window.innerHeight;
+  progressBar.style.width=(dh>0?(st/dh)*100:0)+'%';
+  let ai=0;
+  sections.forEach((s,i)=>{if(s.getBoundingClientRect().top<=window.innerHeight*0.5)ai=i;});
+  navSteps.querySelectorAll('.step-pip').forEach((p,i)=>{p.classList.remove('active','done');if(i===ai)p.classList.add('active');else if(i<ai)p.classList.add('done');});
+}
+window.addEventListener('scroll',updateProgress,{passive:true});
+const fadeObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');fadeObs.unobserve(e.target);}});},{threshold:0.12});
+document.querySelectorAll('.fade-up').forEach(el=>fadeObs.observe(el));
+
+function copyPrompt(btn, preId) {
+  const text = document.getElementById(preId).innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='✓ Kopioitu!'; btn.classList.add('ok');
+    setTimeout(()=>{ btn.textContent='📋 Kopioi'; btn.classList.remove('ok'); },2200);
+  });
+}
+const SPRINT_TITLES = ['TUOTEKORTTI','KILPAILIJAT JA HINNAT','ASIAKASLISTA','MYYNTIVIESTI JA VASTAVÄITTEET','PUHUTTAVA TIIVISTELMÄ'];
+
+function setSaveStatus(msg, ok) {
+  if (!saveStatusEl) return;
+  saveStatusEl.textContent = msg || '';
+  saveStatusEl.style.color = ok === false ? '#c75b3a' : 'var(--accent2)';
+}
+
+function snapshotWork() {
+  const saves = {};
+  for (let i = 1; i <= 5; i++) {
+    const el = document.getElementById('save' + i);
+    saves[String(i)] = el ? el.value.trim() : '';
+  }
+  let productImage = '';
+  try { productImage = localStorage.getItem('sprintti_kuva_' + MODULE_ID) || ''; } catch (e) {}
+  if (!productImage) {
+    try { productImage = localStorage.getItem('sprintti_kuva') || ''; } catch (e) {}
+  }
+  return {
+    v: 1,
+    ts: Date.now(),
+    saves: saves,
+    productImage: productImage
+  };
+}
+
+function summarizeWork(data) {
+  if (!data || !data.saves) return '';
+  const filled = Object.keys(data.saves).filter(function (k) { return data.saves[k]; }).length;
+  return filled + '/5 harjoitusta tallennettu' + (data.productImage ? ' · kuva mukana' : '');
+}
+
+function applyWork(data) {
+  if (!data || data.v !== 1) return false;
+  applyingState = true;
+  if (data.saves) {
+    for (let i = 1; i <= 5; i++) {
+      const el = document.getElementById('save' + i);
+      if (el && data.saves[String(i)] != null) el.value = data.saves[String(i)];
+    }
+  }
+  if (data.productImage) {
+    try {
+      localStorage.setItem('sprintti_kuva_' + MODULE_ID, data.productImage);
+      localStorage.setItem('sprintti_kuva', data.productImage);
+    } catch (e) {}
+    showImage(data.productImage);
+  }
+  refreshFinalPrompt();
+  applyingState = false;
+  return true;
+}
+
+function refreshFinalPrompt() {
+  const el = document.getElementById('finalMaterials');
+  if(!el) return;
+  let out = [];
+  for(let i=0;i<4;i++){
+    const t = document.getElementById('save'+(i+1));
+    const v = t ? t.value.trim() : '';
+    if(v) out.push('=== '+SPRINT_TITLES[i]+' ===\n'+v);
+    else out.push('=== '+SPRINT_TITLES[i]+' ===\n[puuttuu — palaa harjoitukseen '+(i+1)+' ja paina Tallenna]');
+  }
+  el.textContent = out.join('\n\n');
+}
+
+function saveResult(n) {
+  const val = document.getElementById('save'+n).value.trim();
+  if(!val){ alert('Kenttä on tyhjä — liitä tulos ensin.'); return; }
+  refreshFinalPrompt();
+  const c = document.getElementById('confirm'+n);
+  c.style.display='block';
+  setTimeout(()=>{ c.style.display='none'; }, 4000);
+  if (sprintWorkApi && typeof sprintWorkApi.saveNow === 'function') {
+    sprintWorkApi.saveNow().then(function () {
+      setSaveStatus('Tallennettu palvelimelle ✓', true);
+    }).catch(function () {
+      setSaveStatus('Tallennettu paikallisesti', true);
+    });
+  }
+}
+
+function handleImage(input) {
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const img = new Image();
+  const reader = new FileReader();
+  reader.onload = e => {
+    img.onload = () => {
+      const maxSide = 1000;
+      let w = img.width, h = img.height;
+      if(Math.max(w,h) > maxSide){ const k = maxSide/Math.max(w,h); w = Math.round(w*k); h = Math.round(h*k); }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      try {
+        localStorage.setItem('sprintti_kuva_' + MODULE_ID, dataUrl);
+        localStorage.setItem('sprintti_kuva', dataUrl);
+      } catch(err) {
+        alert('Kuva on liian suuri tallennettavaksi tähän sivuun. Pidä kuvatiedosto tallessa koneellasi — liität sen Claudelle harjoituksessa 5.');
+      }
+      showImage(dataUrl);
+      const c = document.getElementById('imgConfirm');
+      c.style.display='block';
+      setTimeout(()=>{ c.style.display='none'; }, 4000);
+      if (!applyingState && sprintWorkApi && typeof sprintWorkApi.scheduleSave === 'function') {
+        sprintWorkApi.scheduleSave();
+        setSaveStatus('Kuva tallennetaan…', true);
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function showImage(dataUrl) {
+  const p1 = document.getElementById('imgPreview');
+  const w1 = document.getElementById('imgPreviewWrap');
+  if(p1 && w1){ p1.src = dataUrl; w1.style.display='block'; }
+  const p5 = document.getElementById('imgPreview5');
+  const w5 = document.getElementById('imgPickup');
+  if(p5 && w5){ p5.src = dataUrl; w5.style.display='block'; }
+}
+
+function downloadImage() {
+  let dataUrl = '';
+  try { dataUrl = localStorage.getItem('sprintti_kuva_' + MODULE_ID) || localStorage.getItem('sprintti_kuva') || ''; } catch(e) {}
+  if(!dataUrl){ alert('Kuvaa ei löydy. Lisää se harjoituksessa 1.'); return; }
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = 'tuotekuva.jpg';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+async function initSprintPersistence() {
+  if (!window.moduleWork || typeof window.moduleWork.initModuleWork !== 'function') {
+    refreshFinalPrompt();
+    return;
+  }
+  try {
+    sprintWorkApi = await window.moduleWork.initModuleWork(MODULE_ID, {
+      collect: snapshotWork,
+      summarize: summarizeWork,
+      debounceMs: 800,
+      fieldIds: ['save1', 'save2', 'save3', 'save4', 'save5'],
+      apply: function (remoteData) {
+        if (!remoteData || remoteData.v !== 1) return;
+        applyWork(remoteData);
+      }
+    });
+    if (sprintWorkApi && typeof sprintWorkApi.saveNow === 'function') {
+      await sprintWorkApi.saveNow();
+    }
+    setSaveStatus('Tallennetaan automaattisesti', true);
+  } catch (e) {
+    console.warn('[myyntisprintti] persistence init failed:', e);
+    setSaveStatus('', true);
+  }
+  refreshFinalPrompt();
+}
+
+document.addEventListener('input', function (ev) {
+  if (applyingState) return;
+  const id = ev.target && ev.target.id;
+  if (id && /^save[1-5]$/.test(id)) refreshFinalPrompt();
+}, true);
+
+function bootModule() {
+  initSprintPersistence();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootModule);
+} else {
+  bootModule();
+}
+</script>
+<script>window.__MODULE_ID__="moduuli-ella-myyntisprintti";</script>
+</body>
+</html>
