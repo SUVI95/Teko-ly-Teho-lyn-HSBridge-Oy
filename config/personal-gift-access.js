@@ -176,7 +176,8 @@ function getGiftKeysForModuleId(moduleId) {
 const PUBLIC_STUDENT_MODULE_IDS = new Set([
   'moduuli8-ai-polku',
   'moduuli9-haastattelu',
-  'moduuli-elava-cv'
+  'moduuli-elava-cv',
+  'moduuli-perplexity-notebooklm'
 ]);
 
 function isPublicStudentModule(moduleId) {

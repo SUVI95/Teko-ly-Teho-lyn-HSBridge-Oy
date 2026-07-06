@@ -490,7 +490,6 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-elava-cv-shane',
   'moduuli-elava-cv-callum',
   'moduuli-elava-cv-reeni',
-  'moduuli-perplexity-notebooklm',
   'moduuli-voice-deep-search',
   'moduuli-ideasta-tuotteeksi',
   'moduuli-alanavaihtajan-kartta',
