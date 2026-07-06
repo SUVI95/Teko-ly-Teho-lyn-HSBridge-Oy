@@ -558,7 +558,7 @@ Parempi vastaus: "Varmasti onkin edullisempaa. Saanko kysyä — paljonko assist
       <button class="prompt-copy" onclick="copyPrompt(this,'p5')">📋 Kopioi</button>
       <pre id="p5">Kokoa alla olevista materiaaleista kaksi asiaa.
 
-1. Yksisivuinen, ammattimainen PDF otsikolla "<span class="ph">[tuotteesi nimi]</span> — tuote ja markkinaselvitys". Käytä liittämääni kuvaa kannessa. Rakenne:
+1. Yksisivuinen, ammattimainen PDF otsikolla "<span class="ph" id="productNamePh">[tuotteesi nimi]</span> — tuote ja markkinaselvitys". Käytä liittämääni kuvaa kannessa. Rakenne:
 - Tuote lyhyesti: mitä, kenelle, mihin hintaan
 - Kilpailijat ja hinnat (mainitse, että lähteet on tarkistettu)
 - Asiakaslista: 10 yritystä taulukkona (nimi, paikkakunta, miksi sopii)
@@ -711,7 +711,36 @@ function applyWork(data) {
   return true;
 }
 
+/** Pull a short product label from Harjoitus 1 tuotekortti for the PDF title. */
+function extractProductName(tuotekortti) {
+  if (!tuotekortti || !tuotekortti.trim()) return '[tuotteesi nimi]';
+  const t = tuotekortti.trim();
+  let m = t.match(/TUOTEKORTTI\s*[—–-]\s*(.+?)(?:\n|$)/i);
+  if (m && m[1].trim()) return m[1].trim().slice(0, 60);
+  m = t.match(/Mitä myyn:\s*(.+?)(?:\n|$)/i);
+  if (m && m[1].trim()) {
+    const short = m[1].trim().split(/[,;]/)[0].trim();
+    if (short.length <= 45) return short;
+    const words = short.split(/\s+/).slice(0, 5).join(' ');
+    return words || '[tuotteesi nimi]';
+  }
+  m = t.match(/Tuotteeni:\s*(.+?)(?:\n|$)/i);
+  if (m && m[1].trim()) return m[1].trim().slice(0, 60);
+  const lines = t.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+  for (let i = 0; i < lines.length; i++) {
+    if (/^TUOTEKORTTI/i.test(lines[i])) continue;
+    if (/^(Mitä myyn|Kenelle|Kuka päättää|Hyöty|Hinta)/i.test(lines[i])) continue;
+    if (lines[i].length > 2 && lines[i].length < 70) return lines[i].slice(0, 60);
+  }
+  return '[tuotteesi nimi]';
+}
+
 function refreshFinalPrompt() {
+  const save1 = document.getElementById('save1');
+  const tuotekortti = save1 ? save1.value.trim() : '';
+  const namePh = document.getElementById('productNamePh');
+  if (namePh) namePh.textContent = extractProductName(tuotekortti);
+
   const el = document.getElementById('finalMaterials');
   if(!el) return;
   let out = [];
