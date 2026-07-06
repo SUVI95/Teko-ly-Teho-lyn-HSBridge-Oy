@@ -123,11 +123,17 @@ details.example .example-body .ex-block{background:var(--paper);border:1px solid
 .copy-all-btn.ok{background:var(--accent2);}
 @media(max-width:768px){nav{padding:0 1.25rem;}.nav-title{display:none;}.section{padding:80px 1.25rem 4rem;}.prompt-copy{position:static;margin-top:1rem;}}
 .idea-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin:1.75rem 0;}
-.idea-card{background:#fff;border-radius:12px;padding:1.25rem 1.4rem;box-shadow:var(--shadow);border:1px solid var(--border);transition:transform 0.2s,box-shadow 0.2s;}
+.idea-card{background:#fff;border-radius:12px;padding:1.25rem 1.4rem;box-shadow:var(--shadow);border:2px solid var(--border);transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s,background 0.2s;cursor:pointer;user-select:none;}
 .idea-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+.idea-card.selected{border-color:var(--accent);background:rgba(29,95,173,0.05);box-shadow:0 0 0 3px rgba(29,95,173,0.12);}
+.idea-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 .idea-card .idea-emoji{font-size:1.8rem;margin-bottom:0.5rem;}
 .idea-card h4{font-family:'DM Serif Display',serif;font-size:1.05rem;font-weight:400;color:var(--ink);margin-bottom:0.35rem;}
 .idea-card p{font-size:0.84rem;color:var(--muted);line-height:1.6;margin:0;}
+.idea-own-wrap{display:none;margin:0 0 1.5rem;background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.4rem;box-shadow:var(--shadow);}
+.idea-own-wrap.visible{display:block;}
+.idea-selected-banner{display:none;font-size:0.88rem;color:var(--accent2);font-weight:600;margin:-0.5rem 0 1.25rem;padding:0.65rem 1rem;background:rgba(14,138,109,0.08);border-radius:8px;border:1px solid rgba(14,138,109,0.2);}
+.idea-selected-banner.visible{display:block;}
 </style>
 </head>
 <body>
@@ -223,16 +229,23 @@ details.example .example-body .ex-block{background:var(--paper);border:1px solid
       <span class="meta-chip needs">Tarvitset: mielikuvituksen — loppu on valmiina</span>
     </div>
     <div class="prose">
-      <p>Aloitetaan hauskimmasta päästä. Valitse alta tuoteidea — tai keksi ihan oma. Kaikki ideat ovat sellaisia, joita myydään yrityksille, koska yritysasiakkaita pääset etsimään ihan oikeasti harjoituksessa 3.</p>
+      <p>Aloitetaan hauskimmasta päästä. <strong>Klikkaa</strong> valitaksesi tuoteidea — tai valitse <strong>Oma idea</strong> ja kirjoita omasi. Valinta päivittää automaattisesti kehotteet (myös lopun PDF-otsikon).</p>
     </div>
 
-    <div class="idea-grid">
-      <div class="idea-card"><div class="idea-emoji">🥐</div><h4>Perjantaipulla</h4><p>Tuoreet pullat toimistolle joka perjantaiaamu — tilaus, joka pyörii itsestään.</p></div>
-      <div class="idea-card"><div class="idea-emoji">🌿</div><h4>Vihreä toimisto</h4><p>Viherkasvit yrityksiin vuokralle — kasvit, ruukut ja hoitokäynnit kuukausihintaan.</p></div>
-      <div class="idea-card"><div class="idea-emoji">🐕</div><h4>Toimistokoirapäivä</h4><p>Rauhallinen, koulutettu koira vierailulle työpaikan hyvinvointipäivään.</p></div>
-      <div class="idea-card"><div class="idea-emoji">☕</div><h4>Kahvihuolto</h4><p>Pientoimistojen kahvikoneen huolto ja paikallisen paahtimon pavut samassa paketissa.</p></div>
-      <div class="idea-card"><div class="idea-emoji">🎧</div><h4>Taukonurkka</h4><p>Siirrettävä rentoutumisnurkka toimistoon: säkkituolit, kuulokkeet ja pehmeä valo.</p></div>
-      <div class="idea-card"><div class="idea-emoji">🎁</div><h4>Paikallinen lahjapaketti</h4><p>Yritysten asiakas- ja joululahjat koottuna oman alueen pientuottajien tuotteista.</p></div>
+    <div class="idea-grid" id="ideaGrid">
+      <div class="idea-card" role="button" tabindex="0" data-idea-id="perjantaipulla" aria-pressed="false"><div class="idea-emoji">🥐</div><h4>Perjantaipulla</h4><p>Tuoreet pullat toimistolle joka perjantaiaamu — tilaus, joka pyörii itsestään.</p></div>
+      <div class="idea-card" role="button" tabindex="0" data-idea-id="vihrea-toimisto" aria-pressed="false"><div class="idea-emoji">🌿</div><h4>Vihreä toimisto</h4><p>Viherkasvit yrityksiin vuokralle — kasvit, ruukut ja hoitokäynnit kuukausihintaan.</p></div>
+      <div class="idea-card" role="button" tabindex="0" data-idea-id="toimistokoirapaiva" aria-pressed="false"><div class="idea-emoji">🐕</div><h4>Toimistokoirapäivä</h4><p>Rauhallinen, koulutettu koira vierailulle työpaikan hyvinvointipäivään.</p></div>
+      <div class="idea-card" role="button" tabindex="0" data-idea-id="kahvihuolto" aria-pressed="false"><div class="idea-emoji">☕</div><h4>Kahvihuolto</h4><p>Pientoimistojen kahvikoneen huolto ja paikallisen paahtimon pavut samassa paketissa.</p></div>
+      <div class="idea-card" role="button" tabindex="0" data-idea-id="taukonurkka" aria-pressed="false"><div class="idea-emoji">🎧</div><h4>Taukonurkka</h4><p>Siirrettävä rentoutumisnurkka toimistoon: säkkituolit, kuulokkeet ja pehmeä valo.</p></div>
+      <div class="idea-card" role="button" tabindex="0" data-idea-id="lahjapaketti" aria-pressed="false"><div class="idea-emoji">🎁</div><h4>Paikallinen lahjapaketti</h4><p>Yritysten asiakas- ja joululahjat koottuna oman alueen pientuottajien tuotteista.</p></div>
+      <div class="idea-card" role="button" tabindex="0" data-idea-id="custom" aria-pressed="false"><div class="idea-emoji">✏️</div><h4>Oma idea</h4><p>Kirjoita oma tuotteesi — nimi ja kuvaus päivittyvät automaattisesti kehotteisiin.</p></div>
+    </div>
+    <div class="idea-selected-banner" id="ideaSelectedBanner"></div>
+    <div class="idea-own-wrap" id="ideaOwnWrap">
+      <div class="save-label">Oma tuoteideas</div>
+      <textarea class="save-textarea" id="ideaOwnInput" rows="3" placeholder="Kirjoita muodossa: Nimi — kuvaus yhdellä lauseella. Esim: Perjantaipulla — tuoreet pullat toimistolle joka perjantaiaamu."></textarea>
+      <p style="font-size:0.82rem;color:var(--muted);margin-top:0.65rem;line-height:1.55;">Tallennus tapahtuu automaattisesti. Nimi ennen viivaa (—) menee PDF-otsikkoon.</p>
     </div>
 
     <div class="step-list">
@@ -246,7 +259,7 @@ details.example .example-body .ex-block{background:var(--paper);border:1px solid
     <div class="prompt-box">
       <div class="prompt-box-label">Kopioi tämä ChatGPT:lle (kuva)</div>
       <button class="prompt-copy" onclick="copyPrompt(this,'p1a')">📋 Kopioi</button>
-      <pre id="p1a">Tee kuva tuotteesta: <span class="ph">[kirjoita tuotteesi tähän, esim. "tuoreiden pullien tilauspalvelu toimistoille"]</span>.
+      <pre id="p1a">Tee kuva tuotteesta: <span class="ph product-pitch-ph">[kirjoita tuotteesi tähän, esim. "tuoreiden pullien tilauspalvelu toimistoille"]</span>.
 
 Tyyli: valoisa ja kutsuva, kuin pienen suomalaisen yrityksen mainoskuva. Näytä tuote käytössä oikeassa ympäristössä. Ei tekstiä kuvaan.</pre>
     </div>
@@ -254,7 +267,7 @@ Tyyli: valoisa ja kutsuva, kuin pienen suomalaisen yrityksen mainoskuva. Näytä
     <div class="prompt-box">
       <div class="prompt-box-label">Kopioi tämä ChatGPT:lle (tuotekortti)</div>
       <button class="prompt-copy" onclick="copyPrompt(this,'p1b')">📋 Kopioi</button>
-      <pre id="p1b">Autat minua rakentamaan tuotekortin. Tuotteeni: <span class="ph">[tuotteesi yhdellä lauseella]</span>.
+      <pre id="p1b">Autat minua rakentamaan tuotekortin. Tuotteeni: <span class="ph product-pitch-ph">[tuotteesi yhdellä lauseella]</span>.
 
 Kysy minulta neljä kysymystä, yksi kerrallaan:
 1. Millaiselle yritykselle tämä sopisi parhaiten? (ala, koko, paikkakunta)
@@ -658,6 +671,15 @@ function copyPrompt(btn, preId) {
   });
 }
 const SPRINT_TITLES = ['TUOTEKORTTI','KILPAILIJAT JA HINNAT','ASIAKASLISTA','MYYNTIVIESTI JA VASTAVÄITTEET','PUHUTTAVA TIIVISTELMÄ'];
+const IDEA_CATALOG = {
+  'perjantaipulla': { name: 'Perjantaipulla', pitch: 'Tuoreet pullat toimistolle joka perjantaiaamu — tilaus, joka pyörii itsestään.' },
+  'vihrea-toimisto': { name: 'Vihreä toimisto', pitch: 'Viherkasvit yrityksiin vuokralle — kasvit, ruukut ja hoitokäynnit kuukausihintaan.' },
+  'toimistokoirapaiva': { name: 'Toimistokoirapäivä', pitch: 'Rauhallinen, koulutettu koira vierailulle työpaikan hyvinvointipäivään.' },
+  'kahvihuolto': { name: 'Kahvihuolto', pitch: 'Pientoimistojen kahvikoneen huolto ja paikallisen paahtimon pavut samassa paketissa.' },
+  'taukonurkka': { name: 'Taukonurkka', pitch: 'Siirrettävä rentoutumisnurkka toimistoon: säkkituolit, kuulokkeet ja pehmeä valo.' },
+  'lahjapaketti': { name: 'Paikallinen lahjapaketti', pitch: 'Yritysten asiakas- ja joululahjat koottuna oman alueen pientuottajien tuotteista.' }
+};
+let selectedIdeaId = '';
 
 function setSaveStatus(msg, ok) {
   if (!saveStatusEl) return;
@@ -680,14 +702,23 @@ function snapshotWork() {
     v: 1,
     ts: Date.now(),
     saves: saves,
-    productImage: productImage
+    productImage: productImage,
+    selectedIdeaId: selectedIdeaId,
+    ideaOwnText: (document.getElementById('ideaOwnInput') && document.getElementById('ideaOwnInput').value) || ''
   };
 }
 
 function summarizeWork(data) {
   if (!data || !data.saves) return '';
   const filled = Object.keys(data.saves).filter(function (k) { return data.saves[k]; }).length;
-  return filled + '/5 harjoitusta tallennettu' + (data.productImage ? ' · kuva mukana' : '');
+  let line = filled + '/5 harjoitusta tallennettu';
+  if (data.productImage) line += ' · kuva mukana';
+  if (data.selectedIdeaId && IDEA_CATALOG[data.selectedIdeaId]) {
+    line += ' · ' + IDEA_CATALOG[data.selectedIdeaId].name;
+  } else if (data.selectedIdeaId === 'custom' && data.ideaOwnText) {
+    line += ' · oma idea';
+  }
+  return line;
 }
 
 function applyWork(data) {
@@ -706,6 +737,10 @@ function applyWork(data) {
     } catch (e) {}
     showImage(data.productImage);
   }
+  selectedIdeaId = data.selectedIdeaId || '';
+  const ownInput = document.getElementById('ideaOwnInput');
+  if (ownInput && data.ideaOwnText != null) ownInput.value = data.ideaOwnText;
+  applyIdeaSelectionUI();
   refreshFinalPrompt();
   applyingState = false;
   return true;
@@ -735,11 +770,96 @@ function extractProductName(tuotekortti) {
   return '[tuotteesi nimi]';
 }
 
-function refreshFinalPrompt() {
+function parseOwnIdea(text) {
+  const t = String(text || '').trim();
+  if (!t) return { name: '[tuotteesi nimi]', pitch: '[tuotteesi yhdellä lauseella]' };
+  const dash = t.match(/^(.+?)\s*[—–-]\s*(.+)$/s);
+  if (dash) {
+    return { name: dash[1].trim().slice(0, 60), pitch: t };
+  }
+  const lines = t.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+  if (lines.length >= 2) {
+    return { name: lines[0].slice(0, 60), pitch: lines.slice(1).join(' ') };
+  }
+  const words = t.split(/\s+/);
+  return { name: words.slice(0, 3).join(' ').slice(0, 60) || '[tuotteesi nimi]', pitch: t };
+}
+
+function extractPitchFromTuotekortti(tuotekortti) {
+  if (!tuotekortti || !tuotekortti.trim()) return '[tuotteesi yhdellä lauseella]';
+  const m = tuotekortti.match(/Mitä myyn:\s*(.+?)(?:\n|$)/i);
+  if (m && m[1].trim()) return m[1].trim();
+  return tuotekortti.trim().split('\n')[0].slice(0, 200);
+}
+
+function resolveProductContext() {
+  if (selectedIdeaId === 'custom') {
+    const input = document.getElementById('ideaOwnInput');
+    return parseOwnIdea(input ? input.value : '');
+  }
+  if (selectedIdeaId && IDEA_CATALOG[selectedIdeaId]) {
+    const idea = IDEA_CATALOG[selectedIdeaId];
+    return { name: idea.name, pitch: idea.pitch };
+  }
   const save1 = document.getElementById('save1');
   const tuotekortti = save1 ? save1.value.trim() : '';
+  return {
+    name: extractProductName(tuotekortti),
+    pitch: extractPitchFromTuotekortti(tuotekortti)
+  };
+}
+
+function applyIdeaSelectionUI() {
+  document.querySelectorAll('.idea-card').forEach(function (card) {
+    const active = card.dataset.ideaId === selectedIdeaId;
+    card.classList.toggle('selected', active);
+    card.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  const ownWrap = document.getElementById('ideaOwnWrap');
+  if (ownWrap) ownWrap.classList.toggle('visible', selectedIdeaId === 'custom');
+  const banner = document.getElementById('ideaSelectedBanner');
+  if (banner) {
+    if (!selectedIdeaId) {
+      banner.classList.remove('visible');
+      banner.textContent = '';
+    } else {
+      const ctx = resolveProductContext();
+      banner.textContent = '✓ Valittu tuote: ' + ctx.name;
+      banner.classList.add('visible');
+    }
+  }
+}
+
+function selectIdea(id) {
+  selectedIdeaId = id || '';
+  applyIdeaSelectionUI();
+  refreshFinalPrompt();
+  if (!applyingState && sprintWorkApi && typeof sprintWorkApi.scheduleSave === 'function') {
+    sprintWorkApi.scheduleSave();
+  }
+}
+
+function bindIdeaCards() {
+  document.querySelectorAll('.idea-card').forEach(function (card) {
+    card.addEventListener('click', function () {
+      selectIdea(card.dataset.ideaId);
+    });
+    card.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectIdea(card.dataset.ideaId);
+      }
+    });
+  });
+}
+
+function refreshFinalPrompt() {
+  const ctx = resolveProductContext();
   const namePh = document.getElementById('productNamePh');
-  if (namePh) namePh.textContent = extractProductName(tuotekortti);
+  if (namePh) namePh.textContent = ctx.name;
+  document.querySelectorAll('.product-pitch-ph').forEach(function (el) {
+    el.textContent = ctx.pitch;
+  });
 
   const el = document.getElementById('finalMaterials');
   if(!el) return;
@@ -834,7 +954,7 @@ async function initSprintPersistence() {
       collect: snapshotWork,
       summarize: summarizeWork,
       debounceMs: 800,
-      fieldIds: ['save1', 'save2', 'save3', 'save4', 'save5'],
+      fieldIds: ['save1', 'save2', 'save3', 'save4', 'save5', 'ideaOwnInput'],
       apply: function (remoteData) {
         if (!remoteData || remoteData.v !== 1) return;
         applyWork(remoteData);
@@ -854,10 +974,16 @@ async function initSprintPersistence() {
 document.addEventListener('input', function (ev) {
   if (applyingState) return;
   const id = ev.target && ev.target.id;
+  if (id === 'ideaOwnInput') {
+    if (selectedIdeaId !== 'custom') selectIdea('custom');
+    else refreshFinalPrompt();
+    return;
+  }
   if (id && /^save[1-5]$/.test(id)) refreshFinalPrompt();
 }, true);
 
 function bootModule() {
+  bindIdeaCards();
   initSprintPersistence();
 }
 if (document.readyState === 'loading') {
