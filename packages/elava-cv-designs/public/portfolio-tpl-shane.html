@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio</title>
+</head>
+<body><div id="app"></div>
+<script src="/js/portfolio-public-features.js"></script>
+<script src="/portfolio-shane-preview.js"></script>
+<script>
+function slugFromPath(){
+  var path=location.pathname.replace(/^\/+|\/+$/g,'');
+  var seg=path.split('/').filter(Boolean);
+  if(seg[0]==='portfolio'&&seg[1]) return seg[1].split('?')[0];
+  if(seg.length===1) return seg[0].split('?')[0];
+  return '';
+}
+var slug=slugFromPath();
+if(!slug){document.getElementById('app').innerHTML='<p style="padding:2rem;text-align:center">Portfoliota ei löytynyt.</p>';}
+else{
+  slug=slug.replace(/\/+$/,'').split('?')[0];
+  var qs=new URLSearchParams(location.search);
+  var isPreview=qs.get('preview')==='1';
+  var pt=qs.get('pt')||'';
+  var url=isPreview?'/api/portfolio/preview/'+encodeURIComponent(slug):'/api/portfolio/view/'+encodeURIComponent(slug);
+  if(isPreview&&pt) url+='?pt='+encodeURIComponent(pt);
+  fetch(url,{credentials:isPreview&&!pt?'include':'same-origin'}).then(function(r){return r.json();}).then(function(d){
+    if(d.portfolio){
+      var p=d.portfolio;
+      if(p.workspace_draft&&p.workspace_draft.visual_style) p.visual_style=p.workspace_draft.visual_style;
+      document.open();document.write(renderShanePreview(p));document.close();
+    }else document.getElementById('app').innerHTML='<p style="padding:2rem;text-align:center">Portfolio ei saatavilla.</p>';
+  }).catch(function(){document.getElementById('app').innerHTML='<p style="padding:2rem;text-align:center">Virhe ladattaessa.</p>';});
+}
+</script>
+</body>
+</html>

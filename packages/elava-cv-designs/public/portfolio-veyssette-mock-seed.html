@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ladataan Veyssette-mockia…</title>
+<script src="/js/portfolio-design-mock-data.js"></script>
+</head>
+<body style="font-family:system-ui,sans-serif;background:#F8F4EE;color:#2C2419;padding:2rem;text-align:center">
+<p>Ladataan mock-portfoliota editoriin…</p>
+<script>
+(function () {
+  var P = window.VEYSSETTE_MOCK_P;
+  if (!P) {
+    document.body.innerHTML = '<p>Mock data puuttuu.</p>';
+    return;
+  }
+  try {
+    localStorage.setItem('ecv_veyssette_draft', JSON.stringify({ P: P, ts: Date.now() }));
+    localStorage.setItem('ecv_veyssette_publish', JSON.stringify({ P: P, ts: Date.now() }));
+  } catch (e) {
+    document.body.innerHTML = '<p>Tallennus epäonnistui: ' + e.message + '</p>';
+    return;
+  }
+  var dest = new URLSearchParams(location.search).get('to') || 'editor';
+  if (dest === 'full') location.replace('/portfolio-veyssette-local.html');
+  else if (dest === 'mock') location.replace('/portfolio-veyssette-mock.html');
+  else location.replace('/module/moduuli-elava-cv-veyssette?demo=1');
+})();
+</script>
+</body>
+</html>
