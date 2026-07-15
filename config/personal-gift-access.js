@@ -153,6 +153,11 @@ const GIFTS = {
     moduleId: 'moduuli-ella-myyntisprintti',
     firstName: 'ella',
     emails: parseEmailList(process.env.ELLA_GIFT_EMAIL, ['ella.m.alexandra@gmail.com', TEST_STUDENT_EMAIL])
+  },
+  santtu: {
+    moduleId: 'moduuli-bottityypit',
+    firstName: 'santtu',
+    emails: parseEmailList(process.env.SANTTU_GIFT_EMAIL, ['korho.san97@proton.me', TEST_STUDENT_EMAIL])
   }
 };
 

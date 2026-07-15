@@ -75,6 +75,9 @@ const { router: courtRoutes } = require('./routes/tuomioistuin');
 const { router: toolBuilderRoutes } = require('./routes/tyokalurakentaja');
 const { router: portfolioRoutes } = require('./routes/portfolio');
 const artifactsRoutes = require('./routes/artifacts');
+const moduleAiRoutes = require('./routes/module-ai');
+const bonusModuleRoutes = require('./routes/bonus-module');
+const realtimeTokenRoutes = require('./routes/realtime-token');
 const { authenticateToken, authenticatePage } = require('./middleware/auth');
 
 const app = express();
@@ -111,6 +114,9 @@ app.use('/api/tuomioistuin', courtRoutes);
 app.use('/api/tyokalurakentaja', toolBuilderRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/artifacts', artifactsRoutes);
+app.use('/api/module-ai', moduleAiRoutes);
+app.use('/api/bonus-module', bonusModuleRoutes);
+app.use('/api/realtime-token', realtimeTokenRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -491,6 +497,7 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-elava-cv-callum',
   'moduuli-elava-cv-reeni',
   'moduuli-voice-deep-search',
+  'moduuli-bottityypit',
   'moduuli-ideasta-tuotteeksi',
   'moduuli-alanavaihtajan-kartta',
   'moduuli-ai-maisema',

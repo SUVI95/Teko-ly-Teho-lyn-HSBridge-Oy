@@ -187,7 +187,8 @@ router.post('/login', async (req, res) => {
         anne_gift: isAnnePathRecipient(user) || isGiftRecipient('anne', user),
         karpo_gift: isGiftRecipient('karpo', user),
         jani_gift: isGiftRecipient('jani', user),
-        ella_gift: isGiftRecipient('ella', user)
+        ella_gift: isGiftRecipient('ella', user),
+        santtu_gift: isGiftRecipient('santtu', user)
       }
     });
   } catch (error) {
@@ -299,7 +300,8 @@ router.get('/me', async (req, res) => {
         anne_gift: isAnnePathRecipient(user) || isGiftRecipient('anne', user),
         karpo_gift: isGiftRecipient('karpo', user),
         jani_gift: isGiftRecipient('jani', user),
-        ella_gift: isGiftRecipient('ella', user)
+        ella_gift: isGiftRecipient('ella', user),
+        santtu_gift: isGiftRecipient('santtu', user)
       }
     });
   } catch (error) {
