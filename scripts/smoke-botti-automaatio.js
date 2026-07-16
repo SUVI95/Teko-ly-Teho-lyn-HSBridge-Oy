@@ -35,7 +35,7 @@ async function req(method, path, body, cookie) {
   if (health.status === 200 && health.json.status === 'ok') pass('GET /api/health');
   else fail('GET /api/health', health.status);
 
-  for (const mod of ['moduuli-bottityypit', 'moduuli1-ai-automaatio', 'moduuli1b-ai-automaatio']) {
+  for (const mod of ['moduuli-bottityypit', 'moduuli1-ai-automaatio', 'moduuli1b-ai-automaatio', 'moduuli1c-ai-automaatio']) {
     const page = await fetch(base + '/module/' + mod + '?preview=1');
     const html = await page.text();
     if (page.status !== 200) { fail('/module/' + mod, page.status); continue; }
@@ -71,6 +71,20 @@ async function req(method, path, body, cookie) {
       else pass(mod + ' initializes module-work autosave');
       if (!html.includes('/api/ai/claude')) fail(mod + ' missing Claude API');
       else pass(mod + ' wires /api/ai/claude');
+    }
+    if (mod === 'moduuli1c-ai-automaatio') {
+      if (!html.includes('module-work.js')) fail(mod + ' missing module-work.js (injected)');
+      else pass(mod + ' has module-work injection');
+      if (!html.includes('__DISABLE_GLOBAL_MODULE_AUTOSAVE__')) fail(mod + ' missing dedicated autosave flag');
+      else pass(mod + ' disables generic autosave race');
+      if (!html.includes('initM1cWork')) fail(mod + ' missing initM1cWork call');
+      else pass(mod + ' initializes module-work autosave');
+      if (!html.includes('/api/ai/claude')) fail(mod + ' missing Claude API');
+      else pass(mod + ' wires /api/ai/claude');
+      if (!html.includes('collectM1cState')) fail(mod + ' missing collectM1cState');
+      else pass(mod + ' collects full exercise state');
+      if (html.includes('module-autosave.js')) fail(mod + ' must not inject generic module-autosave');
+      else pass(mod + ' excludes generic autosave');
     }
   }
 
@@ -158,6 +172,23 @@ async function req(method, path, body, cookie) {
     const m1bText = loadM1b.json?.reflection?.reflection_text || '';
     if (loadM1b.status === 200 && m1bText.includes('smoke m1b work')) pass('load moduuli1b-ai-automaatio__work');
     else fail('load moduuli1b-ai-automaatio__work');
+
+    const saveM1c = await req('POST', '/api/reflections/save', {
+      moduleId: 'moduuli1c-ai-automaatio__work',
+      reflectionText: JSON.stringify({
+        v: 1,
+        data: { ts: Date.now(), tasks: { 0: { done: true, reason: 'smoke m1c work' } }, casesDone: [true, false, false, false, false] },
+        summary: 'Tehtävät 1/3 · Tapaukset 1/5 · Suunnitelma 0 solmua',
+        savedAt: new Date().toISOString()
+      })
+    }, cookie);
+    if (saveM1c.status === 200 && saveM1c.json.success) pass('save moduuli1c-ai-automaatio__work');
+    else fail('save moduuli1c-ai-automaatio__work');
+
+    const loadM1c = await req('GET', '/api/reflections/module/moduuli1c-ai-automaatio__work', null, cookie);
+    const m1cText = loadM1c.json?.reflection?.reflection_text || '';
+    if (loadM1c.status === 200 && m1cText.includes('smoke m1c work')) pass('load moduuli1c-ai-automaatio__work');
+    else fail('load moduuli1c-ai-automaatio__work');
   }
 
   const improveFlow = [

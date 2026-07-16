@@ -210,7 +210,7 @@ router.get('/students/progress', authenticateToken, requireAdmin, async (req, re
     const workResult = await pool.query(`
       SELECT user_id, module_id, reflection_text, updated_at
       FROM reflections
-      WHERE module_id IN ('moduuli1-ai-automaatio__work', 'moduuli1b-ai-automaatio__work', 'moduuli8-ai-polku__work', 'moduuli9-haastattelu__work')
+      WHERE module_id IN ('moduuli1-ai-automaatio__work', 'moduuli1b-ai-automaatio__work', 'moduuli1c-ai-automaatio__work', 'moduuli8-ai-polku__work', 'moduuli9-haastattelu__work')
     `);
     const workByUser = {};
     for (const row of workResult.rows) {
@@ -223,6 +223,7 @@ router.get('/students/progress', authenticateToken, requireAdmin, async (req, re
       const w9 = workByUser[s.id]?.['moduuli9-haastattelu__work'];
       const w1a = workByUser[s.id]?.['moduuli1-ai-automaatio__work'];
       const w1b = workByUser[s.id]?.['moduuli1b-ai-automaatio__work'];
+      const w1c = workByUser[s.id]?.['moduuli1c-ai-automaatio__work'];
       return {
         ...s,
         polku_screen: curScreenFromModuleWorkRow(w8),
@@ -232,7 +233,9 @@ router.get('/students/progress', authenticateToken, requireAdmin, async (req, re
         automaatio_a_summary: summaryFromModuleWorkRow(w1a),
         automaatio_a_work_at: w1a?.updated_at || null,
         automaatio_b_summary: summaryFromModuleWorkRow(w1b),
-        automaatio_b_work_at: w1b?.updated_at || null
+        automaatio_b_work_at: w1b?.updated_at || null,
+        automaatio_c_summary: summaryFromModuleWorkRow(w1c),
+        automaatio_c_work_at: w1c?.updated_at || null
       };
     });
 

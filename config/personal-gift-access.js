@@ -190,7 +190,8 @@ const PUBLIC_STUDENT_MODULE_IDS = new Set([
   'moduuli-perplexity-notebooklm',
   'moduuli-bottityypit',
   'moduuli1-ai-automaatio',
-  'moduuli1b-ai-automaatio'
+  'moduuli1b-ai-automaatio',
+  'moduuli1c-ai-automaatio'
 ]);
 
 function isPublicStudentModule(moduleId) {

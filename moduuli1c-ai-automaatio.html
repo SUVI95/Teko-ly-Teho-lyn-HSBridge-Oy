@@ -1,0 +1,2058 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automaatio C — Näe automaatio kaikkialla</title>
+<script>window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #FAF8F4; --cream2: #F2EFE9; --cream3: #E8E3DA;
+  --ink: #1A1A1A; --ink2: #3D3D3D; --ink3: #6B6B6B; --ink4: #9A9A9A;
+  --orange: #E8570C; --orange-light: rgba(232,87,12,0.08); --orange-mid: rgba(232,87,12,0.15);
+  --green: #2D6A4F; --green-light: rgba(45,106,79,0.08);
+  --blue: #1D4ED8; --blue-light: rgba(29,78,216,0.08);
+  --amber: #B45309; --amber-light: rgba(180,83,9,0.08);
+  --purple: #7C3AED; --purple-light: rgba(124,58,237,0.12);
+  --border: rgba(26,26,26,0.1); --border2: rgba(26,26,26,0.06);
+  --r: 12px; --r-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,0.1);
+  /* n8n-canvas palette (kept close to the real editor so the transfer is real) */
+  --canvas-bg: #ffffff; --canvas-dot: #dcdfe4; --panel: #ffffff; --panel-line: #e4e7eb;
+  --n8n-ink: #2d3748; --n8n-muted: #7d8794;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { background:var(--cream); color:var(--ink); font-family:'DM Sans',sans-serif; font-weight:400; line-height:1.7; overflow-x:hidden; }
+::selection { background:var(--orange-mid); }
+
+/* progress + nav */
+#progress-bar { position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,var(--orange),var(--amber)); z-index:300; transition:width .3s ease; width:0%; }
+nav { position:fixed; top:0; left:0; right:0; z-index:200; height:60px; background:rgba(250,248,244,0.9); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 clamp(1rem,4vw,2.5rem); justify-content:space-between; }
+.nav-left { display:flex; align-items:center; gap:.9rem; min-width:0; }
+.nav-home { display:flex; align-items:center; gap:.5rem; text-decoration:none; color:var(--ink3); font-size:.82rem; font-weight:500; flex-shrink:0; }
+.nav-home:hover { color:var(--ink); }
+.nav-tag { font-family:'DM Mono',monospace; font-size:.66rem; font-weight:500; color:var(--orange); letter-spacing:.1em; text-transform:uppercase; background:var(--orange-light); border:1px solid var(--orange-mid); padding:3px 10px; border-radius:5px; white-space:nowrap; }
+.nav-title { font-size:.8rem; color:var(--ink3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.nav-steps { display:flex; gap:5px; align-items:center; }
+.pip { width:26px; height:4px; border-radius:2px; background:var(--cream3); transition:background .35s; cursor:pointer; }
+.pip.active { background:var(--orange); }
+.pip.done { background:var(--green); }
+@media(max-width:720px){ .nav-title{display:none;} .nav-steps{display:none;} }
+
+/* sections */
+.section { max-width:860px; margin:0 auto; padding:clamp(3.5rem,8vh,6rem) clamp(1.15rem,4vw,2rem); }
+.kicker { font-family:'DM Mono',monospace; font-size:.7rem; font-weight:500; color:var(--orange); letter-spacing:.16em; text-transform:uppercase; margin-bottom:.9rem; display:flex; align-items:center; gap:.6rem; }
+.kicker::before { content:''; width:22px; height:1px; background:var(--orange); }
+h1,h2,h3 { font-family:'Playfair Display',serif; font-weight:800; color:var(--ink); line-height:1.08; letter-spacing:-.01em; }
+h2.h { font-size:clamp(1.9rem,4.5vw,3rem); margin-bottom:1.1rem; }
+h2.h em { font-style:italic; color:var(--orange); }
+.lead { font-size:clamp(1.02rem,2vw,1.14rem); color:var(--ink2); line-height:1.75; margin-bottom:1.1rem; }
+.body { font-size:1rem; color:var(--ink2); line-height:1.8; margin-bottom:1rem; }
+.body strong, .lead strong { color:var(--ink); font-weight:600; }
+.sep { height:1px; background:var(--border); max-width:860px; margin:0 auto; }
+.reveal { opacity:0; transform:translateY(16px); transition:opacity .6s ease,transform .6s ease; }
+.reveal.in { opacity:1; transform:none; }
+
+/* hero */
+#hero { background:var(--ink); color:#fff; padding:clamp(5rem,12vh,7rem) clamp(1.15rem,4vw,2rem) clamp(3.5rem,8vh,5rem); position:relative; overflow:hidden; }
+#hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 70% 60% at 15% 30%,rgba(232,87,12,0.18),transparent 60%),radial-gradient(ellipse 60% 60% at 85% 80%,rgba(180,83,9,0.12),transparent 60%); }
+.hero-in { max-width:860px; margin:0 auto; position:relative; z-index:1; }
+.hero-eyebrow { display:inline-flex; align-items:center; gap:.7rem; margin-bottom:1.8rem; font-family:'DM Mono',monospace; font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; }
+.hero-eyebrow .n { color:#FF8C42; } .hero-eyebrow .l { width:34px; height:1px; background:rgba(255,140,66,.5); } .hero-eyebrow .t { color:rgba(255,255,255,.4); }
+#hero h1 { color:#fff; font-size:clamp(2.5rem,6.5vw,4.6rem); margin-bottom:1.3rem; }
+#hero h1 em { font-style:italic; color:#FF8C42; }
+.hero-sub { font-size:clamp(1.05rem,2.2vw,1.2rem); color:rgba(255,255,255,.62); max-width:560px; line-height:1.7; margin-bottom:2.2rem; font-weight:300; }
+.hero-cta { display:inline-flex; align-items:center; gap:.6rem; background:var(--orange); color:#fff; padding:15px 32px; border-radius:8px; font-weight:600; font-size:.95rem; text-decoration:none; transition:transform .2s,box-shadow .2s; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; }
+.hero-cta:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(232,87,12,.4); }
+.hero-meta { margin-top:1.6rem; display:flex; gap:1.4rem; flex-wrap:wrap; font-size:.8rem; color:rgba(255,255,255,.4); }
+.hero-meta span { display:flex; align-items:center; gap:.4rem; }
+
+/* callout / info boxes */
+.callout { display:flex; gap:.9rem; background:#fff; border:1px solid var(--border); border-left:3px solid var(--orange); border-radius:var(--r-sm); padding:1.1rem 1.3rem; margin:1.5rem 0; box-shadow:var(--shadow); }
+.callout-mark { flex-shrink:0; font-size:1.2rem; }
+.callout-body { font-size:.92rem; color:var(--ink2); line-height:1.7; }
+.callout-body strong { color:var(--ink); }
+.callout.blue { border-left-color:var(--blue); }
+.callout.green { border-left-color:var(--green); }
+.callout.amber { border-left-color:var(--amber); }
+
+/* analogy grid for theory */
+.def-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem; margin:1.8rem 0; }
+.def-card { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:1.3rem; box-shadow:var(--shadow); }
+.def-card .ic { width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1.15rem; margin-bottom:.8rem; }
+.def-card h4 { font-family:'Playfair Display',serif; font-size:1.08rem; margin-bottom:.35rem; }
+.def-card p { font-size:.86rem; color:var(--ink3); line-height:1.6; }
+.def-card .real { margin-top:.6rem; font-family:'DM Mono',monospace; font-size:.7rem; color:var(--ink4); background:var(--cream2); padding:5px 9px; border-radius:5px; display:inline-block; }
+
+/* the theory "node legend" */
+.legend { display:flex; flex-direction:column; gap:.55rem; margin:1.6rem 0; }
+.legend-row { display:flex; align-items:center; gap:.85rem; background:#fff; border:1px solid var(--border); border-radius:var(--r-sm); padding:.7rem .95rem; }
+.legend-chip { flex-shrink:0; width:12px; height:12px; border-radius:3px; }
+.legend-row .lg-name { font-weight:600; font-size:.9rem; min-width:130px; }
+.legend-row .lg-desc { font-size:.85rem; color:var(--ink3); }
+@media(max-width:560px){ .legend-row{flex-wrap:wrap;} .legend-row .lg-name{min-width:auto;} }
+
+/* ============ n8n-STYLE BUILDER ============ */
+.builder-shell { background:#f7f8fa; border:1px solid var(--panel-line); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-lg); margin:1.5rem 0; }
+.builder-topbar { height:46px; background:#fff; border-bottom:1px solid var(--panel-line); display:flex; align-items:center; justify-content:space-between; padding:0 .85rem; gap:.6rem; }
+.bt-left { display:flex; align-items:center; gap:.6rem; min-width:0; }
+.bt-dot { width:9px; height:9px; border-radius:50%; background:#cbd2d9; }
+.bt-name { font-size:.82rem; font-weight:600; color:var(--n8n-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bt-name .muted { color:var(--n8n-muted); font-weight:400; }
+.bt-right { display:flex; align-items:center; gap:.5rem; }
+.bt-toggle { display:flex; align-items:center; gap:.45rem; font-size:.72rem; color:var(--n8n-muted); font-family:'DM Mono',monospace; }
+.bt-switch { width:34px; height:18px; border-radius:10px; background:#cbd2d9; position:relative; transition:background .2s; cursor:not-allowed; }
+.bt-switch::after { content:''; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:#fff; transition:left .2s; }
+.bt-run { display:inline-flex; align-items:center; gap:.4rem; background:var(--orange); color:#fff; border:none; padding:8px 16px; border-radius:7px; font-size:.8rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .2s,opacity .2s; }
+.bt-run:hover { background:#c9490a; }
+.bt-run:disabled { opacity:.5; cursor:not-allowed; }
+.bt-run.running { background:var(--n8n-muted); }
+
+.builder-main { display:flex; min-height:560px; position:relative; }
+/* left palette */
+.palette { width:172px; flex-shrink:0; background:#fff; border-right:1px solid var(--panel-line); padding:.7rem .55rem; display:flex; flex-direction:column; gap:.4rem; overflow-y:auto; max-height:640px; }
+.palette-h { font-family:'DM Mono',monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--n8n-muted); padding:.2rem .3rem .35rem; }
+.pal-node { display:flex; align-items:center; gap:.5rem; background:#fff; border:1px solid var(--panel-line); border-radius:8px; padding:.5rem .55rem; cursor:grab; transition:border-color .15s,box-shadow .15s,transform .05s; user-select:none; }
+.pal-node:hover { border-color:#c3c9d1; box-shadow:0 2px 6px rgba(0,0,0,.06); }
+.pal-node:active { cursor:grabbing; transform:scale(.98); }
+.pal-node.dragging { opacity:.4; }
+.pal-node.used { opacity:.4; pointer-events:none; }
+.pal-ic { width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:.9rem; flex-shrink:0; }
+.pal-name { font-size:.72rem; font-weight:600; color:var(--n8n-ink); line-height:1.2; }
+.pal-hint { font-size:.6rem; color:var(--n8n-muted); }
+.n-trigger .pal-ic,.node.n-trigger .nd-ic { background:var(--amber-light); }
+.n-action .pal-ic,.node.n-action .nd-ic { background:var(--orange-light); }
+.n-ai .pal-ic,.node.n-ai .nd-ic { background:var(--blue-light); }
+.n-filter .pal-ic,.node.n-filter .nd-ic { background:var(--purple-light); }
+.n-output .pal-ic,.node.n-output .nd-ic { background:var(--green-light); }
+
+/* canvas */
+.canvas-wrap { flex:1; position:relative; overflow:hidden; background:var(--canvas-bg);
+  background-image:radial-gradient(var(--canvas-dot) 1.1px, transparent 1.1px);
+  background-size:18px 18px; }
+.canvas-hint { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:.5rem; color:var(--n8n-muted); pointer-events:none; text-align:center; padding:1rem; }
+.canvas-hint .ch-box { width:150px; height:70px; border:2px dashed #c3c9d1; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.75rem; color:var(--n8n-muted); background:rgba(255,255,255,.5); }
+.canvas-hint.hidden { display:none; }
+.canvas-drop-hi { position:absolute; inset:6px; border:2px dashed var(--orange); border-radius:12px; background:var(--orange-light); opacity:0; pointer-events:none; transition:opacity .15s; }
+.canvas-drop-hi.on { opacity:1; }
+#edges { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:1; }
+.edge-path { fill:none; stroke:#b4bcc6; stroke-width:2.5; }
+.edge-path.flow { stroke:var(--orange); stroke-dasharray:6 6; animation:dash .5s linear infinite; }
+@keyframes dash { to { stroke-dashoffset:-12; } }
+
+.node { position:absolute; width:172px; background:#fff; border:1px solid var(--panel-line); border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.08); z-index:2; cursor:grab; transition:box-shadow .15s,border-color .15s; }
+.node:active { cursor:grabbing; }
+.node.selected { border-color:var(--orange); box-shadow:0 0 0 2px var(--orange-mid),0 4px 14px rgba(0,0,0,.12); }
+.node.running { border-color:var(--blue); box-shadow:0 0 0 2px var(--blue-light),0 4px 14px rgba(0,0,0,.12); }
+.node.ok { border-color:var(--green); }
+.node.err { border-color:#c0392b; box-shadow:0 0 0 2px rgba(192,57,43,.15); }
+.nd-stripe { height:3px; border-radius:10px 10px 0 0; }
+.n-trigger .nd-stripe{background:var(--amber);} .n-action .nd-stripe{background:var(--orange);}
+.n-ai .nd-stripe{background:var(--blue);} .n-filter .nd-stripe{background:var(--purple);} .n-output .nd-stripe{background:var(--green);}
+.n-approval .nd-stripe{background:#D97706;} .n-approval .pal-ic,.node.n-approval .nd-ic{ background:rgba(217,119,6,0.14); }
+.nd-head { display:flex; align-items:center; gap:.5rem; padding:.55rem .6rem; }
+.nd-ic { width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:.95rem; flex-shrink:0; }
+.nd-tt { min-width:0; }
+.nd-name { font-size:.76rem; font-weight:600; color:var(--n8n-ink); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.nd-type { font-size:.6rem; color:var(--n8n-muted); font-family:'DM Mono',monospace; text-transform:uppercase; letter-spacing:.05em; }
+.nd-foot { padding:0 .6rem .5rem; font-size:.65rem; color:var(--n8n-muted); line-height:1.4; }
+.nd-status { position:absolute; top:-8px; right:-8px; width:20px; height:20px; border-radius:50%; display:none; align-items:center; justify-content:center; font-size:.7rem; color:#fff; z-index:3; }
+.node.running .nd-status{display:flex; background:var(--blue);}
+.node.ok .nd-status{display:flex; background:var(--green);}
+.node.err .nd-status{display:flex; background:#c0392b;}
+.node .del { position:absolute; top:-8px; left:-8px; width:18px; height:18px; border-radius:50%; background:#fff; border:1px solid var(--panel-line); color:var(--n8n-muted); font-size:.75rem; display:none; align-items:center; justify-content:center; cursor:pointer; z-index:3; line-height:1; }
+.node:hover .del{display:flex;} .node .del:hover{color:#c0392b; border-color:#c0392b;}
+/* ports */
+.port { position:absolute; top:50%; transform:translateY(-50%); width:11px; height:11px; border-radius:50%; background:#fff; border:2px solid #b4bcc6; z-index:4; }
+.port.in { left:-7px; } .port.out { right:-7px; cursor:crosshair; }
+.port.out:hover { border-color:var(--orange); background:var(--orange-light); }
+.node.wiring-src .port.out { border-color:var(--orange); background:var(--orange); }
+.port.can-target { border-color:var(--green); background:var(--green-light); box-shadow:0 0 0 4px var(--green-light); }
+
+/* right parameters panel */
+.params { width:0; flex-shrink:0; background:#fff; border-left:1px solid var(--panel-line); overflow:hidden; transition:width .22s ease; }
+.params.open { width:360px; }
+.params-in { width:360px; padding:1.1rem; }
+.params-head { display:flex; align-items:center; gap:.55rem; padding-bottom:.7rem; border-bottom:1px solid var(--panel-line); margin-bottom:.85rem; }
+.params-head .ph-ic { width:30px; height:30px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
+.params-head .ph-tt .n { font-size:.85rem; font-weight:700; color:var(--n8n-ink); }
+.params-head .ph-tt .t { font-size:.64rem; color:var(--n8n-muted); font-family:'DM Mono',monospace; text-transform:uppercase; }
+.params-close { margin-left:auto; background:none; border:none; color:var(--n8n-muted); font-size:1.1rem; cursor:pointer; line-height:1; }
+.params-close:hover { color:var(--ink); }
+.p-field { margin-bottom:.85rem; }
+.p-label { display:block; font-size:.7rem; font-weight:600; color:var(--n8n-ink); margin-bottom:.3rem; }
+.p-label .req { color:var(--orange); }
+.p-hint { font-size:.65rem; color:var(--n8n-muted); margin-top:.25rem; line-height:1.45; }
+.p-input,.p-select,.p-area { width:100%; border:1px solid var(--panel-line); border-radius:6px; padding:.5rem .6rem; font-size:.78rem; font-family:'DM Sans',sans-serif; color:var(--n8n-ink); background:#fff; outline:none; transition:border-color .15s; }
+.p-input:focus,.p-select:focus,.p-area:focus { border-color:var(--orange); }
+.p-area { resize:vertical; min-height:78px; line-height:1.5; }
+.p-area.big { min-height:200px; font-size:.82rem; line-height:1.6; }
+.p-head-tt { font-size:.7rem; color:var(--n8n-muted); margin-bottom:.5rem; line-height:1.5; }
+.p-example { background:var(--cream2); border-radius:6px; padding:.55rem .65rem; margin-top:.4rem; font-size:.68rem; color:var(--ink3); line-height:1.5; cursor:pointer; transition:background .15s; }
+.p-example:hover { background:var(--cream3); }
+.p-example .lbl { font-family:'DM Mono',monospace; font-size:.6rem; color:var(--orange); text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:.25rem; }
+.p-charcount { text-align:right; font-size:.62rem; color:var(--n8n-muted); font-family:'DM Mono',monospace; margin-top:.25rem; }
+.p-charcount.good { color:var(--green); }
+.p-mono { font-family:'DM Mono',monospace; font-size:.72rem; }
+.p-cred { display:flex; align-items:center; gap:.5rem; background:var(--green-light); border:1px solid rgba(45,106,79,.25); border-radius:6px; padding:.5rem .6rem; font-size:.72rem; color:var(--green); }
+.p-cred .dot { width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; }
+.p-static { background:var(--cream2); border-radius:6px; padding:.5rem .6rem; font-size:.72rem; color:var(--ink3); line-height:1.5; }
+.p-empty { text-align:center; color:var(--n8n-muted); font-size:.8rem; padding:2rem 1rem; line-height:1.6; }
+.p-empty .big { font-size:1.6rem; display:block; margin-bottom:.5rem; opacity:.5; }
+@media(max-width:900px){ .params.open{width:300px;} .params-in,.params-head{width:300px;} .palette{width:150px;} }
+@media(max-width:680px){ .params.open{width:260px;} .params-in,.params-head{width:260px;} .p-area.big{min-height:150px;} }
+
+/* execution log / output drawer */
+.exec { background:#1e2530; border-top:1px solid #2c3540; color:#cdd5df; font-family:'DM Mono',monospace; font-size:.74rem; max-height:0; overflow:hidden; transition:max-height .3s ease; }
+.exec.open { max-height:340px; overflow-y:auto; }
+.exec-head { position:sticky; top:0; background:#171d26; padding:.55rem .85rem; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #2c3540; }
+.exec-head .eh-l { display:flex; align-items:center; gap:.5rem; color:#9aa5b1; font-size:.7rem; letter-spacing:.06em; text-transform:uppercase; }
+.exec-head .live { width:7px; height:7px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px #22c55e; }
+.exec-body { padding:.7rem .85rem 1rem; }
+.log-line { padding:.28rem 0; display:flex; gap:.6rem; align-items:flex-start; opacity:0; transform:translateX(-6px); animation:logIn .35s forwards; }
+@keyframes logIn { to { opacity:1; transform:none; } }
+.log-line .lt { color:#6b7684; flex-shrink:0; }
+.log-line .lb { color:#cdd5df; }
+.log-line.ok .lb { color:#4ade80; } .log-line.warn .lb{color:#fbbf24;} .log-line.err .lb{color:#f87171;}
+.log-line .node-tag { color:#60a5fa; }
+.io-block { background:#141a22; border:1px solid #2c3540; border-radius:7px; margin:.5rem 0; overflow:hidden; }
+.io-head { padding:.4rem .65rem; font-size:.66rem; color:#9aa5b1; text-transform:uppercase; letter-spacing:.06em; border-bottom:1px solid #2c3540; display:flex; justify-content:space-between; }
+.io-body { padding:.6rem .7rem; white-space:pre-wrap; word-break:break-word; line-height:1.55; color:#e2e8f0; font-size:.73rem; }
+.io-body .k { color:#7dd3fc; }
+.result-card { background:#fff; border:1px solid var(--green); border-left:4px solid var(--green); border-radius:var(--r); padding:1.2rem 1.35rem; margin:1.2rem 0; box-shadow:var(--shadow); display:none; }
+.result-card.show { display:block; animation:logIn .4s; }
+.result-card h4 { font-family:'Playfair Display',serif; font-size:1.15rem; margin-bottom:.5rem; color:var(--green); }
+.result-out { white-space:pre-wrap; font-size:.9rem; color:var(--ink2); line-height:1.7; background:var(--cream2); border-radius:8px; padding:.9rem 1rem; margin-top:.6rem; }
+
+/* scenario picker */
+.scen-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; margin:1.6rem 0; }
+.scen-card { background:#fff; border:2px solid var(--border); border-radius:var(--r); padding:1.3rem; cursor:pointer; transition:border-color .18s,transform .1s,box-shadow .18s; text-align:left; }
+.scen-card:hover { border-color:var(--orange-mid); transform:translateY(-2px); box-shadow:var(--shadow); }
+.scen-card.sel { border-color:var(--orange); box-shadow:0 0 0 3px var(--orange-light); }
+.scen-ic { font-size:1.7rem; margin-bottom:.6rem; }
+.scen-card h4 { font-family:'Playfair Display',serif; font-size:1.12rem; margin-bottom:.3rem; }
+.scen-card p { font-size:.84rem; color:var(--ink3); line-height:1.55; }
+.scen-card .tags { margin-top:.7rem; display:flex; flex-wrap:wrap; gap:.35rem; }
+.scen-card .tag { font-size:.66rem; font-family:'DM Mono',monospace; background:var(--cream2); color:var(--ink3); padding:3px 8px; border-radius:5px; }
+.scen-lock { text-align:center; padding:2rem 1rem; color:var(--ink4); font-size:.9rem; }
+
+/* sample data viewer (the "inbox"/"feed") */
+.sample-wrap { background:#fff; border:1px solid var(--border); border-radius:var(--r); overflow:hidden; margin:1.3rem 0; box-shadow:var(--shadow); }
+.sample-head { background:var(--cream2); padding:.7rem 1rem; font-size:.76rem; font-weight:600; color:var(--ink2); display:flex; align-items:center; gap:.5rem; border-bottom:1px solid var(--border); }
+.sample-row { padding:.75rem 1rem; border-bottom:1px solid var(--border2); font-size:.85rem; }
+.sample-row:last-child { border-bottom:none; }
+.sample-row .sr-top { display:flex; justify-content:space-between; gap:.5rem; margin-bottom:.2rem; }
+.sample-row .sr-from { font-weight:600; color:var(--ink); }
+.sample-row .sr-meta { font-size:.7rem; color:var(--ink4); font-family:'DM Mono',monospace; }
+.sample-row .sr-body { color:var(--ink3); line-height:1.5; }
+.sample-row .sr-flag { display:inline-block; font-size:.66rem; font-family:'DM Mono',monospace; padding:2px 7px; border-radius:4px; margin-top:.3rem; }
+.flag-urgent { background:rgba(192,57,43,.1); color:#c0392b; }
+.flag-normal { background:var(--cream3); color:var(--ink3); }
+
+/* checklist / do-this */
+.dothis { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:1.3rem 1.4rem; margin:1.4rem 0; box-shadow:var(--shadow); }
+.dothis-h { font-family:'Playfair Display',serif; font-size:1.15rem; margin-bottom:.9rem; display:flex; align-items:center; gap:.5rem; }
+.dothis ol { list-style:none; counter-reset:d; display:flex; flex-direction:column; gap:.7rem; }
+.dothis li { counter-increment:d; display:flex; gap:.7rem; align-items:flex-start; font-size:.9rem; color:var(--ink2); line-height:1.55; }
+.dothis li::before { content:counter(d); flex-shrink:0; width:22px; height:22px; border-radius:50%; background:var(--orange-light); color:var(--orange); font-family:'DM Mono',monospace; font-size:.75rem; font-weight:600; display:flex; align-items:center; justify-content:center; }
+
+/* AI interview / reflection */
+.ai-q { background:var(--ink); color:#fff; border-radius:var(--r); padding:1.5rem 1.6rem; margin:1.2rem 0; position:relative; overflow:hidden; }
+.ai-q::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 60% at 85% 15%,rgba(232,87,12,.16),transparent 60%); }
+.ai-q-label { position:relative; font-family:'DM Mono',monospace; font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:.7rem; }
+.ai-q-text { position:relative; font-family:'Playfair Display',serif; font-size:1.2rem; color:#fff; margin-bottom:1rem; line-height:1.4; }
+.ai-area { position:relative; width:100%; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:.85rem 1rem; color:#fff; font-size:.92rem; font-family:'DM Sans',sans-serif; resize:vertical; min-height:90px; outline:none; line-height:1.6; }
+.ai-area::placeholder { color:rgba(255,255,255,.28); }
+.ai-actions { position:relative; margin-top:.8rem; display:flex; gap:.6rem; flex-wrap:wrap; }
+.ai-btn { background:var(--orange); color:#fff; border:none; padding:10px 22px; border-radius:7px; font-size:.86rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .2s; }
+.ai-btn:hover { background:#c9490a; } .ai-btn:disabled{opacity:.5;cursor:not-allowed;}
+.ai-resp { position:relative; display:none; margin-top:1rem; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:8px; padding:1rem 1.1rem; }
+.ai-resp-label { font-family:'DM Mono',monospace; font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:.5rem; }
+.ai-resp-text { font-size:.9rem; color:rgba(255,255,255,.9); line-height:1.7; white-space:pre-wrap; }
+.dots span { display:inline-block; width:5px; height:5px; border-radius:50%; background:currentColor; margin:0 2px; animation:d 1.2s infinite; }
+.dots span:nth-child(2){animation-delay:.2s;} .dots span:nth-child(3){animation-delay:.4s;}
+@keyframes d { 0%,80%,100%{transform:scale(.6);opacity:.4;} 40%{transform:scale(1);opacity:1;} }
+
+/* done tiles */
+.done-wrap { background:linear-gradient(135deg,var(--orange-light),var(--amber-light)); border:1.5px solid var(--orange-mid); border-radius:var(--r); padding:1.6rem; margin:1.4rem 0; }
+.done-wrap h3 { font-size:1.3rem; margin-bottom:1rem; }
+.done-tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:.8rem; }
+.done-tile { background:#fff; border:1px solid var(--border); border-radius:var(--r-sm); padding:.9rem 1rem; display:flex; gap:.6rem; align-items:flex-start; }
+.done-check { width:22px; height:22px; border-radius:50%; background:var(--green); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.75rem; flex-shrink:0; }
+.done-tile p { font-size:.82rem; color:var(--ink2); line-height:1.5; }
+
+/* next button */
+.next-wrap { text-align:center; padding:1rem 0 0; }
+.btn-next { display:inline-flex; align-items:center; gap:.6rem; background:var(--ink); color:#fff; padding:15px 34px; border-radius:8px; font-weight:600; font-size:.95rem; text-decoration:none; transition:transform .2s,box-shadow .2s; }
+.btn-next:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+
+.toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:12px 22px; border-radius:9px; font-size:.85rem; box-shadow:var(--shadow-lg); opacity:0; transition:opacity .25s,transform .25s; z-index:400; pointer-events:none; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ===== CHALLENGE SYSTEM ===== */
+.chal-tabs { display:flex; gap:.5rem; margin:1.4rem 0 1rem; flex-wrap:wrap; }
+.chal-tab { flex:1; min-width:150px; background:#fff; border:1.5px solid var(--border); border-radius:10px; padding:.75rem .85rem; cursor:pointer; transition:border-color .15s,box-shadow .15s,opacity .15s; position:relative; text-align:left; }
+.chal-tab:hover { border-color:var(--orange-mid); }
+.chal-tab.active { border-color:var(--orange); box-shadow:0 0 0 3px var(--orange-light); }
+.chal-tab.locked { opacity:.5; cursor:not-allowed; }
+.chal-tab.done { border-color:var(--green); }
+.chal-tab .ct-num { font-family:'DM Mono',monospace; font-size:.62rem; color:var(--orange); letter-spacing:.08em; text-transform:uppercase; }
+.chal-tab.done .ct-num { color:var(--green); }
+.chal-tab .ct-name { font-family:'Playfair Display',serif; font-size:.98rem; font-weight:700; margin-top:.15rem; color:var(--ink); line-height:1.15; }
+.chal-tab .ct-tag { font-size:.68rem; color:var(--ink3); margin-top:.2rem; }
+.chal-tab .ct-check { position:absolute; top:.6rem; right:.6rem; width:18px; height:18px; border-radius:50%; background:var(--green); color:#fff; font-size:.65rem; display:none; align-items:center; justify-content:center; }
+.chal-tab.done .ct-check { display:flex; }
+.chal-tab .ct-lock { position:absolute; top:.6rem; right:.6rem; font-size:.75rem; opacity:.5; display:none; }
+.chal-tab.locked .ct-lock { display:block; }
+
+.chal-brief { background:linear-gradient(135deg,var(--ink),#2a2320); color:#fff; border-radius:var(--r); padding:1.4rem 1.5rem; margin:1.2rem 0; position:relative; overflow:hidden; }
+.chal-brief::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 70% at 88% 20%,rgba(232,87,12,.16),transparent 60%); }
+.chal-brief-tag { position:relative; font-family:'DM Mono',monospace; font-size:.66rem; letter-spacing:.12em; text-transform:uppercase; color:#FF8C42; margin-bottom:.6rem; }
+.chal-brief h3 { position:relative; color:#fff; font-size:1.35rem; margin-bottom:.6rem; }
+.chal-brief p { position:relative; color:rgba(255,255,255,.72); font-size:.94rem; line-height:1.65; margin-bottom:.5rem; }
+.chal-brief .goal { position:relative; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); border-left:3px solid #FF8C42; border-radius:8px; padding:.7rem .9rem; margin-top:.8rem; font-size:.88rem; color:rgba(255,255,255,.9); line-height:1.6; }
+.chal-brief .goal strong { color:#fff; }
+.chal-brief .hint-toggle { position:relative; margin-top:.8rem; background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.7); font-size:.76rem; padding:6px 14px; border-radius:6px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .15s; }
+.chal-brief .hint-toggle:hover { background:rgba(255,255,255,.08); }
+.chal-brief .hint-body { position:relative; display:none; margin-top:.7rem; padding:.7rem .9rem; background:rgba(255,255,255,.05); border-radius:8px; font-size:.82rem; color:rgba(255,255,255,.7); line-height:1.6; }
+.chal-brief .hint-body.show { display:block; }
+.chal-brief .warn-note { position:relative; margin-top:.7rem; font-size:.8rem; color:#FFB380; display:flex; align-items:flex-start; gap:.4rem; }
+
+/* email field in params */
+.p-email-field { background:var(--blue-light); border:1px solid rgba(29,78,216,.2); border-radius:8px; padding:.7rem .8rem; margin-top:.3rem; }
+.p-email-field label { font-size:.72rem; font-weight:600; color:var(--blue); display:block; margin-bottom:.4rem; }
+.p-email-input { width:100%; border:1px solid rgba(29,78,216,.3); border-radius:6px; padding:.55rem .65rem; font-size:.82rem; font-family:'DM Mono',monospace; outline:none; }
+.p-email-input:focus { border-color:var(--blue); }
+
+/* email arrival confirmation */
+.email-status { border-radius:var(--r); padding:1.3rem 1.5rem; margin:1.3rem 0; display:none; }
+.email-status.show { display:block; animation:logIn .4s; }
+.email-status.sending { background:var(--blue-light); border:1px solid rgba(29,78,216,.3); }
+.email-status.sent { background:var(--green-light); border:1px solid rgba(45,106,79,.35); }
+.email-status.failed { background:rgba(192,57,43,.07); border:1px solid rgba(192,57,43,.3); }
+.email-status h4 { font-family:'Playfair Display',serif; font-size:1.2rem; margin-bottom:.5rem; display:flex; align-items:center; gap:.5rem; }
+.email-status.sending h4 { color:var(--blue); } .email-status.sent h4 { color:var(--green); } .email-status.failed h4 { color:#c0392b; }
+.email-status p { font-size:.92rem; color:var(--ink2); line-height:1.65; }
+.email-status .check-inbox { margin-top:.8rem; background:#fff; border:1px solid var(--border); border-radius:8px; padding:.85rem 1rem; display:flex; align-items:center; gap:.7rem; font-size:.88rem; color:var(--ink2); }
+.email-status .check-inbox .big { font-size:1.6rem; }
+.email-status .debug-list { margin-top:.8rem; background:#fff; border:1px solid rgba(192,57,43,.2); border-radius:8px; padding:.85rem 1rem; }
+.email-status .debug-list .dh { font-size:.8rem; font-weight:600; color:#c0392b; margin-bottom:.5rem; }
+.email-status .debug-list ul { list-style:none; display:flex; flex-direction:column; gap:.45rem; }
+.email-status .debug-list li { font-size:.85rem; color:var(--ink2); display:flex; gap:.5rem; align-items:flex-start; line-height:1.5; }
+.email-status .debug-list li::before { content:'→'; color:#c0392b; flex-shrink:0; }
+.email-confirm-btn { margin-top:.9rem; display:inline-flex; align-items:center; gap:.5rem; background:var(--green); color:#fff; border:none; padding:11px 22px; border-radius:8px; font-size:.88rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .2s; }
+.email-confirm-btn:hover { background:#245a42; }
+.email-confirm-btn.no { background:#fff; color:var(--ink3); border:1px solid var(--border); }
+.email-confirm-btn.no:hover { background:var(--cream2); }
+
+@media (prefers-reduced-motion:reduce){ *{animation-duration:.001ms!important; transition-duration:.05ms!important;} .reveal{opacity:1;transform:none;} }
+
+/* ===== M1c: commission / persona / judging ===== */
+.marja { display:flex; gap:1rem; background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:1.3rem 1.4rem; margin:1.4rem 0; box-shadow:var(--shadow); position:relative; }
+.marja::before { content:''; position:absolute; left:0; top:1.4rem; bottom:1.4rem; width:3px; background:var(--green); border-radius:3px; }
+.marja-avatar { flex-shrink:0; width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,var(--green),#1f4a37); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; }
+.marja-body { min-width:0; }
+.marja-name { font-weight:700; font-size:.92rem; color:var(--ink); display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+.marja-role { font-size:.72rem; color:var(--ink4); font-weight:400; font-family:'DM Mono',monospace; }
+.marja-text { font-size:.96rem; color:var(--ink2); line-height:1.7; margin-top:.5rem; }
+.marja-text strong { color:var(--ink); }
+.marja.tight { padding:1rem 1.15rem; } .marja.tight .marja-avatar{width:42px;height:42px;font-size:1.1rem;}
+
+/* task judging cards */
+.task-card { background:#fff; border:1.5px solid var(--border); border-radius:var(--r); padding:1.3rem 1.4rem; margin:1.2rem 0; box-shadow:var(--shadow); }
+.task-card.own { border-style:dashed; border-color:var(--orange-mid); }
+.task-head { display:flex; align-items:flex-start; gap:.7rem; margin-bottom:.4rem; }
+.task-badge { flex-shrink:0; font-family:'DM Mono',monospace; font-size:.64rem; letter-spacing:.06em; text-transform:uppercase; padding:4px 10px; border-radius:6px; margin-top:.15rem; }
+.task-badge.seeded { background:var(--blue-light); color:var(--blue); }
+.task-badge.own { background:var(--orange-light); color:var(--orange); }
+.task-title { font-family:'Playfair Display',serif; font-size:1.15rem; font-weight:700; line-height:1.25; }
+.task-desc { font-size:.9rem; color:var(--ink3); line-height:1.6; margin:.5rem 0 1rem; }
+
+/* three-signal checkboxes */
+.signals { display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; margin:1rem 0; }
+.signal { background:var(--cream2); border:1.5px solid transparent; border-radius:10px; padding:.75rem .7rem; cursor:pointer; transition:border-color .15s,background .15s; text-align:center; user-select:none; }
+.signal:hover { background:var(--cream3); }
+.signal.on { border-color:var(--green); background:var(--green-light); }
+.signal .sig-ic { font-size:1.3rem; display:block; margin-bottom:.3rem; }
+.signal .sig-name { font-size:.8rem; font-weight:600; color:var(--ink); }
+.signal .sig-q { font-size:.66rem; color:var(--ink4); margin-top:.15rem; line-height:1.3; }
+.signal .sig-state { font-size:.62rem; font-family:'DM Mono',monospace; margin-top:.35rem; color:var(--ink4); }
+.signal.on .sig-state { color:var(--green); }
+@media(max-width:560px){ .signals{grid-template-columns:1fr;} }
+
+/* verdict buttons */
+.verdict-label { font-size:.8rem; font-weight:600; color:var(--ink2); margin:.9rem 0 .5rem; }
+.verdicts { display:flex; gap:.6rem; flex-wrap:wrap; }
+.verdict { flex:1; min-width:120px; background:#fff; border:1.5px solid var(--border); border-radius:9px; padding:.7rem .6rem; cursor:pointer; transition:border-color .15s,box-shadow .15s; text-align:center; font-size:.84rem; font-weight:600; color:var(--ink2); }
+.verdict:hover { border-color:var(--ink3); }
+.verdict.sel { border-color:var(--orange); box-shadow:0 0 0 3px var(--orange-light); color:var(--ink); }
+.verdict .v-ic { font-size:1.1rem; display:block; margin-bottom:.2rem; }
+.verdict.sel[data-v="automate"]{ border-color:var(--green); box-shadow:0 0 0 3px var(--green-light); }
+.verdict.sel[data-v="dont"]{ border-color:#c0392b; box-shadow:0 0 0 3px rgba(192,57,43,.1); }
+.verdict.sel[data-v="partly"]{ border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-light); }
+
+.reason-box { margin-top:1rem; }
+.reason-box label { display:block; font-size:.8rem; font-weight:600; color:var(--ink2); margin-bottom:.4rem; }
+.reason-area { width:100%; border:1px solid var(--border); border-radius:8px; padding:.7rem .85rem; font-size:.9rem; font-family:'DM Sans',sans-serif; line-height:1.6; resize:vertical; min-height:70px; outline:none; transition:border-color .15s; }
+.reason-area:focus { border-color:var(--orange); }
+.judge-btn { margin-top:.8rem; display:inline-flex; align-items:center; gap:.5rem; background:var(--ink); color:#fff; border:none; padding:11px 24px; border-radius:8px; font-size:.88rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:transform .15s,background .2s; }
+.judge-btn:hover { transform:translateY(-1px); } .judge-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* Socratic review response */
+.review { display:none; margin-top:1.1rem; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+.review.show { display:block; animation:logIn .4s; }
+.review-head { background:var(--green); color:#fff; padding:.6rem .9rem; font-size:.78rem; font-weight:600; display:flex; align-items:center; gap:.5rem; }
+.review-head.challenge { background:var(--amber); }
+.review-head.agree { background:var(--green); }
+.review-body { padding:1rem 1.1rem; background:#fff; font-size:.9rem; color:var(--ink2); line-height:1.7; white-space:pre-wrap; }
+.review-again { margin-top:.6rem; }
+.review-again .ra-btn { background:none; border:1px solid var(--border); color:var(--ink3); font-size:.78rem; padding:6px 14px; border-radius:6px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+.review-again .ra-btn:hover { border-color:var(--ink3); color:var(--ink); }
+
+/* vinkki (hint) — nudge thinking without the answer */
+.vinkki-toggle { display:inline-flex; align-items:center; gap:.4rem; background:var(--amber-light); border:1px solid rgba(180,83,9,.25); color:var(--amber); font-size:.76rem; font-weight:600; padding:6px 13px; border-radius:6px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .15s; margin:.3rem 0 .6rem; }
+.vinkki-toggle:hover { background:rgba(180,83,9,.14); }
+.vinkki-body { display:none; background:var(--amber-light); border:1px solid rgba(180,83,9,.2); border-left:3px solid var(--amber); border-radius:8px; padding:.85rem 1rem; margin-bottom:.9rem; font-size:.86rem; color:var(--ink2); line-height:1.65; }
+.vinkki-body.show { display:block; animation:logIn .3s; }
+.vinkki-body strong { color:var(--amber); }
+.vinkki-body .vq { font-style:italic; color:var(--ink); display:block; margin-top:.4rem; }
+
+/* progress dots for tasks done */
+.task-progress { display:flex; align-items:center; gap:.5rem; justify-content:center; margin:1.5rem 0; font-size:.8rem; color:var(--ink3); }
+.tp-dot { width:10px; height:10px; border-radius:50%; background:var(--cream3); transition:background .3s; }
+.tp-dot.done { background:var(--green); }
+
+/* insight callout */
+.insight { background:linear-gradient(135deg,var(--blue-light),rgba(29,78,216,0.03)); border:1px solid rgba(29,78,216,.2); border-left:3px solid var(--blue); border-radius:var(--r-sm); padding:1.1rem 1.3rem; margin:1.4rem 0; }
+.insight h4 { font-family:'Playfair Display',serif; font-size:1.05rem; color:var(--blue); margin-bottom:.4rem; }
+.insight p { font-size:.9rem; color:var(--ink2); line-height:1.65; }
+
+/* ===== Claude chat bubble (per-case, inline) ===== */
+.claude-btn { position:relative; margin-top:.8rem; display:inline-flex; align-items:center; gap:.5rem; background:rgba(232,87,12,.1); border:1px solid rgba(232,87,12,.3); color:#FF8C42; font-size:.8rem; font-weight:600; padding:8px 16px; border-radius:8px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .15s; }
+.claude-btn:hover { background:rgba(232,87,12,.18); }
+.claude-btn .cb-ic { font-size:1rem; }
+/* the popup chat window, anchored inside the brief card */
+.claude-chat { position:absolute; z-index:120; bottom:calc(100% + 10px); right:0; width:340px; max-width:calc(100vw - 40px); background:#fff; border:1px solid var(--border); border-radius:14px; box-shadow:0 12px 40px rgba(0,0,0,.22); display:none; flex-direction:column; overflow:hidden; }
+.claude-chat.open { display:flex; animation:chatIn .2s ease; }
+@keyframes chatIn { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+.cc-head { display:flex; align-items:center; gap:.6rem; padding:.75rem .9rem; background:linear-gradient(135deg,var(--ink),#2a2320); color:#fff; }
+.cc-avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--orange),#FF8C42); display:flex; align-items:center; justify-content:center; font-size:.85rem; flex-shrink:0; }
+.cc-title { flex:1; min-width:0; }
+.cc-title .n { font-size:.82rem; font-weight:700; }
+.cc-title .s { font-size:.66rem; color:rgba(255,255,255,.6); }
+.cc-close { background:none; border:none; color:rgba(255,255,255,.7); font-size:1.1rem; cursor:pointer; line-height:1; padding:2px 4px; }
+.cc-close:hover { color:#fff; }
+.cc-body { padding:.85rem; max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:.6rem; background:var(--cream); }
+.cc-msg { font-size:.84rem; line-height:1.55; padding:.6rem .8rem; border-radius:12px; max-width:90%; }
+.cc-msg.claude { background:#fff; border:1px solid var(--border2); color:var(--ink2); align-self:flex-start; border-bottom-left-radius:4px; }
+.cc-msg.user { background:var(--orange); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+.cc-msg.claude strong { color:var(--ink); }
+.cc-hint-chips { display:flex; flex-wrap:wrap; gap:.35rem; padding:0 .85rem .6rem; background:var(--cream); }
+.cc-chip { font-size:.72rem; background:#fff; border:1px solid var(--border2); color:var(--ink3); padding:5px 10px; border-radius:20px; cursor:pointer; transition:border-color .15s; }
+.cc-chip:hover { border-color:var(--orange); color:var(--orange); }
+.cc-input-row { display:flex; gap:.4rem; padding:.7rem .85rem; border-top:1px solid var(--border2); background:#fff; }
+.cc-input { flex:1; border:1px solid var(--border); border-radius:20px; padding:.5rem .85rem; font-size:.82rem; font-family:'DM Sans',sans-serif; outline:none; }
+.cc-input:focus { border-color:var(--orange); }
+.cc-send { background:var(--orange); color:#fff; border:none; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:.9rem; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.cc-send:hover { background:#d64d0a; }
+.cc-send:disabled { opacity:.5; cursor:not-allowed; }
+.cc-typing { align-self:flex-start; padding:.5rem .8rem; }
+.cc-typing span { display:inline-block; width:6px; height:6px; margin:0 1px; background:var(--ink4); border-radius:50%; animation:ccb 1s infinite; }
+.cc-typing span:nth-child(2){animation-delay:.15s;} .cc-typing span:nth-child(3){animation-delay:.3s;}
+@keyframes ccb { 0%,60%,100%{opacity:.3;} 30%{opacity:1;} }
+@media(max-width:560px){ .claude-chat{ width:calc(100vw - 32px); right:-10px; } }
+
+/* ===== Slack-style colleague message popup (in-world story beats) ===== */
+.slack-pop { position:fixed; right:24px; bottom:24px; width:360px; max-width:calc(100vw - 32px); background:#fff; border:1px solid var(--border); border-radius:14px; box-shadow:0 16px 50px rgba(0,0,0,.28); z-index:300; overflow:hidden; display:none; }
+.slack-pop.show { display:block; animation:slackIn .35s cubic-bezier(.2,.8,.3,1); }
+@keyframes slackIn { from{opacity:0; transform:translateY(30px) scale(.96);} to{opacity:1; transform:translateY(0) scale(1);} }
+.slack-head { display:flex; align-items:center; gap:.6rem; padding:.7rem .9rem; background:#3F0E40; color:#fff; }
+.slack-logo { font-size:.7rem; font-weight:700; letter-spacing:.02em; opacity:.85; display:flex; align-items:center; gap:.4rem; }
+.slack-logo::before { content:'#'; font-size:1rem; opacity:.7; }
+.slack-close { margin-left:auto; background:none; border:none; color:rgba(255,255,255,.7); font-size:1.1rem; cursor:pointer; line-height:1; }
+.slack-close:hover { color:#fff; }
+.slack-body { padding:1rem; }
+.slack-msg { display:flex; gap:.7rem; }
+.slack-avatar { width:38px; height:38px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:.9rem; }
+.slack-content { min-width:0; flex:1; }
+.slack-name { font-weight:700; font-size:.88rem; color:var(--ink); display:flex; align-items:baseline; gap:.5rem; }
+.slack-time { font-size:.66rem; color:var(--ink4); font-weight:400; }
+.slack-role { font-size:.68rem; color:var(--ink4); margin-bottom:.4rem; }
+.slack-text { font-size:.9rem; color:var(--ink2); line-height:1.6; }
+.slack-text strong { color:var(--ink); }
+.slack-actions { margin-top:.9rem; display:flex; justify-content:flex-end; }
+.slack-btn { background:#007a5a; color:#fff; border:none; padding:9px 18px; border-radius:7px; font-size:.82rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .15s; }
+.slack-btn:hover { background:#148567; }
+/* notification dot on a minimized bar (optional future) */
+
+/* ===== two-stage case flow (build stage / adapt stage) ===== */
+.stage-track { display:flex; align-items:center; gap:.5rem; margin:1.1rem 0 .3rem; }
+.stage-pill { display:flex; align-items:center; gap:.45rem; font-size:.76rem; font-weight:600; color:var(--ink4); padding:5px 12px; border-radius:20px; background:var(--cream2); border:1px solid var(--border2); }
+.stage-pill.active { color:var(--orange); background:var(--orange-light); border-color:rgba(232,87,12,.3); }
+.stage-pill.done { color:var(--green); background:var(--green-light); border-color:rgba(45,106,79,.3); }
+.stage-pill .sp-num { width:18px; height:18px; border-radius:50%; background:var(--ink4); color:#fff; font-size:.62rem; display:flex; align-items:center; justify-content:center; }
+.stage-pill.active .sp-num { background:var(--orange); }
+.stage-pill.done .sp-num { background:var(--green); }
+.stage-arrow { color:var(--ink4); font-size:.9rem; }
+
+/* the wrinkle / consequence banner */
+.wrinkle { background:linear-gradient(135deg,#fff7ed,#fff); border:1px solid var(--amber); border-left:4px solid var(--amber); border-radius:var(--r); padding:1.2rem 1.4rem; margin:1.3rem 0; display:none; }
+.wrinkle.show { display:block; animation:logIn .4s; }
+.wrinkle-tag { font-family:'DM Mono',monospace; font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--amber); margin-bottom:.5rem; display:flex; align-items:center; gap:.4rem; }
+.wrinkle h4 { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--ink); margin-bottom:.5rem; }
+.wrinkle p { font-size:.92rem; color:var(--ink2); line-height:1.65; margin-bottom:.5rem; }
+.wrinkle .w-task { background:#fff; border:1px solid var(--amber); border-radius:8px; padding:.7rem .9rem; margin-top:.7rem; font-size:.88rem; color:var(--ink); line-height:1.6; }
+.wrinkle .w-task strong { color:var(--amber); }
+
+/* day/time header for immersion */
+.day-banner { display:flex; align-items:center; gap:.7rem; margin:0 0 .4rem; font-family:'DM Mono',monospace; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink4); }
+.day-banner .db-dot { width:7px; height:7px; border-radius:50%; background:var(--green); }
+.day-banner .db-time { color:var(--orange); }
+
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav>
+  <div class="nav-left">
+    <a href="/" class="nav-home">
+      <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      <span>Etusivu</span>
+    </a>
+    <a href="/module/moduuli1b-ai-automaatio" class="nav-home" id="backToM1b" style="margin-left:.35rem;">
+      <span>← Automaatio B</span>
+    </a>
+    <span class="nav-tag">Automaatio C</span>
+    <span class="nav-title">Näe automaatio kaikkialla</span>
+    <span id="m1cSavePill" style="margin-left:.6rem;font-size:.72rem;color:var(--ink4);font-family:'DM Mono',monospace;">—</span>
+  </div>
+  <div class="nav-steps" id="navSteps"></div>
+</nav>
+
+<!-- HERO -->
+<section id="hero" data-index="0">
+  <div class="hero-in">
+    <div class="hero-eyebrow"><span class="n">Automaatio C</span><span class="l"></span><span class="t">Kaiku Audio Oy</span></div>
+    <h1>Osaatko nähdä,<br><em>mitä kannattaa automatisoida?</em></h1>
+    <p class="hero-sub">Rakensit jo toimivia koneita. Nyt opit vaikeamman taidon: <strong>arvioimaan mikä työ kannattaa automatisoida ja mikä ei.</strong> Kaikkea ei pidä automatisoida — osa työstä vaatii ihmisen harkintaa. Se ero on koko osaamisen ydin. Marja Kaiku Audiolta antaa sinulle ensimmäisen toimeksiannon.</p>
+    <button class="hero-cta" onclick="document.getElementById('brief').scrollIntoView()">Lue toimeksianto <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></button>
+    <div class="hero-meta">
+      <span>⏱ Noin 40 min</span>
+      <span>🧠 Sinä analysoit, tekoäly haastaa</span>
+      <span>🎯 Löydä oma automaatiosi</span>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- SCREEN 1: THE COMMISSION -->
+<section class="section" id="brief" data-index="1">
+  <div class="kicker reveal">Osa 1 · Toimeksianto</div>
+  <h2 class="h reveal">Marjalla on <em>tehtävä sinulle</em></h2>
+
+  <div class="marja reveal">
+    <div class="marja-avatar">MS</div>
+    <div class="marja-body">
+      <div class="marja-name">Marja Salo <span class="marja-role">· esihenkilö, Kaiku Audio Oy</span></div>
+      <div class="marja-text">Hei, ja tervetuloa mukaan. Näin että rakensit jo neljä toimivaa automaatiota — vaikuttavaa. Mutta ennen kuin annan sinun rakentaa meille mitään, haluan opettaa sinulle tärkeimmän taidon, jonka hyvä tekijä tarvitsee.<br><br>Se ei ole rakentaminen. Se on <strong>arvostelukyky</strong>: taito nähdä, mikä työ kannattaa automatisoida — ja mikä ei. Moni innostuu ja yrittää automatisoida kaiken. Se on virhe. Osa työstä vaatii ihmisen harkintaa, eikä sitä pidä antaa koneelle.<br><br>Ensimmäinen toimeksiantosi: <strong>opettele erottamaan nämä toisistaan.</strong> Katsotaan muutamaa oikeaa työtehtävää, ja sinä arvioit jokaisen. Minä haastan päätöksesi. Lopuksi löydät yhden automaation omasta työstäsi.</div>
+    </div>
+  </div>
+
+  <div class="callout green reveal">
+    <span class="callout-mark">🎯</span>
+    <span class="callout-body"><strong>Toimeksiannon tavoite:</strong> et opettele tässä rakentamaan lisää — opettelet <strong>arvioimaan</strong>. Se on taito, joka erottaa ammattilaisen innokkaasta aloittelijasta. Sinä teet analyysin. Tekoäly on vaativa arvioija, joka etsii aukot päättelystäsi.</span>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- SCREEN 2: THE LENS -->
+<section class="section" id="linssi" data-index="2">
+  <div class="kicker reveal">Osa 2 · Työkalu ajatteluun</div>
+  <h2 class="h reveal">Kolme merkkiä — ja <em>yksi varoitus</em></h2>
+  <p class="lead reveal">Miten tiedät, kannattaako jokin työ automatisoida? Kysy kolme kysymystä. Mitä useampaan vastaat "kyllä", sitä paremmin työ sopii koneelle.</p>
+
+  <div class="def-grid reveal">
+    <div class="def-card">
+      <div class="ic" style="background:var(--green-light);">🔁</div>
+      <h4>Toistuuko se?</h4>
+      <p>Teetkö saman asian uudestaan ja uudestaan — päivittäin, viikoittain? Kertaluontoista työtä ei kannata automatisoida.</p>
+    </div>
+    <div class="def-card">
+      <div class="ic" style="background:var(--blue-light);">📏</div>
+      <h4>Onko siinä selkeät säännöt?</h4>
+      <p>Voiko työn kuvata sääntöinä: "jos näin, tee näin"? Jos kyllä, kone osaa seurata niitä. Jos se vaatii tilannetajua, ei.</p>
+    </div>
+    <div class="def-card">
+      <div class="ic" style="background:var(--amber-light);">😐</div>
+      <h4>Onko se rutiinia?</h4>
+      <p>Onko se puuduttavaa, matalan harkinnan työtä? Sellainen sopii koneelle. Työ joka vaatii luovuutta tai empatiaa ei.</p>
+    </div>
+  </div>
+
+  <div class="insight reveal">
+    <h4>⚠ Tärkein oppitunti: kaikkea EI pidä automatisoida</h4>
+    <p>Tässä useimmat menevät vikaan. Jokin työ voi olla <strong>toistuvaa ja tylsää</strong>, mutta silti vaatia ihmisen harkintaa — esimerkiksi vaikean asiakasvalituksen käsittely tai palautteen antaminen työntekijälle. Kone voi <em>auttaa</em> (kirjoittaa luonnoksen), mutta lopullista päätöstä ei pidä antaa sille. Hyvä tekijä tunnistaa nämä rajat. <strong>"Automatisoi kaikki" on aloittelijan virhe.</strong></p>
+  </div>
+
+  <div class="marja tight reveal">
+    <div class="marja-avatar">MS</div>
+    <div class="marja-body">
+      <div class="marja-name">Marja Salo</div>
+      <div class="marja-text">Pidä nämä kolme kysymystä mielessä — ja muista se varoitus. Nyt annan sinulle oikeita tehtäviä arvioitavaksi. Älä oleta mitään valmiiksi. Mieti jokainen itse.</div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- SCREEN 3: JUDGE THE TASKS -->
+<section class="section" id="arvioi" data-index="3" style="max-width:920px;">
+  <div class="kicker reveal">Osa 3 · Sinä arvioit</div>
+  <h2 class="h reveal">Kolme tehtävää. <em>Sinä päätät</em></h2>
+  <p class="lead reveal">Alla on kolme oikeaa työtehtävää. Kaksi ensimmäistä ovat Kaiku Audiolta — ja ne ovat tahallaan hankalia. Kolmanteen lisäät tehtävän <strong>omasta työstäsi</strong>. Jokaisen kohdalla: rastita mitkä kolmesta merkistä täyttyvät, tee päätöksesi, ja perustele. Sitten Marja haastaa sinut.</p>
+
+  <div class="task-progress reveal">
+    <span class="tp-dot" id="tp-0"></span><span class="tp-dot" id="tp-1"></span><span class="tp-dot" id="tp-2"></span>
+    <span style="margin-left:.5rem;" id="tpLabel">0 / 3 arvioitu</span>
+  </div>
+
+  <!-- TASK 1 (seeded trap: looks automatable, needs judgment) -->
+  <div class="task-card reveal" id="task0">
+    <div class="task-head">
+      <span class="task-badge seeded">Kaiku · tehtävä 1</span>
+    </div>
+    <div class="task-title">Vastaa asiakkaan reklamaatioon rikkinäisistä kuulokkeista</div>
+    <div class="task-desc">Kaiku Audiolle tulee päivittäin reklamaatioita: tuote hajosi, asiakas on pettynyt, haluaa hyvityksen tai uuden. Jokainen viesti on erilainen — osa kohtelias, osa vihainen. Pitää päättää: hyvitys, vaihto vai ei kumpikaan.</div>
+
+    <button class="vinkki-toggle" onclick="toggleVinkki(0)">💡 Vinkki (ei paljasta vastausta)</button>
+    <div class="vinkki-body" id="vinkki0">Erottele kaksi asiaa: <strong>viestin käsittely</strong> ja <strong>päätöksen tekeminen</strong>. Voi olla että toinen niistä sopii koneelle ja toinen ei.<span class="vq">Kysy itseltäsi: kun asiakas on pettynyt ja rahaa on pelissä, kuka kantaa vastuun päätöksestä — kone vai ihminen? Ja voisiko kone silti auttaa jossain osassa?</span></div>
+
+    <div class="signals" data-task="0">
+      <div class="signal" data-sig="repeat"><span class="sig-ic">🔁</span><span class="sig-name">Toistuu</span><span class="sig-q">saman tyyppistä päivittäin?</span><span class="sig-state">ei valittu</span></div>
+      <div class="signal" data-sig="rules"><span class="sig-ic">📏</span><span class="sig-name">Selkeät säännöt</span><span class="sig-q">voiko kuvata sääntöinä?</span><span class="sig-state">ei valittu</span></div>
+      <div class="signal" data-sig="routine"><span class="sig-ic">😐</span><span class="sig-name">Rutiinia</span><span class="sig-q">matala harkinta?</span><span class="sig-state">ei valittu</span></div>
+    </div>
+
+    <div class="verdict-label">Päätöksesi:</div>
+    <div class="verdicts" data-task="0">
+      <div class="verdict" data-v="automate"><span class="v-ic">🤖</span>Automatisoi</div>
+      <div class="verdict" data-v="partly"><span class="v-ic">🤝</span>Osittain</div>
+      <div class="verdict" data-v="dont"><span class="v-ic">🙅</span>Älä automatisoi</div>
+    </div>
+
+    <div class="reason-box">
+      <label>Perustele lyhyesti — miksi päädyit tähän?</label>
+      <textarea class="reason-area" id="reason0" placeholder="Esim. 'Tämä toistuu, mutta...'"></textarea>
+    </div>
+    <button class="judge-btn" id="judge0" onclick="judgeTask(0)">Lähetä Marjalle arvioitavaksi</button>
+
+    <div class="review" id="review0">
+      <div class="review-head" id="reviewHead0">🤖 Marjan arvio</div>
+      <div class="review-body" id="reviewBody0"></div>
+      <div class="review-again"><button class="ra-btn" onclick="reviseTask(0)">↻ Muokkaa vastaustani</button></div>
+    </div>
+  </div>
+
+  <!-- TASK 2 (seeded: looks like skilled work, but is actually repetitive/automatable) -->
+  <div class="task-card reveal" id="task1">
+    <div class="task-head">
+      <span class="task-badge seeded">Kaiku · tehtävä 2</span>
+    </div>
+    <div class="task-title">Kokoa viikoittainen myyntiraportti eri kanavien luvuista</div>
+    <div class="task-desc">Joka maanantai joku Kaikulla kerää myyntiluvut verkkokaupasta, jälleenmyyjiltä ja kivijalasta, laskee yhteen, ja kirjoittaa niistä lyhyen yhteenvedon johdolle. Se vie tunnin ja tuntuu "asiantuntijatyöltä", koska siinä on numeroita ja raportti.</div>
+
+    <button class="vinkki-toggle" onclick="toggleVinkki(1)">💡 Vinkki (ei paljasta vastausta)</button>
+    <div class="vinkki-body" id="vinkki1">Älä anna sanan "raportti" tai "asiantuntija" hämätä. Kysy sen sijaan: <strong>mitkä vaiheet tässä oikeasti tapahtuvat?</strong> Kerää luvut samoista paikoista → laske → kirjoita yhteenveto.<span class="vq">Kysy itseltäsi: muuttuvatko vaiheet viikosta toiseen, vai tehdäänkö sama asia joka kerta? Tuntuuko "tärkeä" samalta kuin "vaatii ihmisen harkintaa"?</span></div>
+
+    <div class="signals" data-task="1">
+      <div class="signal" data-sig="repeat"><span class="sig-ic">🔁</span><span class="sig-name">Toistuu</span><span class="sig-q">saman tyyppistä viikoittain?</span><span class="sig-state">ei valittu</span></div>
+      <div class="signal" data-sig="rules"><span class="sig-ic">📏</span><span class="sig-name">Selkeät säännöt</span><span class="sig-q">voiko kuvata sääntöinä?</span><span class="sig-state">ei valittu</span></div>
+      <div class="signal" data-sig="routine"><span class="sig-ic">😐</span><span class="sig-name">Rutiinia</span><span class="sig-q">matala harkinta?</span><span class="sig-state">ei valittu</span></div>
+    </div>
+
+    <div class="verdict-label">Päätöksesi:</div>
+    <div class="verdicts" data-task="1">
+      <div class="verdict" data-v="automate"><span class="v-ic">🤖</span>Automatisoi</div>
+      <div class="verdict" data-v="partly"><span class="v-ic">🤝</span>Osittain</div>
+      <div class="verdict" data-v="dont"><span class="v-ic">🙅</span>Älä automatisoi</div>
+    </div>
+
+    <div class="reason-box">
+      <label>Perustele lyhyesti — miksi päädyit tähän?</label>
+      <textarea class="reason-area" id="reason1" placeholder="Mieti: mikä osa tästä oikeasti vaatii ihmistä?"></textarea>
+    </div>
+    <button class="judge-btn" id="judge1" onclick="judgeTask(1)">Lähetä Marjalle arvioitavaksi</button>
+
+    <div class="review" id="review1">
+      <div class="review-head" id="reviewHead1">🤖 Marjan arvio</div>
+      <div class="review-body" id="reviewBody1"></div>
+      <div class="review-again"><button class="ra-btn" onclick="reviseTask(1)">↻ Muokkaa vastaustani</button></div>
+    </div>
+  </div>
+
+  <!-- TASK 3 (his own) -->
+  <div class="task-card own reveal" id="task2">
+    <div class="task-head">
+      <span class="task-badge own">Sinun työstäsi</span>
+    </div>
+    <div class="task-title">Nyt sinä: kerro yksi tehtävä omasta työstäsi</div>
+    <div class="task-desc">Mieti omaa työtäsi tai työnhakuasi metsäalalla tai muualla. Mikä tehtävä toistuu ja tuntuu puuduttavalta? Kuvaile se lyhyesti — sitten arvioi se samoilla työkaluilla. Tämä on tärkein, koska tämän voit oikeasti rakentaa itsellesi.</div>
+
+    <button class="vinkki-toggle" onclick="toggleVinkki(2)">💡 Vinkki oman tehtävän valintaan</button>
+    <div class="vinkki-body" id="vinkki2">Hyvä ehdokas automaatiolle on jotain, jota teet <strong>usein</strong>, joka menee <strong>samalla kaavalla</strong>, eikä vaadi joka kerta uutta harkintaa. Vältä valitsemasta jotain, joka vaatii aina tilannetajua — se johtaa "osittain"-vastaukseen.<span class="vq">Esimerkkejä metsäalalta: samankaltaiset aikatauluviestit urakoitsijoille, viikkoraportin kokoaminen, kenttämuistiinpanojen siistiminen. Mikä sinun työssäsi toistuu eniten?</span></div>
+
+    <div class="reason-box" style="margin-bottom:1rem;">
+      <label>Kuvaile tehtäväsi (1–2 lausetta):</label>
+      <textarea class="reason-area" id="ownTask" placeholder="Esim. 'Kirjoitan joka viikko samankaltaisia sähköposteja urakoitsijoille aikatauluista.'"></textarea>
+    </div>
+
+    <div class="signals" data-task="2">
+      <div class="signal" data-sig="repeat"><span class="sig-ic">🔁</span><span class="sig-name">Toistuu</span><span class="sig-q">saman tyyppistä usein?</span><span class="sig-state">ei valittu</span></div>
+      <div class="signal" data-sig="rules"><span class="sig-ic">📏</span><span class="sig-name">Selkeät säännöt</span><span class="sig-q">voiko kuvata sääntöinä?</span><span class="sig-state">ei valittu</span></div>
+      <div class="signal" data-sig="routine"><span class="sig-ic">😐</span><span class="sig-name">Rutiinia</span><span class="sig-q">matala harkinta?</span><span class="sig-state">ei valittu</span></div>
+    </div>
+
+    <div class="verdict-label">Päätöksesi:</div>
+    <div class="verdicts" data-task="2">
+      <div class="verdict" data-v="automate"><span class="v-ic">🤖</span>Automatisoi</div>
+      <div class="verdict" data-v="partly"><span class="v-ic">🤝</span>Osittain</div>
+      <div class="verdict" data-v="dont"><span class="v-ic">🙅</span>Älä automatisoi</div>
+    </div>
+
+    <div class="reason-box">
+      <label>Perustele — miksi tämä sopii (tai ei sovi) koneelle?</label>
+      <textarea class="reason-area" id="reason2" placeholder="Käytä kolmea merkkiä perustelussasi."></textarea>
+    </div>
+    <button class="judge-btn" id="judge2" onclick="judgeTask(2)">Lähetä Marjalle arvioitavaksi</button>
+
+    <div class="review" id="review2">
+      <div class="review-head" id="reviewHead2">🤖 Marjan arvio</div>
+      <div class="review-body" id="reviewBody2"></div>
+      <div class="review-again"><button class="ra-btn" onclick="reviseTask(2)">↻ Muokkaa vastaustani</button></div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- SCREEN 4: DESIGN YOUR OWN FLOW -->
+<section class="section" id="tapaukset" data-index="4" style="max-width:1080px;">
+  <div class="day-banner reveal"><span class="db-dot"></span> Ensimmäinen työpäiväsi · Kaiku Audio Oy · <span class="db-time" id="dayTime">klo 8.15</span></div>
+  <div class="kicker reveal">Osa 4 · Työpäivä alkaa</div>
+  <h2 class="h reveal">Tervetuloa <em>töihin</em>, konsultti</h2>
+  <p class="lead reveal">Tänään on ensimmäinen päiväsi Kaiku Audiolla. Et istu luokassa — olet töissä. Päivän mittaan sinulle tulee <strong>oikeita tilanteita</strong>: kollegat viestivät, asiakkaat ovat pulassa, ongelmia kasautuu. Jokaisen kohdalla teet konsultin työn: <strong>selvitä mikä oikeasti on vialla, rakenna ratkaisu, ja korjaa se kun tosielämä yllättää.</strong></p>
+
+  <div class="callout amber reveal">
+    <span class="callout-mark">💼</span>
+    <span class="callout-body"><strong>Näin oikea työ menee.</strong> Kukaan ei anna sinulle valmista vastausta. Asiakas kuvaa oireen, ei ongelmaa. Ja kun rakennat koneen — se harvoin toimii täydellisesti heti. Tosielämä tuo yllätyksiä, ja hyvä tekijä <strong>sopeuttaa koneensa</strong>. Jos jäät jumiin, kysy DuuniJobs AI:lta — se auttaa ajattelemaan, ei tee työtäsi.</span>
+  </div>
+
+  <!-- CASE TABS -->
+  <div class="chal-tabs reveal" id="caseTabs">
+    <button class="chal-tab active" data-case="0" onclick="selectCase(0)">
+      <div class="ct-num">Tapaus 1</div><div class="ct-name">Hukkuva asiakas</div><div class="ct-tag">🌊 tunnista ongelma</div>
+      <div class="ct-check">✓</div><div class="ct-lock">🔒</div>
+    </button>
+    <button class="chal-tab locked" data-case="1" onclick="selectCase(1)">
+      <div class="ct-num">Tapaus 2</div><div class="ct-name">Väärä pyyntö</div><div class="ct-tag">🤔 asiakas erehtyy</div>
+      <div class="ct-check">✓</div><div class="ct-lock">🔒</div>
+    </button>
+    <button class="chal-tab locked" data-case="2" onclick="selectCase(2)">
+      <div class="ct-num">Tapaus 3</div><div class="ct-name">Rikkinäinen prosessi</div><div class="ct-tag">🔧 korjaa ja rakenna</div>
+      <div class="ct-check">✓</div><div class="ct-lock">🔒</div>
+    </button>
+    <button class="chal-tab locked" data-case="3" onclick="selectCase(3)">
+      <div class="ct-num">Tapaus 4</div><div class="ct-name">Rahaa pelissä</div><div class="ct-tag">👤 ihminen päättää</div>
+      <div class="ct-check">✓</div><div class="ct-lock">🔒</div>
+    </button>
+    <button class="chal-tab locked" data-case="4" onclick="selectCase(4)">
+      <div class="ct-num">Tapaus 5</div><div class="ct-name">Avoin toimeksianto</div><div class="ct-tag">🏆 suunnittele itse</div>
+      <div class="ct-check">✓</div><div class="ct-lock">🔒</div>
+    </button>
+  </div>
+
+  <!-- CLIENT BRIEF (messy, must interpret) -->
+  <div class="marja reveal" id="caseBriefBox">
+    <div class="marja-avatar" id="caseAvatar">MS</div>
+    <div class="marja-body">
+      <div class="marja-name" id="caseFrom">Marja Salo <span class="marja-role">· toimeksianto</span></div>
+      <div class="marja-text" id="caseBrief"></div>
+    </div>
+  </div>
+
+  <!-- what you must figure out -->
+  <div class="chal-brief reveal" id="caseTask" style="position:relative;">
+    <div class="chal-brief-tag" id="caseTag">Tapaus 1 / 5</div>
+    <h3 id="caseTitle"></h3>
+    <p id="caseGoal"></p>
+    <div class="warn-note" id="caseWarn"></div>
+
+    <button class="claude-btn" onclick="toggleClaudeChat()"><span class="cb-ic">💬</span> Kysy DuuniJobs AI:lta</button>
+
+    <!-- Claude chat popup, anchored to this brief -->
+    <div class="claude-chat" id="claudeChat">
+      <div class="cc-head">
+        <div class="cc-avatar">✦</div>
+        <div class="cc-title"><div class="n">DuuniJobs AI</div><div class="s">auttaa ajattelemaan — ei anna vastausta</div></div>
+        <button class="cc-close" onclick="toggleClaudeChat()">×</button>
+      </div>
+      <div class="cc-body" id="ccBody"></div>
+      <div class="cc-hint-chips" id="ccChips"></div>
+      <div class="cc-input-row">
+        <input class="cc-input" id="ccInput" placeholder="Kysy tästä tapauksesta..." onkeydown="if(event.key==='Enter')sendClaude()">
+        <button class="cc-send" id="ccSend" onclick="sendClaude()">↑</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE TRACK -->
+  <div class="stage-track reveal" id="stageTrack">
+    <div class="stage-pill active" id="stage1"><span class="sp-num">1</span> Rakenna ratkaisu</div>
+    <span class="stage-arrow">→</span>
+    <div class="stage-pill" id="stage2"><span class="sp-num">2</span> Sopeuta yllätykseen</div>
+  </div>
+
+  <!-- BUILDER (own canvas: caseCanvas) -->
+  <div class="builder-shell reveal" id="caseShell">
+    <div class="builder-topbar">
+      <div class="bt-left">
+        <span class="bt-dot" id="caseDot"></span>
+        <span class="bt-name">Asiakkaan ratkaisu<span class="muted" id="caseName"></span></span>
+      </div>
+      <div class="bt-right">
+        <button class="bt-run" onclick="resetCase()" style="background:#fff; color:var(--ink3); border:1px solid var(--panel-line);">↺ Tyhjennä</button>
+        <button class="bt-run" id="caseRun" onclick="runCase()">▶ Suorita</button>
+      </div>
+    </div>
+    <div class="builder-main">
+      <div class="palette" id="casePalette"><div class="palette-h">Palikat — valitse tarvittavat</div></div>
+      <div class="canvas-wrap" id="caseCanvas">
+        <div class="canvas-drop-hi" id="caseDropHi"></div>
+        <div class="canvas-hint" id="caseHint"><div class="ch-box">Tunnista ongelma — rakenna ratkaisu tähän</div><span style="font-size:.72rem;">Mitä asiakas oikeasti tarvitsee?</span></div>
+        <svg id="caseEdges"></svg>
+      </div>
+      <div class="params" id="caseParams"><div class="params-in" id="caseParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa. Tekoäly-palikkaan kirjoitat mitä sen pitää tehdä.</div></div></div>
+    </div>
+    <div class="exec" id="caseExec"><div class="exec-head"><div class="eh-l"><span class="live"></span> Suoritusloki</div><span style="color:#6b7684; font-size:.66rem;" id="caseExecMeta"></span></div><div class="exec-body" id="caseLog"></div></div>
+  </div>
+
+  <div class="broken-banner" id="caseBroken"><h4>⚠️ Tarkista ratkaisusi</h4><p id="caseBrokenText"></p></div>
+
+  <!-- AI result + Marja review -->
+  <div class="result-card" id="caseResultCard"><h4>✅ Koneesi tuotti tämän</h4><div class="result-out" id="caseResultOut"></div></div>
+  <div class="review" id="caseReview" style="margin-top:1rem;">
+    <div class="review-head" id="caseReviewHead">🤖 Marjan arvio</div>
+    <div class="review-body" id="caseReviewBody"></div>
+    <div class="review-again"><button class="ra-btn" onclick="document.getElementById('caseReview').classList.remove('show')">Sulje</button></div>
+  </div>
+
+  <!-- WRINKLE (consequence stage) -->
+  <div class="wrinkle" id="caseWrinkle">
+    <div class="wrinkle-tag" id="wrinkleTag">⚡ Tosielämä yllättää</div>
+    <h4 id="wrinkleTitle"></h4>
+    <p id="wrinkleText"></p>
+    <div class="w-task" id="wrinkleTask"></div>
+    <button class="claude-btn" onclick="startAdapt()" style="margin-top:1rem;"><span class="cb-ic">🔧</span> Sopeuta koneesi</button>
+  </div>
+
+  <!-- CASE COMPLETE -->
+  <div class="research-done" id="caseComplete" style="display:none; margin-top:1.3rem;">
+    <h4 id="caseCompleteH">✅ Tapaus hoidettu</h4>
+    <p id="caseCompleteP"></p>
+    <button class="claude-btn" id="caseNextBtn" onclick="nextCase()" style="margin-top:.9rem; background:var(--green-light); border-color:rgba(45,106,79,.3); color:var(--green);">Seuraava tilanne →</button>
+  </div>
+</section>
+
+<!-- Slack-style colleague message popup (shared) -->
+<div class="slack-pop" id="slackPop">
+  <div class="slack-head"><span class="slack-logo">kaiku-tiimi</span><button class="slack-close" onclick="closeSlack()">×</button></div>
+  <div class="slack-body">
+    <div class="slack-msg">
+      <div class="slack-avatar" id="slackAvatar">MS</div>
+      <div class="slack-content">
+        <div class="slack-name"><span id="slackName">Marja Salo</span><span class="slack-time" id="slackTime">nyt</span></div>
+        <div class="slack-role" id="slackRole">esihenkilö</div>
+        <div class="slack-text" id="slackText"></div>
+        <div class="slack-actions"><button class="slack-btn" id="slackBtn" onclick="slackAction()">Selvä</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<section class="section" id="suunnittele" data-index="5" style="max-width:1000px;">
+  <div class="kicker reveal">Osa 5 · Suunnittele omasi</div>
+  <h2 class="h reveal">Muuta ideasi <em>koneeksi</em></h2>
+  <p class="lead reveal">Otit äsken tehtävän omasta työstäsi. Jos päätit että se kannattaa automatisoida — suunnittele nyt sen ketju. Ei valmista mallia: sinä mietit, mikä on laukaisin, mitä tekoäly tekee, ja mikä on tulos. Marja tarkistaa suunnitelmasi ja etsii aukot.</p>
+
+  <div class="marja tight reveal">
+    <div class="marja-avatar">MS</div>
+    <div class="marja-body">
+      <div class="marja-name">Marja Salo</div>
+      <div class="marja-text">Muista mitä opit koneiden rakentamisesta: jokainen ketju tarvitsee jonkin joka <strong>käynnistää</strong> sen, jotain joka <strong>tekee työn</strong>, ja jonkin joka <strong>vie tuloksen</strong> perille. Piirrä oman tehtäväsi ketju. Kirjoita jokaiseen palikkaan mitä se tekee juuri sinun tapauksessasi.</div>
+    </div>
+  </div>
+
+  <div class="callout reveal">
+    <span class="callout-mark">✏️</span>
+    <span class="callout-body">Tämä on <strong>suunnitelma, ei ajettava kone</strong> — sinun oikea datasi ei ole täällä. Raahaa palikat, kirjoita jokaiseen mitä se tekee sinun tehtävässäsi, ja kytke ne ketjuksi. Sitten paina <strong>Tarkista suunnitelma</strong>.</span>
+  </div>
+
+  <button class="vinkki-toggle" onclick="toggleVinkki('s')" style="margin:.3rem 0 .9rem;">💡 Vinkki suunnitteluun</button>
+  <div class="vinkki-body" id="vinkkis" style="margin-bottom:1rem;">Aloita kolmesta palikasta: <strong>Laukaisin</strong> (mikä käynnistää — esim. "joka perjantai" tai "kun saan uuden viestin"), <strong>Tekoäly</strong> (mitä se kirjoittaa tai käsittelee), ja <strong>Tulos</strong> (minne valmis työ menee). Kirjoita jokaiseen palikkaan yksi konkreettinen lause omasta tehtävästäsi.<span class="vq">Jos tehtäväsi vaatii valikointia (vain osa tapauksista), lisää Ehto-palikka Tekoälyn eteen.</span></div>
+
+  <!-- reused canvas, sketch mode -->
+  <div class="builder-shell reveal" id="buildShell">
+    <div class="builder-topbar">
+      <div class="bt-left">
+        <span class="bt-dot" id="btDot"></span>
+        <span class="bt-name">Oman tehtäväni automaatio<span class="muted" id="ownTaskEcho"></span></span>
+      </div>
+      <div class="bt-right">
+        <button class="bt-run" id="clearBtn" onclick="resetBuild()" style="background:#fff; color:var(--ink3); border:1px solid var(--panel-line);">↺ Tyhjennä</button>
+        <button class="bt-run" id="checkBtn" onclick="checkDesign()">✓ Tarkista suunnitelma</button>
+      </div>
+    </div>
+    <div class="builder-main">
+      <div class="palette" id="palette">
+        <div class="palette-h">Palikat</div>
+        <div class="pal-node n-trigger" draggable="true" data-type="trigger"><div class="pal-ic">🕐</div><div><div class="pal-name">Laukaisin</div><div class="pal-hint">käynnistää</div></div></div>
+        <div class="pal-node n-action" draggable="true" data-type="action"><div class="pal-ic">📥</div><div><div class="pal-name">Toiminto</div><div class="pal-hint">hakee tietoa</div></div></div>
+        <div class="pal-node n-ai" draggable="true" data-type="ai"><div class="pal-ic">🤖</div><div><div class="pal-name">Tekoäly</div><div class="pal-hint">tekee työn</div></div></div>
+        <div class="pal-node n-filter" draggable="true" data-type="filter"><div class="pal-ic">🔀</div><div><div class="pal-name">Ehto</div><div class="pal-hint">valikoi</div></div></div>
+        <div class="pal-node n-output" draggable="true" data-type="output"><div class="pal-ic">📤</div><div><div class="pal-name">Tulos</div><div class="pal-hint">vie tuloksen</div></div></div>
+      </div>
+      <div class="canvas-wrap" id="canvas">
+        <div class="canvas-drop-hi" id="dropHi"></div>
+        <div class="canvas-hint" id="canvasHint">
+          <div class="ch-box">Raahaa palikat ja rakenna oman tehtäväsi ketju</div>
+          <span style="font-size:.72rem;">Mieti: mikä käynnistää sen?</span>
+        </div>
+        <svg id="edges"></svg>
+      </div>
+      <div class="params" id="params">
+        <div class="params-in" id="paramsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa ja kirjoita mitä se tekee sinun tehtävässäsi</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="review" id="designReview" style="margin-top:1.3rem;">
+    <div class="review-head" id="designReviewHead">🤖 Marjan arvio suunnitelmastasi</div>
+    <div class="review-body" id="designReviewBody"></div>
+    <div class="review-again"><button class="ra-btn" onclick="document.getElementById('designReview').classList.remove('show')">Sulje</button></div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- SCREEN 5: COMMISSION COMPLETE -->
+<section class="section" id="valmis" data-index="6">
+  <div class="kicker reveal">Osa 6 · Toimeksianto valmis</div>
+  <h2 class="h reveal">Marja lukee <em>työsi</em></h2>
+
+  <div class="marja reveal">
+    <div class="marja-avatar">MS</div>
+    <div class="marja-body">
+      <div class="marja-name">Marja Salo <span class="marja-role">· esihenkilö, Kaiku Audio Oy</span></div>
+      <div class="marja-text">Hyvää työtä. Huomasitko, mitä juuri opit? Et opetellut nappien painamista — opit <strong>arvioimaan</strong>. Näit että reklamaatio vaatii ihmistä, että "asiantuntijalta näyttävä" raportti olikin rutiinia, ja löysit oman työsi automaation.<br><br>Tämä arvostelukyky on arvokkaampaa kuin mikään yksittäinen työkalu. Se pysyy, vaikka työkalut vaihtuvat. Nyt olet valmis oikeaan työkaluun — ja seuraavaksi katsotaan, mitä tapahtuu kun automaatio menee rikki. Sekin on osa työtä.</div>
+    </div>
+  </div>
+
+  <div class="done-wrap reveal">
+    <h3>✅ Mitä opit tässä toimeksiannossa</h3>
+    <div class="done-tiles">
+      <div class="done-tile"><div class="done-check">✓</div><p>Kolme merkkiä: toistuuko, onko säännöt, onko rutiinia</p></div>
+      <div class="done-tile"><div class="done-check">✓</div><p>Tärkein raja: kaikkea ei pidä automatisoida — osa vaatii ihmistä</p></div>
+      <div class="done-tile"><div class="done-check">✓</div><p>Sinä teit analyysin ja puolustit sitä — et vain lukenut vastauksia</p></div>
+      <div class="done-tile"><div class="done-check">✓</div><p>Löysit ja suunnittelit automaation omasta työstäsi</p></div>
+    </div>
+  </div>
+
+  <div class="next-wrap reveal">
+    <a href="/module/moduuli-eu-ai-act-moduuli5" class="btn-next" id="nextToStar2">Seuraava: Tekoälylaki <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></a>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/ai-helper.js"></script>
+<script>
+/* Claude for all Marja / DuuniJobs AI feedback in Automaatio C */
+async function moduleClaudeChat(role, userMsg, maxTokens) {
+  const tok = maxTokens || 500;
+  try {
+    const res = await fetch('/api/ai/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ system: role, messages: [{ role: 'user', content: userMsg }], max_tokens: tok })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && (data.text || data.reply)) return data.text || data.reply;
+    throw new Error(data.error || ('Claude ' + res.status));
+  } catch (e) {
+    if (typeof window.aiClaude === 'function') {
+      try { return await window.aiClaude(role, userMsg, tok); } catch (_) {}
+    }
+    if (location.search.includes('preview=1')) {
+      return 'Hyvä pohdinta. Jatka analysointia — Claude ei ole käytettävissä paikallisessa esikatselussa.';
+    }
+    throw e;
+  }
+}
+window.aiChat = moduleClaudeChat;
+
+const M1C_MODULE_ID = 'moduuli1c-ai-automaatio';
+let caseSnaps = {};
+function m1cScheduleSave(){
+  if (window._m1cWork && typeof window._m1cWork.scheduleSave === 'function') window._m1cWork.scheduleSave();
+  const pill = document.getElementById('m1cSavePill');
+  if (pill) { pill.textContent = 'tallennetaan…'; pill.classList.remove('ok'); }
+}
+function m1cSavedOk(){
+  const pill = document.getElementById('m1cSavePill');
+  if (pill) { pill.textContent = 'tallennettu ✓'; pill.classList.add('ok'); }
+}
+
+/* ============================================================
+   M1c ENGINE — judge tasks (Socratic) + sketch flow
+============================================================ */
+/* ---- nav / progress / reveal ---- */
+const sections = document.querySelectorAll('[data-index]');
+const navSteps = document.getElementById('navSteps');
+const progressBar = document.getElementById('progress-bar');
+sections.forEach((s,i)=>{ const p=document.createElement('div'); p.className='pip'+(i===0?' active':''); p.onclick=()=>s.scrollIntoView({behavior:'smooth'}); navSteps.appendChild(p); });
+function updateProgress(){
+  const st=window.scrollY, dh=document.documentElement.scrollHeight-window.innerHeight;
+  progressBar.style.width=(dh>0?(st/dh)*100:0)+'%';
+  let ai=0; sections.forEach((s,i)=>{ if(s.getBoundingClientRect().top<=window.innerHeight*0.5) ai=i; });
+  navSteps.querySelectorAll('.pip').forEach((p,i)=>{ p.classList.remove('active','done'); if(i===ai)p.classList.add('active'); else if(i<ai)p.classList.add('done'); });
+}
+window.addEventListener('scroll',updateProgress,{passive:true});
+const revObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revObs.unobserve(e.target);}});},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ============================================================
+   TASK JUDGING (Osa 3) — the analytical core
+============================================================ */
+// truth about each seeded task, used to steer the AI reviewer (NOT shown to user)
+const TASK_TRUTH = {
+  0: { // reklamaatio — TRAP: repetitive+routine-ish but needs human judgment
+    title:'Vastaa asiakkaan reklamaatioon rikkinäisistä kuulokkeista',
+    ideal:'partly',
+    key:'Tämä toistuu, mutta jokainen reklamaatio on erilainen ja hyvitys/vaihto-päätös vaatii ihmisen harkintaa ja empatiaa. Oikea vastaus on OSITTAIN: tekoäly voi luonnostella vastauksen ja luokitella kiireellisyyden, mutta lopullisen päätöksen tekee ihminen. Jos oppija valitsi "automatisoi kokonaan", se on klassinen virhe — päätösvalta ei kuulu koneelle.'
+  },
+  1: { // myyntiraportti — TRAP: looks like expert work, is actually pure routine
+    title:'Kokoa viikoittainen myyntiraportti eri kanavien luvuista',
+    ideal:'automate',
+    key:'Tämä NÄYTTÄÄ asiantuntijatyöltä koska siinä on numeroita ja raportti, mutta se on itse asiassa täysin toistuvaa ja sääntöpohjaista: kerää luvut samoista lähteistä, laske yhteen, kirjoita yhteenveto. Tämä sopii erinomaisesti automatisoitavaksi (AUTOMATISOI). Jos oppija epäröi koska se "tuntuu tärkeältä", hän lankesi ansaan: tylsä ei ole sama kuin vaikea, ja hieno nimi ei tarkoita että työ vaatii ihmistä.'
+  }
+};
+
+const taskState = {}; // {taskIdx: {signals:{repeat,rules,routine}, verdict, done}}
+function ensureTask(i){ if(!taskState[i]) taskState[i]={signals:{repeat:false,rules:false,routine:false}, verdict:null, done:false}; return taskState[i]; }
+
+// signal toggles
+document.querySelectorAll('.signal').forEach(sig=>{
+  sig.addEventListener('click', ()=>{
+    const wrap=sig.closest('.signals'); const ti=+wrap.dataset.task; const key=sig.dataset.sig;
+    const st=ensureTask(ti); st.signals[key]=!st.signals[key];
+    sig.classList.toggle('on', st.signals[key]);
+    sig.querySelector('.sig-state').textContent = st.signals[key]?'✓ kyllä':'ei valittu';
+  });
+});
+// verdict select
+document.querySelectorAll('.verdicts').forEach(vw=>{
+  const ti=+vw.dataset.task;
+  vw.querySelectorAll('.verdict').forEach(v=>{
+    v.addEventListener('click', ()=>{
+      const st=ensureTask(ti); st.verdict=v.dataset.v;
+      vw.querySelectorAll('.verdict').forEach(x=>x.classList.remove('sel'));
+      v.classList.add('sel');
+    });
+  });
+});
+
+async function judgeTask(i){
+  const st=ensureTask(i);
+  const reason=document.getElementById('reason'+i).value.trim();
+  if(!st.verdict){ toast('Tee ensin päätöksesi (Automatisoi / Osittain / Älä)'); return; }
+  if(reason.length<10){ toast('Kirjoita lyhyt perustelu'); return; }
+  // for own task, need description
+  let ownDesc='';
+  if(i===2){ ownDesc=document.getElementById('ownTask').value.trim(); if(ownDesc.length<8){ toast('Kuvaile ensin oma tehtäväsi ylhäällä'); return; } }
+
+  const btn=document.getElementById('judge'+i); btn.disabled=true;
+  const review=document.getElementById('review'+i); const body=document.getElementById('reviewBody'+i); const head=document.getElementById('reviewHead'+i);
+  review.classList.add('show'); body.innerHTML='<span class="dots"><span></span><span></span><span></span></span>';
+  head.className='review-head'; head.textContent='🤖 Marja miettii...';
+
+  const sigList = Object.entries(st.signals).filter(([k,v])=>v).map(([k])=>({repeat:'toistuu',rules:'selkeät säännöt',routine:'rutiinia'}[k])).join(', ') || 'ei valittu yhtään';
+  const vName = {automate:'Automatisoi kokonaan', partly:'Osittain (tekoäly auttaa, ihminen päättää)', dont:'Älä automatisoi'}[st.verdict];
+
+  let role, userMsg;
+  if(i<2){
+    const truth=TASK_TRUTH[i];
+    role='Olet Marja Salo, Kaiku Audio Oy:n esihenkilö ja vaativa mutta reilu mentori suomalaisella AI-kurssilla aikuiselle työnhakijalle. Puhut selkeää suomea (selkokieli). Olet SOKRAATTINEN arvioija: et anna suoraa "oikein/väärin", vaan haastat oppijan päättelyä kysymyksillä ja huomioilla, ja ohjaat häntä näkemään itse. Ole lämmin mutta älä imartele. Pidä vastaus lyhyenä: 3-5 lausetta. ÄLÄ anna pisteitä tai numeroita.';
+    userMsg='TEHTÄVÄ: '+truth.title+'\n\n(SINULLE TIEDOKSI, älä paljasta suoraan: '+truth.key+' Ihanteellinen vastaus olisi "'+truth.ideal+'".)\n\nOppijan arvio:\n- Merkit jotka hän rastitti: '+sigList+'\n- Hänen päätöksensä: '+vName+'\n- Hänen perustelunsa: "'+reason+'"\n\nHaasta hänen päättelyään sokraattisesti. Jos hän osui oikeaan, vahvista se ja syvennä yhdellä tarkentavalla huomiolla. Jos hän lankesi ansaan (esim. valitsi automatisoi kokonaan reklamaatioon, tai epäröi raportin kohdalla koska se "tuntuu tärkeältä"), älä sano suoraan "väärin" — kysy häneltä kysymys joka saa hänet huomaamaan sen itse.';
+  } else {
+    role='Olet Marja Salo, Kaiku Audio Oy:n esihenkilö ja vaativa mutta reilu mentori. Selkeä suomi (selkokieli). Arvioit sokraattisesti oppijan oman työtehtävän automatisointiarvion. Autat häntä näkemään onko hänen päättelynsä johdonmukainen kolmen merkin kanssa. Lyhyt vastaus: 3-5 lausetta. Ei pisteitä.';
+    userMsg='Oppijan OMA tehtävä hänen työstään: "'+ownDesc+'"\n\nHänen arvionsa:\n- Merkit: '+sigList+'\n- Päätös: '+vName+'\n- Perustelu: "'+reason+'"\n\nArvioi onko hänen päättelynsä johdonmukainen. Jos hän merkitsi tehtävän toistuvaksi ja rutiiniksi mutta valitsi "älä automatisoi", kysy miksi. Jos tehtävä selvästi vaatii ihmisen harkintaa mutta hän valitsi "automatisoi kokonaan", haasta se. Kannusta, mutta ole rehellinen.';
+  }
+  try{
+    const out=await window.aiChat(role, userMsg, 400);
+    body.textContent = out || 'Hyvää pohdintaa. Mieti vielä, mikä osa tehtävästä oikeasti vaatii ihmistä.';
+    // color the header based on rough alignment (only for seeded)
+    if(i<2){ const aligned = st.verdict===TASK_TRUTH[i].ideal; head.className='review-head '+(aligned?'agree':'challenge'); head.textContent = aligned?'🤖 Marja — hyvä huomio':'🤖 Marja haastaa sinua'; }
+    else { head.className='review-head agree'; head.textContent='🤖 Marjan arvio'; }
+    st.done=true; markTaskDone(i);
+    st.reviewText=body.textContent; st.reviewHead=head.textContent; st.reviewClass=head.className;
+    try{ localStorage.setItem('m1c_task'+i, JSON.stringify({v:st.verdict,r:reason,d:ownDesc,signals:st.signals,reviewText:st.reviewText})); }catch(e){}
+    if(i===2 && ownDesc){ document.getElementById('ownTaskEcho').textContent=' — '+ownDesc.slice(0,40)+(ownDesc.length>40?'…':''); }
+    m1cScheduleSave();
+  }catch(e){
+    body.textContent='Yhteysvirhe — mutta pohdintasi tallennettiin. Marja olisi kysynyt: mikä osa tästä tehtävästä oikeasti vaatii ihmisen harkintaa, ja mikä on pelkkää toistoa?';
+    head.className='review-head'; head.textContent='🤖 Marjan arvio';
+    st.done=true; markTaskDone(i);
+    st.reviewText=body.textContent; st.reviewHead=head.textContent; st.reviewClass=head.className;
+    m1cScheduleSave();
+  }
+  btn.disabled=false; btn.textContent='Lähetä uudelleen';
+}
+function reviseTask(i){ document.getElementById('review'+i).classList.remove('show'); document.getElementById('reason'+i).focus(); }
+function toggleVinkki(i){ const v=document.getElementById('vinkki'+i); v.classList.toggle('show'); }
+function markTaskDone(i){
+  document.getElementById('tp-'+i).classList.add('done');
+  const n=Object.values(taskState).filter(s=>s.done).length;
+  document.getElementById('tpLabel').textContent=n+' / 3 arvioitu';
+  if(n>=3) toast('✓ Kaikki kolme arvioitu — vieritä alas suunnittelemaan omasi');
+}
+
+/* ============================================================
+   SKETCH CANVAS (Osa 4) — reused builder, no live run
+============================================================ */
+const NODE_LIB = {
+  trigger:{ic:'🕐',type:'Laukaisin',hint:'käynnistää',preview:'Käynnistää ketjun. Esim. ajastin tai saapuva viesti.'},
+  action:{ic:'📥',type:'Toiminto',hint:'hakee tietoa',preview:'Hakee tietoa lähteestä: postilaatikko, feed, tiedosto.'},
+  ai:{ic:'🤖',type:'Tekoäly',hint:'tekee työn',preview:'Lukee tiedon ja työstää sitä ohjeesi mukaan. Ketjun aivot.'},
+  filter:{ic:'🔀',type:'Ehto',hint:'valikoi',preview:'Haarauttaa: vain ehdon täyttävät etenevät.'},
+  output:{ic:'📤',type:'Tulos',hint:'vie tuloksen',preview:'Vie lopputuloksen perille: tallennus tai ilmoitus.'},
+  email:{ic:'✉️',type:'Sähköposti',hint:'lähettää postia',preview:'Lähettää valmiin viestin sähköpostiosoitteeseen.'},
+  approval:{ic:'👤',type:'Ihmisen tarkistus',hint:'ihminen hyväksyy',preview:'Pysäyttää ketjun ja odottaa että ihminen tarkistaa ja hyväksyy ennen jatkamista. Tärkeä kun päätöksellä on seurauksia.'},
+  /* distractors — real-looking nodes that do NOT belong in these flows */
+  database:{ic:'🗄️',type:'Tietokanta',hint:'tallentaa rivejä',preview:'Tallentaa dataa tietokantaan. Hyödyllinen, mutta harkitse tarvitseeko tämä sitä.',distractor:true},
+  webhook:{ic:'🔗',type:'Webhook',hint:'ottaa signaalin',preview:'Ottaa vastaan signaalin toisesta järjestelmästä. Harvoin tarpeen näissä.',distractor:true},
+  translate:{ic:'🌐',type:'Käännös',hint:'kääntää kielen',preview:'Kääntää tekstin toiselle kielelle. Houkutteleva, mutta tarvitaanko sitä?',distractor:true},
+  calendar:{ic:'📅',type:'Kalenteri',hint:'luo tapahtuman',preview:'Lisää tapahtuman kalenteriin. Harkitse kuuluuko tähän.',distractor:true},
+  sheet:{ic:'📊',type:'Taulukko',hint:'kirjoittaa soluun',preview:'Kirjoittaa dataa taulukkoon. Ei aina tarpeen.',distractor:true},
+  sms:{ic:'💬',type:'Tekstiviesti',hint:'lähettää SMS:n',preview:'Lähettää tekstiviestin. Eri kanava — tarvitaanko sitä?',distractor:true},
+  loop:{ic:'🔁',type:'Toisto',hint:'toistaa vaiheen',preview:'Toistaa saman vaiheen monta kertaa. Kehittynyt työkalu.',distractor:true},
+  delay:{ic:'⏳',type:'Viive',hint:'odottaa hetken',preview:'Pysäyttää ketjun määräajaksi. Harvoin tarpeen näissä.',distractor:true},
+  translate2:{ic:'🗂️',type:'Arkistointi',hint:'arkistoi',preview:'Siirtää vanhat tiedot arkistoon. Ei kuulu näihin ketjuihin.',distractor:true}
+};
+function nodeColorClass(t){ if(t==='trigger')return'trigger'; if(t==='ai')return'ai'; if(t==='filter')return'filter'; if(t==='approval')return'approval'; if(t==='output'||t==='email'||t==='sms')return'output'; return'action'; }
+function nodeHTML(n){
+  const m=NODE_LIB[n.type];
+  return `<div class="node n-${nodeColorClass(n.type)}" id="${n.id}" style="left:${n.x}px; top:${n.y}px;" data-type="${n.type}">
+    <div class="nd-stripe"></div><div class="nd-status"></div><div class="del" title="Poista">×</div>
+    <div class="nd-head"><div class="nd-ic">${m.ic}</div><div class="nd-tt"><div class="nd-name">${n.name||m.type}</div><div class="nd-type">${m.type}</div></div></div>
+    <div class="nd-foot" id="foot-${n.id}">${n.config&&n.config.note?n.config.note:(m.preview)}</div>
+    <div class="port in"></div><div class="port out"></div></div>`;
+}
+function drawEdges(svgId, edges, posFn){
+  const svg=document.getElementById(svgId); if(!svg) return; svg.innerHTML='';
+  edges.forEach(([a,b])=>{
+    const pa=posFn(a,'out'), pb=posFn(b,'in'); if(!pa||!pb) return;
+    const dx=Math.max(40,(pb.x-pa.x)*0.5);
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',`M ${pa.x} ${pa.y} C ${pa.x+dx} ${pa.y}, ${pb.x-dx} ${pb.y}, ${pb.x} ${pb.y}`);
+    p.setAttribute('class','edge-path'); p.dataset.a=a; p.dataset.b=b; svg.appendChild(p);
+  });
+}
+function portPos(canvasEl,nodeId,side){
+  const node=document.getElementById(nodeId); if(!node) return null;
+  const cr=canvasEl.getBoundingClientRect(), nr=node.getBoundingClientRect();
+  return { x:(side==='out'?nr.right:nr.left)-cr.left, y:nr.top+nr.height/2-cr.top };
+}
+let buildNodes=[], buildEdges=[], selectedId=null, nodeCounter=0;
+const canvas=document.getElementById('canvas');
+const edgesSvg=document.getElementById('edges');
+let dragType=null;
+document.querySelectorAll('#palette .pal-node').forEach(pn=>{
+  pn.addEventListener('dragstart', e=>{ dragType=pn.dataset.type; pn.classList.add('dragging'); e.dataTransfer.effectAllowed='copy'; });
+  pn.addEventListener('dragend', ()=>{ pn.classList.remove('dragging'); document.getElementById('dropHi').classList.remove('on'); });
+  pn.addEventListener('click', ()=>{ const n=buildNodes.length; addNode(pn.dataset.type, 30+(n%3)*200, 30+Math.floor(n/3)*130); });
+});
+canvas.addEventListener('dragover', e=>{ e.preventDefault(); document.getElementById('dropHi').classList.add('on'); });
+canvas.addEventListener('dragleave', e=>{ if(e.target===canvas) document.getElementById('dropHi').classList.remove('on'); });
+canvas.addEventListener('drop', e=>{ e.preventDefault(); document.getElementById('dropHi').classList.remove('on'); if(!dragType)return; const cr=canvas.getBoundingClientRect(); addNode(dragType, e.clientX-cr.left-88, e.clientY-cr.top-38); dragType=null; });
+function addNode(type,x,y){
+  x=Math.max(6,Math.min(x,canvas.clientWidth-184)); y=Math.max(6,Math.min(y,canvas.clientHeight-100));
+  const id='n'+(++nodeCounter); const m=NODE_LIB[type];
+  buildNodes.push({id,type,name:m.type,config:{note:''},x,y});
+  canvas.insertAdjacentHTML('beforeend', nodeHTML(buildNodes[buildNodes.length-1]));
+  document.getElementById('canvasHint').classList.add('hidden');
+  wireNode(id); renderEdges(); selectNode(id);
+}
+function wireNode(id){
+  const el=document.getElementById(id);
+  el.addEventListener('mousedown', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; startNodeDrag(ev,id); });
+  el.addEventListener('click', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; if(touchWireSrc&&touchWireSrc!==id){connect(touchWireSrc,id);touchWireSrc=null;document.getElementById(id)?.classList.remove('wiring-src');return;} selectNode(id); });
+  el.querySelector('.del').addEventListener('click', ev=>{ ev.stopPropagation(); deleteNode(id); });
+  el.querySelector('.port.out').addEventListener('mousedown', ev=>{ ev.stopPropagation(); startWire(ev,id); });
+  el.querySelector('.port.out').addEventListener('click', ev=>{ ev.stopPropagation(); touchWireStart(id); });
+}
+let dragNode=null, dragOff={x:0,y:0};
+function startNodeDrag(ev,id){ dragNode=id; const node=buildNodes.find(n=>n.id===id); const cr=canvas.getBoundingClientRect(); dragOff={x:ev.clientX-cr.left-node.x,y:ev.clientY-cr.top-node.y}; document.addEventListener('mousemove',onNodeDrag); document.addEventListener('mouseup',stopNodeDrag); }
+function onNodeDrag(ev){ if(!dragNode)return; const node=buildNodes.find(n=>n.id===dragNode); const cr=canvas.getBoundingClientRect(); node.x=Math.max(6,Math.min(ev.clientX-cr.left-dragOff.x,canvas.clientWidth-184)); node.y=Math.max(6,Math.min(ev.clientY-cr.top-dragOff.y,canvas.clientHeight-100)); const el=document.getElementById(dragNode); el.style.left=node.x+'px'; el.style.top=node.y+'px'; renderEdges(); }
+function stopNodeDrag(){ dragNode=null; document.removeEventListener('mousemove',onNodeDrag); document.removeEventListener('mouseup',stopNodeDrag); }
+let wireSrc=null, tempPath=null;
+function startWire(ev,id){ wireSrc=id; document.getElementById(id).classList.add('wiring-src'); document.querySelectorAll('#canvas .node .port.in').forEach(p=>{ if(p.closest('.node').id!==id) p.classList.add('can-target'); }); tempPath=document.createElementNS('http://www.w3.org/2000/svg','path'); tempPath.setAttribute('class','edge-path'); edgesSvg.appendChild(tempPath); document.addEventListener('mousemove',onWire); document.addEventListener('mouseup',stopWire); }
+function onWire(ev){ if(!wireSrc)return; const cr=canvas.getBoundingClientRect(); const pa=portPos(canvas,wireSrc,'out'); const mx=ev.clientX-cr.left,my=ev.clientY-cr.top; const dx=Math.max(40,(mx-pa.x)*0.5); tempPath.setAttribute('d',`M ${pa.x} ${pa.y} C ${pa.x+dx} ${pa.y}, ${mx-dx} ${my}, ${mx} ${my}`); }
+function stopWire(ev){ document.removeEventListener('mousemove',onWire); document.removeEventListener('mouseup',stopWire); document.querySelectorAll('.port.can-target').forEach(p=>p.classList.remove('can-target')); if(wireSrc) document.getElementById(wireSrc)?.classList.remove('wiring-src'); if(tempPath){ tempPath.remove(); tempPath=null; } const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('.node'); if(target && wireSrc && target.id!==wireSrc && target.closest('#canvas')){ connect(wireSrc,target.id); } wireSrc=null; }
+let touchWireSrc=null;
+function touchWireStart(id){ if(touchWireSrc===id){ touchWireSrc=null; document.getElementById(id).classList.remove('wiring-src'); return; } touchWireSrc=id; document.getElementById(id).classList.add('wiring-src'); toast('Napauta palikkaa, johon kytketään'); }
+function connect(a,b){ if(a===b)return; if(buildEdges.some(([x,y])=>x===a&&y===b))return; buildEdges.push([a,b]); renderEdges(); toast('Kytketty'); }
+function deleteNode(id){ buildNodes=buildNodes.filter(n=>n.id!==id); buildEdges=buildEdges.filter(([a,b])=>a!==id&&b!==id); document.getElementById(id)?.remove(); if(selectedId===id){selectedId=null;renderParams();} renderEdges(); if(buildNodes.length===0) document.getElementById('canvasHint').classList.remove('hidden'); }
+function renderEdges(){ drawEdges('edges', buildEdges, (id,side)=>portPos(canvas,id,side)); }
+function selectNode(id){ selectedId=id; document.querySelectorAll('#canvas .node').forEach(n=>n.classList.toggle('selected',n.id===id)); renderParams(); document.getElementById('params').classList.add('open'); }
+function renderParams(){
+  const wrap=document.getElementById('paramsIn');
+  if(!selectedId){ wrap.innerHTML='<div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa ja kirjoita mitä se tekee sinun tehtävässäsi</div>'; return; }
+  const node=buildNodes.find(n=>n.id===selectedId); const m=NODE_LIB[node.type];
+  wrap.innerHTML=`<div class="params-head">
+      <div class="ph-ic" style="background:var(--${node.type==='ai'?'blue':node.type==='trigger'?'amber':node.type==='action'?'orange':node.type==='filter'?'purple':'green'}-light);">${m.ic}</div>
+      <div class="ph-tt"><div class="n">${m.type}</div><div class="t">${m.type}</div></div>
+      <button class="params-close" onclick="closeParams()">×</button></div>
+    <div class="p-head-tt">${m.preview} Kirjoita omin sanoin, mitä TÄMÄ palikka tekee sinun tehtävässäsi.</div>
+    <div class="p-field"><label class="p-label">Mitä tämä palikka tekee? <span class="req">*</span></label>
+      <textarea class="p-area big" id="noteInput" placeholder="Esim. laukaisin: 'joka perjantai klo 15' — tai tekoäly: 'kirjoittaa aikatauluviestin urakoitsijalle'">${node.config.note||''}</textarea>
+      <div class="p-hint">Tämä on sinun suunnitelmasi. Mitä tarkemmin kuvaat, sitä paremman arvion Marja voi antaa.</div></div>`;
+  const ta=document.getElementById('noteInput');
+  if(ta) ta.addEventListener('input', e=>{ node.config.note=e.target.value; const f=document.getElementById('foot-'+node.id); if(f) f.textContent=e.target.value||m.preview; });
+}
+function closeParams(){ document.getElementById('params').classList.remove('open'); document.querySelectorAll('#canvas .node').forEach(n=>n.classList.remove('selected')); selectedId=null; }
+function resetBuild(){ buildNodes=[]; buildEdges=[]; selectedId=null; nodeCounter=0; canvas.querySelectorAll('.node').forEach(n=>n.remove()); renderEdges(); renderParams(); closeParams(); document.getElementById('canvasHint').classList.remove('hidden'); document.getElementById('designReview').classList.remove('show'); }
+
+/* ---- AI stress-tests the design (Socratic) ---- */
+async function checkDesign(){
+  if(buildNodes.length<2){ toast('Rakenna ensin ketju — vähintään pari palikkaa'); return; }
+  const btn=document.getElementById('checkBtn'); btn.disabled=true;
+  const review=document.getElementById('designReview'), body=document.getElementById('designReviewBody'), head=document.getElementById('designReviewHead');
+  review.classList.add('show'); body.innerHTML='<span class="dots"><span></span><span></span><span></span></span>'; head.className='review-head'; head.textContent='🤖 Marja tarkistaa suunnitelmaasi...';
+  // describe the flow
+  const hasIncoming={}, hasOutgoing={};
+  buildEdges.forEach(([a,b])=>{ hasOutgoing[a]=true; hasIncoming[b]=true; });
+  const flowDesc=buildNodes.map(n=>{
+    const inc=buildEdges.filter(([a,b])=>b===n.id).length, out=buildEdges.filter(([a,b])=>a===n.id).length;
+    return `- ${NODE_LIB[n.type].type}: "${n.config.note||'(ei kuvausta)'}" [${inc} tuleva, ${out} lähtevä yhteys]`;
+  }).join('\n');
+  const ownDesc = document.getElementById('ownTask').value.trim() || '(ei kuvattu)';
+  const starts=buildNodes.filter(n=>!hasIncoming[n.id]).length, ends=buildNodes.filter(n=>!hasOutgoing[n.id]).length;
+  const role='Olet Marja Salo, Kaiku Audio Oy:n esihenkilö ja vaativa mutta reilu mentori. Selkeä suomi (selkokieli). Tarkistat oppijan automaatiosuunnitelman ja etsit aukot SOKRAATTISESTI. Et anna pisteitä. Lyhyt vastaus: 4-6 lausetta. Jos suunnitelma on ehjä, vahvista se ja ehdota yhtä parannusta. Jos siinä on aukko (esim. tekoäly-palikassa ei kerrota mitä se tuottaa, tai ketju ei ole kytketty, tai puuttuu tulos), osoita se ystävällisesti ja kysy oppijalta miten hän korjaisi sen.';
+  const userMsg='Oppijan oma tehtävä: "'+ownDesc+'"\n\nHänen suunnittelemansa automaatioketju:\n'+flowDesc+'\n\nKetjussa on '+starts+' aloituspiste(ttä) ja '+ends+' päätepiste(ttä), '+buildEdges.length+' yhteyttä.\n\nArvioi suunnitelma. Onko ketju looginen ja ehjä? Onko jokainen palikka kuvattu järkevästi? Puuttuuko jotain (esim. mikä käynnistää, mitä tekoäly tuottaa, minne tulos menee)? Ohjaa oppijaa näkemään aukot itse.';
+  try{
+    const out=await window.aiChat(role, userMsg, 500);
+    body.textContent=out || 'Hyvä alku. Käy läpi: käynnistyykö ketju selkeästi, tietääkö tekoäly mitä tuottaa, ja meneekö tulos jonnekin?';
+    head.className='review-head agree'; head.textContent='🤖 Marjan arvio suunnitelmastasi';
+    try{ localStorage.setItem('m1c_design', JSON.stringify({nodes:buildNodes,edges:buildEdges})); }catch(e){}
+    m1cScheduleSave();
+  }catch(e){
+    body.textContent='Yhteysvirhe — suunnitelmasi tallennettiin. Marja olisi kysynyt: onko ketjussa selkeä alku (laukaisin), tekeekö tekoäly jotain konkreettista, ja onko lopussa tulos joka menee jonnekin?';
+    head.className='review-head'; head.textContent='🤖 Marjan arvio';
+    m1cScheduleSave();
+  }
+  btn.disabled=false; btn.textContent='✓ Tarkista uudelleen';
+}
+
+/* ---- resize (restore moved to module-work init) ---- */
+window.addEventListener('resize', renderEdges);
+
+
+/* ===== CLIENT CASES ENGINE ===== */
+/* ============================================================
+   CLIENT CASES (Osa 4) — diagnose + build + run + Marja review
+   Own canvas (caseCanvas), parallel to the design-screen engine.
+============================================================ */
+const CASES = [
+  {
+    id:'drowning',
+    tag:'Tapaus 1 / 5',
+    from:'Pekka Rinne · Kaiku Audio, myynti',
+    avatar:'PR',
+    brief:'"Hei! Meillä on ihan kaaos. Postilaatikko täyttyy koko ajan asiakasviesteistä — osa on kiireellisiä reklamaatioita, osa pelkkiä kiitoksia, osa mainoksia. Ehdin vastata vasta illalla ja silloin kiireelliset ovat jo odottaneet tunteja. Voisitko rakentaa jotain? En tiedä mitä, mutta jotain pitää tehdä. Ai niin — ja haluaisin että vanhat viestit myös arkistoituvat, ja ehkä käännetään englanniksi jos asiakas on ulkomailta, ja... no, katso itse mikä auttaa eniten."',
+    title:'Tunnista todellinen ongelma — älä tee kaikkea',
+    goal:'Pekka luetteli monta toivetta: arkistointi, kääntäminen, "jotain". Mutta lue tarkkaan mitä hän sanoo <em>kärsimyksestä</em>: mihin oikea kipu liittyy? Onko ongelma viestien <strong>määrä</strong>, vai se ettei hän tiedä <strong>mihin tarttua ensin</strong>? Päätä itse mikä on todellinen ongelma — ja rakenna kone joka ratkaisee sen. Kaikkia toiveita ei tarvitse toteuttaa.',
+    warn:'⚠ Asiakas kuvaa oireita, ei ongelmaa. Erottele: mikä on "kiva olisi" ja mikä on se yksi asia jonka takia hän kärsii? Rakenna vain sen ympärille. Perustele ratkaisusi DuuniJobs AI:lle jos olet epävarma.',
+    vinkki:'Kysy: mikä on se ONE asia joka aiheuttaa kärsimystä? Kiireelliset hukkuvat. Loput (arkistointi, käännös) ovat "kiva olisi" -toiveita, eivät ongelma. Mieti mitä tarvitaan: jotain joka lukee viestit, jotain joka erottaa kiireelliset muista, jotain joka valmistelee vastaukset, ja jotain joka tallentaa ne. Mikä palikka erottaa kiireelliset?',
+    palette:['trigger','action','filter','ai','output','translate','translate2','calendar','sheet','database'],
+    required:['trigger','action','filter','ai','output'],
+    terminal:'output',
+    data:'1. Pekka V: "Tilaus myöhässä, tarvitsen sen tänään!" [kiireellinen]\n2. Koivu Oy: "Kiitos, loistava palvelu!" [ei kiireellinen]\n3. Anna N: "Laite ei toimi, apua nopeasti!" [kiireellinen]\n4. Mainos: "Osta nyt -50%!" [roska]',
+    aiRole:'Olet asiakaspalvelun assistentti. Kirjoitat kohteliaat vastausluonnokset suomeksi vain kiireellisiin viesteihin. Et lupaa aikatauluja joita et tiedä.',
+    exampleHint:'Esim: "Kirjoita jokaiseen kiireelliseen viestiin kohtelias vastausluonnos. Pahoittele ja pyydä lisätietoja."',
+    time:'klo 8.15',
+    story:{name:'Pekka Rinne', role:'myynti', avatar:'PR', color:'#2D6A4F', text:'Moikka ja tervetuloa taloon! 😅 Heti ensimmäisenä: postilaatikko räjähtää. Voisitko katsoa tätä? Laitoin sähköpostiin koko selityksen. Kiitos jo etukäteen!'},
+    wrinkle:{
+      title:'Pekka: "Melkein täydellinen, mutta..."',
+      text:'"Kone toimii ja poimii kiireelliset — mahtavaa! Mutta huomasin ongelman: asiakas lähetti vihaisen viestin (kiireellinen, ok), ja sitten heti perään \'Anteeksi, sain sen toimimaan itse.\' Kone merkkasi molemmat kiireellisiksi ja tiimi kirjoitti vastauksen jo ratkaistuun ongelmaan. Voisiko kone jotenkin olla fiksumpi?"',
+      task:'Sopeuta koneesi: pelkkä "kiireellinen/ei" ei riitä. Lisää <strong>tekoälylle ohje joka ottaa huomioon myös uusimman viestin</strong> — jos asiakas ilmoittaa ongelman ratkenneen, siihen ei tarvitse vastata. Muokkaa Tekoäly-palikan ohjetta niin että se tarkistaa onko ongelma yhä auki.',
+      check:'aiPromptContains', checkWords:['ratken','selvi','auki','viimeis','uusin','enää','tarkista'],
+      hint:'Et tarvitse uutta palikkaa — sinun täytyy tehdä tekoälystä fiksumpi. Lisää sen ohjeeseen: tarkista onko ongelma yhä auki ennen vastaamista. Jos asiakas sanoo ratkaisseensa sen, älä vastaa.'
+    }
+  },
+  {
+    id:'wrongask',
+    tag:'Tapaus 2 / 5',
+    from:'Liisa Hakala · Kaiku Audio, HR',
+    avatar:'LH',
+    brief:'"Meille tulee paljon työhakemuksia. Haluan koneen joka lukee hakemukset ja lähettää automaattisesti hylkäys- tai kutsuviestin hakijalle — kone päättää kuka pääsee haastatteluun ja ilmoittaa suoraan hakijalle. Näin säästämme aikaa emmekä tarvitse ihmistä väliin. Rakenna tämä, kiitos."',
+    title:'Asiakas pyytää väärää asiaa — rakenna oikea',
+    goal:'Liisa pyytää jotain hyvin tarkkaa: kone joka <strong>päättää itse</strong> kuka pääsee haastatteluun ja <strong>ilmoittaa hakijalle suoraan</strong>. Se säästäisi eniten aikaa. Mutta kysy itseltäsi: onko nopein ratkaisu paras? Mitä tapahtuu jos kone tekee virheen ihmisen hakemuksen kohdalla, eikä kukaan tarkistanut? Sinun täytyy päättää: toteutatko Liisan pyynnön sellaisenaan, vai rakennatko jotain vastuullisempaa — ja perustelet miksi.',
+    warn:'⚠ Asiakas ei ole aina oikeassa. Nopein ratkaisu ja paras ratkaisu voivat olla eri asioita. Mieti tradeoff: aika vs. vastuu. Jos olet epävarma missä raja menee, kysy DuuniJobs AI:lta.',
+    vinkki:'Liisan pyyntö "kone päättää ja ilmoittaa suoraan" on se ongelma. Rekrytointi on liian iso päätös koneelle. Oikea ketju: lue hakemukset → tekoäly arvioi ja valmistelee ehdotuksen → 👤 ihminen tarkistaa ja päättää → vasta sitten tulos. Ihmisen tarkistus tulee tekoälyn jälkeen mutta ennen mitään lopullista.',
+    palette:['trigger','action','ai','approval','output','email','filter','sms','calendar','database'],
+    required:['trigger','action','ai','approval','output'],
+    terminal:'output',
+    data:'1. Hakija A: 6 v kokemus, vahva osaaminen. [ehdotus: haastatteluun]\n2. Hakija B: ei alan kokemusta. [ehdotus: ei haastatteluun]\n3. Hakija C: 3 v kokemus, hyvä profiili. [ehdotus: haastatteluun]',
+    aiRole:'Olet rekrytoinnin assistentti joka VALMISTELEE ehdotuksia suomeksi. Jokaisesta hakijasta: suositus (haastatteluun / ei) ja lyhyt perustelu. Korostat että ihminen tekee lopullisen päätöksen. Et lähetä mitään hakijalle etkä tee lopullista päätöstä.',
+    exampleHint:'Esim: "Arvioi jokainen hakemus ja valmistele suositus perusteluineen. Muista: tämä on ehdotus ihmiselle, ei lopullinen päätös."',
+    time:'klo 9.40',
+    story:{name:'Liisa Hakala', role:'HR', avatar:'LH', color:'#7C3AED', text:'Hei! Kuulin että olet uusi konsulttimme. Minulla olisi rekrytointiin liittyvä pyyntö — laitoin yksityiskohdat viestiin. Toivottavasti tämä on nopea juttu! 🙏'},
+    wrinkle:{
+      title:'Liisa: "Nyt minä olen pullonkaula"',
+      text:'"Ihmisen tarkistus on tärkeä, kiitos siitä. Mutta nyt hukun itse: 200 hakemusta, ja hyväksyn jokaisen yksitellen. Suurin osa on selkeitä — joko ilmiselvästi sopiva tai ilmiselvästi ei. Voisiko kone hoitaa ne ilmiselvät tapaukset itse, ja tuoda minulle vain ne <strong>epävarmat rajatapaukset</strong> joissa oikeasti tarvitaan harkintaa?"',
+      task:'Sopeuta koneesi: kaikki ei tarvitse ihmistä — vain epävarmat. Lisää <strong>Ehto-palikka joka erottaa selkeät tapaukset epävarmoista</strong>, ja ohjaa vain epävarmat ihmisen tarkistukseen. Selkeät menevät suoraan tulokseen. Vihje: mihin kohtaan Ehto kuuluu?',
+      check:'hasNode', checkNode:'filter',
+      hint:'Nyt tarvitset uuden palikan: Ehto, joka erottaa selkeät tapaukset epävarmoista. Ajattele: selkeät → suoraan tulos, epävarmat → ihmisen tarkistus. Ihmistä tarvitaan vain rajatapauksiin, ei kaikkeen.'
+    }
+  },
+  {
+    id:'broken',
+    tag:'Tapaus 3 / 5',
+    from:'Tomi Laine · Kaiku Audio, asiakaspalvelu',
+    avatar:'TL',
+    brief:'"Meillä oli jo automaatio joka vastasi reklamaatioihin, mutta se piti sammuttaa. Se kirjoitti vastauksen JOKAISEEN viestiin — myös kiitoksiin ja mainoksiin — ja tuhlasi valtavasti aikaa ja rahaa. Joku rakensi sen kiireellä. Voitko rakentaa version joka toimii oikein? Sen pitäisi vastata vain oikeisiin reklamaatioihin."',
+    title:'Korjaa rikkinäinen prosessi — rakenna se oikein',
+    goal:'Tomi kertoo oireen: kone vastasi <em>kaikkeen</em>, myös kiitoksiin ja mainoksiin. Mutta hän ei kerro <strong>miksi</strong>. Se on sinun tehtäväsi selvittää: puuttuiko koneesta jokin, vai oliko jokin väärässä paikassa? Kun ymmärrät juurisyyn, rakenna versio joka ei toista virhettä. Vihje ei ole ilmainen — mieti mikä saa koneen käsittelemään myös turhat viestit.',
+    warn:'⚠ Oire ei ole sama kuin syy. "Vastasi kaikkeen" on oire — mikä on syy? Kysy DuuniJobs AI:lta jos et pääse jyvälle siitä, miksi kone käsitteli myös turhat viestit.',
+    vinkki:'Vika oli: ei suodatusta ennen tekoälyä, joten kone vastasi kaikkeen. Korjaus on järjestys — Ehto ENNEN Tekoälyä. Ketju: Laukaisin → Toiminto → Ehto (vain reklamaatiot) → Tekoäly (vastaa) → Tulos. Jos tekoäly tulee ennen ehtoa, se kirjoittaa turhaan kaikkiin.',
+    palette:['trigger','action','filter','ai','output','email','database','sheet','translate','loop'],
+    required:['trigger','action','filter','ai','output'],
+    terminal:'output',
+    mustFilterBeforeAI:true,
+    data:'1. Asiakas A: "Kuulokkeet hajosivat, oikea puoli mykkä." [reklamaatio]\n2. Koivu Oy: "Kiitos hyvästä palvelusta!" [ei reklamaatio]\n3. Asiakas C: "Kaiutin rätisee ja sammuu." [reklamaatio]\n4. Mainos: "Tarjous voimassa!" [roska]',
+    aiRole:'Olet asiakaspalvelun assistentti. Kirjoitat kohteliaat vastausluonnokset suomeksi vain oikeisiin reklamaatioihin. Pahoittelet ja pyydät lisätietoja. Et lupaa hyvityksiä.',
+    exampleHint:'Esim: "Kirjoita kohtelias vastaus jokaiseen reklamaatioon. Pahoittele ja pyydä lisätietoja. Älä lupaa hyvitystä."',
+    time:'klo 11.20',
+    story:{name:'Tomi Laine', role:'asiakaspalvelu', avatar:'TL', color:'#D97706', text:'Terve! Meillä oli automaatio joka piti sammuttaa koska se sekosi täysin. Voisitko rakentaa sen uudestaan kunnolla? Selitin sähköpostissa mikä meni pieleen. Tämä helpottaisi elämääni valtavasti. 🙏'},
+    wrinkle:{
+      title:'Tomi: "Nyt tuli kansainvälinen pulma"',
+      text:'"Kone toimii hienosti suomeksi! Mutta tänään tuli reklamaatio ranskaksi — asiakas Belgiasta. Kone luki sen, mutta vastasi suomeksi, ja asiakas oli täysin ymmällään. Meillä on yhä enemmän ulkomaisia asiakkaita. Voisiko kone jotenkin hoitaa myös muunkieliset?"',
+      task:'Sopeuta koneesi: nyt tarvitset palikan jota <strong>aiemmin ei tarvittu</strong>. Lisää ketjuun <strong>Käännös-palikka</strong> joka varmistaa että vastaus menee asiakkaan omalla kielellä. Opetus: mikään palikka ei ole "turha" — konteksti ratkaisee mitä tarvitaan.',
+      check:'hasNode', checkNode:'translate',
+      hint:'Muistatko Käännös-palikan jonka aiemmin jätit pois? Nyt konteksti muuttui — ulkomaisia asiakkaita on, ja se palikka onkin juuri se mitä tarvitaan. Lisää se ketjuun. Distraktori yhdessä tehtävässä voi olla oikea ratkaisu toisessa.'
+    }
+  },
+  {
+    id:'money',
+    tag:'Tapaus 4 / 5',
+    from:'Marja Salo · esihenkilö, Kaiku Audio',
+    avatar:'MS',
+    brief:'"Iso tapaus. Asiakkaat vaativat hyvityksiä rikkoutuneista tuotteista, ja haluan nopeuttaa käsittelyä. Mutta hyvitys on rahaa — emme voi antaa koneen jakaa rahaa miten sattuu. Haluan että kone valmistelee hyvitysehdotukset ja perustelut, mutta lopullisen päätöksen tekee aina ihminen ennen kuin asiakkaalle luvataan mitään. Rakenna tämä huolella."',
+    title:'Rahaa pelissä — kone valmistelee, ihminen päättää',
+    goal:'Marja haluaa nopeuttaa hyvityskäsittelyä — mutta hyvitys on rahaa. Tässä on jännite: mitä enemmän automatisoit, sitä nopeampaa se on, mutta sitä suurempi riski että kone lupaa rahaa väärin. Missä vedät rajan? Kuinka pitkälle kone saa mennä yksin, ja mihin kohtaan ihminen kuuluu? Rakenna ratkaisu joka tasapainottaa nopeuden ja vastuun — ja ole valmis perustelemaan valintasi. Marja tarkistaa lupasiko koneesi mitään mitä sen ei olisi pitänyt.',
+    warn:'⚠ Nopeus houkuttaa, mutta raha vaatii harkintaa. Missä kohtaa ihminen on oikeasti tarpeen — ja missä ei? Kysy DuuniJobs AI:lta jos mietit mihin raja kuuluu.',
+    vinkki:'Muista Kelan periaate: tekoäly valmistelee, ihminen päättää. Ketju: Laukaisin → Toiminto → Tekoäly (valmistelee hyvitysehdotuksen) → 👤 Ihmisen tarkistus → Tulos. Kirjoita tekoälyn ohjeeseen selkeästi että se VALMISTELEE ehdotuksen eikä lupaa mitään lopullisesti — ihminen päättää.',
+    palette:['trigger','action','ai','approval','output','email','filter','sms','calendar','database','translate'],
+    required:['trigger','action','ai','approval','output'],
+    terminal:'output',
+    data:'1. Asiakas A: "Kuulokkeet hajosivat takuuaikana." [ehdotus: hyvitys]\n2. Asiakas B: "En pidä väristä, haluan rahat." [ehdotus: ei hyvitystä]\n3. Asiakas C: "Laite paloi — vaarallinen!" [ehdotus: hyvitys + tutkinta]',
+    aiRole:'Olet asiakaspalvelun assistentti joka VALMISTELEE hyvitysehdotuksia suomeksi. Jokaisesta: suositus (hyvitys / ei hyvitystä / lisätutkinta) ja perustelu. Korostat että ihminen tekee lopullisen päätöksen. Et vahvista mitään lopullisesti äläkä lupaa rahaa.',
+    exampleHint:'Esim: "Valmistele jokaisesta vaateesta hyvitysehdotus: suositus ja perustelu. Muista: ihminen päättää, älä lupaa mitään lopullisesti."',
+    time:'klo 13.30',
+    story:{name:'Marja Salo', role:'esihenkilö', avatar:'MS', color:'#2D6A4F', text:'Nyt on iso juttu. Hyvitykset ovat rahaa, joten tämä pitää tehdä huolella — en halua koneen jakavan rahaa miten sattuu. Laitoin sähköpostiin tarkat vaatimukset. Tämä on tärkeä, luotan sinuun.'},
+    wrinkle:{
+      title:'Marja: "Vaarallinen tilanne jäi jonoon"',
+      text:'"Ihmisen tarkistus toimii — mutta nyt kävi ikävästi. Asiakkaan laite <strong>syttyi tuleen</strong>, ja se vaatimus jäi hyväksymisjonoon yön yli kun tarkistaja oli vapaalla. Turvallisuusasia ei voi odottaa! Tavalliset hyvitykset voivat kyllä jonottaa, mutta vaaralliset tapaukset pitää nostaa heti esiin. Voisiko kone erottaa nämä?"',
+      task:'Sopeuta koneesi: yksi ihmisen tarkistus ei riitä kaikelle. Lisää <strong>Ehto-palikka joka tunnistaa turvallisuuskriittiset tapaukset</strong> ja nostaa ne erikseen esiin (esim. oma kiireellinen tulos). Opetus: sama "ihminen päättää" ei sovi joka tilanteeseen samalla tavalla.',
+      check:'hasNode', checkNode:'filter',
+      hint:'Nyt tarvitset Ehto-palikan joka erottaa turvallisuustapaukset tavallisista. Vaaralliset → kiireellinen reitti, tavalliset → normaali jono. Yksi hyväksymisjono ei palvele kaikkia tilanteita yhtä hyvin.'
+    }
+  },
+  {
+    id:'open',
+    tag:'Tapaus 5 / 5',
+    from:'Marja Salo · esihenkilö, Kaiku Audio',
+    avatar:'MS',
+    brief:'"Viimeinen tehtävä, ja annan sinulle vapaat kädet. Myyntitiimimme käyttää tunteja viikossa siihen, että he keräävät eri kanavien asiakaspalautteet, lukevat ne läpi, poimivat tärkeimmät, kirjoittavat niistä yhteenvedon ja lähettävät sen minulle sähköpostilla joka perjantai. Suunnittele kone joka hoitaa tämän. Mieti itse mitä se tarvitsee — näytä että olet oppinut."',
+    title:'Avoin toimeksianto — suunnittele koko ratkaisu itse',
+    goal:'Vapaat kädet. Marja kuvaili miten tiimi tekee työn nyt käsin: he keräävät palautteet, lukevat läpi, poimivat tärkeimmät, kirjoittavat yhteenvedon ja lähettävät sen. Sinun tehtäväsi: käännä <em>koko prosessi</em> koneeksi. Päätä itse jokainen vaihe ja järjestys — ja mieti myös, onko jokin vaihe jonka voisi jättää pois tai jonka ihminen haluaisi silti tarkistaa. Tämä on näyttösi. Ei valmiita palasia.',
+    warn:'⚠ Viimeinen ja vaativin. Iso valikoima, ei ohjausta. Lue Marjan kuvaus ja päätä itse: mitkä vaiheet ovat oikeasti tarpeen? Kysy DuuniJobs AI:lta jos haluat sparrata ajatteluasi — mutta ratkaisu on sinun.',
+    vinkki:'Poimi verbit Marjan kuvauksesta: "kerää" (Toiminto), "poimi tärkeimmät" (Ehto), "kirjoita yhteenveto" (Tekoäly), "lähetä sähköpostilla" (Sähköposti). Ja "joka perjantai" on Laukaisin. Ketju: Laukaisin → Toiminto → Ehto → Tekoäly → Sähköposti. Loppu on Sähköposti koska yhteenveto lähetetään Marjalle.',
+    palette:['trigger','action','filter','ai','email','output','approval','database','sheet','translate','calendar','sms','loop'],
+    required:['trigger','action','filter','ai','email'],
+    terminal:'email',
+    isEmail:true,
+    data:'Kanava 1 (verkkokauppa): "Toimitus oli nopea, kiitos!" / "Tuote rikki saapuessa."\nKanava 2 (some): "Paras kaiutin ikinä!" / "Asiakaspalvelu ei vastaa."\nKanava 3 (sähköposti): "Haluaisin lisätietoja takuusta."',
+    aiRole:'Tiivistät hajanaiset asiakaspalautteet eri kanavista yhdeksi selkeäksi viikkoyhteenvedoksi suomeksi Marjalle. Nostat tärkeimmät teemat ja toistuvat huomiot. Et keksi palautteita.',
+    exampleHint:'Esim: "Tiivistä palautteet yhdeksi viikkoyhteenvedoksi. Nosta 3-4 tärkeintä teemaa ja toistuvat ongelmat."',
+    time:'klo 15.10',
+    story:{name:'Marja Salo', role:'esihenkilö', avatar:'MS', color:'#2D6A4F', text:'Viimeinen homma tälle päivälle, ja annan sinulle vapaat kädet. Myyntitiimi tuhlaa tunteja viikkoyhteenvetoon — suunnittele kone joka hoitaa sen. Näytä mitä olet oppinut! Yksityiskohdat sähköpostissa. 💪'},
+    wrinkle:{
+      title:'Marja: "Tiimi haluaa nähdä sen myös — mutta..."',
+      text:'"Viikkoyhteenveto on täydellinen minulle! Mutta tiimi haluaisi myös nähdä sen. Ongelma: osa palautteesta on <strong>luottamuksellista</strong> — esimerkiksi henkilöstön sisäiset valitukset. Minä saan nähdä kaiken, mutta tiimille saa lähettää vain julkiset osat. Voisiko kone lähettää kaksi eri versiota?"',
+      task:'Sopeuta koneesi: yksi vastaanottaja ei riitä. Lisää ketjuun toinen haara — <strong>Ehto joka erottaa luottamukselliset osat</strong>, niin että sinä saat täyden version ja tiimi vain julkisen. Viimeinen näyttösi: kone joka palvelee kahta yleisöä eri tavoin.',
+      check:'hasNode', checkNode:'filter',
+      hint:'Tarvitset Ehto-palikan joka erottaa luottamuksellisen julkisesta. Ajattele kahta reittiä: sinulle kaikki, tiimille vain julkinen osa. Yksi kone voi palvella eri yleisöjä eri sisällöllä.'
+    }
+  }
+];
+
+let currentCase=0;
+/* log helpers (exec drawer) */
+function addLog(logEl, text, cls, nodeTag){
+  const t=new Date().toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const line=document.createElement('div'); line.className='log-line'+(cls?' '+cls:'');
+  line.innerHTML=`<span class="lt">${t}</span><span class="lb">${nodeTag?`<span class="node-tag">[${nodeTag}]</span> `:''}${text}</span>`;
+  logEl.appendChild(line); logEl.parentElement.scrollTop=logEl.parentElement.scrollHeight;
+}
+function addIOBlock(logEl, label, content){
+  const b=document.createElement('div'); b.className='io-block';
+  b.innerHTML=`<div class="io-head"><span>${label}</span><span>data</span></div><div class="io-body">${content}</div>`;
+  logEl.appendChild(b); logEl.parentElement.scrollTop=logEl.parentElement.scrollHeight;
+}
+/* ---- case canvas engine (own state, bound to #caseCanvas) ---- */
+let cNodes=[], cEdges=[], cSel=null, cCounter=0, cDragType=null;
+const cCanvas=document.getElementById('caseCanvas');
+const cEdgesSvg=document.getElementById('caseEdges');
+
+function snapshotCurrentCase(){
+  try{
+    caseSnaps[currentCase]={
+      nodes:cNodes.map(n=>({id:n.id,type:n.type,name:n.name,x:n.x,y:n.y,foot:n.foot,config:n.config?JSON.parse(JSON.stringify(n.config)):{}})),
+      edges:cEdges.map(e=>[e[0],e[1]]),
+      stage:caseStage,
+      done:!!document.querySelector(`.chal-tab[data-case="${currentCase}"]`)?.classList.contains('done')
+    };
+  }catch(e){}
+}
+function restoreCaseCanvas(snap){
+  if(!snap||!Array.isArray(snap.nodes)) return;
+  resetCase();
+  const idMap={};
+  snap.nodes.forEach(sn=>{
+    const n=caseAddNode(sn.type, sn.x, sn.y);
+    if(sn.config) n.config=Object.assign(n.config||{}, sn.config);
+    if(sn.name) n.name=sn.name;
+    const el=document.getElementById(n.id);
+    if(el&&sn.config&&sn.config.prompt){
+      const foot=document.getElementById('foot-'+n.id);
+      if(foot&&sn.type==='ai') foot.textContent=(sn.config.prompt||'').slice(0,40);
+    }
+    idMap[sn.id]=n.id;
+  });
+  (snap.edges||[]).forEach(([a,b])=>{ if(idMap[a]&&idMap[b]) caseConnect(idMap[a],idMap[b]); });
+  caseRenderEdges();
+  if(snap.stage===2){
+    caseStage=2;
+    document.getElementById('stage1').className='stage-pill done'; document.getElementById('stage1').innerHTML='<span class="sp-num">✓</span> Rakenna ratkaisu';
+    document.getElementById('stage2').className='stage-pill active';
+  }
+}
+function selectCase(i){
+  const tab=document.querySelector(`.chal-tab[data-case="${i}"]`);
+  if(tab.classList.contains('locked')){ toast('Ratkaise edellinen tapaus ensin'); return; }
+  snapshotCurrentCase();
+  currentCase=i;
+  document.querySelectorAll('.chal-tab[data-case]').forEach(t=>t.classList.toggle('active', +t.dataset.case===i));
+  const c=CASES[i];
+  document.getElementById('caseAvatar').textContent=c.avatar;
+  document.getElementById('caseFrom').innerHTML=c.from.split('·')[0]+' <span class="marja-role">· '+(c.from.split('·')[1]||'toimeksianto').trim()+'</span>';
+  document.getElementById('caseBrief').textContent=c.brief;
+  document.getElementById('caseTag').textContent=c.tag;
+  document.getElementById('caseTitle').textContent=c.title;
+  document.getElementById('caseGoal').innerHTML=c.goal;
+  document.getElementById('caseWarn').innerHTML=c.warn;
+  // reset stage 1
+  caseStage=1;
+  document.getElementById('stage1').className='stage-pill active'; document.getElementById('stage1').innerHTML='<span class="sp-num">1</span> Rakenna ratkaisu';
+  document.getElementById('stage2').className='stage-pill'; document.getElementById('stage2').innerHTML='<span class="sp-num">2</span> Sopeuta yllätykseen';
+  document.getElementById('caseWrinkle').classList.remove('show');
+  document.getElementById('caseComplete').style.display='none';
+  document.getElementById('dayTime').textContent=c.time||'klo 8.15';
+  // keep restored Claude history; only close the panel
+  document.getElementById('claudeChat')?.classList.remove('open');
+  renderCasePalette();
+  resetCase();
+  if(caseSnaps[i] && caseSnaps[i].nodes && caseSnaps[i].nodes.length){
+    restoreCaseCanvas(caseSnaps[i]);
+  }
+  m1cScheduleSave();
+  // story intro: colleague pings on Slack
+  if(c.story && !window._suppressSlack){ setTimeout(()=>showSlack(c.story.name, c.story.role, c.story.avatar, c.story.color, c.story.text, 'intro'), 600); }
+}
+/* ---- Claude chat bubble (per-case Socratic helper) ---- */
+let claudeHistory={}; // per-case message history
+const CASE_CHIPS=[
+  ['Mistä tiedän mikä on oikea ongelma?','Mitä asiakas oikeasti tarvitsee?','Mitkä palikat eivät kuulu tähän?'],
+  ['Onko asiakkaan pyyntö hyvä idea?','Mitä puuttuu tästä pyynnöstä?','Milloin tarvitaan ihmistä?'],
+  ['Mikä edellisessä koneessa meni vikaan?','Miksi järjestys on tärkeä?','Mistä tunnistan vian?'],
+  ['Miksi ihminen tarvitaan tässä?','Mihin kohtaan ihmisen tarkistus kuuluu?','Mitä jos kone päättäisi yksin?'],
+  ['Miten aloitan tyhjästä?','Miten poimin vaiheet kuvauksesta?','Tarvitaanko tässä suodatusta?']
+];
+function toggleClaudeChat(){
+  const chat=document.getElementById('claudeChat');
+  const opening=!chat.classList.contains('open');
+  chat.classList.toggle('open');
+  if(opening){ renderClaudeChat(); setTimeout(()=>document.getElementById('ccInput').focus(),100); }
+}
+function renderClaudeChat(){
+  const body=document.getElementById('ccBody');
+  const i=currentCase;
+  if(!claudeHistory[i]){
+    claudeHistory[i]=[{role:'claude', text:'Hei! Autan sinua ajattelemaan tätä tapausta. En anna valmista vastausta — kysyn kysymyksiä jotka auttavat sinua oivaltamaan itse. Mitä mietit?'}];
+  }
+  body.innerHTML='';
+  claudeHistory[i].forEach(m=>{
+    const d=document.createElement('div'); d.className='cc-msg '+(m.role==='claude'?'claude':'user'); d.innerHTML=m.text; body.appendChild(d);
+  });
+  body.scrollTop=body.scrollHeight;
+  // chips
+  const chips=document.getElementById('ccChips'); chips.innerHTML='';
+  (CASE_CHIPS[i]||[]).forEach(q=>{ const c=document.createElement('button'); c.className='cc-chip'; c.textContent=q; c.onclick=()=>{ document.getElementById('ccInput').value=q; sendClaude(); }; chips.appendChild(c); });
+}
+async function sendClaude(){
+  const input=document.getElementById('ccInput'); const q=input.value.trim();
+  if(!q) return;
+  const i=currentCase; const c=CASES[i];
+  claudeHistory[i].push({role:'user', text:q.replace(/</g,'&lt;')});
+  input.value=''; document.getElementById('ccChips').innerHTML='';
+  renderClaudeChat();
+  const body=document.getElementById('ccBody');
+  const typing=document.createElement('div'); typing.className='cc-typing'; typing.innerHTML='<span></span><span></span><span></span>'; body.appendChild(typing); body.scrollTop=body.scrollHeight;
+  const send=document.getElementById('ccSend'); send.disabled=true;
+  // system prompt: teach about THIS case, Socratic, NEVER give the node chain
+  const sys='Olet DuuniJobs AI, ystävällinen ja viisas AI-tutori suomalaisella automaatiokurssilla aikuiselle oppijalle (työnhakija, metsäala). Puhut selkeää, lämmintä suomea (selkokieli). '
+    +'Oppija ratkaisee asiakastapausta ja rakentaa automaatiota node-palikoista. Tehtävän ydin: '+c.title+'. Asiakkaan tilanne: '+c.goal.replace(/<[^>]+>/g,'')+' '
+    +'TÄRKEIN SÄÄNTÖ: ÄLÄ KOSKAAN anna valmista vastausta. Älä luettele mitä palikoita tarvitaan, älä kerro oikeaa järjestystä, älä nimeä ratkaisua. '
+    +'Sen sijaan: vastaa LYHYESTI (1-3 lausetta, maksimissaan 40 sanaa), esitä yksi ohjaava vastakysymys tai anna yksi ajattelun näkökulma joka sytyttää oivalluksen. '
+    +'Jos oppija pyytää suoraan vastausta, kieltäydy lempeästi ja käännä se kysymykseksi joka auttaa häntä keksimään itse. Ole kannustava. Ei listoja, ei pitkiä selityksiä. Tavoite: sytytä lamppu hänen päässään, älä tee työtä hänen puolestaan.';
+  // build short conversation context
+  const convo=claudeHistory[i].filter(m=>m.role).slice(-6).map(m=>(m.role==='user'?'Oppija: ':'Claude: ')+m.text.replace(/<[^>]+>/g,'')).join('\n');
+  try{
+    const out=await window.aiChat(sys, convo+'\n\nVastaa oppijan viimeiseen viestiin lyhyesti ja ohjaavasti.', 200);
+    typing.remove();
+    claudeHistory[i].push({role:'claude', text:(out||'Hyvä kysymys. Mitä luulet itse — mikä tässä on se tärkein asia joka pitää ratkaista?').replace(/</g,'&lt;').replace(/\n/g,'<br>')});
+    renderClaudeChat();
+  }catch(e){
+    typing.remove();
+    claudeHistory[i].push({role:'claude', text:'Yhteys katkesi hetkeksi. Mieti sillä välin: mikä on asiakkaan suurin kipupiste — ja ratkaiseeko rakentamasi kone juuri sen?'});
+    renderClaudeChat();
+  }
+  m1cScheduleSave();
+  send.disabled=false;
+}
+
+function renderCasePalette(){
+  const c=CASES[currentCase];
+  const pal=document.getElementById('casePalette');
+  pal.innerHTML='<div class="palette-h">Palikat — valitse tarvittavat</div>';
+  c.palette.forEach(type=>{
+    const m=NODE_LIB[type];
+    const el=document.createElement('div');
+    el.className='pal-node n-'+nodeColorClass(type);
+    el.setAttribute('draggable','true'); el.dataset.type=type;
+    el.innerHTML=`<div class="pal-ic">${m.ic}</div><div><div class="pal-name">${m.type}</div><div class="pal-hint">${m.hint}</div></div>`;
+    pal.appendChild(el);
+  });
+  attachCasePalette();
+}
+function attachCasePalette(){
+  document.querySelectorAll('#casePalette .pal-node').forEach(pn=>{
+    pn.addEventListener('dragstart', e=>{ cDragType=pn.dataset.type; pn.classList.add('dragging'); e.dataTransfer.effectAllowed='copy'; });
+    pn.addEventListener('dragend', ()=>{ pn.classList.remove('dragging'); document.getElementById('caseDropHi').classList.remove('on'); });
+    pn.addEventListener('click', ()=>{ const n=cNodes.length; caseAddNode(pn.dataset.type, 30+(n%3)*200, 30+Math.floor(n/3)*130); });
+  });
+}
+cCanvas.addEventListener('dragover', e=>{ e.preventDefault(); document.getElementById('caseDropHi').classList.add('on'); });
+cCanvas.addEventListener('dragleave', e=>{ if(e.target===cCanvas) document.getElementById('caseDropHi').classList.remove('on'); });
+cCanvas.addEventListener('drop', e=>{ e.preventDefault(); document.getElementById('caseDropHi').classList.remove('on'); if(!cDragType)return; const cr=cCanvas.getBoundingClientRect(); caseAddNode(cDragType, e.clientX-cr.left-88, e.clientY-cr.top-38); cDragType=null; });
+
+function caseAddNode(type,x,y){
+  x=Math.max(6,Math.min(x,cCanvas.clientWidth-184)); y=Math.max(6,Math.min(y,cCanvas.clientHeight-100));
+  const id='cn'+(++cCounter); const m=NODE_LIB[type];
+  const node={id,type,name:m.type,foot:m.preview,x,y,config:type==='ai'?{prompt:''}:{}};
+  cNodes.push(node);
+  cCanvas.insertAdjacentHTML('beforeend', nodeHTML(node));
+  document.getElementById('caseHint').classList.add('hidden');
+  caseWire(id); caseRenderEdges(); caseSelect(id);
+  return node;
+}
+function caseWire(id){
+  const el=document.getElementById(id);
+  el.addEventListener('mousedown', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; cStartDrag(ev,id); });
+  el.addEventListener('click', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; if(cTouchSrc&&cTouchSrc!==id){caseConnect(cTouchSrc,id);cTouchSrc=null;document.getElementById(id)?.classList.remove('wiring-src');return;} caseSelect(id); });
+  el.querySelector('.del').addEventListener('click', ev=>{ ev.stopPropagation(); caseDelete(id); });
+  el.querySelector('.port.out').addEventListener('mousedown', ev=>{ ev.stopPropagation(); cStartWire(ev,id); });
+  el.querySelector('.port.out').addEventListener('click', ev=>{ ev.stopPropagation(); cTouchWire(id); });
+}
+let cDragNode=null, cDragOff={x:0,y:0};
+function cStartDrag(ev,id){ cDragNode=id; const node=cNodes.find(n=>n.id===id); const cr=cCanvas.getBoundingClientRect(); cDragOff={x:ev.clientX-cr.left-node.x,y:ev.clientY-cr.top-node.y}; document.addEventListener('mousemove',cOnDrag); document.addEventListener('mouseup',cStopDrag); }
+function cOnDrag(ev){ if(!cDragNode)return; const node=cNodes.find(n=>n.id===cDragNode); const cr=cCanvas.getBoundingClientRect(); node.x=Math.max(6,Math.min(ev.clientX-cr.left-cDragOff.x,cCanvas.clientWidth-184)); node.y=Math.max(6,Math.min(ev.clientY-cr.top-cDragOff.y,cCanvas.clientHeight-100)); const el=document.getElementById(cDragNode); el.style.left=node.x+'px'; el.style.top=node.y+'px'; caseRenderEdges(); }
+function cStopDrag(){ cDragNode=null; document.removeEventListener('mousemove',cOnDrag); document.removeEventListener('mouseup',cStopDrag); }
+let cWireSrc=null, cTempPath=null;
+function cStartWire(ev,id){ cWireSrc=id; document.getElementById(id).classList.add('wiring-src'); cCanvas.querySelectorAll('.node .port.in').forEach(p=>{ if(p.closest('.node').id!==id) p.classList.add('can-target'); }); cTempPath=document.createElementNS('http://www.w3.org/2000/svg','path'); cTempPath.setAttribute('class','edge-path'); cEdgesSvg.appendChild(cTempPath); document.addEventListener('mousemove',cOnWire); document.addEventListener('mouseup',cStopWire); }
+function cOnWire(ev){ if(!cWireSrc)return; const cr=cCanvas.getBoundingClientRect(); const pa=portPos(cCanvas,cWireSrc,'out'); const mx=ev.clientX-cr.left,my=ev.clientY-cr.top; const dx=Math.max(40,(mx-pa.x)*0.5); cTempPath.setAttribute('d',`M ${pa.x} ${pa.y} C ${pa.x+dx} ${pa.y}, ${mx-dx} ${my}, ${mx} ${my}`); }
+function cStopWire(ev){ document.removeEventListener('mousemove',cOnWire); document.removeEventListener('mouseup',cStopWire); cCanvas.querySelectorAll('.port.can-target').forEach(p=>p.classList.remove('can-target')); if(cWireSrc) document.getElementById(cWireSrc)?.classList.remove('wiring-src'); if(cTempPath){ cTempPath.remove(); cTempPath=null; } const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('.node'); if(target && cWireSrc && target.id!==cWireSrc && target.closest('#caseCanvas')){ caseConnect(cWireSrc,target.id); } cWireSrc=null; }
+let cTouchSrc=null;
+function cTouchWire(id){ if(cTouchSrc===id){ cTouchSrc=null; document.getElementById(id).classList.remove('wiring-src'); return; } cTouchSrc=id; document.getElementById(id).classList.add('wiring-src'); toast('Napauta palikkaa, johon kytketään'); }
+function caseConnect(a,b){ if(a===b)return; if(cEdges.some(([x,y])=>x===a&&y===b))return; cEdges.push([a,b]); caseRenderEdges(); toast('Kytketty'); }
+function caseDelete(id){ cNodes=cNodes.filter(n=>n.id!==id); cEdges=cEdges.filter(([a,b])=>a!==id&&b!==id); document.getElementById(id)?.remove(); if(cSel===id){cSel=null;caseRenderParams();} caseRenderEdges(); if(cNodes.length===0) document.getElementById('caseHint').classList.remove('hidden'); }
+function caseRenderEdges(){ drawEdges('caseEdges', cEdges, (id,side)=>portPos(cCanvas,id,side)); }
+function caseSelect(id){ cSel=id; cCanvas.querySelectorAll('.node').forEach(n=>n.classList.toggle('selected',n.id===id)); caseRenderParams(); document.getElementById('caseParams').classList.add('open'); }
+function caseCloseParams(){ document.getElementById('caseParams').classList.remove('open'); cCanvas.querySelectorAll('.node').forEach(n=>n.classList.remove('selected')); cSel=null; }
+function caseRenderParams(){
+  const wrap=document.getElementById('caseParamsIn');
+  if(!cSel){ wrap.innerHTML='<div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa. Tekoäly-palikkaan kirjoitat mitä sen pitää tehdä.</div>'; return; }
+  const node=cNodes.find(n=>n.id===cSel); const m=NODE_LIB[node.type]; const c=CASES[currentCase];
+  let fields='';
+  if(node.type==='ai'){
+    fields=`<div class="p-head-tt">Koneen aivot. Kirjoita selkeä ohje: mitä tekoälyn pitää tehdä saamallaan tiedolla.</div>
+      <div class="p-field"><label class="p-label">Malli</label><div class="p-static p-mono">gpt-4o-mini · kytketty ✓</div></div>
+      <div class="p-field"><label class="p-label">Ohje tekoälylle <span class="req">*</span></label>
+      <textarea class="p-area big" id="caseAiPrompt" placeholder="Kirjoita omin sanoin mitä tekoälyn pitää tehdä...">${node.config.prompt||''}</textarea>
+      <div class="p-hint">${c.exampleHint||''}</div></div>`;
+  } else if(node.type==='approval'){
+    fields=`<div class="p-head-tt">${m.preview}</div><div class="p-field"><label class="p-label">Kuka tarkistaa?</label><div class="p-static">Ihminen tarkistaa ja hyväksyy ennen kuin ketju jatkaa</div><div class="p-hint">Kone valmistelee, ihminen päättää. Pysäyttää ketjun kunnes ihminen hyväksyy.</div></div>`;
+  } else if(node.type==='filter'){
+    fields=`<div class="p-head-tt">${m.preview}</div><div class="p-field"><label class="p-label">Ehto</label><div class="p-static">Vain ehdon täyttävät viestit jatkavat eteenpäin</div><div class="p-hint">Tekee koneesta valikoivan — se ei käsittele turhia.</div></div>`;
+  } else if(NODE_LIB[node.type].distractor){
+    fields=`<div class="p-head-tt">${m.preview}</div><div class="p-field"><div class="p-static" style="border-left:3px solid var(--amber); background:var(--amber-light);">Tämä palikka toimii, mutta <strong>mieti tarkkaan</strong>: ratkaiseeko <em>tämä</em> asiakkaan ongelman? Ylimääräiset palikat vievät huomion pois ydinasiasta.</div></div>`;
+  } else {
+    fields=`<div class="p-head-tt">${m.preview}</div>`;
+  }
+  wrap.innerHTML=`<div class="params-head"><div class="ph-ic" style="background:var(--${node.type==='ai'?'blue':node.type==='trigger'?'amber':node.type==='action'?'orange':node.type==='filter'?'purple':'green'}-light);">${m.ic}</div><div class="ph-tt"><div class="n">${m.type}</div><div class="t">${NODE_LIB[node.type].distractor?'ylimääräinen?':m.type}</div></div><button class="params-close" onclick="caseCloseParams()">×</button></div>${fields}`;
+  const ta=document.getElementById('caseAiPrompt'); if(ta) ta.addEventListener('input', e=>{ node.config.prompt=e.target.value; });
+}
+function resetCase(){ cNodes=[]; cEdges=[]; cSel=null; cCounter=0; cCanvas.querySelectorAll('.node').forEach(n=>n.remove()); caseRenderEdges(); caseRenderParams(); caseCloseParams(); document.getElementById('caseHint').classList.remove('hidden'); document.getElementById('caseResultCard').classList.remove('show'); document.getElementById('caseReview').classList.remove('show'); document.getElementById('caseBroken').classList.remove('show'); document.getElementById('caseDot').style.background=''; }
+
+function caseValidate(){
+  const c=CASES[currentCase];
+  const types=cNodes.map(n=>n.type);
+  for(const req of c.required){ if(!types.includes(req)) return {ok:false,reason:'missing',missing:req}; }
+  const distractors=cNodes.filter(n=>NODE_LIB[n.type].distractor);
+  if(distractors.length>0) return {ok:false,reason:'distractor',node:distractors[0].type};
+  // connected chain: one start (trigger), one end (terminal)
+  const hasIn={}, hasOut={}; cEdges.forEach(([a,b])=>{ hasOut[a]=true; hasIn[b]=true; });
+  const starts=cNodes.filter(n=>!hasIn[n.id]), ends=cNodes.filter(n=>!hasOut[n.id]);
+  if(cEdges.length < c.required.length-1) return {ok:false,reason:'unconnected'};
+  if(starts.length!==1||ends.length!==1) return {ok:false,reason:'unconnected'};
+  if(starts[0].type!=='trigger') return {ok:false,reason:'order',detail:'Ketjun pitää alkaa Laukaisimella'};
+  if(ends[0].type!==c.terminal) return {ok:false,reason:'order',detail: c.terminal==='email'?'Ketjun pitää päättyä Sähköposti-palikkaan':'Ketjun pitää päättyä Tulos-palikkaan'};
+  // order rule: filter before ai (if required)
+  if(c.mustFilterBeforeAI || (c.required.includes('filter')&&c.required.includes('ai'))){
+    const f=cNodes.find(n=>n.type==='filter'), ai=cNodes.find(n=>n.type==='ai');
+    if(f&&ai&&!casePathReaches(f.id,ai.id)) return {ok:false,reason:'order',detail:'Ehdon (suodatus) pitää tulla ENNEN Tekoälyä, muuten kone käsittelee turhat viestit'};
+  }
+  // approval must be after ai, before terminal (if required)
+  if(c.required.includes('approval')){
+    const ap=cNodes.find(n=>n.type==='approval'), ai=cNodes.find(n=>n.type==='ai');
+    if(ai&&ap&&!casePathReaches(ai.id,ap.id)) return {ok:false,reason:'order',detail:'Ihmisen tarkistus tulee tekoälyn JÄLKEEN — kone valmistelee, ihminen hyväksyy'};
+  }
+  const aiNode=cNodes.find(n=>n.type==='ai');
+  if(aiNode && (!aiNode.config.prompt||aiNode.config.prompt.trim().length<8)) return {ok:false,reason:'noprompt',node:aiNode.id};
+  return {ok:true};
+}
+function casePathReaches(from,to){ const adj={}; cEdges.forEach(([a,b])=>{ (adj[a]=adj[a]||[]).push(b); }); const seen=new Set(),q=[from]; while(q.length){ const cur=q.shift(); if(cur===to)return true; if(seen.has(cur))continue; seen.add(cur); (adj[cur]||[]).forEach(n=>q.push(n)); } return false; }
+// lighter validation for the adapt stage: needs a trigger, a connected chain, and an AI prompt.
+function caseValidateLight(){
+  if(cNodes.length<2) return {ok:false,reason:'unconnected'};
+  const hasIn={}, hasOut={}; cEdges.forEach(([a,b])=>{ hasOut[a]=true; hasIn[b]=true; });
+  const starts=cNodes.filter(n=>!hasIn[n.id]);
+  // every node should be part of the chain (no fully-loose nodes)
+  const loose=cNodes.filter(n=>!hasIn[n.id]&&!hasOut[n.id]);
+  if(loose.length>0) return {ok:false,reason:'unconnected'};
+  if(!cNodes.some(n=>n.type==='trigger')) return {ok:false,reason:'missing',missing:'trigger'};
+  const aiNode=cNodes.find(n=>n.type==='ai');
+  if(aiNode && (!aiNode.config.prompt||aiNode.config.prompt.trim().length<8)) return {ok:false,reason:'noprompt',node:aiNode.id};
+  return {ok:true};
+}
+
+async function runCase(){
+  const btn=document.getElementById('caseRun'); if(btn.classList.contains('running'))return;
+  const c=CASES[currentCase];
+  if(caseStage===1){
+    const v=caseValidate();
+    if(!v.ok){ caseHandleInvalid(v); return; }
+  } else {
+    // stage 2 (adapt): lighter check — connected chain + AI prompt present. The specific
+    // adaptation requirement is checked after the run via checkAdaptation.
+    const v=caseValidateLight();
+    if(!v.ok){ caseHandleInvalid(v); return; }
+  }
+  btn.classList.add('running'); btn.textContent='● Suoritetaan...';
+  const exec=document.getElementById('caseExec'), log=document.getElementById('caseLog'); exec.classList.add('open'); log.innerHTML='';
+  document.getElementById('caseResultCard').classList.remove('show'); document.getElementById('caseReview').classList.remove('show'); document.getElementById('caseBroken').classList.remove('show');
+  cCanvas.querySelectorAll('.node').forEach(n=>{n.classList.remove('ok','err','running');n.querySelector('.nd-status').textContent='';});
+  const ordered=[...cNodes].sort((a,b)=>{ const r=t=>t==='trigger'?0:t==='action'?1:t==='filter'?2:t==='ai'?3:t==='approval'?7:9; return r(a.type)-r(b.type)||a.x-b.x; });
+  document.getElementById('caseExecMeta').textContent=c.tag;
+  let aiResult='';
+  for(const node of ordered){
+    const el=document.getElementById(node.id); el.classList.add('running'); el.querySelector('.nd-status').textContent='●';
+    cEdgesSvg.querySelectorAll(`[data-b="${node.id}"]`).forEach(p=>p.classList.add('flow'));
+    try{
+      if(node.type==='trigger'){ addLog(log,'Laukaisin heräsi — testiajo käynnistyi','ok','Laukaisin'); await wait(500); }
+      else if(node.type==='action'){ addLog(log,'Haetaan tietoa...','','Toiminto'); await wait(450); addIOBlock(log,'Output — haettu data',(c.data||'').replace(/</g,'&lt;').replace(/\n/g,'<br>')); addLog(log,'Data haettu','ok','Toiminto'); await wait(250); }
+      else if(node.type==='filter'){ addLog(log,'Suodatetaan: vain oikeat etenevät','warn','Ehto'); await wait(550); addLog(log,'Turhat viestit pysäytetty','ok','Ehto'); }
+      else if(node.type==='ai'){ addLog(log,'Tekoäly työstää ohjettasi...','','Tekoäly'); addIOBlock(log,'Input — ohjeesi',node.config.prompt.replace(/</g,'&lt;')); aiResult=await window.aiChat(c.aiRole, node.config.prompt+'\n\n--- DATA ---\n'+c.data, 700); addIOBlock(log,'Output — tekoälyn tuotos',(aiResult||'').replace(/</g,'&lt;').replace(/\n/g,'<br>')); addLog(log,'Tekoäly valmis','ok','Tekoäly'); }
+      else if(node.type==='approval'){ addLog(log,'⏸ Ketju pysähtyi — odottaa ihmisen hyväksyntää','warn','Ihmisen tarkistus'); await wait(800); addLog(log,'👤 Ihminen tarkisti ehdotuksen ja hyväksyi','ok','Ihmisen tarkistus'); await wait(400); }
+      else if(node.type==='output'){ addLog(log,'Tulos tallennettu','ok','Tulos'); await wait(400); }
+      else if(node.type==='email'){ addLog(log,'Yhteenveto lähetetty sähköpostilla ✓','ok','Sähköposti'); await wait(500); }
+      el.classList.remove('running'); el.classList.add('ok'); el.querySelector('.nd-status').textContent='✓';
+    }catch(err){ el.classList.remove('running'); el.classList.add('err'); el.querySelector('.nd-status').textContent='!'; addLog(log,'Virhe: '+(err.message||'yhteysvirhe'),'err'); btn.classList.remove('running'); btn.textContent='▶ Suorita uudelleen'; return; }
+    cEdgesSvg.querySelectorAll(`[data-b="${node.id}"]`).forEach(p=>p.classList.remove('flow'));
+  }
+  addLog(log,'✓ Kone suoritettiin onnistuneesti','ok');
+  document.getElementById('caseDot').style.background='var(--green)';
+  if(aiResult){ document.getElementById('caseResultOut').textContent=aiResult; document.getElementById('caseResultCard').classList.add('show'); }
+
+  if(caseStage===1){
+    // Stage 1 done → Marja reviews, then the wrinkle appears
+    await caseReview(c, aiResult);
+    revealWrinkle(c);
+  } else {
+    // Stage 2 (adapt) → verify the adaptation satisfies the wrinkle
+    const adapted=checkAdaptation(c);
+    if(!adapted.ok){ showAdaptFail(c, adapted); btn.classList.remove('running'); btn.textContent='▶ Suorita uudelleen'; return; }
+    await caseReviewAdapt(c, aiResult);
+    completeCase(currentCase);
+  }
+  btn.classList.remove('running'); btn.textContent='▶ Suorita uudelleen';
+}
+
+let caseStage=1;
+function revealWrinkle(c){
+  const w=c.wrinkle; if(!w){ completeCase(currentCase); return; }
+  document.getElementById('wrinkleTitle').textContent=w.title;
+  document.getElementById('wrinkleText').innerHTML=w.text;
+  document.getElementById('wrinkleTask').innerHTML=w.task;
+  document.getElementById('caseWrinkle').classList.add('show');
+  document.getElementById('caseWrinkle').scrollIntoView({behavior:'smooth',block:'nearest'});
+  // colleague pings about it too
+  setTimeout(()=>{ if(c.story) showSlack(c.story.name, c.story.role, c.story.avatar, c.story.color, 'Katso viimeisin viesti — pieni lisäpyyntö tuli. 🙏', 'slackToWrinkle'); }, 1200);
+}
+function startAdapt(){
+  caseStage=2;
+  document.getElementById('stage1').classList.remove('active'); document.getElementById('stage1').classList.add('done');
+  document.getElementById('stage2').classList.add('active');
+  document.getElementById('caseWrinkle').classList.remove('show');
+  document.getElementById('caseReview').classList.remove('show');
+  document.getElementById('caseResultCard').classList.remove('show');
+  const c=CASES[currentCase];
+  // update the task card to show the adaptation goal
+  document.getElementById('caseTitle').textContent='Sopeuta: '+(c.wrinkle.title.split(':')[0]);
+  document.getElementById('caseGoal').innerHTML=c.wrinkle.task;
+  document.getElementById('caseWarn').innerHTML='⚠ Älä aloita alusta — muokkaa konetta joka sinulla jo on kankaalla. Lisää tai muuta vain se mitä uusi tilanne vaatii.';
+  // update DuuniJobs AI context hint for adapt via a chip refresh
+  toast('🔧 Muokkaa olemassa olevaa konettasi — älä tyhjennä');
+  document.getElementById('caseShell').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function checkAdaptation(c){
+  const w=c.wrinkle; if(!w) return {ok:true};
+  if(w.check==='hasNode'){
+    if(!cNodes.some(n=>n.type===w.checkNode)) return {ok:false, need:w.checkNode, hint:w.hint};
+  } else if(w.check==='aiPromptContains'){
+    const ai=cNodes.find(n=>n.type==='ai'); const p=(ai?.config.prompt||'').toLowerCase();
+    if(!w.checkWords.some(word=>p.includes(word))) return {ok:false, needPrompt:true, hint:w.hint};
+  }
+  return {ok:true};
+}
+function showAdaptFail(c, res){
+  let msg = res.needPrompt
+    ? 'Tekoälyn ohje ei vielä huomioi uutta tilannetta. '+res.hint
+    : 'Kone ei vielä ratkaise uutta pulmaa. '+res.hint;
+  document.getElementById('caseBrokenText').textContent=msg;
+  document.getElementById('caseBroken').classList.add('show');
+  document.getElementById('caseBroken').scrollIntoView({behavior:'smooth',block:'nearest'});
+  toast('⚠ Melkein — katso mitä uusi tilanne vaatii');
+}
+async function caseReviewAdapt(c, aiResult){
+  const review=document.getElementById('caseReview'), body=document.getElementById('caseReviewBody'), head=document.getElementById('caseReviewHead');
+  review.classList.add('show'); body.innerHTML='<span class="dots"><span></span><span></span><span></span></span>'; head.className='review-head'; head.textContent='🤖 Marja katsoo sopeutustasi...';
+  const role='Olet Marja Salo, Kaiku Audion esihenkilö. Selkeä suomi. Oppija juuri SOPEUTTI koneensa uuteen yllättävään tilanteeseen. Kehu lyhyesti (2-4 lausetta) että hän osasi mukauttaa ratkaisua tosielämän vaatimukseen — se on tärkeä taito. Nosta yksi asia jonka hän oivalsi. Lämmin, ei pisteitä.';
+  const chain=cNodes.map(n=>NODE_LIB[n.type].type).join(' → ');
+  try{ const out=await window.aiChat(role,'Uusi tilanne oli: '+c.wrinkle.title+'. Oppijan sopeutettu ketju: '+chain+'. Kehu lyhyesti.',350); body.textContent=out||'Hienoa — osasit sopeuttaa koneen tosielämän vaatimukseen. Juuri tätä konsultin työ on.'; head.className='review-head agree'; head.textContent='🤖 Marjan arvio'; }
+  catch(e){ body.textContent='Hienoa työtä — osasit mukauttaa koneen uuteen tilanteeseen. Juuri tätä oikea työ vaatii: ratkaisut elävät ja muuttuvat.'; head.className='review-head agree'; head.textContent='🤖 Marjan arvio'; }
+}
+function completeCase(i){
+  markCaseDone(i);
+  const c=CASES[i];
+  document.getElementById('caseComplete').style.display='block';
+  document.getElementById('caseCompleteP').textContent='Ratkaisit ongelman ja sopeutit sen kun tosielämä yllätti. Juuri näin konsultti työskentelee. '+(i<CASES.length-1?'Seuraava tilanne odottaa.':'Olet selvinnyt ensimmäisestä työpäivästäsi.');
+  document.getElementById('caseComplete').scrollIntoView({behavior:'smooth',block:'nearest'});
+  if(i>=CASES.length-1){ document.getElementById('caseNextBtn').style.display='none'; }
+}
+function nextCase(){
+  const next=currentCase+1;
+  if(next<CASES.length){ selectCase(next); document.getElementById('caseTabs').scrollIntoView({behavior:'smooth',block:'start'}); }
+}
+function caseHandleInvalid(v){
+  cCanvas.querySelectorAll('.node').forEach(n=>n.classList.remove('err'));
+  let msg='';
+  if(v.reason==='missing') msg='Ratkaisusta puuttuu '+NODE_LIB[v.missing].type+'-palikka. Mieti mitä asiakkaan ongelma oikeasti vaatii.';
+  else if(v.reason==='distractor'){ msg=NODE_LIB[v.node].type+'-palikka ei ratkaise tätä ongelmaa. Poista ylimääräiset — keskity ytimeen.'; cNodes.filter(n=>n.type===v.node).forEach(n=>document.getElementById(n.id)?.classList.add('err')); }
+  else if(v.reason==='unconnected') msg='Palikat eivät ole yhtenä ketjuna. Vedä oranssista pisteestä seuraavaan palikkaan.';
+  else if(v.reason==='order'){ msg=v.detail+'.'; }
+  else if(v.reason==='noprompt'){ msg='Avaa Tekoäly-palikka ja kirjoita sille ohje.'; caseSelect(v.node); }
+  document.getElementById('caseBrokenText').textContent=msg;
+  document.getElementById('caseBroken').classList.add('show');
+  const exec=document.getElementById('caseExec'); exec.classList.add('open'); addLog(document.getElementById('caseLog'),'Suoritus ei käynnistynyt: '+msg,'err');
+  toast('⚠ '+msg);
+}
+async function caseReview(c, aiResult){
+  const review=document.getElementById('caseReview'), body=document.getElementById('caseReviewBody'), head=document.getElementById('caseReviewHead');
+  review.classList.add('show'); body.innerHTML='<span class="dots"><span></span><span></span><span></span></span>'; head.className='review-head'; head.textContent='🤖 Marja tarkistaa ratkaisuasi...';
+  const role='Olet Marja Salo, Kaiku Audion esihenkilö ja vaativa mutta reilu mentori. Selkeä suomi (selkokieli). Arvioit oppijan rakentaman ratkaisun asiakastapaukseen SOKRAATTISESTI. Et anna pisteitä. Lyhyt: 3-5 lausetta. Jos ratkaisu on hyvä, vahvista ja nosta yksi asia jonka hän teki oikein. Jos ratkaisussa on parannettavaa, ohjaa kysymyksellä. Kiinnitä huomiota siihen ratkaisiko hän OIKEAN ongelman.';
+  const chain=cNodes.map(n=>NODE_LIB[n.type].type).join(' → ');
+  const userMsg='Asiakastapaus: '+c.title+'\nAsiakkaan ongelma (tiivistäen): '+c.goal.replace(/<[^>]+>/g,'')+'\n\nOppijan rakentama ketju: '+chain+'\nTekoälyn ohje: "'+(cNodes.find(n=>n.type==='ai')?.config.prompt||'')+'"\nKoneen tuotos: "'+(aiResult||'').slice(0,400)+'"\n\nArvioi: ratkaisiko oppija asiakkaan todellisen ongelman? Onko ketju järkevä? Anna sokraattista palautetta.';
+  try{ const out=await window.aiChat(role,userMsg,450); body.textContent=out||'Hyvää työtä. Mietit oikean ongelman ja rakensit toimivan ratkaisun.'; head.className='review-head agree'; head.textContent='🤖 Marjan arvio'; }
+  catch(e){ body.textContent='Yhteysvirhe — ratkaisusi tallennettiin. Marja olisi kysynyt: ratkaiseeko koneesi asiakkaan TODELLISEN ongelman, vai teitkö jotain muuta?'; head.className='review-head'; head.textContent='🤖 Marjan arvio'; }
+  snapshotCurrentCase();
+  m1cScheduleSave();
+}
+function markCaseDone(i){
+  const tab=document.querySelector(`.chal-tab[data-case="${i}"]`); tab.classList.add('done');
+  const next=document.querySelector(`.chal-tab[data-case="${i+1}"]`); if(next) next.classList.remove('locked');
+  try{ localStorage.setItem('m1c_case_'+i,'done'); }catch(e){}
+  snapshotCurrentCase();
+  if(caseSnaps[i]) caseSnaps[i].done=true;
+  m1cScheduleSave();
+  const allDone=CASES.every((c,idx)=>document.querySelector(`.chal-tab[data-case="${idx}"]`).classList.contains('done'));
+  if(allDone) toast('🏆 Ensimmäinen työpäiväsi hoidettu! Olet konsultti.');
+}
+
+/* ---- Slack-style colleague messages (story beats) ---- */
+let slackMode='intro';
+function showSlack(name, role, avatar, color, text, mode, time){
+  slackMode=mode||'intro';
+  document.getElementById('slackName').textContent=name;
+  document.getElementById('slackRole').textContent=role;
+  document.getElementById('slackAvatar').textContent=avatar;
+  document.getElementById('slackAvatar').style.background=color||'#2D6A4F';
+  document.getElementById('slackText').innerHTML=text;
+  document.getElementById('slackTime').textContent= time || CASES[currentCase]?.time || 'nyt';
+  document.getElementById('slackBtn').textContent = mode==='slackToWrinkle' ? 'Katson' : (mode==='onboard' ? 'Aloitetaan!' : 'Katson sähköpostin');
+  document.getElementById('slackPop').classList.add('show');
+}
+function closeSlack(){ document.getElementById('slackPop').classList.remove('show'); }
+function slackAction(){
+  closeSlack();
+  if(slackMode==='intro'){ document.getElementById('caseBriefBox').scrollIntoView({behavior:'smooth',block:'center'}); }
+  else if(slackMode==='slackToWrinkle'){ document.getElementById('caseWrinkle').scrollIntoView({behavior:'smooth',block:'center'}); }
+  else if(slackMode==='onboard'){ document.getElementById('brief').scrollIntoView({behavior:'smooth',block:'start'}); }
+}
+window.addEventListener('resize', caseRenderEdges);
+
+function collectM1cState(){
+  snapshotCurrentCase();
+  const tasks={};
+  for(let i=0;i<3;i++){
+    const st=ensureTask(i);
+    tasks[i]={
+      signals:Object.assign({}, st.signals),
+      verdict:st.verdict,
+      done:!!st.done,
+      reason:document.getElementById('reason'+i)?.value||'',
+      ownDesc:i===2?(document.getElementById('ownTask')?.value||''):'',
+      reviewText:st.reviewText||document.getElementById('reviewBody'+i)?.textContent||'',
+      reviewHead:st.reviewHead||'',
+      reviewClass:st.reviewClass||''
+    };
+  }
+  const claude={};
+  Object.keys(claudeHistory||{}).forEach(k=>{
+    const h=claudeHistory[k];
+    if(Array.isArray(h)) claude[k]=h.map(m=>({role:m.role,text:String(m.text||'').slice(0,2000)}));
+  });
+  return {
+    ts:Date.now(),
+    tasks,
+    designNodes:buildNodes.map(n=>({id:n.id,type:n.type,name:n.name,x:n.x,y:n.y,config:n.config?JSON.parse(JSON.stringify(n.config)):{}})),
+    designEdges:buildEdges.map(e=>[e[0],e[1]]),
+    designReview:document.getElementById('designReviewBody')?.textContent||'',
+    caseSnaps:JSON.parse(JSON.stringify(caseSnaps||{})),
+    currentCase:currentCase,
+    casesDone:CASES.map((_,i)=>!!document.querySelector(`.chal-tab[data-case="${i}"]`)?.classList.contains('done')),
+    claudeHistory:claude
+  };
+}
+function applyM1cTasks(data){
+  if(!data||!data.tasks) return;
+  for(let i=0;i<3;i++){
+    const t=data.tasks[i]; if(!t) continue;
+    const st=ensureTask(i);
+    if(t.signals){
+      st.signals=Object.assign(st.signals,t.signals);
+      document.querySelectorAll(`.signals[data-task="${i}"] .signal`).forEach(sig=>{
+        const key=sig.dataset.sig; const on=!!st.signals[key];
+        sig.classList.toggle('on', on);
+        const ss=sig.querySelector('.sig-state'); if(ss) ss.textContent=on?'✓ kyllä':'ei valittu';
+      });
+    }
+    if(t.verdict){
+      st.verdict=t.verdict;
+      const vw=document.querySelector(`.verdicts[data-task="${i}"]`);
+      vw?.querySelectorAll('.verdict').forEach(x=>x.classList.remove('sel'));
+      vw?.querySelector(`.verdict[data-v="${t.verdict}"]`)?.classList.add('sel');
+    }
+    if(t.reason && document.getElementById('reason'+i)) document.getElementById('reason'+i).value=t.reason;
+    if(i===2 && t.ownDesc && document.getElementById('ownTask')){
+      document.getElementById('ownTask').value=t.ownDesc;
+      document.getElementById('ownTaskEcho').textContent=' — '+t.ownDesc.slice(0,40)+(t.ownDesc.length>40?'…':'');
+    }
+    if(t.done){
+      st.done=true; markTaskDone(i);
+      if(t.reviewText){
+        const review=document.getElementById('review'+i);
+        const body=document.getElementById('reviewBody'+i);
+        const head=document.getElementById('reviewHead'+i);
+        if(review) review.classList.add('show');
+        if(body) body.textContent=t.reviewText;
+        if(head){ head.textContent=t.reviewHead||'🤖 Marjan arvio'; head.className=t.reviewClass||'review-head agree'; }
+        st.reviewText=t.reviewText; st.reviewHead=t.reviewHead; st.reviewClass=t.reviewClass;
+      }
+    }
+  }
+}
+function applyM1cDesign(data){
+  if(!data||!Array.isArray(data.designNodes)||!data.designNodes.length) return;
+  resetBuild();
+  const idMap={};
+  data.designNodes.forEach(sn=>{
+    const n=addNode(sn.type, sn.x, sn.y);
+    if(sn.config) n.config=Object.assign(n.config||{}, sn.config);
+    idMap[sn.id]=n.id;
+    if(sn.config&&sn.config.note){
+      const foot=document.getElementById('foot-'+n.id);
+      if(foot) foot.textContent=sn.config.note;
+    }
+  });
+  (data.designEdges||[]).forEach(([a,b])=>{ if(idMap[a]&&idMap[b]) connect(idMap[a],idMap[b]); });
+  renderEdges();
+  if(data.designReview){
+    const review=document.getElementById('designReview');
+    const body=document.getElementById('designReviewBody');
+    const head=document.getElementById('designReviewHead');
+    if(review) review.classList.add('show');
+    if(body) body.textContent=data.designReview;
+    if(head){ head.className='review-head agree'; head.textContent='🤖 Marjan arvio suunnitelmastasi'; }
+  }
+}
+function applyM1cState(data){
+  if(!data||typeof data!=='object') return;
+  applyM1cTasks(data);
+  applyM1cDesign(data);
+  if(data.caseSnaps) caseSnaps=data.caseSnaps;
+  if(Array.isArray(data.casesDone)){
+    data.casesDone.forEach((done,i)=>{
+      if(!done) return;
+      document.querySelector(`.chal-tab[data-case="${i}"]`)?.classList.add('done');
+      document.querySelector(`.chal-tab[data-case="${i+1}"]`)?.classList.remove('locked');
+    });
+  }
+  const startCase=typeof data.currentCase==='number'?data.currentCase:0;
+  if(document.getElementById('caseCanvas')){
+    window._suppressSlack=true;
+    selectCase(startCase);
+    window._suppressSlack=false;
+  }
+  if(data.claudeHistory){
+    Object.keys(data.claudeHistory).forEach(k=>{ claudeHistory[k]=data.claudeHistory[k]; });
+  }
+  m1cSavedOk();
+}
+function hookM1cCanvasSave(){
+  const origConnect=typeof connect==='function'?connect:null;
+  // design canvas hooks
+  ['canvas','caseCanvas'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('mouseup', function(){ setTimeout(m1cScheduleSave, 40); });
+  });
+  document.querySelectorAll('#reason0,#reason1,#reason2,#ownTask').forEach(function(el){
+    el.addEventListener('input', m1cScheduleSave);
+    el.addEventListener('change', m1cScheduleSave);
+  });
+  document.querySelectorAll('.signal,.verdict').forEach(function(el){
+    el.addEventListener('click', function(){ setTimeout(m1cScheduleSave, 30); });
+  });
+}
+async function initM1cWork(){
+  if(!window.moduleWork||typeof window.moduleWork.initModuleWork!=='function') return;
+  try{
+    const api=await window.moduleWork.initModuleWork(M1C_MODULE_ID,{
+      collect:collectM1cState,
+      apply:applyM1cState,
+      summarize:function(d){
+        if(!d) return '';
+        const tasksDone=d.tasks?Object.values(d.tasks).filter(t=>t&&t.done).length:0;
+        const casesDone=Array.isArray(d.casesDone)?d.casesDone.filter(Boolean).length:0;
+        const designN=Array.isArray(d.designNodes)?d.designNodes.length:0;
+        return 'Tehtävät '+tasksDone+'/3 · Tapaukset '+casesDone+'/5 · Suunnitelma '+designN+' solmua';
+      },
+      debounceMs:900,
+      legacyPrefix:'m1c_',
+      fieldIds:['reason0','reason1','reason2','ownTask']
+    });
+    const origSchedule=api.scheduleSave;
+    let savedTimer=null;
+    api.scheduleSave=function(){
+      const pill=document.getElementById('m1cSavePill');
+      if(pill){ pill.textContent='tallennetaan…'; pill.classList.remove('ok'); }
+      origSchedule();
+      clearTimeout(savedTimer);
+      savedTimer=setTimeout(m1cSavedOk,1100);
+    };
+    window._m1cWork=api;
+    m1cSavedOk();
+  }catch(e){ console.warn('[m1c] module-work init failed:',e); }
+}
+
+document.addEventListener('DOMContentLoaded', async ()=>{
+  hookM1cCanvasSave();
+  await initM1cWork();
+  // If no server restore applied cases, seed UI from empty first case
+  const anyDone=CASES.some((_,i)=>document.querySelector(`.chal-tab[data-case="${i}"]`)?.classList.contains('done'));
+  if(document.getElementById('caseCanvas') && !anyDone && !cNodes.length){
+    window._suppressSlack=true; selectCase(0); window._suppressSlack=false;
+  }
+  const onboardSect=document.getElementById('brief');
+  if(onboardSect && !anyDone){
+    const oio=new IntersectionObserver((es)=>{ es.forEach(e=>{ if(e.isIntersecting){ setTimeout(()=>showSlack('Marja Salo','esihenkilö','MS','#2D6A4F','Tervetuloa taloon! 🎉 Mahtavaa saada sinut tiimiin. Ensimmäinen työpäiväsi alkaa nyt — luin että osaat jo rakentaa ja korjata automaatioita, joten heitän sinut suoraan oikeisiin hommiin. Ensimmäinen tapaus tulee ihan kohta. Onnea matkaan! 💪','onboard','klo 8.00'), 700); oio.disconnect(); } }); },{threshold:.35});
+    oio.observe(onboardSect);
+  }
+  const sect=document.getElementById('tapaukset');
+  if(sect){ const io=new IntersectionObserver((es)=>{ es.forEach(e=>{ if(e.isIntersecting){ const c=CASES[currentCase]; if(c && c.story && caseStage===1 && !document.querySelector(`.chal-tab[data-case="${currentCase}"]`)?.classList.contains('done')){ showSlack(c.story.name,c.story.role,c.story.avatar,c.story.color,c.story.text,'intro'); } io.disconnect(); } }); },{threshold:.25}); io.observe(sect); }
+  if(location.search){
+    const keep=location.search.includes('preview=1')?'?preview=1':(location.search.includes('test=1')?'?test=1':'');
+    if(keep){
+      const back=document.getElementById('backToM1b');
+      if(back) back.href='/module/moduuli1b-ai-automaatio'+keep;
+      const next=document.getElementById('nextToStar2');
+      if(next) next.href='/module/moduuli-eu-ai-act-moduuli5'+keep;
+    }
+  }
+});
+
+</script>
+</body>
+</html>

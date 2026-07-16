@@ -1592,6 +1592,7 @@ nav {
                     <div style="margin-top:0.25rem;">★ Haastattelu: ${tyonhakuProgressLine(s.haast_screen, HAAST_SCREEN_LABELS, s.haast_work_at)}</div>
                     <div style="margin-top:0.25rem;">⚡ Automaatio A: ${automaatioProgressLine(s.automaatio_a_summary, s.automaatio_a_work_at)}</div>
                     <div style="margin-top:0.25rem;">⚡ Automaatio B: ${automaatioProgressLine(s.automaatio_b_summary, s.automaatio_b_work_at)}</div>
+                    <div style="margin-top:0.25rem;">⚡ Automaatio C: ${automaatioProgressLine(s.automaatio_c_summary, s.automaatio_c_work_at)}</div>
                   </div>
                 </div>
               </div>
@@ -1823,9 +1824,10 @@ nav {
       const haastWork = moduleWorkReflections.find(r => r.module_id === 'moduuli9-haastattelu__work');
       const automaatioAWork = moduleWorkReflections.find(r => r.module_id === 'moduuli1-ai-automaatio__work');
       const automaatioBWork = moduleWorkReflections.find(r => r.module_id === 'moduuli1b-ai-automaatio__work');
+      const automaatioCWork = moduleWorkReflections.find(r => r.module_id === 'moduuli1c-ai-automaatio__work');
       const builderVisualTabCount = (appBuilderWork ? 1 : 0) + (visualsWork ? 1 : 0);
       const tyonhakuTabCount = (polkuWork ? 1 : 0) + (haastWork ? 1 : 0);
-      const automaatioTabCount = (automaatioAWork ? 1 : 0) + (automaatioBWork ? 1 : 0);
+      const automaatioTabCount = (automaatioAWork ? 1 : 0) + (automaatioBWork ? 1 : 0) + (automaatioCWork ? 1 : 0);
 
       function jsonPre(obj) {
         try { return escapeHtml(JSON.stringify(obj, null, 2)); } catch (e) { return escapeHtml(String(obj)); }
@@ -2097,7 +2099,7 @@ nav {
             ${automaatioTabCount === 0 ? `
               <div class="empty-state">
                 <div class="empty-state-icon">⚡</div>
-                <p>Ei tallennettuja vastauksia moduuleista <strong>Automaatio A</strong> tai <strong>Automaatio B</strong>.</p>
+                <p>Ei tallennettuja vastauksia moduuleista <strong>Automaatio A</strong>, <strong>B</strong> tai <strong>C</strong>.</p>
                 <p style="font-size:0.9rem;color:var(--muted);margin-top:0.5rem;">Edistyminen tallentuu automaattisesti kun opiskelija on kirjautunut.</p>
               </div>
             ` : `
@@ -2125,6 +2127,19 @@ nav {
                     <div class="content-item-date">${formatDate(automaatioBWork.updated_at || automaatioBWork.created_at)}</div>
                   </div>
                   ${renderAutomaatioWorkHtml(automaatioBWork)}
+                </div>
+              ` : ''}
+              ${automaatioCWork ? `
+                <h3 style="margin:${(automaatioAWork || automaatioBWork) ? '2rem' : '0'} 0 1rem;font-family:'DM Serif Display',serif;color:var(--ink);">Automaatio C — Ensimmäinen työpäivä</h3>
+                <div class="content-item">
+                  <div class="content-item-header">
+                    <div>
+                      <span class="module-badge">moduuli1c-ai-automaatio</span>
+                      <span class="content-item-title">Tallennettu työ</span>
+                    </div>
+                    <div class="content-item-date">${formatDate(automaatioCWork.updated_at || automaatioCWork.created_at)}</div>
+                  </div>
+                  ${renderAutomaatioWorkHtml(automaatioCWork)}
                 </div>
               ` : ''}
             `}
