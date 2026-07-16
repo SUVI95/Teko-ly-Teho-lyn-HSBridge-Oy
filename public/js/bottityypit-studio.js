@@ -376,14 +376,31 @@
     hint.textContent = name ? "Valittu: " + name : "Raahaa tiedosto tähän tai klikkaa valitaksesi";
   }
 
+  function parseApiJson(res) {
+    return res.text().then(function (text) {
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        var err = new Error(
+          res.status === 404
+            ? "Palvelinpolku puuttuu — yritä uudelleen hetken kuluttua"
+            : "Palvelinvirhe (" + res.status + ")"
+        );
+        err.status = res.status;
+        throw err;
+      }
+    });
+  }
+
   async function parseCvFile(file) {
     if (!file) return;
+    var input = $("cvFile");
     if (!isAllowedCvFile(file)) {
       setCvUploadStatus(cvFileTypeError(file), "err");
       return;
     }
     setCvUploadFileName(file.name);
-    setCvUploadStatus("Luetaan CV:stä…", "");
+    setCvUploadStatus("Claude lukee CV:stä…", "");
     var zone = $("cvUploadZone");
     if (zone) zone.style.pointerEvents = "none";
     try {
@@ -394,22 +411,28 @@
         credentials: "include",
         body: fd,
       });
-      var data = await res.json();
+      var data = await parseApiJson(res);
       if (!res.ok) throw new Error(data.error || "CV:n luku epäonnistui");
       if (data.fields && Object.keys(data.fields).length) {
         var ok = applyCvPortfolioFields(data.fields);
         if (ok) {
-          setCvUploadStatus("✓ CV luettu — tarkista teksti ja taidot, sitten tallenna", "ok");
+          setCvUploadStatus("✓ CV luettu Claudella — tarkista teksti ja taidot", "ok");
+          scheduleSave();
         } else {
           setCvUploadStatus(data.message || "CV:stä ei saatu riittävästi tietoa — täydennä käsin", "err");
         }
       } else {
-        setCvUploadStatus(data.message || "CV:stä ei voitu lukea tekstiä — käytä tekstiversiota", "err");
+        setCvUploadStatus(
+          data.message ||
+            "CV:stä ei voitu lukea tekstiä (skannattu PDF?) — liitä teksti käsin",
+          "err"
+        );
       }
     } catch (e) {
       setCvUploadStatus((e.message || "Lataus epäonnistui") + " — liitä teksti käsin", "err");
     } finally {
       if (zone) zone.style.pointerEvents = "";
+      if (input) input.value = "";
     }
   }
 
@@ -417,10 +440,6 @@
     var input = $("cvFile");
     var zone = $("cvUploadZone");
     if (!input || !zone) return;
-    zone.addEventListener("click", function (e) {
-      if (e.target === input) return;
-      input.click();
-    });
     input.addEventListener("change", function () {
       if (input.files && input.files[0]) parseCvFile(input.files[0]);
     });
@@ -436,12 +455,6 @@
       zone.classList.remove("drag");
       var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
       if (f) parseCvFile(f);
-    });
-    zone.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        input.click();
-      }
     });
   }
 
@@ -851,7 +864,7 @@
       }),
     })
       .then(function (res) {
-        return res.json().then(function (data) {
+        return parseApiJson(res).then(function (data) {
           if (!res.ok || !data.ok) throw new Error(data.error || "Analyysi epäonnistui");
           return data.analysis;
         });

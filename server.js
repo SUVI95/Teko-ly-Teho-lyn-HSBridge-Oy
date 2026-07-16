@@ -126,7 +126,11 @@ app.use('/api', automaatioEmailRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    buildId: process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local'
+  });
 });
 
 // Explicitly serve shared frontend JS helpers.
@@ -149,6 +153,17 @@ app.get('/js/feedback.js', (req, res) => {
   res.sendFile(filePath, (err) => {
     if (err) {
       res.status(404).send('/* feedback.js not found */');
+    }
+  });
+});
+
+app.get('/js/auto-reload.js', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'js', 'auto-reload.js');
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      res.status(404).send('/* auto-reload.js not found */');
     }
   });
 });

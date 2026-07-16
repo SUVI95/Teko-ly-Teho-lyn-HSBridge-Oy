@@ -113,6 +113,7 @@ router.post('/chat', async (req, res) => {
  *  guarantees the promise always settles. */
 const OPENAI_TIMEOUT_MS = 8000;
 const ANTHROPIC_TIMEOUT_MS = 25000;
+const STUDIO_ANTHROPIC_TIMEOUT_MS = 55000;
 
 function timeoutSignal(ms) {
   if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
@@ -263,7 +264,7 @@ async function callOpenAIText({ system, messages, max_tokens = 1000, temperature
  * Student-facing written text (feedback, interview copy, coaching).
  * Claude first — OpenAI only as fallback. Voice/realtime stay on OpenAI elsewhere.
  */
-async function callClaudeText({ system, messages, max_tokens = 2000 }) {
+async function callClaudeText({ system, messages, max_tokens = 2000, timeout_ms }) {
   const anthropicKey = envTrim('ANTHROPIC_API_KEY');
   if (!anthropicKey) {
     console.warn('Anthropic API key not configured, using OpenAI for written text');
@@ -278,6 +279,7 @@ async function callClaudeText({ system, messages, max_tokens = 2000 }) {
   if (system) body.system = system;
 
   const maxRetries = 2;
+  const requestTimeout = timeout_ms || ANTHROPIC_TIMEOUT_MS;
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     if (attempt > 0) await new Promise((r) => setTimeout(r, 600));
 
@@ -291,7 +293,7 @@ async function callClaudeText({ system, messages, max_tokens = 2000 }) {
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify(body),
-        signal: timeoutSignal(ANTHROPIC_TIMEOUT_MS)
+        signal: timeoutSignal(requestTimeout)
       });
     } catch (err) {
       console.warn(`Anthropic fetch failed (attempt ${attempt + 1}/${maxRetries}):`, err.message);
@@ -962,7 +964,11 @@ router.post('/bottityypit-job-match', async (req, res) => {
     if (!envTrim('ANTHROPIC_API_KEY')) {
       return res.status(503).json({ error: 'Claude ei ole käytettävissä — ota yhteyttä ylläpitoon.' });
     }
-    const completeJson = (opts) => claudeJsonComplete(callClaudeText, opts);
+    const completeJson = (opts) =>
+      claudeJsonComplete(
+        (args) => callClaudeText({ ...args, timeout_ms: STUDIO_ANTHROPIC_TIMEOUT_MS }),
+        opts
+      );
     const result = await analyzeJobMatch(
       {
         cvText: req.body.cvText,
@@ -1007,7 +1013,11 @@ router.post('/bottityypit-cv-parse-file', (req, res) => {
           message: 'CV:stä ei saatu riittävästi tekstiä automaattista täyttöä varten.'
         });
       }
-      const completeJson = (opts) => claudeJsonComplete(callClaudeText, opts);
+      const completeJson = (opts) =>
+        claudeJsonComplete(
+          (args) => callClaudeText({ ...args, timeout_ms: STUDIO_ANTHROPIC_TIMEOUT_MS }),
+          opts
+        );
       const { fields, chars } = await extractPortfolioFieldsFromCvTextClaude(text, completeJson);
       res.json({ fields, chars, partial: plainLen < 40, provider: 'anthropic' });
     } catch (err) {
