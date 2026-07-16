@@ -1025,21 +1025,17 @@
   }
 
   function callStudioChat(userText) {
+    var system = buildChatSystem();
+    if (system.length > 12000) system = system.slice(0, 12000) + "\n…";
     return fetchJsonWithTimeout(
-      "/api/module-ai",
+      "/api/ai/claude",
       {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          provider: "anthropic",
-          anthropic_only: true,
-          skip_quality_gate: true,
-          bonus_slug: window.BONUS_MODULE_SLUG || "bottityypit",
-          section_id: "studio_chat",
-          system: buildChatSystem(),
+          system: system,
           messages: [{ role: "user", content: userText }],
-          user_text: userText,
           max_tokens: 900,
         }),
       },
@@ -1051,11 +1047,7 @@
             "Yhteys tekoälyyn ei toiminut (" + out.res.status + ")"
         );
       }
-      return String(
-        (out.data.content && out.data.content[0] && out.data.content[0].text) ||
-          out.data.text ||
-          ""
-      ).trim();
+      return String(out.data.text || "").trim();
     });
   }
 

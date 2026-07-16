@@ -43,7 +43,7 @@ async function callAnthropic({ system, messages, max_tokens }) {
   if (!anthropicKey) return null;
 
   const body = {
-    model: 'claude-sonnet-4-20250514',
+    model: envTrim('ANTHROPIC_MODEL') || 'claude-sonnet-4-5',
     max_tokens: max_tokens || 1000,
     messages: messages || []
   };
@@ -128,7 +128,7 @@ router.post('/', async (req, res) => {
       try {
         text = await callAnthropic({ system, messages: msgs, max_tokens });
       } catch (e) {
-        if (anthropic_only) throw e;
+        console.warn('module-ai Anthropic failed, using OpenAI fallback:', e.message);
       }
     }
     if (!text) {
