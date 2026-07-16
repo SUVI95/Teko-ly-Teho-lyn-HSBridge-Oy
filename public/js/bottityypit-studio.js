@@ -392,6 +392,50 @@
     });
   }
 
+  function plainLen(s) {
+    return String(s || "").replace(/\s/g, "").length;
+  }
+
+  function setJobAnalyzeStatus(msg, kind) {
+    var el = $("jobAnalyzeStatus");
+    if (!el) return;
+    el.textContent = msg || "";
+    el.className = "job-analyze-status" + (kind ? " " + kind : "");
+  }
+
+  function validateJobAnalysis() {
+    var cv = ($("cvText") && $("cvText").value) || "";
+    var job = ($("jobPost") && $("jobPost").value) || "";
+    if (plainLen(cv) < 20) {
+      return "CV on liian lyhyt — lataa tai kirjoita CV ensin Kouluta-välilehdellä.";
+    }
+    if (plainLen(job) < 30) {
+      return "Ilmoitus on liian lyhyt — kopioi koko työpaikkailmoitus (yritys, rooli, vaatimukset).";
+    }
+    return null;
+  }
+
+  function fetchJsonWithTimeout(url, options, timeoutMs) {
+    var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    var timer = null;
+    if (ctrl) {
+      options = options || {};
+      options.signal = ctrl.signal;
+      timer = setTimeout(function () {
+        ctrl.abort();
+      }, timeoutMs);
+    }
+    return fetch(url, options)
+      .then(function (res) {
+        return parseApiJson(res).then(function (data) {
+          return { res: res, data: data };
+        });
+      })
+      .finally(function () {
+        if (timer) clearTimeout(timer);
+      });
+  }
+
   async function parseCvFile(file) {
     if (!file) return;
     var input = $("cvFile");
@@ -836,42 +880,54 @@
   }
 
   function runAnalysis(fromChat) {
+    var validationError = validateJobAnalysis();
+    if (validationError) {
+      setJobAnalyzeStatus(validationError, "err");
+      if (!fromChat) alert(validationError);
+      return;
+    }
+    if (!trained && hasCvContent()) {
+      trained = true;
+      updateTrainStatus();
+    }
     if (!trained) {
-      alert("Tallenna botti ensin (CV + taidot).");
+      var msg = "Lisää CV ja paina Tallenna & kouluta ensin.";
+      setJobAnalyzeStatus(msg, "err");
+      alert(msg);
       return;
     }
     var job = $("jobPost").value.trim();
-    if (!job) {
-      alert("Liitä työpaikkailmoitus.");
-      return;
-    }
 
     var btn = $("analyzeBtn");
     if (btn) {
       btn.disabled = true;
       btn.textContent = "Analysoidaan…";
     }
+    setJobAnalyzeStatus("Claude analysoi sopivuutta — tämä voi kestää 15–30 s…", "wait");
     setSaveStatus("Analysoidaan työpaikkaa…", false);
 
-    fetch("/api/ai/bottityypit-job-match", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        cvText: $("cvText").value,
-        skillsText: $("skillsText").value,
-        jobPost: job,
-      }),
-    })
-      .then(function (res) {
-        return parseApiJson(res).then(function (data) {
-          if (!res.ok || !data.ok) throw new Error(data.error || "Analyysi epäonnistui");
-          return data.analysis;
-        });
+    fetchJsonWithTimeout(
+      "/api/ai/bottityypit-job-match",
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cvText: $("cvText").value,
+          skillsText: $("skillsText").value,
+          jobPost: job,
+        }),
+      },
+      75000
+    )
+      .then(function (out) {
+        if (!out.res.ok || !out.data.ok) throw new Error(out.data.error || "Analyysi epäonnistui");
+        return out.data.analysis;
       })
       .then(function (analysis) {
         analysisData = analysis;
         renderAnalysisPanel();
+        setJobAnalyzeStatus("Analyysi valmis — katso oikea paneeli", "ok");
         if (fromChat) {
           addBotRich(
             "Fit score: " + analysisData.score + "%",
@@ -894,7 +950,12 @@
         setSaveStatus("Analyysi valmis", true);
       })
       .catch(function (e) {
-        alert(e.message || "Työpaikka-analyysi epäonnistui — yritä uudelleen.");
+        var msg =
+          e && e.name === "AbortError"
+            ? "Analyysi kesti liian kauan — yritä uudelleen."
+            : e.message || "Työpaikka-analyysi epäonnistui — yritä uudelleen.";
+        setJobAnalyzeStatus(msg, "err");
+        alert(msg);
         setSaveStatus("Analyysi epäonnistui", false);
       })
       .finally(function () {
@@ -971,6 +1032,19 @@
     fieldIds().forEach(function (id) {
       bindFieldSync($(id));
     });
+
+    if ($("jobPost")) {
+      $("jobPost").addEventListener("input", function () {
+        var err = validateJobAnalysis();
+        if (!err && plainLen($("jobPost").value) >= 30) {
+          setJobAnalyzeStatus("Valmis analysoitavaksi — paina Analysoi", "ok");
+        } else if (plainLen($("jobPost").value) > 0 && plainLen($("jobPost").value) < 30) {
+          setJobAnalyzeStatus("Liitä koko ilmoitus — teksti on vielä liian lyhyt", "err");
+        } else {
+          setJobAnalyzeStatus("", "");
+        }
+      });
+    }
 
     $("trainBtn").onclick = trainAndSave;
     $("analyzeBtn").onclick = function () {

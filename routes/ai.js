@@ -113,7 +113,7 @@ router.post('/chat', async (req, res) => {
  *  guarantees the promise always settles. */
 const OPENAI_TIMEOUT_MS = 8000;
 const ANTHROPIC_TIMEOUT_MS = 25000;
-const STUDIO_ANTHROPIC_TIMEOUT_MS = 55000;
+const STUDIO_ANTHROPIC_TIMEOUT_MS = 40000;
 
 function timeoutSignal(ms) {
   if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
@@ -264,7 +264,7 @@ async function callOpenAIText({ system, messages, max_tokens = 1000, temperature
  * Student-facing written text (feedback, interview copy, coaching).
  * Claude first — OpenAI only as fallback. Voice/realtime stay on OpenAI elsewhere.
  */
-async function callClaudeText({ system, messages, max_tokens = 2000, timeout_ms }) {
+async function callClaudeText({ system, messages, max_tokens = 2000, timeout_ms, max_retries }) {
   const anthropicKey = envTrim('ANTHROPIC_API_KEY');
   if (!anthropicKey) {
     console.warn('Anthropic API key not configured, using OpenAI for written text');
@@ -278,7 +278,7 @@ async function callClaudeText({ system, messages, max_tokens = 2000, timeout_ms 
   };
   if (system) body.system = system;
 
-  const maxRetries = 2;
+  const maxRetries = max_retries == null ? 2 : max_retries;
   const requestTimeout = timeout_ms || ANTHROPIC_TIMEOUT_MS;
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     if (attempt > 0) await new Promise((r) => setTimeout(r, 600));
@@ -966,7 +966,12 @@ router.post('/bottityypit-job-match', async (req, res) => {
     }
     const completeJson = (opts) =>
       claudeJsonComplete(
-        (args) => callClaudeText({ ...args, timeout_ms: STUDIO_ANTHROPIC_TIMEOUT_MS }),
+        (args) =>
+          callClaudeText({
+            ...args,
+            timeout_ms: STUDIO_ANTHROPIC_TIMEOUT_MS,
+            max_retries: 1
+          }),
         opts
       );
     const result = await analyzeJobMatch(
@@ -1015,7 +1020,12 @@ router.post('/bottityypit-cv-parse-file', (req, res) => {
       }
       const completeJson = (opts) =>
         claudeJsonComplete(
-          (args) => callClaudeText({ ...args, timeout_ms: STUDIO_ANTHROPIC_TIMEOUT_MS }),
+          (args) =>
+            callClaudeText({
+              ...args,
+              timeout_ms: STUDIO_ANTHROPIC_TIMEOUT_MS,
+              max_retries: 1
+            }),
           opts
         );
       const { fields, chars } = await extractPortfolioFieldsFromCvTextClaude(text, completeJson);
