@@ -22,6 +22,8 @@
   var analysisData = null;
   var saveTimer = null;
   var restored = false;
+  var cachedUserId = null;
+  var userIdLoaded = false;
 
   function $(id) {
     return document.getElementById(id);
@@ -45,7 +47,6 @@
       "personality",
       "behavior",
       "limits",
-      "fullPrompt",
       "cvText",
       "skillsText",
       "jobPost",
@@ -55,6 +56,28 @@
       "chip3",
       "hexMain",
     ];
+  }
+
+  function localStorageKey() {
+    return LOCAL_KEY + ":" + (cachedUserId || "anon");
+  }
+
+  function loadUserId() {
+    if (userIdLoaded) return Promise.resolve(cachedUserId);
+    return fetch("/api/auth/me", { credentials: "include" })
+      .then(function (r) {
+        return r.ok ? r.json() : null;
+      })
+      .then(function (d) {
+        cachedUserId = d && d.user && d.user.id ? String(d.user.id) : "anon";
+        userIdLoaded = true;
+        return cachedUserId;
+      })
+      .catch(function () {
+        cachedUserId = "anon";
+        userIdLoaded = true;
+        return cachedUserId;
+      });
   }
 
   function collectFields() {
@@ -89,20 +112,50 @@
 
   function saveStudio(opts) {
     opts = opts || {};
+    syncPrompt();
     var snap = collectSnapshot();
     var json = JSON.stringify(snap);
     try {
-      localStorage.setItem(LOCAL_KEY, json);
+      localStorage.setItem(localStorageKey(), json);
     } catch (e) {
       /* ignore */
     }
-    if (window.BonusModule && typeof window.BonusModule.saveEntry === "function") {
-      return window.BonusModule.saveEntry("_studio", json, null, null, opts).then(function () {
-        if (!opts.silent) setSaveStatus("Tallennettu", true);
+    if (!opts.silent) setSaveStatus("Tallennetaan…", false);
+
+    return fetch("/api/bonus-module/responses", {
+      method: "POST",
+      credentials: "include",
+      keepalive: !!opts.keepalive,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        slug: window.BONUS_MODULE_SLUG || "bottityypit",
+        section_id: "_studio",
+        user_text: json,
+      }),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { res: res, data: data };
+        });
+      })
+      .then(function (out) {
+        if (out.data && out.data.success) {
+          if (!opts.silent) setSaveStatus("Tallennettu", true);
+          else setSaveStatus("Tallennettu automaattisesti", true);
+          return true;
+        }
+        if (!opts.silent) {
+          setSaveStatus("Tallennettu selaimessa — kirjaudu tallentaaksesi pilveen", true);
+        } else {
+          setSaveStatus("Tallennettu paikallisesti", true);
+        }
+        return false;
+      })
+      .catch(function () {
+        if (!opts.silent) setSaveStatus("Tallennettu vain selaimessa", true);
+        else setSaveStatus("Tallennettu paikallisesti", true);
+        return false;
       });
-    }
-    if (!opts.silent) setSaveStatus("Tallennettu (paikallisesti)", true);
-    return Promise.resolve();
   }
 
   function scheduleSave() {
@@ -128,7 +181,18 @@
 
   function readLocalSnapshot() {
     try {
-      return parseSnapshot(localStorage.getItem(LOCAL_KEY));
+      var scoped = parseSnapshot(localStorage.getItem(localStorageKey()));
+      if (scoped) return scoped;
+      var legacy = parseSnapshot(localStorage.getItem(LOCAL_KEY));
+      if (legacy) {
+        try {
+          localStorage.setItem(localStorageKey(), JSON.stringify(legacy));
+        } catch (e) {
+          /* ignore */
+        }
+        return legacy;
+      }
+      return null;
     } catch (e) {
       return null;
     }
@@ -198,6 +262,7 @@
     if (snap.fields) {
       snap.fields = stripShippedTemplatesFromFields(Object.assign({}, snap.fields));
       Object.keys(snap.fields).forEach(function (id) {
+        if (id === "fullPrompt") return;
         var el = $(id);
         if (!el || snap.fields[id] == null) return;
         el.value = snap.fields[id];
@@ -381,18 +446,25 @@
   }
 
   function syncPrompt() {
+    var cvSnippet = $("cvText").value.trim();
+    if (cvSnippet.length > 200) cvSnippet = cvSnippet.slice(0, 200) + "…";
+    else if (!cvSnippet) cvSnippet = "—";
     var p = [
-      "ROOLI:\n" + $("role").value,
-      "PERSOONALLISUUS:\n" + $("personality").value,
-      "KÄYTTÄYTYMINEN:\n" + $("behavior").value,
-      "RAJAT:\n" + $("limits").value,
-      "CV-DATA:\n" + $("cvText").value.slice(0, 200) + "…",
-      "TAIDOT:\n" + $("skillsText").value,
+      "ROOLI:\n" + ($("role").value || "").trim(),
+      "PERSOONALLISUUS:\n" + ($("personality").value || "").trim(),
+      "KÄYTTÄYTYMINEN:\n" + ($("behavior").value || "").trim(),
+      "RAJAT:\n" + ($("limits").value || "").trim(),
+      "CV-DATA:\n" + cvSnippet,
+      "TAIDOT:\n" + ($("skillsText").value || "").trim(),
     ].join("\n\n");
-    $("fullPrompt").value = p;
-    $("promptWc").textContent = wc(p) + " sanaa";
-    $("chatTitle").textContent = $("botName").value.trim() || parseCvName() || "Uravalmentaja";
-    $("av").textContent = (parseCvName().charAt(0) || "?").toUpperCase();
+    var fp = $("fullPrompt");
+    if (fp) fp.value = p;
+    var wcEl = $("promptWc");
+    if (wcEl) wcEl.textContent = wc(p) + " sanaa";
+    var ct = $("chatTitle");
+    if (ct) ct.textContent = $("botName").value.trim() || parseCvName() || "Uravalmentaja";
+    var av = $("av");
+    if (av) av.textContent = (parseCvName().charAt(0) || "?").toUpperCase();
   }
 
   function parseCvName() {
@@ -425,31 +497,20 @@
 
   function clearLegacyDemoFromDom() {
     var snap = { fields: collectFields(), trained: trained, analysisData: analysisData };
-    var cleared = false;
-    if (isLegacyDemoSnapshot(snap) || isLegacyDemoAnalysis(analysisData)) {
-      $("cvText").value = "";
-      $("skillsText").value = "";
-      $("jobPost").value = "";
-      if (/aino/i.test(($("botName").value || "").trim())) $("botName").value = "";
-      trained = false;
-      analysisData = null;
-      $("analysisEmpty").style.display = "block";
-      $("analysisResult").style.display = "none";
-      $("jobTitle").textContent = "Ei analyysiä vielä — kouluta botti ja liitä ilmoitus";
-      cleared = true;
-    }
-    fieldIds().forEach(function (id) {
-      var el = $(id);
-      if (!el || !isShippedTemplateField(id, el.value)) return;
-      el.value = "";
-      cleared = true;
-    });
-    if (cleared) {
-      syncPrompt();
-      updateTrainStatus();
-      renderSitePreview();
-    }
-    return cleared;
+    if (!isLegacyDemoSnapshot(snap) && !isLegacyDemoAnalysis(analysisData)) return false;
+    $("cvText").value = "";
+    $("skillsText").value = "";
+    $("jobPost").value = "";
+    if (/aino/i.test(($("botName").value || "").trim())) $("botName").value = "";
+    trained = false;
+    analysisData = null;
+    $("analysisEmpty").style.display = "block";
+    $("analysisResult").style.display = "none";
+    $("jobTitle").textContent = "Ei analyysiä vielä — kouluta botti ja liitä ilmoitus";
+    syncPrompt();
+    updateTrainStatus();
+    renderSitePreview();
+    return true;
   }
 
   function stripLegacyDemoSnapshot(snap) {
@@ -466,9 +527,25 @@
 
   function purgeLegacyDemoPersistence(serverSnap) {
     var cleared = clearLegacyDemoFromDom();
-    if (serverSnap && (isLegacyDemoSnapshot(serverSnap) || isTemplateOnlySnapshot(serverSnap))) cleared = true;
-    if (cleared) saveStudio({ silent: true });
+    if (cleared && serverSnap && isLegacyDemoSnapshot(serverSnap)) {
+      saveStudio({ silent: true });
+    }
     return cleared;
+  }
+
+  function bindFieldSync(el) {
+    if (!el || el.dataset.studioSyncBound) return;
+    el.dataset.studioSyncBound = "1";
+    function onEdit() {
+      syncPrompt();
+      if (el.id === "cvText" || el.id === "skillsText" || el.id === "botName") {
+        renderSitePreview();
+      }
+      scheduleSave();
+    }
+    el.addEventListener("input", onEdit);
+    el.addEventListener("change", onEdit);
+    el.addEventListener("keyup", onEdit);
   }
 
   function hasCvContent() {
@@ -874,17 +951,12 @@
         });
         b.classList.add("on");
         $("tab-" + b.dataset.tab).classList.add("on");
+        if (b.dataset.tab === "ai") syncPrompt();
       };
     });
 
     fieldIds().forEach(function (id) {
-      var el = $(id);
-      if (!el) return;
-      el.addEventListener("input", function () {
-        syncPrompt();
-        renderSitePreview();
-        scheduleSave();
-      });
+      bindFieldSync($(id));
     });
 
     $("trainBtn").onclick = trainAndSave;
@@ -925,6 +997,7 @@
       syncPrompt();
       renderChips();
       renderSitePreview();
+      saveStudio();
     };
 
     document.querySelectorAll("#posRow button").forEach(function (b) {
@@ -944,28 +1017,31 @@
   }
 
   function onReady() {
-    try {
-      localStorage.removeItem("bottityypit-studio-v1");
-    } catch (e) {
-      /* ignore */
-    }
-    var serverRaw = null;
-    if (window.BonusModule && typeof window.BonusModule.getEntry === "function") {
-      serverRaw = window.BonusModule.getEntry("_studio");
-    }
-    var serverSnap = parseSnapshot(serverRaw);
-    var best = pickBestSnapshot(serverRaw);
-    wire();
-    wireCvUpload();
-    if (best) restoreSnapshot(best);
-    clearLegacyDemoFromDom();
-    syncPrompt();
-    renderChips();
-    if (!restored) {
-      renderSitePreview();
-      updateTrainStatus();
-    }
-    purgeLegacyDemoPersistence(serverSnap);
+    loadUserId().then(function () {
+      try {
+        localStorage.removeItem("bottityypit-studio-v1");
+        localStorage.removeItem(LOCAL_KEY);
+      } catch (e) {
+        /* ignore */
+      }
+      var serverRaw = null;
+      if (window.BonusModule && typeof window.BonusModule.getEntry === "function") {
+        serverRaw = window.BonusModule.getEntry("_studio");
+      }
+      var serverSnap = parseSnapshot(serverRaw);
+      var best = pickBestSnapshot(serverRaw);
+      wire();
+      wireCvUpload();
+      syncPrompt();
+      if (best) restoreSnapshot(best);
+      else syncPrompt();
+      renderChips();
+      if (!restored) {
+        renderSitePreview();
+        updateTrainStatus();
+      }
+      purgeLegacyDemoPersistence(serverSnap);
+    });
   }
 
   if (document.readyState === "loading") {
