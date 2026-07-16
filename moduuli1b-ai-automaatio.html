@@ -134,13 +134,16 @@ h2.h em { font-style:italic; color:var(--orange); }
 .canvas-wrap { flex:1; min-width:0; position:relative; overflow:hidden; background:var(--canvas-bg);
   background-image:radial-gradient(var(--canvas-dot) 1.1px, transparent 1.1px);
   background-size:18px 18px; }
-.canvas-wrap.fix-settings-only { overflow-x:auto; overflow-y:hidden; min-height:360px; }
-.fix-canvas-track { position:relative; min-height:280px; height:100%; }
-.canvas-wrap.fix-settings-only svg { position:absolute; top:0; left:0; height:100%; pointer-events:none; z-index:1; }
+.canvas-wrap.fix-settings-only { overflow-x:auto; overflow-y:hidden; min-height:300px; }
+.fix-canvas-track { position:relative; height:280px; min-height:280px; }
+.fix-canvas-track svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; z-index:1; }
+.fix-canvas-track .edge-path { stroke:#8b95a1; stroke-width:2.75; }
 .canvas-hint { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:.5rem; color:var(--n8n-muted); pointer-events:none; text-align:center; padding:1rem; }
-.canvas-hint.fix-hint { position:sticky; left:auto; right:.75rem; bottom:.75rem; width:auto; height:auto; inset:auto; align-items:flex-end; justify-content:flex-end; padding:0; z-index:3; }
-.canvas-hint.fix-hint span { font-size:.68rem; background:rgba(255,255,255,.95); border:1px solid var(--panel-line); border-radius:8px; padding:.4rem .6rem; max-width:260px; line-height:1.45; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.canvas-hint.fix-hint { position:absolute; right:.65rem; bottom:.55rem; left:auto; top:auto; inset:auto; z-index:3; width:auto; height:auto; padding:0; align-items:flex-end; justify-content:flex-end; }
+.canvas-hint.fix-hint span { font-size:.66rem; background:rgba(255,255,255,.96); border:1px solid var(--panel-line); border-radius:8px; padding:.35rem .55rem; max-width:220px; line-height:1.4; box-shadow:0 2px 8px rgba(0,0,0,.06); }
 .canvas-wrap.fix-settings-only .node { cursor:pointer; }
+.canvas-wrap.fix-settings-only .port { pointer-events:none; cursor:default; }
+.canvas-wrap.fix-settings-only .port.out:hover { border-color:#b4bcc6; background:#fff; }
 .canvas-hint .ch-box { width:150px; height:70px; border:2px dashed #c3c9d1; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.75rem; color:var(--n8n-muted); background:rgba(255,255,255,.5); }
 .canvas-hint.hidden { display:none; }
 .canvas-drop-hi { position:absolute; inset:6px; border:2px dashed var(--orange); border-radius:12px; background:var(--orange-light); opacity:0; pointer-events:none; transition:opacity .15s; }
@@ -435,7 +438,7 @@ h2.h em { font-style:italic; color:var(--orange); }
 <div class="sep"></div>
 
 <!-- OSA 2: RIKKINÄINEN KONE -->
-<section class="section" id="rikki" data-index="2" style="max-width:1040px;">
+<section class="section" id="rikki" data-index="2" style="max-width:1180px;">
   <div class="kicker reveal">Osa 2 · Korjaa rikkinäinen kone</div>
   <h2 class="h reveal">Tämä kone <em>ei toimi.</em> Selvitä miksi</h2>
   <p class="lead reveal">Alla on <strong>kolme tasoa</strong>. Jokaisessa on valmis automaatio suunnitteluvirheineen. Paina <strong>▶ Suorita</strong>, katso miten se epäonnistuu, lue suoritusloki ja korjaa viat yksi kerrallaan. Taso 1 on suora — tasot 2 ja 3 vaativat enemmän ajattelua.</p>
@@ -468,8 +471,10 @@ h2.h em { font-style:italic; color:var(--orange); }
     </div>
     <div class="builder-main">
       <div class="canvas-wrap fix-settings-only" id="fixCanvas">
-        <svg id="fixEdges"></svg>
-        <div class="canvas-hint fix-hint"><span>Ketju on valmiiksi kytketty. <strong>Klikkaa palikkaa</strong> ja korjaa sen asetuksia — ei tarvitse vetää yhteyksiä.</span></div>
+        <div class="fix-canvas-track" id="fixTrack">
+          <svg id="fixEdges"></svg>
+        </div>
+        <div class="canvas-hint fix-hint"><span>Ketju on valmiiksi kytketty. <strong>Klikkaa palikkaa</strong> ja korjaa sen asetuksia.</span></div>
       </div>
       <div class="params params-pinned open" id="fixParams">
         <div class="params-in" id="fixParamsIn">
@@ -518,7 +523,7 @@ h2.h em { font-style:italic; color:var(--orange); }
         <div class="bt-right"><div class="bt-toggle"><span id="fix2Active">Inactive</span><span class="bt-switch" id="fix2Switch"></span></div><button class="bt-run" id="fix2Run" onclick="runFixLevel('fix2')">▶ Suorita</button></div>
       </div>
       <div class="builder-main">
-        <div class="canvas-wrap fix-settings-only" id="fix2Canvas"><svg id="fix2Edges"></svg><div class="canvas-hint fix-hint"><span>Klikkaa palikkaa ja korjaa asetuksia — ketju pysyy samana.</span></div></div>
+        <div class="canvas-wrap fix-settings-only" id="fix2Canvas"><div class="fix-canvas-track" id="fix2Track"><svg id="fix2Edges"></svg></div><div class="canvas-hint fix-hint"><span>Klikkaa palikkaa ja korjaa asetuksia — ketju pysyy samana.</span></div></div>
         <div class="params params-pinned open" id="fix2Params"><div class="params-in" id="fix2ParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa korjataksesi asetukset</div></div></div>
       </div>
       <div class="exec" id="fix2Exec"><div class="exec-head"><div class="eh-l"><span class="live"></span> Suoritusloki</div></div><div class="exec-body" id="fix2Log"></div></div>
@@ -549,7 +554,7 @@ h2.h em { font-style:italic; color:var(--orange); }
         <div class="bt-right"><div class="bt-toggle"><span id="fix3Active">Inactive</span><span class="bt-switch" id="fix3Switch"></span></div><button class="bt-run" id="fix3Run" onclick="runFixLevel('fix3')">▶ Suorita</button></div>
       </div>
       <div class="builder-main">
-        <div class="canvas-wrap fix-settings-only" id="fix3Canvas"><svg id="fix3Edges"></svg><div class="canvas-hint fix-hint"><span>Klikkaa palikkaa ja korjaa asetuksia — ketju pysyy samana.</span></div></div>
+        <div class="canvas-wrap fix-settings-only" id="fix3Canvas"><div class="fix-canvas-track" id="fix3Track"><svg id="fix3Edges"></svg></div><div class="canvas-hint fix-hint"><span>Klikkaa palikkaa ja korjaa asetuksia — ketju pysyy samana.</span></div></div>
         <div class="params params-pinned open" id="fix3Params"><div class="params-in" id="fix3ParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa — älä ohita yhtään</div></div></div>
       </div>
       <div class="exec" id="fix3Exec"><div class="exec-head"><div class="eh-l"><span class="live"></span> Suoritusloki</div></div><div class="exec-body" id="fix3Log"></div></div>
@@ -675,7 +680,7 @@ h2.h em { font-style:italic; color:var(--orange); }
 <div class="sep"></div>
 
 <!-- OSA 5: RUNG 4 — ORDER BUG (live canvas) -->
-<section class="section" id="jarjestys" data-index="5" style="max-width:1040px;">
+<section class="section" id="jarjestys" data-index="5" style="max-width:1180px;">
   <div class="kicker reveal">Osa 5 · Oikeat palikat, väärä järjestys</div>
   <h2 class="h reveal">Kaikki palikat ovat oikein. <em>Miksi se silti pettää?</em></h2>
   <p class="lead reveal">Joskus koneessa on täsmälleen oikeat palikat — mutta väärässä järjestyksessä. Järjestys ratkaisee: sama palikka väärässä kohdassa tuhlaa työtä tai tekee vääriä asioita. Tämä automaatio on tarkoitus käsitellä <strong>vain kiireelliset</strong> viestit, mutta se käsittelee kaikki. Löydä miksi — ja korjaa raahaamalla.</p>
@@ -716,7 +721,7 @@ h2.h em { font-style:italic; color:var(--orange); }
 <div class="sep"></div>
 
 <!-- OSA 6: RUNG 5 — BUILD FROM BUG REPORT (hardest) -->
-<section class="section" id="korjaarakentamalla" data-index="6" style="max-width:1040px;">
+<section class="section" id="korjaarakentamalla" data-index="6" style="max-width:1180px;">
   <div class="kicker reveal">Osa 6 · Rakenna oikea versio</div>
   <h2 class="h reveal">Asiakas kertoi mikä meni pieleen. <em>Rakenna se oikein</em></h2>
   <p class="lead reveal">Viimeinen ja vaikein. Et saa valmista konetta korjattavaksi — saat <strong>kuvauksen siitä, mitä tarvitaan ja mihin ansaan edellinen yritys lankesi.</strong> Sinun on rakennettava oikea versio tyhjästä, välttäen sama virhe. Tämä yhdistää kaiken: diagnoosin ja rakentamisen.</p>
@@ -874,13 +879,12 @@ const NODE_META={
 };
 function nodeHTML(n, readOnly){
   const m=NODE_META[n.type];
-  const ports=readOnly?'':'<div class="port in"></div><div class="port out"></div>';
   return `<div class="node n-${n.type}" id="${n.id}" style="left:${n.x}px; top:${n.y}px;" data-type="${n.type}">
     <div class="nd-stripe"></div><div class="nd-status"></div>
     ${readOnly?'':'<div class="del" title="Poista">×</div>'}
     <div class="nd-head"><div class="nd-ic">${m.ic}</div><div class="nd-tt"><div class="nd-name">${n.name||m.type}</div><div class="nd-type">${m.type}</div></div></div>
     <div class="nd-foot">${n.foot||''}</div>
-    ${ports}</div>`;
+    <div class="port in"></div><div class="port out"></div></div>`;
 }
 function drawEdges(svgId, edges, posFn){
   const svg=document.getElementById(svgId); if(!svg) return; svg.innerHTML='';
@@ -1225,40 +1229,59 @@ function unlockFixLevel(n){
   if(el) el.classList.remove('fix-level-locked');
 }
 
-const FIX_NODE_W=172, FIX_NODE_GAP=56, FIX_NODE_PAD=40, FIX_NODE_Y=88;
-function ensureFixCanvasTrack(canvasEl){
-  let track=canvasEl.querySelector('.fix-canvas-track');
-  if(!track){
-    track=document.createElement('div');
-    track.className='fix-canvas-track';
-    const svg=canvasEl.querySelector('svg');
-    if(svg) track.appendChild(svg);
-    canvasEl.insertBefore(track, canvasEl.firstChild);
-  }
-  return track;
+const FIX_NODE_W=156, FIX_NODE_H=86, FIX_NODE_PAD=28, FIX_NODE_Y=90;
+function fixTrackEl(levelId){
+  const c=fixEl(levelId,'canvas');
+  return c?.querySelector('.fix-canvas-track')||c;
 }
-function layoutFixNodes(d, trackEl){
+function layoutFixNodes(d, canvasEl, trackEl){
   const count=d.nodes.length;
+  const avail=Math.max(canvasEl.clientWidth||0, 420);
+  let gap=Math.floor((avail-FIX_NODE_PAD*2-count*FIX_NODE_W)/Math.max(1,count-1));
+  if(gap<40) gap=40;
+  if(gap>72) gap=72;
   d.nodes.forEach((n,i)=>{
-    n.x=FIX_NODE_PAD+i*(FIX_NODE_W+FIX_NODE_GAP);
+    n.x=FIX_NODE_PAD+i*(FIX_NODE_W+gap);
     n.y=FIX_NODE_Y;
   });
-  const chainW=FIX_NODE_PAD*2+count*FIX_NODE_W+(count-1)*FIX_NODE_GAP;
+  const chainW=FIX_NODE_PAD*2+count*FIX_NODE_W+(count-1)*gap;
+  trackEl.style.width=chainW+'px';
   trackEl.style.minWidth=chainW+'px';
-  trackEl.style.minHeight='280px';
   const svg=trackEl.querySelector('svg');
   if(svg){
+    svg.setAttribute('width', String(chainW));
+    svg.setAttribute('height', '280');
+    svg.setAttribute('viewBox', '0 0 '+chainW+' 280');
     svg.style.width=chainW+'px';
-    svg.style.minWidth=chainW+'px';
-    svg.style.height='100%';
+    svg.style.height='280px';
   }
+  return {chainW, gap};
+}
+function drawFixEdges(levelId){
+  const d=FIX_DEFS[levelId];
+  const svg=fixEl(levelId,'edges');
+  if(!svg||!d) return;
+  svg.innerHTML='';
+  const byId={}; d.nodes.forEach(n=>{ byId[n.id]=n; });
+  (d.edges||[]).forEach(([a,b])=>{
+    const na=byId[a], nb=byId[b]; if(!na||!nb) return;
+    const pa={x:na.x+FIX_NODE_W, y:na.y+FIX_NODE_H/2};
+    const pb={x:nb.x, y:nb.y+FIX_NODE_H/2};
+    const dx=Math.max(28,(pb.x-pa.x)*0.45);
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M ${pa.x} ${pa.y} C ${pa.x+dx} ${pa.y}, ${pb.x-dx} ${pb.y}, ${pb.x} ${pb.y}`);
+    path.setAttribute('class','edge-path');
+    path.dataset.a=a; path.dataset.b=b;
+    svg.appendChild(path);
+  });
 }
 
 function renderFixLevel(levelId){
   const d=FIX_DEFS[levelId]; syncFixState(levelId);
   const c=fixEl(levelId,'canvas');
-  const track=ensureFixCanvasTrack(c);
-  layoutFixNodes(d, track);
+  const track=fixTrackEl(levelId);
+  if(!c||!track) return;
+  layoutFixNodes(d, c, track);
   track.querySelectorAll('.node').forEach(n=>n.remove());
   d.nodes.forEach(n=>{
     let node={...n};
@@ -1280,10 +1303,20 @@ function renderFixLevel(levelId){
     }
     track.insertAdjacentHTML('beforeend', nodeHTML(node,true));
     const el=document.getElementById(n.id);
+    if(!el) return;
+    el.style.width=FIX_NODE_W+'px';
     el.style.cursor='pointer';
     el.onclick=()=>selectFixLevel(levelId,n.id);
   });
-  drawEdges(fixEl(levelId,'edges').id, d.edges, (id,side)=>portPos(track,id,side));
+  drawFixEdges(levelId);
+  requestAnimationFrame(()=>{
+    layoutFixNodes(d, c, track);
+    d.nodes.forEach(n=>{
+      const el=document.getElementById(n.id);
+      if(el){ el.style.left=n.x+'px'; el.style.top=n.y+'px'; el.style.width=FIX_NODE_W+'px'; }
+    });
+    drawFixEdges(levelId);
+  });
 }
 
 function selectFixLevel(levelId,nodeId){
