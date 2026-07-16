@@ -187,7 +187,10 @@ const PUBLIC_STUDENT_MODULE_IDS = new Set([
   'moduuli8-ai-polku',
   'moduuli9-haastattelu',
   'moduuli-elava-cv',
-  'moduuli-perplexity-notebooklm'
+  'moduuli-perplexity-notebooklm',
+  'moduuli-bottityypit',
+  'moduuli1-ai-automaatio',
+  'moduuli1b-ai-automaatio'
 ]);
 
 function isPublicStudentModule(moduleId) {

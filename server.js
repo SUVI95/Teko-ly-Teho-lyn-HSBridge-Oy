@@ -9,9 +9,11 @@ require('dotenv').config();
 (function logAiEnvPresence() {
   var o = (process.env.OPENAI_API_KEY || '').trim();
   var a = (process.env.ANTHROPIC_API_KEY || '').trim();
+  var r = (process.env.RESEND_API_KEY || '').trim();
   if (process.env.NODE_ENV !== 'test') {
     console.log('[env] OPENAI_API_KEY:', o ? 'configured' : 'MISSING');
     console.log('[env] ANTHROPIC_API_KEY:', a ? 'configured' : 'optional, not set');
+    console.log('[env] RESEND_API_KEY:', r ? 'configured' : 'MISSING (automaatio emails stubbed)');
   }
 })();
 
@@ -78,6 +80,7 @@ const artifactsRoutes = require('./routes/artifacts');
 const moduleAiRoutes = require('./routes/module-ai');
 const bonusModuleRoutes = require('./routes/bonus-module');
 const realtimeTokenRoutes = require('./routes/realtime-token');
+const automaatioEmailRoutes = require('./routes/automaatio-email');
 const { authenticateToken, authenticatePage } = require('./middleware/auth');
 
 const app = express();
@@ -117,6 +120,7 @@ app.use('/api/artifacts', artifactsRoutes);
 app.use('/api/module-ai', moduleAiRoutes);
 app.use('/api/bonus-module', bonusModuleRoutes);
 app.use('/api/realtime-token', realtimeTokenRoutes);
+app.use('/api', automaatioEmailRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -484,6 +488,16 @@ app.get('/:slug', (req, res, next) => {
 });
 
 /** Modules hidden from students; only admins may open (see adminOnlyModuleIds in public/index.html). */
+function isLocalDevHost(req) {
+  const host = String(req.hostname || '').toLowerCase();
+  return host === 'localhost' || host === '127.0.0.1';
+}
+
+/** Local-only: open gated modules without login via ?preview=1 (disabled in production). */
+function allowLocalModulePreview(req) {
+  return process.env.NODE_ENV !== 'production' && isLocalDevHost(req) && req.query.preview === '1';
+}
+
 const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-ai-verkkosivustotyokalut',
   'moduuli7-ai-tyonhaussa',
@@ -497,12 +511,9 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-elava-cv-callum',
   'moduuli-elava-cv-reeni',
   'moduuli-voice-deep-search',
-  'moduuli-bottityypit',
   'moduuli-ideasta-tuotteeksi',
   'moduuli-alanavaihtajan-kartta',
   'moduuli-ai-maisema',
-  'moduuli1-ai-automaatio',
-  'moduuli1b-ai-automaatio',
   'moduuli-jani-tutkimus-kirjoitus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
   'moduuli-karpo-tutkimus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
   'moduuli-anne-tyonhaku-2026', // removed from dashboard — kept on disk for admin reference only
@@ -522,8 +533,9 @@ Object.values(GIFTS).forEach((gift) => {
 
 app.get('/module/:moduleId', async (req, res) => {
   const moduleId = req.params.moduleId;
+  const localPreview = allowLocalModulePreview(req);
   const token = req.cookies && req.cookies.session_token;
-  let viewerIsAdmin = false;
+  let viewerIsAdmin = localPreview;
   let viewerIsKuopioDemo = false;
   if (token) {
     try {
