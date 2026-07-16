@@ -1000,6 +1000,130 @@
     $("msgs").scrollTop = 9999;
   }
 
+  function buildChatSystem() {
+    syncPrompt();
+    var parts = [$("fullPrompt").value || ""];
+    if (analysisData) {
+      parts.push(
+        "VIIMEISIN TYÖPAIKKA-ANALYYSI:\n" +
+          "Rooli: " +
+          analysisData.jobName +
+          "\nFit score: " +
+          analysisData.score +
+          "%\nATS osuu: " +
+          analysisData.atsMatched.join(", ") +
+          "\nATS puuttuu: " +
+          analysisData.atsMissing.join(", ") +
+          "\nParannukset: " +
+          analysisData.improve.join("; ")
+      );
+    }
+    var job = $("jobPost").value.trim();
+    if (job) parts.push("LIITETTY TYÖPAIKKAILMOITUS:\n" + job.slice(0, 4000));
+    parts.push("Vastaa suomeksi, lyhyesti ja käytännöllisesti. Älä keksi CV-tietoja.");
+    return parts.filter(Boolean).join("\n\n");
+  }
+
+  function callStudioChat(userText) {
+    return fetchJsonWithTimeout(
+      "/api/module-ai",
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: "anthropic",
+          anthropic_only: true,
+          skip_quality_gate: true,
+          bonus_slug: window.BONUS_MODULE_SLUG || "bottityypit",
+          section_id: "studio_chat",
+          system: buildChatSystem(),
+          messages: [{ role: "user", content: userText }],
+          user_text: userText,
+          max_tokens: 900,
+        }),
+      },
+      75000
+    ).then(function (out) {
+      if (!out.res.ok) {
+        throw new Error(
+          (out.data && (out.data.error || out.data.text)) ||
+            "Yhteys tekoälyyn ei toiminut (" + out.res.status + ")"
+        );
+      }
+      return String(
+        (out.data.content && out.data.content[0] && out.data.content[0].text) ||
+          out.data.text ||
+          ""
+      ).trim();
+    });
+  }
+
+  function setChatBusy(busy) {
+    var inp = $("inp");
+    var sendBtn = $("sendBtn");
+    if (inp) inp.disabled = !!busy;
+    if (sendBtn) sendBtn.disabled = !!busy;
+  }
+
+  function handleSendChat() {
+    var inp = $("inp");
+    if (!inp) return;
+    var text = inp.value.trim();
+    if (!text) return;
+
+    if (!trained && !hasCvContent()) {
+      addBot("Lisää CV ja paina Tallenna & kouluta ensin Kouluta-välilehdellä.");
+      return;
+    }
+
+    inp.value = "";
+    userMsg(text);
+
+    if (/vertaa|työpaikka|match|sopivuus/i.test(text) && plainLen($("jobPost").value) >= 30) {
+      runAnalysis(true);
+      return;
+    }
+    if (/cv|parann/i.test(text)) {
+      addBotRich(
+        "CV-parannukset",
+        analysisData ? analysisData.improve.join("\n• ") : "Liitä työpaikka ja paina Analysoi ensin."
+      );
+      return;
+    }
+    if (/hakemus|saate|teksti/i.test(text)) {
+      addBotRich(
+        "Hakemusehdotus",
+        analysisData ? analysisData.cover : "Liitä työpaikka ja paina Analysoi ensin."
+      );
+      return;
+    }
+
+    setChatBusy(true);
+    var typing = document.createElement("div");
+    typing.className = "bubble bot";
+    typing.id = "chatTyping";
+    typing.textContent = "Kirjoittaa…";
+    $("msgs").appendChild(typing);
+    $("msgs").scrollTop = 9999;
+
+    callStudioChat(text)
+      .then(function (reply) {
+        var el = $("chatTyping");
+        if (el) el.remove();
+        addBot(reply || "En saanut vastausta — yritä uudelleen.");
+      })
+      .catch(function (e) {
+        var el = $("chatTyping");
+        if (el) el.remove();
+        addBot((e.message || "Yhteys tekoälyyn epäonnistui") + " — yritä uudelleen.");
+      })
+      .finally(function () {
+        setChatBusy(false);
+        if (inp) inp.focus();
+      });
+  }
+
   function trainAndSave() {
     if (wc($("cvText").value) < 20) {
       alert("CV liian lyhyt — lisää tekstiä.");
@@ -1080,6 +1204,15 @@
       $("chat").classList.add("hide");
       $("launch").classList.remove("hide");
     };
+    if ($("sendBtn")) $("sendBtn").onclick = handleSendChat;
+    if ($("inp")) {
+      $("inp").addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          handleSendChat();
+        }
+      });
+    }
     $("syncBtn").onclick = function () {
       syncPrompt();
       renderChips();
