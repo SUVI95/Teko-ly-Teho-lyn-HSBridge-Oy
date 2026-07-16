@@ -285,6 +285,26 @@
     return !!(cv || (fields.skills && fields.skills.length));
   }
 
+  function isAllowedCvFile(file) {
+    if (!file) return false;
+    var name = (file.name || "").toLowerCase();
+    var type = (file.type || "").toLowerCase();
+    if (/\.(pdf|txt|docx)$/.test(name)) return true;
+    return (
+      type === "application/pdf" ||
+      type === "text/plain" ||
+      type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
+  }
+
+  function cvFileTypeError(file) {
+    var name = (file && file.name) || "tiedosto";
+    if (/\.doc$/i.test(name) && !/\.docx$/i.test(name)) {
+      return "Vanha Word (.doc) ei tueta — tallenna PDF- tai DOCX-muodossa.";
+    }
+    return "Tuetut tiedostot: PDF, DOCX ja TXT.";
+  }
+
   function setCvUploadFileName(name) {
     var hint = $("cvUploadHint");
     if (!hint) return;
@@ -293,6 +313,10 @@
 
   async function parseCvFile(file) {
     if (!file) return;
+    if (!isAllowedCvFile(file)) {
+      setCvUploadStatus(cvFileTypeError(file), "err");
+      return;
+    }
     setCvUploadFileName(file.name);
     setCvUploadStatus("Luetaan CV:stä…", "");
     var zone = $("cvUploadZone");
@@ -328,6 +352,10 @@
     var input = $("cvFile");
     var zone = $("cvUploadZone");
     if (!input || !zone) return;
+    zone.addEventListener("click", function (e) {
+      if (e.target === input) return;
+      input.click();
+    });
     input.addEventListener("change", function () {
       if (input.files && input.files[0]) parseCvFile(input.files[0]);
     });

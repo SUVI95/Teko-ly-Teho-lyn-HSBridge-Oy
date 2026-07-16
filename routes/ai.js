@@ -778,13 +778,15 @@ router.post('/cv-extract-text', (req, res) => {
           console.warn('cv-extract-text PDF parse:', extractErr.message);
           text = '';
         }
-      } else if (name.endsWith('.doc') || name.endsWith('.docx')) {
+      } else if (name.endsWith('.docx') || mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        text = await extractTextFromCvFile(req.file);
+      } else if (name.endsWith('.doc') || mime === 'application/msword') {
         return res.status(200).json({
           text: '',
           chars: 0,
           partial: true,
           stored: true,
-          message: 'Emme voineet lukea Word-tiedostoa automaattisesti. Täytä alla oleva lomake, jotta portfolioosi tulee kaikki tarvittavat tiedot.'
+          message: 'Vanha Word (.doc) ei tuettu. Tallenna CV PDF- tai DOCX-muodossa, tai täytä kentät käsin.'
         });
       } else {
         return res.status(400).json({ error: 'Tuetut tiedostot: PDF, TXT, DOC, DOCX' });
