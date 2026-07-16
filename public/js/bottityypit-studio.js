@@ -164,6 +164,118 @@
     if (trained) setSaveStatus("Botti ladattu — voit jatkaa tai muokata", true);
   }
 
+  function setCvUploadStatus(msg, kind) {
+    var el = $("cvUploadStatus");
+    if (!el) return;
+    el.textContent = msg || "";
+    el.className = "cv-upload-status" + (kind ? " " + kind : "");
+  }
+
+  function fieldsToCvText(fields) {
+    if (!fields) return "";
+    var lines = [];
+    var head = [fields.name, fields.target_role].filter(Boolean).join(" — ");
+    if (head) lines.push(head);
+    if (fields.city) lines.push("Sijainti: " + fields.city);
+    if (fields.bio) lines.push("\n" + fields.bio);
+    if (fields.experience && fields.experience.length) {
+      lines.push("\nKokemus:");
+      fields.experience.forEach(function (e) {
+        var row = [e.role, e.company, e.years].filter(Boolean).join(" · ");
+        if (e.desc) row += ": " + e.desc;
+        if (row) lines.push("• " + row);
+      });
+    }
+    if (fields.education && fields.education.length) {
+      lines.push("\nKoulutus:");
+      fields.education.forEach(function (e) {
+        lines.push("• " + [e.degree, e.school, e.year].filter(Boolean).join(" · "));
+      });
+    }
+    if (fields.languages && fields.languages.length) {
+      lines.push(
+        "\nKielet: " +
+          fields.languages
+            .map(function (l) {
+              return l.name + (l.level ? " (" + l.level + ")" : "");
+            })
+            .join(", ")
+      );
+    }
+    return lines.join("\n").trim();
+  }
+
+  function applyCvPortfolioFields(fields) {
+    if (!fields) return false;
+    var cv = fieldsToCvText(fields);
+    if (cv) $("cvText").value = cv;
+    if (fields.skills && fields.skills.length) {
+      $("skillsText").value = fields.skills.join(", ");
+    }
+    if (fields.name && !$("botName").value.trim()) {
+      var role = fields.target_role ? " · " + fields.target_role : "";
+      $("botName").value = fields.name.split(" ")[0] + role;
+    }
+    syncPrompt();
+    renderSitePreview();
+    scheduleSave();
+    return !!(cv || (fields.skills && fields.skills.length));
+  }
+
+  async function parseCvFile(file) {
+    if (!file) return;
+    setCvUploadStatus("Luetaan CV:stä…", "");
+    var zone = $("cvUploadZone");
+    if (zone) zone.style.pointerEvents = "none";
+    try {
+      var fd = new FormData();
+      fd.append("file", file);
+      var res = await fetch("/api/ai/bottityypit-cv-parse-file", {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || "CV:n luku epäonnistui");
+      if (data.fields && Object.keys(data.fields).length) {
+        var ok = applyCvPortfolioFields(data.fields);
+        if (ok) {
+          setCvUploadStatus("✓ CV luettu — tarkista teksti ja taidot, sitten tallenna", "ok");
+        } else {
+          setCvUploadStatus(data.message || "CV:stä ei saatu riittävästi tietoa — täydennä käsin", "err");
+        }
+      } else {
+        setCvUploadStatus(data.message || "CV:stä ei voitu lukea tekstiä — käytä tekstiversiota", "err");
+      }
+    } catch (e) {
+      setCvUploadStatus((e.message || "Lataus epäonnistui") + " — liitä teksti käsin", "err");
+    } finally {
+      if (zone) zone.style.pointerEvents = "";
+    }
+  }
+
+  function wireCvUpload() {
+    var input = $("cvFile");
+    var zone = $("cvUploadZone");
+    if (!input || !zone) return;
+    input.addEventListener("change", function () {
+      if (input.files && input.files[0]) parseCvFile(input.files[0]);
+    });
+    zone.addEventListener("dragover", function (e) {
+      e.preventDefault();
+      zone.classList.add("drag");
+    });
+    zone.addEventListener("dragleave", function () {
+      zone.classList.remove("drag");
+    });
+    zone.addEventListener("drop", function (e) {
+      e.preventDefault();
+      zone.classList.remove("drag");
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) parseCvFile(f);
+    });
+  }
+
   function syncPrompt() {
     var p = [
       "ROOLI:\n" + $("role").value,
@@ -378,7 +490,17 @@
       analysisData.score * 3.6 +
       'deg, var(--border) 0)"><div><div class="val">' +
       analysisData.score +
-      '%</div><div class="lbl">Fit score</div></div></div><div class="score-meta"><div class="t">Hyvä sopivuus — hakeminen kannattaa</div><div class="d">Vahva: asiakaspalvelu, CRM, kielet. Heikko: B2B/SaaS, myyntiluvut.</div></div></div>' +
+      '%</div><div class="lbl">Fit score</div></div></div><div class="score-meta"><div class="t">' +
+      (analysisData.score >= 70
+        ? "Hyvä sopivuus — harkitse hakemista"
+        : analysisData.score >= 45
+          ? "Kohtalainen — paranna CV:tä ensin"
+          : "Heikko sopivuus — tarkista vaatimukset") +
+      '</div><div class="d">ATS: ' +
+      analysisData.atsMatched.length +
+      " osuu · " +
+      analysisData.atsMissing.length +
+      " puuttuu</div></div></div>" +
       '<div class="card"><div class="card-h">ATS-avainsanat — osuu</div><div class="card-b"><div class="kw-wrap">' +
       analysisData.atsMatched
         .map(function (k) {
@@ -428,60 +550,63 @@
       return;
     }
 
-    analysisData = {
-      score: 78,
-      jobName: "Customer Success Specialist — TechNova Oy",
-      atsMatched: [
-        "asiakaspalvelu",
-        "CRM",
-        "Salesforce",
-        "suomen kieli",
-        "englannin kieli",
-        "ongelmanratkaisu",
-        "etätyö",
-      ],
-      atsMissing: ["B2B", "SaaS", "myyntihenkisyyttä", "HubSpot", "tuloshakuisuutta"],
-      skills: [
-        { n: "Asiakaspalvelu", p: 95 },
-        { n: "CRM (Salesforce)", p: 90 },
-        { n: "Kielitaidot", p: 88 },
-        { n: "B2B / SaaS", p: 35 },
-        { n: "Myyntitulokset", p: 25 },
-        { n: "Etätyö (ekspl.)", p: 40 },
-      ],
-      improve: [
-        'Lisää CV:hen yksi mitattava tulos (esim. "ratkaisi 40+ tapausta/viikko" tai myynti-%).',
-        "Mainitse B2B-kokemus jos ollut — tai kirjoita siirtymätarina B2C→B2B.",
-        'Lisää rivi: "Etätyökokemus" jos olet työskennellyt etänä.',
-        "Nosta englanti ja CRM avainsanoina ylemmäs ATS:ää varten.",
-      ],
-      cover:
-        "Hei,\n\nOlen kiinnostunut Customer Success Specialist -tehtävästä TechNovalla. Minulla on 4 vuoden B2C-asiakaspalvelukokemus, vahva CRM-osaaminen (Salesforce, Zendesk) ja 92 % palveluarvosana. Logistiikkataustani on tuonut prosessiosaamista ja paineensietoa — haluan siirtää nämä B2B SaaS -ympäristöön.\n\nLiitteenä CV. Olen tavoitettavissa haastatteluun viikon sisällä.\n\nYstävällisin terveisin,\n" +
-        parseCvName(),
-      apply:
-        "TechNova / Customer Success\n\nVahvuuteni tähän rooliin: asiakastyö, CRM ja ongelmanratkaisu. Kehityskohteeni: myyntiluvut CV:hen — olen valmis osoittamaan tuloshakuisuuden käytännössä.",
-    };
-
-    renderAnalysisPanel();
-    if (fromChat) {
-      addBotRich(
-        "Fit score: " + analysisData.score + "%",
-        "ATS: " +
-          analysisData.atsMatched.length +
-          " osuu · " +
-          analysisData.atsMissing.length +
-          " puuttuu.\n\nKatso täydellinen analyysi oikealta paneelilta."
-      );
-    } else {
-      openChat();
-      addBot(
-        "Analysoin TechNova-ilmoituksen CV:täsi vasten. Fit score on " +
-          analysisData.score +
-          " %. Katso portfolio-sivulta yhteenveto ja oikealta täydellinen analyysi."
-      );
+    var btn = $("analyzeBtn");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Analysoidaan…";
     }
-    renderSitePreview();
-    saveStudio({ silent: true });
+    setSaveStatus("Analysoidaan työpaikkaa…", false);
+
+    fetch("/api/ai/bottityypit-job-match", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cvText: $("cvText").value,
+        skillsText: $("skillsText").value,
+        jobPost: job,
+      }),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          if (!res.ok || !data.ok) throw new Error(data.error || "Analyysi epäonnistui");
+          return data.analysis;
+        });
+      })
+      .then(function (analysis) {
+        analysisData = analysis;
+        renderAnalysisPanel();
+        if (fromChat) {
+          addBotRich(
+            "Fit score: " + analysisData.score + "%",
+            "ATS: " +
+              analysisData.atsMatched.length +
+              " osuu · " +
+              analysisData.atsMissing.length +
+              " puuttuu.\n\nKatso täydellinen analyysi oikealta paneelilta."
+          );
+        } else {
+          openChat();
+          addBot(
+            "Analysoin ilmoituksen CV:täsi vasten. Fit score on " +
+              analysisData.score +
+              " %. Katso portfolio-sivulta yhteenveto ja oikealta täydellinen analyysi."
+          );
+        }
+        renderSitePreview();
+        saveStudio({ silent: true });
+        setSaveStatus("Analyysi valmis", true);
+      })
+      .catch(function (e) {
+        alert(e.message || "Työpaikka-analyysi epäonnistui — yritä uudelleen.");
+        setSaveStatus("Analyysi epäonnistui", false);
+      })
+      .finally(function () {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Analysoi sopivuus & ATS";
+        }
+      });
   }
 
   function openChat() {
@@ -619,6 +744,7 @@
     }
     var best = pickBestSnapshot(serverRaw);
     wire();
+    wireCvUpload();
     syncPrompt();
     renderChips();
     if (best) restoreSnapshot(best);

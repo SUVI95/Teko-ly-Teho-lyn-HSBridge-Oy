@@ -5,8 +5,11 @@ const { fetch } = require('undici');
 const { extractPdfTextFromBuffer } = require('../lib/pdf-extract');
 const {
   extractTextFromCvFile,
-  extractPortfolioFieldsFromCvText
+  extractPortfolioFieldsFromCvText,
+  extractPortfolioFieldsFromCvTextClaude
 } = require('../lib/cv-portfolio-parse');
+const { analyzeJobMatch } = require('../lib/bottityypit-job-match');
+const { claudeJsonComplete } = require('../lib/bottityypit-claude-json');
 const { sanitizePortfolioNarratives } = require('../lib/portfolio-text-dedupe');
 const { buildMultipartForm } = require('../lib/multipart-form');
 const {
@@ -109,7 +112,7 @@ router.post('/chat', async (req, res) => {
  *  if the request hangs, the mission-unlock flow never runs. Bounded latency
  *  guarantees the promise always settles. */
 const OPENAI_TIMEOUT_MS = 8000;
-const ANTHROPIC_TIMEOUT_MS = 10000;
+const ANTHROPIC_TIMEOUT_MS = 25000;
 
 function timeoutSignal(ms) {
   if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
@@ -121,7 +124,6 @@ function timeoutSignal(ms) {
 }
 
 const WHISPER_TIMEOUT_MS = 30000;
-const VOICE_INTERVIEW_TIMEOUT_MS = 45000;
 
 function voiceFeedbackModel() {
   return envTrim('OPENAI_VOICE_MODEL') || 'gpt-realtime-2';
@@ -200,15 +202,27 @@ async function whisperTranscribeBuffer(openaiApiKey, buffer, opts = {}) {
   return String(data.text || '').trim();
 }
 
-/** Analyze interview speech with gpt-realtime-2 (falls back to gpt-4o-mini). */
-async function voiceInterviewFeedback(openaiApiKey, { system, prompt, max_tokens = 350 }) {
-  const models = [voiceFeedbackModel(), 'gpt-4o-mini'];
-  const messages = [];
-  if (system) messages.push({ role: 'system', content: system });
-  messages.push({ role: 'user', content: prompt });
+function claudeTextModel() {
+  return envTrim('ANTHROPIC_MODEL') || 'claude-sonnet-4-5';
+}
 
+/** OpenAI chat completion — returns plain text (used as Claude fallback + voice helpers). */
+async function callOpenAIText({ system, messages, max_tokens = 1000, temperature = 0.7, timeoutMs = OPENAI_TIMEOUT_MS, models = null }) {
+  const openaiApiKey = envTrim('OPENAI_API_KEY');
+  if (!openaiApiKey) {
+    const err = new Error('OpenAI API key not configured');
+    err.code = 'NO_OPENAI';
+    throw err;
+  }
+
+  const openaiMessages = [];
+  if (system) openaiMessages.push({ role: 'system', content: system });
+  openaiMessages.push(...messages);
+
+  const tryModels = models && models.length ? models : ['gpt-4o-mini'];
   let lastError = '';
-  for (const model of models) {
+
+  for (const model of tryModels) {
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -218,79 +232,91 @@ async function voiceInterviewFeedback(openaiApiKey, { system, prompt, max_tokens
         },
         body: JSON.stringify({
           model,
-          messages,
+          messages: openaiMessages,
           max_tokens,
-          temperature: 0.6
+          temperature
         }),
-        signal: timeoutSignal(VOICE_INTERVIEW_TIMEOUT_MS)
+        signal: timeoutSignal(timeoutMs)
       });
 
       if (!response.ok) {
         lastError = await response.text().catch(() => '');
-        console.warn('Voice feedback model failed:', model, lastError);
+        console.warn('OpenAI text model failed:', model, lastError);
         continue;
       }
 
       const data = await response.json();
-      const text = data.choices?.[0]?.message?.content || '';
-      if (text.trim()) return text.trim();
+      const text = String(data.choices?.[0]?.message?.content || '').trim();
+      if (text) return { text, usage: data.usage, model, provider: 'openai' };
     } catch (err) {
       lastError = err.message;
-      console.warn('Voice feedback error:', model, err.message);
+      console.warn('OpenAI text error:', model, err.message);
     }
   }
 
-  const err = new Error('Voice feedback failed');
+  const err = new Error('OpenAI text failed');
   err.details = lastError;
   throw err;
 }
 
-async function callOpenAIFallback(messages, system, max_tokens, res) {
-  const openaiApiKey = envTrim('OPENAI_API_KEY');
-  if (!openaiApiKey) {
-    return res.status(503).json({
-      error: 'Tekoälypalvelu ei ole juuri nyt saatavilla. Yritä hetken kuluttua uudelleen.'
-    });
+/**
+ * Student-facing written text (feedback, interview copy, coaching).
+ * Claude first — OpenAI only as fallback. Voice/realtime stay on OpenAI elsewhere.
+ */
+async function callClaudeText({ system, messages, max_tokens = 2000 }) {
+  const anthropicKey = envTrim('ANTHROPIC_API_KEY');
+  if (!anthropicKey) {
+    console.warn('Anthropic API key not configured, using OpenAI for written text');
+    return callOpenAIText({ system, messages, max_tokens });
   }
 
-  const openaiMessages = [];
-  if (system) openaiMessages.push({ role: 'system', content: system });
-  openaiMessages.push(...messages);
+  const body = {
+    model: claudeTextModel(),
+    max_tokens,
+    messages
+  };
+  if (system) body.system = system;
 
-  let response;
-  try {
-    response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiApiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: openaiMessages,
-        max_tokens: max_tokens,
-        temperature: 0.7
-      }),
-      signal: timeoutSignal(OPENAI_TIMEOUT_MS)
-    });
-  } catch (err) {
-    console.error('OpenAI fallback fetch failed (timeout or network):', err.message);
-    return res.status(503).json({
-      error: 'Tekoälypalvelu ei ole juuri nyt saatavilla. Yritä hetken kuluttua uudelleen.'
-    });
-  }
+  const maxRetries = 2;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 600));
 
-  if (!response.ok) {
+    let response;
+    try {
+      response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify(body),
+        signal: timeoutSignal(ANTHROPIC_TIMEOUT_MS)
+      });
+    } catch (err) {
+      console.warn(`Anthropic fetch failed (attempt ${attempt + 1}/${maxRetries}):`, err.message);
+      if (attempt < maxRetries - 1) continue;
+      break;
+    }
+
+    if (response.ok) {
+      const data = await response.json();
+      const text = String(data.content?.[0]?.text || '').trim();
+      return { text, usage: data.usage, model: claudeTextModel(), provider: 'anthropic' };
+    }
+
     const errorData = await response.text().catch(() => '');
-    console.error('OpenAI fallback error:', errorData);
-    return res.status(503).json({
-      error: 'Tekoälypalvelu ei ole juuri nyt saatavilla. Yritä hetken kuluttua uudelleen.'
-    });
+    if (response.status === 529 || response.status === 503 || response.status === 429) {
+      console.warn(`Anthropic API retryable status ${response.status} (attempt ${attempt + 1}/${maxRetries}):`, errorData);
+      continue;
+    }
+
+    console.warn(`Anthropic API non-retryable status ${response.status}, using OpenAI fallback:`, errorData);
+    return callOpenAIText({ system, messages, max_tokens });
   }
 
-  const data = await response.json();
-  const text = data.choices?.[0]?.message?.content || '';
-  return res.json({ text, usage: data.usage });
+  console.warn('Claude text exhausted retries, falling back to OpenAI');
+  return callOpenAIText({ system, messages, max_tokens });
 }
 
 // DuuniJobs AI (Anthropic) — deep analysis; /claude kept for older clients
@@ -302,79 +328,13 @@ async function handleDuunijobsAi(req, res) {
       return res.status(400).json({ error: 'Messages array is required' });
     }
 
-    const anthropicKey = envTrim('ANTHROPIC_API_KEY');
-    if (!anthropicKey) {
-      console.warn('Anthropic API key not configured, using OpenAI fallback');
-      return callOpenAIFallback(messages, system, max_tokens, res);
-    }
-
-    const body = {
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: max_tokens,
-      messages: messages
-    };
-    if (system) body.system = system;
-
-    // Bounded retries: 2 attempts max, short backoff, hard per-attempt
-    // timeout — so /api/ai/claude never hangs the calling browser tab.
-    const maxRetries = 2;
-
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      if (attempt > 0) {
-        await new Promise(r => setTimeout(r, 600));
-      }
-
-      let response;
-      try {
-        response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': anthropicKey,
-            'anthropic-version': '2023-06-01'
-          },
-          body: JSON.stringify(body),
-          signal: timeoutSignal(ANTHROPIC_TIMEOUT_MS)
-        });
-      } catch (err) {
-        console.warn(`Anthropic fetch failed (attempt ${attempt + 1}/${maxRetries}):`, err.message);
-        if (attempt < maxRetries - 1) continue;
-        break;
-      }
-
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.content?.[0]?.text || '';
-        return res.json({
-          text: text,
-          usage: data.usage
-        });
-      }
-
-      const errorData = await response.text().catch(() => '');
-
-      if (response.status === 529 || response.status === 503 || response.status === 429) {
-        console.warn(`Anthropic API retryable status ${response.status} (attempt ${attempt + 1}/${maxRetries}):`, errorData);
-        continue;
-      }
-
-      console.warn(`Anthropic API non-retryable status ${response.status}, using OpenAI fallback:`, errorData);
-      return callOpenAIFallback(messages, system, max_tokens, res);
-    }
-
-    console.warn('DuuniJobs AI exhausted retries, falling back to OpenAI');
-    return callOpenAIFallback(messages, system, max_tokens, res);
+    const result = await callClaudeText({ system, messages, max_tokens });
+    return res.json({ text: result.text, usage: result.usage });
   } catch (error) {
-    console.error('Error calling Anthropic API, falling back to OpenAI:', error.message);
-    try {
-      const { messages, system, max_tokens = 2000 } = req.body;
-      return callOpenAIFallback(messages, system, max_tokens, res);
-    } catch (fallbackErr) {
-      console.error('OpenAI fallback also failed:', fallbackErr.message);
-      res.status(500).json({
-        error: 'Tekoälypalvelu ei ole juuri nyt saatavilla. Yritä hetken kuluttua uudelleen.'
-      });
-    }
+    console.error('Error calling Claude/OpenAI for written text:', error.message);
+    res.status(500).json({
+      error: 'Tekoälypalvelu ei ole juuri nyt saatavilla. Yritä hetken kuluttua uudelleen.'
+    });
   }
 }
 router.post('/duunijobs', handleDuunijobsAi);
@@ -414,7 +374,7 @@ router.post('/transcribe', audioUpload.single('file'), async (req, res) => {
   }
 });
 
-/** Transcribe + gpt-realtime-2 feedback for moduuli9 voice exercises. */
+/** Transcribe (OpenAI Whisper) + written feedback (Claude) for moduuli9 voice exercises. */
 router.post('/voice-interview', audioUpload.single('file'), async (req, res) => {
   try {
     if (!req.file || !req.file.buffer) {
@@ -449,18 +409,27 @@ router.post('/voice-interview', audioUpload.single('file'), async (req, res) => 
     }
 
     let feedback = '';
+    let feedbackModel = '';
     if (system) {
       const userPrompt = prompt
         ? `${prompt}\n\nHakijan vastaus (transkriptio):\n${transcript}`
         : `Hakijan vastaus (transkriptio):\n${transcript}`;
-      feedback = await voiceInterviewFeedback(openaiApiKey, { system, prompt: userPrompt, max_tokens });
+      // Written coaching text → Claude; Whisper stays OpenAI above.
+      const result = await callClaudeText({
+        system,
+        messages: [{ role: 'user', content: userPrompt }],
+        max_tokens
+      });
+      feedback = result.text || '';
+      feedbackModel = result.model || claudeTextModel();
     }
 
     res.json({
       transcript,
       text: transcript,
       feedback,
-      model: voiceFeedbackModel()
+      model: feedbackModel || claudeTextModel(),
+      transcribe: 'whisper-1'
     });
   } catch (error) {
     console.error('Voice interview error:', error.details || error.message);
@@ -629,18 +598,13 @@ const MOCK_REACTION_TTS_INSTRUCTIONS = [
   'Language: Finnish.'
 ].join(' ');
 
-/** Short human recruiter reaction between mock interview questions. */
+/** Short human recruiter reaction between mock interview questions (text → Claude, spoken via OpenAI TTS). */
 router.post('/mock-reaction', async (req, res) => {
   try {
     const question = String(req.body.question || '').trim();
     const answer = String(req.body.answer || '').trim();
     if (!question || !answer) {
       return res.status(400).json({ error: 'Question and answer required' });
-    }
-
-    const openaiApiKey = envTrim('OPENAI_API_KEY');
-    if (!openaiApiKey) {
-      return res.status(503).json({ error: 'AI-palvelu ei ole käytössä.' });
     }
 
     const system = [
@@ -651,15 +615,16 @@ router.post('/mock-reaction', async (req, res) => {
       'Suomi, rento mutta ammattimainen.'
     ].join(' ');
 
-    const reaction = await voiceInterviewFeedback(openaiApiKey, {
+    const result = await callClaudeText({
       system,
-      prompt: `Kysymys: ${question}\n\nHakijan vastaus: ${answer}`,
+      messages: [{ role: 'user', content: `Kysymys: ${question}\n\nHakijan vastaus: ${answer}` }],
       max_tokens: 100
     });
 
     res.json({
-      reaction: reaction || 'Joo, kiitos — hyvä.',
-      speechInstructions: MOCK_REACTION_TTS_INSTRUCTIONS
+      reaction: result.text || 'Joo, kiitos — hyvä.',
+      speechInstructions: MOCK_REACTION_TTS_INSTRUCTIONS,
+      model: result.model || claudeTextModel()
     });
   } catch (error) {
     console.error('Mock reaction error:', error);
@@ -667,17 +632,12 @@ router.post('/mock-reaction', async (req, res) => {
   }
 });
 
-/** Final feedback after all mock interview answers. */
+/** Final written feedback after mock interview answers — Claude (student-facing coaching). */
 router.post('/mock-feedback', async (req, res) => {
   try {
     const sessions = req.body.sessions;
     if (!Array.isArray(sessions) || !sessions.length) {
       return res.status(400).json({ error: 'Sessions array required' });
-    }
-
-    const openaiApiKey = envTrim('OPENAI_API_KEY');
-    if (!openaiApiKey) {
-      return res.status(503).json({ error: 'AI-palvelu ei ole käytössä.' });
     }
 
     const block = sessions.map((s, i) => {
@@ -699,13 +659,16 @@ router.post('/mock-feedback', async (req, res) => {
       'Suomi. Konkreettinen. Max 10 lausetta. Mainitse jos STAR-rakenne puuttui käytöskysymyksistä.'
     ].join(' ');
 
-    const feedback = await voiceInterviewFeedback(openaiApiKey, {
+    const result = await callClaudeText({
       system,
-      prompt: block,
+      messages: [{ role: 'user', content: block }],
       max_tokens: 450
     });
 
-    res.json({ feedback: feedback || '' });
+    res.json({
+      feedback: result.text || '',
+      model: result.model || claudeTextModel()
+    });
   } catch (error) {
     console.error('Mock feedback error:', error);
     res.status(500).json({ error: 'Palaute epäonnistui', message: error.message });
@@ -985,6 +948,71 @@ router.post('/cv-portfolio-parse-file', (req, res) => {
       res.json({ fields, chars, partial: plainLen < 40 });
     } catch (err) {
       console.error('cv-portfolio-parse-file error:', err);
+      res.status(502).json({ error: err.message || 'CV:n analysointi epäonnistui.' });
+    }
+  });
+});
+
+
+/** CV vs job posting — Bot Studio ATS / fit analysis (Claude). */
+router.post('/bottityypit-job-match', async (req, res) => {
+  try {
+    if (!envTrim('ANTHROPIC_API_KEY')) {
+      return res.status(503).json({ error: 'Claude ei ole käytettävissä — ota yhteyttä ylläpitoon.' });
+    }
+    const completeJson = (opts) => claudeJsonComplete(callClaudeText, opts);
+    const result = await analyzeJobMatch(
+      {
+        cvText: req.body.cvText,
+        skillsText: req.body.skillsText,
+        jobPost: req.body.jobPost
+      },
+      completeJson
+    );
+    res.json({ ok: true, analysis: result, provider: 'anthropic' });
+  } catch (err) {
+    if (err.code === 'CV_TOO_SHORT' || err.code === 'JOB_TOO_SHORT') {
+      return res.status(400).json({ error: err.message });
+    }
+    console.error('bottityypit-job-match error:', err);
+    res.status(502).json({ error: err.message || 'Työpaikka-analyysi epäonnistui.' });
+  }
+});
+
+/** Upload CV → Claude parse for Bot Studio (moduuli-bottityypit). */
+router.post('/bottityypit-cv-parse-file', (req, res) => {
+  cvUpload.single('file')(req, res, async (err) => {
+    if (err) {
+      const msg = err instanceof multer.MulterError
+        ? multerErrorMessage(err, 'cv')
+        : (err.message || 'CV:n lataus epäonnistui');
+      return res.status(err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({ error: msg });
+    }
+    try {
+      if (!envTrim('ANTHROPIC_API_KEY')) {
+        return res.status(503).json({ error: 'Claude ei ole käytettävissä — ota yhteyttä ylläpitoon.' });
+      }
+      if (!req.file || !req.file.buffer) {
+        return res.status(400).json({ error: 'Tiedosto puuttuu' });
+      }
+      const text = await extractTextFromCvFile(req.file);
+      const plainLen = text.replace(/\s/g, '').length;
+      if (plainLen < 20) {
+        return res.status(200).json({
+          partial: true,
+          fields: {},
+          chars: text.length,
+          message: 'CV:stä ei saatu riittävästi tekstiä automaattista täyttöä varten.'
+        });
+      }
+      const completeJson = (opts) => claudeJsonComplete(callClaudeText, opts);
+      const { fields, chars } = await extractPortfolioFieldsFromCvTextClaude(text, completeJson);
+      res.json({ fields, chars, partial: plainLen < 40, provider: 'anthropic' });
+    } catch (err) {
+      if (err.code === 'TEXT_TOO_SHORT') {
+        return res.status(400).json({ error: err.message });
+      }
+      console.error('bottityypit-cv-parse-file error:', err);
       res.status(502).json({ error: err.message || 'CV:n analysointi epäonnistui.' });
     }
   });
