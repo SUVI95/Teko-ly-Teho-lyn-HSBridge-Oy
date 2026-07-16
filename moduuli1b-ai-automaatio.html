@@ -135,6 +135,9 @@ h2.h em { font-style:italic; color:var(--orange); }
   background-image:radial-gradient(var(--canvas-dot) 1.1px, transparent 1.1px);
   background-size:18px 18px; }
 .canvas-hint { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:.5rem; color:var(--n8n-muted); pointer-events:none; text-align:center; padding:1rem; }
+.canvas-hint.fix-hint { align-items:flex-end; justify-content:flex-end; padding:.65rem .85rem; }
+.canvas-hint.fix-hint span { font-size:.68rem; background:rgba(255,255,255,.92); border:1px solid var(--panel-line); border-radius:8px; padding:.35rem .55rem; max-width:280px; line-height:1.45; }
+.canvas-wrap.fix-settings-only .node { cursor:pointer; }
 .canvas-hint .ch-box { width:150px; height:70px; border:2px dashed #c3c9d1; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.75rem; color:var(--n8n-muted); background:rgba(255,255,255,.5); }
 .canvas-hint.hidden { display:none; }
 .canvas-drop-hi { position:absolute; inset:6px; border:2px dashed var(--orange); border-radius:12px; background:var(--orange-light); opacity:0; pointer-events:none; transition:opacity .15s; }
@@ -447,7 +450,7 @@ h2.h em { font-style:italic; color:var(--orange); }
   </div>
 
   <button class="vinkki-toggle reveal" onclick="toggleVinkki('f')" style="margin:.3rem 0 .9rem;">💡 Vinkki (jos jäät jumiin)</button>
-  <div class="vinkki-body" id="vinkkif" style="margin-bottom:1rem;">Klikkaa jokaista palikkaa ja katso sen asetuksia. Yksi kerrallaan: <strong>Laukaisin</strong> — onko ajankohta järkevä? <strong>Tekoäly</strong> — onko ohje kirjoitettu, ja onko se tarpeeksi tarkka? Suoritusloki kertoo, missä ketju pysähtyy.<span class="vq">Kysy jokaisen palikan kohdalla: tekisikö tämä sen, mitä pitääkin? Jos ei, mikä siinä on pielessä?</span></div>
+  <div class="vinkki-body" id="vinkkif" style="margin-bottom:1rem;">Tässä tasossa <strong>et kytket palikoita uudelleen</strong> — ketju on jo valmis. Klikkaa jokaista palikkaa ja katso sen asetuksia. Yksi kerrallaan: <strong>Laukaisin</strong> — onko ajankohta järkevä? <strong>Tekoäly</strong> — onko ohje kirjoitettu, ja onko se tarpeeksi tarkka? Suoritusloki kertoo, missä ketju pysähtyy.<span class="vq">Kysy jokaisen palikan kohdalla: tekisikö tämä sen, mitä pitääkin? Jos ei, mikä siinä on pielessä?</span></div>
 
   <div class="builder-shell reveal" id="fixShell">
     <div class="builder-topbar">
@@ -461,8 +464,9 @@ h2.h em { font-style:italic; color:var(--orange); }
       </div>
     </div>
     <div class="builder-main">
-      <div class="canvas-wrap" id="fixCanvas" style="min-height:320px;">
+      <div class="canvas-wrap fix-settings-only" id="fixCanvas" style="min-height:320px;">
         <svg id="fixEdges"></svg>
+        <div class="canvas-hint fix-hint"><span>Ketju on valmiiksi kytketty. <strong>Klikkaa palikkaa</strong> ja korjaa sen asetuksia — ei tarvitse vetää yhteyksiä.</span></div>
       </div>
       <div class="params" id="fixParams">
         <div class="params-in" id="fixParamsIn">
@@ -511,7 +515,7 @@ h2.h em { font-style:italic; color:var(--orange); }
         <div class="bt-right"><div class="bt-toggle"><span id="fix2Active">Inactive</span><span class="bt-switch" id="fix2Switch"></span></div><button class="bt-run" id="fix2Run" onclick="runFixLevel('fix2')">▶ Suorita</button></div>
       </div>
       <div class="builder-main">
-        <div class="canvas-wrap" id="fix2Canvas" style="min-height:300px;"><svg id="fix2Edges"></svg></div>
+        <div class="canvas-wrap fix-settings-only" id="fix2Canvas" style="min-height:300px;"><svg id="fix2Edges"></svg><div class="canvas-hint fix-hint"><span>Klikkaa palikkaa ja korjaa asetuksia — ketju pysyy samana.</span></div></div>
         <div class="params" id="fix2Params"><div class="params-in" id="fix2ParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa korjataksesi asetukset</div></div></div>
       </div>
       <div class="exec" id="fix2Exec"><div class="exec-head"><div class="eh-l"><span class="live"></span> Suoritusloki</div></div><div class="exec-body" id="fix2Log"></div></div>
@@ -542,7 +546,7 @@ h2.h em { font-style:italic; color:var(--orange); }
         <div class="bt-right"><div class="bt-toggle"><span id="fix3Active">Inactive</span><span class="bt-switch" id="fix3Switch"></span></div><button class="bt-run" id="fix3Run" onclick="runFixLevel('fix3')">▶ Suorita</button></div>
       </div>
       <div class="builder-main">
-        <div class="canvas-wrap" id="fix3Canvas" style="min-height:300px;"><svg id="fix3Edges"></svg></div>
+        <div class="canvas-wrap fix-settings-only" id="fix3Canvas" style="min-height:300px;"><svg id="fix3Edges"></svg><div class="canvas-hint fix-hint"><span>Klikkaa palikkaa ja korjaa asetuksia — ketju pysyy samana.</span></div></div>
         <div class="params" id="fix3Params"><div class="params-in" id="fix3ParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa — älä ohita yhtään</div></div></div>
       </div>
       <div class="exec" id="fix3Exec"><div class="exec-head"><div class="eh-l"><span class="live"></span> Suoritusloki</div></div><div class="exec-body" id="fix3Log"></div></div>
@@ -867,12 +871,13 @@ const NODE_META={
 };
 function nodeHTML(n, readOnly){
   const m=NODE_META[n.type];
+  const ports=readOnly?'':'<div class="port in"></div><div class="port out"></div>';
   return `<div class="node n-${n.type}" id="${n.id}" style="left:${n.x}px; top:${n.y}px;" data-type="${n.type}">
     <div class="nd-stripe"></div><div class="nd-status"></div>
     ${readOnly?'':'<div class="del" title="Poista">×</div>'}
     <div class="nd-head"><div class="nd-ic">${m.ic}</div><div class="nd-tt"><div class="nd-name">${n.name||m.type}</div><div class="nd-type">${m.type}</div></div></div>
     <div class="nd-foot">${n.foot||''}</div>
-    <div class="port in"></div><div class="port out"></div></div>`;
+    ${ports}</div>`;
 }
 function drawEdges(svgId, edges, posFn){
   const svg=document.getElementById(svgId); if(!svg) return; svg.innerHTML='';
@@ -1239,10 +1244,7 @@ function renderFixLevel(levelId){
       if(n.id==='h4') node.foot='ohje ok ✓';
       if(n.id==='h5'){ node.name=d.state.output?'Sisäinen arkisto':'Lähetä toimittajalle'; node.foot=d.state.output?'✓ oikea kohde':'⚠ väärä kohde'; }
     }
-    c.insertAdjacentHTML('beforeend', nodeHTML(node,false));
-    document.getElementById(n.id).querySelector('.del')?.remove();
-  });
-  d.nodes.forEach(n=>{
+    c.insertAdjacentHTML('beforeend', nodeHTML(node,true));
     const el=document.getElementById(n.id);
     el.style.cursor='pointer';
     el.onclick=()=>selectFixLevel(levelId,n.id);
