@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  var LOCAL_KEY = "bottityypit-studio-v1";
+  var LOCAL_KEY = "bottityypit-studio-v2";
   var trained = false;
   var analysisData = null;
   var saveTimer = null;
@@ -122,8 +122,8 @@
   }
 
   function pickBestSnapshot(serverRaw) {
-    var server = parseSnapshot(serverRaw);
-    var local = readLocalSnapshot();
+    var server = stripLegacyDemoSnapshot(parseSnapshot(serverRaw));
+    var local = stripLegacyDemoSnapshot(readLocalSnapshot());
     if (server && local) {
       return (local.ts || 0) >= (server.ts || 0) ? local : server;
     }
@@ -287,14 +287,64 @@
     ].join("\n\n");
     $("fullPrompt").value = p;
     $("promptWc").textContent = wc(p) + " sanaa";
-    $("chatTitle").textContent = $("botName").value.trim() || parseCvName();
-    $("av").textContent = (parseCvName().charAt(0) || "A").toUpperCase();
+    $("chatTitle").textContent = $("botName").value.trim() || parseCvName() || "Uravalmentaja";
+    $("av").textContent = (parseCvName().charAt(0) || "?").toUpperCase();
   }
 
   function parseCvName() {
     var cv = $("cvText").value.trim();
+    if (!cv) return "";
     var m = cv.match(/^([A-ZÅÄÖa-zåäö\s]+?)(?:\s*—|\s*-)/);
-    return m ? m[1].trim() : "Hakija";
+    return m ? m[1].trim() : cv.split("\n")[0].trim().slice(0, 40) || "Hakija";
+  }
+
+  function isLegacyDemoSnapshot(snap) {
+    if (!snap || !snap.fields) return false;
+    var cv = String(snap.fields.cvText || "");
+    var job = String(snap.fields.jobPost || "");
+    var name = String(snap.fields.botName || "");
+    return (
+      /aino\s+virtanen|aino-virtanen|technova|customer success specialist/i.test(cv + job + name) ||
+      /palveluarvosana\s*92\s*%/i.test(cv)
+    );
+  }
+
+  function stripLegacyDemoSnapshot(snap) {
+    if (!snap || !isLegacyDemoSnapshot(snap)) return snap;
+    snap.fields.cvText = "";
+    snap.fields.skillsText = "";
+    snap.fields.jobPost = "";
+    if (/aino/i.test(snap.fields.botName || "")) snap.fields.botName = "";
+    snap.trained = false;
+    snap.analysisData = null;
+    snap.ts = Date.now();
+    return snap;
+  }
+
+  function hasCvContent() {
+    return wc($("cvText").value) >= 5;
+  }
+
+  function parseCvTagline() {
+    var cv = $("cvText").value.trim();
+    if (!cv) return "Lataa CV vasemmalta — portfolio täyttyy automaattisesti";
+    var m = cv.match(/—\s*(.+?)(?:\n|$)/);
+    if (m && m[1].trim()) return m[1].trim();
+    return "Työnhakija · oma portfolio";
+  }
+
+  function renderEmptySitePreview() {
+    $("siteUrl").textContent = "oma-portfolio.fi";
+    $("sitePreview").innerHTML =
+      '<div class="site-hero">' +
+      '<div class="photo">?</div><div>' +
+      "<h2>Portfolio-esikatselu</h2>" +
+      '<div class="tag">Lataa CV vasemmalta (PDF tai teksti) — näet mitä rekrytoija näkisi</div>' +
+      '<div class="meta"><span class="pill warn">CV puuttuu</span><span class="pill">Tekoälybotti · kupla alakulmassa</span></div></div></div>' +
+      '<div class="site-banner"><strong>Ei vielä tietoja</strong>Tallenna CV ja taidot Kouluta-välilehdellä. Sitten esikatselu näyttää oikean nimen, taidot ja match-analyysin.</div>' +
+      '<div class="site-cta"><span class="dot"></span> Aloita: Kouluta → lataa CV → Tallenna & kouluta</div>';
+    $("av").textContent = "?";
+    $("chatTitle").textContent = $("botName").value.trim() || "Uravalmentaja";
   }
 
   function parseCvStats() {
@@ -328,15 +378,19 @@
   }
 
   function renderSitePreview() {
-    var name = parseCvName();
+    if (!hasCvContent() && !trained && !analysisData) {
+      renderEmptySitePreview();
+      return;
+    }
+    var name = parseCvName() || "Hakija";
     var stats = parseCvStats();
     var skills = parseSkills();
-    var initial = name.charAt(0).toUpperCase();
+    var initial = (name.charAt(0) || "?").toUpperCase();
     var slug = name
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
-    $("siteUrl").textContent = (slug || "hakija") + ".portfolio.fi";
+    $("siteUrl").textContent = (slug || "oma") + ".portfolio.fi";
 
     var trainPill = trained
       ? '<span class="pill ok">Botti koulutettu</span>'
@@ -402,7 +456,9 @@
       "<h2>" +
       esc(name) +
       "</h2>" +
-      '<div class="tag">Asiakaspalvelu & myynti · Etsin uutta roolia · Avoin työnhakuun</div>' +
+      '<div class="tag">' +
+      esc(parseCvTagline()) +
+      "</div>" +
       '<div class="meta">' +
       trainPill +
       analysisPill +
@@ -432,7 +488,7 @@
       '<div class="site-cta"><span class="dot"></span> Klikkaa violettia kuplaa — testaa bottia</div>';
 
     $("av").textContent = initial;
-    $("chatTitle").textContent = $("botName").value.trim() || name;
+    $("chatTitle").textContent = $("botName").value.trim() || name || "Uravalmentaja";
   }
 
   function applyColors(hex) {
@@ -738,10 +794,17 @@
   }
 
   function onReady() {
+    try {
+      localStorage.removeItem("bottityypit-studio-v1");
+    } catch (e) {
+      /* ignore */
+    }
     var serverRaw = null;
     if (window.BonusModule && typeof window.BonusModule.getEntry === "function") {
       serverRaw = window.BonusModule.getEntry("_studio");
     }
+    var serverSnap = parseSnapshot(serverRaw);
+    var clearedLegacy = !!(serverSnap && isLegacyDemoSnapshot(serverSnap));
     var best = pickBestSnapshot(serverRaw);
     wire();
     wireCvUpload();
@@ -752,6 +815,7 @@
       renderSitePreview();
       updateTrainStatus();
     }
+    if (clearedLegacy) saveStudio({ silent: true });
   }
 
   if (document.readyState === "loading") {
