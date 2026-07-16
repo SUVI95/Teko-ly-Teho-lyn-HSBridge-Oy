@@ -112,6 +112,9 @@ h2.h em { font-style:italic; color:var(--orange); }
 .bt-run.running { background:var(--n8n-muted); }
 
 .builder-main { display:flex; min-height:560px; position:relative; }
+.builder-main.tall-canvas { min-height:720px; }
+.builder-main.tall-canvas .canvas-wrap { min-height:680px; }
+.builder-main.tall-canvas .palette { max-height:720px; }
 /* left palette */
 .palette { width:172px; flex-shrink:0; background:#fff; border-right:1px solid var(--panel-line); padding:.7rem .55rem; display:flex; flex-direction:column; gap:.4rem; overflow-y:auto; max-height:640px; }
 .palette-h { font-family:'DM Mono',monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--n8n-muted); padding:.2rem .3rem .35rem; }
@@ -132,9 +135,14 @@ h2.h em { font-style:italic; color:var(--orange); }
 .n-approval .nd-stripe{background:#D97706;}
 
 /* canvas */
-.canvas-wrap { flex:1; position:relative; overflow:hidden; background:var(--canvas-bg);
+.canvas-wrap { flex:1; position:relative; overflow:auto; background:var(--canvas-bg);
   background-image:radial-gradient(var(--canvas-dot) 1.1px, transparent 1.1px);
   background-size:18px 18px; }
+.canvas-zoom-bar { position:absolute; top:8px; right:8px; z-index:6; display:flex; align-items:center; gap:.25rem; background:#fff; border:1px solid var(--panel-line); border-radius:8px; padding:.2rem .35rem; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.canvas-zoom-bar button { background:#fff; border:1px solid var(--panel-line); border-radius:6px; width:28px; height:26px; font-size:.85rem; font-weight:700; cursor:pointer; color:var(--n8n-ink); font-family:inherit; }
+.canvas-zoom-bar button:hover { border-color:var(--orange-mid); color:var(--orange); }
+.canvas-zoom-bar .zoom-lbl { font-family:'DM Mono',monospace; font-size:.62rem; color:var(--n8n-muted); min-width:38px; text-align:center; }
+.canvas-stage { position:relative; min-width:100%; min-height:100%; transform-origin:0 0; transition:transform .15s ease; }
 .canvas-hint { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:.5rem; color:var(--n8n-muted); pointer-events:none; text-align:center; padding:1rem; }
 .canvas-hint .ch-box { width:150px; height:70px; border:2px dashed #c3c9d1; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.75rem; color:var(--n8n-muted); background:rgba(255,255,255,.5); }
 .canvas-hint.hidden { display:none; }
@@ -866,7 +874,7 @@ h2.h em { font-style:italic; color:var(--orange); }
       <div class="ct-check">✓</div><div class="ct-lock">🔒</div>
     </button>
     <button class="chal-tab locked" data-chal="9" onclick="selectChallenge(9)">
-      <div class="ct-num">Haaste 10</div><div class="ct-name">Paranna konetta</div><div class="ct-tag">🏆 yhdistä kaikki</div>
+      <div class="ct-num">Haaste 10</div><div class="ct-name">Paranna konetta</div><div class="ct-tag">🏆 8 palikkaa</div>
       <div class="ct-check">✓</div><div class="ct-lock">🔒</div>
     </button>
   </div>
@@ -883,15 +891,21 @@ h2.h em { font-style:italic; color:var(--orange); }
     <div class="hint-body" id="briefHint"></div>
   </div>
 
-  <!-- INTERPRET THINK GATE (Haaste 6) -->
+  <!-- INTERPRET / IMPROVE THINK GATE -->
   <div class="interpret-gate reveal" id="interpretGate" style="display:none;">
-    <div class="ai-q">
-      <div class="ai-q-label">Vaihe 1 · Tulkitse ensin</div>
-      <div class="ai-q-text">Mitä ongelmaa Lena kuvaa? Millaisen automaation hän tarvitsee?</div>
-      <p style="position:relative;font-size:.88rem;color:rgba(255,255,255,.65);margin-bottom:1rem;line-height:1.65;">Kirjoita omin sanoin — ei tarvitse olla täydellinen. Opettaja-tekoäly (Claude) antaa palautetta ja ohjaa sinua eteenpäin ilman että paljastaa vastauksia. Rakennusvaihe aukeaa vasta kun olet ymmärtänyt pääkohdat.</p>
+    <div class="ai-q" id="interpretGateInner">
+      <div class="ai-q-label" id="gateLabel">Vaihe 1 · Tulkitse ensin</div>
+      <div class="ai-q-text" id="gateQuestion">Mitä ongelmaa kuvataan? Millaisen automaation tarvitaan?</div>
+      <p id="gateHint" style="position:relative;font-size:.88rem;color:rgba(255,255,255,.65);margin-bottom:1rem;line-height:1.65;">Kirjoita omin sanoin — ei tarvitse olla täydellinen. Opettaja-tekoäly (Claude) antaa palautetta ilman valmiita vastauksia. Rakennusvaihe aukeaa vasta kun olet ymmärtänyt pääkohdat.</p>
       <textarea class="ai-area" id="interpretInput" placeholder="Ongelma on...&#10;Automaation pitäisi..."></textarea>
+      <div id="improveExtraFields" style="display:none;">
+        <label class="p-label" style="display:block;color:rgba(255,255,255,.5);font-size:.72rem;margin:1rem 0 .35rem;">Luonnos tekoälyn ohjeesta (vastausluonnokset)</label>
+        <textarea class="ai-area" id="improveAiSketch" placeholder="Esim. 'Lue vain tärkeät viestit. Kirjoita kohtelias vastausluonnos. Älä lupaa hyvitystä. Ihminen tarkistaa ennen lähetystä.'"></textarea>
+        <label class="p-label" style="display:block;color:rgba(255,255,255,.5);font-size:.72rem;margin:1rem 0 .35rem;">Mitä kone tuottaa lopuksi? (sähköposti + kuva + muistutus)</label>
+        <textarea class="ai-area" id="improveOutputs" placeholder="Esim. 'Lähetä vastaus vain hyväksytyille. Luo some-kuva tilanteesta. Muistuta tiimiä seuraamaan tapausta huomenna.'"></textarea>
+      </div>
       <div class="ai-actions">
-        <button class="ai-btn" id="interpretSubmit" onclick="submitInterpretThought()">Lähetä opettajalle</button>
+        <button class="ai-btn" id="interpretSubmit" onclick="submitThinkGate()">Lähetä opettajalle</button>
       </div>
       <div class="ai-resp" id="interpretResp">
         <div class="ai-resp-label">Opettajan palaute</div>
@@ -920,12 +934,20 @@ h2.h em { font-style:italic; color:var(--orange); }
         <!-- palette is rendered by JS per challenge (includes distractors) -->
       </div>
       <div class="canvas-wrap" id="canvas">
+        <div class="canvas-zoom-bar" id="canvasZoomBar" style="display:none;">
+          <button type="button" title="Loitonna" onclick="nudgeCanvasZoom(-0.1)">−</button>
+          <span class="zoom-lbl" id="zoomLabel">100%</span>
+          <button type="button" title="Lähennä" onclick="nudgeCanvasZoom(0.1)">+</button>
+          <button type="button" title="Sovita ketju näkyviin" onclick="autoFitCanvas()" style="width:auto;padding:0 .45rem;font-size:.68rem;font-weight:600;">Sovita</button>
+        </div>
+        <div class="canvas-stage" id="canvasStage">
         <div class="canvas-drop-hi" id="dropHi"></div>
         <div class="canvas-hint" id="canvasHint">
           <div class="ch-box">Raahaa palikat tähän ja rakenna ketju</div>
           <span style="font-size:.72rem;">Mieti ensin: mitä tämä kone tarvitsee?</span>
         </div>
         <svg id="edges"></svg>
+        </div>
       </div>
       <div class="params" id="params">
         <div class="params-in" id="paramsIn">
@@ -1145,6 +1167,8 @@ const NODE_LIB = {
   calendar:  { ic:'📅', type:'Kalenteri',  hint:'luo tapahtuman',  preview:'Lisää tapahtuman kalenteriin. Ei kuulu näihin ketjuihin.', distractor:true },
   sheet:     { ic:'📊', type:'Taulukko',   hint:'kirjoittaa soluun',preview:'Kirjoittaa dataa taulukkoon. Ei tarpeen näissä tehtävissä.', distractor:true },
   sms:       { ic:'💬', type:'Tekstiviesti',hint:'lähettää SMS:n', preview:'Lähettää tekstiviestin puhelimeen. Eri kanava kuin tässä tarvitaan.', distractor:true },
+  imagegen:  { ic:'🖼️', type:'Kuvageneraattori', hint:'luo kuvan', preview:'Luo kuvan tekoälyllä (some, sisäinen viesti tai infografiikka). Kirjoitat kuvausohjeen itse.', distractor:true },
+  reminder:  { ic:'🔔', type:'Muistutus', hint:'tiimille', preview:'Asettaa muistutuksen tiimille: seuraa tapausta ja palaa asiaan oikeaan aikaan.', distractor:true },
   loop:      { ic:'🔁', type:'Toisto',      hint:'toistaa vaiheen', preview:'Toistaa saman vaiheen monta kertaa. Kehittynyt työkalu — harkitse tarvitseeko tämä tehtävä sitä.', distractor:true },
   delay:     { ic:'⏳', type:'Viive',        hint:'odottaa hetken',  preview:'Pysäyttää ketjun määräajaksi. Joskus hyödyllinen, mutta ei näissä tehtävissä.', distractor:true }
 };
@@ -1374,30 +1398,42 @@ const CHALLENGES = [
     name:'Paranna konetta',
     tag:'Haaste 10 / 10',
     title:'Viimeinen: tee koneesta parempi',
-    desc:'Olet nyt rakentaja. Viimeinen haaste yhdistää kaiken. Kaiku Audiolla on kone joka toimii — mutta se on kömpelö: se lähettää asiakkaalle vastauksen heti ilman ihmisen tarkistusta, ja käsittelee kaikki viestit vaikka vain osa on tärkeitä. Rakenna parempi versio: lisää suodatus JA ihmisen tarkistus.',
-    goal:'Rakenna parannettu kone: lue viestit → <strong>suodata tärkeät</strong> → tekoäly valmistelee vastauksen → <strong>ihminen tarkistaa</strong> → lähetä. Yhdistät kaksi oppimaasi periaatetta: suodatus säästää työtä, ihmisen tarkistus estää virheet.',
-    warn:'⚠ Viimeinen ja vaativin. Kuusi palikkaa, kaksi tärkeää periaatetta (suodatus + ihmisen tarkistus). Ei vihjettä helpolla. Näytä että olet rakentaja.',
-    hint:'Kaksi periaatetta yhdessä: käsittele vain olennaiset, älä lähetä mitään ilman hyväksyntää. Montako palikkaa tarvitset molempiin? Piirrä ketju paperille ennen rakentamista.',
-    palette:['trigger','action','filter','ai','approval','email','output','database','translate','sms'],
-    required:['trigger','action','filter','ai','approval','email'],
+    desc:'Olet nyt rakentaja. Viimeinen haaste yhdistää kaiken mitä olet oppinut. Kaiku Audiolla on kone joka toimii — mutta se on kömpelö: se lähettää asiakkaalle vastauksen heti ilman ihmisen tarkistusta, käsittelee kaikki viestit vaikka vain osa on tärkeitä, eikä jätä tiimille muistumaa tai visuaalista yhteenvetoa. Rakenna parempi versio: suodatus, ihmisen tarkistus, oikea sähköposti, kuva JA muistutus.',
+    goal:'Rakenna <strong>8-palikan</strong> kone: lue viestit → <strong>suodata tärkeät</strong> → tekoäly valmistelee vastauksen → <strong>ihminen tarkistaa</strong> → <strong>lähetä sähköposti</strong> → <strong>generoi kuva</strong> → <strong>aseta muistutus tiimille</strong>. Kirjoitat itse tekoälyn ohjeen, kuvausohjeen ja muistutuksen — et kopioi valmista.',
+    warn:'⚠ Viimeisin ja vaativin. Kahdeksan palikkaa oikeassa järjestyksessä. Ennen rakentamista kirjoitat suunnitelman ja kolme erillistä ohjetta. Ei helppoa vihjettä. Näytä että olet rakentaja.',
+    hint:'Kaksi periaatetta yhdessä: käsittele vain olennaiset, älä lähetä mitään ilman hyväksyntää. Lisäksi: mitä kone tuottaa asiakkaalle vs. mitä tiimille (kuva + muistutus)? Piirrä ketju paperille ennen palikoita.',
+    requiresThinkGate:true,
+    thinkGateVariant:'improve',
+    interpretTeacherRole:'Olet Marja Salo, automaatio-opettaja. Arvioit oppijan SUUNNITELMAA ennen rakentamista — sokraattisesti, suomeksi, 4-6 lausetta. ÄLÄ anna valmista ketjua tai palikkojen nimiä.\n\nOIKEA YDIN (salainen): kömpelö kone vastaa kaikille heti. Parempi versio: suodatus vain tärkeille → tekoäly valmistelee vastausluonnoksen → ihminen hyväksyy → vasta sitten sähköposti asiakkaalle → lisäksi kuvageneraattori (sisäinen/some) ja muistutus tiimille.\n\nHYVÄKSY [VALMIS] kun oppija mainitsee: suodatuksen, ihmisen tarkistuksen, sähköpostin vasta hyväksynnän jälkeen, JA jotain tiimin muistutuksesta/kuvasta.\nOHJAA [JATKA] jos puuttuu suodatus, hyväksyntä tai jos hän haluaa lähettää heti ilman ihmistä.',
+    palette:['trigger','action','filter','ai','approval','email','imagegen','reminder','output','database','translate','sms','calendar','sheet','webhook','loop','delay'],
+    required:['trigger','action','filter','ai','approval','email','imagegen','reminder'],
+    terminal:'reminder',
     requireEdges:true,
     isEmail:true,
-    data:'1. Pekka V: "Tilaus myöhässä, tarvitsen sen heti!" [tärkeä]\n2. Koivu Oy: "Kiitos hyvästä palvelusta." [ei tärkeä]\n3. Anna N: "Laskussa virhe, väärä summa!" [tärkeä]\n4. Jari M: "Mukavaa päivää." [ei tärkeä]',
-    sampleHead:'📨 Saapuneet viestit',
+    tallCanvas:true,
+    minAiPrompt:45,
+    minImagePrompt:28,
+    minReminderNote:22,
+    data:'1. Pekka V: "Tilaus myöhässä, tarvitsen sen heti! Asiakas odottaa." [tärkeä]\n2. Koivu Oy: "Kiitos hyvästä palvelusta." [ei tärkeä]\n3. Anna N: "Laskussa virhe, väärä summa — korjaa heti!" [tärkeä]\n4. Jari M: "Mukavaa päivää." [ei tärkeä]\n5. Tomi S: "Tuote rikki, haluan vaihdon huomenna." [tärkeä]',
+    sampleHead:'📨 Saapuneet viestit (Kaiku Audio)',
     sample:[
       {from:'Pekka V',meta:'tärkeä',body:'Tilaus myöhässä, tarvitsen sen heti!',flag:'urgent'},
       {from:'Koivu Oy',meta:'kevyt',body:'Kiitos hyvästä palvelusta',flag:'ok'},
       {from:'Anna N',meta:'tärkeä',body:'Laskussa virhe, väärä summa!',flag:'urgent'},
-      {from:'Jari M',meta:'kevyt',body:'Mukavaa päivää',flag:'normal'}
+      {from:'Jari M',meta:'kevyt',body:'Mukavaa päivää',flag:'ok'},
+      {from:'Tomi S',meta:'tärkeä',body:'Tuote rikki, haluan vaihdon huomenna',flag:'urgent'}
     ],
-    aiRole:'Olet asiakaspalvelun assistentti joka valmistelee vastausluonnoksia suomeksi vain tärkeisiin viesteihin. Kohtelias ja selkeä. Et lupaa mitään mitä viestissä ei mainita. Vastaus on ehdotus ihmiselle.',
-    examplePrompt:'Valmistele jokaiseen tärkeään viestiin kohtelias vastausluonnos. Muista: ihminen tarkistaa ennen lähetystä.'
+    aiRole:'Olet asiakaspalvelun assistentti joka valmistelee vastausluonnoksia suomeksi vain tärkeisiin viesteihin. Kohtelias ja selkeä. Et lupaa hyvityksiä tai aikatauluja. Vastaus on ehdotus ihmiselle — ei lopullinen lähetys.',
+    examplePrompt:'Valmistele jokaiseen tärkeään viestiin kohtelias vastausluonnos. Pahoittele viivettä tai virhettä. Pyydä tarvittaessa lisätietoja. Älä lupaa rahaa tai hyvitystä. Muista: ihminen tarkistaa ennen lähetystä.'
   }
 ];
 
 let currentChallenge = 0;
 let userEmail = '';
 let interpretUnlocked = false;
+let improveUnlocked = false;
+let canvasZoom = 1;
+const CANVAS_ZOOM_MIN = 0.6, CANVAS_ZOOM_MAX = 1.45;
 try { userEmail = localStorage.getItem('m1_email') || ''; } catch(e){}
 
 function isInterpretUnlocked(){
@@ -1410,19 +1446,55 @@ function setInterpretUnlocked(){
   interpretUnlocked = true;
   try{ sessionStorage.setItem('m1_interpret_ok','1'); }catch(e){}
 }
+function isImproveUnlocked(){
+  if(!improveUnlocked){
+    try{ improveUnlocked = sessionStorage.getItem('m1_improve_ok') === '1'; }catch(e){}
+  }
+  return improveUnlocked;
+}
+function setImproveUnlocked(){
+  improveUnlocked = true;
+  try{ sessionStorage.setItem('m1_improve_ok','1'); }catch(e){}
+}
+function isThinkGateUnlocked(ch){
+  if(!ch||!ch.requiresThinkGate) return true;
+  if(ch.thinkGateVariant==='improve') return isImproveUnlocked();
+  return isInterpretUnlocked();
+}
 function updateInterpretGate(ch){
   const gate=document.getElementById('interpretGate');
   const shell=document.getElementById('buildShell');
   const banner=document.getElementById('interpretUnlockedBanner');
+  const zoomBar=document.getElementById('canvasZoomBar');
+  const main=document.querySelector('#buildShell .builder-main');
   if(!ch.requiresThinkGate){
     gate.style.display='none';
     shell.style.display='';
+    if(zoomBar) zoomBar.style.display=ch.tallCanvas?'flex':'none';
+    if(main) main.classList.toggle('tall-canvas',!!ch.tallCanvas);
     return;
   }
   gate.style.display='block';
-  const blocked=!isInterpretUnlocked();
+  const blocked=!isThinkGateUnlocked(ch);
   shell.style.display=blocked?'none':'';
   banner.style.display=blocked?'none':'block';
+  if(zoomBar) zoomBar.style.display=(!blocked&&ch.tallCanvas)?'flex':'none';
+  if(main) main.classList.toggle('tall-canvas',!!ch.tallCanvas);
+  const extra=document.getElementById('improveExtraFields');
+  const gateLabel=document.getElementById('gateLabel');
+  const gateQ=document.getElementById('gateQuestion');
+  const gateHint=document.getElementById('gateHint');
+  if(ch.thinkGateVariant==='improve'){
+    gateLabel.textContent='Vaihe 1 · Suunnittele parannus';
+    gateQ.textContent='Mikä on kömpelön koneen ongelma — ja mitä parempi versio tekee eri tavalla?';
+    gateHint.textContent='Kirjoita kolme osaa: suunnitelma, luonnos tekoälyn ohjeesta, ja mitä kone tuottaa (sähköposti + kuva + muistutus). Rakennus aukeaa vasta kun opettaja hyväksyy suunnitelman.';
+    if(extra) extra.style.display='block';
+  } else {
+    gateLabel.textContent='Vaihe 1 · Tulkitse ensin';
+    gateQ.textContent='Mitä ongelmaa Lena kuvaa? Millaisen automaation hän tarvitsee?';
+    gateHint.textContent='Kirjoita omin sanoin — ei tarvitse olla täydellinen. Opettaja-tekoäly antaa palautetta ilman valmiita vastauksia.';
+    if(extra) extra.style.display='none';
+  }
 }
 function mockInterpretTeacherResponse(studentText){
   const t=String(studentText||'').toLowerCase();
@@ -1444,26 +1516,41 @@ function mockInterpretTeacherResponse(studentText){
   }
   return 'Hyvä alku. Mieti vielä: mistä data tulee, mitä tekoäly tekee valituille viesteille, ja minne lopputulos menee?\n[JATKA]';
 }
-async function submitInterpretThought(){
+async function submitThinkGate(){
   const ch=CHALLENGES[currentChallenge];
   if(!ch.requiresThinkGate) return;
   const input=document.getElementById('interpretInput');
   const val=(input.value||'').trim();
-  if(val.length<40){ toast('Kirjoita hieman pidempi tulkinta (vähintään muutama virke)'); return; }
+  if(val.length<40){ toast('Kirjoita hieman pidempi suunnitelma (vähintään muutama virke)'); return; }
+  let userMsg='Oppijan suunnitelma:\n"'+val+'"';
+  if(ch.thinkGateVariant==='improve'){
+    const sketch=(document.getElementById('improveAiSketch').value||'').trim();
+    const outs=(document.getElementById('improveOutputs').value||'').trim();
+    if(sketch.length<25){ toast('Kirjoita luonnos tekoälyn ohjeesta (vastausluonnokset)'); return; }
+    if(outs.length<25){ toast('Kuvaile mitä kone tuottaa: sähköposti, kuva ja muistutus'); return; }
+    userMsg+='\n\nLuonnos tekoälyn ohjeesta:\n"'+sketch+'"\n\nTuotokset (email/kuva/muistutus):\n"'+outs+'"';
+  } else {
+    userMsg='Oppijan tulkinta:\n"'+val+'"';
+  }
+  userMsg+='\n\nArvioi ymmärtääkö oppija ongelman ja automaation pääpiirteet. Muista säännöt ja päättele [VALMIS] tai [JATKA].';
   const btn=document.getElementById('interpretSubmit');
   const resp=document.getElementById('interpretResp');
   const fb=document.getElementById('interpretFeedback');
   btn.disabled=true;
   resp.style.display='block';
   fb.innerHTML='<span class="dots"><span></span><span></span><span></span></span>';
-  const userMsg='Oppijan tulkinta:\n"'+val+'"\n\nArvioi ymmärtääkö oppija ongelman ja automaation pääpiirteet. Muista säännöt ja päättele [VALMIS] tai [JATKA].';
   let raw='';
   try{
-    raw=await moduleClaudeChat(ch.interpretTeacherRole,userMsg,520);
+    raw=await moduleClaudeChat(ch.interpretTeacherRole,userMsg,560);
   }catch(e){
-    console.warn('Claude interpret gate:',e.message||e);
+    console.warn('Claude think gate:',e.message||e);
     if(location.search.includes('preview=1')){
-      raw=mockInterpretTeacherResponse(val);
+      if(ch.thinkGateVariant==='improve'){
+        const outs=(document.getElementById('improveOutputs').value||'').trim();
+        raw=(/(suodat|tärke|valikoi)/i.test(val)&&/(ihmis|tarkist|hyväksy)/i.test(val)&&/(kuva|muistut|sähköpost|email)/i.test(outs||val))
+          ? 'Hyvä suunnitelma — näet suodatuksen, ihmisen roolin ja useat tuotokset.\n[VALMIS]'
+          : 'Mieti vielä: mitä tapahtuu ennen lähetystä, ja mitä tiimille jää?\n[JATKA]';
+      } else raw=mockInterpretTeacherResponse(val);
     }else{
       fb.textContent='Tekoälypalvelu ei vastaa juuri nyt. Yritä hetken päästä uudelleen.';
       btn.disabled=false;
@@ -1475,12 +1562,14 @@ async function submitInterpretThought(){
   fb.textContent=feedback;
   btn.disabled=false;
   if(passed){
-    setInterpretUnlocked();
+    if(ch.thinkGateVariant==='improve') setImproveUnlocked();
+    else setInterpretUnlocked();
     updateInterpretGate(ch);
     toast('✅ Hyvä! Nyt voit rakentaa automaation.');
     setTimeout(()=>document.getElementById('buildShell')?.scrollIntoView({behavior:'smooth',block:'start'}),300);
   }
 }
+async function submitInterpretThought(){ return submitThinkGate(); }
 
 /* ============================================================
    READ-ONLY DEMO (Osa 3) — unchanged
@@ -1507,8 +1596,31 @@ function nodeColorClass(type){
   if(type==='ai')return 'ai';
   if(type==='filter')return 'filter';
   if(type==='approval')return 'approval';
+  if(type==='imagegen')return 'ai';
+  if(type==='reminder')return 'trigger';
   if(type==='output'||type==='email'||type==='sms')return 'output';
   return 'action';
+}
+function setCanvasZoom(z){
+  canvasZoom=Math.max(CANVAS_ZOOM_MIN,Math.min(CANVAS_ZOOM_MAX,z));
+  const stage=document.getElementById('canvasStage');
+  if(stage) stage.style.transform='scale('+canvasZoom+')';
+  const lbl=document.getElementById('zoomLabel');
+  if(lbl) lbl.textContent=Math.round(canvasZoom*100)+'%';
+  renderEdges();
+}
+function nudgeCanvasZoom(d){ setCanvasZoom(canvasZoom+d); }
+function autoFitCanvas(){
+  if(!buildNodes.length){ setCanvasZoom(1); return; }
+  const maxX=Math.max(...buildNodes.map(n=>n.x))+210;
+  const maxY=Math.max(...buildNodes.map(n=>n.y))+130;
+  const cw=canvas.clientWidth||800, ch=canvas.clientHeight||560;
+  const scale=Math.min(1.35,Math.max(CANVAS_ZOOM_MIN,Math.min(cw/maxX, ch/maxY, 1.2)));
+  setCanvasZoom(scale);
+}
+function canvasCoords(clientX,clientY){
+  const cr=canvas.getBoundingClientRect();
+  return { x:(clientX-cr.left)/canvasZoom, y:(clientY-cr.top)/canvasZoom };
 }
 function drawEdges(svgId, edges, posFn){
   const svg=document.getElementById(svgId); if(!svg) return; svg.innerHTML='';
@@ -1612,6 +1724,7 @@ function selectChallenge(i){
     document.getElementById('sampleWrap').style.display='none';
   }
   updateInterpretGate(ch);
+  setTimeout(()=>{ if(ch.tallCanvas) autoFitCanvas(); else setCanvasZoom(1); }, 120);
 }
 function toggleHint(){ document.getElementById('briefHint').classList.toggle('show'); }
 
@@ -1636,25 +1749,28 @@ function attachPaletteHandlers(){
   document.querySelectorAll('#palette .pal-node').forEach(pn=>{
     pn.addEventListener('dragstart', e=>{ dragType=pn.dataset.type; pn.classList.add('dragging'); e.dataTransfer.effectAllowed='copy'; });
     pn.addEventListener('dragend', ()=>{ pn.classList.remove('dragging'); document.getElementById('dropHi').classList.remove('on'); });
-    pn.addEventListener('click', ()=>{ const n=buildNodes.length; addNode(pn.dataset.type, 30+(n%3)*205, 30+Math.floor(n/3)*135); });
+    pn.addEventListener('click', ()=>{ const n=buildNodes.length; addNode(pn.dataset.type, 24+(n%4)*168, 24+Math.floor(n/4)*118); });
   });
 }
 canvas.addEventListener('dragover', e=>{ e.preventDefault(); document.getElementById('dropHi').classList.add('on'); });
 canvas.addEventListener('dragleave', e=>{ if(e.target===canvas) document.getElementById('dropHi').classList.remove('on'); });
 canvas.addEventListener('drop', e=>{
   e.preventDefault(); document.getElementById('dropHi').classList.remove('on');
-  if(!dragType) return; const cr=canvas.getBoundingClientRect();
-  addNode(dragType, e.clientX-cr.left-90, e.clientY-cr.top-40); dragType=null;
+  if(!dragType) return;
+  const p=canvasCoords(e.clientX,e.clientY);
+  addNode(dragType, p.x-90, p.y-40); dragType=null;
 });
 
 function addNode(type,x,y){
   x=Math.max(6,Math.min(x,canvas.clientWidth-184)); y=Math.max(6,Math.min(y,canvas.clientHeight-100));
   const id='n'+(++nodeCounter); const m=NODE_LIB[type];
-  const node={id,type,name:m.type,foot:m.preview,x,y,config:type==='ai'?{prompt:''}:{}};
+  const node={id,type,name:m.type,foot:m.preview,x,y,
+    config:type==='ai'?{prompt:''}:type==='imagegen'?{imagePrompt:''}:type==='reminder'?{reminderNote:''}:{}};
   buildNodes.push(node);
   canvas.insertAdjacentHTML('beforeend', nodeHTML(node,false));
   document.getElementById('canvasHint').classList.add('hidden');
   wireNode(id); renderEdges(); selectNode(id);
+  if(CHALLENGES[currentChallenge]?.tallCanvas) setTimeout(autoFitCanvas, 80);
 }
 function wireNode(id){
   const el=document.getElementById(id);
@@ -1666,14 +1782,17 @@ function wireNode(id){
 }
 let dragNode=null, dragOff={x:0,y:0};
 function startNodeDrag(ev,id){
-  dragNode=id; const node=buildNodes.find(n=>n.id===id); const cr=canvas.getBoundingClientRect();
-  dragOff={x:ev.clientX-cr.left-node.x,y:ev.clientY-cr.top-node.y};
+  dragNode=id; const node=buildNodes.find(n=>n.id===id);
+  const p=canvasCoords(ev.clientX,ev.clientY);
+  dragOff={x:p.x-node.x,y:p.y-node.y};
   document.addEventListener('mousemove',onNodeDrag); document.addEventListener('mouseup',stopNodeDrag);
 }
 function onNodeDrag(ev){
-  if(!dragNode)return; const node=buildNodes.find(n=>n.id===dragNode); const cr=canvas.getBoundingClientRect();
-  node.x=Math.max(6,Math.min(ev.clientX-cr.left-dragOff.x,canvas.clientWidth-184));
-  node.y=Math.max(6,Math.min(ev.clientY-cr.top-dragOff.y,canvas.clientHeight-100));
+  if(!dragNode)return; const node=buildNodes.find(n=>n.id===dragNode);
+  const p=canvasCoords(ev.clientX,ev.clientY);
+  const cw=(canvas.clientWidth||800)/canvasZoom, ch=(canvas.clientHeight||560)/canvasZoom;
+  node.x=Math.max(6,Math.min(p.x-dragOff.x,cw-184));
+  node.y=Math.max(6,Math.min(p.y-dragOff.y,ch-100));
   const el=document.getElementById(dragNode); el.style.left=node.x+'px'; el.style.top=node.y+'px'; renderEdges();
 }
 function stopNodeDrag(){ dragNode=null; document.removeEventListener('mousemove',onNodeDrag); document.removeEventListener('mouseup',stopNodeDrag); }
@@ -1746,6 +1865,18 @@ function renderParams(){
     fields=`<div class="p-head-tt">${m.preview}</div><div class="p-field"><label class="p-label">Mihin tulos viedään</label><div class="p-static">Tallennetaan ja näytetään sinulle</div><div class="p-hint">Tulos-palikka päättää ketjun. Näytetään sinulle ajon jälkeen.</div></div>`;
   } else if(node.type==='approval'){
     fields=`<div class="p-head-tt">${m.preview}</div><div class="p-field"><label class="p-label">Kuka tarkistaa?</label><div class="p-static">Ihminen (sinä tai kollega) tarkistaa ja hyväksyy ennen kuin ketju jatkaa</div><div class="p-hint">Tärkeä periaate: kone valmistelee, ihminen päättää. Tämä palikka pysäyttää ketjun kunnes ihminen hyväksyy — juuri kuten Kelan esimerkissä.</div></div>`;
+  } else if(node.type==='imagegen'){
+    fields=`<div class="p-head-tt">Kuvageneraattori luo visuaalisen yhteenvedon tiimille tai someen. Kirjoita <strong>kuvausohje</strong> — mitä kuvassa pitää näkyä?</div>
+      <div class="p-field"><label class="p-label">Kuvausohje tekoälylle <span class="req">*</span></label>
+      <textarea class="p-area big" id="imagePrompt" placeholder="Esim. 'Minimalistinen some-kuva: asiakaspalvelu korjaa viivästyneen tilauksen. Lämmin sävy, ei tekstiä.'">${node.config.imagePrompt||''}</textarea>
+      <div class="p-charcount" id="imgCharcount">0 merkkiä</div>
+      <div class="p-hint">Kerro tyyli, tunnelma ja mitä kuvassa näkyy. Mitä tarkempi, sitä parempi kuva.</div></div>`;
+  } else if(node.type==='reminder'){
+    fields=`<div class="p-head-tt">Muistutus-palikka jättää tiimille seurannan: kuka palaa asiaan ja milloin.</div>
+      <div class="p-field"><label class="p-label">Muistutuksen sisältö <span class="req">*</span></label>
+      <textarea class="p-area" id="reminderNote" placeholder="Esim. 'Muistuta tiimiä: seuraa Pekan ja Annan tapauksia huomenna klo 10. Tarkista onko vastaus lähetetty.'">${node.config.reminderNote||''}</textarea>
+      <div class="p-charcount" id="remCharcount">0 merkkiä</div>
+      <div class="p-hint">Kirjoita kenelle ja mitä muistutetaan. Tämä on automaation viimeinen askel.</div></div>`;
   } else {
     // distractor node
     fields=`<div class="p-head-tt">${m.preview}</div><div class="p-field"><div class="p-static" style="border-left:3px solid var(--amber); background:var(--amber-light);">Tämä palikka toimii oikeissa työkaluissa, mutta <strong>mieti tarkkaan</strong>: tarvitseeko <em>tämä</em> kone sitä? Ylimääräiset palikat voivat rikkoa ketjun.</div></div>`;
@@ -1757,18 +1888,36 @@ function renderParams(){
   const ta=document.getElementById('aiPrompt');
   if(ta){
     const cc=document.getElementById('aiCharcount');
-    const upd=()=>{ node.config.prompt=ta.value; cc.textContent=ta.value.trim().length+' merkkiä'; cc.classList.toggle('good', ta.value.trim().length>=20); };
+    const minLen=ch.minAiPrompt||20;
+    const upd=()=>{ node.config.prompt=ta.value; cc.textContent=ta.value.trim().length+' merkkiä'; cc.classList.toggle('good', ta.value.trim().length>=minLen); };
     ta.addEventListener('input', upd); upd();
+  }
+  const ip=document.getElementById('imagePrompt');
+  if(ip){
+    const cc=document.getElementById('imgCharcount');
+    const minLen=ch.minImagePrompt||20;
+    const upd=()=>{ node.config.imagePrompt=ip.value; cc.textContent=ip.value.trim().length+' merkkiä'; cc.classList.toggle('good', ip.value.trim().length>=minLen); };
+    ip.addEventListener('input', upd); upd();
+  }
+  const rn=document.getElementById('reminderNote');
+  if(rn){
+    const cc=document.getElementById('remCharcount');
+    const minLen=ch.minReminderNote||15;
+    const upd=()=>{ node.config.reminderNote=rn.value; cc.textContent=rn.value.trim().length+' merkkiä'; cc.classList.toggle('good', rn.value.trim().length>=minLen); };
+    rn.addEventListener('input', upd); upd();
   }
   const ei=document.getElementById('emailInput');
   if(ei) ei.addEventListener('input', e=>{ userEmail=e.target.value.trim(); try{localStorage.setItem('m1_email',userEmail);}catch(x){} });
 }
 function fillExample(){
   const ch=CHALLENGES[currentChallenge]; const node=buildNodes.find(n=>n.id===selectedId);
-  const starter = ch.aiTaskDefault
-    ? ('Tehtävä: ' + ch.aiTaskDefault + '\n\nKirjoita tarkemmin omin sanoin mitä tekoälyn pitää tuottaa.')
-    : 'Kirjoita omin sanoin: mitä tekoälyn pitää tehdä saamallaan tiedolla ja millaisen lopputuloksen haluat.';
-  if(node&&node.type==='ai'){ node.config.prompt=starter; const ta=document.getElementById('aiPrompt'); if(ta){ ta.value=starter; ta.dispatchEvent(new Event('input')); } toast('Aloitusidea lisätty — täydennä itse'); }
+  if(node&&node.type==='ai'){
+    const sketch=document.getElementById('improveAiSketch')?.value?.trim();
+    const starter = sketch && ch.thinkGateVariant==='improve' ? sketch
+      : ch.aiTaskDefault ? ('Tehtävä: ' + ch.aiTaskDefault + '\n\nKirjoita tarkemmin omin sanoin mitä tekoälyn pitää tuottaa.')
+      : (ch.examplePrompt || 'Kirjoita omin sanoin: mitä tekoälyn pitää tehdä saamallaan tiedolla ja millaisen lopputuloksen haluat.');
+    node.config.prompt=starter; const ta=document.getElementById('aiPrompt'); if(ta){ ta.value=starter; ta.dispatchEvent(new Event('input')); } toast('Aloitusidea lisätty — täydennä itse');
+  }
 }
 function closeParams(){ document.getElementById('params').classList.remove('open'); document.querySelectorAll('#canvas .node').forEach(n=>n.classList.remove('selected')); selectedId=null; }
 function resetBuild(){
@@ -1780,6 +1929,7 @@ function resetBuild(){
   document.getElementById('activeLabel').textContent='Inactive';
   document.getElementById('activeSwitch').style.background='';
   document.getElementById('btDot').style.background='';
+  setCanvasZoom(1);
 }
 
 /* ---- validate the built flow against the challenge's required chain ---- */
@@ -1788,8 +1938,8 @@ function validateFlow(){
   const typesPresent=buildNodes.map(n=>n.type);
   // 1. all required present?
   for(const req of ch.required){ if(!typesPresent.includes(req)) return {ok:false, reason:'missing', missing:req}; }
-  // 2. any distractor present?
-  const distractors=buildNodes.filter(n=>NODE_LIB[n.type].distractor);
+  // 2. any distractor present (unless required in this challenge)?
+  const distractors=buildNodes.filter(n=>NODE_LIB[n.type].distractor && !ch.required.includes(n.type));
   if(distractors.length>0) return {ok:false, reason:'distractor', node:distractors[0].type};
   // 3. edges form a connected chain covering required nodes (if requireEdges)?
   if(ch.requireEdges){
@@ -1804,13 +1954,20 @@ function validateFlow(){
     if(starts.length!==1 || ends.length!==1) return {ok:false, reason:'unconnected'};
     // start should be trigger, end should be the terminal type
     if(starts[0].type!=='trigger') return {ok:false, reason:'order', detail:'Ketjun pitää alkaa Laukaisimella'};
-    const terminal = ch.isEmail ? 'email' : 'output';
-    if(ends[0].type!==terminal) return {ok:false, reason:'order', detail: ch.isEmail?'Ketjun pitää päättyä Sähköposti-palikkaan':'Ketjun pitää päättyä Tulos-palikkaan'};
+    const terminal = ch.terminal || (ch.isEmail ? 'email' : 'output');
+    if(ends[0].type!==terminal) return {ok:false, reason:'order', detail: terminal==='email'?'Ketjun pitää päättyä Sähköposti-palikkaan':terminal==='reminder'?'Ketjun pitää päättyä Muistutus-palikkaan':'Ketjun pitää päättyä Tulos-palikkaan'};
   }
-  // 4. AI prompt filled?
   const aiNode=buildNodes.find(n=>n.type==='ai');
-  if(aiNode && (!aiNode.config.prompt || aiNode.config.prompt.trim().length<8)) return {ok:false, reason:'noprompt', node:aiNode.id};
-  // 5. email present -> email address valid?
+  const minAi=ch.minAiPrompt||8;
+  if(aiNode && (!aiNode.config.prompt || aiNode.config.prompt.trim().length<minAi)) return {ok:false, reason:'noprompt', node:aiNode.id};
+  const imgNode=buildNodes.find(n=>n.type==='imagegen');
+  if(imgNode && ch.minImagePrompt){
+    if(!imgNode.config.imagePrompt || imgNode.config.imagePrompt.trim().length<ch.minImagePrompt) return {ok:false, reason:'noimage', node:imgNode.id};
+  }
+  const remNode=buildNodes.find(n=>n.type==='reminder');
+  if(remNode && ch.minReminderNote){
+    if(!remNode.config.reminderNote || remNode.config.reminderNote.trim().length<ch.minReminderNote) return {ok:false, reason:'noreminder', node:remNode.id};
+  }
   if(ch.isEmail){
     if(!userEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(userEmail)) return {ok:false, reason:'noemail'};
   }
@@ -1821,7 +1978,7 @@ function validateFlow(){
 async function runBuild(){
   const btn=document.getElementById('buildRun'); if(btn.classList.contains('running'))return;
   const ch=CHALLENGES[currentChallenge];
-  if(ch.requiresThinkGate && !isInterpretUnlocked()){ toast('Tulkitse ensin Lenan viesti opettajalle'); document.getElementById('interpretGate')?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+  if(ch.requiresThinkGate && !isThinkGateUnlocked(ch)){ toast('Täytä ensin suunnitteluvaihe opettajalle'); document.getElementById('interpretGate')?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
   const v=validateFlow();
   if(!v.ok){ handleInvalid(v); return; }
 
@@ -1834,7 +1991,7 @@ async function runBuild(){
 
   // run order by edges (topological-ish via x, but respect trigger first / terminal last)
   const ordered=[...buildNodes].sort((a,b)=>{
-    const rank=t=>t==='trigger'?0:(t==='email'||t==='output')?9:t==='action'?1:t==='filter'?2:t==='ai'?3:t==='approval'?7:5;
+    const rank=t=>t==='trigger'?0:(t==='email'||t==='output'||t==='reminder')?9:t==='imagegen'?8:t==='action'?1:t==='filter'?2:t==='ai'?3:t==='approval'?7:5;
     return rank(a.type)-rank(b.type)||a.x-b.x;
   });
   document.getElementById('buildExecMeta').textContent=ch.name;
@@ -1862,6 +2019,31 @@ async function runBuild(){
       else if(node.type==='email'){
         addLog(log,'Lähetetään sähköpostia osoitteeseen '+userEmail+'...','','Sähköposti');
         await sendRealEmail(ch, aiResult, log);
+      }
+      else if(node.type==='imagegen'){
+        addLog(log,'Kuvageneraattori luo kuvaa ohjeellasi...','','Kuvageneraattori');
+        addIOBlock(log,'Input — kuvausohje', (node.config.imagePrompt||'').replace(/</g,'&lt;'));
+        try{
+          const imgRes=await fetch('/api/ai/image',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({prompt:node.config.imagePrompt})});
+          const imgData=await imgRes.json().catch(()=>({}));
+          if(imgRes.ok&&imgData.url){
+            addIOBlock(log,'Output — kuva luotu','<a href="'+imgData.url+'" target="_blank" rel="noopener">Avaa luotu kuva</a>');
+            addLog(log,'Kuva generoitu onnistuneesti','ok','Kuvageneraattori');
+          } else {
+            addIOBlock(log,'Output — kuvaehdotus (mock)','Kuva: '+node.config.imagePrompt.slice(0,120)+'…');
+            addLog(log,'Kuvageneraattori valmis (esikatselu/mock)','ok','Kuvageneraattori');
+          }
+        }catch(e){
+          addIOBlock(log,'Output — kuvaehdotus', node.config.imagePrompt.replace(/</g,'&lt;'));
+          addLog(log,'Kuva valmisteltu (API ei käytettävissä)','warn','Kuvageneraattori');
+        }
+        await wait(500);
+      }
+      else if(node.type==='reminder'){
+        addLog(log,'Asetetaan muistutus tiimille...','','Muistutus');
+        addIOBlock(log,'Muistutus', (node.config.reminderNote||'').replace(/</g,'&lt;').replace(/\n/g,'<br>'));
+        addLog(log,'Muistutus tallennettu — tiimi saa ilmoituksen huomenna klo 10','ok','Muistutus');
+        await wait(450);
       }
       el.classList.remove('running'); el.classList.add('ok'); el.querySelector('.nd-status').textContent='✓';
     }catch(err){
@@ -1892,7 +2074,9 @@ function handleInvalid(v){
   else if(v.reason==='distractor'){ msg=NODE_LIB[v.node].type+'-palikka ei kuulu tähän koneeseen. Poista ylimääräiset ja mieti mitä oikeasti tarvitaan.'; buildNodes.filter(n=>n.type===v.node).forEach(n=>document.getElementById(n.id)?.classList.add('err')); }
   else if(v.reason==='unconnected'){ msg='Palikat eivät ole kytketty yhdeksi ketjuksi. Vedä oranssista pisteestä seuraavaan palikkaan.'; }
   else if(v.reason==='order'){ msg=v.detail+'. Tarkista järjestys — alkaako ketju oikeasta paikasta ja päättyykö oikeaan loppupisteeseen?'; }
-  else if(v.reason==='noprompt'){ msg='Avaa Tekoäly-palikka ja kirjoita sille ohje.'; selectNode(v.node); }
+  else if(v.reason==='noprompt'){ msg='Avaa Tekoäly-palikka ja kirjoita sille ohje (vähintään '+(CHALLENGES[currentChallenge].minAiPrompt||8)+' merkkiä).'; selectNode(v.node); }
+  else if(v.reason==='noimage'){ msg='Avaa Kuvageneraattori-palikka ja kirjoita kuvausohje.'; selectNode(v.node); }
+  else if(v.reason==='noreminder'){ msg='Avaa Muistutus-palikka ja kirjoita mitä tiimille muistutetaan.'; selectNode(v.node); }
   else if(v.reason==='noemail'){ msg='Avaa Sähköposti-palikka ja kirjoita oma sähköpostiosoitteesi.'; const em=buildNodes.find(n=>n.type==='email'); if(em) selectNode(em.id); }
   toast('⚠ '+msg);
   // also surface in log
