@@ -624,7 +624,7 @@
       '<div class="photo">?</div><div>' +
       "<h2>Portfolio-esikatselu</h2>" +
       '<div class="tag">Lataa CV vasemmalta (PDF tai teksti) — näet mitä rekrytoija näkisi</div>' +
-      '<div class="meta"><span class="pill warn">CV puuttuu</span><span class="pill">Tekoälybotti · kupla alakulmassa</span></div></div></div>' +
+      '<div class="meta"><span class="pill warn">CV puuttuu</span><span class="pill">Generatiivinen · kupla alakulmassa</span></div></div></div>' +
       '<div class="site-banner"><strong>Ei vielä tietoja</strong>Tallenna CV ja taidot Kouluta-välilehdellä. Sitten esikatselu näyttää oikean nimen, taidot ja match-analyysin.</div>' +
       '<div class="site-cta"><span class="dot"></span> Aloita: Kouluta → lataa CV → Tallenna & kouluta</div>';
     $("av").textContent = "?";
@@ -697,7 +697,7 @@
         " avainsanaa · Klikkaa kuplaa kysyäksesi lisää.</div>";
     } else if (trained) {
       bannerHtml =
-        '<div class="site-banner"><strong>Työnhakubottisi on valmiina</strong>Käytät sitä täällä alustalla. Liitä työpaikka vasemmalta nähdäksesi match-analyysin.</div>';
+        '<div class="site-banner"><strong>Generatiivinen työnhakubottisi on valmiina</strong>Käytät sitä täällä alustalla. Liitä työpaikka vasemmalta nähdäksesi sopivuuden.</div>';
     } else {
       bannerHtml =
         '<div class="site-banner"><strong>Portfolio-esikatselu</strong>Tallenna CV ja taidot — sitten näet mitä rekrytoija näkisi.</div>';
@@ -746,7 +746,7 @@
       '<div class="meta">' +
       trainPill +
       analysisPill +
-      '<span class="pill">Tekoälybotti · kupla alakulmassa</span></div></div></div>' +
+      '<span class="pill">Generatiivinen · kupla alakulmassa</span></div></div></div>' +
       bannerHtml +
       '<div class="site-grid">' +
       '<div class="stat-box"><b>' +
