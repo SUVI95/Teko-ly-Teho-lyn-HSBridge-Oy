@@ -116,4 +116,37 @@ router.post('/responses', async (req, res) => {
   }
 });
 
+/** Pedagogical path for AI Polku bonus modules ★2–★5 (+ bottityypit). */
+const AI_POLKU_BONUS_PATH = [
+  { slug: 'bottityypit', href: '/module/moduuli-bottityypit', name: 'Tunne bottityypit', nextLabel: 'Tunne bottityypit' },
+  { slug: 'eu-ai-act-moduuli5', href: '/module/moduuli-eu-ai-act-moduuli5', name: 'Tekoälylaki', nextLabel: 'Tekoälylaki' },
+  { slug: 'prompt-hiomo', href: '/module/moduuli-prompt-hiomo', name: 'Kirjoita botin ohje', nextLabel: 'Prompt-hiomo' },
+  { slug: 'hitl-architect', href: '/module/moduuli-hitl-architect', name: 'Kun botti ei riitä', nextLabel: 'HITL' },
+  { slug: 'asiakaspalvelu-live-puhelu', href: '/module/moduuli-asiakaspalvelu-live-puhelu', name: 'Live-puhelu', nextLabel: 'Live-puhelu' }
+];
+
+function pathIndex(slug) {
+  return AI_POLKU_BONUS_PATH.findIndex((m) => m.slug === slug);
+}
+
+router.get('/next', (req, res) => {
+  const slug = String(req.query.slug || '').trim();
+  const i = pathIndex(slug);
+  if (i < 0 || i >= AI_POLKU_BONUS_PATH.length - 1) {
+    return res.json({ href: null });
+  }
+  const next = AI_POLKU_BONUS_PATH[i + 1];
+  res.json({ href: next.href, name: next.name, nextLabel: next.nextLabel });
+});
+
+router.get('/prev', (req, res) => {
+  const slug = String(req.query.slug || '').trim();
+  const i = pathIndex(slug);
+  if (i <= 0) {
+    return res.json({ href: null });
+  }
+  const prev = AI_POLKU_BONUS_PATH[i - 1];
+  res.json({ href: prev.href, name: prev.name, nextLabel: prev.nextLabel });
+});
+
 module.exports = router;

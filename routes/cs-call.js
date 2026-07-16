@@ -1,6 +1,7 @@
 const express = require('express');
 const { fetch } = require('undici');
 const { buildMultipartForm } = require('../lib/multipart-form');
+const pool = require('../database/db');
 const {
   CS_CALL_PHASES,
   CS_CALL_TURN_COUNT,
@@ -10,6 +11,43 @@ const {
 } = require('../lib/cs-call-scenarios');
 
 const router = express.Router();
+const CS_MODULE_ID = 'moduuli-asiakaspalvelu-live-puhelu';
+
+async function resolveUserId(req) {
+  if (req.user && req.user.id) return req.user.id;
+  const token = req.cookies && req.cookies.session_token;
+  if (!token) return null;
+  try {
+    const session = await pool.query(
+      `SELECT u.id FROM sessions s
+       JOIN users u ON s.user_id = u.id
+       WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE`,
+      [token]
+    );
+    return session.rows.length ? session.rows[0].id : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function upsertReflection(userId, moduleId, reflectionText) {
+  if (!userId || !moduleId || !reflectionText) return;
+  const existing = await pool.query(
+    'SELECT id FROM reflections WHERE user_id = $1 AND module_id = $2',
+    [userId, moduleId]
+  );
+  if (existing.rows.length) {
+    await pool.query(
+      'UPDATE reflections SET reflection_text = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 AND module_id = $3',
+      [reflectionText, userId, moduleId]
+    );
+  } else {
+    await pool.query(
+      'INSERT INTO reflections (user_id, module_id, reflection_text) VALUES ($1, $2, $3)',
+      [userId, moduleId, reflectionText]
+    );
+  }
+}
 
 function envTrim(name) {
   const v = process.env[name];
@@ -203,7 +241,37 @@ router.post('/feedback', async (req, res) => {
       max_tokens: 450
     });
 
-    res.json({ feedback: feedback || '' });
+    const feedbackText = feedback || '';
+    try {
+      const userId = await resolveUserId(req);
+      if (userId) {
+        const payload = JSON.stringify({
+          v: 1,
+          savedAt: new Date().toISOString(),
+          data: {
+            scenarioId,
+            sessions,
+            callFeedbackText: feedbackText,
+            completedScenarios: [scenarioId]
+          }
+        });
+        await upsertReflection(userId, CS_MODULE_ID + '__autosave', payload);
+        await upsertReflection(
+          userId,
+          CS_MODULE_ID + '__feedback',
+          JSON.stringify({
+            scenarioId,
+            feedback: feedbackText,
+            sessions,
+            savedAt: new Date().toISOString()
+          })
+        );
+      }
+    } catch (persistErr) {
+      console.error('CS call feedback persist:', persistErr.message);
+    }
+
+    res.json({ feedback: feedbackText });
   } catch (error) {
     console.error('CS call feedback error:', error);
     res.status(500).json({ error: 'Palaute epäonnistui', message: error.message });

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Esikatselu — live asiakaspuhelu (ei auth)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/cs-workbench.css?v=11">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F8F6F2;--paper:#FFF;--ink:#18181B;--ink2:#52525B;--ink3:#A1A1AA;
+  --line:rgba(24,24,27,.09);--navy:#1B2B4B;--navy-lt:#EEF2F8;
+  --coral:#C85C3C;--coral-lt:#FDF2EE;--forest:#2D5A4A;--forest-lt:#EDF4F1;
+  --r10:10px;--r14:14px;--r20:20px;--border:#e5e5e5;
+}
+/* Live-call module type scale */
+.cs-screen-title{font-size:20px;font-weight:600;color:#1a1a1a;line-height:1.35}
+.cs-section-label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#999}
+.cs-field-label{font-size:12px;font-weight:600;color:#666;letter-spacing:.02em;text-transform:uppercase}
+.cs-body{font-size:14px;font-weight:400;color:#1a1a1a;line-height:1.5}
+.cs-muted{font-size:11px;color:#aaa}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px}
+.top-nav{position:fixed;top:0;left:0;right:0;z-index:900;background:rgba(248,246,242,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);height:50px;padding:0 22px;display:flex;align-items:center;justify-content:space-between}
+.tn-link{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);text-decoration:none}
+.tn-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--coral)}
+.setup-shell{min-height:100vh;padding:62px 16px 40px}
+.setup-wrap{max-width:720px;margin:0 auto}
+body.live-mode{background:#f4f5f7}
+.wrap{padding:0}
+.mission-hdr{background:var(--navy);border-radius:var(--r14);padding:18px 20px;margin-bottom:16px;position:relative;overflow:hidden}
+.mission-hdr::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--coral),transparent)}
+.mh-eye{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#F5C4A8;margin-bottom:8px;display:block}
+.mh-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:#fff;margin-bottom:8px;line-height:1.25}
+.mh-sub{font-size:14px;color:#fff;line-height:1.6;font-weight:400}
+.flow-step{display:none}.flow-step.active{display:block}
+.theory-box{background:var(--paper);border:1px solid var(--line);border-radius:var(--r14);padding:16px 18px;margin-bottom:16px;line-height:1.5;color:var(--ink2)}
+.theory-box h3{margin-bottom:10px}
+.theory-box p{font-size:14px;line-height:1.5;color:#1a1a1a}
+.sc-grid{display:grid;gap:8px;margin-bottom:12px}
+.sc-opt{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r14);padding:14px 16px;cursor:pointer;transition:all .2s}
+.sc-opt:hover{border-color:var(--coral)}.sc-opt.selected{border-color:var(--coral);background:var(--coral-lt)}
+.sc-opt-title{font-weight:600;font-size:14px;margin-bottom:4px;color:#1a1a1a}.sc-opt-desc{font-size:14px;color:#666;line-height:1.5}
+.custom-box{display:none;margin-bottom:12px}.custom-box.show{display:block}
+.custom-box label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#999}
+textarea{width:100%;min-height:80px;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r10);font-family:inherit;font-size:14px;line-height:1.5;resize:vertical}
+.btn{display:inline-flex;align-items:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;padding:12px 20px;border-radius:var(--r10);cursor:pointer;border:none;text-decoration:none;margin-right:8px;margin-top:8px}
+.btn-coral{background:var(--coral);color:#fff}.btn-coral:disabled{opacity:.4;cursor:not-allowed}
+.btn-outline{background:transparent;border:1.5px solid var(--line);color:#666}
+.stage-label{margin-bottom:10px}
+/* CRM */
+.crm-dash{font-family:'Plus Jakarta Sans',sans-serif;background:#fafafa;color:#1a1a1a;height:100%;display:flex;flex-direction:column}
+.crm-hdr{background:#fff;border-bottom:1px solid var(--border);padding:10px 12px}
+.crm-hdr-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.crm-hdr-main{min-width:0;flex:1}
+.crm-mono{font-family:'DM Mono',monospace;font-size:12px}
+.crm-ticket-id{color:#999}
+.crm-badge{display:inline-block;background:#fde8e8;color:#c0392b;font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:4px}
+.crm-name{font-weight:600;font-size:16px;margin-top:4px;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crm-since{font-size:12px;color:#888;margin-top:2px}
+.crm-upd{white-space:nowrap}
+.crm-meta{margin-top:6px;color:#888;font-size:11px}
+.crm-toolbar{background:#fff;border-bottom:1px solid var(--border);padding:8px 12px}
+.crm-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.crm-tab{border:none;background:transparent;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;color:#999}
+.crm-tab.active{background:#e5e5e5;color:#1a1a1a}
+.crm-search-row{display:flex;gap:6px}
+.crm-search{flex:1;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:14px}
+.crm-search-btn{border:1px solid var(--border);background:#f4f4f5;padding:8px 12px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;color:#666}
+.crm-search-hint{font-size:11px;color:#c0392b;margin-top:6px}
+.crm-loading{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px;color:#aaa}
+.crm-spin{width:12px;height:12px;border:2px solid #e5e5e5;border-top-color:#666;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.crm-fields{flex:1;overflow-y:auto;padding:10px 12px}
+.crm-field-card{border-radius:10px;padding:12px 14px;margin-bottom:8px;position:relative;transition:background .3s ease,border-color .3s ease}
+.crm-field-card.locked{border:1px solid #e5e5e5;background:#fafafa}
+.crm-field-card.found{border:1px solid #d4edda;background:#f6fdf8}
+.crm-field-card-hdr{display:flex;justify-content:space-between;align-items:center}
+.crm-field-label{font-size:12px;font-weight:600;letter-spacing:.02em;color:#666;text-transform:uppercase}
+.crm-field-label.found{color:#2e7d4f}
+.crm-field-icon{font-size:14px}
+.crm-field-icon.found{color:#2e7d4f}
+.crm-field-value{margin:6px 0 0;font-size:14px;line-height:1.5;color:#1a1a1a}
+.crm-field-value.blurred{filter:blur(5px);user-select:none;color:#333;transition:filter .4s ease}
+/* Briefing */
+.brief-shell{border:1px solid var(--line);border-radius:var(--r14);overflow:hidden;background:#fff}
+.brief-top-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;border-bottom:1px solid var(--border);background:#fff}
+.timer-block{flex-shrink:0;width:72px;text-align:center}
+.timer-number{font-family:'DM Mono',monospace;font-size:28px;font-weight:600;line-height:1;color:#1a1a1a}
+.timer-number.urgent{color:#c0392b}
+.timer-sub{margin-top:2px}
+.ticket-header{flex:1;min-width:0}
+.ticket-name{font-size:16px;font-weight:600;margin:2px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1a1a1a}
+.ticket-since{font-size:12px;color:#888;margin:2px 0 0}
+.status-badge{flex-shrink:0;background:#fde8e8;color:#c0392b;font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.brief-task-strip{display:flex;gap:8px;padding:10px 14px;background:#fff8e6;overflow-x:auto;border-bottom:1px solid var(--border)}
+.task-pill{flex-shrink:0;display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:999px;background:#fff;color:#666;border:1px solid #eee}
+.task-pill.done{background:#e3f6e9;color:#2e7d4f;border-color:#d4edda}
+.brief-layout{display:block}
+.brief-main{position:relative;min-height:360px;background:#fff}
+.brief-aside{display:none;padding:16px;border-top:1px solid var(--border);font-size:14px}
+.brief-aside ul{list-style:none;margin-top:12px}
+.brief-aside li{margin-bottom:8px;color:#666;font-size:14px}
+.brief-aside li.done{color:#2e7d4f}
+.brief-hint{margin-top:14px;line-height:1.55}
+.brief-overlay{position:absolute;inset:0;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-weight:600;z-index:10;font-size:14px;color:#666}
+@media(min-width:501px){
+  .brief-task-strip{display:none}
+  .brief-layout{display:grid;grid-template-columns:1fr 200px}
+  .brief-aside{display:block;border-top:none;border-left:1px solid var(--border)}
+}
+@media(max-width:500px){
+  .brief-aside{display:none}
+}
+.fb-panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r14);padding:16px 18px;margin-top:12px;line-height:1.5;font-size:14px;color:#1a1a1a}
+.fb-status{min-height:20px;font-size:13px;color:var(--ink2);margin:8px 0 4px}
+.fb-status.error{color:#c0392b}.fb-status.loading{color:var(--ink3)}
+.fb-section{margin-bottom:12px;padding:12px 14px;border-radius:var(--r10);border:1px solid var(--line);background:var(--paper)}
+.fb-section-body{font-size:14px;line-height:1.55;color:#1a1a1a;white-space:pre-wrap}
+.fb-section.good{border-color:#d4edda;background:#f6fdf8}
+.fb-section.warn{border-color:#fde8c8;background:#fff8e6}
+.fb-section.tip{border-color:#dbeafe;background:#eff6ff}
+.fb-loading{display:flex;align-items:center;gap:10px;color:#666;font-size:14px;padding:8px 0}
+.fb-actions{margin-top:16px}
+.retry-box{text-align:center;padding:20px 16px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r14)}
+.retry-box p{font-size:14px;color:#666;line-height:1.5}
+.auth-gate{background:#fde8e8;border:1px solid #f5c6c6;border-radius:var(--r14);padding:14px 16px;margin-bottom:16px;color:#7a1f1f;line-height:1.5;font-size:14px}
+.auth-gate a{color:var(--coral);font-weight:600}
+.ai-setup{background:#fff8e6;border:1px solid #f0d78c;border-radius:var(--r14);padding:14px 16px;margin:62px auto 12px;max-width:1400px;color:#7a5b00;line-height:1.5;font-size:14px}
+#csAudioMount{position:absolute;width:0;height:0;opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<nav class="top-nav">
+  <a class="tn-link" href="/preview-cs-live-call.html">Esikatselu</a>
+  <span class="tn-title">Local preview · ei auth</span>
+</nav>
+
+<div id="aiSetupGate" class="ai-setup" style="display:none;margin-left:16px;margin-right:16px"></div>
+
+<div id="authGate" class="auth-gate setup-wrap" style="display:none;margin:62px auto 0;max-width:720px">
+  <strong>Kirjaudu ensin.</strong> CRM-tehtävä ja live-ääni vaativat kirjautumisen.
+  <a id="authLoginLink" href="/login">Kirjaudu sisään →</a>
+</div>
+
+<div id="setupShell" class="setup-shell" style="display:none">
+<div class="setup-wrap">
+<div class="wrap">
+  <div class="flow-step" id="stepFeedback">
+    <div class="mission-hdr">
+      <span class="mh-eye">Asiakaspalvelu · live puhelu</span>
+      <h2 class="mh-title">Palaute puhelustasi</h2>
+      <p class="mh-sub">Claude analysoi transkription ja CRM-kirjauksen. Käy läpi ennen uutta yritystä.</p>
+    </div>
+    <p class="stage-label cs-section-label">4 · Palaute</p>
+    <div id="fbStatus" class="fb-status" role="status"></div>
+    <div class="fb-panel" id="fbText"><div class="fb-loading"><span class="crm-spin"></span> Ladataan palautetta...</div></div>
+    <div class="fb-actions">
+      <button class="btn btn-coral" id="toRetryBtn" disabled>Jatka →</button>
+    </div>
+  </div>
+
+  <div class="flow-step" id="stepRetry">
+    <p class="stage-label cs-section-label">5 · Valmis</p>
+    <div class="retry-box">
+      <p style="margin-bottom:16px;color:var(--ink2)">Haluatko harjoitella saman skenaarion uudelleen lyhyemmällä CRM-ajalla (45 s)?</p>
+      <button class="btn btn-coral" id="retryBtn">Yritä uudelleen</button>
+      <button class="btn btn-outline" id="doneBtn">Valmis</button>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div id="liveShell" class="live-shell">
+  <div class="wb-toolbar" id="wbToolbar">
+    <div class="wb-toolbar-head">
+      <div>
+        <div class="wb-toolbar-title">Agentin työpöytä — CRM + puhelin</div>
+        <div class="wb-toolbar-sub">Hae tilaus CRM:stä → vastaa puhelu → kirjaus → palaute</div>
+      </div>
+    </div>
+    <div class="wb-sc-grid" id="wbScGrid"></div>
+    <div class="wb-custom" id="wbCustomBox">
+      <label class="cs-section-label" style="display:block;margin-bottom:6px">Oma skenaario</label>
+      <textarea id="customText" placeholder="Kuvaile tilanne — AI-asiakas seuraa tätä."></textarea>
+    </div>
+    <div class="wb-start"><button type="button" id="wbStartBtn" disabled>Lataa työpöytä →</button></div>
+    <div class="wb-flow-actions" id="wbFlowActions" style="display:none">
+      <button type="button" id="wbStartTimerBtn" class="primary">1 · Aloita CRM-aika (90 s)</button>
+      <button type="button" id="wbRingNowBtn">2 · Puhelu soi nyt →</button>
+    </div>
+  </div>
+  <p id="liveStatus" class="live-status-bar">Valitse skenaario ja lataa työpöytä.</p>
+  <p id="liveWrapStatus" class="live-wrap-status" style="display:none"></p>
+  <div id="liveMount"></div>
+  <div id="csAudioMount" aria-hidden="true"></div>
+</div>
+
+<script>window.__MODULE_ID__ = 'moduuli-asiakaspalvelu-live-puhelu';</script>
+<script src="/js/cs-pressure-engine.js?v=11"></script>
+<script src="/js/cs-crm-ui.js?v=11"></script>
+<script src="/js/cs-rig-ui.js?v=11"></script>
+<script src="/js/cs-mock-realtime.js?v=18"></script>
+<script>
+(function () {
+  var STATE = 'workbench';
+  var selectedScenario = 'wrong_bill';
+  var crmTicket = null;
+  var briefingFound = [];
+  var callFound = [];
+  var sessionLog = [];
+  var liveCall = null;
+  var liveUI = null;
+  var briefingSeconds = 90;
+  var briefingRemaining = 90;
+  var briefingTimer = null;
+  var callPhase = 'idle';
+  var callTimer = null;
+  var callElapsed = 0;
+  var busy = false;
+  var answerBusy = false;
+  var wrapUpData = null;
+  var wrapUpStarted = false;
+  var authOk = false;
+  var scenarioList = [];
+  var scenarioHintsById = {};
+  var aiReady = { liveCall: false, feedback: false };
+
+  function indexScenarioHints(list) {
+    scenarioHintsById = {};
+    (list || []).forEach(function (s) {
+      if (s && s.id) scenarioHintsById[s.id] = s;
+    });
+  }
+
+  function showAiSetupIssues(cfg) {
+    if (!cfg || !cfg.aiReady) return;
+    aiReady = cfg.aiReady;
+    var issues = [];
+    if (!cfg.aiReady.liveCall) {
+      issues.push('<strong>Live-ääni:</strong> OPENAI_API_KEY puuttuu Vercelistä — asiakas-ääni ei toimi ennen kuin avain on lisätty ja deploy ajettu.');
+    }
+    if (!cfg.aiReady.feedback) {
+      issues.push('<strong>Palaute:</strong> ANTHROPIC_API_KEY tai OPENAI_API_KEY puuttuu palvelimelta.');
+    }
+    var gate = document.getElementById('aiSetupGate');
+    if (issues.length && gate) {
+      gate.style.display = 'block';
+      gate.innerHTML = issues.join('<br><br>');
+    } else if (gate) {
+      gate.style.display = 'none';
+    }
+  }
+
+  function apiUrl(path) { return (window.location.origin || '') + path; }
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function fmtMmSs(sec) {
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  function showStep(name) {
+    STATE = name;
+    var isWorkbench = name === 'workbench' || name === 'live-call';
+    var isFeedback = name === 'feedback' || name === 'retry-decision';
+    document.body.classList.toggle('live-mode', isWorkbench);
+    document.getElementById('setupShell').style.display = isFeedback ? 'block' : 'none';
+    document.getElementById('liveShell').style.display = isFeedback ? 'none' : 'block';
+    document.querySelectorAll('.flow-step').forEach(function (el) { el.classList.remove('active'); });
+    if (name === 'feedback') document.getElementById('stepFeedback').classList.add('active');
+    if (name === 'retry-decision') document.getElementById('stepRetry').classList.add('active');
+    if (isFeedback) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function renderFeedback(text) {
+    var el = document.getElementById('fbText');
+    if (!el) return;
+    var raw = String(text || '').trim();
+    if (!raw) {
+      el.innerHTML = '<div class="fb-section"><div class="fb-section-body">(ei palautetta)</div></div>';
+      return;
+    }
+    if (raw.indexOf('Palaute epäonnistui') === 0) {
+      el.innerHTML = '<div class="fb-section warn"><div class="fb-section-body">' + esc(raw) + '</div></div>';
+      return;
+    }
+    var parts = raw.split(/\n(?=[✓⚠→]|CRM-hetki)/);
+    var html = '';
+    parts.forEach(function (block) {
+      block = block.trim();
+      if (!block) return;
+      var cls = 'fb-section';
+      if (block.indexOf('✓') === 0) cls += ' good';
+      else if (block.indexOf('⚠') === 0) cls += ' warn';
+      else if (block.indexOf('→') === 0 || block.indexOf('CRM-hetki') === 0) cls += ' tip';
+      html += '<div class="' + cls + '"><div class="fb-section-body">' + esc(block) + '</div></div>';
+    });
+    el.innerHTML = html || ('<div class="fb-section"><div class="fb-section-body">' + esc(raw) + '</div></div>');
+  }
+
+  function renderScenarios(list) {
+    scenarioList = list || [];
+    document.getElementById('wbScGrid').innerHTML = scenarioList.map(function (s) {
+      return '<button type="button" class="wb-sc-chip' + (s.id === selectedScenario ? ' selected' : '') + '" data-id="' + s.id + '">' + esc(s.title) + '</button>';
+    }).join('');
+    document.getElementById('wbScGrid').querySelectorAll('.wb-sc-chip').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        window.__pickSc(btn.getAttribute('data-id'), btn);
+      });
+    });
+  }
+
+  window.__pickSc = function (id, el) {
+    selectedScenario = id;
+    document.querySelectorAll('.wb-sc-chip').forEach(function (n) { n.classList.remove('selected'); });
+    if (el) el.classList.add('selected');
+    document.getElementById('wbCustomBox').classList.toggle('show', id === 'custom');
+    document.getElementById('wbStartBtn').disabled = !authOk;
+  };
+
+  async function loadCrmTicket() {
+    var r = await fetch(apiUrl('/api/cs-call/crm?scenario=' + encodeURIComponent(selectedScenario)), { credentials:'include' });
+    var d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'CRM lataus epäonnistui');
+    crmTicket = d.ticket;
+    return crmTicket;
+  }
+
+  function clearBriefingTimer() {
+    if (briefingTimer) clearInterval(briefingTimer);
+    briefingTimer = null;
+  }
+
+  function checkBriefingComplete() {
+    if (!crmTicket || callPhase !== 'briefing') return;
+    var must = crmTicket.mustFindBeforePromise || [];
+    var done = must.every(function (id) { return briefingFound.indexOf(id) >= 0; });
+    if (done) beginIncomingCall();
+  }
+
+  function updateFlowButtons() {
+    var actions = document.getElementById('wbFlowActions');
+    var startTimer = document.getElementById('wbStartTimerBtn');
+    var ringNow = document.getElementById('wbRingNowBtn');
+    if (actions) actions.style.display = liveUI ? 'flex' : 'none';
+    if (!startTimer || !ringNow) return;
+    var idleOrBriefing = callPhase === 'idle' || callPhase === 'briefing';
+    startTimer.disabled = !idleOrBriefing || callPhase === 'briefing';
+    ringNow.disabled = !idleOrBriefing;
+    if (callPhase === 'briefing') {
+      startTimer.textContent = 'CRM-aika käynnissä (' + fmtMmSs(briefingRemaining) + ')';
+    } else if (callPhase === 'idle') {
+      startTimer.textContent = '1 · Aloita CRM-aika (90 s)';
+    }
+  }
+
+  function startBriefingTimer() {
+    if (callPhase !== 'idle') return;
+    callPhase = 'briefing';
+    briefingRemaining = briefingSeconds;
+    tickBriefingBanner();
+    if (liveUI) {
+      liveUI.setPhoneWaiting('CRM-aika käynnissä — hae tilausnumero. Puhelu soi automaattisesti kun aika loppuu.');
+      liveUI.setCustomerLine('Hae tilausnumero CRM:stä ennen kuin puhelu soi.');
+    }
+    document.getElementById('liveStatus').textContent = 'CRM-aika käynnissä — hae ORD-55291 (tai skenaarion tilaus) ennen puhelua.';
+    updateFlowButtons();
+    clearBriefingTimer();
+    briefingTimer = setInterval(function () {
+      if (callPhase !== 'briefing') return;
+      briefingRemaining--;
+      tickBriefingBanner();
+      updateFlowButtons();
+      if (briefingRemaining <= 0) beginIncomingCall();
+    }, 1000);
+  }
+
+  function ringNow() {
+    if (callPhase === 'incoming' || callPhase === 'live' || callPhase === 'wrapup') return;
+    clearBriefingTimer();
+    beginIncomingCall();
+  }
+
+  function tickBriefingBanner() {
+    if (!liveUI || callPhase !== 'briefing') return;
+    var urgent = briefingRemaining <= 15;
+    liveUI.setBannerMessage(
+      (urgent ? 'Kiire! ' : '') + 'CRM-aika ' + fmtMmSs(briefingRemaining) + ' — hae tilausnumero ja pakolliset kentät ennen puhelua',
+      false
+    );
+  }
+
+  function beginIncomingCall() {
+    if (callPhase !== 'briefing' && callPhase !== 'idle') return;
+    if (!aiReady.liveCall) {
+      document.getElementById('liveStatus').textContent =
+        'Live-ääni ei käytössä — OPENAI_API_KEY puuttuu palvelimelta (Vercel). CRM-harjoitus toimii.';
+      return;
+    }
+    callPhase = 'incoming';
+    clearBriefingTimer();
+    if (liveUI) {
+      liveUI.setIncoming(true);
+      liveUI.setCustomerLine('Soittaa...');
+      liveUI.setBannerMessage('Saapuva puhelu — vastaa puhelimesta ja hae tilaus CRM:stä', true);
+    }
+    document.getElementById('liveStatus').textContent = 'Saapuva puhelu — paina vihreää Vastaa puhelu -nappia puhelimessa';
+    updateFlowButtons();
+  }
+
+  function mountWorkbench() {
+    if (!crmTicket || typeof CsWorkbenchRig === 'undefined') return;
+    if (liveUI) liveUI.destroy();
+    liveCall = null;
+    answerBusy = false;
+    wrapUpStarted = false;
+    sessionLog = [];
+    callFound = [];
+    callElapsed = 0;
+    callPhase = 'idle';
+    briefingFound = [];
+    briefingRemaining = briefingSeconds;
+    clearBriefingTimer();
+    clearInterval(callTimer);
+    document.getElementById('liveWrapStatus').style.display = 'none';
+    document.getElementById('liveMount').innerHTML = '';
+
+    liveUI = new CsWorkbenchRig(document.getElementById('liveMount'), crmTicket, {
+      foundIds: [],
+      requireOrderSearch: true,
+      incoming: false,
+      onFieldFound: function (id) {
+        if (briefingFound.indexOf(id) < 0) briefingFound.push(id);
+        if (callFound.indexOf(id) < 0) callFound.push(id);
+        checkBriefingComplete();
+      },
+      onEndCall: function () { if (liveCall) liveCall.finish('stopped'); },
+      onPickUp: function () { answerIncomingCall(); }
+    });
+
+    liveUI.setBannerMessage('Valmis — paina Aloita CRM-aika tai Puhelu soi nyt', false);
+    liveUI.setCustomerLine('Puhelu ei vielä soi. Voit hakea tilausnumeron CRM:stä jo nyt.');
+    document.getElementById('liveStatus').textContent =
+      'Työpöytä valmis. Paina 1 · Aloita CRM-aika (90 s) tai 2 · Puhelu soi nyt →';
+    updateFlowButtons();
+  }
+
+  async function startWorkbenchSession() {
+    if (selectedScenario === 'custom' && !document.getElementById('customText').value.trim()) {
+      alert('Kirjoita oma skenaario.');
+      return;
+    }
+    try {
+      document.getElementById('wbStartBtn').disabled = true;
+      await loadCrmTicket();
+      showStep('workbench');
+      mountWorkbench();
+      document.getElementById('wbStartBtn').disabled = false;
+      document.getElementById('wbStartBtn').textContent = 'Käynnistä uudelleen ↺';
+    } catch (e) {
+      document.getElementById('wbStartBtn').disabled = !authOk;
+      alert((e.message || 'CRM ei latautunut') + ' — varmista että olet kirjautunut ja sinulla on moduulin käyttöoikeus.');
+    }
+  }
+
+  document.getElementById('wbStartBtn').addEventListener('click', startWorkbenchSession);
+  document.getElementById('wbStartTimerBtn').addEventListener('click', startBriefingTimer);
+  document.getElementById('wbRingNowBtn').addEventListener('click', ringNow);
+
+  async function answerIncomingCall() {
+    if (answerBusy || liveCall || callPhase === 'briefing' || callPhase === 'idle') return;
+    if (!aiReady.liveCall) {
+      alert('Live-ääni ei ole käytössä: OPENAI_API_KEY puuttuu Vercel-ympäristömuuttujista.');
+      return;
+    }
+    if (typeof CsLiveCall === 'undefined') {
+      alert('Live-asiakaspuhelu-skripti ei latautunut. Päivitä sivu (Cmd+Shift+R).');
+      return;
+    }
+    answerBusy = true;
+    if (liveUI) liveUI.setPickupPending(true);
+
+    var baseHints = scenarioHintsById[selectedScenario] || scenarioHintsById.wrong_bill || {};
+    var hints = Object.assign({}, baseHints, {
+      orderId: crmTicket.orderId,
+      customerName: baseHints.customerName || crmTicket.customerName.split(' ')[0] || crmTicket.customerName,
+      customerEmail: crmTicket.customerEmail || '',
+      confirmationChannel: crmTicket.confirmationChannel || 'Sähköposti'
+    });
+    if (selectedScenario === 'custom') {
+      hints = Object.assign({}, hints, { openingHint: document.getElementById('customText').value.trim() });
+    }
+
+    document.getElementById('liveStatus').textContent = 'Yhdistetään mikrofoniin ja live-asiakkaaseen — salli mikrofoni...';
+
+    liveCall = new CsLiveCall({
+      scenarioId: selectedScenario,
+      customContext: selectedScenario === 'custom' ? document.getElementById('customText').value.trim() : '',
+      scenarioHints: hints,
+      requirePickup: true,
+      onStatus: function (msg) { document.getElementById('liveStatus').textContent = msg; },
+      onPhaseChange: function (info) {
+        if (liveUI && info.phase !== 'done') liveUI.setPhase(info.phase);
+        if (info.customerText && liveUI) liveUI.setCustomerLine(info.customerText);
+      },
+      onCustomerSpeakingChange: function (v) { if (liveUI) liveUI.setCustomerSpeaking(v); },
+      onPressureUpdate: function (state) { if (liveUI) liveUI.setPressure(state); },
+      onUserTranscript: function (data) { sessionLog[data.index] = data; },
+      onAssistantText: function (text) {
+        if (liveUI) {
+          liveUI.setCustomerLine(text);
+          liveUI.suggestSearchFromCustomer(text);
+        }
+      },
+      onComplete: function () { beginWrapUp(); },
+      onError: function (err) {
+        console.warn('[cs-call]', err);
+        var msg = (err && err.message) || String(err || 'Live-asiakaspuhelu keskeytyi');
+        alert(msg);
+        document.getElementById('liveStatus').textContent = msg;
+      }
+    });
+
+    try {
+      await liveCall.start();
+      callPhase = 'live';
+      if (liveUI) liveUI.setIncoming(false);
+      liveCall.pickUp();
+      updateFlowButtons();
+      document.getElementById('liveStatus').textContent = '● Live — kuuntele asiakasta ja vastaa puheenvuorollasi';
+      callTimer = setInterval(function () {
+        callElapsed++;
+        if (liveUI) liveUI.setCallDuration(callElapsed);
+      }, 1000);
+    } catch (e) {
+      var errMsg = e.message || 'Live-yhteys epäonnistui';
+      alert(errMsg);
+      document.getElementById('liveStatus').textContent = errMsg;
+      liveCall = null;
+      callPhase = 'incoming';
+      if (liveUI) liveUI.setIncoming(true);
+    } finally {
+      if (liveUI) liveUI.setPickupPending(false);
+      answerBusy = false;
+    }
+  }
+
+  function beginWrapUp() {
+    if (wrapUpStarted) return;
+    wrapUpStarted = true;
+    callPhase = 'wrapup';
+    clearInterval(callTimer);
+    clearBriefingTimer();
+    liveCall = null;
+    document.getElementById('liveWrapStatus').style.display = 'block';
+    document.getElementById('liveWrapStatus').textContent =
+      'Puhelu päättyi — täytä CRM-kirjaus (mitä lupasit, vahvistuskanava, yhteenveto).';
+    if (liveUI) {
+      liveUI.enterWrapUpMode({
+        onSave: function (data) {
+          wrapUpData = data;
+          submitFeedback();
+        }
+      });
+    }
+  }
+
+  async function submitFeedback() {
+    if (busy) return;
+    if (!aiReady.feedback) {
+      alert('Palaute ei ole käytössä: ANTHROPIC_API_KEY tai OPENAI_API_KEY puuttuu palvelimelta.');
+      if (liveUI) liveUI.setWrapUpSaveEnabled(true);
+      return;
+    }
+    var sessions = sessionLog.filter(Boolean);
+    if (!sessions.length) {
+      alert('Puhelun transkripti puuttuu — harjoittele vähintään yksi vaihe ennen palautetta.');
+      if (liveUI) liveUI.setWrapUpSaveEnabled(true);
+      return;
+    }
+
+    busy = true;
+    var wrapStatus = document.getElementById('liveWrapStatus');
+    var fbStatus = document.getElementById('fbStatus');
+    var toRetryBtn = document.getElementById('toRetryBtn');
+    if (wrapStatus) {
+      wrapStatus.style.display = 'block';
+      wrapStatus.textContent = 'Analysoidaan puhelua (Claude)...';
+    }
+    if (fbStatus) {
+      fbStatus.className = 'fb-status loading';
+      fbStatus.textContent = '';
+    }
+    if (toRetryBtn) toRetryBtn.disabled = true;
+
+    try {
+      var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var timeoutId = controller ? setTimeout(function () { controller.abort(); }, 60000) : null;
+      var fetchOpts = {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        credentials:'include',
+        body: JSON.stringify({
+          sessions: sessions,
+          scenarioId: selectedScenario,
+          customContext: selectedScenario === 'custom' ? document.getElementById('customText').value.trim() : '',
+          fieldsFoundDuringBriefing: briefingFound,
+          fieldsFoundDuringCall: callFound,
+          wrapUp: wrapUpData
+        })
+      };
+      if (controller) fetchOpts.signal = controller.signal;
+      var r = await fetch(apiUrl('/api/cs-call/feedback'), fetchOpts);
+      if (timeoutId) clearTimeout(timeoutId);
+      var d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Palaute epäonnistui');
+      showStep('feedback');
+      renderFeedback(d.feedback || '(ei palautetta)');
+      if (fbStatus) {
+        fbStatus.className = 'fb-status';
+        fbStatus.textContent = d.saved ? 'Palaute tallennettu.' : (d.dev_preview ? 'Esikatselu — ei tallennettu tietokantaan.' : '');
+      }
+      if (toRetryBtn) toRetryBtn.disabled = false;
+    } catch (e) {
+      var errMsg = e && e.name === 'AbortError' ? 'Palaute aikakatkaistiin — yritä uudelleen.' : (e.message || String(e));
+      if (wrapStatus) wrapStatus.textContent = 'Palaute epäonnistui: ' + errMsg;
+      if (liveUI) liveUI.setWrapUpSaveEnabled(true);
+      if (toRetryBtn) toRetryBtn.disabled = false;
+    } finally {
+      busy = false;
+    }
+  }
+
+  document.getElementById('toRetryBtn').addEventListener('click', function () { showStep('retry-decision'); });
+  document.getElementById('retryBtn').addEventListener('click', function () {
+    briefingSeconds = 45;
+    showStep('workbench');
+    startWorkbenchSession();
+  });
+  document.getElementById('doneBtn').addEventListener('click', function () {
+    briefingSeconds = 90;
+    showStep('workbench');
+  });
+
+  fetch(apiUrl('/api/auth/me'), { credentials:'include' })
+    .then(function (r) {
+      authOk = r.ok;
+      if (r.ok) return null;
+      var gate = document.getElementById('authGate');
+      var link = document.getElementById('authLoginLink');
+      if (gate) gate.style.display = 'block';
+      if (link) {
+        link.href = '/login?callbackUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
+      }
+      document.getElementById('wbStartBtn').disabled = true;
+    })
+    .catch(function () { authOk = false; })
+    .finally(function () {
+      fetch(apiUrl('/api/cs-call/config'), { credentials:'include' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (cfg) {
+          showAiSetupIssues(cfg);
+          if (cfg && Array.isArray(cfg.scenarios)) {
+            indexScenarioHints(cfg.scenarios);
+            renderScenarios(cfg.scenarios);
+          } else renderScenarios([
+            { id:'wrong_bill', title:'Väärä lasku' },
+            { id:'late_delivery', title:'Myöhästynyt toimitus' },
+            { id:'vacation_bereavement', title:'Loman peruutus' },
+            { id:'custom', title:'Oma skenaario' }
+          ]);
+          window.__pickSc('wrong_bill', document.querySelector('.wb-sc-chip[data-id="wrong_bill"]'));
+          if (authOk) startWorkbenchSession();
+        })
+        .catch(function () {
+          renderScenarios([
+            { id:'wrong_bill', title:'Väärä lasku' },
+            { id:'late_delivery', title:'Myöhästynyt toimitus' },
+            { id:'vacation_bereavement', title:'Loman peruutus' },
+            { id:'custom', title:'Oma skenaario' }
+          ]);
+          if (authOk) startWorkbenchSession();
+        });
+    });
+})();
+</script>
+</body>
+</html>

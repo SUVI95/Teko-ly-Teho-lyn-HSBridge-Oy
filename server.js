@@ -85,6 +85,7 @@ const { router: portfolioRoutes } = require('./routes/portfolio');
 const artifactsRoutes = require('./routes/artifacts');
 const moduleAiRoutes = require('./routes/module-ai');
 const bonusModuleRoutes = require('./routes/bonus-module');
+const csCallRoutes = require('./routes/cs-call');
 const realtimeTokenRoutes = require('./routes/realtime-token');
 const automaatioEmailRoutes = require('./routes/automaatio-email');
 const { authenticateToken, authenticatePage } = require('./middleware/auth');
@@ -125,6 +126,7 @@ app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/artifacts', artifactsRoutes);
 app.use('/api/module-ai', moduleAiRoutes);
 app.use('/api/bonus-module', bonusModuleRoutes);
+app.use('/api/cs-call', csCallRoutes);
 app.use('/api/realtime-token', realtimeTokenRoutes);
 app.use('/api', automaatioEmailRoutes);
 

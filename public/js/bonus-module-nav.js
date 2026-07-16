@@ -37,22 +37,22 @@
   window.bonusGoNext = function (slug) {
     if (!slug) slug = window.BONUS_MODULE_SLUG;
     if (!slug) {
-      window.location.href = "/";
+      window.location.href = "/dashboard";
       return;
     }
     fetchNext(slug).then(function (d) {
-      window.location.href = d && d.href ? d.href : "/";
+      window.location.href = d && d.href ? d.href : "/dashboard";
     });
   };
 
   window.bonusGoPrev = function (slug) {
     if (!slug) slug = window.BONUS_MODULE_SLUG;
     if (!slug) {
-      window.location.href = "/";
+      window.location.href = "/dashboard";
       return;
     }
     fetchPrev(slug).then(function (d) {
-      window.location.href = d && d.href ? d.href : "/";
+      window.location.href = d && d.href ? d.href : "/dashboard";
     });
   };
 
@@ -69,7 +69,7 @@
         } else {
           btn.textContent = "Takaisin ty\u00f6p\u00f6yd\u00e4lle \u2192";
           btn.onclick = function () {
-            window.location.href = "/";
+            window.location.href = "/dashboard";
           };
         }
         btn.style.display = btn.classList.contains("bonus-next-inline") ? "inline-flex" : "";

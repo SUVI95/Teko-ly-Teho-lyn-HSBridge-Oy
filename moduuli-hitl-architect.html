@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kun botti ei riitä — eskalaatio ja hyväksymisportit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================
+   TOKENS
+   Subject = an AI-ops "control room": confidence scores,
+   sentiment flags, audit trails, approval gates. Dark console
+   surface with a single amber "pending human" signal color —
+   the same semantic amber used on real ops dashboards, not a
+   decorative choice.
+   ========================================================== */
+:root{
+  --bg:#0C0E13; --panel:#151822; --panel2:#1B1F2B; --panel3:#20242F;
+  --line:rgba(237,239,243,.14); --line-strong:rgba(237,239,243,.24);
+  --ink:#F4F6FA; --ink2:#C6CDDA; --ink3:#8A93A4;
+  --amber:#E8A33D; --amber-dim:#2E2414; --amber-line:#5A431F;
+  --green:#3FBE8E; --green-dim:#123227; --green-line:#1E5A42;
+  --red:#E4636A; --red-dim:#341419; --red-line:#6B2830;
+  --blue:#6C9BF2; --blue-dim:#141F33;
+  --serif:'Fraunces',serif; --sans:'Inter',sans-serif; --mono:'JetBrains Mono',monospace;
+  --r10:10px; --r14:14px; --r18:18px;
+  --shadow:0 20px 50px -20px rgba(0,0,0,.6);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.6;-webkit-font-smoothing:antialiased}
+::selection{background:var(--amber);color:#1a1305}
+a{color:inherit}
+button{font-family:inherit;cursor:pointer}
+.wrap{max-width:920px;margin:0 auto;padding:0 22px}
+
+/* ---------- top progress rail ---------- */
+.railnav{position:sticky;top:0;z-index:50;background:rgba(12,14,19,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.railnav-inner{max-width:920px;margin:0 auto;padding:0 22px;height:52px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.rail-brand{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.rail-left{display:flex;align-items:center;gap:12px;min-width:0}
+.rail-back{font-family:var(--mono);font-size:11px;color:var(--ink3);text-decoration:none;padding:6px 10px;border-radius:999px;border:1px solid var(--line);transition:.15s;white-space:nowrap;flex-shrink:0}
+.rail-back:hover{color:var(--ink);border-color:var(--line-strong)}
+.rail-steps{display:flex;gap:2px}
+.rail-step{font-family:var(--mono);font-size:11px;color:var(--ink3);padding:7px 10px;border-radius:999px;text-decoration:none;letter-spacing:.02em;transition:.15s;white-space:nowrap}
+.rail-step:hover{color:var(--ink)}
+.rail-step.on{background:var(--panel2);color:var(--amber)}
+.rail-progress{height:2px;background:var(--line);position:relative}
+.rail-progress-bar{height:100%;background:var(--amber);width:0%;transition:width .2s ease}
+@media(max-width:720px){.rail-steps{display:none}}
+
+/* ---------- hero ---------- */
+.hero{padding:64px 0 40px;position:relative;overflow:hidden}
+.hero-compact{padding:36px 0 28px}
+.hero-compact h1{max-width:22ch;font-size:clamp(26px,4vw,38px);margin:14px 0 12px}
+.hero-compact p.lede{font-size:16px;margin:0}
+.hero::before{content:'';position:absolute;top:-160px;right:-120px;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(232,163,61,.14),transparent 68%);pointer-events:none}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);display:flex;align-items:center;gap:9px;position:relative}
+.eyebrow::before{content:'';width:7px;height:7px;border-radius:2px;background:var(--amber);box-shadow:0 0 0 3px var(--amber-dim)}
+.hero h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,4.6vw,46px);line-height:1.1;margin:18px 0 20px;max-width:16ch;position:relative}
+.hero h1 em{font-style:italic;color:var(--amber);font-weight:500}
+.hero p.lede{font-size:17px;color:var(--ink2);max-width:56ch;line-height:1.65;position:relative}
+
+.stat-band{display:grid;grid-template-columns:1.1fr 1fr;gap:0;margin-top:38px;border:1px solid var(--line);border-radius:var(--r18);overflow:hidden;background:var(--panel)}
+.stat-band-fig{padding:26px 28px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--line)}
+.stat-num{font-family:var(--serif);font-size:52px;font-weight:600;color:var(--amber);line-height:1}
+.stat-num span{font-size:22px;color:var(--ink2);font-weight:400}
+.stat-cap{font-size:12.5px;color:var(--ink3);margin-top:8px;line-height:1.5}
+.stat-band-txt{padding:24px 28px;font-size:14px;color:var(--ink2);line-height:1.65;display:flex;align-items:center}
+.stat-band-txt strong{color:var(--ink);font-weight:600}
+@media(max-width:640px){.stat-band{grid-template-columns:1fr}.stat-band-fig{border-right:none;border-bottom:1px solid var(--line)}}
+
+/* ---------- sections ---------- */
+section{padding:52px 0}
+section.tight{padding:36px 0}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px}
+h2{font-family:var(--serif);font-weight:600;font-size:28px;margin-bottom:14px;line-height:1.2}
+h2 em{color:var(--amber);font-style:italic;font-weight:500}
+p.body-txt{color:var(--ink2);max-width:64ch;line-height:1.7;margin-bottom:14px;font-size:15px}
+.divider{height:1px;background:var(--line)}
+
+/* ---------- definition callout ---------- */
+.def-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r18);padding:26px 28px;margin-top:22px;position:relative}
+.def-card::before{content:'MÄÄRITELMÄ';position:absolute;top:-10px;left:24px;background:var(--amber);color:#1a1305;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 10px;border-radius:999px}
+.def-term{font-family:var(--serif);font-size:20px;font-weight:600;color:var(--amber);margin-bottom:8px}
+.def-body{color:var(--ink2);font-size:14.5px;line-height:1.7}
+
+/* ---------- trigger cards ---------- */
+.trigger-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.trigger-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:20px;display:flex;flex-direction:column;gap:10px}
+.trigger-tag{align-self:flex-start;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:6px}
+.trigger-tag.confidence{background:var(--blue-dim);color:var(--blue)}
+.trigger-tag.sentiment{background:var(--red-dim);color:var(--red)}
+.trigger-tag.policy{background:var(--amber-dim);color:var(--amber)}
+.trigger-card h3{font-size:15.5px;font-weight:700}
+.trigger-card p{font-size:13px;color:var(--ink2);line-height:1.6}
+.trigger-example{font-family:var(--mono);font-size:11.5px;color:var(--ink3);background:var(--panel3);border-radius:8px;padding:9px 11px;line-height:1.55;border-left:2px solid var(--line-strong)}
+@media(max-width:760px){.trigger-grid{grid-template-columns:1fr}}
+
+/* ==========================================================
+   APPROVAL GATE — live interactive demo. Signature element.
+   ========================================================== */
+.gate-shell{background:linear-gradient(160deg,var(--panel) 0%,#171B26 100%);border:1px solid var(--line);border-radius:var(--r18);overflow:hidden;box-shadow:var(--shadow);margin-top:22px}
+.gate-hdr{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.gate-hdr-title{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--ink2);display:flex;align-items:center;gap:8px}
+.gate-hdr-title .dot{width:7px;height:7px;border-radius:50%;background:var(--amber);animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.gate-status{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:999px;background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-line)}
+.gate-status.approved{background:var(--green-dim);color:var(--green);border-color:var(--green-line)}
+.gate-status.rejected{background:var(--red-dim);color:var(--red);border-color:var(--red-line)}
+
+.gate-body{padding:22px}
+.gate-ticket{display:grid;grid-template-columns:1fr auto;gap:16px;margin-bottom:18px}
+.gate-customer{font-size:14px;color:var(--ink2)}
+.gate-customer strong{color:var(--ink);font-weight:700}
+.gate-quote{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--ink);margin-top:8px;line-height:1.5}
+.gate-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
+.meta-chip{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:8px;background:var(--panel3);color:var(--ink2);border:1px solid var(--line)}
+.meta-chip.warn{background:var(--amber-dim);color:var(--amber);border-color:var(--amber-line)}
+
+.gate-draft{background:var(--panel3);border:1px dashed var(--line-strong);border-radius:var(--r10);padding:16px 18px;margin-bottom:18px}
+.gate-draft-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px}
+.gate-draft textarea{width:100%;background:transparent;border:none;color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.6;resize:vertical;min-height:64px}
+.gate-draft textarea:focus{outline:none}
+.gate-draft.locked textarea{color:var(--ink2)}
+
+.gate-actions{display:flex;gap:10px;flex-wrap:wrap}
+.gbtn{font-family:var(--sans);font-weight:700;font-size:13.5px;padding:11px 18px;border-radius:var(--r10);border:1.5px solid var(--line-strong);background:var(--panel2);color:var(--ink);transition:.15s}
+.gbtn:hover:not(:disabled){border-color:var(--ink3)}
+.gbtn:disabled{opacity:.35;cursor:not-allowed}
+.gbtn.approve{background:var(--green);border-color:var(--green);color:#062018}
+.gbtn.correct{background:var(--amber);border-color:var(--amber);color:#241a04}
+.gbtn.reject{background:transparent;border-color:var(--red);color:var(--red)}
+
+.gate-log{border-top:1px solid var(--line);background:var(--panel2);padding:16px 22px;font-family:var(--mono);font-size:12px;color:var(--ink3);min-height:52px}
+.gate-log-row{display:flex;gap:10px;padding:5px 0;color:var(--ink2);border-bottom:1px dashed var(--line)}
+.gate-log-row:last-child{border-bottom:none}
+.gate-log-row .t{color:var(--ink3);flex-shrink:0}
+.gate-reset{margin-top:14px}
+.gate-reset button{font-family:var(--mono);font-size:11.5px;color:var(--ink3);background:none;border:1px solid var(--line-strong);border-radius:999px;padding:6px 12px}
+.gate-reset button:hover{color:var(--ink)}
+
+/* ==========================================================
+   EXERCISE — escalation matrix builder
+   ========================================================== */
+.ex-intro{background:var(--panel);border:1px solid var(--line);border-radius:var(--r18);padding:24px 26px;margin-top:22px}
+.ex-intro h3{font-family:var(--serif);font-size:19px;font-weight:600;margin-bottom:10px}
+.ex-progress-row{display:flex;align-items:center;gap:14px;margin-top:16px}
+.ex-progress-track{flex:1;height:6px;background:var(--panel3);border-radius:999px;overflow:hidden}
+.ex-progress-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--green));width:0%;transition:width .25s ease}
+.ex-progress-label{font-family:var(--mono);font-size:12px;color:var(--ink2);white-space:nowrap}
+
+.ticket-list{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.ticket-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:18px 20px;transition:border-color .15s}
+.ticket-card.decided{border-color:var(--line-strong)}
+.tc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.tc-id{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.tc-channel{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--ink2);background:var(--panel3);padding:4px 9px;border-radius:7px;margin-left:8px}
+.tc-customer{font-size:13.5px;color:var(--ink2);margin-top:8px}
+.tc-customer strong{color:var(--ink)}
+.tc-quote{font-size:15px;margin-top:6px;line-height:1.55}
+.tc-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+.tc-decide{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.dbtn{flex:1;min-width:180px;font-weight:700;font-size:13.5px;padding:11px 14px;border-radius:var(--r10);border:1.5px solid var(--line-strong);background:var(--panel2);color:var(--ink2);transition:.15s}
+.dbtn:hover{border-color:var(--ink3);color:var(--ink)}
+.dbtn.sel-ai{background:var(--green);border-color:var(--green);color:#062018}
+.dbtn.sel-human{background:var(--amber);border-color:var(--amber);color:#241a04}
+
+.tc-reason{margin-top:12px;display:none}
+.tc-reason.show{display:block}
+.tc-reason-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px}
+.reason-chips{display:flex;gap:6px;flex-wrap:wrap}
+.rchip{font-family:var(--mono);font-size:11px;padding:6px 11px;border-radius:999px;border:1px solid var(--line-strong);background:transparent;color:var(--ink2);transition:.15s}
+.rchip.on{background:var(--panel3);border-color:var(--ink3);color:var(--ink)}
+
+.tc-result{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:none;font-size:13.5px;line-height:1.6}
+.tc-result.show{display:block}
+.tc-verdict{font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:6px;display:inline-block;margin-bottom:8px}
+.tc-verdict.correct{background:var(--green-dim);color:var(--green)}
+.tc-verdict.incorrect{background:var(--red-dim);color:var(--red)}
+.tc-result-body{color:var(--ink2)}
+.tc-result-body strong{color:var(--ink)}
+
+.ex-submit{margin-top:26px;text-align:center}
+.ex-submit button{font-family:var(--sans);font-weight:700;font-size:15px;padding:15px 32px;border-radius:var(--r10);border:none;background:var(--amber);color:#241a04;box-shadow:0 10px 26px -8px rgba(232,163,61,.5)}
+.ex-submit button:disabled{opacity:.3;cursor:not-allowed;box-shadow:none}
+.ex-submit-note{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:10px}
+
+/* ---------- results ---------- */
+#resultsSection{display:none}
+.score-hero{background:linear-gradient(160deg,var(--panel) 0%,#171B26 100%);border:1px solid var(--line);border-radius:var(--r18);padding:34px 30px;text-align:center;margin-top:22px}
+.score-num{font-family:var(--serif);font-size:64px;font-weight:600;color:var(--amber);line-height:1}
+.score-num span{font-size:26px;color:var(--ink3);font-weight:400}
+.score-msg{font-size:15px;color:var(--ink2);margin-top:10px;max-width:48ch;margin-left:auto;margin-right:auto}
+.score-breakdown{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:24px}
+.bd-cell{background:var(--panel3);border-radius:var(--r10);padding:14px 16px;text-align:left}
+.bd-cell .n{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--ink)}
+.bd-cell .l{font-size:12px;color:var(--ink3);margin-top:2px}
+
+.rerun-row{margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.outline-btn{background:transparent;border:1.5px solid var(--line-strong);color:var(--ink2);font-weight:700;font-size:13.5px;padding:11px 20px;border-radius:var(--r10)}
+.outline-btn:hover{border-color:var(--ink3);color:var(--ink)}
+a.outline-btn{display:inline-block;text-decoration:none;text-align:center}
+
+.takeaway{margin-top:44px}
+.takeaway ul{list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.takeaway li{display:flex;gap:12px;font-size:14.5px;color:var(--ink2);line-height:1.6}
+.takeaway li::before{content:'—';color:var(--amber);flex-shrink:0}
+
+footer{padding:40px 0 60px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink3)}
+
+/* ---------- five HITL exercises ---------- */
+.skill-pill{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:var(--blue-dim);color:var(--blue);margin-bottom:12px}
+.ex-context{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:18px 20px;margin:18px 0;font-size:14px;color:var(--ink2);line-height:1.65}
+.ex-context strong{color:var(--ink)}
+.ex-example{font-family:var(--mono);font-size:12px;background:var(--panel3);border-left:3px solid var(--amber);padding:12px 14px;border-radius:0 var(--r10) var(--r10) 0;margin:14px 0;color:var(--ink2);line-height:1.55}
+.split-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+@media(max-width:720px){.split-grid{grid-template-columns:1fr}}
+.panel-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:16px 18px}
+.panel-box h4{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px}
+.policy-doc{font-size:13px;color:var(--ink2);line-height:1.65;white-space:pre-wrap}
+.policy-doc .hl{color:var(--amber);font-weight:600}
+.ex-ta{width:100%;background:var(--panel3);border:1px solid var(--line-strong);border-radius:var(--r10);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6;padding:12px 14px;resize:vertical;min-height:100px}
+.ex-ta:focus{outline:2px solid var(--amber);outline-offset:1px}
+.ex-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.ex-btn{font-weight:700;font-size:13px;padding:10px 16px;border-radius:var(--r10);border:1.5px solid var(--line-strong);background:var(--panel2);color:var(--ink)}
+.ex-btn.primary{background:var(--amber);border-color:var(--amber);color:#241a04}
+.ex-btn.danger{background:var(--red);border-color:var(--red);color:#fff}
+.ex-btn.on{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.hitl-retry-btn{margin-top:12px;font-weight:600;font-size:12.5px;padding:8px 14px;background:var(--panel2);border:1px solid var(--line-strong);color:var(--ink2)}
+.hitl-retry-btn:hover{color:var(--ink);border-color:var(--amber)}
+.approve-glow{box-shadow:0 0 24px rgba(63,190,142,.35);border-color:var(--green)!important}
+.ai-feedback{display:none;margin-top:16px;padding:14px 16px;background:var(--panel3);border:1px solid var(--line);border-radius:var(--r10);font-size:14px;color:var(--ink2);line-height:1.65}
+.ai-feedback.show{display:block}
+.ai-loading{color:var(--amber);font-family:var(--mono);font-size:12px}
+.fb-verdict{font-family:var(--serif);font-size:16px;font-weight:600;padding:11px 14px;border-radius:10px;margin:-2px 0 12px;display:flex;align-items:center;gap:8px}
+.fb-verdict.verdict-pass{background:rgba(43,166,154,.13);border:1px solid rgba(43,166,154,.4);color:var(--green,#2BA69A)}
+.fb-verdict.verdict-retry{background:rgba(233,162,59,.13);border:1px solid rgba(233,162,59,.4);color:var(--amber)}
+.fb-points{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink2);margin:-6px 0 12px;padding:0 2px}
+.fb-body{font-size:14px;color:var(--ink2);line-height:1.7}
+/* Ex3 pinned context strip — confidence explainer + task, visible on every phase */
+.ex3-ctx{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r12);padding:14px 16px;margin:0 0 18px}
+.ex3-ctx .ctx-task{font-size:13.5px;line-height:1.55;color:var(--ink);margin-bottom:11px;padding-left:26px;position:relative}
+.ex3-ctx .ctx-task::before{content:'🎯';position:absolute;left:0;top:0}
+.ex3-ctx .ctx-task b{color:var(--ink)}
+.ex3-ctx .ctx-conf{font-size:12.5px;line-height:1.55;color:var(--ink2);padding-left:26px;position:relative;border-top:1px dashed var(--line);padding-top:11px}
+.ex3-ctx .ctx-conf::before{content:'📊';position:absolute;left:0;top:11px}
+.ex3-ctx .ctx-conf b{color:var(--ink);font-family:var(--mono);font-size:12px}
+.ex3-ctx .ctx-conf .cf-scale{display:inline-flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.ex3-ctx .ctx-conf .cf-scale span{font-size:11px;background:var(--panel3);border:1px solid var(--line);border-radius:6px;padding:3px 9px;color:var(--ink2)}
+.ex3-ctx .ctx-conf .cf-ok{border-color:rgba(43,166,154,.35)}
+.ex3-ctx .ctx-conf .cf-warn{border-color:rgba(212,160,23,.35)}
+.ex3-ctx .ctx-conf .cf-bad{border-color:rgba(224,85,85,.35)}
+.ex3-now{background:var(--amber-dim);border:1px solid var(--amber-line);border-radius:var(--r10);padding:12px 16px;margin:0 0 16px;font-size:14px;line-height:1.55;color:var(--ink2)}
+.ex3-now b{color:var(--ink);font-weight:600}
+.ex3-now .ex3-now-tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;background:var(--panel3);border:1px solid var(--line);border-radius:999px;padding:2px 9px;margin-right:8px;color:var(--amber)}
+.ops-dashboard-simple{grid-template-columns:repeat(2,1fr);max-width:520px}
+.ops-metric-goal .n{color:var(--amber)}
+.data-table .vol-main{display:block;font-weight:600;color:var(--ink)}
+.data-table .vol-hint{display:block;font-size:11px;color:var(--ink3);margin-top:2px}
+.data-table .conf-badge{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;white-space:nowrap}
+.data-table .rule-now{font-size:12.5px;line-height:1.45}
+/* Worked-example row helper for the rules phase */
+.ex3-worked{background:rgba(43,166,154,.06);border:1px solid rgba(43,166,154,.28);border-radius:var(--r12);padding:14px 16px;margin:14px 0}
+.ex3-worked .we-h{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--green,#2BA69A);margin-bottom:9px}
+.ex3-worked .we-row{font-size:12.5px;color:var(--ink2);line-height:1.5;margin-bottom:8px}
+.ex3-worked .we-row b{color:var(--ink);font-family:var(--mono);font-size:12px}
+.ex3-worked .we-rule{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:12.5px;color:var(--ink);line-height:1.5;margin-bottom:8px}
+.ex3-worked .we-parts{font-size:12px;color:var(--ink2);line-height:1.55}
+.ex3-worked .we-parts em{color:var(--ink);font-style:normal;font-weight:600}
+.chat-sim{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);overflow:hidden;margin-top:18px}
+.chat-hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.sentiment-meter{font-family:var(--mono);font-size:13px;font-weight:700;padding:4px 10px;border-radius:8px;background:var(--panel3)}
+.sentiment-meter.danger{background:var(--red-dim);color:var(--red)}
+.chat-msgs{padding:14px 16px;max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.chat-msg{font-size:13.5px;line-height:1.55;padding:10px 12px;border-radius:var(--r10);background:var(--panel3)}
+.chat-msg .who{font-family:var(--mono);font-size:10px;display:block;margin-bottom:4px;color:var(--ink3)}
+.chat-msg.cust{border-left:3px solid var(--blue)}
+.chat-msg.bot.bad{border-left:3px solid var(--red)}
+.chat-msg.sys{font-size:12px;color:var(--ink3);background:transparent;border:1px dashed var(--line)}
+.command-center{background:var(--panel);border:1px solid var(--line);border-radius:var(--r18);padding:22px;margin-top:18px}
+.dial-row{margin-bottom:18px}
+.dial-row label{display:flex;justify-content:space-between;font-size:13px;color:var(--ink2);margin-bottom:6px}
+.dial-row input[type=range]{width:100%;accent-color:var(--amber)}
+.queue-sim{text-align:center;padding:20px;background:var(--panel3);border-radius:var(--r14);margin-top:16px}
+.queue-num{font-family:var(--serif);font-size:48px;color:var(--amber);line-height:1}
+.queue-sim.overwhelmed .queue-num{color:var(--red);animation:pulse 1s infinite}
+.triage-wrap{margin-top:18px}
+.triage-timer{font-family:var(--mono);font-size:14px;color:var(--amber);margin-bottom:12px}
+.triage-board{display:flex;flex-wrap:wrap;gap:10px;min-height:80px;margin-bottom:16px}
+.triage-card{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r10);padding:12px 14px;max-width:220px;cursor:grab;font-size:13px}
+.triage-card strong{display:block;margin-bottom:4px}
+.triage-card p{color:var(--ink2);font-size:12px;line-height:1.5}
+.triage-bins{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.triage-bin{min-height:100px;border:2px dashed var(--line-strong);border-radius:var(--r14);padding:14px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--ink3)}
+.triage-bin.hover{border-color:var(--amber);background:var(--amber-dim)}
+.triage-bin.approve{border-color:var(--green-line)}
+.triage-bin.human{border-color:var(--amber-line)}
+.breach-warn{display:none;margin-top:16px;padding:16px;background:var(--red-dim);border:1px solid var(--red-line);border-radius:var(--r10);color:var(--red);font-weight:600}
+.breach-warn.show{display:block}
+.breach-warn p{font-weight:400;font-size:13px;color:var(--ink2);margin-top:8px}
+.learn-block{background:linear-gradient(160deg,var(--panel) 0%,#171B26 100%);border:1px solid var(--line);border-radius:var(--r18);padding:22px 24px;margin:20px 0}
+.learn-block h3{font-family:var(--serif);font-size:18px;margin-bottom:12px}
+.learn-block ul{margin:10px 0 0 18px;color:var(--ink2);font-size:14px;line-height:1.7}
+.learn-block li{margin-bottom:6px}
+.ops-dashboard{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+@media(max-width:760px){.ops-dashboard{grid-template-columns:repeat(2,1fr)}}
+.ops-metric{background:var(--panel);border:1px solid var(--line);border-radius:var(--r10);padding:14px}
+.ops-metric .n{font-family:var(--serif);font-size:28px;color:var(--amber);line-height:1}
+.ops-metric .l{font-size:11px;color:var(--ink3);margin-top:4px;line-height:1.4}
+.data-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+.data-table th,.data-table td{border:1px solid var(--line);padding:10px 12px;text-align:left}
+.data-table th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);background:var(--panel2)}
+.data-table td{color:var(--ink2)}
+.data-table tr.danger td{color:var(--red)}
+.ex-step{margin-top:28px;padding-top:8px;border-top:1px solid var(--line)}
+.ex-step-hdr{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.ex-step-num{font-family:var(--mono);font-size:11px;color:var(--amber);background:var(--amber-dim);padding:4px 10px;border-radius:999px}
+.ex-step h3{font-size:17px;font-weight:700}
+.ex1-phase,.ex2-phase,.ex3-phase,.ex4-phase,.ex5-phase{display:none;margin-top:18px}
+.ex1-phase.show,.ex2-phase.show,.ex3-phase.show,.ex4-phase.show,.ex5-phase.show{display:block}
+/* Näkyvä "yrityksen sääntö" -konteksti ennen päätöstä (lisätty: konteksti ensin) */
+.rule-context{position:relative;background:var(--amber-dim);border:1px solid var(--amber-line);border-radius:var(--r14);padding:22px 20px 18px;margin:6px 0 18px}
+.rule-context::before{content:'YRITYKSEN SÄÄNTÖ · LUE ENSIN';position:absolute;top:-11px;left:20px;background:var(--amber);color:#1a1305;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 11px;border-radius:999px}
+.rule-context h4{font-family:var(--serif);font-size:16px;font-weight:600;color:var(--amber);margin:2px 0 10px}
+.rule-context .rule-why{font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:12px}
+.rule-context .rule-why b{color:var(--ink)}
+.rule-context .policy-doc{background:rgba(0,0,0,.18);border-radius:10px;padding:14px 16px}
+/* Worked example (malli) — teaches pattern on an unrelated case, no answer given */
+.worked-example{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r14);padding:20px 18px;margin:16px 0}
+.worked-example .we-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:10px}
+.worked-example .we-intro{font-size:14px;color:var(--ink2);line-height:1.6;margin-bottom:14px}
+.worked-example .we-intro em{color:var(--ink);font-style:italic}
+.we-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.we-grid{grid-template-columns:1fr}}
+.we-card{border-radius:12px;padding:14px 15px;border:1px solid var(--line)}
+.we-card.weak{background:rgba(217,106,106,.07);border-color:rgba(217,106,106,.28)}
+.we-card.strong{background:rgba(43,166,154,.07);border-color:rgba(43,166,154,.3)}
+.we-card .we-tag{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+.we-card.weak .we-tag{color:#d96a6a}
+.we-card.strong .we-tag{color:var(--green,#2BA69A)}
+.we-card p{font-size:13.5px;line-height:1.55;color:var(--ink);margin:0 0 8px}
+.we-card .we-note{font-size:12px;line-height:1.5;color:var(--ink2);border-top:1px dashed var(--line);padding-top:8px}
+.we-takeaway{font-size:13.5px;line-height:1.6;color:var(--ink2);margin:14px 0 0}
+.we-takeaway strong{color:var(--ink)}
+/* Persistent case card — keeps the source visible across write phases */
+.case-pin{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:10px;padding:12px 14px;margin:0 0 16px}
+.case-pin .cp-label{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--amber);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.case-pin .cp-turn{font-size:12.5px;line-height:1.5;margin:5px 0}
+.case-pin .cp-turn .cp-who{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2);display:block;margin-bottom:2px}
+.case-pin .cp-turn.cust .cp-txt{color:var(--ink);font-weight:500}
+.case-pin .cp-turn.bot .cp-txt{color:var(--ink2)}
+.ex5-mission{background:var(--blue-dim);border:1px solid rgba(108,155,242,.35);border-radius:var(--r14);padding:16px 18px;margin:18px 0;font-size:14px;color:var(--ink2);line-height:1.65}
+.ex5-evidence-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 12px}
+.ex5-ev-tab{padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);font-size:12.5px;font-weight:600;color:var(--ink2);cursor:pointer}
+.ex5-ev-tab:hover{border-color:var(--amber)}
+.ex5-ev-tab.open{border-color:var(--amber);background:var(--amber-dim);color:var(--amber)}
+.ex5-ev-tab.seen{border-color:var(--green-line)}
+.ex5-ev-tab.seen::after{content:' ✓';color:var(--green);font-size:11px}
+.ex5-ev-panel{display:none;background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:18px 20px;margin-bottom:14px}
+.ex5-ev-panel.show{display:block}
+.ex5-ev-panel h4{font-size:14px;margin-bottom:10px}
+.ex5-ev-body{font-size:13.5px;color:var(--ink2);line-height:1.65;white-space:pre-line}
+.ex5-ev-screenshot{background:var(--panel3);border:1px solid var(--line);border-radius:var(--r10);padding:14px 16px;font-size:13px;color:var(--ink);line-height:1.55}
+.ex5-ev-meta{font-family:var(--mono);font-size:11px;color:var(--ink3);margin-bottom:10px}
+.ex5-struct-hint{background:var(--panel2);border-left:3px solid var(--amber);padding:12px 14px;margin:10px 0;font-size:13px;color:var(--ink2);line-height:1.6}
+.ex5-notify-grid{display:grid;gap:8px;margin-top:10px}
+.matrix-budget{background:var(--amber-dim);border:1px solid var(--amber-line);border-radius:var(--r10);padding:12px 16px;margin:14px 0;font-size:14px;color:var(--ink2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.matrix-budget strong{color:var(--amber)}
+.matrix-budget.warn{background:var(--red-dim);border-color:var(--red-line)}
+.matrix-budget.warn strong{color:var(--red)}
+.ops-dashboard.cols-5{grid-template-columns:repeat(5,1fr)}
+@media(max-width:900px){.ops-dashboard.cols-5{grid-template-columns:repeat(2,1fr)}}
+.ex4-mission{background:var(--blue-dim);border:1px solid rgba(108,155,242,.35);border-radius:var(--r14);padding:16px 18px;margin:18px 0;font-size:14px;color:var(--ink2);line-height:1.65}
+.ex4-queue-progress{display:flex;gap:6px;margin:12px 0 16px;flex-wrap:wrap}
+.ex4-queue-dot{width:10px;height:10px;border-radius:50%;background:var(--panel3);border:1px solid var(--line)}
+.ex4-queue-dot.done{background:var(--green);border-color:var(--green-line)}
+.ex4-queue-dot.active{background:var(--amber);border-color:var(--amber-line)}
+.ex4-queue-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:20px 22px}
+.ex4-case-fb{margin-top:12px;padding:12px 14px;border-radius:8px;font-size:13px;display:none}
+.ex4-case-fb.show{display:block}
+.ex4-case-fb.ok{background:var(--green-dim);border:1px solid var(--green-line);color:var(--green)}
+.ex4-case-fb.warn{background:var(--amber-dim);border:1px solid var(--amber-line);color:var(--amber)}
+.ex4-case-fb.bad{background:var(--red-dim);border:1px solid var(--red-line);color:var(--red)}
+.ex4-priority-grid{display:grid;gap:8px;margin-top:10px}
+.ex3-mission{background:var(--red-dim);border:1px solid var(--red-line);border-radius:var(--r14);padding:16px 18px;margin:18px 0;font-size:14px;color:var(--ink2);line-height:1.65}
+.ex3-mission strong{color:var(--red)}
+.ex3-goal{background:var(--amber-dim);border:1px solid var(--amber-line);border-radius:var(--r10);padding:14px 16px;margin:14px 0;font-size:14px;color:var(--ink2)}
+.ex3-pro-reveal{display:none;margin-top:18px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r14);padding:18px 20px}
+.ex3-pro-reveal.show{display:block}
+.ex3-pro-reveal li{margin:6px 0;font-size:14px;color:var(--ink2)}
+.ex1-urgency{background:var(--red-dim);border:1px solid var(--red-line);border-radius:var(--r14);padding:16px 18px;margin:18px 0;font-size:14px;color:var(--ink2);line-height:1.65}
+.ex1-urgency strong{color:var(--red)}
+.ex1-draft-only{background:var(--panel3);border:1px dashed var(--amber-line);border-radius:var(--r10);padding:18px 20px;margin-top:14px;white-space:pre-line;font-size:14.5px;line-height:1.65;color:var(--ink)}
+.ex1-vocab{margin-top:16px;padding:14px 16px;background:var(--panel2);border-radius:var(--r10);border-left:3px solid var(--amber)}
+.ex1-vocab dt{font-weight:700;color:var(--amber);font-size:13px;margin-top:10px}
+.ex1-vocab dt:first-child{margin-top:0}
+.ex1-vocab dd{color:var(--ink2);font-size:13.5px;margin:4px 0 0}
+.objective-list{list-style:none;margin:10px 0 0;padding:0}
+.objective-list li{margin:6px 0;font-size:14px;color:var(--ink2)}
+.objective-list li::before{content:'✓ ';color:var(--green)}
+.ex1-choice-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.ex1-choice-btn{padding:12px 18px;border-radius:var(--r10);border:2px solid var(--line);background:var(--panel2);color:var(--ink);font-weight:700;font-size:14px}
+.ex1-choice-btn:hover{border-color:var(--amber)}
+.ex1-choice-btn.picked{border-color:var(--amber);background:var(--amber-dim);color:var(--amber)}
+.ex1-work-layout{display:grid;grid-template-columns:minmax(240px,.95fr) minmax(300px,1.15fr);gap:18px;align-items:start;margin-top:4px}
+@media(max-width:820px){.ex1-work-layout{grid-template-columns:1fr}}
+.ex1-ref-col{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow-y:auto}
+.ex1-ref-panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:14px 16px;margin-bottom:12px}
+.ex1-ref-panel h4{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--amber)}
+.ex1-ref-draft{white-space:pre-line;font-size:13px;line-height:1.6;color:var(--ink);background:var(--panel3);padding:12px 14px;border-radius:8px;border:1px dashed var(--amber-line)}
+.ex1-ref-hint{font-size:12px;color:var(--ink3);line-height:1.5;margin:4px 0 0}
+.ex1-cs-why{background:var(--blue-dim);border:1px solid rgba(108,155,242,.32);border-radius:10px;padding:12px 14px;margin:0 0 14px;font-size:13.5px;line-height:1.55;color:var(--ink2)}
+.ex1-cs-why strong{color:var(--ink)}
+.field-label{display:block;font-size:13px;color:var(--ink2);margin:12px 0 6px;line-height:1.5}
+.field-label em{color:var(--ink3);font-style:normal;font-size:12px}
+.scenario-list{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+.scenario-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:16px 18px}
+.scenario-card .sc-meta{font-family:var(--mono);font-size:11px;color:var(--ink3);margin-bottom:8px}
+.scenario-card .sc-quote{font-size:14px;color:var(--ink);margin-bottom:12px;line-height:1.55}
+.choice-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.choice-row label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink2);padding:8px 12px;border:1px solid var(--line);border-radius:var(--r10);cursor:pointer}
+.choice-row input{accent-color:var(--amber)}
+.choice-row label:has(input:checked){border-color:var(--amber);background:var(--amber-dim);color:var(--ink)}
+.legal-case{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:18px 20px;margin-bottom:16px}
+.legal-case h4{font-size:15px;margin-bottom:8px}
+.legal-case .case-body{font-size:13.5px;color:var(--ink2);line-height:1.65;margin-bottom:12px}
+.char-hint{font-family:var(--mono);font-size:11px;color:var(--ink3);margin-top:4px}
+/* Progressive unlock — one exercise at a time */
+body.hitl-progressive section.hitl-locked{display:none}
+body.hitl-progressive .rail-step.hitl-rail-locked{opacity:.55;cursor:pointer}
+.hitl-next-hint{display:flex;align-items:flex-start;gap:12px;margin-top:28px;padding:16px 18px;background:var(--panel2);border:1px dashed var(--line-strong);border-radius:var(--r14);max-width:640px}
+.hnh-icon{font-size:1.25rem;line-height:1;flex-shrink:0;margin-top:2px}
+.hnh-text{margin:0;font-size:14.5px;font-weight:600;line-height:1.55;color:var(--ink2)}
+.hitl-unlock-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);z-index:300;display:flex;align-items:center;gap:10px;padding:14px 20px;background:var(--green-dim);border:1px solid var(--green-line);border-radius:var(--r14);box-shadow:0 12px 32px rgba(0,0,0,.4);font-size:14px;color:var(--ink);max-width:min(92vw,420px);opacity:0;transition:opacity .35s ease,transform .35s ease;pointer-events:none}
+.hitl-unlock-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.hitl-unlock-toast strong{color:var(--green)}
+.hitl-ex-actions{margin-top:18px;padding:16px 18px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r14);max-width:680px}
+.hea-note{margin:0 0 12px;font-size:13.5px;line-height:1.55;color:var(--ink2);font-weight:600}
+.hea-btns{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.ex1-step-bar{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 6px}
+.ex1-step-bar span{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--ink3);cursor:pointer;transition:.15s}
+.ex1-step-bar span:hover{border-color:var(--amber);color:var(--ink)}
+.ex1-step-bar span.on{border-color:var(--amber);background:var(--amber-dim);color:var(--amber)}
+.ex1-step-bar span.done{border-color:var(--green-line);color:var(--green)}
+.ex-step-nav{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 6px}
+.ex-step-nav button{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--ink3);background:transparent;cursor:pointer;transition:.15s}
+.ex-step-nav button:hover{border-color:var(--amber);color:var(--ink)}
+.ex-step-nav button.on{border-color:var(--amber);background:var(--amber-dim);color:var(--amber)}
+.ex-step-nav button.done{border-color:var(--green-line);color:var(--green)}
+.ex2-ref-chat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);overflow:hidden;margin-bottom:12px}
+.ex2-ref-chat .chat-hdr{padding:10px 14px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--ink2)}
+.ex2-ref-chat .chat-msgs{padding:12px 14px;max-height:280px;overflow-y:auto}
+.ex2-ref-facts{font-size:12.5px;line-height:1.55;color:var(--ink2);background:var(--panel2);border-radius:10px;padding:12px 14px;margin-bottom:12px;border-left:3px solid var(--blue)}
+.ex2-ref-facts strong{color:var(--ink)}
+.ex2-work-layout{display:grid;grid-template-columns:minmax(260px,.95fr) minmax(300px,1.15fr);gap:18px;align-items:start}
+@media(max-width:820px){.ex2-work-layout{grid-template-columns:1fr}}
+.ex2-ref-col{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow-y:auto}
+.ex3-ref-mission{font-size:12.5px;line-height:1.5;background:var(--red-dim);border:1px solid var(--red-line);border-radius:10px;padding:10px 12px;margin-bottom:10px;color:var(--ink2)}
+.ex3-ref-goal{font-size:12px;line-height:1.5;background:var(--amber-dim);border:1px solid var(--amber-line);border-radius:10px;padding:10px 12px;margin-bottom:10px;color:var(--ink2)}
+.ex3-ref-table{font-size:11px;margin:0 0 8px}
+.ex3-ref-table th,.ex3-ref-table td{padding:6px 8px}
+.ex3-ref-table th{font-size:9px}
+body.hitl-beginner #s-ex4,body.hitl-beginner #s-ex5,body.hitl-beginner #s-matriisi{display:none!important}
+body.hitl-beginner .rail-step[data-tgt="s-ex4"],body.hitl-beginner .rail-step[data-tgt="s-ex5"],body.hitl-beginner .rail-step[data-tgt="s-matriisi"]{display:none}
+body.hitl-beginner .hitl-advanced-only{display:none!important}
+body.hitl-beginner #matrixImpact,body.hitl-beginner .score-hero,body.hitl-beginner #reviewBtn,body.hitl-beginner #resetExerciseBtn{display:none!important}
+.beginner-finish{background:var(--green-dim);border:1px solid var(--green-line);border-radius:var(--r14);padding:22px 20px;margin:20px 0 28px}
+.beginner-finish h3{font-size:18px;margin-bottom:10px;color:var(--green)}
+.beginner-finish ul{margin:0;padding-left:20px}
+.beginner-finish li{margin:8px 0;font-size:14px;color:var(--ink2)}
+.beginner-path-banner{background:var(--blue-dim);border:1px solid rgba(108,155,242,.35);border-radius:var(--r14);padding:14px 18px;margin:18px 0 0;font-size:14px;line-height:1.55;color:var(--ink2)}
+.beginner-path-banner strong{color:var(--ink)}
+.ex2-beginner-tip{font-size:13px;line-height:1.55;color:var(--ink2);background:var(--panel2);border-left:3px solid var(--teal,#2BA69A);padding:12px 14px;margin:0 0 14px;border-radius:0 10px 10px 0}
+</style>
+</head>
+<body class="hitl-progressive hitl-beginner">
+
+<nav class="railnav" aria-label="Moduulin navigointi">
+  <div class="railnav-inner">
+    <div class="rail-left">
+      <a href="/" class="rail-back">← Työpöytä</a>
+      <span class="rail-brand">Kun botti ei riitä</span>
+    </div>
+    <div class="rail-steps">
+      <a class="rail-step" data-tgt="s-teoria" href="#s-teoria">Teoria</a>
+      <a class="rail-step" data-tgt="s-portti" href="#s-portti">Portti</a>
+      <a class="rail-step" data-tgt="s-ex1" href="#s-ex1">H1</a>
+      <a class="rail-step" data-tgt="s-ex2" href="#s-ex2">H2</a>
+      <a class="rail-step" data-tgt="s-ex3" href="#s-ex3">H3</a>
+      <a class="rail-step" data-tgt="s-ex4" href="#s-ex4">H4</a>
+      <a class="rail-step" data-tgt="s-ex5" href="#s-ex5">H5</a>
+      <a class="rail-step" data-tgt="s-matriisi" href="#s-matriisi">Matriisi</a>
+      <a class="rail-step" data-tgt="s-tulokset" href="#s-tulokset">Tulokset</a>
+    </div>
+  </div>
+  <div class="rail-progress"><div class="rail-progress-bar" id="railBar"></div></div>
+</nav>
+
+<header class="hero hero-compact">
+  <div class="wrap">
+    <span class="eyebrow">AI Polku · Eskalaatio</span>
+    <h1>Kun botti ei riitä — <em>milloin ihminen ottaa ohjat.</em></h1>
+    <p class="lede">Opit kolme ydintaitoa: tarkista AI:n vastaus, ota ohjat poikkeustilanteessa, ja päätä mikä menee ihmiselle. Noin 45 min.</p>
+  </div>
+</header>
+
+<!-- ============================================================
+     1 · THEORY
+     ============================================================ -->
+<section id="s-teoria">
+  <div class="wrap">
+    <span class="kicker">Osa 1 · Taustaksi</span>
+    <h2>Mikä on <em>Human-in-the-Loop</em>?</h2>
+    <p class="body-txt">Human-in-the-Loop (HITL) tarkoittaa järjestelmää, jossa tekoäly tekee valmistelevan työn — analysoi tilanteen, muotoilee vastauksen tai toimenpide-ehdotuksen — mutta ihminen pysyy viimeisenä tarkastuspisteenä ennen kuin mitään tapahtuu oikeasti. Tekoäly ei korvaa ihmisen harkintaa, se säästää ihmisen ajan rutiinityöstä niin että harkinta ehditään käyttää siihen, missä sillä on merkitystä.</p>
+
+    <div class="def-card">
+      <div class="def-term">Hyväksymisportti (Approval Gate)</div>
+      <div class="def-body">Hyväksymisportti on kohta prosessissa, jossa tekoäly on jo laatinut toimenpiteen — esimerkiksi 500 euron hyvityksen — mutta toimenpide <strong style="color:var(--ink)">pysähtyy odottamaan</strong> ihmisesimiehen tarkastusta. Esimies voi hyväksyä sellaisenaan, korjata ja hyväksyä, tai hylätä. Vasta hyväksynnän jälkeen toimenpide toteutuu asiakkaalle asti.</div>
+    </div>
+
+    <div style="margin-top:36px">
+      <span class="kicker">Kolme laukaisinta</span>
+      <h2 style="font-size:24px">Milloin portti pitäisi sulkeutua?</h2>
+      <p class="body-txt">Kokenut eskalaatioarkkitehti ei päätä tapaus kerrallaan tunteella — hän rakentaa säännöt kolmen mitattavan laukaisimen varaan.</p>
+      <div class="trigger-grid">
+        <div class="trigger-card">
+          <span class="trigger-tag confidence">Luottamuskynnys</span>
+          <h3>Tekoäly ei ole varma</h3>
+          <p>Kun mallin oma varmuus vastauksesta jää esim. alle 80 %, se on merkki moniselitteisestä tapauksesta — ei automaation viasta.</p>
+          <div class="trigger-example">confidence: 0.64 → eskaloi</div>
+        </div>
+        <div class="trigger-card">
+          <span class="trigger-tag sentiment">Negatiivinen sentimentti</span>
+          <h3>Asiakas on jo suuttunut</h3>
+          <p>Uhkaava kieli, toistuva valitus tai julkinen kanava nostavat mainehaitan riskiä, vaikka itse pyyntö olisi teknisesti yksinkertainen.</p>
+          <div class="trigger-example">sentiment: erittäin negatiivinen → eskaloi</div>
+        </div>
+        <div class="trigger-card">
+          <span class="trigger-tag policy">Politiikkarajoitus</span>
+          <h3>Sääntö sanoo aina</h3>
+          <p>Rahasummarajat, GDPR-pyynnöt ja lakiuhat eskaloidaan aina — riippumatta siitä miten varma tai neutraali tapaus muuten on.</p>
+          <div class="trigger-example">value: 500€ > 200€ raja → eskaloi</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="divider"></div></div>
+
+<!-- ============================================================
+     2 · LIVE APPROVAL GATE DEMO
+     ============================================================ -->
+<section id="s-portti">
+  <div class="wrap">
+    <span class="kicker">Osa 2 · Kokeile itse</span>
+    <h2>Näin <em>hyväksymisportti</em> toimii käytännössä</h2>
+    <p class="body-txt">Alla on oikea tapaus: tekoäly on jo laatinut vastauksen ja hyvityksen. Sinä olet esimies, joka näkee sen ennen kuin mitään lähtee asiakkaalle. Kokeile kaikkia kolmea toimintoa.</p>
+
+    <div class="gate-shell">
+      <div class="gate-hdr">
+        <span class="gate-hdr-title"><span class="dot" id="gateDot"></span> Hyväksymisportti — tiketti #CS-88213</span>
+        <span class="gate-status" id="gateStatusPill">Odottaa hyväksyntää</span>
+      </div>
+      <div class="gate-body">
+        <div class="gate-ticket">
+          <div>
+            <div class="gate-customer">Asiakas: <strong>Marko Lindqvist</strong> · Kanava: puhelu · Asiakkuus: 4 v.</div>
+            <div class="gate-quote">"Tuote saapui vaurioituneena kahdesti peräkkäin. Haluan täyden hyvityksen, en enää uutta lähetystä."</div>
+          </div>
+          <div class="gate-meta">
+            <span class="meta-chip">confidence: 0.89</span>
+            <span class="meta-chip">sentiment: turhautunut</span>
+            <span class="meta-chip warn">summa: 500 € (raja 200 €)</span>
+          </div>
+        </div>
+
+        <div class="gate-draft" id="gateDraft">
+          <div class="gate-draft-label">Tekoälyn luonnos — muokattavissa ennen hyväksyntää</div>
+          <textarea id="gateDraftText" rows="3">Pahoittelemme aidosti kahta peräkkäistä vaurioitunutta toimitusta. Käsittelemme 500 € täyden hyvityksen alkuperäiselle maksutavalle 2–4 arkipäivän kuluessa. Emme lähetä tuotetta uudelleen, ellette erikseen pyydä.</textarea>
+        </div>
+
+        <div class="gate-actions">
+          <button class="gbtn approve" id="gateApprove">✓ Hyväksy sellaisenaan</button>
+          <button class="gbtn correct" id="gateCorrect">✎ Korjaa ja hyväksy</button>
+          <button class="gbtn reject" id="gateReject">✕ Hylkää</button>
+        </div>
+      </div>
+      <div class="gate-log" id="gateLog">
+        <div style="color:var(--ink3)">Odottaa esimiehen päätöstä — toimenpide ei ole vielä toteutunut asiakkaalle.</div>
+      </div>
+    </div>
+    <div class="gate-reset"><button id="gateReset">↺ Nollaa portti ja kokeile uudelleen</button></div>
+  </div>
+</section>
+
+<div class="wrap"><div class="divider"></div></div>
+
+<!-- ============================================================
+     HARJOITUS 1 — Ghost Policy Catcher
+     ============================================================ -->
+<section id="s-ex1">
+  <div class="wrap">
+    <span class="kicker">Harjoitus 1 · AI Output Auditing</span>
+    <h2><em>Ghost Policy</em> — hallusinaatioiden sieppari</h2>
+    <span class="skill-pill">CV-taito: AI Output Auditing &amp; Knowledge Constraint Management</span>
+
+    <p class="body-txt" style="margin-top:14px"><strong style="color:var(--ink)">Generatiivinen tekoäly optimoi asiakkaan tyytyväisyyttä, ei yrityksen sääntöjä.</strong> Sinä olet viimeinen tarkistus ennen lähetystä — sama rooli kuin kun tarkistat hyvityksen tai palautuksen ennen kuin vastaus menee asiakkaalle.</p>
+    <p class="body-txt" style="font-size:13.5px;color:var(--ink2)">Kolme vaihetta: (1) päätös, (2) auditointi, (3) korjaus + lyhyt reflektio. <strong style="color:var(--ink)">Harjoitus 2 avautuu vasta kun lähetät tämän arvioon.</strong></p>
+    <div class="ex1-step-bar" id="ex1StepBar" aria-label="Harjoitus 1 vaiheet">
+      <span class="on" data-ex1step="ex1PhaseUrgency">1 · Päätös</span>
+      <span data-ex1step="ex1PhaseAudit">2 · Auditointi</span>
+      <span data-ex1step="ex1PhaseRewrite">3 · Korjaus</span>
+    </div>
+
+    <div class="ex1-phase show" id="ex1PhaseUrgency">
+      <div class="ex1-urgency">
+        <strong>⚠ Tämä sähköposti lähtee asiakkaalle 60 sekunnin kuluttua</strong> — ellei sinä pysäytä sitä.<br>
+        Tapaus #CS-44102 · Kahvikauppa Oy · Anna M. (VIP) · rikkinäinen kahvikone, osto 34 päivää sitten.
+      </div>
+
+      <div class="rule-context">
+        <h4>Palautuspolitiikka v3.2</h4>
+        <p class="rule-why">Tämä on <b>Kahvikauppa Oy:n virallinen palautussääntö</b>. Tekoäly ei aina noudata sitä. Sinun tehtäväsi on verrata alla olevaa luonnosta näihin sääntöihin ennen kuin päätät.</p>
+        <div class="policy-doc">PALAUTUKSET — voimassa 1.1.2026 · hyväksyjä: Legal
+
+§2 Palautusoikeus: <span class="hl">30 päivää</span> ostopäivästä. Ei poikkeuksia VIP-statukselle.
+
+§4 Yli 30 pv: ei täyttä hyvitystä. Vain (a) valmistajan takuukorjaus tai (b) <span class="hl">15 € lahjakortti</span> hyvityksenä.
+
+§6 Täysi hyvitys sallittu vain jos tuote vaurioitunut <span class="hl">alle 14 pv</span> ostopäivästä.
+
+§9 Kaikki hyvityslupaukset yli 50 € vaativat <span class="hl">esimiehen hyväksynnän</span>.</div>
+      </div>
+
+      <p class="body-txt">Tekoäly on kirjoittanut alla olevan vastauksen. <strong style="color:var(--ink)">Vertaa sitä yllä oleviin sääntöihin — yksi tai useampi lause ei vastaa politiikkaa.</strong> Voiko tämän lähettää turvallisesti?</p>
+      <div class="ex1-draft-only" id="ex1DraftPreview">Hei Anna,
+
+Pahoittelemme syvästi kahvikoneen vikaantumista — ymmärrämme täysin turhautumisenne.
+
+Olemme tarkistaneet tilauksenne ja näemme, että olette arvostettu VIP-asiakas. VIP-erikoiskohteluna olemme pidentäneet palautusajan 60 päivään, joten voit palauttaa koneen vielä tänään.
+
+Lähetämme palautustarran sähköpostiisi. Hyvitämme täyden ostohinnan takaisin 3–5 arkipäivässä — käsittelemme sen automaattisesti ilman lisäviiveitä.
+
+Ystävällisin terveisin,
+AI-asiakaspalvelu</div>
+      <p class="body-txt" style="margin-top:14px;font-size:14px">Lue luonnos huolellisesti. Mitä huomioit?</p>
+      <label class="field-label">Ensivaikutelmasi (valinnainen)</label>
+      <textarea class="ex-ta" id="ex1FirstImpression" rows="2" placeholder="Mikä herätti epäilyä…"></textarea>
+      <p class="body-txt" style="margin-top:12px;font-size:14px">Voitko hyväksyä lähetyksen?</p>
+      <div class="ex1-choice-row">
+        <button type="button" class="ex1-choice-btn" data-ex1gate="yes">Kyllä — lähetä</button>
+        <button type="button" class="ex1-choice-btn" data-ex1gate="no">Ei — pysäytä</button>
+        <button type="button" class="ex1-choice-btn" data-ex1gate="unsure">En ole varma</button>
+      </div>
+      <div class="ex-actions" style="margin-top:14px">
+        <button class="ex-btn primary" id="ex1GateSubmit">Jatka tarkistukseen →</button>
+      </div>
+      <div class="ai-feedback" id="ex1GateFb"></div>
+    </div>
+
+    <div class="ex1-phase" id="ex1PhasePolicy">
+      <div class="split-grid">
+        <div class="panel-box">
+          <h4>Sidottu lähde — palautuspolitiikka v3.2</h4>
+          <div class="policy-doc">PALAUTUKSET — voimassa 1.1.2026 · hyväksyjä: Legal
+
+§2 Palautusoikeus: <span class="hl">30 päivää</span> ostopäivästä. Ei poikkeuksia VIP-statukselle.
+
+§4 Yli 30 pv: ei täyttä hyvitystä. Vain (a) valmistajan takuukorjaus tai (b) <span class="hl">15 € lahjakortti</span> hyvityksenä.
+
+§6 Täysi hyvitys sallittu vain jos tuote vaurioitunut <span class="hl">alle 14 pv</span> ostopäivästä.
+
+§9 Kaikki hyvityslupaukset yli 50 € vaativat <span class="hl">esimiehen hyväksynnän</span>.</div>
+        </div>
+        <div class="panel-box">
+          <h4>AI:n luonnos — vertaa politiikkaan</h4>
+          <textarea class="ex-ta" id="ex1Draft" rows="10" readonly data-bonus-skip-save="1">Hei Anna,
+
+Pahoittelemme syvästi kahvikoneen vikaantumista — ymmärrämme täysin turhautumisenne.
+
+Olemme tarkistaneet tilauksenne ja näemme, että olette arvostettu VIP-asiakas. VIP-erikoiskohteluna olemme pidentäneet palautusajan 60 päivään, joten voit palauttaa koneen vielä tänään.
+
+Lähetämme palautustarran sähköpostiisi. Hyvitämme täyden ostohinnan takaisin 3–5 arkipäivässä — käsittelemme sen automaattisesti ilman lisäviiveitä.
+
+Ystävällisin terveisin,
+AI-asiakaspalvelu</textarea>
+        </div>
+      </div>
+      <div class="ex1-vocab" id="ex1Vocab" style="display:none">
+        <p class="body-txt" style="margin-bottom:10px;font-size:14px">Löysit kohdan, jota politiikassa ei ole? Sitä kutsutaan <strong style="color:var(--amber)">hallusinaatioksi</strong> — teksti kuulostaa viralliselta mutta ei löydy dokumentista.</p>
+        <dl>
+          <dt style="font-weight:700;color:var(--amber);font-size:13px;margin-top:10px">Auditointi</dt>
+          <dd style="color:var(--ink2);font-size:13.5px;margin:4px 0 0">Vertaat jokaisen lauseen sidottuun lähteeseen (politiikka, CRM, sopimus).</dd>
+          <dt style="font-weight:700;color:var(--amber);font-size:13px;margin-top:10px">Knowledge constraint</dt>
+          <dd style="color:var(--ink2);font-size:13.5px;margin:4px 0 0">Tekoäly saa käyttää vain hyväksyttyjä artikkeleita — sinä korjaat kun se ylittää rajat.</dd>
+        </dl>
+      </div>
+      <div class="ex-actions" style="margin-top:14px">
+        <button class="ex-btn primary" id="ex1PolicyContinue">Aloita auditointi →</button>
+      </div>
+    </div>
+
+    <div class="ex1-phase" id="ex1PhaseAudit">
+      <div class="ex1-cs-why"><strong>Miksi tämä on asiakaspalvelua:</strong> Sama tilanne kuin CRM:ssä tai sähköpostissa — ennen lähetystä varmistat, että lupaukset pitävät. Tekoäly kirjoittaa nopeasti; sinä olet viimeinen tarkistus.</div>
+      <div class="ex1-work-layout">
+        <aside class="ex1-ref-col" aria-label="Lähteet — pysyvät näkyvissä">
+          <div class="ex1-ref-panel">
+            <h4>📋 Virallinen politiikka</h4>
+            <div class="policy-doc" style="font-size:13px">PALAUTUKSET — voimassa 1.1.2026
+
+§2 Palautusoikeus: <span class="hl">30 päivää</span>. Ei VIP-poikkeuksia.
+
+§4 Yli 30 pv: ei täyttä hyvitystä — vain takuukorjaus tai <span class="hl">15 € lahjakortti</span>.
+
+§6 Täysi hyvitys vain alle <span class="hl">14 pv</span> ostopäivästä.
+
+§9 Yli 50 € hyvitykset → <span class="hl">esimiehen hyväksyntä</span>.</div>
+          </div>
+          <div class="ex1-ref-panel">
+            <h4>✉️ AI:n luonnos (älä lähetä)</h4>
+            <div class="ex1-ref-draft">Hei Anna,
+
+Pahoittelemme syvästi kahvikoneen vikaantumista — ymmärrämme täysin turhautumisenne.
+
+Olemme tarkistaneet tilauksenne ja näemme, että olette arvostettu VIP-asiakas. VIP-erikoiskohteluna olemme pidentäneet palautusajan 60 päivään, joten voit palauttaa koneen vielä tänään.
+
+Lähetämme palautustarran sähköpostiisi. Hyvitämme täyden ostohinnan takaisin 3–5 arkipäivässä — käsittelemme sen automaattisesti ilman lisäviiveitä.
+
+Ystävällisin terveisin,
+AI-asiakaspalvelu</div>
+          </div>
+          <p class="ex1-ref-hint">Lähteet pysyvät näkyvissä koko harjoituksen ajan — voit lainata niistä suoraan.</p>
+          <div class="ex1-vocab" id="ex1VocabAudit" style="display:none;margin-top:8px">
+            <p class="body-txt" style="margin-bottom:8px;font-size:13px"><strong style="color:var(--amber)">Hallusinaatio</strong> = teksti kuulostaa viralliselta mutta ei löydy politiikasta (esim. 60 pv VIP-palautus).</p>
+          </div>
+        </aside>
+        <div class="ex1-task-col">
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex-step-hdr"><span class="ex-step-num">Vaihe 1</span><h3>Auditoitu rikkomukset</h3></div>
+        <p class="body-txt">Vertaa <strong style="color:var(--ink)">vasemmalla olevaa luonnosta politiikkaan</strong>. Listaa vähintään kaksi ongelmaa: lainaa AI:n tekstiä, viittaa §-kohtaan, kerro miksi riski.</p>
+        <label class="field-label">Rikkomuslista</label>
+        <textarea class="ex-ta" id="ex1Audit" rows="6" placeholder="1) AI sanoo: «60 päivää» → Rikkuu §2 koska VIP ei saa pidennystä…&#10;2) AI sanoo: «täyden ostohinnan» → Rikkuu §4/§9 koska…"></textarea>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex1AuditContinue">Jatka korjaukseen →</button>
+      </div>
+      <div class="ai-feedback" id="ex1AuditFb"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex1-phase" id="ex1PhaseRewrite">
+      <div class="ex1-cs-why"><strong>Miksi tämä on asiakaspalvelua:</strong> Korjaat asiakkaalle lähtevän viestin — empatia säilyy, mutta lupaukset vastaavat yrityksen sääntöjä.</div>
+      <div class="ex1-work-layout">
+        <aside class="ex1-ref-col" aria-label="Lähteet — pysyvät näkyvissä">
+          <div class="ex1-ref-panel">
+            <h4>📋 Virallinen politiikka</h4>
+            <div class="policy-doc" style="font-size:13px">§2 30 pv · §4 yli 30 pv = 15 € lahjakortti · §6 täysi hyvitys vain &lt;14 pv · §9 &gt;50 € = esimies</div>
+          </div>
+          <div class="ex1-ref-panel">
+            <h4>✉️ AI:n virheellinen luonnos</h4>
+            <div class="ex1-ref-draft">…VIP-erikoiskohteluna olemme pidentäneet palautusajan 60 päivään…
+…Hyvitämme täyden ostohinnan takaisin 3–5 arkipäivässä…</div>
+            <p class="ex1-ref-hint" style="margin-top:8px">Anna 34 pv vanhalle tilaukselle: takuukorjaus tai 15 € lahjakortti — ei täyttä hyvitystä.</p>
+          </div>
+        </aside>
+        <div class="ex1-task-col">
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex-step-hdr"><span class="ex-step-num">Vaihe 2</span><h3>Kirjoita korjattu sähköposti</h3></div>
+        <p class="body-txt">Kirjoita koko vastaus Annalle uudelleen. Onnistunut viesti:</p>
+        <ul class="objective-list">
+          <li>Pysyy empaattisena (HEAT)</li>
+          <li>Noudattaa politiikkaa — ei lupaa täyttä hyvitystä</li>
+          <li>Kertoo selkeät seuraavat askeleet</li>
+        </ul>
+        <textarea class="ex-ta" id="ex1Rewrite" rows="8" placeholder="Hei Anna, pahoittelemme kahvikoneen vikaantumista…" style="margin-top:12px"></textarea>
+        <div class="ex-step" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">
+          <p class="body-txt" style="margin-bottom:10px"><strong style="color:var(--ink)">Lyhyt reflektio</strong> — kaksi kysymystä ennen lähetystä.</p>
+          <label class="field-label">Mitä pahinta tapahtuisi, jos lähettäisit alkuperäisen luonnon sellaisenaan?</label>
+          <textarea class="ex-ta" id="ex1Risk" rows="2" placeholder="Esim. asiakas odottaa täyttä hyvitystä, yritys rikkoo politiikkaa…"></textarea>
+          <label class="field-label" style="margin-top:12px">Mikä lause melkein hämäsi sinut? <em>Lainaa vasemmalta.</em></label>
+          <textarea class="ex-ta" id="ex1Fooled" rows="2" placeholder="Esim. «VIP-erikoiskohteluna 60 päivää»…"></textarea>
+        </div>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex1RewriteContinue">Lähetä arvioon →</button>
+        <button type="button" id="ex1Submit" hidden tabindex="-1" aria-hidden="true">Lähetä</button>
+      </div>
+      <div class="ai-feedback" id="ex1Ai"></div>
+      <div class="ai-feedback" id="ex1RewriteFb"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex1-phase hitl-advanced-only" id="ex1PhaseRisk">
+      <div class="ex1-cs-why"><strong>Miksi tämä on HITL:ää:</strong> Yksi virheellinen lupaus voi maksaa yritykselle rahaa ja sinulle luottamuksen.</div>
+      <div class="ex1-work-layout">
+        <aside class="ex1-ref-col" aria-label="Lähteet — pysyvät näkyvissä">
+          <div class="ex1-ref-panel">
+            <h4>✉️ Alkuperäinen luonnos (muistutus)</h4>
+            <div class="ex1-ref-draft">VIP-erikoiskohteluna… 60 päivää… täyden ostohinnan… automaattisesti ilman lisäviiveitä.</div>
+          </div>
+        </aside>
+        <div class="ex1-task-col">
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex1SubmitAdvanced">Lähetä arvioon →</button>
+      </div>
+      <div class="ai-feedback" id="ex1AiAdvanced"></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="body-txt" style="margin-top:20px;font-size:13.5px"><strong>Aha!</strong> Kohtelias tekoäly voi silti olla massiivinen taloudellinen riski. Tehtäväsi ei ole vain olla mukava — vaan suojella yritystä dokumentoidulla auditoinnilla.</p>
+  </div>
+</section>
+
+<div class="wrap"><div class="divider"></div></div>
+
+<!-- ============================================================
+     HARJOITUS 2 — Tilannetaju (ihminen ottaa ohjat)
+     ============================================================ -->
+<section id="s-ex2">
+  <div class="wrap">
+    <span class="kicker">Harjoitus 2 · Tilannetaju</span>
+    <h2><em>Ihminen ottaa ohjat</em> — milloin prosessi väistyy</h2>
+    <span class="skill-pill">CV-taito: Tilannetaju ja harkinta — milloin ihminen keskeyttää automaation</span>
+    <p class="body-txt" style="margin-top:14px;font-size:13.5px;color:var(--ink2)">Chat ja tapaus <strong style="color:var(--ink)">pysyvät näkyvissä</strong> koko harjoituksen ajan. <strong style="color:var(--ink)">Kolme vaihetta:</strong> päätös → analyysi → ihmisvastaus ja lähetys.</p>
+
+    <div class="ex2-phase show" id="ex2PhaseChat">
+      <div class="ex2-ref-facts" style="margin-top:14px"><strong>Tapaus · NordFlow</strong> · Kirsi L., 8 vuoden tilaaja · miehensä kuoli eilen · peruutus 89 €/v</div>
+      <p class="body-txt" style="margin-top:14px">Sinä olet asiakaspalvelija. Tekoäly vastaa chatissa puolestasi.</p>
+      <div class="chat-sim">
+        <div class="chat-hdr">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--ink2)">Live chat</span>
+        </div>
+        <div class="chat-msgs" id="ex2Chat">
+          <div class="chat-msg cust"><span class="who">Asiakas Kirsi</span>Mieheni kuoli eilen. Haluan peruuttaa hänen vuosittaisen tilauksensa. Älkää teettäkö minulle byrokratiaa tänään.</div>
+          <div class="chat-msg bot"><span class="who">Tekoälyavustaja</span>Olen pahoillani tilanteestanne. Voin auttaa peruutuksessa. Tarvitsen ensin asiakasnumeron ja tilauksen viitteen, jotta voin käynnistää prosessin.</div>
+        </div>
+      </div>
+      <p class="body-txt" style="margin-top:14px;font-size:14px"><strong style="color:var(--ink)">Lähettäisitkö tämän vastauksen asiakkaalle?</strong></p>
+      <div class="ex1-choice-row">
+        <button type="button" class="ex1-choice-btn" data-ex2send="yes">Kyllä</button>
+        <button type="button" class="ex1-choice-btn" data-ex2send="edit">Muokkaisin sitä</button>
+        <button type="button" class="ex1-choice-btn" data-ex2send="stop">Keskeyttäisin botin välittömästi</button>
+      </div>
+      <div class="ex-actions" style="margin-top:14px">
+        <button class="ex-btn primary" id="ex2SendContinue">Jatka →</button>
+      </div>
+      <div class="ai-feedback" id="ex2SendFb"></div>
+    </div>
+
+    <div class="ex2-phase hitl-advanced-only" id="ex2PhaseWhen">
+      <div class="ex2-work-layout">
+        <aside class="ex2-ref-col" aria-label="Chat ja tapaus — pysyvät näkyvissä">
+          <div class="ex2-ref-facts"><strong>Tapaus · NordFlow</strong><br>Kirsi L. · 8 vuoden tilaaja · miehensä kuoli eilen · peruutus 89 €/v · pyysi: ei byrokratiaa tänään</div>
+          <div class="ex2-ref-chat">
+            <div class="chat-hdr">Live chat · Kirsi</div>
+            <div class="chat-msgs">
+              <div class="chat-msg cust"><span class="who">Asiakas Kirsi</span>Mieheni kuoli eilen. Haluan peruuttaa hänen vuosittaisen tilauksensa. Älkää teettäkö minulle byrokratiaa tänään.</div>
+              <div class="chat-msg bot"><span class="who">Tekoälyavustaja</span>Olen pahoillani tilanteestanne. Voin auttaa peruutuksessa. Tarvitsen ensin asiakasnumeron ja tilauksen viitteen, jotta voin käynnistää prosessin.</div>
+            </div>
+          </div>
+        </aside>
+        <div class="ex2-task-col">
+      <p class="body-txt"><strong style="color:var(--ink)">Milloin keskeyttäisit tekoälyn?</strong></p>
+      <div class="choice-row">
+        <label><input type="radio" name="ex2when" value="now"> Heti</label>
+        <label><input type="radio" name="ex2when" value="later"> Vasta jos asiakas suuttuu lisää</label>
+        <label><input type="radio" name="ex2when" value="never"> En keskeyttäisi</label>
+      </div>
+      <label class="field-label" style="margin-top:12px">Miksi? <em>Viittaa chattiin vasemmalta.</em></label>
+      <textarea class="ex-ta" id="ex2WhenWhy" rows="3" placeholder="Perustele päätöksesi…"></textarea>
+      <div class="ex-actions" style="margin-top:10px">
+        <button class="ex-btn primary" id="ex2WhenContinue">Jatka →</button>
+      </div>
+      <div class="ai-feedback" id="ex2WhenFb"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex2-phase hitl-advanced-only" id="ex2PhaseLearn">
+      <div class="ex2-work-layout">
+        <aside class="ex2-ref-col" aria-label="Chat ja tapaus — pysyvät näkyvissä">
+          <div class="ex2-ref-facts"><strong>Tapaus · NordFlow</strong><br>Kirsi L. · 8 vuoden tilaaja · miehensä kuoli eilen · peruutus 89 €/v · pyysi: ei byrokratiaa tänään</div>
+          <div class="ex2-ref-chat">
+            <div class="chat-hdr">Live chat · Kirsi (tätä analysoit)</div>
+            <div class="chat-msgs">
+              <div class="chat-msg cust"><span class="who">Asiakas Kirsi</span>Mieheni kuoli eilen. Haluan peruuttaa hänen vuosittaisen tilauksensa. Älkää teettäkö minulle byrokratiaa tänään.</div>
+              <div class="chat-msg bot"><span class="who">Tekoälyavustaja</span>Olen pahoillani tilanteestanne. Voin auttaa peruutuksessa. Tarvitsen ensin asiakasnumeron ja tilauksen viitteen, jotta voin käynnistää prosessin.</div>
+            </div>
+          </div>
+          <p class="ex1-ref-hint">Malli oikealla on <em>eri tapaus</em> — vertaa ideaa Kirsin chattiin.</p>
+        </aside>
+        <div class="ex2-task-col">
+      <div class="learn-block" style="margin-top:0">
+        <h3>Ennen kuin analysoit — mitä tarkkailla</h3>
+        <p class="body-txt" style="margin-bottom:10px">Tekoäly osaa lukea <em>sanat</em>, mutta ei aina <em>tilannetta</em>. Se tunnistaa pyynnön ("haluan peruuttaa") ja etenee sen mukaan. Sinun tehtäväsi ihmisenä on katsoa laajemmin: <strong style="color:var(--ink)">sopiiko botin tapa toimia juuri tähän hetkeen ja tähän ihmiseen?</strong></p>
+        <p class="body-txt" style="margin-bottom:0">Katso chatti vasemmalta: mitä Kirsi sanoi, miten botti reagoi — sopiiko se yhteen?</p>
+      </div>
+
+      <div class="worked-example">
+        <div class="we-label">Malli · eri tapaus — näin "heikko" ja "vahva" eroavat</div>
+        <p class="we-intro">Tässä <strong>eri asiakas</strong> (ei Kirsi) — pelkkä esimerkki siitä, miltä ero näyttää. Asiakas: <em>"Tilaukseni on viikon myöhässä, tämä on kolmas kerta. Pettynyt."</em></p>
+        <div class="we-grid">
+          <div class="we-card weak">
+            <div class="we-tag">Heikko</div>
+            <p>"Pahoittelut viiveestä. Anna tilausnumerosi, niin tarkistan tilanteen ja lähetän uuden arvion toimituksesta."</p>
+            <div class="we-note">Tekninen ja oikea — mutta ohittaa sen, että tämä on jo kolmas kerta. Kohtelee toistuvaa ongelmaa kuin ensimmäistä.</div>
+          </div>
+          <div class="we-card strong">
+            <div class="we-tag">Vahva</div>
+            <p>"Kolmas viive peräkkäin ei ole hyväksyttävää — ymmärrän pettymyksen. Otan tämän itse hoitaakseni: selvitän syyn ja palaan sinulle tänään, et joudu kyselemään uudestaan."</p>
+            <div class="we-note">Sama asia, mutta huomioi toiston, ottaa vastuun ja poistaa asiakkaalta vaivan. Ei liioittele — napakka ja konkreettinen.</div>
+          </div>
+        </div>
+        <p class="we-takeaway">Ero ei ole "enemmän tunnetta". Ero on <strong>tilannetaju</strong>: vahva vastaus näkee mitä tässä tilanteessa oikeasti tarvitaan. Sovella samaa ajattelua Kirsin chattiin vasemmalla.</p>
+      </div>
+
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex2LearnContinue">Analysoi tilanne →</button>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex2-phase" id="ex2PhaseAnalysis">
+      <div class="ex2-work-layout">
+        <aside class="ex2-ref-col" aria-label="Chat ja tapaus — pysyvät näkyvissä">
+          <div class="ex2-ref-facts"><strong>Tapaus · NordFlow</strong><br>Kirsi L. · 8 vuoden tilaaja · miehensä kuoli eilen · peruutus 89 €/v · pyysi: ei byrokratiaa tänään</div>
+          <div class="ex2-ref-chat">
+            <div class="chat-hdr">Live chat · Kirsi</div>
+            <div class="chat-msgs">
+              <div class="chat-msg cust"><span class="who">Asiakas Kirsi</span>Mieheni kuoli eilen. Haluan peruuttaa hänen vuosittaisen tilauksensa. Älkää teettäkö minulle byrokratiaa tänään.</div>
+              <div class="chat-msg bot"><span class="who">Tekoälyavustaja</span>Olen pahoillani tilanteestanne. Voin auttaa peruutuksessa. Tarvitsen ensin asiakasnumeron ja tilauksen viitteen, jotta voin käynnistää prosessin.</div>
+            </div>
+          </div>
+          <p class="ex1-ref-hint">Vertaa: mitä Kirsi sanoi vs. mitä botti teki. Botti meni suoraan prosessiin.</p>
+        </aside>
+        <div class="ex2-task-col">
+      <div class="ex2-beginner-tip"><strong>Vinkki:</strong> Botti vastasi kohteliaasti mutta meni suoraan prosessiin. Surutilanteessa ihminen ottaa ohjat — poistaa byrokratian, ei lisää sitä.</div>
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex-step-hdr"><span class="ex-step-num">Vaihe 1</span><h3>Mikä meni pieleen?</h3></div>
+        <label class="field-label">Katso chat vasemmalta. Erottele: mitä asiakas sanoi, mitä botti ymmärsi, mitä jäi huomiotta.</label>
+        <textarea class="ex-ta" id="ex2Analysis" rows="4" placeholder="Asiakas kertoi… Botti vastasi… Ongelma on…"></textarea>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn danger" id="ex2Override">Ohita tekoäly — vastaan itse</button>
+      </div>
+      <p class="body-txt" style="font-size:13px;color:var(--ink3)">Kirjoita lyhyt analyysi (n. 20 sanaa) ennen ohitusta.</p>
+      <div class="ai-feedback" id="ex2AnalysisFb"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex2-phase" id="ex2PhaseReply">
+      <div class="ex2-work-layout">
+        <aside class="ex2-ref-col" aria-label="Chat ja tapaus — pysyvät näkyvissä">
+          <div class="ex2-ref-facts"><strong>Vastaat Kirsi L.:lle</strong><br>Surutilanne · peruuta 89 €/v tilaus · älä lisää byrokratiaa · ei alennuksia eikä peruutusmaksua</div>
+          <div class="ex2-ref-chat">
+            <div class="chat-hdr">Mitä botti lähetti (älä toista tätä)</div>
+            <div class="chat-msgs">
+              <div class="chat-msg cust"><span class="who">Asiakas Kirsi</span>Mieheni kuoli eilen. Haluan peruuttaa hänen vuosittaisen tilauksensa (89 €/v). Älkää teettäkö minulle byrokratiaa tänään.</div>
+              <div class="chat-msg bot"><span class="who">Tekoälyavustaja — virhe</span>Olen pahoillani tilanteestanne. Voin auttaa peruutuksessa. Tarvitsen ensin asiakasnumeron ja tilauksen viitteen, jotta voin käynnistää prosessin.</div>
+            </div>
+          </div>
+          <p class="ex1-ref-hint">Kirjoita uusi viesti, joka tunnustaa menetyksen ja hoitaa peruutuksen ilman turhaa vaivaa.</p>
+        </aside>
+        <div class="ex2-task-col">
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex-step-hdr"><span class="ex-step-num">Vaihe 2</span><h3>Kirjoita ihmisvastaus</h3></div>
+        <p class="body-txt">Vastauksesi pitäisi:</p>
+        <ul class="objective-list">
+          <li>Tunnustaa menetyksen</li>
+          <li>Poistaa turha byrokratia (ei peruutusmaksua)</li>
+          <li>Kertoa selkeä seuraava askel</li>
+          <li>Välttää myyntikieltä ja alennustarjouksia</li>
+        </ul>
+        <textarea class="ex-ta" id="ex2Reply" rows="6" disabled placeholder="Kirsi, olen pahoillani menetyksestäsi… Hoidan peruutuksen puolestasi…" style="margin-top:12px"></textarea>
+        <div class="ex-step" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">
+          <p class="body-txt" style="margin-bottom:10px"><strong style="color:var(--ink)">Mitä opit?</strong> — kaksi lyhyttä kysymystä.</p>
+          <p class="body-txt" style="margin-bottom:8px">Mikä oli tekoälyn suurin virhe?</p>
+          <div class="choice-row">
+            <label><input type="radio" name="ex2error" value="sell"> Se yritti myydä</label>
+            <label><input type="radio" name="ex2error" value="emotion"> Se ei tajunnut tilannetta</label>
+            <label><input type="radio" name="ex2error" value="process"> Se käytti väärää prosessia</label>
+            <label><input type="radio" name="ex2error" value="multiple"> Useita virheitä</label>
+          </div>
+          <label class="field-label" style="margin-top:12px">Milloin sinä keskeyttäisit tekoälyn? (yksi lause)</label>
+          <textarea class="ex-ta" id="ex2Rule" rows="2" placeholder="Keskeyttäisin heti, kun…"></textarea>
+          <label class="field-label hitl-advanced-only" style="margin-top:12px">Missä muissa tilanteissa keskeyttäisit? (vähintään kolme)</label>
+          <textarea class="ex-ta hitl-advanced-only" id="ex2Examples" rows="3" placeholder="Esimerkiksi: läheisen kuolema, vakava sairaus…"></textarea>
+        </div>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex2ReplyContinue">Lähetä arvioon →</button>
+        <button type="button" id="ex2Submit" hidden tabindex="-1" aria-hidden="true">Lähetä</button>
+      </div>
+      <div class="ai-feedback" id="ex2Ai"></div>
+      <div class="ai-feedback" id="ex2ReplyFb"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ex2-phase hitl-advanced-only" id="ex2PhaseReflect">
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex-step-hdr"><span class="ex-step-num">Vaihe 3</span><h3>Siirrä oppiminen työhön</h3></div>
+        <p class="body-txt">Mikä oli tekoälyn suurin virhe?</p>
+        <div class="choice-row">
+          <label><input type="radio" name="ex2error" value="sell"> Se yritti myydä</label>
+          <label><input type="radio" name="ex2error" value="emotion"> Se ei tajunnut tilannetta, vain pyynnön</label>
+          <label><input type="radio" name="ex2error" value="process"> Se käytti väärää prosessia</label>
+          <label><input type="radio" name="ex2error" value="multiple"> Useita virheitä yhtä aikaa</label>
+        </div>
+        <label class="field-label" style="margin-top:14px">Milloin sinä keskeyttäisit tekoälyn? (yksi lause)</label>
+        <textarea class="ex-ta" id="ex2Rule" rows="2" placeholder="Keskeyttäisin heti, kun…"></textarea>
+        <label class="field-label" style="margin-top:14px">Missä muissa tilanteissa keskeyttäisit tekoälyn? Kirjoita vähintään kolme esimerkkiä.</label>
+        <textarea class="ex-ta" id="ex2Examples" rows="4" placeholder="Esimerkiksi: läheisen kuolema, vakava sairaus, uhkaus…"></textarea>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex2SubmitAdvanced">Lähetä koko tehtävä arvioon →</button>
+      </div>
+      <div class="ai-feedback" id="ex2Ai"></div>
+    </div>
+
+    <p class="body-txt" style="margin-top:20px;font-size:13.5px"><strong>Aha!</strong> Tekoäly lukee sanat, ei tilannetta. Kyse ei ole tunteilusta — vaan harkinnasta: milloin prosessi väistyy ja ihminen ottaa vaivan pois asiakkaalta. Työelämässä kirjaat ohituksen syyn asiakaspalvelun lokiin (esim. "poikkeustilanne, ei vakioprosessia").</p>
+  </div>
+</section>
+
+<div class="wrap"><div class="divider"></div></div>
+
+<!-- ============================================================
+     HARJOITUS 3 — Escalation Flow Architect
+     ============================================================ -->
+<section id="s-ex3">
+  <div class="wrap">
+    <span class="kicker">Harjoitus 3 · Jonon hallinta</span>
+    <h2><em>Kuka hoitaa, kuka ei?</em> — tekoäly vai ihminen</h2>
+    <span class="skill-pill">CV-taito: Jonon priorisointi &amp; eskalaatiosäännöt</span>
+    <p class="body-txt" style="margin-top:14px;font-size:13.5px;color:var(--ink2)">Black Friday -ruuhka: ihmisjonossa on liikaa asioita. <strong style="color:var(--ink)">Kolme vaihetta:</strong> löydä ongelma → kirjoita säännöt → testaa kahdella tapauksella. Et tarvitse olla matematiikkanero — riittää järki ja riskitajunta.</p>
+
+    <div class="ex3-phase show" id="ex3PhaseMission">
+      <div class="ex3-ctx">
+        <div class="ctx-task"><b>Kokonaistehtävä:</b> Päätä mitä tekoäly saa hoitaa ja mitä pakotetaan ihmiselle. Jono pitää saada lyhyemmäksi — mutta GDPR, yli 200 € hyvitykset ja julkinen some ovat aina ihmisellä.</div>
+        <div class="ctx-conf"><b>Tekoälyn varmuus</b> — onko kone melkein varma vai arvailee? Kuten kokeessa: 9/10 = luotettava, alle 7/10 = ihminen katsokoon.
+          <span class="cf-scale"><span class="cf-ok">🟢 Varma</span><span class="cf-warn">🟡 Epävarma</span><span class="cf-bad">🔴 Ei luota</span></span>
+        </div>
+      </div>
+      <div class="ex3-now"><span class="ex3-now-tag">Aloitus</span><b>Lue tilanne ja tutustu taulukkoon.</b> Paina Aloita diagnosointi kun olet valmis — et tarvitse laskea mitään vielä.</div>
+      <div class="ex3-mission">
+        <strong>🚨 Black Friday · klo 14:00</strong><br>
+        Esimies soittaa: <em>"Jonossa on 4 000 asiakasta ja odotus on lähes tunnin. Meillä on 30 minuuttia ennen kuin palvelulupaus menee."</em>
+      </div>
+      <div class="ops-dashboard ops-dashboard-simple">
+        <div class="ops-metric"><div class="n">4 000</div><div class="l">ihmistä jonossa nyt</div></div>
+        <div class="ops-metric ops-metric-goal"><div class="n">&lt; 1 000</div><div class="l">tavoite — loput tekoälylle jos turvallista</div></div>
+      </div>
+      <div class="ex3-goal">
+        <strong>Muista aina:</strong> <strong style="color:var(--ink)">GDPR</strong>, <strong style="color:var(--ink)">yli 200 € hyvitykset</strong> ja <strong style="color:var(--ink)">julkinen some</strong> → aina ihminen, vaikka tekoäly olisi varma.
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Asiatyyppi</th><th>Kuinka yleinen?</th><th>Tekoälyn varmuus</th><th>Mitä tapahtuu nyt?</th></tr></thead>
+        <tbody>
+          <tr class="danger" data-row="small"><td>Pienet hyvitykset (8–40 €)</td><td><span class="vol-main">Erittäin yleinen</span><span class="vol-hint">noin 6 kertaa 10:stä</span></td><td><span class="conf-badge">🟢 Varma</span></td><td class="rule-now">Lähes kaikki menee ihmiselle — 5 € raja on liian tiukka</td></tr>
+          <tr data-row="address"><td>Osoite / salasana</td><td><span class="vol-main">Yleinen</span><span class="vol-hint">noin 2 kertaa 10:stä</span></td><td><span class="conf-badge">🟢 Hyvin varma</span></td><td class="rule-now">Tekoäly hoitaa — ei rahaa, ei riskiä</td></tr>
+          <tr data-row="large"><td>Isot hyvitykset (&gt;200 €)</td><td><span class="vol-main">Harvinainen</span><span class="vol-hint">noin 1 kerran 10:stä</span></td><td><span class="conf-badge">🟡 Melko varma</span></td><td class="rule-now">Oikein → ihmiselle (iso summa)</td></tr>
+          <tr data-row="gdpr"><td>GDPR / lakiasiat</td><td><span class="vol-main">Harvinainen</span><span class="vol-hint">harvoin</span></td><td><span class="conf-badge">🟡 Melko varma</span></td><td class="rule-now">Ei pakko-eskalointia — riski: tekoäly voi poistaa dataa</td></tr>
+          <tr data-row="social"><td>Julkinen some-kanava</td><td><span class="vol-main">Hyvin harvinainen</span><span class="vol-hint">hyvin harvoin</span></td><td><span class="conf-badge">🔴 Epävarma</span></td><td class="rule-now">Vain tunnetilan seuranta — maine-riski</td></tr>
+          <tr data-row="sentiment"><td>Erittäin negatiivinen asiakas</td><td><span class="vol-main">Hyvin harvinainen</span><span class="vol-hint">hyvin harvoin</span></td><td><span class="conf-badge">🔴 Ei luota</span></td><td class="rule-now">Oikein → ihmiselle (tekoäly epävarma)</td></tr>
+        </tbody>
+      </table>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex3MissionContinue">Aloita diagnosointi →</button>
+      </div>
+    </div>
+
+    <div class="ex3-phase" id="ex3PhaseBottleneck">
+      <div class="ex3-ctx">
+        <div class="ctx-task"><b>Kokonaistehtävä:</b> Päätä mitä tekoäly saa hoitaa ja mitä pakotetaan ihmiselle. Jono pitää saada lyhyemmäksi — mutta GDPR, yli 200 € hyvitykset ja julkinen some ovat aina ihmisellä.</div>
+        <div class="ctx-conf"><b>Tekoälyn varmuus</b> — onko kone melkein varma vai arvailee? Kuten kokeessa: 9/10 = luotettava, alle 7/10 = ihminen katsokoon.
+          <span class="cf-scale"><span class="cf-ok">🟢 Varma</span><span class="cf-warn">🟡 Epävarma</span><span class="cf-bad">🔴 Ei luota</span></span>
+        </div>
+      </div>
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex3-now"><span class="ex3-now-tag">Vaihe 1 / 3</span><b>Valitse yksi rivi</b> — mikä täyttää ihmisjonon turhaan?</div>
+        <div class="ex-step-hdr"><span class="ex-step-num">Vaihe 1</span><h3>Mikä rivi aiheuttaa suurimman ongelman?</h3></div>
+        <p class="body-txt">Valitse <strong style="color:var(--ink)">yksi</strong> asiatyyppi ja kerro miksi — riittää 1–2 lausetta (esim. “tulee useimmin” tai “nykyinen sääntö lähettää kaiken ihmiselle”).</p>
+        <div class="choice-row">
+          <label><input type="radio" name="ex3row" value="small"> Pienet hyvitykset <span style="color:var(--ink3);font-size:12px">(eniten kontakteja)</span></label>
+          <label><input type="radio" name="ex3row" value="address"> Osoite / salasana</label>
+          <label><input type="radio" name="ex3row" value="large"> Isot hyvitykset (&gt;200 €)</label>
+          <label><input type="radio" name="ex3row" value="gdpr"> GDPR / lakiasiat</label>
+          <label><input type="radio" name="ex3row" value="social"> Julkinen some</label>
+          <label><input type="radio" name="ex3row" value="sentiment"> Erittäin negatiivinen asiakas</label>
+        </div>
+        <label class="field-label" style="margin-top:12px">Miksi juuri tämä rivi?</label>
+        <textarea class="ex-ta" id="ex3Evidence" rows="3" placeholder="Esim: Tämä tulee useimmin (erittäin yleinen) ja nykyinen 5 € raja lähettää lähes kaiken ihmiselle…"></textarea>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex3BottleneckContinue">Jatka →</button>
+      </div>
+      <div class="ai-feedback" id="ex3BottleneckFb"></div>
+    </div>
+
+    <div class="ex3-phase hitl-advanced-only" id="ex3PhaseLearn">
+      <div class="ex3-ctx">
+        <div class="ctx-task"><b>Kokonaistehtävä:</b> Päätä mitä tekoäly saa hoitaa ja mitä pakotetaan ihmiselle. Jono pitää saada lyhyemmäksi — mutta GDPR, yli 200 € hyvitykset ja julkinen some ovat aina ihmisellä.</div>
+        <div class="ctx-conf"><b>Tekoälyn varmuus</b> — onko kone melkein varma vai arvailee? Kuten kokeessa: 9/10 = luotettava, alle 7/10 = ihminen katsokoon.
+          <span class="cf-scale"><span class="cf-ok">🟢 Varma</span><span class="cf-warn">🟡 Epävarma</span><span class="cf-bad">🔴 Ei luota</span></span>
+        </div>
+      </div>
+      <div class="learn-block" style="margin-top:0">
+        <div class="ex3-now"><span class="ex3-now-tag">Väliohje</span><b>Lyhyt opetus ennen sääntöjä</b> — lue tämä, sitten rakennat omat säännöt.</div>
+        <h3>Miksi säännöt ovat kompromissi</h3>
+        <p class="body-txt" style="margin-bottom:10px">Et säädä liukuria kunnes numero näyttää hyvältä. Päätät <strong style="color:var(--ink)">milloin automaatio saa toimia</strong> ja <strong style="color:var(--ink)">milloin ihminen on pakollinen</strong>.</p>
+        <ul>
+          <li><strong style="color:var(--ink)">Liian tiukka sääntö</strong> → jono kasvaa, asiakkaat odottavat liian kauan</li>
+          <li><strong style="color:var(--ink)">Liian löysä sääntö</strong> → GDPR-riski, isot hyvitykset ilman valvontaa</li>
+          <li><strong style="color:var(--ink)">Oikea tasapaino</strong> → ihmisen aika sinne, missä riski on suurin</li>
+        </ul>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex3LearnContinue">Rakenna säännöt →</button>
+      </div>
+    </div>
+
+    <div class="ex3-phase" id="ex3PhaseRules">
+      <div class="ex3-ctx">
+        <div class="ctx-task"><b>Kokonaistehtävä:</b> Päätä mitä tekoäly saa hoitaa ja mitä pakotetaan ihmiselle. Jono pitää saada lyhyemmäksi — mutta GDPR, yli 200 € hyvitykset ja julkinen some ovat aina ihmisellä.</div>
+        <div class="ctx-conf"><b>Tekoälyn varmuus</b> — onko kone melkein varma vai arvailee? Kuten kokeessa: 9/10 = luotettava, alle 7/10 = ihminen katsokoon.
+          <span class="cf-scale"><span class="cf-ok">🟢 Varma</span><span class="cf-warn">🟡 Epävarma</span><span class="cf-bad">🔴 Ei luota</span></span>
+        </div>
+      </div>
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex3-now"><span class="ex3-now-tag">Vaihe 2 / 3</span><b>Kirjoita 2–4 sääntöä</b> muodossa JOS … NIIN … — aloita alla olevasta mallista.</div>
+        <div class="ex-step-hdr"><span class="ex-step-num">Vaihe 2</span><h3>Uudet eskalaatiosäännöt</h3></div>
+        <div class="ex2-beginner-tip" style="margin-bottom:12px"><strong>Muista:</strong> liian tiukka sääntö täyttää jonon; liian löysä sääntö riskeeraa GDPR:n ja isoja hyvityksiä. Ihmisen aika sinne, missä riski on suurin.</div>
+        <p class="body-txt">Kirjoita <strong>2–4 sääntöä</strong> muodossa <strong>JOS … NIIN …</strong>. Mainitse ainakin: GDPR, iso raha (&gt;200 €) ja julkinen some → aina ihminen.</p>
+
+        <div class="ex3-worked">
+          <div class="we-h">Malli · näin teet yhden säännön</div>
+          <div class="we-row">Otetaan taulukosta <b>Osoite / salasana</b>: tulee <b>yleisesti</b>, tekoäly on <b>🟢 hyvin varma</b>, ei rahaa eikä riskiä → turvallista antaa koneelle.</div>
+          <div class="we-rule">JOS asia = osoite tai salasana JA tekoäly on varma (🟢) → NIIN tekoäly hoitaa itse.</div>
+          <div class="we-parts"><em>Syy:</em> rutiini, ei rahaa eikä henkilötietoriskiä. &nbsp;·&nbsp; <em>Vaikutus:</em> vapauttaa ihmisiä muille asioille.</div>
+          <div class="we-parts" style="margin-top:9px;color:var(--ink3)">Tee samanlainen sääntö muille riveille. GDPR, iso raha ja some → aina ihminen, vaikka tekoäly olisi varma.</div>
+        </div>
+
+        <textarea class="ex-ta" id="ex3Rules" rows="10" placeholder="Sääntö 1: JOS… NIIN… (miksi?)&#10;Sääntö 2: JOS… NIIN…&#10;AINA ihmiselle: GDPR, yli 200 € hyvitykset, julkinen some"></textarea>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex3RulesContinue">Testaa sääntöjä →</button>
+      </div>
+      <div class="ai-feedback" id="ex3RulesFb"></div>
+    </div>
+
+    <div class="ex3-phase hitl-advanced-only" id="ex3PhaseCapacity">
+      <div class="ex3-ctx">
+        <div class="ctx-task"><b>Kokonaistehtävä:</b> Päätä mitä tekoäly saa hoitaa ja mitä pakotetaan ihmiselle. Jono pitää saada lyhyemmäksi — mutta GDPR, yli 200 € hyvitykset ja julkinen some ovat aina ihmisellä.</div>
+        <div class="ctx-conf"><b>Tekoälyn varmuus</b> — onko kone melkein varma vai arvailee? Kuten kokeessa: 9/10 = luotettava, alle 7/10 = ihminen katsokoon.
+          <span class="cf-scale"><span class="cf-ok">🟢 Varma</span><span class="cf-warn">🟡 Epävarma</span><span class="cf-bad">🔴 Ei luota</span></span>
+        </div>
+      </div>
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex3-now"><span class="ex3-now-tag">Vaihe 2b</span><b>Arvioi vaikutus</b> — kuinka monta asiaa jäisi vielä ihmisjonoon uusilla säännöillä?</div>
+        <div class="ex-step-hdr"><span class="ex-step-num">Vaihe 3</span><h3>Arvioi jonon koko</h3></div>
+        <label class="field-label">Arvio: montako asiaa jäisi ihmisjonoon? (koko 5 000:sta)</label>
+        <input type="number" id="ex3QueueEst" min="0" max="5000" placeholder="esim. 600" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel3);color:var(--ink);font-family:inherit;margin-bottom:10px">
+        <label class="field-label">Perustele lyhyesti: mitä riskiä hyväksyt, mitä vältät? (voit viitata taulukkoon)</label>
+        <textarea class="ex-ta" id="ex3Tradeoff" rows="4" placeholder="Esim: Pienet hyvitykset ovat erittäin yleisiä — jos annan ne tekoälylle, jono pienenee paljon. GDPR ja isot hyvitykset pysyvät aina ihmisellä…"></textarea>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex3CapacityContinue">Testaa sääntöjä →</button>
+      </div>
+      <div class="ai-feedback" id="ex3CapacityFb"></div>
+    </div>
+
+    <div class="ex3-phase" id="ex3PhaseSpot">
+      <div class="ex3-ctx">
+        <div class="ctx-task"><b>Kokonaistehtävä:</b> Päätä mitä tekoäly saa hoitaa ja mitä pakotetaan ihmiselle. Jono pitää saada lyhyemmäksi — mutta GDPR, yli 200 € hyvitykset ja julkinen some ovat aina ihmisellä.</div>
+        <div class="ctx-conf"><b>Tekoälyn varmuus</b> — onko kone melkein varma vai arvailee? Kuten kokeessa: 9/10 = luotettava, alle 7/10 = ihminen katsokoon.
+          <span class="cf-scale"><span class="cf-ok">🟢 Varma</span><span class="cf-warn">🟡 Epävarma</span><span class="cf-bad">🔴 Ei luota</span></span>
+        </div>
+      </div>
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex3-now"><span class="ex3-now-tag">Vaihe 3 / 3</span><b>Testaa sääntösi</b> — päätä jokaisessa tapauksessa: tekoäly vai ihminen?</div>
+        <div class="ex-step-hdr"><span class="ex-step-num">Vaihe 3</span><h3>Testaa kahdella tapauksella</h3></div>
+        <p class="body-txt">Päätä: tekoäly vai ihminen? Kerro lyhyesti miksi — viittaa omaan sääntöösi.</p>
+        <div class="scenario-list" id="ex3Scenarios"></div>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex3Submit">Lähetä eskalaatiosuunnitelma arvioon →</button>
+      </div>
+      <div class="ai-feedback" id="ex3Ai"></div>
+      <div class="ex3-pro-reveal hitl-advanced-only" id="ex3ProReveal">
+        <h4 style="margin:0 0 10px;font-size:16px">Miten operaatiotiimi ratkaisi saman tilanteen</h4>
+        <ul>
+          <li><strong>Hyvitys yli 150 €</strong> → aina ihminen</li>
+          <li><strong>GDPR-poisto</strong> → aina ihminen + legal</li>
+          <li><strong>Tekoäly epävarma (🔴)</strong> → ihminen</li>
+          <li><strong>Julkinen some</strong> → aina ihminen</li>
+          <li><strong>Osoitteen vaihto / salasana</strong> → tekoäly jos 🟢 varma</li>
+          <li><strong>Pienet hyvitykset alle 75 €</strong> → tekoäly jos 🟢 varma</li>
+        </ul>
+        <p class="body-txt" style="margin:12px 0 0;font-size:14px">Vertaa omaa suunnitelmaasi: mikä ero on tärkein — ja miksi?</p>
+        <textarea class="ex-ta" id="ex3Compare" rows="3" placeholder="Eroin ammattilaisista siinä, että…"></textarea>
+      </div>
+    </div>
+
+    <p class="body-txt" style="margin-top:20px;font-size:13.5px"><strong>Aha!</strong> Hyvät säännöt eivät poista riskiä kokonaan — ne varmistavat, että ihmisten aika menee sinne missä sillä on eniten merkitystä.</p>
+  </div>
+</section>
+
+<div class="wrap"><div class="divider"></div></div>
+
+<!-- ============================================================
+     HARJOITUS 4 — Legal Minefield (GDPR)
+     ============================================================ -->
+<section id="s-ex4">
+  <div class="wrap">
+    <span class="kicker">Harjoitus 4 · Legal AI Compliance</span>
+    <h2><em>Hyväksymisjono</em> — GDPR-portti</h2>
+    <span class="skill-pill">CV-taito: Legal AI Compliance &amp; Data Governance</span>
+
+    <div class="ex4-phase show" id="ex4PhaseMission">
+      <div class="ex4-mission">
+        <strong>Maanantai klo 9.15</strong> — Olet asiakaspalvelun AI-valvoja. Yön aikana tekoäly käsitteli satoja tapauksia. <strong>Kuusi tapausta</strong> on pysähtynyt hyväksymisporttiin. Päätä, mitkä voidaan hyväksyä ja mitkä siirretään ihmiselle.
+      </div>
+      <p class="body-txt">Et tee lakitenttiä — arvioit, milloin automaatio voi vaikuttaa asiakkaan oikeuksiin, rahaan tai henkilötietoihin.</p>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex4MissionContinue">Avaa hyväksymisjono →</button>
+      </div>
+    </div>
+
+    <div class="ex4-phase" id="ex4PhasePriority">
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex-step-hdr"><span class="ex-step-num">Prioriteetti</span><h3>Ehdit käydä läpi vain kolme ensin</h3></div>
+        <p class="body-txt">Vuorosi päättyy pian. Valitse <strong>kolme tapausta</strong>, jotka tarkistat ensin — ja kerro miksi.</p>
+        <div class="ex4-priority-grid" id="ex4PriorityGrid">
+          <label class="ex2-check-row" data-key="addr"><input type="checkbox"> Osoitteen vaihto (paketti jo lähetetty)</label>
+          <label class="ex2-check-row" data-key="refund"><input type="checkbox"> 15 € myöhästymismaksun poisto</label>
+          <label class="ex2-check-row" data-key="gdpr"><input type="checkbox"> GDPR — poista kaikki tiedot</label>
+          <label class="ex2-check-row" data-key="password"><input type="checkbox"> Salasanan reset</label>
+          <label class="ex2-check-row" data-key="export"><input type="checkbox"> Ostohistoria vahvistettuun sähköpostiin</label>
+          <label class="ex2-check-row" data-key="goodwill"><input type="checkbox"> 250 € hyvitys + some-uhat</label>
+        </div>
+        <label class="field-label" style="margin-top:12px">Miksi juuri nämä kolme ensin?</label>
+        <textarea class="ex-ta" id="ex4PriorityWhy" rows="3" placeholder="Aloitan GDPR:sta koska…"></textarea>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex4PriorityContinue">Aloita tapaukset →</button>
+      </div>
+      <div class="ai-feedback" id="ex4PriorityFb"></div>
+    </div>
+
+    <div class="ex4-phase" id="ex4PhaseQueue">
+      <div class="ex4-queue-progress" id="ex4QueueDots"></div>
+      <div class="ex4-queue-card" id="ex4QueueCard"></div>
+      <div class="ex4-case-fb" id="ex4CaseFb"></div>
+      <div class="ex-actions" style="margin-top:14px">
+        <button class="ex-btn primary" id="ex4CaseNext" style="display:none">Seuraava tapaus →</button>
+        <button class="ex-btn primary" id="ex4QueueDone" style="display:none">Yhteenveto →</button>
+      </div>
+    </div>
+
+    <div class="ex4-phase" id="ex4PhaseLearn">
+      <div class="learn-block" style="margin-top:0">
+        <h3>Miksi juridinen portti on erillinen</h3>
+        <p class="body-txt" style="margin-bottom:10px"><strong style="color:var(--ink)">Kaikkea ei saa automatisoida.</strong> Kun päätös voi vaikuttaa asiakkaan oikeuksiin, rahaan tai henkilötietoihin, ihminen tarkistaa sen.</p>
+        <p class="body-txt" style="margin-bottom:10px">GDPR:ssä asiakkaalla on oikeus tulla unohdetuksi — mutta <strong style="color:var(--ink)">ei absoluuttista oikeutta poistaa kaikkea</strong>: kirjanpito, sopimus ja verovelvoitteet säilytetään.</p>
+        <p class="body-txt" style="margin-bottom:0">Tekoäly ei tunne poikkeuksia, ellei sääntö ole eksplisiittinen.</p>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex4LearnContinue">Viimeistele →</button>
+      </div>
+    </div>
+
+    <div class="ex4-phase" id="ex4PhaseReflect">
+      <label class="field-label">Milloin vaadit aina ihmisen tarkistuksen? (yksi lause)</label>
+      <textarea class="ex-ta" id="ex4Rule" rows="2" placeholder="Vaadin ihmisen tarkistuksen, kun…"></textarea>
+      <div class="ex-actions" style="margin-top:12px">
+        <button class="ex-btn primary" id="ex4Submit">Lähetä hyväksymisjono arvioon →</button>
+      </div>
+      <div class="breach-warn" id="ex4Breach">
+        ⚠ Täydellinen rekisterin poisto ei ole sama asia kuin markkinointiluvan peruutus — kirjanpito säilytetään.
+      </div>
+      <div class="ai-feedback" id="ex4Ai"></div>
+    </div>
+
+    <p class="body-txt" style="margin-top:20px;font-size:13.5px"><strong>Aha!</strong> Työelämässä dokumentoit lyhyesti: miksi tekoäly ei saanut toimia yksin — esimerkiksi GDPR-poisto + kirjanpitosäilytys.</p>
+  </div>
+</section>
+
+<div class="wrap"><div class="divider"></div></div>
+
+<!-- ============================================================
+     HARJOITUS 5 — Root Cause Detective
+     ============================================================ -->
+<section id="s-ex5">
+  <div class="wrap">
+    <span class="kicker">Harjoitus 5 · Knowledge Base Management</span>
+    <h2><em>Root Cause Detective</em> — silmukan sulkeminen</h2>
+    <span class="skill-pill">CV-taito: Knowledge Base Management &amp; Continuous AI Improvement</span>
+
+    <div class="ex5-phase show" id="ex5PhaseMission">
+      <div class="ex5-mission">
+        <strong>Tapaus #KB-991 · ScaleNord</strong> — Eskaloitu chat. Asiakas väittää botin antaneen väärän palautusmaksun. CRM: <strong>47 samanlaista valitusta tänään</strong> (norm. 2–3).
+      </div>
+      <p class="body-txt">Et tiedä vielä miksi. Tutki todisteet, selvitä juurisyy, korjaa asiakkaalle ja järjestelmälle.</p>
+      <div class="split-grid">
+        <div class="panel-box">
+          <h4>Asiakkaan viesti</h4>
+          <p style="font-size:13.5px;color:var(--ink2);line-height:1.65;margin:0">"Botti sanoi että maksan 15 € palautuksesta — teillä lukee Instagramissa ILMAISET PALAUTUKSET koko marraskuun! Tilaus #88421."</p>
+        </div>
+        <div class="panel-box">
+          <h4>Tietopankki — artikkeli jota botti siteerasi</h4>
+          <div class="ex5-ev-body" style="margin:0">PALAUTUKSET — viimeksi päivitetty 14.10.2025
+
+Kaikki palautukset: 15 € käsittelymaksu. Asiakas maksaa postimaksun.
+Poikkeus: B2B-tilaukset 50 € minimi.</div>
+        </div>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex5MissionContinue">Aloita tutkinta →</button>
+      </div>
+    </div>
+
+    <div class="ex5-phase" id="ex5PhaseEvidence">
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex-step-hdr"><span class="ex-step-num">Tutkinta</span><h3>Yhdistä todisteet</h3></div>
+        <p class="body-txt">Avaa jokainen lähde. Vasta sitten päätä, miksi tekoäly epäonnistui.</p>
+        <div class="ex5-evidence-tabs" id="ex5EvidenceTabs">
+          <button type="button" class="ex5-ev-tab" data-ev="kb">Tietopankki</button>
+          <button type="button" class="ex5-ev-tab" data-ev="complaint">Asiakasvalitus</button>
+          <button type="button" class="ex5-ev-tab" data-ev="email">Marketing-sähköposti</button>
+          <button type="button" class="ex5-ev-tab" data-ev="instagram">Instagram-postaus</button>
+          <button type="button" class="ex5-ev-tab" data-ev="crm">CRM-tiketit</button>
+        </div>
+        <div class="ex5-ev-panel show" id="ex5Ev-kb" data-ev-panel="kb">
+          <h4>Tietopankkiartikkeli (RAG-lähde)</h4>
+          <div class="ex5-ev-body">PALAUTUKSET — viimeksi päivitetty 14.10.2025
+
+Kaikki palautukset: 15 € käsittelymaksu. Asiakas maksaa postimaksun.
+Poikkeus: B2B-tilaukset 50 € minimi.</div>
+        </div>
+        <div class="ex5-ev-panel" id="ex5Ev-complaint" data-ev-panel="complaint">
+          <h4>Chat-loki · eskaloitu 08:41</h4>
+          <div class="ex5-ev-body">Asiakas: "Botti sanoi että maksan 15 € palautuksesta — teillä lukee Instagramissa ILMAISET PALAUTUKSET koko marraskuun! Tilaus #88421."
+Botti: "Palautuksista peritään 15 € käsittelymaksu asiakkaalta."
+Lähde: tietopankki /palautukset (päivitetty 14.10.2025)</div>
+        </div>
+        <div class="ex5-ev-panel" id="ex5Ev-email" data-ev-panel="email">
+          <div class="ex5-ev-meta">Sisäinen · marketing@scalenord.fi → kaikki · 1.11. klo 07:12</div>
+          <h4>Free Returns -kampanja live</h4>
+          <div class="ex5-ev-body">Hei,
+
+Julkaisimme tänään Instagramissa Free Returns -kampanjan (1.–30.11., kaikki B2C-tilaukset).
+Varmistakaa että FAQ ja chat-botti näyttävät oikean tiedon.
+
+— Marketing</div>
+        </div>
+        <div class="ex5-ev-panel" id="ex5Ev-instagram" data-ev-panel="instagram">
+          <h4>Instagram · @scalenord · 1.11.</h4>
+          <div class="ex5-ev-screenshot">🎁 ILMAISET PALAUTUKSET koko marraskuun!
+Free Returns 1.–30.11. kaikille kuluttaja-asiakkaille.
+#freereturns #scalenord</div>
+        </div>
+        <div class="ex5-ev-panel" id="ex5Ev-crm" data-ev-panel="crm">
+          <h4>CRM-yhteenveto · tänään</h4>
+          <div class="ex5-ev-body">Palautusmaksu-valitukset: 47 (eilen: 3, viikkokeskiarvo: 2)
+Yleisin bottivastaus: "15 € käsittelymaksu"
+Confidence keskiarvo: 0,94
+Eskaloituja: 12</div>
+        </div>
+        <label class="field-label" style="margin-top:14px">Miksi tekoäly antoi väärän vastauksen?</label>
+        <textarea class="ex-ta" id="ex5Root" rows="4" placeholder="Yhdistä todisteet: tietopankki vs. kampanja vs. …"></textarea>
+        <label class="field-label">Defect-luokka</label>
+        <select class="ex-ta" id="ex5Defect" style="min-height:auto;padding:10px 12px">
+          <option value="">— Valitse —</option>
+          <option value="stale_kb">Stale Knowledge Base Article</option>
+          <option value="missing_promo">Missing Promo Rule Sync</option>
+          <option value="wrong_source">Wrong Source Priority</option>
+          <option value="intent_misroute">Intent Misroute</option>
+        </select>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex5EvidenceContinue">Agentin tehtävä →</button>
+      </div>
+      <div class="ai-feedback" id="ex5EvidenceFb"></div>
+    </div>
+
+    <div class="ex5-phase" id="ex5PhaseAgent">
+      <div class="case-pin">
+        <div class="cp-label">📌 Vastaat tälle · tilaus #88421</div>
+        <div class="cp-turn cust"><span class="cp-who">Asiakas · ScaleNord</span><span class="cp-txt">"Botti sanoi että maksan 15 € palautuksesta — teillä lukee Instagramissa ILMAISET PALAUTUKSET koko marraskuun! Tilaus #88421."</span></div>
+      </div>
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex-step-hdr"><span class="ex-step-num">Agentti</span><h3>HEAT-vastaus tälle asiakkaalle</h3></div>
+        <p class="body-txt">Korjaat <strong>yhden</strong> asiakkaan tilanteen. Älä viittaa sisäisiin defect-luokkiin asiakkaalle.</p>
+        <textarea class="ex-ta" id="ex5Heat" rows="6" placeholder="[Hear] … [Empathise] … [Apologize] … [Take action] …"></textarea>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex5AgentContinue">Orchestratorin tehtävä →</button>
+      </div>
+      <div class="ai-feedback" id="ex5AgentFb"></div>
+    </div>
+
+    <div class="ex5-phase" id="ex5PhaseOrchestrator">
+      <div class="ex-step" style="margin-top:0;border:none;padding-top:0">
+        <div class="ex-step-hdr"><span class="ex-step-num">Orchestrator</span><h3>Artikkeli, jota tekoäly ei voi ymmärtää väärin</h3></div>
+        <p class="body-txt">Kirjoita strukturoitu tietopankkiartikkeli — ei markkinointitekstiä. Tämä menee suoraan AI-agentin koulutusdataan.</p>
+        <div class="ex5-struct-hint">Hyvä rakenne: Sääntö → Soveltuu → Ajalle → Poikkeukset → Palautusmaksu. Erottele normaali ja kampanja selkeästi.</div>
+        <textarea class="ex-ta" id="ex5KbNew" rows="10" placeholder="SÄÄNTÖ: Normaalit palautukset&#10;SOVELTUU: …&#10;PALAUTUSMAKSU: 15 €&#10;&#10;SÄÄNTÖ: Free Returns -kampanja&#10;SOVELTUU: B2C&#10;AJALLE: 1.–30.11.2025&#10;POIKKEUKSET: B2B ei mukana&#10;PALAUTUSMAKSU: 0 €"></textarea>
+        <label class="field-label" style="margin-top:16px">Ketkä saavat automaattisen ilmoituksen? (valitse vähintään kaksi)</label>
+        <div class="ex5-notify-grid" id="ex5NotifyGrid">
+          <label class="ex2-check-row"><input type="checkbox" value="marketing"> Marketing</label>
+          <label class="ex2-check-row"><input type="checkbox" value="kb"> Knowledge Manager</label>
+          <label class="ex2-check-row"><input type="checkbox" value="ai"> AI-tiimi</label>
+          <label class="ex2-check-row"><input type="checkbox" value="cs"> Asiakaspalvelu</label>
+          <label class="ex2-check-row"><input type="checkbox" value="it"> IT</label>
+        </div>
+        <label class="field-label" style="margin-top:14px">Mikä prosessimuutos estää toiston?</label>
+        <textarea class="ex-ta" id="ex5Process" rows="3" placeholder="Esim. kun marketing julkaisee kampanjan → automaattinen KB-tarkistuslista…"></textarea>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex5OrchestratorContinue">Yhteenveto →</button>
+      </div>
+      <div class="ai-feedback" id="ex5OrchestratorFb"></div>
+    </div>
+
+    <div class="ex5-phase" id="ex5PhaseLearn">
+      <div class="learn-block" style="margin-top:0">
+        <h3>Kaksi eri roolia — älä sekoita</h3>
+        <ul>
+          <li><strong style="color:var(--ink)">Agentti</strong> korjaa yhden asiakkaan tilanteen (HEAT-vastaus)</li>
+          <li><strong style="color:var(--ink)">AI Orchestrator</strong> korjaa järjestelmän: päivittää tietopankin, luokittelee defectin, käynnistää uudelleenkoulutuksen</li>
+        </ul>
+        <p class="body-txt" style="margin-top:10px;margin-bottom:0">Ilman juurisyuanalyysiä sama virhe toistuu satoja kertoja viikossa.</p>
+      </div>
+      <div class="ex-actions">
+        <button class="ex-btn primary" id="ex5Submit">Lähetä root cause -paketti arvioon →</button>
+      </div>
+      <div class="ai-feedback" id="ex5Ai"></div>
+    </div>
+
+    <p class="body-txt" style="margin-top:20px;font-size:13.5px"><strong>Aha!</strong> Yksi päivitetty artikkeli + dokumentoitu defect = satoja vähemmän eskalaatioita. Tämä on se työ, jota haastattelussa kannattaa kertoa.</p>
+  </div>
+</section>
+
+<div class="wrap"><div class="divider"></div></div>
+
+<!-- ============================================================
+     3 · EXERCISE — ESCALATION MATRIX
+     ============================================================ -->
+<section id="s-matriisi">
+  <div class="wrap">
+    <span class="kicker">Loppuarvio · Vuorosi hallinta</span>
+    <h2>Tehtävä: <em>eskalaatiomatriisi</em></h2>
+    <div class="ex-intro">
+      <h3>Kymmenen tikettiä kerralla — neljä eskalointia jäljellä</h3>
+      <p class="body-txt" style="margin-bottom:0">Vuorosi alkaa. Tiimi on ylikuormittunut: voit eskaloida korkeintaan <strong style="color:var(--ink)">neljä</strong> tikettiä ihmiselle. Loput tekoäly hoitaa. Valitse strategisesti — jokaisella päätöksellä on vaikutus.</p>
+      <div class="matrix-budget" id="matrixBudget">
+        <span>Eskaloinnit käytetty: <strong id="matrixEscUsed">0</strong> / 4</span>
+        <span id="matrixBudgetHint">Jäljellä: 4</span>
+      </div>
+      <div class="ex-progress-row">
+        <div class="ex-progress-track"><div class="ex-progress-fill" id="exProgressFill"></div></div>
+        <span class="ex-progress-label" id="exProgressLabel">0 / 10 päätetty</span>
+      </div>
+    </div>
+
+    <div class="ticket-list" id="ticketList"></div>
+
+    <div class="ex-submit">
+      <button id="exSubmitBtn" disabled>Päätä vuoro →</button>
+      <div class="ex-submit-note" id="exSubmitNote">Päätä kaikki 10 tikettiä (max. 4 eskalointia)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     4 · RESULTS
+     ============================================================ -->
+<section id="s-tulokset">
+  <div class="wrap" id="resultsSection">
+    <span class="kicker">Osa 9 · Tulokset</span>
+    <h2>Näin vuorosi vaikutti tiimiin ja riskeihin</h2>
+
+    <div class="beginner-finish" id="beginnerFinish">
+      <h3>Loistavaa — kolme HITL-taitoa harjoiteltu</h3>
+      <ul>
+        <li><strong>Auditointi:</strong> vertasit AI:n vastauksen politiikkaan ja korjasit asiakasviestin.</li>
+        <li><strong>Tilannetaju:</strong> tunnistit milloin ihminen ottaa ohjat poikkeustilanteessa.</li>
+        <li><strong>Triage:</strong> päätit mitkä kontaktit menevät ihmiselle ja mitkä tekoäly hoitaa.</li>
+      </ul>
+      <p class="body-txt" style="margin:14px 0 0;font-size:14px">Nämä kolme taitoa kattavat arjen ydin-HITL:n. Harjoitukset 4–5 ja eskalaatiomatriisi ovat lisähaasteita edistyneille.</p>
+      <div class="rerun-row" style="margin-top:16px">
+        <a href="/" class="ex-btn primary">← Takaisin työpöydälle</a>
+      </div>
+    </div>
+
+    <div class="ops-dashboard cols-5 hitl-advanced-only" id="matrixImpact">
+      <div class="ops-metric"><div class="n" id="impAi">0</div><div class="l">Tekoäly hoiti</div></div>
+      <div class="ops-metric"><div class="n" id="impHuman">0</div><div class="l">Ihmiselle</div></div>
+      <div class="ops-metric"><div class="n" id="impWait">—</div><div class="l">Arvioitu jonotusaika</div></div>
+      <div class="ops-metric"><div class="n" id="impRisk">—</div><div class="l">Juridinen riski</div></div>
+      <div class="ops-metric"><div class="n" id="impSat">—</div><div class="l">Asiakastyytyväisyys</div></div>
+    </div>
+
+    <div class="score-hero hitl-advanced-only">
+      <div class="score-num" id="scoreNum">0<span>/10</span></div>
+      <div class="score-msg" id="scoreMsg"></div>
+      <div class="score-breakdown">
+        <div class="bd-cell"><div class="n" id="bdCaught">0</div><div class="l">oikein eskaloitu ihmiselle</div></div>
+        <div class="bd-cell"><div class="n" id="bdMissed">0</div><div class="l">jäi vahingossa tekoälylle</div></div>
+        <div class="bd-cell"><div class="n" id="bdOver">0</div><div class="l">eskaloitu turhaan</div></div>
+        <div class="bd-cell"><div class="n" id="bdClean">0</div><div class="l">oikein autonominen</div></div>
+      </div>
+      <div class="rerun-row">
+        <button class="outline-btn" id="reviewBtn">Käy tiketit läpi alla ↓</button>
+        <button class="outline-btn" id="resetExerciseBtn">Aloita matriisi alusta</button>
+        <a href="/" class="outline-btn">← Takaisin työpöydälle</a>
+      </div>
+    </div>
+
+    <div class="takeaway hitl-advanced-only">
+      <h2 style="font-size:20px">Mitä tästä kannattaa muistaa</h2>
+      <ul>
+        <li>Rahasumma ei yksin ratkaise — julkinen kanava tai toistuva ongelma nostaa mainehaitan riskiä pienessäkin tapauksessa.</li>
+        <li>Korkea luottamusarvo ei riitä ohittamaan politiikkarajoitusta: GDPR-, lakiasia- ja mediapyynnöt eskaloidaan aina, riippumatta tekoälyn varmuudesta.</li>
+        <li>Eskalaatiomatriisi on elävä dokumentti — sitä päivitetään aina kun uusi tapaustyyppi paljastaa aukon säännöissä.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>Hyväksymisportin arkkitehti · AI-eskalaatiohallinnan harjoitus</footer>
+
+<script>
+(function(){
+
+/* ============================================================
+   RAIL PROGRESS + ACTIVE STEP
+   ============================================================ */
+var sections = ['s-teoria','s-portti','s-ex1','s-ex2','s-ex3','s-ex4','s-ex5','s-matriisi','s-tulokset'].map(function(id){return document.getElementById(id);});
+var railSteps = document.querySelectorAll('.rail-step');
+function onScroll(){
+  var doc = document.documentElement;
+  var pct = (doc.scrollTop) / (doc.scrollHeight - doc.clientHeight) * 100;
+  document.getElementById('railBar').style.width = Math.min(100, Math.max(0,pct)) + '%';
+  var current = sections[0].id;
+  sections.forEach(function(s){ if (s.getBoundingClientRect().top < 140) current = s.id; });
+  railSteps.forEach(function(a){ a.classList.toggle('on', a.getAttribute('data-tgt') === current); });
+}
+document.addEventListener('scroll', onScroll, {passive:true});
+onScroll();
+
+/* ============================================================
+   APPROVAL GATE DEMO
+   ============================================================ */
+var gateDraft = document.getElementById('gateDraft');
+var gateDraftText = document.getElementById('gateDraftText');
+var gateLog = document.getElementById('gateLog');
+var gateStatusPill = document.getElementById('gateStatusPill');
+var gateDot = document.getElementById('gateDot');
+var gateDecided = false;
+
+function logRow(text){
+  var t = new Date().toLocaleTimeString('fi-FI', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  var row = document.createElement('div');
+  row.className = 'gate-log-row';
+  row.innerHTML = '<span class="t">' + t + '</span><span>' + text + '</span>';
+  if (gateLog.firstChild && gateLog.firstChild.style) gateLog.innerHTML = '';
+  gateLog.prepend(row);
+}
+
+function lockGate(status, pillClass, dotColor){
+  gateDecided = true;
+  gateStatusPill.textContent = status;
+  gateStatusPill.className = 'gate-status ' + pillClass;
+  gateDot.style.background = dotColor;
+  gateDot.style.animation = 'none';
+  gateDraftText.disabled = true;
+  gateDraft.classList.add('locked');
+  document.getElementById('gateApprove').disabled = true;
+  document.getElementById('gateCorrect').disabled = true;
+  document.getElementById('gateReject').disabled = true;
+}
+
+document.getElementById('gateApprove').addEventListener('click', function(){
+  if (gateDecided) return;
+  logRow('Esimies hyväksyi luonnoksen sellaisenaan. Hyvitys 500 € käsitellään.');
+  lockGate('Hyväksytty', 'approved', 'var(--green)');
+});
+document.getElementById('gateCorrect').addEventListener('click', function(){
+  if (gateDecided) return;
+  gateDraftText.focus();
+  logRow('Esimies muokkaa luonnosta ennen hyväksyntää — kirjoita korjaus tekstikenttään, paina sitten uudelleen "Korjaa ja hyväksy".');
+  document.getElementById('gateCorrect').textContent = '✓ Vahvista korjattu versio';
+  document.getElementById('gateCorrect').onclick = function(){
+    if (gateDecided) return;
+    logRow('Esimies korjasi vastauksen sanamuotoa ja hyväksyi korjatun version.');
+    lockGate('Korjattu ja hyväksytty', 'approved', 'var(--green)');
+  };
+});
+document.getElementById('gateReject').addEventListener('click', function(){
+  if (gateDecided) return;
+  logRow('Esimies hylkäsi luonnoksen. Tapaus siirtyy kokonaan ihmisagentin hoidettavaksi ilman automaattista hyvitystä.');
+  lockGate('Hylätty', 'rejected', 'var(--red)');
+});
+document.getElementById('gateReset').addEventListener('click', function(){
+  gateDecided = false;
+  gateDraftText.disabled = false;
+  gateDraft.classList.remove('locked');
+  gateDraftText.value = 'Pahoittelemme aidosti kahta peräkkäistä vaurioitunutta toimitusta. Käsittelemme 500 € täyden hyvityksen alkuperäiselle maksutavalle 2–4 arkipäivän kuluessa. Emme lähetä tuotetta uudelleen, ellette erikseen pyydä.';
+  document.getElementById('gateApprove').disabled = false;
+  document.getElementById('gateCorrect').disabled = false;
+  document.getElementById('gateCorrect').textContent = '✎ Korjaa ja hyväksy';
+  document.getElementById('gateReject').disabled = false;
+  gateStatusPill.textContent = 'Odottaa hyväksyntää';
+  gateStatusPill.className = 'gate-status';
+  gateDot.style.background = 'var(--amber)';
+  gateDot.style.animation = 'pulse 1.8s infinite';
+  gateLog.innerHTML = '<div style="color:var(--ink3)">Odottaa esimiehen päätöstä — toimenpide ei ole vielä toteutunut asiakkaalle.</div>';
+});
+
+/* ============================================================
+   ESCALATION MATRIX EXERCISE — 10 tickets
+   ============================================================ */
+var TICKETS = [
+  { id:'T-101', channel:'Sähköposti', customer:'Liisa K.', tenure:'2 v.', quote:'Haluan päivittää toimitusosoitteeni, muutan ensi viikolla.',
+    confidence:0.97, sentiment:'neutraali', value:null, correct:'ai', triggers:[],
+    explain:'Rutiininomainen tietopäivitys, ei taloudellista riskiä eikä politiikkarajoitusta. Korkea luottamus riittää — tekoäly hoitaa itsenäisesti.' },
+  { id:'T-102', channel:'Chat', customer:'Antti M.', tenure:'1 v.', quote:'Tilaus saapui rikkinäisenä. Haluan 500 € hyvityksen.',
+    confidence:0.88, sentiment:'turhautunut', value:500, correct:'human', triggers:['policy'], risk:'high',
+    explain:'Summa (500 €) ylittää automaattisen hyvitysrajan (200 €). Politiikkarajoitus eskaloi tämän riippumatta tekoälyn varmuudesta.' },
+  { id:'T-103', channel:'Verkkolomake', customer:'Tuntematon (GDPR-pyyntö)', tenure:'—', quote:'Vaadin kaikkien henkilötietojeni poistamista rekisteristänne 30 päivän kuluessa.',
+    confidence:0.91, sentiment:'neutraali', value:null, correct:'human', triggers:['policy'], risk:'high',
+    explain:'Tietosuojapyynnöt (GDPR-poisto) vaativat aina vastuuhenkilön juridisen tarkistuksen ennen toteutusta, vaikka pyyntö itsessään on selkeä.' },
+  { id:'T-104', channel:'Puhelu', customer:'Markus V.', tenure:'3 v.', quote:'Jos tätä ei korjata tänään, vien asian kuluttajariitalautakuntaan ja someen.',
+    confidence:0.65, sentiment:'erittäin negatiivinen', value:45, correct:'human', triggers:['confidence','sentiment'], risk:'high',
+    explain:'Uhkaava sävy ja matala luottamusarvo yhdessä — mainehaitan riski on iso, vaikka rahasumma on pieni.' },
+  { id:'T-105', channel:'Chat', customer:'Reetta S.', tenure:'<1 v.', quote:'Unohdin salasanani, en pääse kirjautumaan.',
+    confidence:0.99, sentiment:'neutraali', value:null, correct:'ai', triggers:[],
+    explain:'Tekninen rutiinitoimenpide, ei riskiä. Ihanteellinen tapaus täydelle automaatiolle.' },
+  { id:'T-106', channel:'Chat', customer:'Sanna L.', tenure:'2 v.', quote:'Tuote ei vastannut kuvausta. Haluan 75 € hyvityksen heti.',
+    confidence:0.82, sentiment:'turhautunut', value:75, correct:'human', triggers:['policy','sentiment'], risk:'medium',
+    explain:'75 € on rajavyöhykkeellä — alle 75 € AI voi hoitaa jos confidence ≥ 0,85. 0,82 + turhautunut asiakas = usein ihminen. Strategisessa vuorossa voi jäädä AI:lle, jos eskalointikiintiö täynnä.' },
+  { id:'T-107', channel:'Some (julkinen)', customer:'@saraa_k', tenure:'2 v.', quote:'Tämä on kolmas kerta kun tilaukseni myöhästyy. Peruutan tilaukseni JULKISESTI.',
+    confidence:0.74, sentiment:'erittäin negatiivinen', value:30, correct:'human', triggers:['sentiment','policy'], risk:'high',
+    explain:'Pieni rahasumma, mutta julkinen kanava ja toistuva ongelma nostavat mainehaitan riskin korkeaksi. Julkiset kanavat eskaloidaan lähes aina.' },
+  { id:'T-108', channel:'Chat', customer:'Ville H.', tenure:'1 v.', quote:'Tilasin vahingossa kaksi kertaa saman tuotteen, peruuta toinen tilaus.',
+    confidence:0.96, sentiment:'neutraali', value:null, correct:'ai', triggers:[],
+    explain:'Selkeä, korjattavissa oleva virhe, ei taloudellista menetystä yritykselle. Tekoäly hoitaa itsenäisesti.' },
+  { id:'T-109', channel:'Sähköposti', customer:'Toimittaja, medium.fi', tenure:'—', quote:'Kirjoitan juttua yrityksenne asiakaspalveluongelmista. Voitteko kommentoida?',
+    confidence:0.40, sentiment:'neutraali (epävarma konteksti)', value:null, correct:'human', triggers:['policy'], risk:'high',
+    explain:'Mediapyynnöt eivät koskaan kuulu tekoälyn vastuulle — viestintä- ja lakiasiat eskaloidaan aina riippumatta luottamusarvosta.' },
+  { id:'T-110', channel:'Puhelu', customer:'Petra L.', tenure:'4 v.', quote:'Haluan vaihtaa tilaukseni suurempaan pakettiin.',
+    confidence:0.90, sentiment:'positiivinen', value:null, correct:'ai', triggers:[],
+    explain:'Positiivinen, yksinkertainen lisämyyntitilanne ilman riskiä. Tekoäly voi hoitaa koko vaihdon itsenäisesti.' }
+];
+
+var REASON_LABELS = {confidence:'Luottamuskynnys', sentiment:'Negatiivinen sentimentti', policy:'Politiikkarajoitus', none:'Ei erityistä syytä'};
+var MAX_ESCALATIONS = 4;
+var answers = {}; // id -> {decision:'ai'|'human', reasons:[...]}
+
+function countEscalations(){
+  return Object.keys(answers).filter(function(id){ return answers[id].decision === 'human'; }).length;
+}
+
+function updateMatrixBudget(){
+  var used = countEscalations();
+  var left = MAX_ESCALATIONS - used;
+  var usedEl = document.getElementById('matrixEscUsed');
+  var hintEl = document.getElementById('matrixBudgetHint');
+  var budgetEl = document.getElementById('matrixBudget');
+  if (usedEl) usedEl.textContent = used;
+  if (hintEl) hintEl.textContent = left >= 0 ? 'Jäljellä: ' + left : 'Ylitys: ' + Math.abs(left);
+  if (budgetEl) budgetEl.classList.toggle('warn', used > MAX_ESCALATIONS);
+}
+
+var listEl = document.getElementById('ticketList');
+TICKETS.forEach(function(tk){
+  answers[tk.id] = { decision:null, reasons:[] };
+  var card = document.createElement('div');
+  card.className = 'ticket-card';
+  card.id = 'card-' + tk.id;
+
+  var valueChip = tk.value ? '<span class="meta-chip warn">summa: ' + tk.value + ' €</span>' : '';
+  card.innerHTML =
+    '<div class="tc-top">' +
+      '<div><span class="tc-id">' + tk.id + '</span><span class="tc-channel">' + tk.channel + '</span></div>' +
+    '</div>' +
+    '<div class="tc-customer">Asiakas: <strong>' + tk.customer + '</strong> · Asiakkuus ' + tk.tenure + '</div>' +
+    '<div class="tc-quote">"' + tk.quote + '"</div>' +
+    '<div class="tc-meta">' +
+      '<span class="meta-chip">confidence: ' + tk.confidence.toFixed(2) + '</span>' +
+      '<span class="meta-chip">sentiment: ' + tk.sentiment + '</span>' +
+      valueChip +
+    '</div>' +
+    '<div class="tc-decide">' +
+      '<button class="dbtn" data-dec="ai">Tekoäly hoitaa itsenäisesti</button>' +
+      '<button class="dbtn" data-dec="human">Eskaloi ihmiselle</button>' +
+    '</div>' +
+    '<div class="tc-reason" id="reason-' + tk.id + '">' +
+      '<div class="tc-reason-label">Perustele (valitse yksi tai useampi)</div>' +
+      '<div class="reason-chips">' +
+        Object.keys(REASON_LABELS).map(function(k){ return '<button class="rchip" data-r="' + k + '">' + REASON_LABELS[k] + '</button>'; }).join('') +
+      '</div>' +
+    '</div>' +
+    '<div class="tc-result" id="result-' + tk.id + '"></div>';
+  listEl.appendChild(card);
+
+  card.querySelectorAll('.dbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var dec = btn.getAttribute('data-dec');
+      if (dec === 'human' && answers[tk.id].decision !== 'human' && countEscalations() >= MAX_ESCALATIONS) {
+        var note = document.getElementById('exSubmitNote');
+        if (note) {
+          note.textContent = 'Eskalointikiintiö täynnä (4/4). Peru jokin eskalointi tai jätä tämä tekoälylle.';
+          note.style.color = 'var(--red)';
+        }
+        return;
+      }
+      answers[tk.id].decision = dec;
+      card.querySelectorAll('.dbtn').forEach(function(b){ b.classList.remove('sel-ai','sel-human'); });
+      btn.classList.add(dec === 'ai' ? 'sel-ai' : 'sel-human');
+      card.classList.add('decided');
+      document.getElementById('reason-' + tk.id).classList.add('show');
+      updateProgress();
+      updateMatrixBudget();
+      var note2 = document.getElementById('exSubmitNote');
+      if (note2) note2.style.color = '';
+    });
+  });
+  card.querySelectorAll('.rchip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var r = chip.getAttribute('data-r');
+      var idx = answers[tk.id].reasons.indexOf(r);
+      if (idx >= 0){ answers[tk.id].reasons.splice(idx,1); chip.classList.remove('on'); }
+      else { answers[tk.id].reasons.push(r); chip.classList.add('on'); }
+    });
+  });
+});
+
+function updateProgress(){
+  var done = Object.keys(answers).filter(function(id){ return answers[id].decision; }).length;
+  document.getElementById('exProgressFill').style.width = (done/10*100) + '%';
+  document.getElementById('exProgressLabel').textContent = done + ' / 10 päätetty';
+  var esc = countEscalations();
+  document.getElementById('exSubmitBtn').disabled = done < 10 || esc > MAX_ESCALATIONS;
+  var note = document.getElementById('exSubmitNote');
+  if (note && done >= 10 && esc <= MAX_ESCALATIONS) {
+    note.textContent = 'Valmis — katso vuorosi vaikutus';
+    note.style.color = 'var(--green)';
+  }
+}
+
+function computeMatrixImpact(){
+  var aiCount = 0, humanCount = 0, missedHigh = 0, missedMed = 0, over = 0, caught = 0;
+  TICKETS.forEach(function(tk){
+    var a = answers[tk.id];
+    if (a.decision === 'ai') aiCount++;
+    else humanCount++;
+    if (tk.correct === 'human' && a.decision === 'human') caught++;
+    if (tk.correct === 'human' && a.decision === 'ai') {
+      if (tk.risk === 'high') missedHigh++;
+      else if (tk.risk === 'medium') missedMed++;
+    }
+    if (tk.correct === 'ai' && a.decision === 'human') over++;
+  });
+  var waitMin = 4 + humanCount * 3;
+  var riskLabel = missedHigh >= 2 ? 'Korkea' : missedHigh === 1 ? 'Keskitaso' : missedMed > 0 ? 'Keskitaso' : 'Matala';
+  var sat = 94 - missedHigh * 12 - missedMed * 5 - over * 4;
+  if (humanCount > MAX_ESCALATIONS) sat -= 10;
+  sat = Math.max(55, Math.min(98, sat));
+  return { aiCount: aiCount, humanCount: humanCount, waitMin: waitMin, riskLabel: riskLabel, sat: sat, missedHigh: missedHigh, missedMed: missedMed, over: over, caught: caught };
+}
+
+function applyMatrixResults(scroll){
+  var correctCount = 0, caught = 0, missed = 0, over = 0, clean = 0;
+  var impact = computeMatrixImpact();
+  TICKETS.forEach(function(tk){
+    var a = answers[tk.id];
+    var isCorrect = a.decision === tk.correct;
+    if (isCorrect) correctCount++;
+    if (tk.correct === 'human' && a.decision === 'human') caught++;
+    if (tk.correct === 'human' && a.decision === 'ai') missed++;
+    if (tk.correct === 'ai' && a.decision === 'human') over++;
+    if (tk.correct === 'ai' && a.decision === 'ai') clean++;
+
+    var resEl = document.getElementById('result-' + tk.id);
+    resEl.classList.add('show');
+    var yourReasons = a.reasons.length ? a.reasons.map(function(r){return REASON_LABELS[r];}).join(', ') : 'ei valittu';
+    resEl.innerHTML =
+      '<span class="tc-verdict ' + (isCorrect?'correct':'incorrect') + '">' + (isCorrect ? '✓ Oikein' : '✕ Asiantuntijalinja eri') + '</span>' +
+      '<div class="tc-result-body"><strong>Oikea päätös:</strong> ' + (tk.correct==='ai' ? 'Tekoäly hoitaa itsenäisesti' : 'Eskaloi ihmiselle') + '<br>' +
+      '<strong>Sinun perustelusi:</strong> ' + yourReasons + '<br>' +
+      tk.explain + '</div>';
+  });
+
+  document.getElementById('impAi').textContent = impact.aiCount;
+  document.getElementById('impHuman').textContent = impact.humanCount;
+  document.getElementById('impWait').textContent = impact.waitMin + ' min';
+  document.getElementById('impRisk').textContent = impact.riskLabel;
+  document.getElementById('impSat').textContent = impact.sat + '%';
+
+  document.getElementById('scoreNum').innerHTML = correctCount + '<span>/10</span>';
+  document.getElementById('bdCaught').textContent = caught;
+  document.getElementById('bdMissed').textContent = missed;
+  document.getElementById('bdOver').textContent = over;
+  document.getElementById('bdClean').textContent = clean;
+
+  var msg;
+  if (impact.missedHigh > 0) msg = 'Korkean riskin tapaus' + (impact.missedHigh>1?'ta':'') + ' jäi tekoälylle kiintiön takia tai virheellisesti — juridinen riski: ' + impact.riskLabel.toLowerCase() + '.';
+  else if (missed > 0) msg = 'Muutama tapaus olisi ansainnut ihmisen — arvioi, oliko eskalointikiintiö oikein käytetty.';
+  else if (over > 1) msg = 'Vuorosi on turvallinen mutta ylivarovainen — ' + over + ' tapausta eskaloitiin turhaan ja kuormitti jonoa.';
+  else msg = 'Vahva vuoro — tunnistit kriittiset tapaukset ja käytit eskalointikiintiön strategisesti.';
+  document.getElementById('scoreMsg').textContent = msg;
+
+  document.getElementById('resultsSection').style.display = 'block';
+  try { localStorage.setItem('hitl-matrix-result', JSON.stringify({score:correctCount, ts:Date.now()})); } catch(e){}
+  if (scroll) document.getElementById('s-tulokset').scrollIntoView({behavior:'smooth', block:'start'});
+  document.dispatchEvent(new CustomEvent('hitl:state-changed'));
+}
+
+document.getElementById('exSubmitBtn').addEventListener('click', function(){
+  applyMatrixResults(true);
+});
+
+document.getElementById('reviewBtn').addEventListener('click', function(){
+  document.getElementById('s-matriisi').scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+document.getElementById('resetExerciseBtn').addEventListener('click', function(){
+  TICKETS.forEach(function(tk){
+    answers[tk.id] = { decision:null, reasons:[] };
+    var card = document.getElementById('card-' + tk.id);
+    card.classList.remove('decided');
+    card.querySelectorAll('.dbtn').forEach(function(b){ b.classList.remove('sel-ai','sel-human'); });
+    card.querySelectorAll('.rchip').forEach(function(c){ c.classList.remove('on'); });
+    document.getElementById('reason-' + tk.id).classList.remove('show');
+    document.getElementById('result-' + tk.id).classList.remove('show');
+  });
+  updateProgress();
+  updateMatrixBudget();
+  document.getElementById('resultsSection').style.display = 'none';
+  document.getElementById('s-matriisi').scrollIntoView({behavior:'smooth', block:'start'});
+  document.dispatchEvent(new CustomEvent('hitl:state-changed'));
+});
+
+function restoreMatrixUi(saved){
+  if (!saved || !saved.answers) return;
+  TICKETS.forEach(function(tk){
+    var a = saved.answers[tk.id];
+    if (!a) return;
+    answers[tk.id] = { decision: a.decision || null, reasons: a.reasons ? a.reasons.slice() : [] };
+    var card = document.getElementById('card-' + tk.id);
+    if (!card || !a.decision) return;
+    card.querySelectorAll('.dbtn').forEach(function(b){
+      b.classList.remove('sel-ai','sel-human');
+      if (b.getAttribute('data-dec') === a.decision) b.classList.add(a.decision === 'ai' ? 'sel-ai' : 'sel-human');
+    });
+    card.classList.add('decided');
+    var reasonEl = document.getElementById('reason-' + tk.id);
+    if (reasonEl) reasonEl.classList.add('show');
+    card.querySelectorAll('.rchip').forEach(function(chip){
+      var r = chip.getAttribute('data-r');
+      chip.classList.toggle('on', a.reasons.indexOf(r) >= 0);
+    });
+  });
+  updateProgress();
+  updateMatrixBudget();
+  if (saved.resultsVisible) {
+    var done = Object.keys(answers).filter(function(id){ return answers[id].decision; }).length;
+    if (done >= TICKETS.length) applyMatrixResults(false);
+  }
+}
+
+window.__hitlInline = {
+  getGate: function(){
+    return {
+      decided: gateDecided,
+      draft: gateDraftText ? gateDraftText.value : '',
+      statusText: gateStatusPill ? gateStatusPill.textContent : '',
+      statusClass: gateStatusPill ? gateStatusPill.className : '',
+      dotColor: gateDot ? gateDot.style.background : '',
+      dotAnim: gateDot ? gateDot.style.animation : '',
+      logHtml: gateLog ? gateLog.innerHTML : '',
+      draftLocked: gateDraft ? gateDraft.classList.contains('locked') : false,
+      draftDisabled: gateDraftText ? gateDraftText.disabled : false
+    };
+  },
+  setGate: function(s){
+    if (!s) return;
+    if (s.draft != null && gateDraftText) gateDraftText.value = s.draft;
+    if (s.logHtml != null && gateLog) gateLog.innerHTML = s.logHtml;
+    gateDecided = !!s.decided;
+    if (gateStatusPill) {
+      gateStatusPill.textContent = s.statusText || 'Odottaa hyväksyntää';
+      gateStatusPill.className = s.statusClass || 'gate-status';
+    }
+    if (gateDot) {
+      if (s.dotColor) gateDot.style.background = s.dotColor;
+      gateDot.style.animation = s.dotAnim || (gateDecided ? 'none' : 'pulse 1.8s infinite');
+    }
+    if (gateDraftText) gateDraftText.disabled = !!s.draftDisabled;
+    if (gateDraft) gateDraft.classList.toggle('locked', !!s.draftLocked);
+    ['gateApprove','gateCorrect','gateReject'].forEach(function(id){
+      var btn = document.getElementById(id);
+      if (btn) btn.disabled = !!s.draftDisabled;
+    });
+  },
+  getMatrix: function(){
+    var out = { answers: {} };
+    TICKETS.forEach(function(tk){ out.answers[tk.id] = JSON.parse(JSON.stringify(answers[tk.id])); });
+    var rs = document.getElementById('resultsSection');
+    out.resultsVisible = rs && rs.style.display === 'block';
+    return out;
+  },
+  setMatrix: function(s){ restoreMatrixUi(s); }
+};
+
+['gateApprove','gateCorrect','gateReject','gateReset'].forEach(function(id){
+  var btn = document.getElementById(id);
+  if (btn) btn.addEventListener('click', function(){ setTimeout(function(){ document.dispatchEvent(new CustomEvent('hitl:state-changed')); }, 50); });
+});
+
+})();
+</script>
+<script>window.BONUS_MODULE_SLUG = 'hitl-architect';</script>
+<script src="/js/bonus-module-runtime.js?v=20260712p" defer></script>
+<script src="/js/bonus-module-nav.js" defer></script>
+<script src="/js/hitl-architect-persistence.js?v=20260716as1" defer></script>
+<script src="/js/hitl-progressive-preview.js?v=20260714hitl7" defer></script>
+<script src="/js/hitl-architect-exercises.js?v=20260714hitl-ex3plain" defer></script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+/* =========================================================
+   ACCESSIBILITY VISUAL UPGRADE
+   Drop this at the end of the existing <style> block in
+   moduuli-eu-ai-act-moduuli5.html — it only ADDS classes,
+   nothing here overrides or removes existing rules.
+   Uses the module's existing CSS variables (--navy, --amber,
+   --red, --green, --ink-soft, --line, etc.) so it inherits
+   the current palette automatically.
+   ========================================================= */
+
+/* ---------- 1. Sticky pinned question ----------
+   Use on any exercise where the core decision question
+   should stay visible while the student scrolls/reads.
+   Markup:
+   <div class="pinned-question">
+     <span class="pq-icon">🔍</span>
+     <p>Julkaisisitko tämän huomenna klo 08:00?</p>
+   </div>
+*/
+.pinned-question{
+  position:sticky;
+  top:8px;
+  z-index:5;
+  background:var(--navy-deep);
+  color:#fff;
+  border-radius:12px;
+  padding:12px 18px;
+  margin:0 0 18px;
+  box-shadow:0 10px 24px -12px rgba(15,90,82,.55);
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.pinned-question .pq-icon{font-size:1.15rem;flex-shrink:0;}
+.pinned-question p{margin:0;font-weight:600;font-size:.92rem;}
+
+/* ---------- 2. Step progress bar (generic, reusable) ----------
+   Use for ex3 and ex4, which currently have no visible progress
+   indicator across their 7-9 sequential steps (ex1 and ex4-chats
+   already have .review-progress / .review-dots — this is the
+   equivalent for step-based exercises, not per-item wizards).
+   Markup:
+   <div class="step-progress">
+     <span class="sp-label" id="ex3StepLabel">Vaihe 2 / 8</span>
+     <div class="sp-track"><div class="sp-fill" id="ex3StepFill"></div></div>
+   </div>
+*/
+.step-progress{margin:0 0 20px;}
+.sp-label{font-family:"Courier New",monospace;font-size:.8rem;color:var(--ink-soft);font-weight:700;display:block;margin-bottom:6px;}
+.sp-track{height:6px;border-radius:3px;background:var(--paper-dark,#ECEFF6);overflow:hidden;}
+.sp-fill{height:100%;background:var(--navy);transition:width .3s ease;}
+
+/* ---------- 3. Constraint chip ----------
+   Wrap hard numeric constraints (time limits, word limits,
+   customer counts) so they register visually instead of
+   hiding inside a sentence.
+   Usage: <span class="constraint-chip">⏱ 8 min</span>
+   Neutral color on purpose — never color-code these red/green,
+   since in Tapaus 5 that would reveal which numbers are wrong.
+*/
+.constraint-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  background:#fff;
+  border:1px solid var(--navy);
+  color:var(--navy-deep);
+  font-family:"Courier New",monospace;
+  font-size:.78rem;
+  font-weight:700;
+  padding:2px 8px;
+  border-radius:6px;
+  white-space:nowrap;
+}
+
+/* ---------- 4. Hint / instruction upgrade ----------
+   The existing .hint and .review-step .hint classes render
+   instructions as small, low-contrast text. This upgrades
+   visibility WITHOUT changing existing markup — just add the
+   class "hint-strong" alongside "hint", or replace it.
+   Usage: <p class="hint hint-strong">💡 Kirjoita vähintään kolme havaintoa.</p>
+*/
+.hint-strong{
+  font-size:.88rem !important;
+  color:var(--ink) !important;
+  background:var(--amber-lt, #FDF2E2);
+  border-left:3px solid var(--amber);
+  padding:8px 12px;
+  border-radius:0 8px 8px 0;
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  margin:0 0 10px !important;
+}
+.panel .hint.hint-strong::before,
+.hint.hint-strong::before{display:none;content:'';}
+
+/* ---------- 5. Format-flexibility note ----------
+   Pair with any free-text textarea to make clear that bullet
+   points are an accepted alternative to full sentences.
+   Usage: <p class="format-note">Täydet lauseet tai lyhyet ranskalaiset viivat käyvät molemmat.</p>
+*/
+.format-note{
+  font-size:.78rem;
+  color:var(--ink-soft);
+  margin:6px 0 0;
+  font-style:italic;
+}
+
+/* ---------- 6. Vendor claim vs. reality distinction ----------
+   Extends .bot-brief (Tapaus 1) so "Toimittajan lupaus" and
+   "Asiakastilanne" read as visually distinct block types
+   instead of two stacked <h4>/<p> pairs.
+*/
+.bot-brief .claim-block{
+  background:var(--amber-lt,#FDF2E2);
+  border:1px solid rgba(233,162,59,.4);
+  border-radius:10px;
+  padding:12px 14px;
+  margin:8px 0 12px;
+}
+.bot-brief .claim-block .block-tag{
+  font-family:"Courier New",monospace;
+  font-size:.68rem;
+  text-transform:uppercase;
+  color:var(--amber-deep);
+  margin-bottom:4px;
+  display:flex;align-items:center;gap:5px;
+}
+.bot-brief .claim-block p{font-style:italic;margin:0;color:var(--ink);}
+
+.bot-brief .situation-block{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px 14px;
+  margin:0 0 12px;
+}
+.bot-brief .situation-block .block-tag{
+  font-family:"Courier New",monospace;
+  font-size:.68rem;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin-bottom:4px;
+  display:flex;align-items:center;gap:5px;
+}
+.bot-brief .situation-block p{margin:0;color:var(--ink);}
+.bot-brief .policy-list{margin:6px 0 0 18px;padding:0;}
+.bot-brief .policy-list li{font-size:0.9rem;line-height:1.55;color:var(--ink);margin-bottom:4px;}
+
+/* ---------- 7. Chat bubble speaker label ----------
+   Extends .review-chat .bubble (already styled) with a small
+   speaker tag above each bubble, so who's-speaking is visible
+   without re-reading names in the avatar row every time.
+   Usage: <span class="bubble-speaker">Asiakas</span> before the bubble text.
+*/
+.bubble-speaker{
+  display:block;
+  font-family:"Courier New",monospace;
+  font-size:.65rem;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin-bottom:3px;
+  letter-spacing:.04em;
+}
+
+/* ---------- 8. Sticky reference panel (Tapaus 3 rewrite step) ----------
+   Optional upgrade for #ex3RewriteRefs so the original material
+   stays visible while writing instead of requiring scroll-back.
+   Only apply on wide viewports; falls back to normal flow on mobile.
+*/
+@media (min-width: 900px){
+  .ex3-ref-panel.sticky-ref,
+  .ex3-ref-pin.sticky-ref{
+    position:sticky;
+    top:12px;
+    max-height:70vh;
+    overflow-y:auto;
+  }
+}
