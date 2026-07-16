@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kuplabotti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c1220;--panel:#111827;--line:#1e293b;--ink:#e2e8f0;--ink2:#94a3b8;--teal:#2ba69a;--teal2:rgba(43,166,154,.15)}
+*{box-sizing:border-box}
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.shell{width:100%;max-width:420px;height:min(92vh,560px);background:var(--panel);border:1px solid var(--line);border-radius:20px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.top{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.av{width:40px;height:40px;border-radius:12px;background:var(--teal2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.meta h1{margin:0;font-size:15px;font-weight:700}
+.meta p{margin:2px 0 0;font-size:11px;color:var(--ink2)}
+.body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:88%;padding:10px 12px;border-radius:12px;font-size:14px;line-height:1.55;white-space:pre-wrap}
+.msg.bot{background:rgba(255,255,255,.06);border-bottom-left-radius:4px;align-self:flex-start}
+.msg.user{background:var(--teal);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 8px}
+.chip{font-size:11px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;font-family:inherit}
+.chip:hover{border-color:var(--teal);color:var(--ink)}
+.foot{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line)}
+.foot input{flex:1;background:#0a0f1c;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);font:inherit;font-size:14px}
+.foot input:focus{outline:none;border-color:var(--teal)}
+.foot button{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
+.foot button:disabled{opacity:.45;cursor:not-allowed}
+.err{padding:24px;text-align:center;color:#f0a28e;font-size:14px}
+.badge{font-size:10px;color:var(--ink2);text-align:center;padding:6px}
+</style>
+</head>
+<body>
+<div class="shell" id="shell" hidden>
+  <div class="top">
+    <div class="av" id="av">🤖</div>
+    <div class="meta"><h1 id="name">Kuplabotti</h1><p id="sub">Tekoälybotti · AI Polku</p></div>
+  </div>
+  <div class="body" id="body"></div>
+  <div class="chips" id="chips"></div>
+  <div class="foot">
+    <input type="text" id="input" placeholder="Kirjoita viesti…" autocomplete="off">
+    <button type="button" id="send">Lähetä</button>
+  </div>
+  <div class="badge">Rakennettu AI Polku -kurssilla</div>
+</div>
+<div class="err" id="err">Ladataan…</div>
+<script>
+(function(){
+  var slug=(location.pathname.match(/\/bot\/([^/?#]+)/)||[])[1]||'';
+  var body=document.getElementById('body');
+  var input=document.getElementById('input');
+  var send=document.getElementById('send');
+  var history=[];
+  var sending=false;
+  var config=null;
+
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function add(role,text){
+    var d=document.createElement('div');
+    d.className='msg '+role;
+    d.textContent=text;
+    body.appendChild(d);
+    body.scrollTop=body.scrollHeight;
+  }
+
+  async function chat(text){
+    if(sending||!text.trim()||!config) return;
+    sending=true; send.disabled=true;
+    add('user',text);
+    history.push({role:'user',content:text});
+    try{
+      var r=await fetch('/api/bubble-bot/'+encodeURIComponent(slug)+'/chat',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({messages:history})
+      });
+      var d=await r.json();
+      if(!r.ok||!d.text) throw new Error('fail');
+      add('bot',d.text);
+      history.push({role:'assistant',content:d.text});
+    }catch(e){
+      add('bot','(Botti ei vastannut juuri nyt — kokeile hetken päästä uudelleen.)');
+    }
+    sending=false; send.disabled=false; input.focus();
+  }
+
+  send.addEventListener('click',function(){ var v=input.value; input.value=''; chat(v); });
+  input.addEventListener('keydown',function(e){ if(e.key==='Enter'){ var v=input.value; input.value=''; chat(v); }});
+
+  fetch('/api/bubble-bot/'+encodeURIComponent(slug))
+    .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+    .then(function(o){
+      if(!o.ok){ document.getElementById('err').textContent='Bottia ei löydy.'; return; }
+      config=o.d;
+      document.getElementById('err').hidden=true;
+      document.getElementById('shell').hidden=false;
+      document.getElementById('name').textContent=config.botName||'Kuplabotti';
+      document.title=config.botName||'Kuplabotti';
+      if(config.imageUrl){
+        document.getElementById('av').innerHTML='<img src="'+esc(config.imageUrl)+'" alt="">';
+      }
+      add('bot', config.welcome||'Hei! Miten voin auttaa?');
+      history.push({role:'assistant',content:config.welcome||''});
+      var chips=document.getElementById('chips');
+      (config.suggestedQuestions||[]).forEach(function(q){
+        var b=document.createElement('button');
+        b.type='button'; b.className='chip'; b.textContent=q;
+        b.addEventListener('click',function(){ chat(q); });
+        chips.appendChild(b);
+      });
+      input.focus();
+    })
+    .catch(function(){
+      document.getElementById('err').textContent='Bottia ei voitu ladata.';
+    });
+})();
+</script>
+</body>
+</html>

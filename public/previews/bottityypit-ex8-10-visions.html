@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bottityypit Ex 8–10 — 3 visiota</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c1220;--panel:#111827;--line:#1e293b;--ink:#e2e8f0;--ink2:#94a3b8;--ink3:#64748b;
+  --teal:#2ba69a;--teal2:rgba(43,166,154,.15);--blue:#599ce7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding:24px 20px 48px}
+.wrap{max-width:1100px;margin:0 auto}
+h1{font-size:26px;font-weight:700;margin-bottom:8px}
+.lead{color:var(--ink2);font-size:15px;line-height:1.55;max-width:720px;margin-bottom:24px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.tab{font-family:inherit;font-size:13px;font-weight:600;padding:10px 16px;border-radius:10px;border:1.5px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer}
+.tab:hover{border-color:var(--teal);color:var(--ink)}
+.tab.on{border-color:var(--teal);background:var(--teal2);color:var(--ink)}
+.panel{display:none}
+.panel.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:20px}
+.card-h{font-size:18px;font-weight:700;margin-bottom:4px}
+.card-sub{color:var(--ink2);font-size:14px;margin-bottom:18px}
+.mock{border:1px solid var(--line);border-radius:12px;background:#0a0f1c;overflow:hidden;margin-bottom:18px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:720px){.steps{grid-template-columns:1fr}}
+.step{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.step-k{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);margin-bottom:6px}
+.step-t{font-size:12.5px;color:var(--ink2);line-height:1.45}
+.tags{display:flex;gap:8px;flex-wrap:wrap}
+.tag{font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--ink3)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+@media(max-width:640px){.compare{grid-template-columns:1fr}}
+.compare h3{font-size:13px;color:var(--ink2);margin-bottom:8px}
+.compare ul{list-style:none;font-size:12.5px;color:var(--ink3);line-height:1.6}
+.compare ul li::before{content:'— ';color:var(--ink3)}
+.compare .good ul li::before{content:'+ ';color:var(--teal)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+@media(max-width:800px){.grid3{grid-template-columns:1fr}}
+.mini{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.mini h4{font-size:14px;margin-bottom:6px}
+.mini p{font-size:12px;color:var(--ink2);line-height:1.4}
+.mini button{margin-top:10px;font-family:inherit;font-size:11px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer}
+.mini button:hover{border-color:var(--teal);color:var(--ink)}
+.open-hint{margin-top:20px;padding:14px 16px;border:1px dashed var(--line);border-radius:10px;font-size:13px;color:var(--ink2)}
+.open-hint code{font-family:'DM Mono',monospace;font-size:12px;color:var(--teal)}
+/* Studio mock */
+.st-top{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.03)}
+.st-av{width:28px;height:28px;border-radius:8px;background:var(--teal2)}
+.st-body{display:grid;grid-template-columns:130px 1fr 120px;min-height:220px}
+@media(max-width:600px){.st-body{grid-template-columns:1fr}}
+.st-side{padding:10px;border-right:1px solid var(--line);font-size:10px;color:var(--ink3)}
+.st-side:last-child{border-right:none;border-top:1px solid var(--line)}
+@media(min-width:601px){.st-side:last-child{border-top:none;border-left:1px solid var(--line)}}
+.st-side h5{font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);margin-bottom:8px}
+.kb{margin:4px 0;padding:6px 8px;background:rgba(255,255,255,.05);border-radius:6px;font-size:9px;color:var(--ink2)}
+.st-mid{padding:14px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.bubble{width:90%;max-width:220px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+.bubble p{font-size:11px;color:var(--ink2);margin-bottom:10px;line-height:1.4}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:8px;padding:3px 7px;border:1px solid var(--line);border-radius:99px;color:var(--ink3)}
+.chan{display:flex;gap:6px}
+.chan span{font-size:8px;padding:3px 8px;border-radius:4px;border:1px solid var(--line);color:var(--ink3)}
+.chan span.on{background:rgba(255,255,255,.08);border-color:var(--teal);color:var(--ink)}
+/* Launch mock */
+.la-grid{display:grid;grid-template-columns:1fr 130px;gap:14px;padding:14px}
+@media(max-width:560px){.la-grid{grid-template-columns:1fr}}
+.la-box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.la-box h5{font-size:12px;margin-bottom:10px}
+.qr-row{display:flex;gap:12px;align-items:center}
+.qr{width:52px;height:52px;background:#fff;border-radius:6px;padding:4px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.stats b{display:block;font-size:18px;color:var(--ink)}
+.stats span{font-size:9px;color:var(--ink3)}
+.phone{border:2px solid var(--line);border-radius:20px;padding:8px;background:#0a0f1c}
+.phone-in{height:200px;border-radius:14px;background:rgba(255,255,255,.03);padding:10px;display:flex;flex-direction:column}
+.phone-in .msg{font-size:9px;background:rgba(255,255,255,.06);padding:8px;border-radius:8px;margin-top:auto;color:var(--ink2)}
+/* Expert mock */
+.ex-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px}
+@media(max-width:560px){.ex-grid{grid-template-columns:1fr}}
+.ex-box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:10px;color:var(--ink2);line-height:1.5}
+.ex-box h5{font-size:11px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.tool-row{display:flex;padding:6px 10px;border-top:1px solid var(--line);font-size:9px}
+.tool-row span:first-child{width:56px;font-weight:600;color:var(--ink)}
+.tool-row span:nth-child(2){flex:1;color:var(--ink3)}
+.tool-row span:last-child{color:var(--ink3)}
+.vs{grid-column:1/-1;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.vs-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:11px;font-weight:600}
+.vs-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:9px;color:var(--ink3)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bottityypit · Ex 8–10 — kolme eri visiota</h1>
+  <p class="lead">Aikuiset ovat käyneet läpi 7 harjoitusta. Nämä kolme korvaavat nykyisen Ex 8–10 -ketjun. Jokainen näyttää erilaiselta ja tekee eri asian.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab on" data-tab="a" type="button">A — Bot Studio</button>
+    <button class="tab" data-tab="b" type="button">B — Launch Day</button>
+    <button class="tab" data-tab="c" type="button">C — Asiantuntijakartta</button>
+  </div>
+
+  <div class="panel on" id="panel-a">
+    <div class="card">
+      <div class="card-h">Visio A — Bot Studio</div>
+      <div class="card-sub">Rakentaa kuin oikeassa SaaS-työkalussa (Intercom / Tidio / Chatbase)</div>
+      <div class="mock">
+        <div class="st-top">
+          <div class="st-av"></div>
+          <div><div style="font-size:12px;font-weight:600">Minun työnhakubotti</div><div style="font-size:9px;color:var(--ink3)">Bot Studio · AI Polku</div></div>
+          <span style="margin-left:auto;font-size:9px;padding:3px 8px;border-radius:99px;background:var(--teal2);color:var(--teal)">Live</span>
+        </div>
+        <div class="st-body">
+          <div class="st-side">
+            <h5>Tietopankki</h5>
+            <div class="kb">CV-yhteenveto</div>
+            <div class="kb">Taidot</div>
+            <div class="kb">Saatavuus</div>
+            <div style="margin-top:8px;font-size:9px;color:var(--teal)">+ Lisää tieto</div>
+          </div>
+          <div class="st-mid">
+            <span style="font-size:9px;color:var(--ink3)">Esikatselu — verkkosivu-kupla</span>
+            <div class="bubble">
+              <p>Hei! Olen tekoälyavustaja — kysy työkokemuksestani.</p>
+              <div class="chips"><span class="chip">Kokemus?</span><span class="chip">Koulutus?</span><span class="chip">Yhteystiedot</span></div>
+              <div style="margin-top:10px;height:22px;border:1px solid var(--line);border-radius:6px;font-size:8px;padding:4px 6px;color:var(--ink3)">Kirjoita viesti…</div>
+            </div>
+            <div class="chan"><span class="on">Sivu</span><span>WhatsApp</span><span>Sähköposti</span></div>
+          </div>
+          <div class="st-side">
+            <h5>Käyttäytyminen</h5>
+            <div style="font-size:9px;line-height:1.7;color:var(--ink3)">Tyyppi: Generatiivinen<br>Sävy: Ammattimainen<br>Rajat: Ei lupaa töitä<br>Ihmiselle: Kun pyytää</div>
+          </div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-k">Ex 8</div><div class="step-t">Kanava + konteksti (työ/arki) — nopea valinta</div></div>
+        <div class="step"><div class="step-k">Ex 9</div><div class="step-t">Koko näytön studio: tietopankki, ulkoasu, live-kupla, kanavat</div></div>
+        <div class="step"><div class="step-k">Ex 10</div><div class="step-t">Julkaise + QR + 30 sek haastattelupitch</div></div>
+      </div>
+      <div class="tags"><span class="tag">Tunne: Intercom / Tidio</span><span class="tag">Rakennetaan AI Polkuun — /bot/slug</span></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-b">
+    <div class="card">
+      <div class="card-h">Visio B — Launch Day</div>
+      <div class="card-sub">Julkaisee oikean botin ja testaa puhelimella — startup-lanseeraus, ei tentti</div>
+      <div class="mock">
+        <div class="la-grid">
+          <div>
+            <div class="la-box">
+              <h5>Bottisi on julkaistu</h5>
+              <div class="qr-row">
+                <div class="qr"><svg viewBox="0 0 40 40" width="44" height="44"><rect fill="#111" width="40" height="40"/><rect fill="#333" x="2" y="2" width="14" height="14"/><rect fill="#333" x="18" y="2" width="5" height="5"/><rect fill="#2ba69a" x="26" y="2" width="5" height="5"/></svg></div>
+                <div><div style="font-size:10px;color:var(--ink3)">aipolku.fi/bot/maria-cv</div><div style="font-size:9px;margin-top:4px;color:var(--teal)">Jaa QR kaverille</div></div>
+              </div>
+            </div>
+            <div class="la-box">
+              <h5 style="font-size:10px;color:var(--ink3);font-weight:400;margin-bottom:8px">Ensimmäiset 24 h — analytics</h5>
+              <div class="stats"><div><b>7</b><span>Vierailut</span></div><div><b>12</b><span>Kysymykset</span></div><div><b>1</b><span>Handoff</span></div></div>
+            </div>
+          </div>
+          <div class="phone">
+            <div class="phone-in">
+              <div style="font-size:8px;color:var(--ink3);text-align:center">Puhelin</div>
+              <div class="msg">Hei Maria! Mitä osaat?</div>
+              <div style="margin-top:8px;height:20px;border:1px solid var(--line);border-radius:8px;font-size:7px;padding:4px 6px;color:var(--ink3)">Mystery shopper testaa…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-k">Ex 8</div><div class="step-t">Valitse käyttötapaus: portfolio, harrastus, asiakaspalvelu</div></div>
+        <div class="step"><div class="step-k">Ex 9</div><div class="step-t">Nopea wizard: nimi, tervehdys, 5 FAQ, avatar — esikatselu puhelimessa</div></div>
+        <div class="step"><div class="step-k">Ex 10</div><div class="step-t">QR → mystery shopper → feikki analytics → pitch työnantajalle</div></div>
+      </div>
+      <div class="tags"><span class="tag">Tunne: Startup-lanseeraus</span><span class="tag">Julkaisu alustalla + ilmaiset työkalut</span></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-c">
+    <div class="card">
+      <div class="card-h">Visio C — Asiantuntijakartta</div>
+      <div class="card-sub">Vertaa oikeaa maailmaa ja omaa bottia — konsultti joka osaa valita työkalun</div>
+      <div class="mock">
+        <div class="ex-grid">
+          <div class="ex-box">
+            <h5>Sinun bottisi</h5>
+            Tyyppi: Generatiivinen<br>Kanava: Portfolio-kupla<br>Linkki: /bot/maria-cv<br><br>
+            <em style="color:var(--ink3)">"Rakensin FAQ-botin CV:heni — tiedän milloin siirryn Chatbaseen."</em>
+          </div>
+          <div class="ex-box" style="padding:0;overflow:hidden">
+            <div style="padding:8px 10px;background:rgba(255,255,255,.03);font-size:10px;font-weight:600">Tuotantotyökalut (0 € aloitus)</div>
+            <div class="tool-row"><span>Chatbase</span><span>FAQ-kupla</span><span>Ei integraatioita</span></div>
+            <div class="tool-row"><span>ManyChat</span><span>WhatsApp</span><span>Meta Business</span></div>
+            <div class="tool-row"><span>Make.com</span><span>Agentti</span><span>Webhook</span></div>
+            <div class="tool-row"><span>Vapi</span><span>Ääni</span><span>Minuuttimaksu</span></div>
+          </div>
+          <div class="vs">
+            <div class="vs-h"><span>vs. Ex 6 — NordSound</span><span style="font-size:9px;padding:3px 8px;border:1px solid var(--line);border-radius:99px">Kilpailija tutkittu</span></div>
+            <div class="vs-cols">
+              <div>Heidän: generatiivinen FAQ, ei integraatioita, pienehkö budjetti</div>
+              <div style="color:var(--ink2)">Sinun: parempi rajaus + tekoälymaininta + portfolio-linkki</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-k">Ex 8</div><div class="step-t">Tuo takaa Ex 6 -sivu jonka tutki — valitse kilpailija</div></div>
+        <div class="step"><div class="step-k">Ex 9</div><div class="step-t">Rakenna parempi versio samalle käyttötapaukselle (kevyt studio)</div></div>
+        <div class="step"><div class="step-k">Ex 10</div><div class="step-t">Työkalutaulukko + portfolio-kortti haastatteluun</div></div>
+      </div>
+      <div class="tags"><span class="tag">Tunne: Konsultti</span><span class="tag">Artifact alustalla + ulkoiset työkalut</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h" style="font-size:15px">Mitä nykyisestä poistuu</div>
+    <div class="compare">
+      <div><h3>Nykyinen (ei toimi)</h3><ul><li>Ex 9 = sama prompt-kirjoitus kuin Ex 5</li><li>Ex 10 = red team + checklist</li><li>Moduulin tumma UI — ei näytä oikealta elämältä</li></ul></div>
+      <div class="good"><h3>Kaikissa visioissa yhteistä</h3><ul><li>Oma konteksti — ei Kaiku</li><li>Julkaistava linkki alustalla</li><li>Claude arvioi kerran per vaihe</li><li>Opiskelija osaa työkalut, ei vain promptit</li></ul></div>
+    </div>
+  </div>
+
+  <div class="grid3">
+    <div class="mini"><h4>A — Bot Studio</h4><p>Iso builder, realistinen kupla, kanavat.</p><button type="button" data-goto="a">Näytä</button></div>
+    <div class="mini"><h4>B — Launch Day</h4><p>QR, puhelin, analytics, pitch.</p><button type="button" data-goto="b">Näytä</button></div>
+    <div class="mini"><h4>C — Asiantuntijakartta</h4><p>Kilpailija vs sinä + työkalut.</p><button type="button" data-goto="c">Näytä</button></div>
+  </div>
+
+  <p class="open-hint">Avaa tämä sivu selaimessa: <code id="url"></code></p>
+</div>
+<script>
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+    t.classList.add('on');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('on');
+  });
+});
+document.querySelectorAll('[data-goto]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var id=b.dataset.goto;
+    document.querySelector('.tab[data-tab="'+id+'"]').click();
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+document.getElementById('url').textContent=location.href;
+</script>
+</body>
+</html>

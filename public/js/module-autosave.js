@@ -1,5 +1,8 @@
 (function () {
   if (window.__globalModuleAutosaveInitialized) return;
+  // Modules with their own persistence (e.g. haastattelu) opt out so the
+  // generic field scraper cannot race and overwrite richer module-work state.
+  if (window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__) return;
   window.__globalModuleAutosaveInitialized = true;
 
   function detectModuleId() {

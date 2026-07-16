@@ -28,6 +28,30 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .tn-link{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);text-decoration:none;transition:color .2s}
 .tn-link:hover{color:var(--coral)}
 .tn-title{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.tn-right{display:flex;align-items:center;gap:10px}
+@media(max-width:640px){.tn-right .tn-link{display:none}}
+.ha-menu-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink2);cursor:pointer;transition:border-color .16s,background .16s,color .16s}
+.ha-menu-btn:hover{border-color:rgba(200,92,60,.35);color:var(--coral);background:var(--coral-lt)}
+.ha-menu-btn[aria-expanded="true"]{border-color:var(--coral);color:var(--coral);background:var(--coral-lt)}
+.ha-menu-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.ha-menu-backdrop{position:fixed;inset:0;z-index:960;background:rgba(24,24,27,.35);opacity:0;pointer-events:none;transition:opacity .2s}
+.ha-menu-backdrop.open{opacity:1;pointer-events:auto}
+.ha-menu-panel{position:fixed;top:0;right:0;z-index:970;width:min(320px,92vw);height:100%;background:var(--paper);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column}
+.ha-menu-panel.open{transform:translateX(0)}
+.ha-menu-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.ha-menu-head h2{margin:0;font-size:14px;font-weight:600;color:var(--ink)}
+.ha-menu-close{width:36px;height:36px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--ink2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.ha-menu-close svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.ha-menu-hint{margin:0;padding:10px 18px 0;font-size:12px;color:var(--ink3);line-height:1.45}
+.ha-menu-list{list-style:none;margin:0;padding:10px 12px 24px;overflow-y:auto;flex:1}
+.ha-menu-list li{margin:0}
+.ha-menu-link{width:100%;display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--ink2);font-family:inherit;font-size:13px;line-height:1.35;text-align:left;cursor:pointer;transition:background .14s,border-color .14s,color .14s}
+.ha-menu-link:hover{background:var(--soft);color:var(--ink)}
+.ha-menu-link.on{background:var(--coral-lt);border-color:rgba(200,92,60,.28);color:var(--ink)}
+.ha-menu-num{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--ink3);min-width:28px;padding-top:2px;flex-shrink:0}
+.ha-menu-link.on .ha-menu-num{color:var(--coral)}
+.ha-menu-label{font-weight:600}
+.ha-menu-sub{display:block;font-size:11.5px;font-weight:400;color:var(--ink3);margin-top:2px}
 
 /* ── PROGRESS ── */
 .prog-track{position:fixed;top:50px;left:0;right:0;height:2px;background:rgba(200,92,60,.12);z-index:899}
@@ -482,6 +506,8 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
 .mock-next-btn{padding:13px 28px;border-radius:100px;border:none;cursor:pointer;background:var(--coral);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:600;transition:all .2s}
 .mock-next-btn:hover{filter:brightness(1.1)}
 .mock-next-btn:disabled{opacity:.35;cursor:default}
+.mock-choice-row{display:none;width:100%;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px}
+.mock-choice-row.show{display:flex}
 .ripple-indicator{width:48px;height:48px;border-radius:50%;background:rgba(200,92,60,.15);border:2px solid var(--coral);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .ripple-indicator.active{animation:pulse-rec 1s infinite}
 </style>
@@ -491,8 +517,24 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
 <div class="top-nav">
   <a href="/" class="tn-link">← Kurssille</a>
   <span class="tn-title" id="navTitle">Haastattelu</span>
-  <a href="/" class="tn-link">Etusivu →</a>
+  <div class="tn-right">
+    <a href="/" class="tn-link">Etusivu →</a>
+    <button type="button" class="ha-menu-btn" id="haMenuBtn" aria-expanded="false" aria-controls="haMenuPanel" aria-label="Avaa harjoitusvalikko">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
+  </div>
 </div>
+<div class="ha-menu-backdrop" id="haMenuBackdrop" hidden></div>
+<aside class="ha-menu-panel" id="haMenuPanel" aria-label="Siirry harjoitukseen" hidden>
+  <div class="ha-menu-head">
+    <h2>Siirry harjoitukseen</h2>
+    <button type="button" class="ha-menu-close" id="haMenuClose" aria-label="Sulje valikko">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <p class="ha-menu-hint">Vapaa selaus — voit hypätä mihin tahansa harjoitukseen ilman lukkoja.</p>
+  <ul class="ha-menu-list" id="haMenuList"></ul>
+</aside>
 <div class="prog-track"><div class="prog-fill" id="prog"></div></div>
 
 <div class="step-bar">
@@ -1138,6 +1180,10 @@ textarea::placeholder,input[type=text]::placeholder{color:var(--ink3)}
       <button class="voice-btn voice-btn-rec" id="mockRecBtn" onclick="mockStart()">● Aloita haastattelu</button>
       <button class="voice-btn voice-btn-stop" id="mockStopBtn" onclick="mockStop()" style="display:none">■ Valmis</button>
       <span class="voice-timer" id="mockTimer">0:00</span>
+      <div class="mock-choice-row" id="mockChoiceRow">
+        <button type="button" class="voice-btn voice-btn-retry" id="mockRetryBtn" onclick="mockRetryCurrent()">↺ Yritä tätä uudelleen</button>
+        <button type="button" class="mock-next-btn" id="mockNextQBtn" onclick="mockAdvanceNext()">Seuraava kysymys →</button>
+      </div>
     </div>
     <div style="padding:0 28px 16px">
       <div class="voice-status" id="mockStatus">Paina "Aloita haastattelu" — rekrytoija pyytää ensin esittäytymään</div>
@@ -1620,22 +1666,29 @@ Käytä tuoreita lähteitä: uutiset, LinkedIn, Kauppalehti, Google News.</div>
 </div>
 </div>
 
-<script>window.__MODULE_ID__ = window.__MODULE_ID__ || "moduuli9-haastattelu";</script>
+<script>
+window.__MODULE_ID__ = window.__MODULE_ID__ || "moduuli9-haastattelu";
+window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;
+</script>
 <script src="/js/module-work.js"></script>
-<script src="/js/mock-realtime.js"></script>
+<script src="/js/mock-realtime.js?v=20260716m"></script>
 <script src="/js/ai-helper.js"></script>
 <script>
 const S={pre:[],w_s:'',w_t:'',w_a:'',w_r:'',w2_s:'',w2_t:'',w2_a:'',w2_r:'',w3_s:'',w3_t:'',w3_a:'',w3_r:'',w_weak:'',w_why:'',w_vastav:'',companyName:'',companyUrl:'',companyFact:'',w_company:'',w_palkka:'',abResults:[],hp1:'',hp2:'',hp3:'',hpBuilt:'',hpFinal:'',startKey:'',nextKey:'',scenPicks:{},stfAnswers:[],vastaQuestion:'',mockSession:[],mockCandidateName:'',starVoiceQ:1,starVoiceDone:{1:false,2:false,3:false},starVoiceRecordings:{}};
 const COMPANY_HOME_URLS={'Elisa':'https://www.elisa.fi/','S-ryhmä':'https://www.s-ryhma.fi/','OP Ryhmä':'https://www.op.fi/','DNA':'https://www.dna.fi/','Mehiläinen':'https://www.mehilainen.fi/','Kesko':'https://www.kesko.fi/'};
 const TOTAL=12;
 const MODULE9_ID='moduuli9-haastattelu';
-const HA_KEY='aip-haastattelu-v1';
+const HA_KEY_LEGACY='aip-haastattelu-v1';
+const HA_TEXT_KEYS=['w_s','w_t','w_a','w_r','w2_s','w2_t','w2_a','w2_r','w3_s','w3_t','w3_a','w3_r','w_weak','w_why','w_vastav','w_company','w_palkka','hp1','hp2','hp3','hpFinal','companyFact'];
 const HA_STEP_LABELS={
   1:'Aloitus',2:'Ymmärrys',3:'STAR',4:'Decoder',5:'Kirjoita',
-  6:'Vastaväite',7:'Spot the flaw',8:'Hissipuhe',9:'Yritys',
+  '5b':'Puhu',6:'Vastaväite',7:'Spot the flaw',8:'Hissipuhe','8b':'Mock',9:'Yritys',
   10:'Tilanteet',11:'Vaikeat',12:'Ansaitse'
 };
 let curScreen=1;
+let haUserId='anon';
+let haReady=false;
+let haRestoring=false;
 
 function formatResumeSavedWhen(ts){
   if(!ts)return '';
@@ -1650,7 +1703,8 @@ function formatResumeSavedWhen(ts){
 }
 
 function showResumeBanner(screen,ts){
-  if(!screen||screen<=1||screen>=TOTAL)return;
+  const sn=screenNum(screen);
+  if(!screen||sn<=1||sn>=TOTAL)return;
   const banner=document.getElementById('resumeBanner');
   const text=document.getElementById('resumeBannerText');
   const btn=document.getElementById('resumeBannerBtn');
@@ -1661,20 +1715,79 @@ function showResumeBanner(screen,ts){
   banner.classList.add('show');
   document.body.classList.add('has-resume-banner');
   if(btn){
-    btn.onclick=function(){go(screen);window.scrollTo({top:0,behavior:'smooth'});};
+    btn.onclick=function(){browseGo(screen);window.scrollTo({top:0,behavior:'smooth'});};
   }
 }
 let haWorkApi=null;
 let haSaveTimer=null;
 
-function mergeHaData(a,b){
-  if(!a)return b;
+function haLocalKey(){
+  return HA_KEY_LEGACY+'_'+haUserId;
+}
+function haTextScore(d){
+  if(!d||typeof d!=='object')return 0;
+  let score=0;
+  const Sobj=d.S||{};
+  const inputs=d.inputs||{};
+  HA_TEXT_KEYS.forEach(k=>{
+    const v=String(Sobj[k]!=null?Sobj[k]:(inputs[k]||'')).trim();
+    if(v)score+=Math.min(v.length,240);
+  });
+  const sn=screenNum(d.curScreen||1);
+  if(Number.isFinite(sn))score+=Math.round(sn*12);
+  if(d.shown&&d.shown.finished)score+=80;
+  return score;
+}
+function fillHaEmptyFrom(base,filler){
+  if(!base)return filler||null;
+  if(!filler)return base;
+  let out;
+  try{out=JSON.parse(JSON.stringify(base));}catch(e){return base;}
+  out.S=out.S||{};
+  const fS=filler.S||{};
+  Object.keys(fS).forEach(k=>{
+    const fv=fS[k];
+    const ov=out.S[k];
+    if(typeof fv==='string'&&fv.trim()&&!(typeof ov==='string'&&ov.trim()))out.S[k]=fv;
+    else if(Array.isArray(fv)&&fv.length&&(!Array.isArray(ov)||!ov.length))out.S[k]=fv;
+    else if(fv&&typeof fv==='object'&&!Array.isArray(fv)&&(!ov||typeof ov!=='object'))out.S[k]=fv;
+  });
+  out.inputs=out.inputs||{};
+  const fI=filler.inputs||{};
+  Object.keys(fI).forEach(k=>{
+    if(String(fI[k]||'').trim()&&!String(out.inputs[k]||'').trim())out.inputs[k]=fI[k];
+  });
+  if(filler.texts&&typeof filler.texts==='object'){
+    out.texts=out.texts||{};
+    Object.keys(filler.texts).forEach(k=>{
+      if(String(filler.texts[k]||'').trim()&&!String(out.texts[k]||'').trim())out.texts[k]=filler.texts[k];
+    });
+  }
+  const baseScreen=screenNum(out.curScreen||1);
+  const fillScreen=screenNum(filler.curScreen||1);
+  if(fillScreen>baseScreen)out.curScreen=filler.curScreen;
+  out.ts=Math.max(Number(out.ts||0),Number(filler.ts||0));
+  out.v=1;
+  return out;
+}
+function pickBestHaData(a,b){
+  if(!a)return b||null;
   if(!b)return a;
-  return Number(a.ts||0)>=Number(b.ts||0)?a:b;
+  const sa=haTextScore(a);
+  const sb=haTextScore(b);
+  // Never let a near-empty newer snapshot wipe a rich older one.
+  if(sa>=40&&sb<25)return fillHaEmptyFrom(a,b);
+  if(sb>=40&&sa<25)return fillHaEmptyFrom(b,a);
+  const newer=Number(a.ts||0)>=Number(b.ts||0)?a:b;
+  const older=newer===a?b:a;
+  return fillHaEmptyFrom(newer,older);
+}
+function mergeHaData(a,b){
+  return pickBestHaData(a,b);
 }
 function loadBestHaData(serverData){
   let best=serverData&&serverData.v===1?serverData:null;
-  best=mergeHaData(best,loadLocalHaData());
+  best=pickBestHaData(best,loadLocalHaData());
   try{
     for(let i=0;i<localStorage.length;i++){
       const k=localStorage.key(i);
@@ -1683,14 +1796,21 @@ function loadBestHaData(serverData){
       if(!raw)continue;
       const p=JSON.parse(raw);
       const d=p&&p.data;
-      if(d&&d.v===1)best=mergeHaData(best,d);
+      if(d&&d.v===1)best=pickBestHaData(best,d);
     }
   }catch(e){}
   return best;
 }
 function flushHaProgress(){
+  if(!haReady||haRestoring)return;
   try{saveLocalHaData(haSnapshot());}catch(e){}
   try{if(haWorkApi?.saveNow)haWorkApi.saveNow();}catch(e){}
+}
+function normalizeHaScreen(n){
+  if(n==='5b'||n==='8b')return n;
+  const num=Number(n);
+  if(!Number.isFinite(num))return 1;
+  return Math.min(TOTAL,Math.max(1,Math.round(num)));
 }
 
 function screenNum(n){
@@ -1719,20 +1839,24 @@ function updateStfGate(){
   }
 }
 
-function go(n){
+function go(n, opts){
+  opts = opts || {};
+  const free = !!opts.free;
   const targetNum=screenNum(n);
-  if(n==='5b'&&!allStarWriteDone()){
-    alert('Täytä ja arvioi kaikki kolme STAR-vastausta ensin.');
-    n=5;
-  }
-  if((n===6||screenNum(n)>5.5)&&n!=='5b'&&!allStarVoiceDone()){
-    alert('Nauhoita vastaus kaikille kolmelle kysymykselle ja odota palaute ennen Vastaväite-osioon siirtymistä.');
-    n='5b';
-  }
-  if(targetNum>=8&&!isStfComplete()){
-    alert('Suorita ensin kaikki viisi Spot Flaw -kierrosta (Osio 06).');
-    n=7;
-    if(!abBuilt)buildAB();
+  if(!free){
+    if(n==='5b'&&!allStarWriteDone()){
+      alert('Täytä ja arvioi kaikki kolme STAR-vastausta ensin.');
+      n=5;
+    }
+    if((n===6||screenNum(n)>5.5)&&n!=='5b'&&!allStarVoiceDone()){
+      alert('Nauhoita vastaus kaikille kolmelle kysymykselle ja odota palaute ennen Vastaväite-osioon siirtymistä.');
+      n='5b';
+    }
+    if(targetNum>=8&&!isStfComplete()){
+      alert('Suorita ensin kaikki viisi Spot Flaw -kierrosta (Osio 06).');
+      n=7;
+      if(!abBuilt)buildAB();
+    }
   }
   curScreen=n;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1758,10 +1882,91 @@ function go(n){
   if(n===10&&!scenBuilt)buildScen();
   if(n===12)buildEarn();
   if(n==='5b')initStarVoiceScreen();
+  if(n==='8b'){try{prefetchMockMic();}catch(e){}}
   updateStarVoiceGate();
   updateStfGate();
+  updateHaMenuActive();
   try{saveProgress();}catch(e){}
 }
+
+function browseGo(n){
+  go(n,{free:true});
+}
+
+const HA_MENU_ITEMS=[
+  {id:1,num:'01',label:'Aloitus',sub:'Johdanto'},
+  {id:2,num:'02',label:'Ymmärrys',sub:'Totta vai tarua'},
+  {id:3,num:'03',label:'STAR',sub:'Metodi'},
+  {id:4,num:'04',label:'Decoder',sub:'STAR-lauseet'},
+  {id:5,num:'05',label:'Kirjoita',sub:'Kolme vastausta'},
+  {id:'5b',num:'🎙',label:'Puhu',sub:'Ääniharjoitus'},
+  {id:6,num:'06',label:'Vastaväite',sub:'Haastava kysymys'},
+  {id:7,num:'07',label:'Spot flaw',sub:'Virheet vastauksissa'},
+  {id:8,num:'08',label:'Hissipuhe',sub:'Lyhyt pitch'},
+  {id:'8b',num:'🎙',label:'Mock',sub:'Live-haastattelu'},
+  {id:9,num:'09',label:'Yritys',sub:'Miksi tämä yritys'},
+  {id:10,num:'10',label:'Tilanteet',sub:'Tilannepeli'},
+  {id:11,num:'11',label:'Vaikeat',sub:'Heikkous & palkka'},
+  {id:12,num:'🏆',label:'Ansaitse',sub:'Omat vastaukset'}
+];
+
+function openHaMenu(){
+  const panel=document.getElementById('haMenuPanel');
+  const backdrop=document.getElementById('haMenuBackdrop');
+  const btn=document.getElementById('haMenuBtn');
+  if(!panel||!backdrop||!btn)return;
+  panel.hidden=false;backdrop.hidden=false;
+  requestAnimationFrame(()=>{
+    panel.classList.add('open');backdrop.classList.add('open');
+    btn.setAttribute('aria-expanded','true');
+  });
+}
+function closeHaMenu(){
+  const panel=document.getElementById('haMenuPanel');
+  const backdrop=document.getElementById('haMenuBackdrop');
+  const btn=document.getElementById('haMenuBtn');
+  if(!panel||!backdrop||!btn)return;
+  panel.classList.remove('open');backdrop.classList.remove('open');
+  btn.setAttribute('aria-expanded','false');
+  setTimeout(()=>{panel.hidden=true;backdrop.hidden=true;},220);
+}
+function updateHaMenuActive(){
+  document.querySelectorAll('.ha-menu-link').forEach(link=>{
+    const id=link.dataset.screen;
+    const cur=String(curScreen);
+    link.classList.toggle('on',id===cur);
+  });
+}
+function buildHaMenu(){
+  const list=document.getElementById('haMenuList');
+  if(!list)return;
+  list.innerHTML='';
+  HA_MENU_ITEMS.forEach(item=>{
+    const li=document.createElement('li');
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='ha-menu-link'+(String(curScreen)===String(item.id)?' on':'');
+    btn.dataset.screen=String(item.id);
+    btn.innerHTML='<span class="ha-menu-num">'+item.num+'</span><span><span class="ha-menu-label">'+item.label+'</span><span class="ha-menu-sub">'+item.sub+'</span></span>';
+    btn.addEventListener('click',()=>{closeHaMenu();browseGo(item.id);});
+    li.appendChild(btn);
+    list.appendChild(li);
+  });
+}
+function wireHaMenu(){
+  buildHaMenu();
+  const openBtn=document.getElementById('haMenuBtn');
+  const closeBtn=document.getElementById('haMenuClose');
+  const backdrop=document.getElementById('haMenuBackdrop');
+  if(openBtn)openBtn.addEventListener('click',openHaMenu);
+  if(closeBtn)closeBtn.addEventListener('click',closeHaMenu);
+  if(backdrop)backdrop.addEventListener('click',closeHaMenu);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&openBtn&&openBtn.getAttribute('aria-expanded')==='true')closeHaMenu();
+  });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wireHaMenu);
+else wireHaMenu();
 
 const startMsgs={
   a:'Jännitys on normaalia — melkein jokainen jännittää. Tämä moduuli antaa sinulle rakenteen joka muuttaa jännityksen varmuudeksi.',
@@ -2328,6 +2533,7 @@ function aiReqSignal(ms){
   if(typeof AbortSignal!=='undefined'&&typeof AbortSignal.timeout==='function')return AbortSignal.timeout(ms);
   const c=new AbortController();setTimeout(()=>c.abort(),ms);return c.signal;
 }
+/** Written coaching / feedback shown to students — Claude first, OpenAI only as fallback. */
 async function ai(prompt,sys,tok=400){
   try{
     if(window.aiClaude)return await window.aiClaude(sys,prompt,tok);
@@ -2538,9 +2744,19 @@ function applyHaData(d){
   if(d.inputs){
     Object.keys(d.inputs).forEach(id=>{
       const el=document.getElementById(id);
-      if(el&&'value' in el)el.value=d.inputs[id];
+      if(el&&'value' in el&&String(d.inputs[id]||'').trim())el.value=d.inputs[id];
     });
   }
+  // S holds the canonical exercise texts — fill any empty inputs from S.
+  HA_TEXT_KEYS.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el||!('value' in el))return;
+    if(String(el.value||'').trim()){
+      if(id in S)S[id]=el.value;
+      return;
+    }
+    if(S[id]!=null&&String(S[id]).trim())el.value=S[id];
+  });
   if(d.texts){
     Object.keys(d.texts).forEach(id=>{
       const el=document.getElementById(id);
@@ -2656,16 +2872,24 @@ function applyHaData(d){
   try{checkVastav();}catch(e){}
   try{checkCompany();}catch(e){}
   try{checkPalkka();}catch(e){}
-  let screen=Math.min(TOTAL,Math.max(1,Number(d.curScreen)||1));
+  let screen=normalizeHaScreen(d.curScreen);
+  // Soft gate only — free restore so locks don't bounce the student to an empty screen.
   if(screenNum(screen)>=8&&!isStfComplete())screen=7;
-  go(screen);
-  if(screen===12)buildEarn();
-  if(screen>1&&!(d.shown&&d.shown.finished))showResumeBanner(screen,d.ts);
+  go(screen,{free:true});
+  if(screen===12||Number(screen)===12)buildEarn();
+  if(screenNum(screen)>1&&!(d.shown&&d.shown.finished))showResumeBanner(screen,d.ts);
   return true;
 }
 function loadLocalHaData(){
   try{
-    const raw=localStorage.getItem(HA_KEY);
+    let raw=localStorage.getItem(haLocalKey());
+    if(!raw){
+      const legacy=localStorage.getItem(HA_KEY_LEGACY);
+      if(legacy){
+        raw=legacy;
+        try{localStorage.setItem(haLocalKey(),legacy);}catch(e){}
+      }
+    }
     if(!raw)return null;
     const d=JSON.parse(raw);
     return d&&d.v===1?d:null;
@@ -2673,14 +2897,26 @@ function loadLocalHaData(){
 }
 function saveLocalHaData(data){
   if(!data||data.v!==1)return;
-  try{localStorage.setItem(HA_KEY,JSON.stringify(data));}catch(e){}
+  try{localStorage.setItem(haLocalKey(),JSON.stringify(data));}catch(e){}
 }
 function saveProgress(){
+  if(!haReady||haRestoring)return;
   try{
     if(haWorkApi?.scheduleSave)haWorkApi.scheduleSave();
     clearTimeout(haSaveTimer);
-    haSaveTimer=setTimeout(()=>{try{saveLocalHaData(haSnapshot());}catch(e){}},400);
+    haSaveTimer=setTimeout(()=>{
+      if(!haReady||haRestoring)return;
+      try{saveLocalHaData(haSnapshot());}catch(e){}
+    },400);
   }catch(e){console.warn('[haastattelu] saveProgress',e);}
+}
+async function resolveHaUserId(){
+  try{
+    const r=await fetch('/api/auth/me',{credentials:'include'});
+    if(!r.ok)return;
+    const d=await r.json();
+    if(d&&d.user&&d.user.id!=null)haUserId=String(d.user.id);
+  }catch(e){}
 }
 async function initHaWorkPersistence(){
   if(!window.moduleWork?.initModuleWork)return;
@@ -2690,29 +2926,42 @@ async function initHaWorkPersistence(){
       summarize:summarizeHaData,
       debounceMs:800,
       apply:function(remoteData){
-        const local=loadLocalHaData();
-        const localTs=local&&Number(local.ts||0);
-        const remoteTs=Number(remoteData?.ts||0);
-        const newest=(localTs&&localTs>remoteTs)?local:remoteData;
-        if(applyHaData(newest))saveLocalHaData(newest);
+        haRestoring=true;
+        try{
+          const best=pickBestHaData(remoteData,loadLocalHaData());
+          if(best&&applyHaData(best))saveLocalHaData(best);
+        }finally{
+          haRestoring=false;
+        }
       }
     });
-    if(haWorkApi?.saveNow)haWorkApi.saveNow();
   }catch(e){console.warn('[haastattelu] module-work init failed:',e);}
 }
 async function initHaPersistence(){
-  await initHaWorkPersistence();
-  const local=loadLocalHaData();
-  if(local){
-    const remoteTs=haWorkApi&&haWorkApi.data?Number(haWorkApi.data.ts||0):0;
-    const localTs=Number(local.ts||0);
-    if(localTs>remoteTs)applyHaData(local);
+  await resolveHaUserId();
+  haRestoring=true;
+  try{
+    await initHaWorkPersistence();
+    const best=loadBestHaData(haWorkApi&&haWorkApi.data?haWorkApi.data:null);
+    if(best){
+      applyHaData(best);
+      saveLocalHaData(best);
+    }
+  }finally{
+    haRestoring=false;
+    haReady=true;
   }
+  // Persist only AFTER restore so an empty first paint cannot wipe the server copy.
+  try{if(haWorkApi?.scheduleSave)haWorkApi.scheduleSave();}catch(e){}
   updateStarVoicePrompt();
 }
 document.addEventListener('input',saveProgress,true);
 document.addEventListener('change',saveProgress,true);
 document.addEventListener('click',()=>setTimeout(saveProgress,400),true);
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden')flushHaProgress();
+});
+window.addEventListener('pagehide',flushHaProgress);
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',()=>setTimeout(initHaPersistence,80));
 }else{
@@ -2720,7 +2969,7 @@ if(document.readyState==='loading'){
 }
 
 // ══════════════════════════════════════════════════════
-// VOICE RECORDING — Whisper transcription + gpt-realtime-2 feedback
+// VOICE RECORDING — Whisper (OpenAI) + written feedback (Claude)
 // ══════════════════════════════════════════════════════
 const voiceState = {};
 
@@ -2980,6 +3229,38 @@ let mockBusy = false;
 let mockLiveActive = false;
 let mockRealtime = null;
 let mockLiveTimerInt = null;
+let mockMicPrefetch = null;
+let mockClassicAwaitingAdvance = false;
+
+function setMockChoiceRow(show, isLast) {
+  const row = document.getElementById('mockChoiceRow');
+  const nextBtn = document.getElementById('mockNextQBtn');
+  const retryBtn = document.getElementById('mockRetryBtn');
+  if (!row) return;
+  row.classList.toggle('show', !!show);
+  if (nextBtn) nextBtn.textContent = isLast ? 'Päätä haastattelu →' : 'Seuraava kysymys →';
+  if (retryBtn) retryBtn.style.display = show ? 'inline-flex' : 'none';
+}
+
+function hideMockChoiceRow() {
+  setMockChoiceRow(false, false);
+}
+
+function prefetchMockMic() {
+  if (mockMicPrefetch || !navigator.mediaDevices?.getUserMedia) return;
+  mockMicPrefetch = navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 }
+  }).then(stream => {
+    // Keep tracks alive briefly so first start is faster; stop if unused
+    setTimeout(() => {
+      if (!mockLiveActive && !(mockRecorder && mockRecorder.mr && mockRecorder.mr.state === 'recording')) {
+        try { stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+        mockMicPrefetch = null;
+      }
+    }, 45000);
+    return stream;
+  }).catch(() => { mockMicPrefetch = null; return null; });
+}
 
 function mockShowInstantConnectingUI() {
   document.getElementById('mockTopStatus').textContent = 'Yhdistetään...';
@@ -3042,6 +3323,8 @@ function resetMockSessionState() {
   document.getElementById('mockFbArea').classList.remove('show');
   document.getElementById('mockTimer').textContent = '0:00';
   showMockLiveBadge(false);
+  hideMockChoiceRow();
+  mockClassicAwaitingAdvance = false;
   const recBtn = document.getElementById('mockRecBtn');
   if (recBtn) { recBtn.textContent = '● Aloita haastattelu'; recBtn.style.display = 'inline-flex'; }
   document.getElementById('mockReplayBtn').style.display = 'none';
@@ -3072,6 +3355,8 @@ async function mockFinishLiveSession() {
     document.getElementById('mockStatus').textContent = 'Live-haastattelu suoritettu — lue palautetta alta.';
     document.getElementById('mockRecBtn').style.display = 'inline-flex';
     document.getElementById('mockRecBtn').textContent = '↺ Harjoittele uudelleen';
+    hideMockChoiceRow();
+    document.getElementById('mockReplayBtn').style.display = 'none';
     try { saveProgress(); } catch (e) {}
   } catch (e) {
     console.error('[mock-live]', e);
@@ -3103,13 +3388,22 @@ async function mockStartLive() {
     onStatus: (msg) => {
       document.getElementById('mockStatus').textContent = msg;
       const waiting = /sinun vuoro/i.test(msg);
-      document.getElementById('mockQSpeaking')?.classList.toggle('hide', waiting);
-      document.getElementById('mockRipple')?.classList.toggle('active', !waiting);
+      const reviewing = /yrittää uudelleen|jatkaa seuraavaan|päättää haastattelun/i.test(msg);
+      document.getElementById('mockQSpeaking')?.classList.toggle('hide', waiting || reviewing);
+      document.getElementById('mockRipple')?.classList.toggle('active', !waiting && !reviewing);
+      if (waiting) {
+        document.getElementById('mockReplayBtn').style.display = 'inline-flex';
+        document.getElementById('mockTopStatus').textContent = 'Sinun vuorosi';
+      }
     },
     onPhaseChange: (info) => {
       mockQ = mockDoneCount;
       updateMockLiveUI(info);
       updateMockDots();
+      if (info && info.awaitingAnswer) {
+        document.getElementById('mockReplayBtn').style.display = 'inline-flex';
+        hideMockChoiceRow();
+      }
     },
     onUserTranscript: (data) => {
       if (!Array.isArray(S.mockSession)) S.mockSession = [];
@@ -3132,13 +3426,23 @@ async function mockStartLive() {
       });
       try { saveProgress(); } catch (e) {}
     },
+    onAnswerReady: (info) => {
+      document.getElementById('mockReplayBtn').style.display = 'none';
+      document.getElementById('mockStopBtn').style.display = 'none';
+      document.getElementById('mockTopStatus').textContent = 'Vastaus tallennettu';
+      setMockChoiceRow(true, !!info.isLast);
+      try { saveProgress(); } catch (e) {}
+    },
     onAssistantText: (text) => {
       document.getElementById('mockQSpeaking')?.classList.remove('hide');
+      document.getElementById('mockReplayBtn').style.display = 'none';
+      hideMockChoiceRow();
       updateMockLiveUI({
         label: document.getElementById('mockQLabel')?.textContent || 'Rekrytoija puhuu',
         tag: document.getElementById('mockQTag')?.textContent || '',
         recruiterText: text
       });
+      if (text) mockCurrentQuestionText = text;
     },
     onComplete: () => { mockFinishLiveSession(); },
     onError: (err) => console.warn('[mock-live]', err)
@@ -3174,12 +3478,12 @@ function mockStopQuestionAudio() {
 function mockSpeechInput(plain, qIndex) {
   const last = MOCK_CLASSIC_QUESTIONS.length - 1;
   if (qIndex === 0) {
-    return ['Hei, tervetuloa — mukava tavata.', plain].join(' ');
+    return ['Hei — tervetuloa.', plain].join(' ');
   }
   if (qIndex === last) {
-    return ['Okei, viimeinen kysymys — tämä on vaikea.', plain].join(' ');
+    return ['Viimeinen kysymys.', plain].join(' ');
   }
-  return ['Kiitos.', 'Seuraava kysymys:', plain].join(' ');
+  return ['Seuraava kysymys.', plain].join(' ');
 }
 
 function renderMockTimeline(activeIndex) {
@@ -3306,9 +3610,114 @@ async function speakMockQuestion(text, qIndex) {
 }
 
 async function mockReplayQuestion() {
-  if (!mockCurrentQuestionText || mockBusy) return;
-  if (mockRecorder && mockRecorder.mr && mockRecorder.mr.state === 'recording') return;
+  if (mockBusy) return;
+  if (mockClassicAwaitingAdvance) return;
+  if (mockLiveActive && mockRealtime) {
+    const ok = mockRealtime.repeatCurrentQuestion();
+    if (ok) {
+      document.getElementById('mockReplayBtn').style.display = 'none';
+      hideMockChoiceRow();
+    }
+    return;
+  }
+  if (!mockCurrentQuestionText) return;
+
+  // Allow replay even while recording: stop mic, replay, then start again
+  if (mockRecorder && mockRecorder.mr && mockRecorder.mr.state === 'recording') {
+    try {
+      clearInterval(mockTimerInt);
+      mockRecorder.mr.ondataavailable = null;
+      mockRecorder.mr.onstop = null;
+      mockRecorder.mr.stop();
+      mockRecorder.stream.getTracks().forEach(t => t.stop());
+    } catch (e) {}
+    mockRecorder = null;
+    document.getElementById('mockStopBtn').style.display = 'none';
+    document.getElementById('mockRipple').classList.remove('active');
+  }
+
   await speakMockQuestion(mockCurrentQuestionText, mockQ);
+  document.getElementById('mockTopStatus').textContent = 'Sinun vuorosi vastata';
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    startMockRecording(stream);
+  }).catch(e => alert('Mikrofoniin ei pääse: ' + e.message));
+}
+
+function mockRetryCurrent() {
+  if (mockBusy) return;
+  if (mockLiveActive && mockRealtime) {
+    const qIndex = Math.max(0, (mockDoneCount || 1) - 1);
+    if (Array.isArray(S.mockSession)) S.mockSession[qIndex] = null;
+    mockDoneCount = qIndex;
+    mockQ = qIndex;
+    updateMockDots();
+    renderMockTimeline();
+    hideMockChoiceRow();
+    mockRealtime.retryCurrentTurn();
+    document.getElementById('mockStopBtn').style.display = 'inline-flex';
+    document.getElementById('mockStopBtn').textContent = 'Lähetä vastaus';
+    try { saveProgress(); } catch (e) {}
+    return;
+  }
+  if (!mockClassicAwaitingAdvance) return;
+  mockClassicAwaitingAdvance = false;
+  hideMockChoiceRow();
+  if (Array.isArray(S.mockSession)) S.mockSession[mockQ] = null;
+  mockDoneCount = mockQ;
+  updateMockDots();
+  renderMockTimeline();
+  document.getElementById('mockTimer').textContent = '0:00';
+  presentMockQuestion(mockQ);
+  try { saveProgress(); } catch (e) {}
+}
+
+async function mockAdvanceNext() {
+  if (mockBusy) return;
+  if (mockLiveActive && mockRealtime) {
+    hideMockChoiceRow();
+    document.getElementById('mockReplayBtn').style.display = 'none';
+    document.getElementById('mockStopBtn').style.display = 'inline-flex';
+    document.getElementById('mockStopBtn').textContent = 'Lähetä vastaus';
+    const ok = mockRealtime.continueAfterAnswer();
+    if (!ok) mockFinishLiveSession();
+    return;
+  }
+  if (!mockClassicAwaitingAdvance) return;
+  mockClassicAwaitingAdvance = false;
+  hideMockChoiceRow();
+  const isLast = mockQ >= MOCK_CLASSIC_QUESTIONS.length - 1;
+  if (isLast) {
+    await finishClassicMockAfterLast();
+    return;
+  }
+  mockQ++;
+  document.getElementById('mockTimer').textContent = '0:00';
+  try { saveProgress(); } catch (e) {}
+  await presentMockQuestion(mockQ);
+}
+
+async function finishClassicMockAfterLast() {
+  mockBusy = true;
+  try {
+    document.getElementById('mockTopStatus').textContent = 'Haastattelu päättyy...';
+    document.getElementById('mockStatus').textContent = 'Rekrytoija antaa palautetta...';
+    await speakMockText('Kiitos — hyvä sessio. Hetki, katson vastauksesi kokonaisuudessaan.', null);
+    document.getElementById('mockStatus').textContent = 'Valmistellaan palautetta...';
+    const feedback = await fetchMockFinalFeedback(S.mockSession);
+    showMockFinalFeedback(feedback);
+    document.getElementById('mockDone').classList.add('show');
+    document.getElementById('mockTopStatus').textContent = '✓ Valmis';
+    document.getElementById('mockStatus').textContent = 'Haastattelu suoritettu — lue kokonaispalaute alta.';
+    document.getElementById('mockRecBtn').style.display = 'inline-flex';
+    document.getElementById('mockRecBtn').textContent = '↺ Harjoittele uudelleen';
+    try { saveProgress(); } catch (e) {}
+  } catch (e) {
+    console.error('[mock]', e);
+    document.getElementById('mockStatus').textContent = 'Virhe — yritä uudelleen tai aloita alusta.';
+    document.getElementById('mockRecBtn').style.display = 'inline-flex';
+  } finally {
+    mockBusy = false;
+  }
 }
 
 async function mockTranscribeOnly(blob) {
@@ -3478,46 +3887,28 @@ async function processMockAnswer(blob) {
 
     const isLast = qIndex >= MOCK_CLASSIC_QUESTIONS.length - 1;
 
-    if (!isLast) {
-      document.getElementById('mockTopStatus').textContent = 'Rekrytoija reagoi...';
-      document.getElementById('mockStatus').textContent = 'Vastauksesi on tallennettu yllä ↑ — kuuntele rekrytoijan reaktiota...';
+    document.getElementById('mockTopStatus').textContent = 'Rekrytoija reagoi...';
+    document.getElementById('mockStatus').textContent = 'Vastauksesi on tallennettu yllä ↑ — kuuntele rekrytoijan reaktiota...';
+    document.getElementById('mockReplayBtn').style.display = 'none';
 
-      const { reaction, speechInstructions } = await fetchMockReaction(question, transcript);
-      S.mockSession[qIndex].reaction = reaction;
-      renderMockTimeline(qIndex);
+    const { reaction, speechInstructions } = await fetchMockReaction(question, transcript);
+    S.mockSession[qIndex].reaction = reaction;
+    renderMockTimeline(qIndex);
 
-      await speakMockText(reaction, speechInstructions);
+    await speakMockText(reaction, speechInstructions);
 
-      document.getElementById('mockStatus').textContent = 'Lue vastauksesi ja reaktio yllä — seuraava kysymys hetken kuluttua...';
-      await new Promise(r => setTimeout(r, 2500));
-
-      mockQ++;
-      document.getElementById('mockTimer').textContent = '0:00';
-      try { saveProgress(); } catch (e) {}
-
-      await presentMockQuestion(mockQ);
-      return;
-    }
-
-    document.getElementById('mockTopStatus').textContent = 'Haastattelu päättyy...';
-    document.getElementById('mockStatus').textContent = 'Rekrytoija antaa palautetta...';
-    await speakMockText('Kiitos — hyvä sessio. Hetki, katson vastauksesi kokonaisuudessaan.', null);
-
-    document.getElementById('mockStatus').textContent = 'Valmistellaan palautetta...';
-    const feedback = await fetchMockFinalFeedback(S.mockSession);
-    showMockFinalFeedback(feedback);
-
-    document.getElementById('mockDone').classList.add('show');
-    document.getElementById('mockTopStatus').textContent = '✓ Valmis';
-    document.getElementById('mockStatus').textContent = 'Haastattelu suoritettu — lue kokonaispalaute alta.';
-    document.getElementById('mockRecBtn').style.display = 'inline-flex';
-    document.getElementById('mockRecBtn').textContent = '↺ Harjoittele uudelleen';
+    mockClassicAwaitingAdvance = true;
+    mockBusy = false;
+    document.getElementById('mockTopStatus').textContent = 'Vastaus tallennettu';
+    document.getElementById('mockStatus').textContent = isLast
+      ? 'Voit yrittää tätä kysymystä uudelleen tai päättää haastattelun.'
+      : 'Voit yrittää tätä kysymystä uudelleen tai jatkaa seuraavaan.';
+    setMockChoiceRow(true, isLast);
     try { saveProgress(); } catch (e) {}
   } catch (e) {
     console.error('[mock]', e);
     document.getElementById('mockStatus').textContent = 'Virhe — yritä uudelleen tai aloita alusta.';
     document.getElementById('mockRecBtn').style.display = 'inline-flex';
-  } finally {
     mockBusy = false;
   }
 }
@@ -3535,6 +3926,6 @@ function updateMockDots() {
   });
 }
 </script>
-<script>window.__MODULE_ID__="moduuli9-haastattelu";</script>
+<script>window.__MODULE_ID__="moduuli9-haastattelu";window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__=true;</script>
 </body>
 </html>

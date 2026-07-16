@@ -5,7 +5,7 @@
   'use strict';
 
   var DEFAULT_TURNS = 4;
-  var ECHO_GUARD_MS = 1500;
+  var ECHO_GUARD_MS = 900;
   var MIN_ANSWER_LEN = 2;
   var MIN_INTRO_LEN = 12;
 
@@ -27,6 +27,7 @@
     this.onComplete = options.onComplete || function () {};
     this.onError = options.onError || function () {};
     this.onRemoteAudio = options.onRemoteAudio || function () {};
+    this.onAnswerReady = options.onAnswerReady || null;
 
     this.pc = null;
     this.dc = null;
@@ -48,6 +49,8 @@
     this.responseAudioFallbackTimer = null;
     this.eventQueue = [];
     this.userAnswers = {};
+    this.pausedForReview = false;
+    this.pendingAdvanceCtx = null;
   }
 
   MockRealtimeInterview.prototype.phaseAt = function (index) {
@@ -84,41 +87,29 @@
 
     if (phase === 0) {
       return [
-        'Tee lyhyt lämmin tervehdys suomeksi (max 1 lause), esim. "Hei, tervetuloa — mukava tavata."',
-        'Kysy YHDESSÄ yhdessä kysymyksessä: mikä on hakijan nimi, ja pyydä häntä kertomaan lyhyesti itsestään ja taustastaan — mitä on tehnyt, opiskellut tai kokemusta.',
-        'Max 3 lausetta yhteensä. Älä esitä muita kysymyksiä. Lopeta — odota hiljaa pitkää vastausta.'
+        'Aloita HETI puhumaan. Lyhyt tervehdys (yksi lause) + yksi kysymys: nimi ja lyhyt tausta.',
+        'Max 2 lausetta. Älä pidä taukoa ennen puhetta. Lopeta — odota vastausta.'
       ].join(' ');
     }
     if (phase === 1) {
       return [
-        'Hakija esittäytyi ja kertoi taustastaan: "' + intro + '".',
-        'Analysoi mitä hän kertoi — työ, opiskelu, harrastukset, kokemus.',
-        'Anna 1 lyhyt luonnollinen reaktio ("kiitos, mukava kuulla").',
-        'Generoi YKSI vaikea STAR-kysymys joka liittyy suoraan hänen taustaansa.',
-        'Esim. "Mainitsit että olit [X] — kerro tilanteesta jossa tilanne kärjistyi tai paine kasvoi."',
-        'Pyydä tilanne, tehtävä, toiminta ja tulos. Vain yksi kysymys. Lopeta — odota.'
+        'Hakija esittäytyi: "' + intro + '".',
+        '1 lyhyt reaktio + YKSI STAR-kysymys hänen taustastaan. Max 2–3 lausetta. Lopeta — odota.'
       ].join(' ');
     }
     if (phase === 2) {
       return [
-        'Hakijan esittäytyminen: "' + intro + '".',
-        'Edellinen vastaus (STAR): "' + last + '".',
-        'Lyhyt reaktio (1 lause).',
-        'Generoi YKSI kysymys virheestä tai epäonnistumisesta joka liittyy hänen taustaan.',
-        'Esim. "Kun olit [X], kerro tilanteesta jossa asiat menivät pieleen — mitä tapahtui ja mitä opit."',
-        'Vain yksi kysymys. Lopeta — odota.'
+        'Tausta: "' + intro + '". Edellinen: "' + last + '".',
+        '1 lyhyt reaktio + YKSI kysymys virheestä/epäonnistumisesta. Max 2–3 lausetta. Lopeta — odota.'
       ].join(' ');
     }
     if (phase === 3) {
       return [
-        'Hakijan esittäytyminen: "' + intro + '".',
-        'Edellinen vastaus: "' + last + '".',
-        'Lyhyt reaktio (1 lause).',
-        'Generoi YKSI kysymys paineen alla tai eri mieltä olemisesta — esimiehen, kollegan tai asiakkaan kanssa.',
-        'Kytke kysymys siihen mitä hakija kertoi taustastaan. Vain yksi kysymys. Lopeta — odota.'
+        'Tausta: "' + intro + '". Edellinen: "' + last + '".',
+        '1 lyhyt reaktio + YKSI kysymys paineesta / eri mielestä. Max 2–3 lausetta. Lopeta — odota.'
       ].join(' ');
     }
-    return 'Hakija vastasi viimeiseen kysymykseen. Kiitä lyhyesti: "Kiitos — hyvä keskustelu." Älä kysy mitään lisää. Älä anna palautetta.';
+    return 'Kiitä lyhyesti: "Kiitos — hyvä keskustelu." Älä kysy mitään. Älä anna palautetta.';
   };
 
   MockRealtimeInterview.prototype.requestRecruiterResponse = function (phase, ctx) {
@@ -174,19 +165,101 @@
 
     this.pendingRecruiterText = '';
     var ctx = this.buildContext(transcript);
+    this.pausedForReview = true;
+    this.awaitingUserAnswer = false;
+    this.pendingAdvanceCtx = ctx;
+
+    var isLast = this.answerCount >= this.expectedTurns;
+    this.onStatus(isLast
+      ? 'Vastaus tallennettu — voit yrittää uudelleen tai päättää haastattelun.'
+      : 'Vastaus tallennettu — voit yrittää uudelleen tai jatkaa seuraavaan.');
+    if (typeof this.onAnswerReady === 'function') {
+      this.onAnswerReady({
+        index: qIndex,
+        phase: phase.id,
+        label: phase.label,
+        isLast: isLast,
+        transcript: transcript
+      });
+      return;
+    }
+
+    // Fallback if UI does not handle pause: continue automatically
+    this.continueAfterAnswer();
+  };
+
+  MockRealtimeInterview.prototype.continueAfterAnswer = function () {
+    if (!this.pausedForReview && !this.pendingAdvanceCtx) return false;
+    var ctx = this.pendingAdvanceCtx || this.buildContext('');
+    this.pausedForReview = false;
+    this.pendingAdvanceCtx = null;
 
     if (this.answerCount >= this.expectedTurns) {
       this.awaitingWrapUp = true;
       this.onStatus('Viimeinen vastaus kuultu — rekrytoija päättää...');
       this.onPhaseChange({ phase: 'done', label: 'Valmis', recruiterText: '' });
       this.requestRecruiterResponse('wrapup', ctx);
-      return;
+      return true;
     }
 
     var next = this.phaseAt(this.answerCount);
-    this.onStatus('Vastaus tallennettu — rekrytoija valmistelee seuraavaa kysymystä...');
-    this.onPhaseChange({ phase: next.id, label: next.label, recruiterText: '' });
+    this.onStatus('Seuraava kysymys — rekrytoija puhuu...');
+    this.onPhaseChange({ phase: next.id, label: next.label, tag: next.tag || '', recruiterText: '' });
     this.requestRecruiterResponse(this.answerCount, ctx);
+    return true;
+  };
+
+  MockRealtimeInterview.prototype.retryCurrentTurn = function () {
+    if (!this.pausedForReview) return false;
+    if (this.answerCount < 1) return false;
+
+    var qIndex = this.answerCount - 1;
+    var phase = this.phaseAt(qIndex);
+    this.answerCount = qIndex;
+    if (phase && phase.id) delete this.userAnswers[phase.id];
+    if (phase && phase.id === 'intro') this.userAnswers.intro = '';
+
+    this.pausedForReview = false;
+    this.pendingAdvanceCtx = null;
+    this.awaitingUserAnswer = false;
+    this.onStatus('Toistetaan kysymys — kuuntele ja vastaa uudelleen...');
+    this.onPhaseChange({
+      phase: phase.id,
+      label: phase.label,
+      tag: phase.tag,
+      recruiterText: this.lastAssistantText || this.pendingRecruiterText || ''
+    });
+    this.repeatCurrentQuestion();
+    return true;
+  };
+
+  MockRealtimeInterview.prototype.repeatCurrentQuestion = function () {
+    if (this.aiResponding || this.awaitingWrapUp) return false;
+    if (!this.connected) return false;
+
+    var qIndex = this.answerCount;
+    var phase = this.phaseAt(qIndex);
+    var lastQ = this.lastAssistantText || this.pendingRecruiterText || '';
+    this.pausedForReview = false;
+    this.awaitingUserAnswer = false;
+    this.aiResponding = true;
+    this.onStatus('Toistetaan kysymys...');
+
+    var instructions = lastQ
+      ? ('Toista tämä kysymys SANASTA SANAAN uudelleen suomeksi, ilman lisäyksiä: "' + lastQ + '". Älä muuta mitään. Lopeta heti kysymyksen jälkeen.')
+      : this.buildResponseInstructions(qIndex, this.buildContext(this.userAnswers.intro || ''));
+
+    this.sendEvent({
+      type: 'response.create',
+      response: { instructions: instructions }
+    });
+    this.onPhaseChange({
+      phase: phase.id,
+      label: phase.label,
+      tag: phase.tag,
+      recruiterText: lastQ || 'Toistetaan...'
+    });
+    return true;
   };
 
   MockRealtimeInterview.prototype.clearResponseAudioFallback = function () {
@@ -225,6 +298,7 @@
     }
 
     this.awaitingUserAnswer = true;
+    this.setRemoteAudioMuted(true);
     var waitingPhase = this.phaseAt(this.answerCount);
     var waitMsg = waitingPhase.id === 'intro'
       ? 'Sinun vuoro — kerro nimesi ja vähän itsestäsi sekä taustastasi. Ota aikaa.'
@@ -233,7 +307,9 @@
     this.onPhaseChange({
       phase: waitingPhase.id,
       label: waitingPhase.label,
-      recruiterText: this.pendingRecruiterText || this.lastAssistantText || ''
+      tag: waitingPhase.tag || '',
+      recruiterText: this.pendingRecruiterText || this.lastAssistantText || '',
+      awaitingAnswer: true
     });
   };
 
@@ -354,7 +430,8 @@
     }
 
     audio.volume = 1;
-    audio.muted = true;
+    // Unmute early so first recruiter audio is not delayed behind mute+play race
+    audio.muted = false;
     if (!this.remoteAudioStarted) {
       this.remoteAudioStarted = true;
       this.onRemoteAudio();

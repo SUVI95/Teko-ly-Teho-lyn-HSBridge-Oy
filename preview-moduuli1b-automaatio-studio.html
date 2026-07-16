@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automaatio Studio — Korjaa, rakenna, aja (preview)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FAF8F4;--cream2:#F2EFE9;--cream3:#E8E3DA;
+  --ink:#1A1A1A;--ink2:#3D3D3D;--ink3:#6B6B6B;--ink4:#9A9A9A;
+  --orange:#E8570C;--orange-light:rgba(232,87,12,.08);
+  --green:#2D6A4F;--green-light:rgba(45,106,79,.08);
+  --blue:#1D4ED8;--blue-light:rgba(29,78,216,.08);
+  --amber:#B45309;--amber-light:rgba(180,83,9,.08);
+  --red:#DC2626;--red-light:rgba(220,38,38,.07);
+  --purple:#7C3AED;--purple-light:rgba(124,58,237,.08);
+  --border:rgba(26,26,26,.1);--r:12px;--shadow:0 2px 16px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);line-height:1.65;font-size:16px}
+a{color:var(--orange)}
+
+.topnav{position:fixed;top:0;left:0;right:0;z-index:300;height:52px;display:flex;align-items:center;padding:0 20px;background:rgba(250,248,244,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);gap:16px}
+.brand{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink4);white-space:nowrap}
+.brand b{color:var(--orange)}
+.prog-wrap{flex:1;height:3px;background:var(--cream3);border-radius:4px;overflow:hidden;max-width:200px}
+#progress-bar{height:100%;width:0;background:var(--orange);transition:width .3s}
+#navSteps{display:flex;gap:6px;margin-left:auto}
+.pip{width:8px;height:8px;border-radius:50%;background:var(--cream3);cursor:pointer;transition:all .2s}
+.pip.active{background:var(--orange);transform:scale(1.2)}
+.pip.done{background:var(--green)}
+
+.section{max-width:960px;margin:0 auto;padding:88px 24px 64px}
+.section[data-index="0"]{padding-top:100px}
+.kicker{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.kicker::before{content:'';width:18px;height:2px;background:var(--orange)}
+h1{font-family:'Playfair Display',serif;font-size:clamp(32px,5vw,52px);font-weight:800;line-height:1.05;margin-bottom:16px}
+h1 em{font-style:italic;color:var(--orange)}
+h2{font-family:'Playfair Display',serif;font-size:clamp(26px,3.5vw,38px);font-weight:800;line-height:1.1;margin-bottom:14px}
+.lead{font-size:17px;color:var(--ink2);max-width:640px;margin-bottom:12px}
+.body-t{font-size:15px;color:var(--ink2);max-width:640px;margin-bottom:20px}
+.sep-line{display:flex;align-items:center;gap:12px;margin:48px auto;max-width:960px;padding:0 24px}
+.sep-line span{flex:1;height:1px;background:var(--border)}
+.sep-line em{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);font-style:normal;white-space:nowrap}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .45s,transform .45s}
+.reveal.in{opacity:1;transform:none}
+
+.scen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:24px 0}
+.scen-card{background:#fff;border:2px solid var(--border);border-radius:var(--r);padding:20px;cursor:pointer;transition:all .2s}
+.scen-card:hover{border-color:rgba(232,87,12,.4);box-shadow:var(--shadow)}
+.scen-card.sel{border-color:var(--orange);background:var(--orange-light)}
+.scen-ic{font-size:28px;margin-bottom:8px}
+.scen-tt{font-weight:700;font-size:15px;margin-bottom:4px}
+.scen-ds{font-size:13px;color:var(--ink3)}
+.scen-pick{font-family:'DM Mono',monospace;font-size:12px;color:var(--orange);margin-top:16px}
+
+.studio-shell{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);margin-top:20px}
+.studio-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--cream2);flex-wrap:wrap;gap:10px}
+.studio-top h3{font-size:14px;font-weight:600}
+.status-pill{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink3)}
+.bt-dot{width:8px;height:8px;border-radius:50%;background:var(--ink4)}
+.mini-switch{width:36px;height:20px;border-radius:10px;background:var(--cream3);position:relative}
+.mini-switch span{position:absolute;right:3px;top:3px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+
+.bug-pills{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.bug-pill{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:6px 12px;border-radius:100px;background:var(--red-light);color:var(--red);border:1px solid rgba(220,38,38,.2)}
+.bug-pill.found{background:var(--green-light);color:var(--green);border-color:rgba(45,106,79,.25)}
+.bug-pill .x{font-family:'DM Mono',monospace}
+
+.workbench{display:grid;grid-template-columns:1fr 280px;min-height:420px}
+@media(max-width:800px){.workbench{grid-template-columns:1fr}}
+.canvas-zone{position:relative;background:linear-gradient(90deg,var(--border) 1px,transparent 1px),linear-gradient(var(--border) 1px,transparent 1px);background-size:24px 24px;background-color:#fafafa;min-height:380px;overflow:auto}
+.canvas-zone canvas-bg{position:absolute;inset:0}
+#fixCanvas,#canvas{position:relative;min-width:100%;min-height:380px}
+#fixEdges,#edges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.edge-path{fill:none;stroke:rgba(26,26,26,.18);stroke-width:2}
+.edge-path.flow{stroke:var(--orange);stroke-dasharray:6 4;animation:dash 1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-20}}
+
+.node{position:absolute;width:172px;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:grab;user-select:none;z-index:2}
+.node.selected{border-color:var(--orange);box-shadow:0 0 0 3px rgba(232,87,12,.15)}
+.node.running{border-color:var(--blue)}
+.node.ok{border-color:var(--green)}
+.node.err{border-color:var(--red)}
+.node.wiring-src .port.out{background:var(--orange)}
+.nd-stripe{height:3px;border-radius:10px 10px 0 0}
+.n-trigger .nd-stripe{background:var(--amber)}
+.n-action .nd-stripe{background:var(--orange)}
+.n-ai .nd-stripe{background:var(--blue)}
+.n-filter .nd-stripe{background:var(--purple)}
+.n-output .nd-stripe{background:var(--green)}
+.nd-status{position:absolute;top:6px;right:28px;font-size:11px;font-weight:700}
+.nd-head{display:flex;gap:8px;padding:10px 12px 4px;align-items:flex-start}
+.nd-ic{font-size:18px}
+.nd-name{font-size:12px;font-weight:700;line-height:1.3}
+.nd-type{font-family:'DM Mono',monospace;font-size:9px;color:var(--ink4);text-transform:uppercase}
+.nd-foot{padding:0 12px 10px;font-size:11px;color:var(--ink3);line-height:1.4}
+.port{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--cream3);border:2px solid #fff;box-shadow:0 0 0 1px var(--border)}
+.port.in{left:-5px;top:50%;margin-top:-5px}
+.port.out{right:-5px;top:50%;margin-top:-5px;cursor:crosshair}
+.port.can-target{background:var(--orange)}
+.del{position:absolute;top:4px;right:6px;width:18px;height:18px;border:none;background:var(--cream2);border-radius:4px;cursor:pointer;font-size:14px;line-height:1;color:var(--ink3)}
+.del:hover{background:var(--red-light);color:var(--red)}
+
+.side-panel{border-left:1px solid var(--border);background:#fff;display:flex;flex-direction:column}
+@media(max-width:800px){.side-panel{border-left:none;border-top:1px solid var(--border)}}
+.palette{padding:14px;border-bottom:1px solid var(--border)}
+.palette-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink4);margin-bottom:10px}
+.pal-nodes{display:flex;flex-wrap:wrap;gap:6px}
+.pal-node{font-size:11px;padding:6px 10px;border:1px dashed var(--border);border-radius:8px;cursor:grab;background:var(--cream2)}
+.pal-node:hover{border-color:var(--orange);background:var(--orange-light)}
+.pal-node.dragging{opacity:.5}
+
+.params-panel{flex:1;padding:14px;overflow:auto;display:none}
+.params-panel.open,.#fixParams.open{display:block}
+#fixParams{display:none;padding:14px;border-top:1px solid var(--border)}
+#fixParams.open{display:block}
+.params-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ph-ic{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.ph-tt .n{font-weight:700;font-size:14px}
+.ph-tt .t{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink4)}
+.params-close{margin-left:auto;border:none;background:var(--cream2);width:28px;height:28px;border-radius:6px;cursor:pointer}
+.p-field{margin-bottom:14px}
+.p-label{display:block;font-size:12px;font-weight:600;margin-bottom:6px}
+.p-label .req{color:var(--red)}
+.p-hint{font-size:11px;color:var(--ink3);margin-top:6px;line-height:1.5}
+.p-static{font-size:13px;padding:10px 12px;background:var(--cream2);border-radius:8px;border:1px solid var(--border)}
+.p-mono{font-family:'DM Mono',monospace;font-size:12px}
+.p-select,.p-area{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;background:#fff}
+.p-area{min-height:88px;resize:vertical;line-height:1.55}
+.p-cred{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--green)}
+.p-cred .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.p-empty{text-align:center;padding:24px 12px;color:var(--ink3);font-size:13px}
+.p-empty .big{font-size:28px;display:block;margin-bottom:8px}
+
+.run-bar{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--cream2)}
+.btn-run{background:var(--ink);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-weight:600;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.btn-run:hover{background:#333}
+.btn-run.running{opacity:.7;pointer-events:none}
+.btn-ghost{background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer}
+#canvasHint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink4);font-size:14px;pointer-events:none;text-align:center;padding:24px}
+#canvasHint.hidden{display:none}
+#dropHi{position:absolute;inset:0;border:2px dashed var(--orange);background:rgba(232,87,12,.06);display:none;pointer-events:none;border-radius:8px;margin:8px}
+#dropHi.on{display:block}
+
+.exec-panel{display:none;border-top:1px solid var(--border);background:#1a1a1a;color:#e8e8e8}
+.exec-panel.open{display:block}
+.exec-head{padding:10px 16px;font-family:'DM Mono',monospace;font-size:11px;color:#888;border-bottom:1px solid #333;display:flex;justify-content:space-between}
+.exec-log{padding:12px 16px;max-height:280px;overflow:auto;font-family:'DM Mono',monospace;font-size:12px;line-height:1.6}
+.log-line{margin-bottom:6px;display:flex;gap:10px}
+.log-line.warn .lb{color:#fbbf24}
+.log-line.ok .lb{color:#4ade80}
+.log-line.err .lb{color:#f87171}
+.lt{color:#666;flex-shrink:0}
+.node-tag{color:var(--orange)}
+.io-block{margin:10px 0;border:1px solid #333;border-radius:8px;overflow:hidden}
+.io-head{display:flex;justify-content:space-between;padding:6px 10px;background:#252525;font-size:10px;color:#888}
+.io-body{padding:10px;font-size:11px;line-height:1.55;color:#ccc;max-height:120px;overflow:auto}
+
+.banner{display:none;margin:16px 0;padding:16px 18px;border-radius:var(--r);border:1px solid}
+.banner.show{display:block}
+#brokenBanner{background:var(--red-light);border-color:rgba(220,38,38,.25)}
+#fixedBanner{background:var(--green-light);border-color:rgba(45,106,79,.25)}
+.banner h4{font-size:15px;margin-bottom:6px}
+.banner p{font-size:14px;color:var(--ink2);margin-bottom:8px}
+.banner .hint{font-size:13px;color:var(--ink)}
+
+.result-card{display:none;margin-top:20px;background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--shadow)}
+.result-card.show{display:block}
+.result-card h4{font-size:14px;margin-bottom:10px}
+.result-card pre{white-space:pre-wrap;font-size:13px;line-height:1.65;color:var(--ink2);background:var(--cream2);padding:14px;border-radius:8px;max-height:320px;overflow:auto}
+
+.interview-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:16px;box-shadow:var(--shadow)}
+.interview-card textarea{width:100%;min-height:88px;padding:12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:15px;resize:vertical;margin:10px 0}
+.interview-card button{background:var(--orange);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-weight:600;cursor:pointer}
+.interview-resp{display:none;margin-top:12px;padding:14px;background:var(--green-light);border-radius:8px;font-size:14px;line-height:1.65}
+.dots span{display:inline-block;width:6px;height:6px;background:var(--orange);border-radius:50%;margin:0 2px;animation:b 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.15s}
+.dots span:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:500;z-index:500;opacity:0;transition:all .3s;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.nav-links{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+.nav-links a{font-size:14px;color:var(--ink3);text-decoration:none}
+.nav-links a:hover{color:var(--orange)}
+</style>
+</head>
+<body>
+
+<header class="topnav">
+  <div class="brand">kurssi / <b>automaatio-studio</b> · preview</div>
+  <div class="prog-wrap"><div id="progress-bar"></div></div>
+  <div id="navSteps"></div>
+</header>
+
+<section class="section reveal" data-index="0" id="s0">
+  <div class="kicker">Moduuli 1b — Studio</div>
+  <h1>Korjaa. Rakenna. <em>Aja.</em></h1>
+  <p class="lead">Kaikki tapahtuu tällä sivulla — ei Pinkfishiä, ei ulkoisia välilehtiä. Valitse maailmasi, korjaa rikkinäinen ketju, rakenna oma automaatiosi ja aja testi.</p>
+  <p class="body-t">Santulle ja muille: sama logiikka (Laukaisin → Toiminto → Tekoäly → Tulos), eri arjen tilanteet.</p>
+
+  <div class="scen-grid">
+    <div class="scen-card" data-scen="raportointi" onclick="pickScenario('raportointi')">
+      <div class="scen-ic">🌲</div>
+      <div class="scen-tt">Raportointi &amp; ala</div>
+      <div class="scen-ds">Kenttämuistiinpanot → siisti raportti. Metsätalousinsinööri.</div>
+    </div>
+    <div class="scen-card" data-scen="asiakas" onclick="pickScenario('asiakas')">
+      <div class="scen-ic">✉️</div>
+      <div class="scen-tt">Asiakasposti</div>
+      <div class="scen-ds">Saapuvat viestit → vastausluonnos + kiireelliset.</div>
+    </div>
+    <div class="scen-card" data-scen="tyonhaku" onclick="pickScenario('tyonhaku')">
+      <div class="scen-ic">💼</div>
+      <div class="scen-tt">Työnhaku</div>
+      <div class="scen-ds">Uudet ilmoitukset → suodatettu lista sähköpostiin.</div>
+    </div>
+  </div>
+  <p class="scen-pick" id="buildScenName">← Valitse maailma aloittaaksesi</p>
+  <div class="nav-links">
+    <a href="/module/moduuli1-ai-automaatio">← Automaatio A</a>
+    <a href="/">Kurssivalikko</a>
+  </div>
+</section>
+
+<div class="sep-line"><span></span><em>Osa 1 — Korjaa rikkinäinen</em><span></span></div>
+
+<section class="section reveal" data-index="1" id="s1">
+  <h2>Mikä meni pieleen?</h2>
+  <p class="lead">Kolme vikaa piilee tässä raportointiketjussa. Klikkaa palikoita, korjaa asetukset, aja uudelleen.</p>
+
+  <div class="bug-pills">
+    <div class="bug-pill" id="pill-trigger"><span class="x">○</span> Väärä laukaisin</div>
+    <div class="bug-pill" id="pill-ai"><span class="x">○</span> Tyhjä ohje</div>
+    <div class="bug-pill" id="pill-scope"><span class="x">○</span> Liian laaja ohje</div>
+  </div>
+
+  <div class="studio-shell" id="fixShell">
+    <div class="studio-top">
+      <h3>Rikkinäinen automaatio — raportointi</h3>
+      <div class="status-pill"><span class="bt-dot"></span> <span id="fixActive">Draft</span> <div class="mini-switch" id="fixSwitch"><span></span></div></div>
+    </div>
+    <div class="workbench">
+      <div class="canvas-zone">
+        <svg id="fixEdges"></svg>
+        <div id="fixCanvas"></div>
+      </div>
+      <div class="side-panel">
+        <div id="fixParams">
+          <div id="fixParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa korjataksesi sen</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="run-bar">
+      <button class="btn-run" id="fixRun" onclick="runFix()">▶ Suorita testi</button>
+    </div>
+    <div class="exec-panel" id="fixExec">
+      <div class="exec-head"><span>Suoritusloki</span></div>
+      <div class="exec-log"><div id="fixLog"></div></div>
+    </div>
+  </div>
+
+  <div class="banner" id="brokenBanner">
+    <h4>✗ Automaatio pysähtyi</h4>
+    <p id="brokenText"></p>
+    <p id="brokenDiag"></p>
+    <p class="hint" id="brokenHint"></p>
+  </div>
+  <div class="banner" id="fixedBanner">
+    <h4>✓ Kaikki viat korjattu</h4>
+    <p>Automaatio ajettiin onnistuneesti. Tässä tekoälyn tuotos:</p>
+    <pre id="fixResult" style="white-space:pre-wrap;font-size:13px;margin-top:10px;background:var(--cream2);padding:12px;border-radius:8px"></pre>
+  </div>
+</section>
+
+<div class="sep-line"><span></span><em>Osa 2 — Rakenna oma</em><span></span></div>
+
+<section class="section reveal" data-index="2" id="s2">
+  <h2>Rakenna kestävä kone</h2>
+  <p class="lead">Raahaa palikoita kankaalle, kytke nuolilla (vedä oikeasta portista), täytä tekoälyn ohje ja aja.</p>
+
+  <div class="studio-shell">
+    <div class="studio-top">
+      <h3>Oma automaatio <span id="buildScenName2"></span></h3>
+      <div class="status-pill"><span class="bt-dot" id="btDot"></span> <span id="activeLabel">Draft</span> <div class="mini-switch" id="activeSwitch"><span></span></div></div>
+    </div>
+    <div class="workbench">
+      <div class="canvas-zone" id="canvasZone">
+        <svg id="edges"></svg>
+        <div id="canvas"></div>
+        <div id="canvasHint">Valitse maailma yllä → raahaa palikoita tähän tai klikkaa palettia</div>
+        <div id="dropHi"></div>
+      </div>
+      <div class="side-panel">
+        <div class="palette">
+          <div class="palette-title">Palikat</div>
+          <div class="pal-nodes">
+            <div class="pal-node" draggable="true" data-type="trigger">🕐 Laukaisin</div>
+            <div class="pal-node" draggable="true" data-type="action">📥 Toiminto</div>
+            <div class="pal-node" draggable="true" data-type="ai">🤖 Tekoäly</div>
+            <div class="pal-node" draggable="true" data-type="filter">🔀 Ehto</div>
+            <div class="pal-node" draggable="true" data-type="output">📤 Tulos</div>
+          </div>
+        </div>
+        <div class="params-panel open" id="params">
+          <div id="paramsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa nähdäksesi asetukset</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="run-bar">
+      <button class="btn-run" id="buildRun" onclick="runBuild()">▶ Suorita automaatio</button>
+      <button class="btn-ghost" onclick="resetBuild()">Tyhjennä</button>
+    </div>
+    <div class="exec-panel" id="buildExec">
+      <div class="exec-head"><span>Suoritusloki</span><span id="buildExecMeta"></span></div>
+      <div class="exec-log"><div id="buildLog"></div></div>
+    </div>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <h4>Valmis tulos</h4>
+    <pre id="resultOut"></pre>
+  </div>
+</section>
+
+<div class="sep-line"><span></span><em>Osa 3 — Rakentajan testi</em><span></span></div>
+
+<section class="section reveal" data-index="3" id="s3">
+  <h2>Mitä opit?</h2>
+  <p class="lead">Kaksi lyhyttä kysymystä — tekoäly antaa palautetta.</p>
+
+  <div class="interview-card">
+    <strong>1. Mitä voisi mennä pieleen asiakasviestissä?</strong>
+    <textarea id="q1" placeholder="Kirjoita omin sanoin..."></textarea>
+    <button id="q1btn" onclick="askInterview(1)">Lähetä</button>
+    <div class="interview-resp" id="q1resp"><span id="q1text"></span></div>
+  </div>
+  <div class="interview-card" id="q2wrap" style="opacity:.45;pointer-events:none">
+    <strong>2. Mikä kolmesta viasta oli vaikein huomata?</strong>
+    <textarea id="q2" placeholder="Väärä laukaisin, tyhjä ohje, liian laaja ohje..."></textarea>
+    <button id="q2btn" onclick="askInterview(2)">Lähetä</button>
+    <div class="interview-resp" id="q2resp"><span id="q2text"></span></div>
+  </div>
+  <div id="doneWrap" style="display:none;margin-top:24px;padding:20px;background:var(--green-light);border-radius:var(--r);border:1px solid rgba(45,106,79,.2)">
+    <strong>✓ Studio suoritettu</strong>
+    <p style="margin-top:8px;font-size:14px;color:var(--ink2)">Osaat korjata, rakentaa ja ajaa automaation alustalla. Jatka työnhakuun tai seuraavaan moduuliin.</p>
+  </div>
+</section>
+
+<div id="toast"></div>
+
+<script src="/js/ai-helper.js"></script>
+<script>
+/* ============================================================
+   M1b ENGINE — shared builder + debugging layer
+============================================================ */
+/* ---- nav / progress / reveal ---- */
+const sections = document.querySelectorAll('[data-index]');
+const navSteps = document.getElementById('navSteps');
+const progressBar = document.getElementById('progress-bar');
+sections.forEach((s,i)=>{ const p=document.createElement('div'); p.className='pip'+(i===0?' active':''); p.onclick=()=>s.scrollIntoView({behavior:'smooth'}); navSteps.appendChild(p); });
+function updateProgress(){
+  const st=window.scrollY, dh=document.documentElement.scrollHeight-window.innerHeight;
+  progressBar.style.width=(dh>0?(st/dh)*100:0)+'%';
+  let ai=0; sections.forEach((s,i)=>{ if(s.getBoundingClientRect().top<=window.innerHeight*0.5) ai=i; });
+  navSteps.querySelectorAll('.pip').forEach((p,i)=>{ p.classList.remove('active','done'); if(i===ai)p.classList.add('active'); else if(i<ai)p.classList.add('done'); });
+}
+window.addEventListener('scroll',updateProgress,{passive:true});
+const revObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revObs.unobserve(e.target);}});},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+const NODE_META={
+  trigger:{ic:'🕐',type:'Laukaisin'}, action:{ic:'📥',type:'Toiminto'},
+  ai:{ic:'🤖',type:'Tekoäly'}, filter:{ic:'🔀',type:'Ehto'}, output:{ic:'📤',type:'Tulos'}
+};
+function nodeHTML(n, readOnly){
+  const m=NODE_META[n.type];
+  return `<div class="node n-${n.type}" id="${n.id}" style="left:${n.x}px; top:${n.y}px;" data-type="${n.type}">
+    <div class="nd-stripe"></div><div class="nd-status"></div>
+    ${readOnly?'':'<div class="del" title="Poista">×</div>'}
+    <div class="nd-head"><div class="nd-ic">${m.ic}</div><div class="nd-tt"><div class="nd-name">${n.name||m.type}</div><div class="nd-type">${m.type}</div></div></div>
+    <div class="nd-foot">${n.foot||''}</div>
+    <div class="port in"></div><div class="port out"></div></div>`;
+}
+function drawEdges(svgId, edges, posFn){
+  const svg=document.getElementById(svgId); if(!svg) return; svg.innerHTML='';
+  edges.forEach(([a,b])=>{
+    const pa=posFn(a,'out'), pb=posFn(b,'in'); if(!pa||!pb) return;
+    const dx=Math.max(40,(pb.x-pa.x)*0.5);
+    const d=`M ${pa.x} ${pa.y} C ${pa.x+dx} ${pa.y}, ${pb.x-dx} ${pb.y}, ${pb.x} ${pb.y}`;
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',d); p.setAttribute('class','edge-path'); p.dataset.a=a; p.dataset.b=b; svg.appendChild(p);
+  });
+}
+function portPos(canvasEl, nodeId, side){
+  const node=document.getElementById(nodeId); if(!node) return null;
+  const cr=canvasEl.getBoundingClientRect(), nr=node.getBoundingClientRect();
+  return { x:(side==='out'?nr.right:nr.left)-cr.left, y:nr.top+nr.height/2-cr.top };
+}
+function addLog(logEl, text, cls, nodeTag){
+  const t=new Date().toLocaleTimeString('fi-FI',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const line=document.createElement('div'); line.className='log-line'+(cls?' '+cls:'');
+  line.innerHTML=`<span class="lt">${t}</span><span class="lb">${nodeTag?`<span class="node-tag">[${nodeTag}]</span> `:''}${text}</span>`;
+  logEl.appendChild(line); logEl.parentElement.scrollTop=logEl.parentElement.scrollHeight;
+}
+function addIOBlock(logEl, label, content){
+  const b=document.createElement('div'); b.className='io-block';
+  b.innerHTML=`<div class="io-head"><span>${label}</span><span>data</span></div><div class="io-body">${content}</div>`;
+  logEl.appendChild(b); logEl.parentElement.scrollTop=logEl.parentElement.scrollHeight;
+}
+
+const SCENARIOS = {
+  tyonhaku: {
+    name:' — Työnhaku',
+    trigger:{title:'Joka arkiaamu klo 08:00',foot:'Ajastin herää aamulla'},
+    action:{title:'Hae uudet työpaikat',foot:'Duunitori + Työmarkkinatori'},
+    ai:{placeholder:'Esim: Lue alla olevat työpaikat. Valitse 3 parasta metsäalan tai esimiestyön paikkaa. Yksi lause per paikka. Selkeä suomi.',
+        role:'Olet avulias työnhakuassistentti. Selkeä suomi (selkokieli). Et keksi tietoa jota ei annettu.'},
+    output:{title:'Lähetä sähköposti',foot:'saapuu aamukahvin kanssa'},
+    dataForAI:'1. Metsähallitus (Rovaniemi): Metsätalousinsinööri, korjuun suunnittelu.\n2. Stora Enso (Kajaani): Hankintaesimies, puunhankinta.\n3. K-Market (Oulu): Myyjä, osa-aikainen.\n4. UPM (etätyö): Ympäristöasiantuntija, raportointi.\n5. Wolt (Kuopio): Lähetti.'
+  },
+  raportointi: {
+    name:' — Raportointi & ala',
+    trigger:{title:'Kun lisään kenttämuistiinpanon',foot:'Laukeaa uudesta muistiinpanosta'},
+    action:{title:'Lue muistiinpanot',foot:'kentältä tulleet raakamuistiinpanot'},
+    ai:{placeholder:'Esim: Muuta sekavat muistiinpanot siistiksi raportiksi. Otsikot: Kuvio, Havainto, Toimenpide. Poimi kiireelliset esiin.',
+        role:'Olet metsäalan raporttiassistentti. Selkeä asiallinen suomi. Et keksi tietoja.'},
+    output:{title:'Tallenna raportti',foot:'valmis raportti + kiireelliset esiin'},
+    dataForAI:'Kuvio 3 (09:14): harvennus myöhässä, maa märkä, kone jäi jumiin, omistaja soitti.\nKuvio 7 (10:02): taimikko ok, istutus onnistunut.\nKuvio 12 (11:20): ojan reuna sortunut, vaara koneelle, merkattava kartalle heti.\nKuvio 5 (13:40): rajapyykki löytyi, mittaukset tehty.'
+  },
+  asiakas: {
+    name:' — Asiakasposti',
+    trigger:{title:'Kun uusi asiakasviesti saapuu',foot:'Laukeaa saapuvasta postista'},
+    action:{title:'Lue postilaatikko',foot:'saapuneet asiakasviestit'},
+    ai:{placeholder:'Esim: Lue viestit. Merkitse kiireelliset. Kirjoita kohtelias vastausluonnos. Älä lupaa mitään mitä viestissä ei mainita.',
+        role:'Olet asiakaspalvelun assistentti. Kohtelias, selkeä suomi. Et lupaa asioita joita asiakas ei pyytänyt.'},
+    output:{title:'Luo vastausluonnokset',foot:'luonnokset + kiireelliset merkattu'},
+    dataForAI:'1. Pekka Virtanen (12 min): "Milloin toimitus saapuu? Piti tulla eilen."\n2. Koivu Oy (1 t): "Kiitos hyvästä palvelusta!"\n3. Anna Nieminen (2 t): "Lasku näyttää väärältä, summa isompi kuin sovittiin."\n4. Jari Mäkelä (3 t): "Voisinko saada tarjouksen ensi kuulle?"'
+  }
+};
+let currentScenario=null;
+function pickScenario(key){
+  currentScenario=key;
+  document.querySelectorAll('.scen-card').forEach(c=>c.classList.toggle('sel', c.dataset.scen===key));
+  const label=SCENARIOS[key].name;
+  document.getElementById('buildScenName').textContent='Valittu:'+label;
+  const b2=document.getElementById('buildScenName2'); if(b2) b2.textContent=label;
+  resetBuild();
+  try{ localStorage.setItem('m1b_scenario',key); }catch(e){}
+  const names={tyonhaku:'Työnhaku',raportointi:'Raportointi & ala',asiakas:'Asiakasposti'};
+  toast('Maailma valittu: '+names[key]);
+}
+
+const fixState = { trigger:false, ai:false, scope:false };
+const FIX_NODES=[
+  { id:'f1', type:'trigger', name:'Joka yö klo 03:00', foot:'⚠ väärä ajankohta', x:24, y:120 },
+  { id:'f2', type:'action', name:'Lue muistiinpanot', foot:'hakee datan', x:220, y:120 },
+  { id:'f3', type:'ai', name:'Käsittele', foot:'⚠ ohje puuttuu', x:416, y:120 },
+  { id:'f4', type:'output', name:'Tallenna raportti', foot:'vie tuloksen', x:612, y:120 }
+];
+const FIX_EDGES=[['f1','f2'],['f2','f3'],['f3','f4']];
+let fixCfg = { triggerTime:'03:00', aiPrompt:'' };
+
+function renderFix(){
+  const c=document.getElementById('fixCanvas');
+  c.querySelectorAll('.node').forEach(n=>n.remove());
+  FIX_NODES.forEach(n=>{
+    let node={...n};
+    if(n.id==='f1'){ node.foot=fixState.trigger?'✓ arkiaamu klo 08:00':'⚠ väärä ajankohta'; node.name=fixState.trigger?'Joka arkiaamu klo 08:00':'Joka yö klo 03:00'; }
+    if(n.id==='f3') node.foot=(fixState.ai&&fixState.scope)?'✓ selkeä rajattu ohje':(fixState.ai?'⚠ ohje liian laaja':'⚠ ohje puuttuu');
+    c.insertAdjacentHTML('beforeend', nodeHTML(node,false));
+    document.getElementById(n.id).querySelector('.del')?.remove();
+  });
+  FIX_NODES.forEach(n=>{
+    document.getElementById(n.id).addEventListener('click', ()=>selectFix(n.id));
+  });
+  drawEdges('fixEdges', FIX_EDGES, (id,side)=>portPos(c,id,side));
+}
+function selectFix(id){
+  document.querySelectorAll('#fixCanvas .node').forEach(n=>n.classList.toggle('selected', n.id===id));
+  document.getElementById('fixParams').classList.add('open');
+  const node=FIX_NODES.find(n=>n.id===id); const m=NODE_META[node.type];
+  const wrap=document.getElementById('fixParamsIn');
+  let body='';
+  if(id==='f1'){
+    body=`<div class="p-field"><label class="p-label">Milloin ketju käynnistyy <span class="req">*</span></label>
+      <select class="p-select" id="fixTriggerSel">
+        <option value="03:00" ${fixCfg.triggerTime==='03:00'?'selected':''}>Joka yö klo 03:00</option>
+        <option value="08:00" ${fixCfg.triggerTime==='08:00'?'selected':''}>Joka arkiaamu klo 08:00</option>
+      </select>
+      <div class="p-hint">Vika: raportti valmistuu yöllä. Vaihda arkiaamuun.</div></div>`;
+  } else if(id==='f2'){
+    body=`<div class="p-field"><label class="p-label">Toiminto</label><div class="p-static">${node.name}</div><div class="p-hint">Tämä palikka on kunnossa.</div></div>`;
+  } else if(id==='f3'){
+    body=`<div class="p-field"><label class="p-label">Ohje tekoälylle <span class="req">*</span></label>
+      <textarea class="p-area" id="fixAiPrompt" placeholder="Kirjoita selkeä, rajattu ohje...">${fixCfg.aiPrompt}</textarea>
+      <div class="p-hint">Tyhjä tai liian laaja ohje = huono tulos. Kerro muoto ja sisältö.</div></div>`;
+  } else {
+    body=`<div class="p-field"><label class="p-label">Tulos</label><div class="p-static">${node.name}</div></div>`;
+  }
+  wrap.innerHTML=`<div class="params-head"><div class="ph-ic">${m.ic}</div><div class="ph-tt"><div class="n">${node.name}</div><div class="t">${m.type}</div></div></div>${body}`;
+  const sel=document.getElementById('fixTriggerSel');
+  if(sel) sel.addEventListener('change', e=>{ fixCfg.triggerTime=e.target.value; fixState.trigger=(e.target.value==='08:00'); updateBugPills(); renderFix(); selectFix('f1'); });
+  const ta=document.getElementById('fixAiPrompt');
+  if(ta) ta.addEventListener('input', e=>{
+    fixCfg.aiPrompt=e.target.value; const v=e.target.value.trim();
+    fixState.ai=v.length>=8;
+    const broad=/^(tee jotain|tee kaikki|auta|hoida|käsittele|analysoi kaikki)/i.test(v)||(v.length>=8&&v.length<22);
+    fixState.scope=v.length>=22&&!broad;
+    updateBugPills();
+    if(id==='f3'){ const el=document.getElementById('f3'); if(el){ const f=el.querySelector('.nd-foot'); if(f) f.textContent=(fixState.ai&&fixState.scope)?'✓ selkeä ohje':(fixState.ai?'⚠ liian laaja':'⚠ ohje puuttuu'); }}
+  });
+}
+function updateBugPills(){
+  ['trigger','ai','scope'].forEach(k=>{
+    const el=document.getElementById('pill-'+k); if(!el) return;
+    el.classList.toggle('found', fixState[k]);
+    el.querySelector('.x').textContent=fixState[k]?'✓':'○';
+  });
+}
+let fixWon=false;
+async function runFix(){
+  const btn=document.getElementById('fixRun'); if(btn.classList.contains('running'))return;
+  btn.classList.add('running'); btn.textContent='● Suoritetaan...';
+  const log=document.getElementById('fixLog'); document.getElementById('fixExec').classList.add('open');
+  log.innerHTML='';
+  document.getElementById('brokenBanner').classList.remove('show');
+  document.getElementById('fixedBanner').classList.remove('show');
+  document.querySelectorAll('#fixCanvas .node').forEach(n=>{n.classList.remove('ok','err','running'); n.querySelector('.nd-status').textContent='';});
+  const c=document.getElementById('fixCanvas'); const svg=document.getElementById('fixEdges');
+  const sc=SCENARIOS.raportointi;
+  for(const id of ['f1','f2','f3','f4']){
+    const el=document.getElementById(id); el.classList.add('running'); el.querySelector('.nd-status').textContent='●';
+    svg.querySelectorAll(`[data-b="${id}"]`).forEach(p=>p.classList.add('flow'));
+    let failed=false, failMsg='', diag='', hint='';
+    if(id==='f1'&&!fixState.trigger){
+      addLog(log,'Laukaisin: klo 03:00','warn','Laukaisin'); await wait(500);
+      failed=true; failMsg='Raportti valmistui yöllä — kukaan ei lukenut sitä.';
+      diag='<strong>Vika 1:</strong> väärä ajankohta.'; hint='Vaihda <strong>arkiaamu klo 08:00</strong>.';
+    } else if(id==='f1'){ addLog(log,'Laukaisin klo 08:00','ok','Laukaisin'); await wait(400); }
+    if(id==='f2'&&!failed){ addLog(log,'Haetaan muistiinpanot','','Toiminto'); await wait(400); addIOBlock(log,'Data',sc.dataForAI.replace(/\n/g,'<br>')); addLog(log,'4 muistiinpanoa','ok','Toiminto'); }
+    if(id==='f3'&&!failed){
+      if(!fixState.ai){ failed=true; failMsg='Tekoälyllä ei ollut ohjetta.'; diag='<strong>Vika 2:</strong> tyhjä ohje.'; hint='Kirjoita ohje 🤖-palikkaan.'; addLog(log,'Ohje tyhjä','err','Tekoäly'); }
+      else if(!fixState.scope){ failed=true; failMsg='Ohje oli liian laaja.'; diag='<strong>Vika 3:</strong> rajaa ohjetta.'; hint='Kerro otsikot ja muoto.'; addLog(log,'Ohje liian laaja','warn','Tekoäly'); }
+      else {
+        addLog(log,'Tekoäly työstää...','','Tekoäly');
+        try{
+          const out=await window.aiChat(sc.ai.role, fixCfg.aiPrompt+'\n\n--- DATA ---\n'+sc.dataForAI, 700);
+          addIOBlock(log,'Tulos', (out||'').replace(/</g,'&lt;').replace(/\n/g,'<br>'));
+          window._fixResult=out; addLog(log,'Valmis','ok','Tekoäly');
+        }catch(e){ failed=true; failMsg='Yhteysvirhe.'; addLog(log,'Virhe','err','Tekoäly'); }
+      }
+    }
+    if(id==='f4'&&!failed){ addLog(log,'Raportti tallennettu','ok','Tulos'); await wait(300); }
+    svg.querySelectorAll(`[data-b="${id}"]`).forEach(p=>p.classList.remove('flow'));
+    if(failed){
+      el.classList.remove('running'); el.classList.add('err'); el.querySelector('.nd-status').textContent='!';
+      document.getElementById('brokenText').textContent=failMsg;
+      document.getElementById('brokenDiag').innerHTML=diag;
+      document.getElementById('brokenHint').innerHTML=hint;
+      document.getElementById('brokenBanner').classList.add('show');
+      btn.classList.remove('running'); btn.textContent='▶ Suorita uudelleen'; return;
+    }
+    el.classList.remove('running'); el.classList.add('ok'); el.querySelector('.nd-status').textContent='✓';
+  }
+  document.getElementById('fixActive').textContent='Active';
+  document.getElementById('fixSwitch').style.background='var(--green)';
+  document.querySelector('#fixShell .bt-dot').style.background='var(--green)';
+  if(window._fixResult) document.getElementById('fixResult').textContent=window._fixResult;
+  document.getElementById('fixedBanner').classList.add('show');
+  btn.classList.remove('running'); btn.textContent='▶ Suorita uudelleen';
+  if(!fixWon){ fixWon=true; toast('🎉 Kaikki viat korjattu!'); }
+}
+
+let buildNodes=[], buildEdges=[], selectedId=null, nodeCounter=0;
+const canvas=document.getElementById('canvas');
+const edgesSvg=document.getElementById('edges');
+let dragType=null;
+document.querySelectorAll('.pal-node').forEach(pn=>{
+  pn.addEventListener('dragstart', e=>{ dragType=pn.dataset.type; e.dataTransfer.effectAllowed='copy'; });
+  pn.addEventListener('click', ()=>{ const n=buildNodes.length; addNode(pn.dataset.type, 30+(n%3)*195, 30+Math.floor(n/3)*120); });
+});
+canvas.addEventListener('dragover', e=>{ e.preventDefault(); document.getElementById('dropHi').classList.add('on'); });
+canvas.addEventListener('dragleave', e=>{ if(e.target===canvas) document.getElementById('dropHi').classList.remove('on'); });
+canvas.addEventListener('drop', e=>{
+  e.preventDefault(); document.getElementById('dropHi').classList.remove('on');
+  if(!dragType) return; const cr=canvas.getBoundingClientRect();
+  addNode(dragType, e.clientX-cr.left-86, e.clientY-cr.top-34); dragType=null;
+});
+function addNode(type,x,y){
+  x=Math.max(6,Math.min(x,canvas.clientWidth-178)); y=Math.max(6,Math.min(y,canvas.clientHeight-96));
+  const id='n'+(++nodeCounter);
+  const preset=currentScenario?SCENARIOS[currentScenario][type]:null; const meta=NODE_META[type];
+  const node={id,type,name:preset&&preset.title?preset.title:meta.type,foot:preset&&preset.foot?preset.foot:'',x,y,config:type==='ai'?{prompt:''}:{}};
+  buildNodes.push(node);
+  canvas.insertAdjacentHTML('beforeend', nodeHTML(node,false));
+  document.getElementById('canvasHint').classList.add('hidden');
+  wireNode(id); renderEdges(); selectNode(id);
+}
+function wireNode(id){
+  const el=document.getElementById(id);
+  el.addEventListener('mousedown', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; startNodeDrag(ev,id); });
+  el.addEventListener('click', ev=>{
+    if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return;
+    if(touchWireSrc&&touchWireSrc!==id){connect(touchWireSrc,id);touchWireSrc=null;document.getElementById(id)?.classList.remove('wiring-src');return;}
+    selectNode(id);
+  });
+  el.querySelector('.del').addEventListener('click', ev=>{ ev.stopPropagation(); deleteNode(id); });
+  el.querySelector('.port.out').addEventListener('mousedown', ev=>{ ev.stopPropagation(); startWire(ev,id); });
+  el.querySelector('.port.out').addEventListener('click', ev=>{ ev.stopPropagation(); touchWireStart(id); });
+}
+let dragNode=null, dragOff={x:0,y:0};
+function startNodeDrag(ev,id){
+  dragNode=id; const node=buildNodes.find(n=>n.id===id); const cr=canvas.getBoundingClientRect();
+  dragOff={x:ev.clientX-cr.left-node.x,y:ev.clientY-cr.top-node.y};
+  document.addEventListener('mousemove',onNodeDrag); document.addEventListener('mouseup',stopNodeDrag);
+}
+function onNodeDrag(ev){
+  if(!dragNode)return; const node=buildNodes.find(n=>n.id===dragNode); const cr=canvas.getBoundingClientRect();
+  node.x=Math.max(6,Math.min(ev.clientX-cr.left-dragOff.x,canvas.clientWidth-178));
+  node.y=Math.max(6,Math.min(ev.clientY-cr.top-dragOff.y,canvas.clientHeight-96));
+  const el=document.getElementById(dragNode); el.style.left=node.x+'px'; el.style.top=node.y+'px'; renderEdges();
+}
+function stopNodeDrag(){ dragNode=null; document.removeEventListener('mousemove',onNodeDrag); document.removeEventListener('mouseup',stopNodeDrag); }
+let wireSrc=null, tempPath=null;
+function startWire(ev,id){
+  wireSrc=id; document.getElementById(id).classList.add('wiring-src');
+  document.querySelectorAll('#canvas .node .port.in').forEach(p=>{ if(p.closest('.node').id!==id) p.classList.add('can-target'); });
+  tempPath=document.createElementNS('http://www.w3.org/2000/svg','path'); tempPath.setAttribute('class','edge-path'); edgesSvg.appendChild(tempPath);
+  document.addEventListener('mousemove',onWire); document.addEventListener('mouseup',stopWire);
+}
+function onWire(ev){
+  if(!wireSrc)return; const cr=canvas.getBoundingClientRect(); const pa=portPos(canvas,wireSrc,'out');
+  const mx=ev.clientX-cr.left,my=ev.clientY-cr.top; const dx=Math.max(40,(mx-pa.x)*0.5);
+  tempPath.setAttribute('d',`M ${pa.x} ${pa.y} C ${pa.x+dx} ${pa.y}, ${mx-dx} ${my}, ${mx} ${my}`);
+}
+function stopWire(ev){
+  document.removeEventListener('mousemove',onWire); document.removeEventListener('mouseup',stopWire);
+  document.querySelectorAll('.port.can-target').forEach(p=>p.classList.remove('can-target'));
+  if(wireSrc) document.getElementById(wireSrc)?.classList.remove('wiring-src');
+  if(tempPath){ tempPath.remove(); tempPath=null; }
+  const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('.node');
+  if(target && wireSrc && target.id!==wireSrc && target.closest('#canvas')) connect(wireSrc,target.id);
+  wireSrc=null;
+}
+let touchWireSrc=null;
+function touchWireStart(id){
+  if(touchWireSrc===id){ touchWireSrc=null; document.getElementById(id).classList.remove('wiring-src'); return; }
+  touchWireSrc=id; document.getElementById(id).classList.add('wiring-src'); toast('Napauta kohdepalikka');
+}
+function connect(a,b){ if(a===b)return; if(buildEdges.some(([x,y])=>x===a&&y===b))return; buildEdges.push([a,b]); renderEdges(); toast('Kytketty'); }
+function deleteNode(id){
+  buildNodes=buildNodes.filter(n=>n.id!==id); buildEdges=buildEdges.filter(([a,b])=>a!==id&&b!==id);
+  document.getElementById(id)?.remove(); if(selectedId===id){selectedId=null;renderParams();} renderEdges();
+  if(buildNodes.length===0) document.getElementById('canvasHint').classList.remove('hidden');
+}
+function renderEdges(){ drawEdges('edges', buildEdges, (id,side)=>portPos(canvas,id,side)); }
+function selectNode(id){ selectedId=id; document.querySelectorAll('#canvas .node').forEach(n=>n.classList.toggle('selected',n.id===id)); renderParams(); }
+function renderParams(){
+  const wrap=document.getElementById('paramsIn');
+  if(!selectedId){ wrap.innerHTML='<div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa</div>'; return; }
+  const node=buildNodes.find(n=>n.id===selectedId); const m=NODE_META[node.type]; const sc=currentScenario?SCENARIOS[currentScenario]:null;
+  let fields='';
+  if(node.type==='ai'){
+    fields=`<div class="p-field"><label class="p-label">Ohje tekoälylle <span class="req">*</span></label>
+      <textarea class="p-area" id="aiPrompt" placeholder="${sc?sc.ai.placeholder:'Rajattu ohje...'}">${node.config.prompt||''}</textarea></div>`;
+  } else {
+    fields=`<div class="p-field"><label class="p-label">Palikka</label><div class="p-static">${node.name}<br><span style="font-size:12px;color:var(--ink3)">${node.foot}</span></div></div>`;
+  }
+  wrap.innerHTML=`<div class="params-head"><div class="ph-ic">${m.ic}</div><div class="ph-tt"><div class="n">${node.name}</div><div class="t">${m.type}</div></div></div>${fields}`;
+  const ta=document.getElementById('aiPrompt'); if(ta) ta.addEventListener('input', e=>{ node.config.prompt=e.target.value; });
+}
+function resetBuild(){
+  buildNodes=[]; buildEdges=[]; selectedId=null; nodeCounter=0;
+  canvas.querySelectorAll('.node').forEach(n=>n.remove()); renderEdges(); renderParams();
+  document.getElementById('canvasHint').classList.remove('hidden'); document.getElementById('resultCard').classList.remove('show');
+}
+let buildRan=false;
+async function runBuild(){
+  if(!currentScenario){ toast('Valitse maailma ensin'); return; }
+  const btn=document.getElementById('buildRun'); if(btn.classList.contains('running'))return;
+  const aiNode=buildNodes.find(n=>n.type==='ai');
+  if(buildNodes.length<3||!buildNodes.some(n=>n.type==='trigger')||!aiNode||!buildNodes.some(n=>n.type==='output')){ toast('Tarvitset: Laukaisin → Tekoäly → Tulos'); return; }
+  if(!aiNode.config.prompt||aiNode.config.prompt.trim().length<8){ toast('Kirjoita tekoälyn ohje'); selectNode(aiNode.id); return; }
+  btn.classList.add('running'); btn.textContent='● Suoritetaan...';
+  const log=document.getElementById('buildLog'); document.getElementById('buildExec').classList.add('open'); log.innerHTML='';
+  document.getElementById('resultCard').classList.remove('show');
+  const sc=SCENARIOS[currentScenario];
+  document.getElementById('buildExecMeta').textContent=sc.name.replace(' — ','');
+  const ordered=[...buildNodes].sort((a,b)=>{ const r=t=>t==='trigger'?0:t==='output'?9:t==='action'?1:t==='ai'?3:2; return r(a.type)-r(b.type)||a.x-b.x; });
+  let aiResult='';
+  for(const node of ordered){
+    const el=document.getElementById(node.id); el.classList.add('running'); el.querySelector('.nd-status').textContent='●';
+    try{
+      if(node.type==='trigger'){ addLog(log,node.name,'ok',node.name); await wait(500); }
+      else if(node.type==='action'){ addLog(log,'Haetaan data','',node.name); await wait(450); addIOBlock(log,'Data',sc.dataForAI.replace(/\n/g,'<br>')); addLog(log,'OK','ok',node.name); }
+      else if(node.type==='filter'){ addLog(log,'Suodatus','warn',node.name); await wait(400); }
+      else if(node.type==='ai'){
+        addLog(log,'Tekoäly...','',node.name);
+        aiResult=await window.aiChat(sc.ai.role, node.config.prompt+'\n\n--- DATA ---\n'+sc.dataForAI, 700);
+        addIOBlock(log,'Tulos', (aiResult||'').replace(/</g,'&lt;').replace(/\n/g,'<br>'));
+        addLog(log,'Valmis','ok',node.name);
+      }
+      else { addLog(log,node.name+' valmis','ok',node.name); await wait(350); }
+      el.classList.remove('running'); el.classList.add('ok'); el.querySelector('.nd-status').textContent='✓';
+    }catch(err){
+      el.classList.remove('running'); el.classList.add('err');
+      addLog(log,'Virhe: '+(err.message||'yhteys'),'err',node.name);
+      btn.classList.remove('running'); btn.textContent='▶ Suorita uudelleen'; return;
+    }
+  }
+  if(aiResult){ document.getElementById('resultOut').textContent=aiResult; document.getElementById('resultCard').classList.add('show'); }
+  document.getElementById('activeLabel').textContent='Active';
+  document.getElementById('activeSwitch').style.background='var(--green)';
+  document.getElementById('btDot').style.background='var(--green)';
+  btn.classList.remove('running'); btn.textContent='▶ Suorita uudelleen';
+  if(!buildRan){ buildRan=true; toast('🎉 Automaatio toimii!'); }
+}
+
+const interviewDone={1:false,2:false};
+async function askInterview(n){
+  const val=document.getElementById('q'+n).value.trim();
+  if(val.length<10){ toast('Kirjoita pidempi vastaus'); return; }
+  const btn=document.getElementById('q'+n+'btn'); btn.disabled=true;
+  const resp=document.getElementById('q'+n+'resp'); const txt=document.getElementById('q'+n+'text');
+  resp.style.display='block'; txt.innerHTML='<span class="dots"><span></span><span></span><span></span></span>';
+  const questions={
+    1:'Kuvittele automaatio joka lähettää asiakkaalle vastauksen. Mikä voisi mennä pieleen ja miten estäisit sen.',
+    2:'Kolme vikaa: väärä laukaisin, tyhjä ohje, liian laaja ohje. Kumpi olisi sinulle vaikein huomata ja miksi.'
+  };
+  const role='Olet lämmin tekoälyopettaja. Selkeä suomi. 3-5 lausetta palautetta. Ei numeroita.';
+  try{
+    const out=await window.aiChat(role,'Kysymys: "'+questions[n]+'"\n\nVastaus: "'+val+'"',400);
+    txt.textContent=out||'Hyvä ajattelu!';
+    interviewDone[n]=true;
+    if(n===1){ const w=document.getElementById('q2wrap'); w.style.opacity='1'; w.style.pointerEvents='auto'; }
+    if(interviewDone[1]&&interviewDone[2]) document.getElementById('doneWrap').style.display='block';
+  }catch(e){ txt.textContent='Yhteysvirhe — vastaus tallennettu.'; interviewDone[n]=true; }
+  btn.disabled=false;
+}
+
+window.addEventListener('resize', ()=>{ renderFix(); renderEdges(); });
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderFix(); updateBugPills();
+  try{ const s=localStorage.getItem('m1b_scenario'); if(s&&SCENARIOS[s]) pickScenario(s); }catch(e){}
+});
+setTimeout(()=>{ renderFix(); renderEdges(); }, 400);
+</script>
+</body>
+</html>
