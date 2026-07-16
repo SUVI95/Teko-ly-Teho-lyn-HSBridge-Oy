@@ -215,6 +215,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+/** Moniakava clone leftover: AI Polku home is `/`, not `/dashboard`. */
+app.get('/dashboard', (req, res) => {
+  res.redirect(302, '/');
+});
+
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
