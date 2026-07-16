@@ -517,6 +517,12 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-jani-tutkimus-kirjoitus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
   'moduuli-karpo-tutkimus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
   'moduuli-anne-tyonhaku-2026', // removed from dashboard — kept on disk for admin reference only
+  'moduuli-ella-myyntisprintti', // temporarily admin-only — no student/gift access
+]);
+
+/** Admin-only modules that also block personal-gift recipients (no /module/ bypass). */
+const STRICT_ADMIN_ONLY_MODULE_IDS = new Set([
+  'moduuli-ella-myyntisprintti',
 ]);
 
 /** Soft-locked modules: visible on dashboard with lock badge but only admin can open. */
@@ -567,6 +573,9 @@ app.get('/module/:moduleId', async (req, res) => {
   if (ADMIN_ONLY_MODULE_IDS.has(moduleId) && !viewerIsAdmin) {
     if (moduleId === 'moduuli-ai-verkkosivustotyokalut') {
       return res.redirect(302, '/module/moduuli-elava-cv');
+    }
+    if (STRICT_ADMIN_ONLY_MODULE_IDS.has(moduleId)) {
+      return res.redirect(302, '/');
     }
     let giftUser = { email: '', name: '' };
     if (token) {
