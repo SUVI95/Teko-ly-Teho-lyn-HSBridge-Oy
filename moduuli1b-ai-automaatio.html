@@ -134,9 +134,11 @@ h2.h em { font-style:italic; color:var(--orange); }
 .canvas-wrap { flex:1; position:relative; overflow:hidden; background:var(--canvas-bg);
   background-image:radial-gradient(var(--canvas-dot) 1.1px, transparent 1.1px);
   background-size:18px 18px; }
+.canvas-wrap.fix-settings-only { overflow-x:auto; overflow-y:hidden; min-height:360px; }
+.canvas-wrap.fix-settings-only svg { position:absolute; top:0; left:0; height:100%; pointer-events:none; z-index:1; }
 .canvas-hint { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:.5rem; color:var(--n8n-muted); pointer-events:none; text-align:center; padding:1rem; }
-.canvas-hint.fix-hint { align-items:flex-end; justify-content:flex-end; padding:.65rem .85rem; }
-.canvas-hint.fix-hint span { font-size:.68rem; background:rgba(255,255,255,.92); border:1px solid var(--panel-line); border-radius:8px; padding:.35rem .55rem; max-width:280px; line-height:1.45; }
+.canvas-hint.fix-hint { position:sticky; left:auto; right:.75rem; bottom:.75rem; width:auto; height:auto; inset:auto; align-items:flex-end; justify-content:flex-end; padding:0; z-index:3; }
+.canvas-hint.fix-hint span { font-size:.68rem; background:rgba(255,255,255,.95); border:1px solid var(--panel-line); border-radius:8px; padding:.4rem .6rem; max-width:260px; line-height:1.45; box-shadow:0 2px 8px rgba(0,0,0,.06); }
 .canvas-wrap.fix-settings-only .node { cursor:pointer; }
 .canvas-hint .ch-box { width:150px; height:70px; border:2px dashed #c3c9d1; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.75rem; color:var(--n8n-muted); background:rgba(255,255,255,.5); }
 .canvas-hint.hidden { display:none; }
@@ -464,7 +466,7 @@ h2.h em { font-style:italic; color:var(--orange); }
       </div>
     </div>
     <div class="builder-main">
-      <div class="canvas-wrap fix-settings-only" id="fixCanvas" style="min-height:320px;">
+      <div class="canvas-wrap fix-settings-only" id="fixCanvas">
         <svg id="fixEdges"></svg>
         <div class="canvas-hint fix-hint"><span>Ketju on valmiiksi kytketty. <strong>Klikkaa palikkaa</strong> ja korjaa sen asetuksia — ei tarvitse vetää yhteyksiä.</span></div>
       </div>
@@ -515,7 +517,7 @@ h2.h em { font-style:italic; color:var(--orange); }
         <div class="bt-right"><div class="bt-toggle"><span id="fix2Active">Inactive</span><span class="bt-switch" id="fix2Switch"></span></div><button class="bt-run" id="fix2Run" onclick="runFixLevel('fix2')">▶ Suorita</button></div>
       </div>
       <div class="builder-main">
-        <div class="canvas-wrap fix-settings-only" id="fix2Canvas" style="min-height:300px;"><svg id="fix2Edges"></svg><div class="canvas-hint fix-hint"><span>Klikkaa palikkaa ja korjaa asetuksia — ketju pysyy samana.</span></div></div>
+        <div class="canvas-wrap fix-settings-only" id="fix2Canvas"><svg id="fix2Edges"></svg><div class="canvas-hint fix-hint"><span>Klikkaa palikkaa ja korjaa asetuksia — ketju pysyy samana.</span></div></div>
         <div class="params" id="fix2Params"><div class="params-in" id="fix2ParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa korjataksesi asetukset</div></div></div>
       </div>
       <div class="exec" id="fix2Exec"><div class="exec-head"><div class="eh-l"><span class="live"></span> Suoritusloki</div></div><div class="exec-body" id="fix2Log"></div></div>
@@ -546,7 +548,7 @@ h2.h em { font-style:italic; color:var(--orange); }
         <div class="bt-right"><div class="bt-toggle"><span id="fix3Active">Inactive</span><span class="bt-switch" id="fix3Switch"></span></div><button class="bt-run" id="fix3Run" onclick="runFixLevel('fix3')">▶ Suorita</button></div>
       </div>
       <div class="builder-main">
-        <div class="canvas-wrap fix-settings-only" id="fix3Canvas" style="min-height:300px;"><svg id="fix3Edges"></svg><div class="canvas-hint fix-hint"><span>Klikkaa palikkaa ja korjaa asetuksia — ketju pysyy samana.</span></div></div>
+        <div class="canvas-wrap fix-settings-only" id="fix3Canvas"><svg id="fix3Edges"></svg><div class="canvas-hint fix-hint"><span>Klikkaa palikkaa ja korjaa asetuksia — ketju pysyy samana.</span></div></div>
         <div class="params" id="fix3Params"><div class="params-in" id="fix3ParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa — älä ohita yhtään</div></div></div>
       </div>
       <div class="exec" id="fix3Exec"><div class="exec-head"><div class="eh-l"><span class="live"></span> Suoritusloki</div></div><div class="exec-body" id="fix3Log"></div></div>
@@ -1222,9 +1224,27 @@ function unlockFixLevel(n){
   if(el) el.classList.remove('fix-level-locked');
 }
 
+const FIX_NODE_W=172, FIX_NODE_GAP=56, FIX_NODE_PAD=40, FIX_NODE_Y=88;
+function layoutFixNodes(d, canvasEl){
+  const count=d.nodes.length;
+  d.nodes.forEach((n,i)=>{
+    n.x=FIX_NODE_PAD+i*(FIX_NODE_W+FIX_NODE_GAP);
+    n.y=FIX_NODE_Y;
+  });
+  const chainW=FIX_NODE_PAD*2+count*FIX_NODE_W+(count-1)*FIX_NODE_GAP;
+  canvasEl.style.minWidth=chainW+'px';
+  const svg=canvasEl.querySelector('svg');
+  if(svg){
+    svg.style.width=chainW+'px';
+    svg.style.minWidth=chainW+'px';
+    svg.style.height='100%';
+  }
+}
+
 function renderFixLevel(levelId){
   const d=FIX_DEFS[levelId]; syncFixState(levelId);
   const c=fixEl(levelId,'canvas');
+  layoutFixNodes(d, c);
   c.querySelectorAll('.node').forEach(n=>n.remove());
   d.nodes.forEach(n=>{
     let node={...n};
