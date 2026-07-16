@@ -2218,16 +2218,80 @@ function updateStarVoicePrompt(){
 function escHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+/** Shared coaching voice for Claude feedback — beginners, little work history OK. */
+const HA_COACH_BASE=[
+  'Olet kokenut suomalainen rekrytoija ja haastattelucoach. Opetat asiakaspalvelun haastattelutaitoja ihmisille joilla on usein vähän muodollista työkokemusta.',
+  'Hyväksy täysin: koulu, harjoittelu, kesätyö, kassa, hoiva, harrastus, vapaaehtoistyö, sisarusten/lasten hoitaminen, oma yritys, maahanmuuttotausta. Älä vaadi "isoa yrityskokemusta".',
+  'LUE vastaus oikeasti. Jos se on jo vahva ja konkreettinen, SANO se suoraan — älä keksi ongelmaa. Älä anna geneeristä "hyvää yritystä" ilman sisältöä.',
+  'Kun annat palautetta: siteeraa hakijan omia sanoja lyhyesti, jotta hän näkee että luit tekstin.',
+  'Kirjoita suomea, selkeästi, aikuiselle. Ei emojia. Ei bullet-listaa ellei pyydetä. Ei englantia.'
+].join(' ');
+
+function haStarWriteSystem(){
+  return [
+    HA_COACH_BASE,
+    '',
+    'Tehtävä: arvioi STAR-vastaus (S=tilanne, T=tehtävä/vastuu, A=toiminta, R=tulos).',
+    '',
+    'Mitä "hyvä" tarkoittaa tässä:',
+    '- S: paikka/aika/konteksti ymmärrettävä (ei tarvitse olla dramaattinen)',
+    '- T: hakijan oma vastuu selviää',
+    '- A: MITÄ MINÄ TEIN askel askeleelta, minä-muoto (ei vain "me" / "tiimi hoiti")',
+    '- R: mitä seurasi + mahdollisesti mitä oppi',
+    '',
+    'Palautteen RAKENNE (pakollinen, 4–6 lyhyttä lausetta):',
+    '1) Mikä toimi — nimeä 1–2 vahvaa kohtaa ja siteeraa hakijaa.',
+    '2) STAR-lukema — onko S/T/A/R paikallaan? Jos joku osa on heikko, nimeä se.',
+    '3) Yksi konkreettinen parannus — anna esimerkki miten yksi lause voisi kuulostaa vahvemmalta (kirjoita mallilause).',
+    '4) Jos vastaus on jo vahva: sano "Tämä kelpaa haastatteluun sellaisenaan" ja anna vain pieni kiillotus, älä keksi isoa virhettä.',
+    '',
+    'Vältä: kliseitä ("ole oma itsesi"), tyhjiä kehuja, "lisää yksityiskohtia" ilman esimerkkiä, vaatimusta CV-tason yritysroolista.'
+  ].join('\n');
+}
+
+function haVoiceCoachSystem(kind){
+  const topic=kind==='star'
+    ? 'STAR-vastauksen äänitteestä (tilanne–tehtävä–toiminta–tulos)'
+    : 'hissipuheen äänitteestä (tausta + vahvuus + suunta)';
+  return [
+    HA_COACH_BASE,
+    'Tehtävä: anna palaute '+topic+'.',
+    'Rakenne (3–5 lausetta):',
+    '1) Yksi asia joka toimi — siteeraa transkriptiota.',
+    '2) Yksi konkreettinen parannus (esim. lisää yksi "minä tein X" -askel, lyhennä, selkeytä tulos).',
+    '3) Jos tarina oli jo selkeä: sano se suoraan. Älä keksi ongelmaa.',
+    'Muista: puhe voi olla epätäydellistä — arvioi sisältöä, älä murretta tai täytesanoja.'
+  ].join('\n');
+}
+
+function getStarQuestionTitle(q){
+  const el=document.querySelector('#starQ'+q+' .star-q-title');
+  return el?(el.textContent||'').trim():'';
+}
+
 async function evalWrite(q){
   q=q||1;
   const ids=starFbIds(q);
   const btn=document.getElementById(starEvalBtnId(q));
   btn.disabled=true;
   load(ids.txt);
+  try{syncSFromDom();}catch(e){}
   const [s,t,a,r]=getStarValues(q);
-  const sys='Olet kokenut rekrytoija. Arvioit STAR-vastauksen asiakaspalvelun haastatteluun. Arvioi: (1) onko S/T/A/R siellä, (2) onko Action konkreettinen ja henkilökohtainen, (3) yksi parannus. Max 3 lausetta. Suomi. Kannustava mutta rehellinen.';
-  const txt=await ai(`S: ${s}\nT: ${t}\nA: ${a}\nR: ${r}`,sys,400);
-  document.getElementById(ids.txt).textContent=txt||'Hyvä vastaus.';
+  const question=getStarQuestionTitle(q);
+  const userPrompt=[
+    'Haastattelukysymys: '+question,
+    '',
+    'Hakijan STAR-vastaus:',
+    'S (tilanne): '+s,
+    'T (tehtävä/vastuu): '+t,
+    'A (toiminta — mitä minä tein): '+a,
+    'R (tulos): '+r,
+    '',
+    'Anna palaute yllä olevalla rakenteella. Lue jokainen kenttä — älä oleta että vastaus on heikko.'
+  ].join('\n');
+  const txt=await ai(userPrompt,haStarWriteSystem(),700);
+  document.getElementById(ids.txt).textContent=txt||'En saanut yhteyttä arviointiin — yritä hetken päästä uudelleen.';
   document.getElementById(ids.fb).classList.add('show');
   if(q===1)S.starAnswer=`S: ${s}\nT: ${t}\nA: ${a}\nR: ${r}`;
   syncStarUnlockFromProgress();
@@ -2360,8 +2424,40 @@ function checkHardSectionDone(){
   const ok=['weakFb','whyFb','palkkaFb'].every(id=>document.getElementById(id)?.classList.contains('show'));
   if(ok)pd.classList.add('show');
 }
-async function evalWeak(){document.getElementById('weakBtn').disabled=true;load('weakFbT');const sys='Arvioit heikkousvastauksen. Rakenne: heikkous + esimerkki + mitä teen nyt. 1-2 lausetta. Suomi.';const txt=await ai(S.w_weak,sys,300);document.getElementById('weakFbT').textContent=txt;document.getElementById('weakFb').classList.add('show');document.getElementById('weakBtn').disabled=false;checkHardSectionDone();try{saveProgress();}catch(e){}}
-async function evalWhy(){document.getElementById('whyBtn').disabled=true;load('whyFbT');const sys='Arvioit "miksi haluat tätä työtä" -vastauksen. Rakenne: miksi rooli + miksi yritys + mitä tuot. 1-2 lausetta. Suomi.';const txt=await ai(S.w_why,sys,300);document.getElementById('whyFbT').textContent=txt;document.getElementById('whyFb').classList.add('show');document.getElementById('whyBtn').disabled=false;checkHardSectionDone();try{saveProgress();}catch(e){}}
+async function evalWeak(){
+  document.getElementById('weakBtn').disabled=true;load('weakFbT');
+  try{syncSFromDom();}catch(e){}
+  const sys=[
+    HA_COACH_BASE,
+    'Tehtävä: arvioi "kerro heikkoudestasi" -vastaus.',
+    'Hyvä vastaus = rehellinen heikkous + yksi konkreettinen esimerkki + mitä teet NYT toisin. "Perfektionismi" ilman esimerkkiä on klisee.',
+    'Rakenne (3–5 lausetta): (1) mikä toimi / siteeraa, (2) puuttuuko esimerkki tai muutos, (3) yksi mallilause jolla vastaus vahvistuu.',
+    'Jos vastaus on jo rehellinen ja konkreettinen: sano se suoraan.'
+  ].join('\n');
+  const txt=await ai('Hakijan heikkousvastaus:\n'+(S.w_weak||''),sys,550);
+  document.getElementById('weakFbT').textContent=txt||'En saanut yhteyttä arviointiin — yritä uudelleen.';
+  document.getElementById('weakFb').classList.add('show');
+  document.getElementById('weakBtn').disabled=false;
+  checkHardSectionDone();
+  try{saveProgress();}catch(e){}
+}
+async function evalWhy(){
+  document.getElementById('whyBtn').disabled=true;load('whyFbT');
+  try{syncSFromDom();}catch(e){}
+  const sys=[
+    HA_COACH_BASE,
+    'Tehtävä: arvioi "miksi haluat tätä työtä / asiakaspalvelua" -vastaus.',
+    'Hyvä vastaus yhdistää: miksi rooli + (jos mahdollista) miksi tämä tyyppinen työ + mitä hakija tuo. Yksi tarina voittaa kolme adjektiivia.',
+    'Rakenne (3–5 lausetta): (1) mikä toimi / siteeraa, (2) onko todiste vai vain "nautin ihmisten auttamisesta", (3) yksi konkreettinen lisäys.',
+    'Jos vastaus on jo tarinallinen ja aito: sano se suoraan.'
+  ].join('\n');
+  const txt=await ai('Hakijan vastaus:\n'+(S.w_why||''),sys,550);
+  document.getElementById('whyFbT').textContent=txt||'En saanut yhteyttä arviointiin — yritä uudelleen.';
+  document.getElementById('whyFb').classList.add('show');
+  document.getElementById('whyBtn').disabled=false;
+  checkHardSectionDone();
+  try{saveProgress();}catch(e){}
+}
 
 function earnPreview(text,max){
   if(!text||text==='—')return 'Avaa nähdäksesi tai kopioidaksesi';
@@ -2417,8 +2513,15 @@ function checkHP(){
 async function buildHP(){
   document.getElementById('hpBuildBtn').disabled=true;
   load('hpFbT');
-  const sys='Olet uravalmentaja. Rakennat hakijalle 45-60 sekunnin hissipuheen asiakaspalvelun haastatteluun. Kolme palasta saatu: tausta, vahvuus, suunta. Kirjoita puhe ensimmäisessä persoonassa. Ei kliseitä kuten "tiimipelaaja" tai "intohimoinen". Aloita konkreettisella faktalla tai tilanteella — ei "Olen...". Max 4 lausetta. Kuulostaa ihmiseltä, ei tekoälylta. Suomi.';
-  const txt=await ai(`Tausta: ${S.hp1}\nVahvuus: ${S.hp2}\nSuunta: ${S.hp3}`,sys,300);
+  try{syncSFromDom();}catch(e){}
+  const sys=[
+    HA_COACH_BASE,
+    'Tehtävä: rakenna 45–60 sekunnin hissipuhe asiakaspalvelun haastatteluun kolmesta palasesta (tausta, vahvuus, suunta).',
+    'Kirjoita ensimmäisessä persoonassa. Aloita konkreettisella faktalla tai tilanteella — ei "Olen intohimoinen...".',
+    'Ei kliseitä ("tiimipelaaja", "intohimoinen", "aina positiivinen"). Max 4 luonnollista lausetta. Kuulosta ihmiseltä.',
+    'Käytä hakijan omia sisältöjä — älä keksi uusia faktoja joita hän ei antanut.'
+  ].join('\n');
+  const txt=await ai(`Tausta: ${S.hp1}\nVahvuus: ${S.hp2}\nSuunta: ${S.hp3}`,sys,400);
   document.getElementById('hpFbT').textContent=txt||'Hissipuhetta ei voitu rakentaa — tarkista yhteys.';
   document.getElementById('hpFb').classList.add('show');
   S.hpBuilt=txt;
@@ -2429,8 +2532,13 @@ async function buildHP(){
 async function filterHP(){
   document.getElementById('hpFilterBtn').disabled=true;
   load('hpFilterT');
-  const sys='Olet kokenut rekrytoija suomalaisessa yrityksessä. Kuuntelet hakijan hissipuheen asiakaspalvelurooliin. Kerro: (1) Mitä kuulet — kaksi asiaa jotka rekisteröityvät positiivisesti, (2) Mitä mietit — yksi epäselvä kohta tai puuttuva tieto, (3) Yksi konkreettinen lisäys joka tekisi puheesta vahvemman. Max 3-4 lyhyttä lausetta. Suomi. Ei ylistystä.';
-  const txt=await ai(`Hissipuhe: ${S.hpBuilt||document.getElementById('hpFbT').textContent}`,sys,350);
+  const sys=[
+    HA_COACH_BASE,
+    'Tehtävä: kuuntele (lue) hissipuhe asiakaspalvelurooliin rekrytoijan korvin.',
+    'Rakenne (4–5 lausetta): (1) kaksi asiaa jotka rekisteröityvät positiivisesti — siteeraa, (2) yksi epäselvä kohta JOS sellainen on (muuten sano että puhe on jo selkeä), (3) yksi konkreettinen lisäys mallilauseella.',
+    'Älä keksi heikkoutta jos puhe on jo vahva.'
+  ].join('\n');
+  const txt=await ai(`Hissipuhe:\n${S.hpBuilt||document.getElementById('hpFbT').textContent}`,sys,550);
   document.getElementById('hpFilterT').textContent=txt||'—';
   document.getElementById('hpFilterFb').classList.add('show');
   document.getElementById('hpFixReveal').classList.add('show');
@@ -2479,10 +2587,24 @@ function initVastav(){
 function checkVastav(){document.getElementById('evalVastavBtn').disabled=!S.w_vastav||S.w_vastav.trim().length<30;}
 async function evalVastav(){
   document.getElementById('evalVastavBtn').disabled=true;load('vastavFbT');
-  const sys='Olet rekrytoija joka kuulee hakijan puolustavan STAR-vastaustaan. Arvioi: (1) lisäsikö hakija konkreettisia yksityiskohtia vai toistiko saman, (2) kuulostaako vastaus aidolta, (3) yksi asia joka vahvistaisi puolustusta entisestään. Max 3 lausetta. Suomi.';
-  const prompt9='STAR: '+S.w_s+' '+S.w_a+' Puolustus: '+S.w_vastav;
-  const txt=await ai(prompt9,sys,350);
-  document.getElementById('vastavFbT').textContent=txt||'Hyvä puolustus.';
+  try{syncSFromDom();}catch(e){}
+  const sys=[
+    HA_COACH_BASE,
+    'Tehtävä: hakija puolustaa STAR-vastaustaan kun rekrytoija kyseenalaistaa.',
+    'Rakenne (3–5 lausetta): (1) lisäsikö hän uusia konkreettisia yksityiskohtia vai toistikö saman — siteeraa, (2) kuulostaako aidolta, (3) yksi lause jolla puolustus vahvistuisi entisestään.',
+    'Jos puolustus on jo vahva: sano se suoraan.'
+  ].join('\n');
+  const prompt9=[
+    'Alkuperäinen STAR:',
+    'S: '+(S.w_s||''),
+    'A: '+(S.w_a||''),
+    'R: '+(S.w_r||''),
+    '',
+    'Hakijan puolustus / tarkennus:',
+    S.w_vastav||''
+  ].join('\n');
+  const txt=await ai(prompt9,sys,550);
+  document.getElementById('vastavFbT').textContent=txt||'En saanut yhteyttä arviointiin — yritä uudelleen.';
   document.getElementById('vastavFb').classList.add('show');
   document.getElementById('vastavReveal').classList.add('show');
   document.getElementById('evalVastavBtn').disabled=false;
@@ -2524,10 +2646,17 @@ function checkCompany(){
 }
 async function evalCompany(){
   document.getElementById('evalCompanyBtn').disabled=true;load('companyFbT');
-  const sys='Olet rekrytoija. Arvioit hakijan "miksi tämä yritys" -vastausta. Tarkista: (1) onko yritystieto konkreettinen ja oikeasti löydetty (ei yleinen), (2) yhdistääkö hakija oman taustansa yritykseen, (3) yksi parannus. Max 3 lausetta. Suomi.';
-  const p3='Yritys: '+S.companyName+' Fakta: '+S.companyFact+' Vastaus: '+S.w_company;
-  const txt=await ai(p3,sys,350);
-  document.getElementById('companyFbT').textContent=txt||'Hyvä vastaus.';
+  try{syncSFromDom();}catch(e){}
+  const sys=[
+    HA_COACH_BASE,
+    'Tehtävä: arvioi "miksi tämä yritys" -vastaus.',
+    'Hyvä = yksi konkreettinen, löydetty fakta (ei "teidän arvonne") + yhteys hakijan omaan taustaan/motivaatioon.',
+    'Rakenne (3–5 lausetta): (1) mikä toimi / siteeraa, (2) onko fakta riittävän tarkka, (3) yksi mallilause jolla vastaus kiinnittyy paremmin hakijaan.',
+    'Jos vastaus on jo konkreettinen: sano se suoraan.'
+  ].join('\n');
+  const p3=['Yritys: '+(S.companyName||''),'Löydetty fakta: '+(S.companyFact||''),'Hakijan vastaus: '+(S.w_company||'')].join('\n');
+  const txt=await ai(p3,sys,550);
+  document.getElementById('companyFbT').textContent=txt||'En saanut yhteyttä arviointiin — yritä uudelleen.';
   document.getElementById('companyFb').classList.add('show');
   document.getElementById('companyDone').classList.add('show');
   document.getElementById('evalCompanyBtn').disabled=false;
@@ -2540,9 +2669,16 @@ function checkPalkka(){
 }
 async function evalPalkka(){
   document.getElementById('palkkaBtn').disabled=true;load('palkkaFbT');
-  const sys='Arvioit palkkavastauksen suomalaista asiakaspalveluhaastattelua varten. Tarkista: (1) annettiinko vaihteluväli vai yksi luku, (2) onko taso realistinen asiakaspalvelussa (2100-3000e tyypillinen), (3) perusteltiin osaaminen. Max 3 lausetta. Suomi.';
-  const txt=await ai(S.w_palkka,sys,300);
-  document.getElementById('palkkaFbT').textContent=txt||'Hyvä vastaus.';
+  try{syncSFromDom();}catch(e){}
+  const sys=[
+    HA_COACH_BASE,
+    'Tehtävä: arvioi palkkavastaus suomalaiseen asiakaspalvelurooliin.',
+    'Hyvä = vaihteluväli (ei yksi jäykkä luku) + lyhyt perustelu (kokemus/kielet/vuorot). Tyypillinen taso usein noin 2100–3000 €/kk riippuen roolista ja paikkakunnasta — älä nolaa jos luku on hieman eri, opeta muoto.',
+    'Rakenne (3–5 lausetta): (1) mikä toimi, (2) onko väli + perustelu, (3) yksi mallilause jos tarvitaan.',
+    'Jos vastaus on jo selkeä: sano se suoraan.'
+  ].join('\n');
+  const txt=await ai('Hakijan palkkavastaus:\n'+(S.w_palkka||''),sys,500);
+  document.getElementById('palkkaFbT').textContent=txt||'En saanut yhteyttä arviointiin — yritä uudelleen.';
   document.getElementById('palkkaFb').classList.add('show');
   document.getElementById('palkkaBtn').disabled=false;
   checkHardSectionDone();
@@ -2561,7 +2697,7 @@ async function ai(prompt,sys,tok=400){
     const fbPayload={model:'gpt-4o-mini',system:sys,max_tokens:tok,messages:[{role:'user',content:prompt}]};
     let primaryErr='';
     try{
-      const r=await fetch('/api/ai/claude',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',signal:aiReqSignal(20000),body:JSON.stringify(payload)});
+      const r=await fetch('/api/ai/claude',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',signal:aiReqSignal(35000),body:JSON.stringify(payload)});
       let d={};try{d=await r.json();}catch(e){}
       if(r.ok)return d.text||d.reply||'';
       primaryErr=d.error||d.message||('Virhe '+r.status);
@@ -3161,12 +3297,14 @@ function voiceStart(id) {
       if (id === 'star') renderStarVoiceActiveQuestion();
       const blob = new Blob(chunks, { type: mr.mimeType });
       const elapsed = voiceState[id + '_elapsed'] || 0;
-      const type = id === 'star' ? 'STAR-vastauksesta' : 'hissipuheesta';
-      const sys = `Olet rekrytoija. Kuuntelit hakijan ${type}. Transkriptio alla. Anna lyhyt palaute: (1) yksi asia joka toimi, (2) yksi konkreettinen parannusehdotus. Max 3 lausetta. Suomi. Ei ylistystä.`;
+      const sys = haVoiceCoachSystem(id === 'star' ? 'star' : 'hp');
+      const qHint = id === 'star'
+        ? ('Kysymys '+ (S.starVoiceQ || 1) + ': ' + (getStarQuestionText(S.starVoiceQ || 1) || ''))
+        : 'Hissipuhe asiakaspalvelun haastatteluun';
       const result = await voiceInterviewRequest(blob, {
         system: sys,
-        prompt: 'Analysoi hakijan nauhoitus ja anna palaute transkriptin perusteella.',
-        max_tokens: 250
+        prompt: qHint + '\n\nLue transkriptio tarkasti. Jos tarina on jo selkeä ja konkreettinen, sano se suoraan — älä keksi ongelmaa.',
+        max_tokens: 450
       });
       const transcript = result.error
         ? result.error
