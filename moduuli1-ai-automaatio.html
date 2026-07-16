@@ -148,9 +148,10 @@ h2.h em { font-style:italic; color:var(--orange); }
 .canvas-hint.hidden { display:none; }
 .canvas-drop-hi { position:absolute; inset:6px; border:2px dashed var(--orange); border-radius:12px; background:var(--orange-light); opacity:0; pointer-events:none; transition:opacity .15s; }
 .canvas-drop-hi.on { opacity:1; }
-#edges { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:1; }
+#edges, #demoEdges { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:1; overflow:visible; }
+#demoCanvas { min-height:320px; min-width:660px; }
 .edge-path { fill:none; stroke:#b4bcc6; stroke-width:2.5; }
-.edge-path.flow { stroke:var(--orange); stroke-dasharray:6 6; animation:dash .5s linear infinite; }
+.edge-path.flow { stroke:var(--orange); stroke-width:3; stroke-dasharray:6 6; animation:dash .5s linear infinite; }
 @keyframes dash { to { stroke-dashoffset:-12; } }
 
 .node { position:absolute; width:172px; background:#fff; border:1px solid var(--panel-line); border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.08); z-index:2; cursor:grab; transition:box-shadow .15s,border-color .15s; }
@@ -1622,8 +1623,18 @@ function canvasCoords(clientX,clientY){
   const cr=canvas.getBoundingClientRect();
   return { x:(clientX-cr.left)/canvasZoom, y:(clientY-cr.top)/canvasZoom };
 }
-function drawEdges(svgId, edges, posFn){
+function sizeEdgeSvg(svg, canvasEl){
+  if(!svg||!canvasEl) return;
+  const w=Math.max(canvasEl.scrollWidth, canvasEl.clientWidth, 1);
+  const h=Math.max(canvasEl.scrollHeight, canvasEl.clientHeight, 1);
+  svg.setAttribute('width', w);
+  svg.setAttribute('height', h);
+  svg.style.width=w+'px';
+  svg.style.height=h+'px';
+}
+function drawEdges(svgId, edges, posFn, canvasEl){
   const svg=document.getElementById(svgId); if(!svg) return; svg.innerHTML='';
+  if(canvasEl) sizeEdgeSvg(svg, canvasEl);
   edges.forEach(([a,b])=>{
     const pa=posFn(a,'out'), pb=posFn(b,'in'); if(!pa||!pb) return;
     const dx=Math.max(40,(pb.x-pa.x)*0.5);
@@ -1632,6 +1643,10 @@ function drawEdges(svgId, edges, posFn){
     p.setAttribute('d',d); p.setAttribute('class','edge-path'); p.dataset.a=a; p.dataset.b=b; svg.appendChild(p);
   });
 }
+function setNodeEdgeFlow(svg, nodeId, flowing){
+  if(!svg||!nodeId) return;
+  svg.querySelectorAll(`[data-a="${nodeId}"],[data-b="${nodeId}"]`).forEach(p=>p.classList.toggle('flow',!!flowing));
+}
 function portPos(canvasEl, nodeId, side){
   const node=document.getElementById(nodeId); if(!node) return null;
   const cr=canvasEl.getBoundingClientRect(), nr=node.getBoundingClientRect();
@@ -1639,9 +1654,10 @@ function portPos(canvasEl, nodeId, side){
 }
 function renderDemo(){
   const c=document.getElementById('demoCanvas');
+  if(!c) return;
   c.querySelectorAll('.node').forEach(n=>n.remove());
   DEMO_NODES.forEach(n=>c.insertAdjacentHTML('beforeend', nodeHTML(n,true)));
-  drawEdges('demoEdges', DEMO_EDGES, (id,side)=>portPos(c,id,side));
+  drawEdges('demoEdges', DEMO_EDGES, (id,side)=>portPos(c,id,side), c);
 }
 async function runDemo(){
   const btn=document.getElementById('demoRun'); if(btn.classList.contains('running'))return;
@@ -1652,13 +1668,14 @@ async function runDemo(){
   const order=['d1','d2','d3','d4'];
   const msgs={ d1:['Ajastin heräsi — kello on 08:00','ok'], d2:['Haettiin 5 uutta työpaikkaa Duunitorista','ok'], d3:['Tekoäly luki paikat ja valitsi 3 parasta','ok'], d4:['Sähköposti lähetetty — "3 sinulle sopivaa paikkaa"','ok'] };
   const svg=document.getElementById('demoEdges');
+  svg.querySelectorAll('.edge-path').forEach(p=>p.classList.remove('flow'));
   for(const id of order){
     const node=document.getElementById(id); node.classList.add('running'); node.querySelector('.nd-status').textContent='●';
-    svg.querySelectorAll(`[data-b="${id}"]`).forEach(p=>p.classList.add('flow'));
+    setNodeEdgeFlow(svg, id, true);
     addLog(log, msgs[id][0], msgs[id][1], DEMO_NODES.find(x=>x.id===id).name);
     await wait(760);
     node.classList.remove('running'); node.classList.add('ok'); node.querySelector('.nd-status').textContent='✓';
-    svg.querySelectorAll(`[data-b="${id}"]`).forEach(p=>p.classList.remove('flow'));
+    setNodeEdgeFlow(svg, id, false);
   }
   addLog(log,'Valmis. Automaatio suoritettiin onnistuneesti.','ok');
   btn.classList.remove('running'); btn.textContent='▶ Suorita uudelleen';
@@ -1828,7 +1845,7 @@ function deleteNode(id){
   document.getElementById(id)?.remove(); if(selectedId===id){selectedId=null;renderParams();} renderEdges();
   if(buildNodes.length===0) document.getElementById('canvasHint').classList.remove('hidden');
 }
-function renderEdges(){ drawEdges('edges', buildEdges, (id,side)=>portPos(canvas,id,side)); }
+function renderEdges(){ drawEdges('edges', buildEdges, (id,side)=>portPos(canvas,id,side), canvas); }
 function selectNode(id){ selectedId=id; document.querySelectorAll('#canvas .node').forEach(n=>n.classList.toggle('selected',n.id===id)); renderParams(); document.getElementById('params').classList.add('open'); }
 
 function renderParams(){
@@ -1998,7 +2015,7 @@ async function runBuild(){
   let aiResult='';
   for(const node of ordered){
     const el=document.getElementById(node.id); el.classList.add('running'); el.querySelector('.nd-status').textContent='●';
-    edgesSvg.querySelectorAll(`[data-b="${node.id}"]`).forEach(p=>p.classList.add('flow'));
+    setNodeEdgeFlow(edgesSvg, node.id, true);
     try{
       if(node.type==='trigger'){ addLog(log,'Laukaisin heräsi — testiajo käynnistyi','ok','Laukaisin'); await wait(600); }
       else if(node.type==='action'){ addLog(log,'Haetaan tietoa...','','Toiminto'); await wait(500); addIOBlock(log,'Output — haettu data', (ch.data||'').replace(/</g,'&lt;').replace(/\n/g,'<br>')); addLog(log,'Data haettu','ok','Toiminto'); await wait(300); }
@@ -2049,10 +2066,10 @@ async function runBuild(){
     }catch(err){
       el.classList.remove('running'); el.classList.add('err'); el.querySelector('.nd-status').textContent='!';
       addLog(log,'Virhe: '+(err.message||'yhteysvirhe'),'err',NODE_LIB[node.type].type);
-      edgesSvg.querySelectorAll(`[data-b="${node.id}"]`).forEach(p=>p.classList.remove('flow'));
+      setNodeEdgeFlow(edgesSvg, node.id, false);
       btn.classList.remove('running'); btn.textContent='▶ Suorita uudelleen'; return;
     }
-    edgesSvg.querySelectorAll(`[data-b="${node.id}"]`).forEach(p=>p.classList.remove('flow'));
+    setNodeEdgeFlow(edgesSvg, node.id, false);
   }
   addLog(log,'✓ Automaatio suoritettiin onnistuneesti alusta loppuun','ok');
   // show result (non-email challenges) or email already shown
@@ -2242,6 +2259,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }catch(e){}
 });
 setTimeout(()=>{ renderDemo(); renderEdges(); }, 400);
+const demoSection=document.getElementById('katso');
+if(demoSection){
+  const demoObs=new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting){ renderDemo(); demoObs.unobserve(e.target); } });
+  },{threshold:.2});
+  demoObs.observe(demoSection);
+}
 </script>
 </body>
 </html>
