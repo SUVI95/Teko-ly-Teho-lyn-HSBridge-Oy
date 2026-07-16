@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Automaatio A — Rakenna ensimmäinen automaatiosi</title>
+<script>window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1139,12 +1140,22 @@ function saveResearch(i){
   const ta=document.getElementById('r'+i); const val=ta.value.trim();
   if(val.length<10){ toast('Kirjoita hieman pidempi vastaus ennen tallennusta'); return; }
   researchSaved[i]=true;
-  try{ localStorage.setItem('m1_research_'+i, val); }catch(e){}
   const btn=document.getElementById('rs'+i); btn.classList.add('saved'); btn.textContent='✓ Tallennettu';
   document.getElementById('rp-'+i)?.classList.add('done');
+  updateResearchProgress();
+  m1ScheduleSave();
+}
+function updateResearchProgress(){
   const n=Object.keys(researchSaved).length;
-  document.getElementById('rpLabel').textContent=n+' / 6 vastausta tallennettu';
-  if(n>=6){ const d=document.getElementById('researchDone'); d.style.display='block'; }
+  const rp=document.getElementById('rpLabel');
+  if(rp) rp.textContent=n+' / 6 vastausta tallennettu';
+  for(let i=0;i<6;i++){
+    if(!researchSaved[i]) continue;
+    document.getElementById('rp-'+i)?.classList.add('done');
+    const btn=document.getElementById('rs'+i);
+    if(btn){ btn.classList.add('saved'); btn.textContent='✓ Tallennettu'; }
+  }
+  if(n>=6){ const d=document.getElementById('researchDone'); if(d) d.style.display='block'; }
 }
 
 /* ============================================================
@@ -1446,6 +1457,7 @@ function isInterpretUnlocked(){
 function setInterpretUnlocked(){
   interpretUnlocked = true;
   try{ sessionStorage.setItem('m1_interpret_ok','1'); }catch(e){}
+  m1ScheduleSave();
 }
 function isImproveUnlocked(){
   if(!improveUnlocked){
@@ -1456,6 +1468,7 @@ function isImproveUnlocked(){
 function setImproveUnlocked(){
   improveUnlocked = true;
   try{ sessionStorage.setItem('m1_improve_ok','1'); }catch(e){}
+  m1ScheduleSave();
 }
 function isThinkGateUnlocked(ch){
   if(!ch||!ch.requiresThinkGate) return true;
@@ -1566,6 +1579,7 @@ async function submitThinkGate(){
     if(ch.thinkGateVariant==='improve') setImproveUnlocked();
     else setInterpretUnlocked();
     updateInterpretGate(ch);
+    m1ScheduleSave();
     toast('✅ Hyvä! Nyt voit rakentaa automaation.');
     setTimeout(()=>document.getElementById('buildShell')?.scrollIntoView({behavior:'smooth',block:'start'}),300);
   }
@@ -1699,18 +1713,49 @@ function pickScenario(key){
   const el=document.getElementById('scenChosen'); el.style.display='block';
   const names={tyonhaku:'Työnhaku',raportointi:'Raportointi & ala',asiakas:'Asiakasposti'};
   el.textContent='✓ Kiinnostava valinta: '+names[key]+'. Osassa 4 rakennat oikeita koneita — vieritä alas.';
+  m1ScheduleSave();
 }
 
 /* ============================================================
    CHALLENGE ENGINE (Osa 4)
 ============================================================ */
 let buildNodes=[], buildEdges=[], selectedId=null, nodeCounter=0;
+const challengeSnapshots={};
+const M1_MODULE_ID='moduuli1-ai-automaatio';
+function m1ScheduleSave(){
+  if(window._m1Work&&typeof window._m1Work.scheduleSave==='function') window._m1Work.scheduleSave();
+}
+function serializeBuildNode(n){
+  return {id:n.id,type:n.type,name:n.name,foot:n.foot,x:n.x,y:n.y,config:n.config?JSON.parse(JSON.stringify(n.config)):{}};
+}
+function snapshotCurrentChallenge(){
+  challengeSnapshots[currentChallenge]={
+    nodes:buildNodes.map(serializeBuildNode),
+    edges:buildEdges.map(e=>e.slice()),
+    nodeCounter:nodeCounter
+  };
+}
+function restoreBuildFromSnapshot(snap){
+  if(!snap||!snap.nodes||!snap.nodes.length) return;
+  nodeCounter=snap.nodeCounter||0;
+  snap.nodes.forEach(n=>{
+    const node={id:n.id,type:n.type,name:n.name,foot:n.foot,x:n.x,y:n.y,config:n.config||{}};
+    buildNodes.push(node);
+    canvas.insertAdjacentHTML('beforeend', nodeHTML(node,false));
+    wireNode(node.id);
+  });
+  buildEdges=(snap.edges||[]).map(e=>e.slice());
+  document.getElementById('canvasHint').classList.toggle('hidden', buildNodes.length>0);
+  renderEdges();
+}
 const canvas=document.getElementById('canvas');
 const edgesSvg=document.getElementById('edges');
 
-function selectChallenge(i){
+function selectChallenge(i, opts){
+  opts=opts||{};
+  if(!opts.fromRestore&&!opts.skipSnapshot) snapshotCurrentChallenge();
   const tab=document.querySelector(`.chal-tab[data-chal="${i}"]`);
-  if(!TEST_ALL_CHALLENGES && tab.classList.contains('locked')) { toast('Suorita edellinen haaste ensin'); return; }
+  if(!opts.fromRestore&&!TEST_ALL_CHALLENGES&&tab.classList.contains('locked')) { toast('Suorita edellinen haaste ensin'); return; }
   currentChallenge=i;
   document.querySelectorAll('.chal-tab').forEach(t=>t.classList.toggle('active', +t.dataset.chal===i));
   const ch=CHALLENGES[i];
@@ -1726,6 +1771,7 @@ function selectChallenge(i){
   document.getElementById('briefHint').classList.remove('show');
   renderPalette();
   resetBuild();
+  if(challengeSnapshots[i]) restoreBuildFromSnapshot(challengeSnapshots[i]);
   // sample data (challenges 2-4)
   if(ch.sample){
     document.getElementById('sampleIntro').style.display='block';
@@ -1742,6 +1788,7 @@ function selectChallenge(i){
   }
   updateInterpretGate(ch);
   setTimeout(()=>{ if(ch.tallCanvas) autoFitCanvas(); else setCanvasZoom(1); }, 120);
+  if(!opts.fromRestore) m1ScheduleSave();
 }
 function toggleHint(){ document.getElementById('briefHint').classList.toggle('show'); }
 
@@ -1788,6 +1835,7 @@ function addNode(type,x,y){
   document.getElementById('canvasHint').classList.add('hidden');
   wireNode(id); renderEdges(); selectNode(id);
   if(CHALLENGES[currentChallenge]?.tallCanvas) setTimeout(autoFitCanvas, 80);
+  m1ScheduleSave();
 }
 function wireNode(id){
   const el=document.getElementById(id);
@@ -1812,7 +1860,7 @@ function onNodeDrag(ev){
   node.y=Math.max(6,Math.min(p.y-dragOff.y,ch-100));
   const el=document.getElementById(dragNode); el.style.left=node.x+'px'; el.style.top=node.y+'px'; renderEdges();
 }
-function stopNodeDrag(){ dragNode=null; document.removeEventListener('mousemove',onNodeDrag); document.removeEventListener('mouseup',stopNodeDrag); }
+function stopNodeDrag(){ dragNode=null; document.removeEventListener('mousemove',onNodeDrag); document.removeEventListener('mouseup',stopNodeDrag); m1ScheduleSave(); }
 let wireSrc=null, tempPath=null;
 function startWire(ev,id){
   wireSrc=id; document.getElementById(id).classList.add('wiring-src');
@@ -1839,11 +1887,12 @@ function touchWireStart(id){
   if(touchWireSrc===id){ touchWireSrc=null; document.getElementById(id).classList.remove('wiring-src'); return; }
   touchWireSrc=id; document.getElementById(id).classList.add('wiring-src'); toast('Napauta nyt palikkaa, johon kytketään');
 }
-function connect(a,b){ if(a===b)return; if(buildEdges.some(([x,y])=>x===a&&y===b))return; buildEdges.push([a,b]); renderEdges(); toast('Kytketty'); }
+function connect(a,b){ if(a===b)return; if(buildEdges.some(([x,y])=>x===a&&y===b))return; buildEdges.push([a,b]); renderEdges(); toast('Kytketty'); m1ScheduleSave(); }
 function deleteNode(id){
   buildNodes=buildNodes.filter(n=>n.id!==id); buildEdges=buildEdges.filter(([a,b])=>a!==id&&b!==id);
   document.getElementById(id)?.remove(); if(selectedId===id){selectedId=null;renderParams();} renderEdges();
   if(buildNodes.length===0) document.getElementById('canvasHint').classList.remove('hidden');
+  m1ScheduleSave();
 }
 function renderEdges(){ drawEdges('edges', buildEdges, (id,side)=>portPos(canvas,id,side), canvas); }
 function selectNode(id){ selectedId=id; document.querySelectorAll('#canvas .node').forEach(n=>n.classList.toggle('selected',n.id===id)); renderParams(); document.getElementById('params').classList.add('open'); }
@@ -1906,25 +1955,25 @@ function renderParams(){
   if(ta){
     const cc=document.getElementById('aiCharcount');
     const minLen=ch.minAiPrompt||20;
-    const upd=()=>{ node.config.prompt=ta.value; cc.textContent=ta.value.trim().length+' merkkiä'; cc.classList.toggle('good', ta.value.trim().length>=minLen); };
+    const upd=()=>{ node.config.prompt=ta.value; cc.textContent=ta.value.trim().length+' merkkiä'; cc.classList.toggle('good', ta.value.trim().length>=minLen); m1ScheduleSave(); };
     ta.addEventListener('input', upd); upd();
   }
   const ip=document.getElementById('imagePrompt');
   if(ip){
     const cc=document.getElementById('imgCharcount');
     const minLen=ch.minImagePrompt||20;
-    const upd=()=>{ node.config.imagePrompt=ip.value; cc.textContent=ip.value.trim().length+' merkkiä'; cc.classList.toggle('good', ip.value.trim().length>=minLen); };
+    const upd=()=>{ node.config.imagePrompt=ip.value; cc.textContent=ip.value.trim().length+' merkkiä'; cc.classList.toggle('good', ip.value.trim().length>=minLen); m1ScheduleSave(); };
     ip.addEventListener('input', upd); upd();
   }
   const rn=document.getElementById('reminderNote');
   if(rn){
     const cc=document.getElementById('remCharcount');
     const minLen=ch.minReminderNote||15;
-    const upd=()=>{ node.config.reminderNote=rn.value; cc.textContent=rn.value.trim().length+' merkkiä'; cc.classList.toggle('good', rn.value.trim().length>=minLen); };
+    const upd=()=>{ node.config.reminderNote=rn.value; cc.textContent=rn.value.trim().length+' merkkiä'; cc.classList.toggle('good', rn.value.trim().length>=minLen); m1ScheduleSave(); };
     rn.addEventListener('input', upd); upd();
   }
   const ei=document.getElementById('emailInput');
-  if(ei) ei.addEventListener('input', e=>{ userEmail=e.target.value.trim(); try{localStorage.setItem('m1_email',userEmail);}catch(x){} });
+  if(ei) ei.addEventListener('input', e=>{ userEmail=e.target.value.trim(); m1ScheduleSave(); });
 }
 function fillExample(){
   const ch=CHALLENGES[currentChallenge]; const node=buildNodes.find(n=>n.id===selectedId);
@@ -2181,10 +2230,9 @@ function confirmInbox(got){
 function markChallengeDone(i){
   const tab=document.querySelector(`.chal-tab[data-chal="${i}"]`);
   tab.classList.add('done');
-  // unlock next
   const next=document.querySelector(`.chal-tab[data-chal="${i+1}"]`);
   if(next){ next.classList.remove('locked'); }
-  try{ localStorage.setItem('m1_chal_'+i,'done'); }catch(e){}
+  m1ScheduleSave();
   // if all done, reveal a note
   const allDone=CHALLENGES.every((c,idx)=>document.querySelector(`.chal-tab[data-chal="${idx}"]`).classList.contains('done'));
   if(allDone) toast('🏆 Kaikki 10 haastetta suoritettu! Olet rakentaja.');
@@ -2210,7 +2258,7 @@ async function askInterview(n){
     const out=await moduleAiChat(role,userMsg,400);
     txt.textContent=out||'Hyvä vastaus! Olet ymmärtänyt automaation idean.';
     interviewDone[n]=true;
-    try{ localStorage.setItem('m1_q'+n, val); }catch(e){}
+    m1ScheduleSave();
     if(n===1){ const w=document.getElementById('q2wrap'); w.style.opacity='1'; w.style.pointerEvents='auto'; }
     if(interviewDone[1]&&interviewDone[2]){ const dw=document.getElementById('doneWrap'); dw.style.display='block'; dw.scrollIntoView({behavior:'smooth',block:'nearest'}); }
   }catch(e){
@@ -2222,41 +2270,138 @@ async function askInterview(n){
 }
 
 /* ============================================================
+   PERSISTENCE — all exercises via module-work
+============================================================ */
+function migrateLegacyM1(data){
+  data=data||{};
+  try{
+    for(let i=0;i<6;i++){
+      if(data.research&&data.research[i]) continue;
+      const v=localStorage.getItem('m1_research_'+i);
+      if(v){ if(!data.research) data.research={}; data.research[i]=v; }
+    }
+    for(let i=0;i<CHALLENGES.length;i++){
+      if(localStorage.getItem('m1_chal_'+i)==='done'){
+        if(!data.challengesDone) data.challengesDone=[];
+        if(data.challengesDone.indexOf(i)<0) data.challengesDone.push(i);
+      }
+    }
+    if(!data.q1){ const a=localStorage.getItem('m1_q1'); if(a) data.q1=a; }
+    if(!data.q2){ const b=localStorage.getItem('m1_q2'); if(b) data.q2=b; }
+    if(!data.userEmail){ const e=localStorage.getItem('m1_email'); if(e) data.userEmail=e; }
+  }catch(e){}
+  return data;
+}
+function collectM1State(){
+  snapshotCurrentChallenge();
+  const research={};
+  for(let i=0;i<6;i++) research[i]=document.getElementById('r'+i)?.value||'';
+  const challengesDone=[];
+  for(let i=0;i<CHALLENGES.length;i++){
+    if(document.querySelector(`.chal-tab[data-chal="${i}"]`)?.classList.contains('done')) challengesDone.push(i);
+  }
+  let scenario=null;
+  document.querySelectorAll('.scen-card').forEach(c=>{ if(c.classList.contains('sel')) scenario=c.dataset.scen; });
+  return {
+    ts:Date.now(),
+    research:research,
+    scenario:scenario,
+    currentChallenge:currentChallenge,
+    challengesDone:challengesDone,
+    interpretUnlocked:interpretUnlocked,
+    improveUnlocked:improveUnlocked,
+    interpretInput:document.getElementById('interpretInput')?.value||'',
+    improveAiSketch:document.getElementById('improveAiSketch')?.value||'',
+    improveOutputs:document.getElementById('improveOutputs')?.value||'',
+    q1:document.getElementById('q1')?.value||'',
+    q2:document.getElementById('q2')?.value||'',
+    interviewDone:{1:!!interviewDone[1],2:!!interviewDone[2]},
+    userEmail:userEmail,
+    challengeSnapshots:JSON.parse(JSON.stringify(challengeSnapshots))
+  };
+}
+function applyM1State(data){
+  if(!data||typeof data!=='object') return;
+  data=migrateLegacyM1(data);
+  if(data.challengeSnapshots){
+    Object.keys(data.challengeSnapshots).forEach(k=>{
+      challengeSnapshots[+k]=data.challengeSnapshots[k];
+    });
+  }
+  if(data.research){
+    for(let i=0;i<6;i++){
+      const v=data.research[i];
+      if(v!=null&&document.getElementById('r'+i)) document.getElementById('r'+i).value=v;
+      if(v&&String(v).trim().length>=10) researchSaved[i]=true;
+    }
+    updateResearchProgress();
+  }
+  if(data.scenario) pickScenario(data.scenario);
+  if(data.interpretUnlocked) setInterpretUnlocked();
+  if(data.improveUnlocked) setImproveUnlocked();
+  if(data.interpretInput&&document.getElementById('interpretInput')) document.getElementById('interpretInput').value=data.interpretInput;
+  if(data.improveAiSketch&&document.getElementById('improveAiSketch')) document.getElementById('improveAiSketch').value=data.improveAiSketch;
+  if(data.improveOutputs&&document.getElementById('improveOutputs')) document.getElementById('improveOutputs').value=data.improveOutputs;
+  if(data.userEmail) userEmail=data.userEmail;
+  if(data.q1&&document.getElementById('q1')) document.getElementById('q1').value=data.q1;
+  if(data.q2&&document.getElementById('q2')) document.getElementById('q2').value=data.q2;
+  if(data.interviewDone){
+    if(data.interviewDone[1]) interviewDone[1]=true;
+    if(data.interviewDone[2]) interviewDone[2]=true;
+    if(interviewDone[1]){ const w=document.getElementById('q2wrap'); if(w){ w.style.opacity='1'; w.style.pointerEvents='auto'; } }
+    if(interviewDone[1]&&interviewDone[2]){ const dw=document.getElementById('doneWrap'); if(dw) dw.style.display='block'; }
+  }
+  if(Array.isArray(data.challengesDone)){
+    data.challengesDone.forEach(i=>{
+      const tab=document.querySelector(`.chal-tab[data-chal="${i}"]`);
+      if(tab) tab.classList.add('done');
+      const nx=document.querySelector(`.chal-tab[data-chal="${i+1}"]`);
+      if(nx) nx.classList.remove('locked');
+    });
+  }
+  const ch=typeof data.currentChallenge==='number'?data.currentChallenge:0;
+  selectChallenge(ch,{fromRestore:true});
+  updateInterpretGate(CHALLENGES[currentChallenge]);
+}
+async function initM1Work(){
+  if(!window.moduleWork||typeof window.moduleWork.initModuleWork!=='function') return;
+  try{
+    window._m1Work=await window.moduleWork.initModuleWork(M1_MODULE_ID,{
+      collect:collectM1State,
+      apply:applyM1State,
+      debounceMs:900,
+      legacyPrefix:'m1_',
+      fieldIds:['r0','r1','r2','r3','r4','r5','interpretInput','improveAiSketch','improveOutputs','q1','q2']
+    });
+  }catch(e){ console.warn('[m1] module-work init failed:',e); }
+}
+
+/* ============================================================
    INIT
 ============================================================ */
 window.addEventListener('resize', ()=>{ renderDemo(); renderEdges(); });
-document.addEventListener('DOMContentLoaded', ()=>{
+document.addEventListener('DOMContentLoaded', async ()=>{
   renderDemo();
   if (TEST_ALL_CHALLENGES) {
     document.querySelectorAll('.chal-tab.locked').forEach(function (t) { t.classList.remove('locked'); });
   }
-  // restore challenge progress (unlock + mark done)
-  try{
-    for(let i=0;i<CHALLENGES.length;i++){
-      if(localStorage.getItem('m1_chal_'+i)==='done'){
-        const tab=document.querySelector(`.chal-tab[data-chal="${i}"]`); if(tab) tab.classList.add('done');
-        const nx=document.querySelector(`.chal-tab[data-chal="${i+1}"]`); if(nx) nx.classList.remove('locked');
-      }
-    }
-  }catch(e){}
-  selectChallenge(0); // load first challenge brief + palette
+  await initM1Work();
+  if(!window._m1Work||!window._m1Work.data){
+    applyM1State(migrateLegacyM1({ currentChallenge:0 }));
+  }
+  for(let i=0;i<6;i++){
+    const ta=document.getElementById('r'+i);
+    if(ta) ta.addEventListener('input', function(){
+      if(this.value.trim().length>=10) researchSaved[i]=true;
+      updateResearchProgress();
+      m1ScheduleSave();
+    });
+  }
   const nextM1b=document.getElementById('nextToM1b');
   if(nextM1b && location.search){
     const keep=location.search.includes('preview=1')?'?preview=1':(location.search.includes('test=1')?'?test=1':'');
     if(keep) nextM1b.href='/module/moduuli1b-ai-automaatio'+keep;
   }
-  try{ const a=localStorage.getItem('m1_q1'); if(a) document.getElementById('q1').value=a; }catch(e){}
-  try{ const b=localStorage.getItem('m1_q2'); if(b) document.getElementById('q2').value=b; }catch(e){}
-  // restore research answers
-  try{
-    for(let i=0;i<6;i++){
-      const v=localStorage.getItem('m1_research_'+i);
-      if(v){ document.getElementById('r'+i).value=v; researchSaved[i]=true; document.getElementById('rp-'+i)?.classList.add('done'); const btn=document.getElementById('rs'+i); if(btn){btn.classList.add('saved'); btn.textContent='✓ Tallennettu';} }
-    }
-    const n=Object.keys(researchSaved).length;
-    if(n>0) document.getElementById('rpLabel').textContent=n+' / 6 vastausta tallennettu';
-    if(n>=6) document.getElementById('researchDone').style.display='block';
-  }catch(e){}
 });
 setTimeout(()=>{ renderDemo(); renderEdges(); }, 400);
 const demoSection=document.getElementById('katso');

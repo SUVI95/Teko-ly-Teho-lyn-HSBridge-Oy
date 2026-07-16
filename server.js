@@ -56,6 +56,8 @@ function injectModulePersistenceScripts(html, moduleId) {
   const needsAutoSave =
     moduleId !== 'moduuli-bottityypit-studio' &&
     moduleId !== 'moduuli-bottityypit' &&
+    moduleId !== 'moduuli1-ai-automaatio' &&
+    moduleId !== 'moduuli1b-ai-automaatio' &&
     !html.includes('/js/module-autosave.js');
   const tags = [bootScript];
   if (needsModuleWork) tags.push('<script src="/js/module-work.js"></script>');

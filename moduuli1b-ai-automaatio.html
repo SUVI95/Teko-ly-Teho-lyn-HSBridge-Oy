@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Automaatio B — Kun kone menee rikki</title>
+<script>window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1735,7 +1736,15 @@ function hookM1bCanvasSave(){
   if(build2){
     const bc=build2.connect.bind(build2);
     build2.connect=function(a,b){ bc(a,b); m1bScheduleSave(); };
+    const ba=build2.addNode.bind(build2);
+    build2.addNode=function(){ const n=ba.apply(build2, arguments); m1bScheduleSave(); return n; };
+    const bd=build2.deleteNode.bind(build2);
+    build2.deleteNode=function(id){ bd(id); m1bScheduleSave(); };
   }
+  ['orderCanvas','canvas2'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('mouseup', function(){ setTimeout(m1bScheduleSave, 40); });
+  });
 }
 async function initM1bWork(){
   if(!window.moduleWork||typeof window.moduleWork.initModuleWork!=='function') return;
