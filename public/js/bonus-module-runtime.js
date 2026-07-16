@@ -21,6 +21,10 @@
   var saveTimer = null;
   var goWrapped = false;
 
+  function isBotStudioPage() {
+    return /moduuli-bottityypit-studio/.test(location.pathname || "");
+  }
+
   function apiBase() {
     return "/api/bonus-module/responses?slug=" + encodeURIComponent(SLUG);
   }
@@ -46,6 +50,7 @@
   }
 
   function flushDrafts(opts) {
+    if (isBotStudioPage()) return;
     opts = opts || {};
     document.querySelectorAll("textarea[id]").forEach(function (el) {
       if (!el.id || el.getAttribute("data-bonus-skip-save") === "1") return;
@@ -72,6 +77,7 @@
   }
 
   function onPageLeave() {
+    if (isBotStudioPage()) return;
     flushAll({ keepalive: true });
   }
 
@@ -359,6 +365,7 @@
   }
 
   function bindAutosave() {
+    if (isBotStudioPage()) return;
     document.querySelectorAll("textarea[id]").forEach(function (el) {
       if (!el.id || el.dataset.bonusAutosaveBound) return;
       el.dataset.bonusAutosaveBound = "1";
@@ -481,7 +488,7 @@
   function init() {
     injectSaveIndicator();
     loadEntries().then(function () {
-      restoreDrafts();
+      if (!isBotStudioPage()) restoreDrafts();
       restoreAiFeedback();
       var state = parseState(getEntry("_state"));
       if (SLUG === "hitl-architect" && typeof window.restoreHitlState === "function") {
@@ -497,8 +504,8 @@
       } else {
         restoreFromState(state);
       }
-      bindAutosave();
-      bindPageLeaveSave();
+      if (!isBotStudioPage()) bindAutosave();
+      if (!isBotStudioPage()) bindPageLeaveSave();
       wrapGo();
       patchFinish();
       document.dispatchEvent(new CustomEvent("bonus-module:ready"));

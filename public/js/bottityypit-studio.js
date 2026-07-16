@@ -5,6 +5,19 @@
   "use strict";
 
   var LOCAL_KEY = "bottityypit-studio-v2";
+  var SHIPPED_TEMPLATES = {
+    role:
+      "Olet uravalmentaja joka auttaa työnhaussa. Vertaat CV:tä työpaikkoihin, analysoit ATS-sopivuutta ja ehdotat hakemustekstejä. Et lupaa työpaikkaa.",
+    personality: "Lämmin, asiallinen, rehellinen. Kerrot suoraan jos sopivuus on heikko.",
+    behavior:
+      "Kun työpaikka on liitetty, aloita fit scoresta. Anna aina konkreettinen parannus CV:hen ennen hakemustekstiä.",
+    limits: "Älä keksi kokemusta. Älä takaa valintaa. Käytä vain koulutusdataa (CV + taidot).",
+    welcome:
+      "Hei! Olen tekoälyuravalmentajasi. Liitä työpaikka — kerron sopivuuden, ATS:n ja ehdotan hakemustekstit.",
+    chip1: "Vertaa tähän työpaikkaan",
+    chip2: "Mitä parannan CV:ssä?",
+    chip3: "Ehdota hakemusteksti",
+  };
   var trained = false;
   var analysisData = null;
   var saveTimer = null;
@@ -121,19 +134,69 @@
     }
   }
 
+  function isShippedTemplateField(id, value) {
+    var shipped = SHIPPED_TEMPLATES[id];
+    if (!shipped) return false;
+    return String(value || "").trim() === shipped;
+  }
+
+  function stripShippedTemplatesFromFields(fields) {
+    if (!fields) return fields;
+    Object.keys(SHIPPED_TEMPLATES).forEach(function (id) {
+      if (isShippedTemplateField(id, fields[id])) fields[id] = "";
+    });
+    return fields;
+  }
+
+  function isTemplateOnlySnapshot(snap) {
+    if (!snap || !snap.fields) return false;
+    if (snap.trained || snap.analysisData) return false;
+    if (wc(snap.fields.cvText) >= 5 || wc(snap.fields.skillsText) >= 3) return false;
+    var hasCustom = false;
+    ["role", "personality", "behavior", "limits", "welcome", "botName", "jobPost"].forEach(function (id) {
+      var v = String(snap.fields[id] || "").trim();
+      if (!v) return;
+      if (isShippedTemplateField(id, v)) return;
+      hasCustom = true;
+    });
+    return !hasCustom;
+  }
+
+  function stripTemplateOnlySnapshot(snap) {
+    if (!snap || !isTemplateOnlySnapshot(snap)) return snap;
+    snap.fields = stripShippedTemplatesFromFields(Object.assign({}, snap.fields));
+    snap.trained = false;
+    snap.analysisData = null;
+    snap.ts = Date.now();
+    return snap;
+  }
+
   function pickBestSnapshot(serverRaw) {
-    var server = stripLegacyDemoSnapshot(parseSnapshot(serverRaw));
-    var local = stripLegacyDemoSnapshot(readLocalSnapshot());
+    var server = stripLegacyDemoSnapshot(stripTemplateOnlySnapshot(parseSnapshot(serverRaw)));
+    var local = stripLegacyDemoSnapshot(stripTemplateOnlySnapshot(readLocalSnapshot()));
     if (server && local) {
       return (local.ts || 0) >= (server.ts || 0) ? local : server;
     }
-    return server || local;
+    var best = server || local;
+    if (best && !hasMeaningfulSnapshot(best)) return null;
+    return best;
+  }
+
+  function hasMeaningfulSnapshot(snap) {
+    if (!snap) return false;
+    if (snap.trained || snap.analysisData) return true;
+    var f = snap.fields || {};
+    if (wc(f.cvText) >= 5 || wc(f.skillsText) >= 3) return true;
+    return fieldIds().some(function (id) {
+      return String(f[id] || "").trim().length > 0;
+    });
   }
 
   function restoreSnapshot(snap) {
     if (!snap || restored) return;
     restored = true;
     if (snap.fields) {
+      snap.fields = stripShippedTemplatesFromFields(Object.assign({}, snap.fields));
       Object.keys(snap.fields).forEach(function (id) {
         var el = $(id);
         if (!el || snap.fields[id] == null) return;
@@ -321,20 +384,31 @@
 
   function clearLegacyDemoFromDom() {
     var snap = { fields: collectFields(), trained: trained, analysisData: analysisData };
-    if (!isLegacyDemoSnapshot(snap) && !isLegacyDemoAnalysis(analysisData)) return false;
-    $("cvText").value = "";
-    $("skillsText").value = "";
-    $("jobPost").value = "";
-    if (/aino/i.test(($("botName").value || "").trim())) $("botName").value = "";
-    trained = false;
-    analysisData = null;
-    $("analysisEmpty").style.display = "block";
-    $("analysisResult").style.display = "none";
-    $("jobTitle").textContent = "Ei analyysiä vielä — kouluta botti ja liitä ilmoitus";
-    syncPrompt();
-    updateTrainStatus();
-    renderSitePreview();
-    return true;
+    var cleared = false;
+    if (isLegacyDemoSnapshot(snap) || isLegacyDemoAnalysis(analysisData)) {
+      $("cvText").value = "";
+      $("skillsText").value = "";
+      $("jobPost").value = "";
+      if (/aino/i.test(($("botName").value || "").trim())) $("botName").value = "";
+      trained = false;
+      analysisData = null;
+      $("analysisEmpty").style.display = "block";
+      $("analysisResult").style.display = "none";
+      $("jobTitle").textContent = "Ei analyysiä vielä — kouluta botti ja liitä ilmoitus";
+      cleared = true;
+    }
+    fieldIds().forEach(function (id) {
+      var el = $(id);
+      if (!el || !isShippedTemplateField(id, el.value)) return;
+      el.value = "";
+      cleared = true;
+    });
+    if (cleared) {
+      syncPrompt();
+      updateTrainStatus();
+      renderSitePreview();
+    }
+    return cleared;
   }
 
   function stripLegacyDemoSnapshot(snap) {
@@ -351,7 +425,7 @@
 
   function purgeLegacyDemoPersistence(serverSnap) {
     var cleared = clearLegacyDemoFromDom();
-    if (serverSnap && isLegacyDemoSnapshot(serverSnap)) cleared = true;
+    if (serverSnap && (isLegacyDemoSnapshot(serverSnap) || isTemplateOnlySnapshot(serverSnap))) cleared = true;
     if (cleared) saveStudio({ silent: true });
     return cleared;
   }
@@ -369,7 +443,7 @@
   }
 
   function renderEmptySitePreview() {
-    $("siteUrl").textContent = "oma-portfolio.fi";
+    $("siteUrl").textContent = "portfolio.fi";
     $("sitePreview").innerHTML =
       '<div class="site-hero">' +
       '<div class="photo">?</div><div>' +
