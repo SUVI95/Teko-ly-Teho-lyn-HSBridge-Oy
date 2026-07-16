@@ -7,7 +7,8 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Tunne bottityypit</title>
-<!-- build: 20260714t1 -->
+<script>window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;</script>
+<!-- build: 20260716r1 -->
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;450;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
@@ -1613,11 +1614,30 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
 
   /* ---- WARM-UP (easy first win, rule-based bot) ---- */
   var wuDone=false;
+  var wuPick=null;
+  function restoreWuUI(){
+    if(!wuDone||!wuPick) return;
+    var correct=wuPick==='rule';
+    document.querySelectorAll('.wu-opt').forEach(function(x){
+      x.style.pointerEvents='none';
+      if(x.dataset.wu==='rule') x.classList.add('correct');
+      else if(x.dataset.wu===wuPick) x.classList.add('wrong');
+    });
+    var fb=$('wuFb');
+    if(!fb) return;
+    fb.className='wu-fb show '+(correct?'good':'bad');
+    if(correct){
+      fb.innerHTML='<b>Oikein — hyvä alku!</b> Botti toisti saman nappilistan eikä ymmärtänyt vapaata tekstiä ollenkaan. Se on sääntöpohjainen. Nyt olet valmis oikeaan harjoitukseen.';
+    } else {
+      fb.innerHTML='<b>Katso uudelleen:</b> botti toisti täsmälleen saman nappilistan, vaikka asiakas kirjoitti selvästi mitä halusi. Se ei ymmärtänyt sanoja lainkaan — se osaa vain napit. Se on <b>sääntöpohjainen</b>. Ei hätää, tämä oli vasta lämmittely!';
+    }
+  }
   document.querySelectorAll('.wu-opt').forEach(function(b){
     b.addEventListener('click', function(){
       if(wuDone) return;
       wuDone=true;
-      var pick=b.dataset.wu;
+      wuPick=b.dataset.wu;
+      var pick=wuPick;
       var correct = pick==='rule';
       document.querySelectorAll('.wu-opt').forEach(function(x){
         x.style.pointerEvents='none';
@@ -1631,6 +1651,7 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
       } else {
         fb.innerHTML='<b>Katso uudelleen:</b> botti toisti täsmälleen saman nappilistan, vaikka asiakas kirjoitti selvästi mitä halusi. Se ei ymmärtänyt sanoja lainkaan — se osaa vain napit. Se on <b>sääntöpohjainen</b>. Ei hätää, tämä oli vasta lämmittely!';
       }
+      btSave();
     });
   });
 
@@ -1690,6 +1711,12 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
     await sleep(Math.min(900, 300+text.length*8));
     t.remove();
     var m=document.createElement('div'); m.className='msg '+cls;
+    m.innerHTML=(who?'<span class="who">'+esc(who)+'</span>':'')+esc(text);
+    host.appendChild(m); host.scrollTop=host.scrollHeight;
+  }
+  function appendBubble(host, cls, who, text){
+    var m=document.createElement('div'); m.className='msg '+cls;
+    m.style.animation='none'; m.style.opacity='1'; m.style.transform='none';
     m.innerHTML=(who?'<span class="who">'+esc(who)+'</span>':'')+esc(text);
     host.appendChild(m); host.scrollTop=host.scrollHeight;
   }
@@ -1764,16 +1791,40 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
      why:'Oikein! Huomasit ratkaisevan asian: botti ei vain puhunut, se TEKI tekoja — perui tilauksen ja käynnisti palautuksen oikeissa järjestelmissä. Se on agentti.'}
   ];
   var ex1Sel=null;
-  async function buildEx1(){
+  var ex1Checked=false;
+  function restoreEx1UI(){
+    if(!ex1Sel) return;
+    document.querySelectorAll('#ex1Choices .choice').forEach(function(b){
+      if(b.dataset.id===ex1Sel){
+        b.classList.add('sel');
+        $('ex1Check').disabled=ex1Checked;
+      }
+    });
+    if(!ex1Checked) return;
+    var c=EX1_CHOICES.find(function(x){return x.id===ex1Sel;});
+    if(!c) return;
+    revealChoiceResult('ex1Choices', EX1_CHOICES, ex1Sel);
+    showVerdict('ex1Verdict', c.correct, '<p>'+esc(c.why)+'</p>');
+    $('ex1Check').disabled=true;
+    showSkill('ex1Skill');
+    if(c.correct) markPassed('ex1Next');
+    else $('ex1Next').style.display='';
+  }
+  async function buildEx1(opts){
+    opts=opts||{};
     var host=$('ex1Body'); host.innerHTML='';
     initSkip('ex1Next','Seuraava harjoitus');
-    $('ex1Verdict').className='verdict'; $('ex1Check').disabled=true; ex1Sel=null; $('ex1Skill').classList.remove('show');
+    if(!opts.preserve){
+      $('ex1Verdict').className='verdict'; $('ex1Check').disabled=true; ex1Sel=null; ex1Checked=false; $('ex1Skill').classList.remove('show');
+    }
     for(var i=0;i<EX1_CHAT.length;i++){
       var m=EX1_CHAT[i];
       var cls=m.u?'user':(m.cls==='action'?'action':'bot violet');
-      await typeBubble(host, cls, null, m.t, m.u?300:600);
+      if(opts.preserve) appendBubble(host, cls, null, m.t);
+      else await typeBubble(host, cls, null, m.t, m.u?300:600);
     }
-    renderChoices('ex1Choices', EX1_CHOICES, function(id){ ex1Sel=id; $('ex1Check').disabled=false; });
+    renderChoices('ex1Choices', EX1_CHOICES, function(id){ ex1Sel=id; $('ex1Check').disabled=false; btSave(); });
+    if(opts.preserve) restoreEx1UI();
   }
   function renderChoices(hostId, choices, onSel){
     var host=$(hostId); host.innerHTML='';
@@ -1807,9 +1858,11 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
     revealChoiceResult('ex1Choices', EX1_CHOICES, ex1Sel);
     showVerdict('ex1Verdict', c.correct, '<p>'+esc(c.why)+'</p>');
     $('ex1Check').disabled=true;
+    ex1Checked=true;
     showSkill('ex1Skill');
     if(c.correct){ markPassed('ex1Next'); }
     else { $('ex1Next').style.display=''; } // allow skip after attempt
+    btSave();
   });
   $('ex1Next').addEventListener('click', function(){ show('stageEx2'); buildEx2(); });
 
@@ -1846,20 +1899,29 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
     ],
     passLabel:'Seuraava harjoitus', nextStage:'stageEx3'
   };
-  async function buildEx2(){
+  async function buildEx2(opts){
+    opts=opts||{};
     var host=$('ex2Body'); host.innerHTML='';
     initSkip('ex2Next', EX2.passLabel);
-    $('ex2Grade').innerHTML=''; $('ex2Status').textContent=''; $('ex2Status').className='grade-status'; $('ex2Skill').classList.remove('show');
-    $('ex2Submit').disabled=true; $('ex2Text').value=''; $('ex2Count').textContent='0 sanaa · tarvitaan vähintään 12';
+    if(!opts.preserve){
+      $('ex2Grade').innerHTML=''; $('ex2Status').textContent=''; $('ex2Status').className='grade-status'; $('ex2Skill').classList.remove('show');
+      $('ex2Submit').disabled=true; $('ex2Text').value=''; $('ex2Count').textContent='0 sanaa · tarvitaan vähintään 12';
+    } else {
+      var words=wc($('ex2Text').value);
+      $('ex2Count').textContent=words+' sanaa'+(words<12?' · tarvitaan vähintään 12':'');
+      $('ex2Submit').disabled=words<12;
+    }
     for(var i=0;i<EX2_CHAT.length;i++){
       var m=EX2_CHAT[i];
-      await typeBubble(host, m.u?'user':'bot', null, m.t, m.u?300:550);
+      if(opts.preserve) appendBubble(host, m.u?'user':'bot', null, m.t);
+      else await typeBubble(host, m.u?'user':'bot', null, m.t, m.u?300:550);
     }
   }
   $('ex2Text').addEventListener('input', function(){
     var words=wc(this.value);
     $('ex2Count').textContent=words+' sanaa'+(words<12?' · tarvitaan vähintään 12':'');
     $('ex2Submit').disabled=words<12;
+    btSave();
   });
   $('ex2Submit').addEventListener('click', function(){ gradeWritten(EX2, 'ex2'); });
   $('ex2Next').addEventListener('click', function(){ show('stageEx3'); buildEx3(); });
@@ -2061,6 +2123,7 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
       $('ex3Submit').disabled=!(ex3Choices[co.id] && words>=8);
     }
     ex3UpdateHint();
+    btSave();
   }
   $('ex3Text').addEventListener('input', ex3Refresh);
 
@@ -2162,24 +2225,28 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
     $('ex4Submit').disabled=!ok;
     if($('ex4Count')) $('ex4Count').textContent=wc($('ex4Text').value)+' sanaa'+(wc($('ex4Text').value)<12?' · tarvitaan vähintään 12':'');
   }
-  async function buildEx4(){
+  async function buildEx4(opts){
+    opts=opts||{};
     initSkip('ex4Next','Seuraava harjoitus');
-    ex4Accept={}; ex4Base=null; ex4Reviewed=false; ex4Sent=false;
-    $('ex4Verdict').className='verdict';
-    $('ex4Grade').innerHTML=''; $('ex4Status').textContent=''; $('ex4Status').className='grade-status';
-    $('ex4Skill').classList.remove('show');
-    $('ex4Review').disabled=false; $('ex4Review').style.display='';
-    $('ex4Submit').disabled=true; $('ex4Submit').style.display='none';
-    $('ex4Text').value='';
-    ex4ShowEditPanel(false);
-    if($('ex4Hint')) $('ex4Hint').textContent='Valitse kaikki ehdotukset, jotka ovat hyväksyttäviä sellaisenaan. Vertaa jokaista Kaiku Audion sääntöihin.';
+    if(!opts.preserve){
+      ex4Accept={}; ex4Base=null; ex4Reviewed=false; ex4Sent=false;
+      $('ex4Verdict').className='verdict';
+      $('ex4Grade').innerHTML=''; $('ex4Status').textContent=''; $('ex4Status').className='grade-status';
+      $('ex4Skill').classList.remove('show');
+      $('ex4Review').disabled=false; $('ex4Review').style.display='';
+      $('ex4Submit').disabled=true; $('ex4Submit').style.display='none';
+      $('ex4Text').value='';
+      ex4ShowEditPanel(false);
+      if($('ex4Hint')) $('ex4Hint').textContent='Valitse kaikki ehdotukset, jotka ovat hyväksyttäviä sellaisenaan. Vertaa jokaista Kaiku Audion sääntöihin.';
+    }
     var host=$('ex4Body'); host.innerHTML='';
     var sh=$('ex4Suggs'); sh.innerHTML='';
     for(var i=0;i<EX4_CHAT.length;i++){
-      await typeBubble(host, EX4_CHAT[i].u?'user':'bot', null, EX4_CHAT[i].t, 400);
+      if(opts.preserve) appendBubble(host, EX4_CHAT[i].u?'user':'bot', null, EX4_CHAT[i].t);
+      else await typeBubble(host, EX4_CHAT[i].u?'user':'bot', null, EX4_CHAT[i].t, 400);
     }
     EX4_SUGGS.forEach(function(sg){
-      ex4Accept[sg.id]=false;
+      if(!ex4Accept[sg.id] && ex4Accept[sg.id]!==false) ex4Accept[sg.id]=false;
       var card=document.createElement('div');
       card.className='cp-sugg clickable'; card.dataset.id=sg.id;
       card.innerHTML='<span class="cps-tag">'+esc(sg.tag)+'</span>'+
@@ -2187,13 +2254,24 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
         '<label class="cps-ok"><input type="checkbox" data-accept="'+sg.id+'"> Hyväksyttävä sellaisenaan</label>'+
         '<span class="cps-flag">'+esc(sg.reveal)+'</span>';
       var cb=card.querySelector('input[type="checkbox"]');
+      if(ex4Accept[sg.id]) cb.checked=true;
+      if(ex4Reviewed || ex4Sent){
+        card.classList.add('revealed');
+        card.classList.remove('clickable');
+        var picked=!!ex4Accept[sg.id];
+        card.classList.add(picked?'wrong':'correct');
+        cb.disabled=true;
+      }
+      if(ex4Base===sg.id) card.classList.add('base');
       cb.addEventListener('change', function(e){
         e.stopPropagation();
+        if(ex4Reviewed) return;
         ex4Accept[sg.id]=cb.checked;
+        btSave();
       });
       cb.addEventListener('click', function(e){ e.stopPropagation(); });
       card.addEventListener('click', function(){
-        if(ex4Sent) return;
+        if(ex4Sent || ex4Reviewed) return;
         sh.querySelectorAll('.cp-sugg').forEach(function(x){ x.classList.remove('base'); });
         card.classList.add('base');
         ex4Base=sg.id;
@@ -2201,12 +2279,14 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
         ex4ShowEditPanel(true);
         ex4RefreshSend();
         $('ex4Text').focus();
+        btSave();
       });
       sh.appendChild(card);
     });
+    if(ex4Reviewed) ex4ShowEditPanel(true);
     ex4RefreshSend();
   }
-  $('ex4Text').addEventListener('input', ex4RefreshSend);
+  $('ex4Text').addEventListener('input', function(){ ex4RefreshSend(); btSave(); });
   $('ex4Review').addEventListener('click', function(){
     if(ex4Reviewed) return;
     ex4Reviewed=true;
@@ -2235,6 +2315,7 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
     $('ex4Submit').style.display='';
     ex4RefreshSend();
     if($('ex4Hint')) $('ex4Hint').textContent=ok?'Arvio valmis — nyt muokkaa viestiä alla.':'Korjaa arvio mielessäsi ja muokkaa viesti alla.';
+    btSave();
   });
   $('ex4Submit').addEventListener('click', async function(){
     if(!ex4Reviewed || ex4Sent || wc($('ex4Text').value)<12) return;
@@ -2245,6 +2326,7 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
     await gradeWritten(EX4, 'ex4');
     $('ex4Submit').disabled=true;
     $('ex4Submit').style.display='none';
+    btSave();
   });
   $('ex4Next').addEventListener('click', function(){ show('stageEx5'); buildEx5(); });
 
@@ -3029,7 +3111,7 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
   $('ex7Call').addEventListener('click', ex7StartCall);
   $('ex7Hang').addEventListener('click', function(){ ex7HangUp(); });
   $('ex7Retry').addEventListener('click', function(){ buildEx7(); });
-  $('ex7TypeToggle').addEventListener('change', function(){ ex7SetTypeMode(this.checked); });
+  $('ex7TypeToggle').addEventListener('change', function(){ ex7SetTypeMode(this.checked); btSave(); });
   $('ex7TypeSend').addEventListener('click', ex7SendTyped);
   $('ex7TypeInput').addEventListener('input', ex7UpdateTypeControls);
   $('ex7TypeInput').addEventListener('keydown', function(e){
@@ -3161,6 +3243,7 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
       st.className='grade-status error'; st.textContent=(e.message||'Arvio epäonnistui')+' — yritä uudelleen.';
     }finally{
       btn.disabled=false;
+      btSave();
     }
   }
   function renderGrade(panel, raw){
@@ -3263,10 +3346,10 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
     closeStageMenu();
     show(id);
     if(id==='stageIntro') setTimeout(playCompare, 200);
-    else if(id==='stageEx1') buildEx1();
-    else if(id==='stageEx2') buildEx2();
+    else if(id==='stageEx1') buildEx1({preserve:true});
+    else if(id==='stageEx2') buildEx2({preserve:true});
     else if(id==='stageEx3') buildEx3({ preserve:true });
-    else if(id==='stageEx4') buildEx4();
+    else if(id==='stageEx4') buildEx4({preserve:true});
     else if(id==='stageEx5') buildEx5({ preserve:true });
     else if(id==='stageEx6') buildEx6({ preserve:true });
     else if(id==='stageEx7') buildEx7({ preserve:true });
@@ -3324,8 +3407,9 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
       var el=$(id); if(el) skills[id]=el.classList.contains('show');
     });
     return {
-      stage:currentStage, wuDone:wuDone,
-      ex1Sel:ex1Sel, ex3Choices:ex3Choices, ex3Texts:ex3Texts, ex3Step:ex3Step,
+      stage:currentStage, wuDone:wuDone, wuPick:wuPick,
+      ex1Sel:ex1Sel, ex1Checked:ex1Checked,
+      ex3Choices:ex3Choices, ex3Texts:ex3Texts, ex3Step:ex3Step,
       ex3Graded:ex3Graded, ex3Grades:ex3Grades,
       ex4Accept:ex4Accept, ex4Base:ex4Base, ex4Reviewed:ex4Reviewed, ex4Sent:ex4Sent,
       ex4Text:$('ex4Text')?$('ex4Text').value:'', ex5Type:ex5Type,
@@ -3339,7 +3423,9 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
   window.__bottityypitApplySnapshot=function(snap){
     if(!snap) return;
     if(snap.wuDone) wuDone=true;
+    if(snap.wuPick) wuPick=snap.wuPick;
     if(snap.ex1Sel) ex1Sel=snap.ex1Sel;
+    if(snap.ex1Checked) ex1Checked=true;
     if(snap.ex3Choices) ex3Choices=snap.ex3Choices;
     else if(snap.ex3Type) ex3Choices.a=snap.ex3Type;
     if(snap.ex3Texts) ex3Texts=snap.ex3Texts;
@@ -3386,44 +3472,37 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
     fields=fields||{};
     var stage=snap&&snap.stage?snap.stage:'stageIntro';
     show(stage);
-    if(stage==='stageEx1') buildEx1().then(function(){
-      if(ex1Sel) document.querySelectorAll('#ex1Choices .choice').forEach(function(b){
-        if(b.dataset.id===ex1Sel){ b.classList.add('sel'); $('ex1Check').disabled=false; }
+    if(stage==='stageIntro') restoreWuUI();
+    if(stage==='stageEx1'){
+      buildEx1({preserve:true}).then(function(){
+        restoreEx1UI();
       });
-    });
-    else if(stage==='stageEx2') buildEx2();
+    }
+    else if(stage==='stageEx2') buildEx2({preserve:true});
     else if(stage==='stageEx3'){
       buildEx3({ preserve: true });
     }
-    else if(stage==='stageEx4') buildEx4().then(function(){
-      if(snap.ex4Accept){
-        Object.keys(snap.ex4Accept).forEach(function(id){
-          var cb=document.querySelector('#ex4Suggs input[data-accept="'+id+'"]');
-          if(cb){ cb.checked=!!snap.ex4Accept[id]; ex4Accept[id]=!!snap.ex4Accept[id]; }
-        });
-      }
-      if(snap.ex4Base){
-        var card=ex4Card(snap.ex4Base);
-        if(card) card.classList.add('base');
-        ex4Base=snap.ex4Base;
-      }
-      if(snap.ex4Text && $('ex4Text')) $('ex4Text').value=snap.ex4Text;
+    else if(stage==='stageEx4'){
+      buildEx4({ preserve: true });
       if(snap.ex4Reviewed){
-        ex4Reviewed=true;
-        $('ex4Review').disabled=true;
+        var wronglyAccepted=0;
         EX4_SUGGS.forEach(function(sg){
-          var card=ex4Card(sg.id); if(!card) return;
-          card.classList.add('revealed');
-          var picked=!!ex4Accept[sg.id];
-          card.classList.add(picked?'wrong':'correct');
-          card.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ cb.disabled=true; });
-          card.classList.remove('clickable');
+          if(ex4Accept[sg.id]) wronglyAccepted++;
         });
-        ex4ShowEditPanel(true);
+        var ok=wronglyAccepted===0;
+        var html=ok
+          ? '<p><b>Hyvä arvio!</b> Et merkinnyt yhtään ehdotusta hyväksyttäväksi — juuri näin. Jokaisessa oli sekä oikeaa että vääriä faktoja. Nyt muokkaa viesti, jonka lähettäisit asiakkaalle.</p>'
+          : '<p><b>Yksikään ei ole turvallinen sellaisenaan.</b> Merkitsit '+wronglyAccepted+' ehdotusta hyväksyttäväksi, vaikka jokaisessa oli virheitä tai keksittyjä lupauksia. Katso palaute jokaisesta kortista — sitten muokkaa oma viestisi.</p>';
+        showVerdict('ex4Verdict', ok, html);
+        $('ex4Review').disabled=true;
         $('ex4Submit').style.display=snap.ex4Sent?'none':'';
+        if($('ex4Hint')) $('ex4Hint').textContent=ok?'Arvio valmis — nyt muokkaa viestiä alla.':'Korjaa arvio mielessäsi ja muokkaa viesti alla.';
       }
       ex4RefreshSend();
-    });
+      if(snap.ex4Sent && $('ex4Text') && $('ex4Text').value.trim()){
+        appendBubble($('ex4Body'), 'bot', 'sinä lähetit', $('ex4Text').value.trim());
+      }
+    }
     else if(stage==='stageEx5'){
       buildEx5({ preserve: true });
       ex5RenderHistory();
@@ -3453,7 +3532,7 @@ textarea.write:focus{outline:none;border-color:var(--teal)}
 <script>window.BONUS_MODULE_SLUG = 'bottityypit';</script>
 <script src="/js/bonus-module-runtime.js?v=20260714t1" defer></script>
 <script src="/js/bonus-module-nav.js?v=20260716a" defer></script>
-<script src="/js/bottityypit-persistence.js?v=20260714t1" defer></script>
+<script src="/js/bottityypit-persistence.js?v=20260716r1" defer></script>
 
 </body>
 </html>

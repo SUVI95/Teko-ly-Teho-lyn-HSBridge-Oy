@@ -13,11 +13,28 @@
     }, 700);
   }
 
+  function isSkippableInput(el) {
+    var type = (el.type || "").toLowerCase();
+    return (
+      type === "file" ||
+      type === "password" ||
+      type === "submit" ||
+      type === "button" ||
+      type === "reset" ||
+      type === "image"
+    );
+  }
+
   function collectFields() {
     var fields = {};
-    document.querySelectorAll("textarea[id], input[id][type='text'], select[id]").forEach(function (el) {
-      if (!el.id) return;
-      fields[el.id] = el.value != null ? String(el.value) : "";
+    document.querySelectorAll("textarea[id], input[id], select[id]").forEach(function (el) {
+      if (!el.id || isSkippableInput(el)) return;
+      var type = (el.type || "").toLowerCase();
+      if (type === "checkbox" || type === "radio") {
+        fields[el.id] = el.checked ? "1" : "0";
+      } else {
+        fields[el.id] = el.value != null ? String(el.value) : "";
+      }
     });
     return fields;
   }
@@ -40,8 +57,14 @@
     Object.keys(fields).forEach(function (id) {
       var el = document.getElementById(id);
       if (!el || fields[id] == null) return;
-      el.value = fields[id];
-      el.dispatchEvent(new Event(el.tagName === "SELECT" ? "change" : "input", { bubbles: true }));
+      var type = (el.type || "").toLowerCase();
+      if (type === "checkbox" || type === "radio") {
+        el.checked = fields[id] === "1" || fields[id] === true;
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      } else {
+        el.value = fields[id];
+        el.dispatchEvent(new Event(el.tagName === "SELECT" ? "change" : "input", { bubbles: true }));
+      }
     });
   }
 
@@ -127,13 +150,30 @@
   };
 
   function bindAutosave() {
-    document.addEventListener("input", function (e) {
+    document.addEventListener(
+      "input",
+      function (e) {
+        var t = e.target;
+        if (t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT" || t.tagName === "SELECT")) {
+          scheduleSave();
+        }
+      },
+      true
+    );
+    document.addEventListener("change", scheduleSave, true);
+    document.addEventListener("click", function (e) {
       var t = e.target;
-      if (t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT")) {
+      if (!t || !t.closest) return;
+      if (
+        t.closest(".choice") ||
+        t.closest(".type-opt") ||
+        t.closest(".wu-opt") ||
+        t.closest(".cp-sugg") ||
+        t.closest("[data-bottityypit-track]")
+      ) {
         scheduleSave();
       }
-    });
-    document.addEventListener("change", scheduleSave);
+    }, true);
     document.addEventListener("bottityypit:state-changed", scheduleSave);
   }
 

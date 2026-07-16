@@ -54,7 +54,9 @@ function injectModulePersistenceScripts(html, moduleId) {
   const needsModuleWork =
     moduleId !== 'moduuli-bottityypit-studio' && !html.includes('/js/module-work.js');
   const needsAutoSave =
-    moduleId !== 'moduuli-bottityypit-studio' && !html.includes('/js/module-autosave.js');
+    moduleId !== 'moduuli-bottityypit-studio' &&
+    moduleId !== 'moduuli-bottityypit' &&
+    !html.includes('/js/module-autosave.js');
   const tags = [bootScript];
   if (needsModuleWork) tags.push('<script src="/js/module-work.js"></script>');
   if (needsAutoSave) tags.push('<script src="/js/module-autosave.js"></script>');
