@@ -285,8 +285,15 @@
     return !!(cv || (fields.skills && fields.skills.length));
   }
 
+  function setCvUploadFileName(name) {
+    var hint = $("cvUploadHint");
+    if (!hint) return;
+    hint.textContent = name ? "Valittu: " + name : "Raahaa tiedosto tähän tai klikkaa valitaksesi";
+  }
+
   async function parseCvFile(file) {
     if (!file) return;
+    setCvUploadFileName(file.name);
     setCvUploadStatus("Luetaan CV:stä…", "");
     var zone = $("cvUploadZone");
     if (zone) zone.style.pointerEvents = "none";
@@ -336,6 +343,12 @@
       zone.classList.remove("drag");
       var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
       if (f) parseCvFile(f);
+    });
+    zone.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        input.click();
+      }
     });
   }
 
