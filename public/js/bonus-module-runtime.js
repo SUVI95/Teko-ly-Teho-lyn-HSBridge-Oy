@@ -184,6 +184,8 @@
   }
 
   function restoreDrafts() {
+    // Bot Studio persists via bottityypit-studio.js (_studio) — drafts caused stale demo CV to reappear.
+    if (/moduuli-bottityypit-studio/.test(location.pathname || "")) return;
     document.querySelectorAll("textarea[id]").forEach(function (el) {
       if (!el.id) return;
       if (el.value && String(el.value).trim()) return;

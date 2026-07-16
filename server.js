@@ -52,7 +52,8 @@ function injectModulePersistenceScripts(html, moduleId) {
   if (!html || typeof html !== 'string') return html;
   const bootScript = `<script>window.__MODULE_ID__=${JSON.stringify(String(moduleId || ''))};</script>`;
   const needsModuleWork = !html.includes('/js/module-work.js');
-  const needsAutoSave = !html.includes('/js/module-autosave.js');
+  const needsAutoSave =
+    moduleId !== 'moduuli-bottityypit-studio' && !html.includes('/js/module-autosave.js');
   const tags = [bootScript];
   if (needsModuleWork) tags.push('<script src="/js/module-work.js"></script>');
   if (needsAutoSave) tags.push('<script src="/js/module-autosave.js"></script>');
@@ -81,6 +82,7 @@ const moduleAiRoutes = require('./routes/module-ai');
 const bonusModuleRoutes = require('./routes/bonus-module');
 const realtimeTokenRoutes = require('./routes/realtime-token');
 const automaatioEmailRoutes = require('./routes/automaatio-email');
+const bubbleBotRoutes = require('./routes/bubble-bot');
 const { authenticateToken, authenticatePage } = require('./middleware/auth');
 
 const app = express();
@@ -121,6 +123,7 @@ app.use('/api/module-ai', moduleAiRoutes);
 app.use('/api/bonus-module', bonusModuleRoutes);
 app.use('/api/realtime-token', realtimeTokenRoutes);
 app.use('/api', automaatioEmailRoutes);
+app.use('/api/bubble-bot', bubbleBotRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -540,6 +543,11 @@ Object.values(GIFTS).forEach((gift) => {
   app.get(`/${gift.moduleId}.html`, (req, res) => {
     res.redirect(302, `/module/${gift.moduleId}`);
   });
+});
+
+app.get('/bot/:slug', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=60');
+  res.sendFile(path.join(__dirname, 'public', 'bubble-bot.html'));
 });
 
 app.get('/module/:moduleId', async (req, res) => {

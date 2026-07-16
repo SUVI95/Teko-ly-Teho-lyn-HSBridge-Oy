@@ -302,11 +302,39 @@
     if (!snap || !snap.fields) return false;
     var cv = String(snap.fields.cvText || "");
     var job = String(snap.fields.jobPost || "");
+    var skills = String(snap.fields.skillsText || "");
     var name = String(snap.fields.botName || "");
+    var blob = cv + "\n" + job + "\n" + skills + "\n" + name;
     return (
-      /aino\s+virtanen|aino-virtanen|technova|customer success specialist/i.test(cv + job + name) ||
-      /palveluarvosana\s*92\s*%/i.test(cv)
+      /aino\s+virtanen|aino-virtanen|aino\s*·/i.test(blob) ||
+      /technova|customer success specialist/i.test(blob) ||
+      /palveluarvosana\s*92\s*%|salesforce,\s*zendesk/i.test(blob) ||
+      /b2c-asiakaspalvelu.*myynti/i.test(cv)
     );
+  }
+
+  function isLegacyDemoAnalysis(data) {
+    if (!data) return false;
+    var blob = JSON.stringify(data);
+    return /technova|aino\s+virtanen|customer success specialist/i.test(blob);
+  }
+
+  function clearLegacyDemoFromDom() {
+    var snap = { fields: collectFields(), trained: trained, analysisData: analysisData };
+    if (!isLegacyDemoSnapshot(snap) && !isLegacyDemoAnalysis(analysisData)) return false;
+    $("cvText").value = "";
+    $("skillsText").value = "";
+    $("jobPost").value = "";
+    if (/aino/i.test(($("botName").value || "").trim())) $("botName").value = "";
+    trained = false;
+    analysisData = null;
+    $("analysisEmpty").style.display = "block";
+    $("analysisResult").style.display = "none";
+    $("jobTitle").textContent = "Ei analyysiä vielä — kouluta botti ja liitä ilmoitus";
+    syncPrompt();
+    updateTrainStatus();
+    renderSitePreview();
+    return true;
   }
 
   function stripLegacyDemoSnapshot(snap) {
@@ -319,6 +347,13 @@
     snap.analysisData = null;
     snap.ts = Date.now();
     return snap;
+  }
+
+  function purgeLegacyDemoPersistence(serverSnap) {
+    var cleared = clearLegacyDemoFromDom();
+    if (serverSnap && isLegacyDemoSnapshot(serverSnap)) cleared = true;
+    if (cleared) saveStudio({ silent: true });
+    return cleared;
   }
 
   function hasCvContent() {
@@ -804,18 +839,18 @@
       serverRaw = window.BonusModule.getEntry("_studio");
     }
     var serverSnap = parseSnapshot(serverRaw);
-    var clearedLegacy = !!(serverSnap && isLegacyDemoSnapshot(serverSnap));
     var best = pickBestSnapshot(serverRaw);
     wire();
     wireCvUpload();
+    if (best) restoreSnapshot(best);
+    clearLegacyDemoFromDom();
     syncPrompt();
     renderChips();
-    if (best) restoreSnapshot(best);
-    else {
+    if (!restored) {
       renderSitePreview();
       updateTrainStatus();
     }
-    if (clearedLegacy) saveStudio({ silent: true });
+    purgeLegacyDemoPersistence(serverSnap);
   }
 
   if (document.readyState === "loading") {
