@@ -112,7 +112,7 @@ h2.h em { font-style:italic; color:var(--orange); }
 .bt-run:disabled { opacity:.5; cursor:not-allowed; }
 .bt-run.running { background:var(--n8n-muted); }
 
-.builder-main { display:flex; min-height:440px; position:relative; }
+.builder-main { display:flex; min-height:440px; position:relative; min-width:0; }
 /* left palette */
 .palette { width:158px; flex-shrink:0; background:#fff; border-right:1px solid var(--panel-line); padding:.7rem .55rem; display:flex; flex-direction:column; gap:.4rem; }
 .palette-h { font-family:'DM Mono',monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--n8n-muted); padding:.2rem .3rem .35rem; }
@@ -131,10 +131,11 @@ h2.h em { font-style:italic; color:var(--orange); }
 .n-output .pal-ic,.node.n-output .nd-ic { background:var(--green-light); }
 
 /* canvas */
-.canvas-wrap { flex:1; position:relative; overflow:hidden; background:var(--canvas-bg);
+.canvas-wrap { flex:1; min-width:0; position:relative; overflow:hidden; background:var(--canvas-bg);
   background-image:radial-gradient(var(--canvas-dot) 1.1px, transparent 1.1px);
   background-size:18px 18px; }
 .canvas-wrap.fix-settings-only { overflow-x:auto; overflow-y:hidden; min-height:360px; }
+.fix-canvas-track { position:relative; min-height:280px; height:100%; }
 .canvas-wrap.fix-settings-only svg { position:absolute; top:0; left:0; height:100%; pointer-events:none; z-index:1; }
 .canvas-hint { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:.5rem; color:var(--n8n-muted); pointer-events:none; text-align:center; padding:1rem; }
 .canvas-hint.fix-hint { position:sticky; left:auto; right:.75rem; bottom:.75rem; width:auto; height:auto; inset:auto; align-items:flex-end; justify-content:flex-end; padding:0; z-index:3; }
@@ -179,7 +180,7 @@ h2.h em { font-style:italic; color:var(--orange); }
 
 /* right parameters panel */
 .params { width:0; flex-shrink:0; background:#fff; border-left:1px solid var(--panel-line); overflow:hidden; transition:width .22s ease; }
-.params.open { width:262px; }
+.params.open, .params.params-pinned { width:262px; }
 .params-in { width:262px; padding:.9rem; }
 .params-head { display:flex; align-items:center; gap:.55rem; padding-bottom:.7rem; border-bottom:1px solid var(--panel-line); margin-bottom:.85rem; }
 .params-head .ph-ic { width:30px; height:30px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
@@ -200,7 +201,7 @@ h2.h em { font-style:italic; color:var(--orange); }
 .p-static { background:var(--cream2); border-radius:6px; padding:.5rem .6rem; font-size:.72rem; color:var(--ink3); line-height:1.5; }
 .p-empty { text-align:center; color:var(--n8n-muted); font-size:.8rem; padding:2rem 1rem; line-height:1.6; }
 .p-empty .big { font-size:1.6rem; display:block; margin-bottom:.5rem; opacity:.5; }
-@media(max-width:820px){ .params.open{width:230px;} .params-in,.params-head{width:230px;} .palette{width:132px;} }
+@media(max-width:820px){ .params.open,.params.params-pinned{width:230px;} .params-in,.params-head{width:230px;} .palette{width:132px;} }
 
 /* execution log / output drawer */
 .exec { background:#1e2530; border-top:1px solid #2c3540; color:#cdd5df; font-family:'DM Mono',monospace; font-size:.74rem; max-height:0; overflow:hidden; transition:max-height .3s ease; }
@@ -470,7 +471,7 @@ h2.h em { font-style:italic; color:var(--orange); }
         <svg id="fixEdges"></svg>
         <div class="canvas-hint fix-hint"><span>Ketju on valmiiksi kytketty. <strong>Klikkaa palikkaa</strong> ja korjaa sen asetuksia — ei tarvitse vetää yhteyksiä.</span></div>
       </div>
-      <div class="params" id="fixParams">
+      <div class="params params-pinned open" id="fixParams">
         <div class="params-in" id="fixParamsIn">
           <div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa nähdäksesi ja korjataksesi sen asetukset</div>
         </div>
@@ -518,7 +519,7 @@ h2.h em { font-style:italic; color:var(--orange); }
       </div>
       <div class="builder-main">
         <div class="canvas-wrap fix-settings-only" id="fix2Canvas"><svg id="fix2Edges"></svg><div class="canvas-hint fix-hint"><span>Klikkaa palikkaa ja korjaa asetuksia — ketju pysyy samana.</span></div></div>
-        <div class="params" id="fix2Params"><div class="params-in" id="fix2ParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa korjataksesi asetukset</div></div></div>
+        <div class="params params-pinned open" id="fix2Params"><div class="params-in" id="fix2ParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa korjataksesi asetukset</div></div></div>
       </div>
       <div class="exec" id="fix2Exec"><div class="exec-head"><div class="eh-l"><span class="live"></span> Suoritusloki</div></div><div class="exec-body" id="fix2Log"></div></div>
     </div>
@@ -549,7 +550,7 @@ h2.h em { font-style:italic; color:var(--orange); }
       </div>
       <div class="builder-main">
         <div class="canvas-wrap fix-settings-only" id="fix3Canvas"><svg id="fix3Edges"></svg><div class="canvas-hint fix-hint"><span>Klikkaa palikkaa ja korjaa asetuksia — ketju pysyy samana.</span></div></div>
-        <div class="params" id="fix3Params"><div class="params-in" id="fix3ParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa — älä ohita yhtään</div></div></div>
+        <div class="params params-pinned open" id="fix3Params"><div class="params-in" id="fix3ParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa — älä ohita yhtään</div></div></div>
       </div>
       <div class="exec" id="fix3Exec"><div class="exec-head"><div class="eh-l"><span class="live"></span> Suoritusloki</div></div><div class="exec-body" id="fix3Log"></div></div>
     </div>
@@ -703,7 +704,7 @@ h2.h em { font-style:italic; color:var(--orange); }
     </div>
     <div class="builder-main">
       <div class="canvas-wrap" id="orderCanvas" style="min-height:340px;"><svg id="orderEdges"></svg></div>
-      <div class="params" id="orderParams"><div class="params-in" id="orderParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa nähdäksesi sen. Vedä porteista kytkeäksesi uudelleen.</div></div></div>
+      <div class="params params-pinned open" id="orderParams"><div class="params-in" id="orderParamsIn"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa nähdäksesi sen. Vedä porteista kytkeäksesi uudelleen.</div></div></div>
     </div>
     <div class="exec" id="orderExec"><div class="exec-head"><div class="eh-l"><span class="live"></span> Suoritusloki</div></div><div class="exec-body" id="orderLog"></div></div>
   </div>
@@ -756,7 +757,7 @@ h2.h em { font-style:italic; color:var(--orange); }
         <div class="canvas-hint" id="canvasHint2"><div class="ch-box">Rakenna reklamaatiokone tähän</div><span style="font-size:.72rem;">Muista: suodata ennen tekoälyä</span></div>
         <svg id="edges2"></svg>
       </div>
-      <div class="params" id="params2"><div class="params-in" id="paramsIn2"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa. Tekoäly-palikkaan kirjoitat ohjeen joka välttää ansan.</div></div></div>
+      <div class="params params-pinned open" id="params2"><div class="params-in" id="paramsIn2"><div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa. Tekoäly-palikkaan kirjoitat ohjeen joka välttää ansan.</div></div></div>
     </div>
     <div class="exec" id="build2Exec"><div class="exec-head"><div class="eh-l"><span class="live"></span> Suoritusloki</div></div><div class="exec-body" id="build2Log"></div></div>
   </div>
@@ -1225,15 +1226,27 @@ function unlockFixLevel(n){
 }
 
 const FIX_NODE_W=172, FIX_NODE_GAP=56, FIX_NODE_PAD=40, FIX_NODE_Y=88;
-function layoutFixNodes(d, canvasEl){
+function ensureFixCanvasTrack(canvasEl){
+  let track=canvasEl.querySelector('.fix-canvas-track');
+  if(!track){
+    track=document.createElement('div');
+    track.className='fix-canvas-track';
+    const svg=canvasEl.querySelector('svg');
+    if(svg) track.appendChild(svg);
+    canvasEl.insertBefore(track, canvasEl.firstChild);
+  }
+  return track;
+}
+function layoutFixNodes(d, trackEl){
   const count=d.nodes.length;
   d.nodes.forEach((n,i)=>{
     n.x=FIX_NODE_PAD+i*(FIX_NODE_W+FIX_NODE_GAP);
     n.y=FIX_NODE_Y;
   });
   const chainW=FIX_NODE_PAD*2+count*FIX_NODE_W+(count-1)*FIX_NODE_GAP;
-  canvasEl.style.minWidth=chainW+'px';
-  const svg=canvasEl.querySelector('svg');
+  trackEl.style.minWidth=chainW+'px';
+  trackEl.style.minHeight='280px';
+  const svg=trackEl.querySelector('svg');
   if(svg){
     svg.style.width=chainW+'px';
     svg.style.minWidth=chainW+'px';
@@ -1244,8 +1257,9 @@ function layoutFixNodes(d, canvasEl){
 function renderFixLevel(levelId){
   const d=FIX_DEFS[levelId]; syncFixState(levelId);
   const c=fixEl(levelId,'canvas');
-  layoutFixNodes(d, c);
-  c.querySelectorAll('.node').forEach(n=>n.remove());
+  const track=ensureFixCanvasTrack(c);
+  layoutFixNodes(d, track);
+  track.querySelectorAll('.node').forEach(n=>n.remove());
   d.nodes.forEach(n=>{
     let node={...n};
     if(levelId==='fix1'){
@@ -1264,12 +1278,12 @@ function renderFixLevel(levelId){
       if(n.id==='h4') node.foot='ohje ok ✓';
       if(n.id==='h5'){ node.name=d.state.output?'Sisäinen arkisto':'Lähetä toimittajalle'; node.foot=d.state.output?'✓ oikea kohde':'⚠ väärä kohde'; }
     }
-    c.insertAdjacentHTML('beforeend', nodeHTML(node,true));
+    track.insertAdjacentHTML('beforeend', nodeHTML(node,true));
     const el=document.getElementById(n.id);
     el.style.cursor='pointer';
     el.onclick=()=>selectFixLevel(levelId,n.id);
   });
-  drawEdges(fixEl(levelId,'edges').id, d.edges, (id,side)=>portPos(c,id,side));
+  drawEdges(fixEl(levelId,'edges').id, d.edges, (id,side)=>portPos(track,id,side));
 }
 
 function selectFixLevel(levelId,nodeId){
@@ -1341,9 +1355,10 @@ function wireFixInputs(levelId){
   if(o3) o3.onchange=e=>{ d.cfg.outputDest=e.target.value; updateBugPills(levelId); renderFixLevel(levelId); selectFixLevel(levelId,'h5'); m1bScheduleSave(); };
 }
 function closeFixLevel(levelId){
-  fixEl(levelId,'params').classList.remove('open');
   fixEl(levelId,'canvas').querySelectorAll('.node').forEach(n=>n.classList.remove('selected'));
   FIX_DEFS[levelId].selected=null;
+  const wrap=fixEl(levelId,'paramsIn');
+  if(wrap) wrap.innerHTML='<div class="p-empty"><span class="big">👈</span>Klikkaa palikkaa nähdäksesi ja korjataksesi sen asetukset</div>';
 }
 
 async function runFixLevel(levelId){
@@ -1544,7 +1559,7 @@ function makeCanvas(cfg){
     if(cfg.renderParams) cfg.renderParams(id, state, api);
     document.getElementById(cfg.paramsId).classList.add('open');
   }
-  function closeParams(){ document.getElementById(cfg.paramsId).classList.remove('open'); canvas.querySelectorAll('.node').forEach(n=>n.classList.remove('selected')); state.sel=null; }
+  function closeParams(){ const p=document.getElementById(cfg.paramsId); if(p&&!p.classList.contains('params-pinned')) p.classList.remove('open'); canvas.querySelectorAll('.node').forEach(n=>n.classList.remove('selected')); state.sel=null; }
   function wireNode(id){
     const el=document.getElementById(id);
     el.addEventListener('mousedown', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; startNodeDrag(ev,id); });
