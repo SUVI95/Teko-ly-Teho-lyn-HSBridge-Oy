@@ -1733,6 +1733,26 @@ function haTextScore(d){
     const v=String(Sobj[k]!=null?Sobj[k]:(inputs[k]||'')).trim();
     if(v)score+=Math.min(v.length,240);
   });
+  // Non-text exercise progress — keep quiz/voice/mock state from being wiped by emptier snapshots
+  if(Number(d.tfDone||0)>0)score+=20+Number(d.tfDone||0)*8;
+  if(Number(d.decoderDone||0)>0)score+=20+Number(d.decoderDone||0)*8;
+  if(Number(d.stfCurrent||0)>0)score+=15+Number(d.stfCurrent||0)*10;
+  if(Array.isArray(Sobj.stfAnswers))Sobj.stfAnswers.forEach(a=>{if(String(a||'').trim().length>=10)score+=25;});
+  if(Sobj.scenPicks&&typeof Sobj.scenPicks==='object')score+=Object.keys(Sobj.scenPicks).length*12;
+  if(Sobj.starVoiceDone&&typeof Sobj.starVoiceDone==='object'){
+    [1,2,3].forEach(q=>{if(Sobj.starVoiceDone[q])score+=35;});
+  }
+  if(Sobj.starVoiceRecordings&&typeof Sobj.starVoiceRecordings==='object'){
+    Object.keys(Sobj.starVoiceRecordings).forEach(k=>{
+      const r=Sobj.starVoiceRecordings[k];
+      if(r&&(String(r.transcript||'').trim()||String(r.fb||'').trim()))score+=40;
+    });
+  }
+  if(Array.isArray(Sobj.mockSession))Sobj.mockSession.forEach(m=>{if(m&&String(m.transcript||'').trim())score+=40;});
+  if(d.mockDoneCount)score+=Number(d.mockDoneCount)*15;
+  if(Sobj.startKey)score+=15;
+  if(Sobj.companyName)score+=15;
+  if(Sobj.hpBuilt)score+=30;
   const sn=screenNum(d.curScreen||1);
   if(Number.isFinite(sn))score+=Math.round(sn*12);
   if(d.shown&&d.shown.finished)score+=80;
@@ -2669,8 +2689,12 @@ function haSnapshot(){
 function summarizeHaData(data){
   if(!data||typeof data!=='object')return 'Haastattelu — tallennettu';
   const parts=[`Vaihe ${data.curScreen||1}/${TOTAL}`];
-  if(data.S&&data.S.w_s)parts.push('STAR-vastaus');
-  if(data.S&&data.S.hpBuilt)parts.push('Hissipuhe');
+  const Sobj=data.S||{};
+  if(Sobj.w_s||Sobj.w2_s||Sobj.w3_s)parts.push('STAR');
+  if(Sobj.starVoiceDone&&[1,2,3].some(q=>Sobj.starVoiceDone[q]))parts.push('Puhu');
+  if(Sobj.hpBuilt||Sobj.hp1)parts.push('Hissipuhe');
+  if(Array.isArray(Sobj.mockSession)&&Sobj.mockSession.some(m=>m&&m.transcript))parts.push('Mock');
+  if(Sobj.w_weak||Sobj.w_why||Sobj.w_palkka)parts.push('Vaikeat');
   if(data.shown&&data.shown.finished)parts.push('Suoritettu');
   return parts.join(' · ');
 }
@@ -2735,12 +2759,18 @@ function restoreSTF(d){
 function applyHaData(d){
   if(!d||d.v!==1)return false;
   try{Object.assign(S,d.S||{});}catch(e){}
+  ensureStarVoiceState();
+  if(!Array.isArray(S.stfAnswers))S.stfAnswers=[];
+  if(!Array.isArray(S.mockSession))S.mockSession=[];
+  if(!S.scenPicks||typeof S.scenPicks!=='object')S.scenPicks={};
   tfDone=Number(d.tfDone||0);
   tfCorrect=Number(d.tfCorrect||0);
   decoderDone=Number(d.decoderDone||0);
   companyChosen=!!d.companyChosen;
   scenBuilt=!!d.scenBuilt;
   scenDone=Number(d.scenDone||0);
+  if(typeof d.stfCurrent==='number')stfCurrent=d.stfCurrent;
+  if(d.abBuilt)abBuilt=true;
   if(d.inputs){
     Object.keys(d.inputs).forEach(id=>{
       const el=document.getElementById(id);
@@ -2757,6 +2787,10 @@ function applyHaData(d){
     }
     if(S[id]!=null&&String(S[id]).trim())el.value=S[id];
   });
+  // Spot-flaw draft answer lives in a dynamic textarea
+  if(d.stfCurrentAnswer&&document.getElementById('stf-ta')&&!String(document.getElementById('stf-ta').value||'').trim()){
+    document.getElementById('stf-ta').value=d.stfCurrentAnswer;
+  }
   if(d.texts){
     Object.keys(d.texts).forEach(id=>{
       const el=document.getElementById(id);
@@ -2877,6 +2911,20 @@ function applyHaData(d){
   if(screenNum(screen)>=8&&!isStfComplete())screen=7;
   go(screen,{free:true});
   if(screen===12||Number(screen)===12)buildEarn();
+  // Re-apply voice / mock UI after navigation so exercise cards match saved progress.
+  try{
+    ensureStarVoiceState();
+    updateStarVoiceGate();
+    if(screen==='5b')initStarVoiceScreen();
+    if(screen==='8b'||(Array.isArray(S.mockSession)&&S.mockSession.some(Boolean))){
+      if(typeof renderMockTimeline==='function')renderMockTimeline();
+      if(typeof updateMockDots==='function')updateMockDots();
+    }
+    if(S.hpBuilt){
+      const hpFbT=document.getElementById('hpFbT');
+      if(hpFbT&&!hpFbT.textContent&&d.texts&&d.texts.hpFbT)hpFbT.textContent=d.texts.hpFbT;
+    }
+  }catch(e){}
   if(screenNum(screen)>1&&!(d.shown&&d.shown.finished))showResumeBanner(screen,d.ts);
   return true;
 }
