@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Pohjola CRM — Context Hygiene</title>
+<script>window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a1a2e;--ink2:#2d2d44;--paper:#f5f3ef;--paper2:#eeeae3;--warm:#e8e0d4;
+  --accent:#c75b3a;--accent2:#2563a8;--accent3:#2a7a4b;--gold:#b8860b;
+  --muted:#6b6880;--border:rgba(26,26,46,.12);
+  --shadow:0 2px 20px rgba(26,26,46,.08);--shadow-md:0 10px 40px rgba(26,26,46,.12);
+  --serif:'DM Serif Display',Georgia,serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --crm-sidebar:240px;--crm-compose:min(400px,42vw);
+  --safe-area-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.65;font-size:16px;-webkit-text-size-adjust:100%}
+button,textarea{font-family:inherit}
+button{cursor:pointer;border:none;background:none}
+body.large-text{font-size:18px}
+body.calm .pulse{animation:none!important}
+
+.local-banner{
+  height:32px;display:flex;align-items:center;justify-content:center;gap:10px;
+  background:var(--ink);color:rgba(255,255,255,.65);font-size:11px;letter-spacing:.04em;
+  position:relative;z-index:1000;
+}
+.local-banner code{font-family:var(--mono);color:#f0c9a0;background:rgba(255,255,255,.08);padding:2px 7px;border-radius:4px;font-size:10px}
+
+.screen{display:none}
+.screen.active{display:block}
+
+/* ── THEORY (exciting first impression) ── */
+#screenTheory{
+  min-height:calc(100vh - 32px);
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 0%,rgba(199,91,58,.1),transparent 55%),
+    radial-gradient(ellipse 60% 50% at 90% 20%,rgba(37,99,168,.08),transparent 50%),
+    var(--paper);
+}
+.th-wrap{max-width:880px;margin:0 auto;padding:56px 28px 80px}
+.th-kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:1.25rem;display:flex;align-items:center;gap:12px}
+.th-kicker::after{content:'';width:40px;height:1px;background:rgba(199,91,58,.4)}
+.th-wrap h1{font-family:var(--serif);font-size:clamp(2.8rem,6vw,4.2rem);font-weight:400;line-height:1.05;letter-spacing:-.02em;margin-bottom:1.25rem;max-width:12ch}
+.th-wrap h1 em{font-style:italic;color:var(--accent)}
+.th-lead{font-size:1.2rem;font-weight:300;color:var(--muted);max-width:36ch;line-height:1.75;margin-bottom:2rem}
+.th-cta-row{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:3.5rem}
+.btn-go{
+  display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#fff;
+  font-weight:600;font-size:1rem;padding:16px 28px;border-radius:8px;transition:.25s;
+}
+.btn-go:hover{background:#b34e2f;transform:translateY(-2px);box-shadow:0 10px 28px rgba(199,91,58,.35)}
+.btn-link{color:var(--muted);font-size:.92rem;text-decoration:underline;text-underline-offset:3px}
+.btn-link:hover{color:var(--ink)}
+.a11y{display:flex;gap:8px;flex-wrap:wrap}
+.a11y button{background:#fff;border:1px solid var(--border);border-radius:999px;padding:8px 14px;font-size:.82rem;color:var(--ink2);box-shadow:var(--shadow)}
+.a11y button.on{border-color:rgba(199,91,58,.35);color:var(--accent);background:rgba(199,91,58,.06)}
+
+.th-section{margin:3.5rem 0;padding-top:2rem;border-top:1px solid var(--border)}
+.th-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
+.th-section h2{font-family:var(--serif);font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:400;line-height:1.15;margin-bottom:1rem}
+.th-section h2 em{font-style:italic;color:var(--accent)}
+.th-p{font-size:1.05rem;color:var(--ink2);line-height:1.8;max-width:40rem;margin-bottom:1rem;font-weight:300}
+.th-p strong{font-weight:600;color:var(--ink)}
+.quote{
+  font-family:var(--serif);font-style:italic;font-size:1.45rem;color:var(--accent);
+  border-left:3px solid var(--accent);padding-left:1.15rem;margin:1.75rem 0;line-height:1.35;
+}
+.flow{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:1.75rem 0;
+}
+@media(max-width:700px){.flow{grid-template-columns:1fr 1fr}}
+.flow-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.1rem;text-align:center;box-shadow:var(--shadow)}
+.flow-card b{display:block;font-size:.92rem;margin-bottom:4px}
+.flow-card span{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:1.5rem 0}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+.rule-tile{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.25rem;box-shadow:var(--shadow)}
+.rule-tile h3{font-family:var(--serif);font-weight:400;font-size:1.15rem;margin-bottom:6px}
+.rule-tile p{font-size:.9rem;color:var(--muted);line-height:1.6}
+.gold-card{
+  background:#fff;border:1px solid var(--border);border-radius:18px;padding:1.75rem 2rem;
+  box-shadow:var(--shadow-md);margin:1.5rem 0;
+}
+.gold-card .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.75rem}
+.gold-card blockquote{font-family:var(--serif);font-size:clamp(1.35rem,3vw,1.85rem);line-height:1.3;margin-bottom:1rem}
+.gold-card blockquote em{font-style:italic;color:var(--accent)}
+.gold-card p{color:var(--muted);font-size:.95rem;line-height:1.7}
+.never-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:1.5rem 0}
+@media(max-width:800px){.never-row{grid-template-columns:1fr 1fr}}
+.never{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.15rem;box-shadow:var(--shadow)}
+.never .code{font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;color:var(--accent);margin-bottom:8px}
+.never h3{font-family:var(--serif);font-weight:400;font-size:1.05rem;margin-bottom:4px}
+.never p{font-size:.82rem;color:var(--muted);line-height:1.55}
+.ok-strip{background:rgba(42,122,75,.07);border:1px solid rgba(42,122,75,.22);border-radius:14px;padding:1.35rem 1.5rem;margin-top:1.25rem}
+.ok-strip h3{font-family:var(--serif);font-weight:400;color:var(--accent3);font-size:1.25rem;margin-bottom:.5rem}
+.th-end{
+  margin-top:3rem;padding:2rem 0 1rem;border-top:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:flex-start;gap:14px;
+}
+.th-end p{font-size:1.05rem;color:var(--muted);font-weight:300;max-width:36ch;line-height:1.7}
+
+/* ── CRM APP ── */
+#screenDesk{height:calc(100vh - 32px);overflow:hidden}
+.crm{
+  height:100%;display:grid;
+  grid-template-rows:56px 1fr;
+  background:#eae6df;
+}
+.crm-top{
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:16px;padding:0 18px;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:.95rem}
+.brand-mark{
+  width:28px;height:28px;border-radius:7px;
+  background:linear-gradient(135deg,var(--accent),#a84a2f);color:#fff;
+  display:grid;place-items:center;font-family:var(--serif);font-size:12px;
+  box-shadow:0 3px 10px rgba(199,91,58,.3);
+}
+.brand small{font-family:var(--mono);font-weight:400;font-size:.72rem;color:var(--muted);margin-left:4px}
+.crm-search{
+  flex:1;max-width:380px;height:36px;background:var(--paper);border:1px solid var(--border);
+  border-radius:8px;padding:0 12px;display:flex;align-items:center;gap:8px;
+  color:var(--muted);font-size:.85rem;
+}
+.crm-meta{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.pill{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.04em;
+  background:rgba(199,91,58,.1);color:var(--accent);border:1px solid rgba(199,91,58,.22);
+  padding:5px 11px;border-radius:999px;font-weight:600;
+}
+.save-pill{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;
+  color:var(--muted);padding:4px 10px;border-radius:999px;background:var(--paper2);
+  border:1px solid var(--border);white-space:nowrap;
+}
+.save-pill.ok{color:var(--accent3);background:rgba(42,122,75,.08);border-color:rgba(42,122,75,.25)}
+.avatar{
+  display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);
+  border-radius:999px;padding:3px 12px 3px 3px;font-size:.8rem;box-shadow:var(--shadow);
+}
+.avatar i{
+  width:28px;height:28px;border-radius:50%;background:var(--ink);color:#f0c9a0;
+  display:grid;place-items:center;font-style:normal;font-family:var(--mono);font-size:9px;font-weight:600;
+}
+
+.crm-body{
+  display:grid;grid-template-columns:var(--crm-sidebar) 1fr;
+  min-height:0;height:100%;
+}
+.crm-nav{
+  background:#fff;border-right:1px solid var(--border);
+  padding:14px 10px;display:flex;flex-direction:column;gap:2px;overflow:auto;
+}
+.nav-h{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:12px 12px 8px}
+.nav-btn{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:10px 12px;border-radius:10px;font-size:.9rem;color:var(--ink2);transition:.15s;
+}
+.nav-btn:hover{background:var(--paper2)}
+.nav-btn.on{background:rgba(199,91,58,.08);color:var(--accent);font-weight:600;border:1px solid rgba(199,91,58,.18)}
+.nav-btn .n{margin-left:auto;font-family:var(--mono);font-size:.7rem;background:var(--paper2);padding:2px 7px;border-radius:999px;color:var(--muted)}
+.nav-btn.on .n{background:var(--accent);color:#fff}
+.nav-foot{margin-top:auto;padding:12px;font-size:.78rem;color:var(--muted);line-height:1.5;border-top:1px solid var(--border)}
+
+/* LIST MODE */
+.crm-main{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.list-head{
+  padding:18px 22px 12px;background:var(--paper);border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.list-head h1{font-family:var(--serif);font-size:1.55rem;font-weight:400}
+.list-head p{font-size:.88rem;color:var(--muted);font-weight:300;margin-top:4px}
+.steps{display:flex;gap:5px}
+.step{width:28px;height:4px;border-radius:2px;background:var(--warm)}
+.step.done{background:var(--accent3)}.step.cur{background:var(--accent)}.step.miss{background:#b91c1c}
+
+.ticket-table{flex:1;overflow:auto;padding:14px 18px 24px}
+.t-row{
+  display:grid;grid-template-columns:72px 1fr 140px 90px 70px;
+  gap:12px;align-items:center;
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;margin-bottom:8px;cursor:pointer;text-align:left;width:100%;
+  box-shadow:var(--shadow);transition:.2s;color:inherit;
+}
+.t-row:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:rgba(199,91,58,.3)}
+.t-row.done{opacity:.55}
+.t-id{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.t-title{font-weight:600;font-size:.95rem;color:var(--ink);margin-bottom:2px}
+.t-sub{font-size:.8rem;color:var(--muted)}
+.t-from{font-size:.82rem;color:var(--ink2)}
+.t-prio{font-family:var(--mono);font-size:.65rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px;justify-self:start}
+.t-prio.high{background:rgba(185,28,28,.08);color:#b91c1c;border:1px solid rgba(185,28,28,.18)}
+.t-prio.normal{background:var(--paper2);color:var(--muted)}
+.t-status{font-family:var(--mono);font-size:.7rem;color:var(--muted);text-align:right}
+@media(max-width:900px){
+  .t-row{grid-template-columns:1fr;gap:6px}
+  .t-from,.t-status{display:none}
+  .crm-body{grid-template-columns:1fr}
+  .crm-nav{display:none}
+  .crm-search{display:none}
+  .list-head{padding:14px 14px 10px}
+  .list-head h1{font-size:1.25rem}
+  .ticket-table{padding:10px 12px 88px}
+  .avatar span{display:none}
+  .th-wrap{padding:36px 18px 72px}
+  .th-wrap h1{font-size:clamp(2.2rem,9vw,3.2rem)}
+  .never-row{grid-template-columns:1fr 1fr}
+  .flow{grid-template-columns:1fr 1fr}
+  .grid2{grid-template-columns:1fr}
+}
+
+/* WORK MODE — desktop split; phone uses tabs */
+.work{
+  flex:1;min-height:0;display:none;
+  grid-template-columns:1fr var(--crm-compose);
+  background:#ddd8cf;
+}
+.work.open{display:grid}
+.mobile-tabs{display:none}
+@media(max-width:900px){
+  .work.open{
+    grid-template-columns:1fr;
+    grid-template-rows:48px 1fr;
+  }
+  .mobile-tabs{
+    display:grid;grid-template-columns:1fr 1fr;gap:6px;
+    padding:8px 10px;background:#fff;border-bottom:1px solid var(--border);
+    grid-column:1/-1;
+  }
+  .mobile-tabs button{
+    padding:10px 8px;border-radius:10px;font-weight:600;font-size:.88rem;
+    background:var(--paper);color:var(--muted);border:1px solid var(--border);
+  }
+  .mobile-tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .work.open .doc-pane,
+  .work.open .compose{grid-row:2;grid-column:1}
+  .work.open[data-tab="doc"] .compose{display:none}
+  .work.open[data-tab="write"] .doc-pane{display:none}
+  .work.open[data-tab="write"] .compose{display:flex;border-left:none;border-top:none}
+  .doc-toolbar h2{font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .doc-toolbar .meta{display:none}
+  .doc-scroll{padding:14px 14px 28px}
+  .file-body{padding:16px 16px;font-size:.92rem}
+  .compose-head{padding:12px 14px 10px}
+  .compose-head h3{font-size:1.1rem}
+  .compose-body{padding:10px 14px}
+  #auditInput{min-height:160px;font-size:16px} /* 16px avoids iOS zoom */
+  .compose-foot{padding:10px 14px calc(14px + var(--safe-area-bottom))}
+  .result{max-height:40vh}
+  .crm-top{padding:0 10px;gap:8px}
+  .brand small{display:none}
+  .mobile-go-write{
+    display:block;padding:12px 14px calc(14px + var(--safe-area-bottom));
+    background:#fff;border-top:1px solid var(--border);flex-shrink:0;
+  }
+  .btn-go,.btn-submit,.btn-next{width:100%;justify-content:center;min-height:48px}
+  .th-cta-row{flex-direction:column;align-items:stretch}
+  .a11y{width:100%}
+  .a11y button{flex:1;min-height:44px}
+  .t-row{min-height:64px;padding:14px}
+  .save-pill{font-size:10px;padding:4px 8px}
+  .pill{display:none}
+  .never-row{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr}
+  #screenDesk{height:calc(100dvh - 32px);height:calc(100vh - 32px)}
+  .crm{height:100%}
+  .db{padding:36px 18px 80px}
+}
+.mobile-go-write{display:none}
+
+.doc-pane{
+  min-width:0;min-height:0;display:flex;flex-direction:column;
+  background:var(--paper);border-right:1px solid var(--border);
+}
+.doc-toolbar{
+  height:52px;flex-shrink:0;display:flex;align-items:center;gap:12px;
+  padding:0 16px;background:#fff;border-bottom:1px solid var(--border);
+}
+.back{
+  width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:#fff;
+  display:grid;place-items:center;font-size:1rem;color:var(--ink2);box-shadow:var(--shadow);
+}
+.back:hover{border-color:var(--accent);color:var(--accent)}
+.doc-toolbar h2{font-family:var(--serif);font-size:1.15rem;font-weight:400;line-height:1.2;flex:1;min-width:0}
+.doc-toolbar .meta{font-size:.75rem;color:var(--muted);font-family:var(--mono);white-space:nowrap}
+.doc-scroll{flex:1;overflow:auto;padding:24px 28px 40px}
+.doc-scroll::-webkit-scrollbar{width:10px}
+.doc-scroll::-webkit-scrollbar-thumb{background:rgba(26,26,46,.15);border-radius:8px}
+
+.msg{
+  background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;
+  margin-bottom:14px;box-shadow:var(--shadow);display:grid;grid-template-columns:40px 1fr;gap:12px;
+}
+.msg .av{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600}
+.msg .who{font-weight:600;font-size:.9rem}
+.msg .who span{font-weight:400;color:var(--muted);font-family:var(--mono);font-size:.72rem;margin-left:8px}
+.msg .body{font-size:.95rem;color:var(--ink2);margin-top:4px;line-height:1.65}
+
+.file{
+  background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;
+  box-shadow:var(--shadow-md);max-width:720px;
+}
+.file-bar{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:10px 16px;background:var(--paper2);border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:.72rem;color:var(--muted);
+}
+.file-body{padding:22px 26px;font-size:.95rem;line-height:1.75;color:var(--ink)}
+.file-body h3{font-family:var(--serif);font-weight:400;font-size:1.35rem;margin-bottom:14px}
+.art{padding:12px 0;border-bottom:1px solid var(--border)}
+.art:last-child{border-bottom:none}
+.art-n{font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.tag{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;margin-right:6px}
+.tag.c{background:rgba(37,99,168,.1);color:var(--accent2)}
+.tag.h{background:rgba(124,58,237,.1);color:#7c3aed}
+.tag.t{background:rgba(199,91,58,.1);color:var(--accent)}
+.tag.s{background:rgba(184,134,11,.12);color:var(--gold)}
+
+/* COMPOSE — fixed, roomy, never fights document scroll */
+.compose{
+  min-height:0;display:flex;flex-direction:column;
+  background:#fff;border-left:1px solid var(--border);
+}
+.compose-head{
+  flex-shrink:0;padding:16px 18px 12px;border-bottom:1px solid var(--border);
+}
+.compose-head .lbl{font-family:var(--mono);font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.compose-head h3{font-family:var(--serif);font-size:1.25rem;font-weight:400;line-height:1.25;margin-bottom:6px}
+.compose-head p{font-size:.88rem;color:var(--muted);line-height:1.55;font-weight:300}
+.compose-body{flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 18px}
+#auditInput{
+  flex:1;min-height:220px;width:100%;resize:none;
+  border:1px solid var(--border);border-radius:12px;padding:14px 16px;
+  font-size:.95rem;line-height:1.7;color:var(--ink);background:var(--paper);
+  outline:none;
+}
+#auditInput:focus{border-color:rgba(199,91,58,.45);box-shadow:0 0 0 3px rgba(199,91,58,.1);background:#fff}
+#auditInput:disabled{opacity:.7}
+.compose-foot{flex-shrink:0;padding:12px 18px 18px;border-top:1px solid var(--border);background:#fff}
+.btn-submit{
+  width:100%;background:var(--ink);color:#fff;font-weight:600;padding:14px;
+  border-radius:8px;font-size:.95rem;transition:.2s;
+}
+.btn-submit:hover{background:var(--ink2)}
+.btn-submit:disabled{opacity:.4;cursor:not-allowed}
+.btn-next{
+  display:none;width:100%;margin-top:10px;background:var(--accent);color:#fff;
+  font-weight:600;padding:14px;border-radius:8px;font-size:.95rem;
+}
+.btn-next.show{display:block}
+.btn-next:hover{background:#b34e2f}
+.result{display:none;margin-top:12px;padding:14px 16px;border-radius:12px;font-size:.9rem;line-height:1.7;max-height:280px;overflow:auto}
+.result.show{display:block}
+.result.ok{background:rgba(42,122,75,.08);border:1px solid rgba(42,122,75,.25);color:var(--ink2)}
+.result.partial{background:rgba(184,134,11,.1);border:1px solid rgba(184,134,11,.28);color:var(--ink2)}
+.result.bad{background:rgba(185,28,28,.07);border:1px solid rgba(185,28,28,.2);color:var(--ink2)}
+.result.loading{background:var(--paper);border:1px solid var(--border);color:var(--muted)}
+.result .verdict{font-family:var(--serif);font-size:1.15rem;font-weight:400;color:var(--ink);margin-bottom:8px}
+.result.ok .verdict{color:var(--accent3)}
+.result.partial .verdict{color:#92400e}
+.result.bad .verdict{color:#b91c1c}
+.ai-fb{margin:10px 0;padding:12px 14px;background:#fff;border-radius:10px;border:1px solid var(--border);color:var(--ink2);font-size:.9rem;line-height:1.7}
+.ai-fb strong{color:var(--ink);display:block;margin-bottom:4px;font-size:.72rem;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.chip{font-family:var(--mono);font-size:.65rem;padding:3px 8px;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--muted)}
+.chip.hit{background:rgba(42,122,75,.1);color:var(--accent3);border-color:rgba(42,122,75,.3)}
+.chip.miss{background:rgba(185,28,28,.07);color:#b91c1c;border-color:rgba(185,28,28,.2)}
+.model{margin-top:8px;color:var(--muted);font-size:.85rem;line-height:1.65}
+.btn-retry{display:none;width:100%;margin-top:8px;background:#fff;border:1px solid var(--border);color:var(--ink2);font-weight:600;padding:12px;border-radius:8px;font-size:.9rem}
+.btn-retry.show{display:block}
+.btn-retry:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Optional hint lamp */
+.hint-row{margin-top:12px}
+.hint-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:transparent;border:1px dashed rgba(184,134,11,.4);
+  color:var(--gold);border-radius:999px;padding:7px 14px 7px 10px;
+  font-size:.82rem;font-weight:500;transition:.2s;
+}
+.hint-btn:hover{background:rgba(184,134,11,.08);border-style:solid}
+.hint-btn.open{background:rgba(184,134,11,.1);border-style:solid}
+.hint-btn .lamp{
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(184,134,11,.15);display:grid;place-items:center;
+  font-size:14px;line-height:1;
+}
+.hint-panel{
+  display:none;margin-top:10px;padding:12px 14px;
+  background:rgba(184,134,11,.07);border:1px solid rgba(184,134,11,.22);
+  border-radius:12px;font-size:.88rem;color:var(--ink2);line-height:1.65;
+}
+.hint-panel.show{display:block}
+.hint-panel .hint-step{margin-bottom:8px}
+.hint-panel .hint-step:last-child{margin-bottom:0}
+.hint-panel .hint-n{
+  font-family:var(--mono);font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--gold);display:block;margin-bottom:2px;
+}
+.hint-more{
+  margin-top:10px;background:none;border:none;color:var(--accent);
+  font-size:.82rem;font-weight:600;padding:0;text-decoration:underline;text-underline-offset:3px;
+}
+.hint-more:hover{color:var(--ink)}
+.hint-more[hidden]{display:none!important}
+
+/* DEBRIEF */
+#screenDebrief{min-height:calc(100vh - 32px);padding:64px 24px 80px}
+.debrief{max-width:600px;margin:0 auto;text-align:center}
+.ring{
+  width:140px;height:140px;border-radius:50%;border:3px solid var(--accent3);
+  display:grid;place-items:center;margin:0 auto 1.5rem;font-family:var(--serif);font-size:2.2rem;
+  background:#fff;box-shadow:var(--shadow-md);
+}
+.ring.mid{border-color:var(--gold)}.ring.low{border-color:#b91c1c}
+.debrief h1{font-family:var(--serif);font-size:clamp(2rem,4vw,2.6rem);font-weight:400;margin-bottom:12px}
+.debrief .lead{color:var(--muted);font-weight:300;font-size:1.05rem;line-height:1.75;margin-bottom:2rem}
+.take{text-align:left;background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.35rem 1.5rem;margin-bottom:1.5rem;box-shadow:var(--shadow-md)}
+.take h3{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.take li{list-style:none;padding:10px 0;border-bottom:1px solid var(--border);font-size:.95rem;color:var(--ink2);display:flex;gap:10px}
+.take li:last-child{border-bottom:none}
+.take li::before{content:'✓';color:var(--accent3);font-weight:700}
+.rev{text-align:left;margin-bottom:1.75rem}
+.rev details{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow)}
+.rev summary{cursor:pointer;font-weight:500}
+.rev .b{margin-top:8px;font-size:.88rem;color:var(--muted);line-height:1.65}
+</style>
+</head>
+<body>
+
+<div class="local-banner">Paikallinen esikatselu · <code>/module/preview-moduuli1-context-hygiene?preview=1</code></div>
+
+<!-- THEORY -->
+<section class="screen active" id="screenTheory">
+  <div class="th-wrap">
+    <div class="th-kicker">Moduuli 01 · Tietosuoja</div>
+    <h1>Käytä AI:ta <em>turvallisesti</em></h1>
+    <p class="th-lead">Ensimmäinen taito koko kurssilla. Kun tämä on hallussa, voit käyttää tekoälyä huoletta — töissä ja työnhaussa.</p>
+    <div class="th-cta-row">
+      <button type="button" class="btn-go" onclick="enterDesk()">Avaa Pohjola CRM →</button>
+      <div class="a11y">
+        <button type="button" id="btnLarge" onclick="toggleLarge()">Isompi teksti</button>
+        <button type="button" id="btnCalm" onclick="toggleCalm()">Rauhallinen</button>
+      </div>
+    </div>
+
+    <div class="th-section">
+      <div class="th-label">Miksi tämä ensin</div>
+      <h2>AI on työkalu. <em>Sinä päätät.</em></h2>
+      <p class="th-p">Tekoäly auttaa kirjoittamaan, suunnittelemaan ja löytämään mahdollisuuksia. Tällä kurssilla käytät sitä CV:hen, teksteihin, ideointiin ja oikeisiin työkaluihin.</p>
+      <div class="quote">"Kaikki mitä kirjoitat AI:lle menee internetin kautta ulkoiselle palvelimelle."</div>
+      <p class="th-p">Se on kuin juttelisit asiantuntijalle jonka tapaat ensimmäistä kertaa — <strong>jaat ammatillista tietoa, et henkilökohtaista tai työnantajan salaisuuksia.</strong></p>
+    </div>
+
+    <div class="th-section">
+      <div class="th-label">Miten data liikkuu</div>
+      <h2>GDPR tarkoittaa: <em>datasi on sinun</em></h2>
+      <div class="flow">
+        <div class="flow-card"><b>Sinä</b><span>Kirjoitat</span></div>
+        <div class="flow-card"><b>Internet</b><span>Salattu yhteys</span></div>
+        <div class="flow-card"><b>OpenAI / Google</b><span>USA:n palvelimet</span></div>
+        <div class="flow-card"><b>Tallennus</b><span>Jopa 30 päivää</span></div>
+      </div>
+      <p class="th-p">Ilmaisessa ChatGPT:ssä keskusteluja voidaan käyttää mallin kouluttamiseen (voit kytkeä pois). Kun jaat vain ammattitietoa — taidot, kokemus, tavoitteet — olet turvassa.</p>
+      <div class="grid2">
+        <div class="rule-tile"><h3>95% on riskitöntä</h3><p>Kun et jaa henkilötunnusta, pankkitietoja, salasanoja tai terveystietoja.</p></div>
+        <div class="rule-tile"><h3>Työsopimus-esimerkki</h3><p>Joku liitti sopimuksen AI:lle “onko tämä normaali?” — mukana nimi, palkka ja salassapito. Älä tee niin. Kysy yleistä ilman dokumenttia.</p></div>
+      </div>
+    </div>
+
+    <div class="th-section">
+      <div class="th-label">Kultainen sääntö</div>
+      <div class="gold-card">
+        <div class="lbl">LinkedIn-sääntö</div>
+        <blockquote>"Jos et julkaisisi sitä <em>LinkedInissä</em>, älä jaa sitä tekoälylle."</blockquote>
+        <p>Kun epäilet, kysy: näkyisikö tämä ammattilaisverkostolleni? Jos ei — se ei kuulu AI:lle.</p>
+      </div>
+    </div>
+
+    <div class="th-section">
+      <div class="th-label">Context hygiene</div>
+      <h2>Mitä ei koskaan <em>mene AI:lle</em></h2>
+      <div class="never-row">
+        <div class="never"><div class="code">ASIAKAS</div><h3>Asiakastiedot</h3><p>Nimet, sähköpostit, ostot, CRM-viennit, tilaukset.</p></div>
+        <div class="never"><div class="code">HR</div><h3>Henkilöstö</h3><p>Palkat, irtisanomiset, hakemukset, sisäiset arviot.</p></div>
+        <div class="never"><div class="code">TERVEYS</div><h3>Terveys</h3><p>Diagnoosit, sairauslomat, lääkitykset — myös kollegoiden.</p></div>
+        <div class="never"><div class="code">SOPIMUS</div><h3>Sopimukset</h3><p>Hinnat, sakot, salassapito, tarjousten luvut.</p></div>
+      </div>
+      <div class="ok-strip">
+        <h3>Kaikki muu? Käytä vapaasti.</h3>
+        <p class="th-p" style="margin:0">Ammattinimike, osaaminen, koulutus, tavoitteet, ideat, yleiset kysymykset, tekstiluonnokset ilman nimiä. Tämä on suurin osa AI:n käytöstä.</p>
+      </div>
+
+      <div class="th-end">
+        <p>Seuraavaksi: maanantai Pohjola Servicesin CRM:ssä. Sinä vastaat aamun AI-pyyntöihin.</p>
+        <button type="button" class="btn-go" onclick="enterDesk()">Kirjaudu työpöydälle →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CRM -->
+<section class="screen" id="screenDesk">
+  <div class="crm">
+    <header class="crm-top">
+      <div class="brand"><div class="brand-mark">PS</div> Pohjola CRM <small>Workspace</small></div>
+      <div class="crm-search"><span>⌕</span> Hae tikettejä, asiakkaita, dokumentteja…</div>
+      <div class="crm-meta">
+        <span class="save-pill" id="savePill">—</span>
+        <span class="pill" id="openCount">5 avointa</span>
+        <div class="avatar"><i>SINÄ</i> <span>Context Hygiene</span></div>
+      </div>
+    </header>
+
+    <div class="crm-body">
+      <nav class="crm-nav">
+        <div class="nav-h">Työjono</div>
+        <button type="button" class="nav-btn on" data-f="all" onclick="setFilter(this,'all')">📥 Saapuneet <span class="n" id="navN">5</span></button>
+        <button type="button" class="nav-btn" data-f="contract" onclick="setFilter(this,'contract')">📄 Sopimukset</button>
+        <button type="button" class="nav-btn" data-f="customer" onclick="setFilter(this,'customer')">👤 Asiakkaat</button>
+        <button type="button" class="nav-btn" data-f="hr" onclick="setFilter(this,'hr')">👥 HR</button>
+        <button type="button" class="nav-btn" data-f="health" onclick="setFilter(this,'health')">✚ Työterveys</button>
+        <div class="nav-foot">Vuoro: maanantai 08:40<br>Rooli: AI-käytön tarkistus</div>
+      </nav>
+
+      <div class="crm-main">
+        <!-- LIST -->
+        <div id="listMode">
+          <div class="list-head">
+            <div>
+              <h1>AI-pyynnöt · tänään</h1>
+              <p>Avaa tiketti · lue liite · kirjoita vastaus · saat AI-palautteen heti</p>
+            </div>
+            <div class="steps" id="steps"></div>
+          </div>
+          <div class="ticket-table" id="ticketTable"></div>
+        </div>
+
+        <!-- WORK SPLIT -->
+        <div class="work" id="workMode" data-tab="doc">
+          <div class="mobile-tabs" role="tablist">
+            <button type="button" class="on" id="tabDoc" onclick="setWorkTab('doc')">1. Lue</button>
+            <button type="button" id="tabWrite" onclick="setWorkTab('write')">2. Kirjoita</button>
+          </div>
+          <div class="doc-pane">
+            <div class="doc-toolbar">
+              <button type="button" class="back" onclick="closeWork()" aria-label="Takaisin">←</button>
+              <h2 id="workTitle">—</h2>
+              <div class="meta" id="workMeta">—</div>
+            </div>
+            <div class="doc-scroll" id="docScroll"></div>
+            <div class="mobile-go-write" id="mobileGoWriteWrap">
+              <button type="button" class="btn-submit" onclick="setWorkTab('write')">Siirry kirjoittamaan →</button>
+            </div>
+          </div>
+          <aside class="compose">
+            <div class="compose-head">
+              <div class="lbl" id="composeLbl">Vastaus</div>
+              <h3 id="composeTitle">—</h3>
+              <p id="composeHelp">—</p>
+              <div class="hint-row">
+                <button type="button" class="hint-btn" id="hintBtn" onclick="toggleHint()" aria-expanded="false">
+                  <span class="lamp" aria-hidden="true">💡</span>
+                  <span id="hintBtnLabel">Vinkki (vapaaehtoinen)</span>
+                </button>
+                <div class="hint-panel" id="hintPanel" hidden>
+                  <div id="hintSteps"></div>
+                  <button type="button" class="hint-more" id="hintMore" onclick="showMoreHint()" hidden>Näytä toinen vinkki</button>
+                </div>
+              </div>
+            </div>
+            <div class="compose-body">
+              <textarea id="auditInput" placeholder="Kirjoita tähän…"></textarea>
+            </div>
+            <div class="compose-foot">
+              <button type="button" class="btn-submit" id="btnSubmit" onclick="submitWork()">Lähetä vastaus</button>
+              <div class="result" id="result"></div>
+              <button type="button" class="btn-retry" id="btnRetry" onclick="retryWork()">Muokkaa vastausta</button>
+              <button type="button" class="btn-next" id="btnNext" onclick="nextTicket()">Seuraava tiketti →</button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEBRIEF -->
+<section class="screen" id="screenDebrief">
+  <div class="debrief">
+    <div class="ring" id="ring">—</div>
+    <h1 id="dbTitle">Vuoro päättyi</h1>
+    <p class="lead" id="dbLead">—</p>
+    <div class="take">
+      <h3>Mukaan otettavaa</h3>
+      <ul>
+        <li>Lue dokumentti ennen kuin liität sen mihinkään AI:hin</li>
+        <li>Asiakas · HR · terveys · sopimusluvut — pois ennen kuin kirjoitat ChatGPT:lle</li>
+        <li>Turvallinen tapa: kysy yleistä tai anonymisoi ensin</li>
+        <li>Paine “tee nopeasti” ei ohita tietosuojaa</li>
+      </ul>
+    </div>
+    <div class="rev" id="rev"></div>
+    <button type="button" class="btn-go" onclick="restart()">Uusi vuoro</button>
+    <div style="margin-top:16px"><button type="button" class="btn-link" onclick="show('screenTheory')">← Teoriaan</button></div>
+  </div>
+</section>
+
+<script src="/js/module-work.js"></script>
+<script>
+const MODULE_ID = 'preview-moduuli1-context-hygiene';
+const TICKETS = [
+  {
+    id:'TK-2401', cat:'contract', prio:'high', time:'08:41',
+    from:'Sanna Peltonen · Markkinointi',
+    title:'Sopimusliite — “onko kilpailukielto normaali?”',
+    composeLbl:'Audit-muistio',
+    composeTitle:'Mitä tässä dokumentissa ei saa syöttää AI:lle?',
+    composeHelp:'Listaa mitä tietoja ei saa laittaa ChatGPT:lle — ja miten saman asian voi kysyä turvallisesti.',
+    minLen:100, passNeed:5,
+    situation:'Kollega liitti palvelusopimuksen ChatGPT:hen kysyäkseen kilpailukiellosta. Sinun pitää kertoa, mikä dokumentissa on riskiä.',
+    hints:[
+      'Lue koko dokumentti — myös liitteet ja allekirjoitus. Riski ei ole aina vain otsikossa.',
+      'Mieti LinkedIn-sääntöä: julkaisisitko hinnat, maksutiedot tai henkilön tunnisteen verkossa?'
+    ],
+    findings:[
+      {id:'parties', label:'Osapuolet / Y-tunnus', keys:['pohjola','nordic','y-tunnus','3124567','osapuolet']},
+      {id:'value', label:'Hinta / 184 000', keys:['184','arvo','hinta','7 667','7667','kuukausimaksu','euro']},
+      {id:'nc', label:'Kilpailukielto / sakko', keys:['kilpailukielto','sakko','50 000','50000','12 kk']},
+      {id:'nda', label:'Salassapito', keys:['salassapito','luottamuksell','5 vuotta','nda']},
+      {id:'iban', label:'IBAN / maksutiedot', keys:['iban','fi89','tili','maksu']},
+      {id:'hetu', label:'Henkilötunnus allekirjoituksessa', keys:['hetu','150385','henkilötunn']},
+      {id:'contact', label:'Yhteyshenkilö', keys:['maria','virtanen','040','sähköposti','@']}
+    ],
+    model:'Älä liitä sopimusta. Riskit: yritysnimet+Y-tunnus, hinta, kilpailukielto+sakko, salassapito, IBAN liitteessä, allekirjoittajan hetu, yhteyshenkilön yhteystiedot. Turvallinen kysymys: “Mitä kilpailukielto yleensä tarkoittaa B2B-palvelusopimuksessa Suomessa?” — ilman lukuja ja nimiä.',
+    doc:()=>`
+      <div class="msg">
+        <div class="av" style="background:#b8860b">SP</div>
+        <div>
+          <div class="who">Sanna Peltonen <span>08:41 · Teams</span></div>
+          <div class="body">Hei — liitin tän sopparin ChatGPT:hen jo kerran mutta vastaus oli epäselvä. Katso liite ja sano mulle voinko kysyä uudelleen. Tarviin vastauksen ennen 10:00.</div>
+        </div>
+      </div>
+      <div class="file">
+        <div class="file-bar"><span>PS-NT-MSA-2026-041.pdf</span><span>Luottamuksellinen · 6 sivua</span></div>
+        <div class="file-body">
+          <h3>Palvelusopimus (Master Service Agreement)</h3>
+          <div class="art"><div class="art-n">1. Osapuolet</div>
+            Pohjola Services Oy (Y-tunnus 3124567-8) ja NordicTech Oy (Y-tunnus 2871144-1).<br>
+            Yhteyshenkilö NordicTech: Maria Virtanen, maria.virtanen@nordictech.fi, 040-778 2211.</div>
+          <div class="art"><div class="art-n">2. Kohde ja hinnoittelu</div>
+            Asiakaspalvelun ulkoistus 24 kk. Kokonaisarvo 184 000 €. Kuukausimaksu 7 667 € + alv. Hintaa ei saa julkaista ilman kirjallista lupaa.</div>
+          <div class="art"><div class="art-n">3. Kilpailukielto</div>
+            Toimittaja sitoutuu 12 kk kilpailukieltoon sopimuksen päättymisestä. Sopimussakko rikkomuksesta 50 000 €.</div>
+          <div class="art"><div class="art-n">4. Salassapito</div>
+            Ehdot, hinnat ja asiakaslistat salassapidon alaisia 5 vuotta. Julkinen tuotekuvaus (liite A) ei kuulu salassapitoon.</div>
+          <div class="art"><div class="art-n">Liite B — Maksutiedot</div>
+            Laskutus: IBAN FI89 1234 5600 0007 85, BIC NDEAFIHH. Viitenumero 0041287.</div>
+          <div class="art"><div class="art-n">Allekirjoitus</div>
+            Jukka Laine, TJ, Pohjola Services Oy. Hetu 150385-123A. Helsinki 3.3.2026.</div>
+        </div>
+      </div>`
+  },
+  {
+    id:'TK-2402', cat:'customer', prio:'high', time:'08:58',
+    from:'Minna Koivisto · Myynti',
+    title:'Korjaa teksti ennen kuin se menee ChatGPT:lle',
+    composeLbl:'Turvallinen viesti AI:lle',
+    composeTitle:'Kirjoita uusi teksti, jonka voi lähettää ChatGPT:lle',
+    composeHelp:'Säilytä tavoite (asiakkaiden ryhmittely). Poista kaikki, jolla henkilön voi tunnistaa — myös asiakasnumerot.',
+    minLen:60,
+    type:'rewrite',
+    situation:'Kollega haluaa pyytää ChatGPT:ltä apua asiakkaiden ryhmittelyyn. Alkuperäinen teksti sisältää nimiä, sähköposteja, puhelimia, yrityksiä ja CRM-asiakasnumeroita.',
+    hints:[
+      'Pelkkä puhelinnumeron poisto ei aina riitä. Mikä muu rivillä yksilöi ihmisen tai yrityksen?',
+      'Voitko kuvata datan yleisesti (esim. toimiala + ostosumma) ilman että kukaan on tunnistettavissa?'
+    ],
+    forbidden:[
+      {id:'names', label:'Nimet', keys:['laura','nieminen','jari','heikkil','sanna','virtanen']},
+      {id:'mail', label:'Sähköpostit', keys:['@','firma.fi','kauppa.fi']},
+      {id:'phone', label:'Puhelin', keys:['040','552','8811']},
+      {id:'crmid', label:'CRM-ID / asiakasnumero', keys:['crm-','a-90441','a-88102','a-77219','asiakasnumero']},
+      {id:'company', label:'Asiakasyritysten nimet', keys:['frostbite','lumina','kaamos']}
+    ],
+    required:[
+      {id:'seg', label:'Pyytää ryhmittelyä / apua', keys:['segment','ryhm','prior','luokit','jaot','auta','ehdota','järjest','asiakas']},
+      {id:'anon', label:'Ilman henkilötietoja', keys:['anonyymi','ilman nimi','ilman henkil','ei nimi','ei sähkö','ei puhelin','yleist','ei yksilö','kuvitteell','dummy','haarukka','toimiala','ostosum']}
+    ],
+    model:'Esimerkki turvallisesta tekstistä: “Minulla on 20 yrityksasiakasta ilman nimiä: toimiala, ostosumma-haarukka ja ostotiheys. Ehdota 3 ryhmää ja kenelle kannattaa olla yhteydessä ensin.”',
+    doc:()=>`
+      <div class="msg">
+        <div class="av" style="background:#2563a8">MK</div>
+        <div>
+          <div class="who">Minna Koivisto <span>08:58 · Slack #myynti</span></div>
+          <div class="body">Kirjoitin ChatGPT:lle tämän tekstin. Poistin jo osan puhelinnumeroista — voitko tehdä siitä turvallisen version? Palaveri 15 min.</div>
+        </div>
+      </div>
+      <div class="file">
+        <div class="file-bar"><span>chatgpt_luonnos_qbr.txt</span><span>Luonnos · ei hyväksytty</span></div>
+        <div class="file-body">
+          <h3>Minnan luonnos ChatGPT:lle</h3>
+          <p style="font-family:var(--mono);font-size:.86rem;background:var(--paper);padding:1rem;border-radius:10px;line-height:1.75;white-space:pre-wrap">Segmentoi nämä TOP-asiakkaat ja kerro kenelle soitetaan ensin:
+
+1. Laura Nieminen · Frostbite Oy · CRM-A-90441 · laura.nieminen@firma.fi · LTV 12 400 €
+2. Jari Heikkilä · Lumina Soft · CRM-A-88102 · 040-552 8811 · LTV 9 200 €
+3. Sanna Virtanen · Kaamos Group · CRM-A-77219 · sanna.v@kauppa.fi · LTV 7 800 €
+
+Käytä myös sisäistä “VIP-liputusta” jos ostot &gt; 10k.</p>
+        </div>
+      </div>`
+  },
+  {
+    id:'TK-2403', cat:'hr', prio:'high', time:'09:12',
+    from:'Jukka Laine · Toimitusjohtaja',
+    title:'Johdon palaveri — palkkavertailu AI:lla',
+    composeLbl:'Vastaus esimiehelle',
+    composeTitle:'Kirjoita vastaus Jukalle',
+    composeHelp:'Kirjoita esimiehelle: miksi taulukkoa ei voi laittaa ChatGPT:lle, ja miten vertailu silti saadaan.',
+    minLen:80, passNeed:3,
+    situation:'Toimitusjohtaja käskee liittää palkkataulukon ChatGPT:hen ennen johtoryhmää. Taulukossa on palkkoja ja terveyteen liittyvä merkintä.',
+    hints:[
+      'Kiire tai esimiehen pyyntö ei muuta sääntöä. Mitä taulukossa on ihmisten lisäksi?',
+      'Voisiko saman vertailun tehdä ilman nimiä — tai kysymällä yleistä markkinatietoa?'
+    ],
+    findings:[
+      {id:'refuse', label:'Kieltää liittämisen', keys:['ei voi','ei saa','älä','en liitä','ei liitet','ei chat','ei laiteta','kieltäyd','en voi']},
+      {id:'hr', label:'HR / palkat / henkilöt', keys:['palkka','hr','henkilö','nimi','luottamuksell','arkaluonte']},
+      {id:'pressure', label:'Paine ≠ poikkeus', keys:['palaveri','kiire','paine','esimies','silti','vaikka']},
+      {id:'alt', label:'Turvallinen vaihtoehto', keys:['yleinen','markkina','tilasto','anonyymi','ilman nimi','toimiala','mediaani','haastattelu']}
+    ],
+    model:'Ei voida liittää palkkalistaa ulkoiseen AI:hin. Sisältää henkilöt ja palkat; kiire ei muuta sääntöä. Vaihtoehto: kysyä yleistä markkinapalkkaa roolille/alueelle ilman nimiä, tai pyytää HR:ltä anonymisoitua vertailua sisäisesti.',
+    doc:()=>`
+      <div class="msg">
+        <div class="av" style="background:#7c3aed">JL</div>
+        <div>
+          <div class="who">Jukka Laine <span>09:12 · Email</span></div>
+          <div class="body">Tarvitsen vastauksen ennen johtoryhmää klo 10. Liitä oheinen taulukko ChatGPT:hen ja kysy onko tasomme markkinoiden mukainen. Tee se nyt.</div>
+        </div>
+      </div>
+      <div class="file">
+        <div class="file-bar"><span>JR_palkat_Q1_INTERNAL.xlsx</span><span>HR · vain johto</span></div>
+        <div class="file-body">
+          <h3>Palkkaote Q1</h3>
+          <div class="art"><div class="art-n">Rivit</div>
+            Anna Mäkinen — asiakaspalvelu — 3 450 €/kk — “suoritus: hyvä”<br>
+            Tommi Räsänen — myynti — 4 100 € + bonus — “neuvottelu kesken”<br>
+            Emilia Korhonen — tuki — 3 200 €/kk — “raskausvapaa 5/2026” (HR-muistiinpano)</div>
+          <div class="art"><div class="art-n">Kommentti HR:ltä</div>
+            Älä jaa taulukkoa tiimin ulkopuolelle. Sisältää terveyteen liittyvän merkinnän.</div>
+        </div>
+      </div>`
+  },
+  {
+    id:'TK-2404', cat:'health', prio:'high', time:'09:27',
+    from:'Lauri Heino · Harjoittelija',
+    title:'Skannattu todistus — “AI selittää diagnoosin”',
+    composeLbl:'Ohje Laurille',
+    composeTitle:'Mitä on pielessä ja miten toimia',
+    composeHelp:'Kerro Laurille selkeästi: miksi ei, ja mitä hän voi tehdä sen sijaan.',
+    minLen:70, passNeed:3,
+    situation:'Harjoittelija aikoo näyttää skannatun sairauslomatodistuksen ChatGPT:lle.',
+    hints:[
+      'Terveyteen liittyvä tieto on erityisen suojattua — myös kollegoiden.',
+      'Miten neuvoisin, jos haluaisin vain ymmärtää prosessia ilman henkilön papereita?'
+    ],
+    findings:[
+      {id:'health', label:'Terveys / diagnoosi', keys:['terveys','diagnoos','sairaus','masenn','f32','lääkär','potilas']},
+      {id:'person', label:'Nimi / henkilöllisyys', keys:['petri','salminen','nimi','henkilö']},
+      {id:'never', label:'Ei AI:lle', keys:['ei koskaan','ei saa','älä','kiellet','ei liitä','ei skann']},
+      {id:'alt', label:'Turvallinen polku', keys:['hr','esimies','yleinen','ilman nimi','ilman diag','työterveys','prosessi']}
+    ],
+    model:'Skannausta ei saa näyttää AI:lle. Sisältää nimen ja diagnoosin. Ohjaa Lauri esimiehelle/HR:lle. Yleistä voi kysyä ilman henkilöä (“miten sairauslomaprosessi etenee työnantajalla”).',
+    doc:()=>`
+      <div class="msg">
+        <div class="av" style="background:#c75b3a">LH</div>
+        <div>
+          <div class="who">Lauri Heino <span>09:27 · Teams</span></div>
+          <div class="body">Sain tämän skannattuna sähköpostiin. Ajattelin kysyä ChatGPT:ltä mitä F32.1 tarkoittaa työkyvyn kannalta, jotta osaan neuvoa Petriä. Okko?</div>
+        </div>
+      </div>
+      <div class="file">
+        <div class="file-bar"><span>IMG_1403_sairausloma.jpg</span><span>Liite · arkaluonteinen</span></div>
+        <div class="file-body">
+          <h3>Lääkärintodistus A</h3>
+          <div class="art"><div class="art-n">Potilas</div>Petri Salminen, s. 1987</div>
+          <div class="art"><div class="art-n">Diagnoosi</div>F32.1 Keskivaikea masennustila</div>
+          <div class="art"><div class="art-n">Sairausloma</div>14.3.2026 – 28.3.2026</div>
+          <div class="art"><div class="art-n">Lisätieto</div>Lääkitys aloitettu. Kontrolli työterveydessä.</div>
+        </div>
+      </div>`
+  },
+  {
+    id:'TK-2405', cat:'customer', prio:'normal', time:'09:51',
+    from:'Tukijono · Live-chat',
+    title:'Reklamaatio — apua ChatGPT:ltä ilman asiakastietoja',
+    composeLbl:'Turvallinen viesti AI:lle',
+    composeTitle:'Kirjoita ChatGPT:lle teksti anteeksipyynnön avuksi',
+    composeHelp:'Kerro tilanteesta yleisesti. Älä laita nimeä, osoitetta, tilausnumeroa, puhelinta tai sähköpostia.',
+    minLen:40,
+    type:'rewrite',
+    situation:'Asiakaspalvelija haluaa ChatGPT:n apua anteeksipyyntöön. Raaka chat-vienti sisältää paljon henkilötietoja.',
+    hints:[
+      'ChatGPT ei tarvitse asiakkaan nimeä kirjoittaakseen kohteliaan vastauksen.',
+      'Kuvaile tilanne yhdellä lauseella ilman osoitetta, puhelinta tai tilausnumeroa.'
+    ],
+    forbidden:[
+      {id:'name', label:'Nimi', keys:['otto','kallio']},
+      {id:'mail', label:'Sähköposti', keys:['@mail','otto.kallio']},
+      {id:'order', label:'Tilaus / lippu', keys:['44102','kg-2026','tk-8821']},
+      {id:'addr', label:'Osoite', keys:['keskuskatu','tampere','33100']},
+      {id:'phone', label:'Puhelin', keys:['050','441','2299']}
+    ],
+    required:[
+      {id:'tone', label:'Anteeksi / viallinen tuote', keys:['anteeksi','reklama','viall','rikkin','hyvitys','empat','kohtelias','asiakas','tuote','vastaus']}
+    ],
+    model:'Esimerkki: “Kirjoita kohtelias suomenkielinen vastaus asiakkaalle, jonka tuote saapui viallisena. Empatia, selkeä seuraava askel, ei syyttelyä. Älä käytä henkilötietoja.”',
+    doc:()=>`
+      <div class="msg">
+        <div class="av" style="background:#2a7a4b">BOT</div>
+        <div>
+          <div class="who">Tukijono <span>09:51 · automaatti</span></div>
+          <div class="body">Agentti pyytää lupaa liittää koko chat-ketju ChatGPT:hen. Päätös sinulla — tai kirjoita turvallinen versio.</div>
+        </div>
+      </div>
+      <div class="file">
+        <div class="file-bar"><span>chat_export_TK-8821.json</span><span>Asiakastuki</span></div>
+        <div class="file-body">
+          <h3>Chat-loki (raaka vienti)</h3>
+          <div class="art"><div class="art-n">Asiakas</div>Otto Kallio · otto.kallio@mail.fi · 050-441 2299</div>
+          <div class="art"><div class="art-n">Tilaus</div>KG-2026-44102 · sisäinen lippu TK-8821</div>
+          <div class="art"><div class="art-n">Viesti</div>“Tuote tuli rikkinäisenä. Haluan hyvityksen heti. Toimitus: Keskuskatu 4 A 12, 33100 Tampere.”</div>
+          <div class="art"><div class="art-n">Agentin luonnos</div>“Liitä yllä oleva ChatGPT:hen ja kirjoita anteeksipyyntö jossa mainitaan tilausnumero.”</div>
+        </div>
+      </div>`
+  }
+];
+
+let S = { filter:'all', open:null, done:{}, drafts:{}, hintOpen:false, hintLevel:0, screen:'screenTheory' };
+let workApi = null;
+let savePillTimer = null;
+let restoring = false;
+
+function $(id){ return document.getElementById(id); }
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  S.screen = id;
+  scheduleModuleSave();
+}
+function toggleLarge(){ document.body.classList.toggle('large-text'); $('btnLarge').classList.toggle('on'); scheduleModuleSave(); }
+function toggleCalm(){ document.body.classList.toggle('calm'); $('btnCalm').classList.toggle('on'); scheduleModuleSave(); }
+function norm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function hit(text, g){ const t=norm(text); return g.keys.some(k=>t.includes(norm(k))); }
+function esc(s){ return String(s).replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+function setSavePill(text, ok){
+  const pill = $('savePill');
+  if (!pill) return;
+  pill.textContent = text;
+  pill.classList.toggle('ok', !!ok);
+}
+function scheduleModuleSave(){
+  if (restoring) return;
+  if (workApi && typeof workApi.scheduleSave === 'function') {
+    workApi.scheduleSave();
+  }
+}
+function collectState(){
+  if (S.open) {
+    const input = $('auditInput');
+    if (input && !input.disabled) S.drafts[S.open] = input.value;
+  }
+  return {
+    ts: Date.now(),
+    screen: S.screen || 'screenTheory',
+    filter: S.filter,
+    open: S.open,
+    done: S.done,
+    drafts: S.drafts,
+    largeText: document.body.classList.contains('large-text'),
+    calm: document.body.classList.contains('calm')
+  };
+}
+function applyState(data){
+  if (!data || typeof data !== 'object') return;
+  restoring = true;
+  try {
+    if (data.done && typeof data.done === 'object') S.done = data.done;
+    if (data.drafts && typeof data.drafts === 'object') S.drafts = data.drafts;
+    if (data.filter) S.filter = data.filter;
+    if (data.largeText) { document.body.classList.add('large-text'); $('btnLarge')?.classList.add('on'); }
+    if (data.calm) { document.body.classList.add('calm'); $('btnCalm')?.classList.add('on'); }
+    document.querySelectorAll('.nav-btn').forEach(b=>{
+      b.classList.toggle('on', (b.getAttribute('data-f') || '') === S.filter);
+    });
+    const screen = data.screen || 'screenTheory';
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    if ($(screen)) { $(screen).classList.add('active'); S.screen = screen; }
+    else { $('screenTheory').classList.add('active'); S.screen = 'screenTheory'; }
+    if (screen === 'screenDesk' || screen === 'screenDebrief') {
+      renderList();
+      renderSteps();
+    }
+    if (screen === 'screenDebrief') {
+      finish(true);
+    } else if (data.open && TICKETS.some(t=>t.id===data.open)) {
+      openTicket(data.open, true);
+    }
+  } finally {
+    restoring = false;
+  }
+}
+async function initAutosave(){
+  if (!window.moduleWork || typeof window.moduleWork.initModuleWork !== 'function') {
+    setSavePill('paikallinen', false);
+    return;
+  }
+  try {
+    const api = await window.moduleWork.initModuleWork(MODULE_ID, {
+      collect: collectState,
+      apply: applyState,
+      summarize: function(d){
+        if (!d) return '';
+        const n = d.done ? Object.keys(d.done).length : 0;
+        return 'Context Hygiene · ' + n + '/' + TICKETS.length + ' tehtävää';
+      },
+      debounceMs: 800,
+      legacyPrefix: 'ctx_hygiene_',
+      fieldIds: ['auditInput']
+    });
+    const orig = api.scheduleSave;
+    api.scheduleSave = function(){
+      if (restoring) return;
+      setSavePill('tallennetaan…', false);
+      orig();
+      clearTimeout(savePillTimer);
+      savePillTimer = setTimeout(()=>setSavePill('tallennettu ✓', true), 1100);
+    };
+    workApi = api;
+    setSavePill('tallennettu ✓', true);
+  } catch (e) {
+    console.warn('[context-hygiene] autosave init failed', e);
+    setSavePill('ei tallennusta', false);
+  }
+}
+
+function enterDesk(){
+  show('screenDesk');
+  renderList();
+  renderSteps();
+}
+
+function setFilter(btn, f){
+  S.filter = f;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  closeWork();
+  renderList();
+  scheduleModuleSave();
+}
+
+function setWorkTab(tab){
+  const work = $('workMode');
+  if (!work) return;
+  work.setAttribute('data-tab', tab === 'write' ? 'write' : 'doc');
+  $('tabDoc')?.classList.toggle('on', tab !== 'write');
+  $('tabWrite')?.classList.toggle('on', tab === 'write');
+  if (tab === 'write') {
+    setTimeout(()=>{ try { $('auditInput')?.focus({ preventScroll:true }); } catch(_){ $('auditInput')?.focus(); } }, 80);
+  }
+}
+
+function renderSteps(){
+  $('steps').innerHTML = TICKETS.map(t=>{
+    const d = S.done[t.id];
+    let c = 'step';
+    if (d) c += d.grade==='ok'?' done':(d.grade==='partial'?' cur':' miss');
+    else if (S.open===t.id) c += ' cur';
+    return `<div class="${c}"></div>`;
+  }).join('');
+}
+
+function renderList(){
+  const open = TICKETS.filter(t=>!S.done[t.id]).length;
+  $('openCount').textContent = open ? open+' avointa' : 'Valmis';
+  $('navN').textContent = String(open);
+  const items = TICKETS.filter(t=>S.filter==='all'||t.cat===S.filter);
+  $('ticketTable').innerHTML = items.map(t=>{
+    const d = S.done[t.id];
+    const st = d ? (d.grade==='ok'?'Valmis':d.grade==='partial'?'Osittainen':'Uudelleen') : 'Avoin';
+    return `<button type="button" class="t-row${d?' done':''}" onclick="openTicket('${t.id}')">
+      <div class="t-id">${t.id}</div>
+      <div><div class="t-title">${esc(t.title)}</div><div class="t-sub"><span class="tag ${t.cat[0]}">${esc(t.cat)}</span>${esc(t.time)}</div></div>
+      <div class="t-from">${esc(t.from)}</div>
+      <div class="t-prio ${t.prio}">${t.prio==='high'?'Kiire':'Normaali'}</div>
+      <div class="t-status">${st}</div>
+    </button>`;
+  }).join('');
+}
+
+function openTicket(id, fromRestore){
+  const t = TICKETS.find(x=>x.id===id);
+  if (!t) return;
+  // Persist draft of previously open ticket
+  if (S.open && S.open !== id) {
+    const prevInput = $('auditInput');
+    if (prevInput && !prevInput.disabled) S.drafts[S.open] = prevInput.value;
+  }
+  S.open = id;
+  $('listMode').style.display = 'none';
+  $('workMode').classList.add('open');
+  setWorkTab('doc');
+  $('workTitle').textContent = t.title;
+  $('workMeta').textContent = t.id+' · '+t.time;
+  $('docScroll').innerHTML = t.doc();
+  $('docScroll').scrollTop = 0;
+  $('composeLbl').textContent = t.composeLbl;
+  $('composeTitle').textContent = t.composeTitle;
+  $('composeHelp').textContent = t.composeHelp;
+  resetHints(t);
+  const prev = S.done[id];
+  const input = $('auditInput');
+  input.value = prev ? prev.text : (S.drafts[id] || '');
+  input.disabled = !!prev;
+  $('btnSubmit').disabled = !!prev;
+  $('btnSubmit').style.display = prev ? 'none' : 'block';
+  $('result').className = 'result';
+  $('btnNext').classList.remove('show');
+  $('btnRetry').classList.remove('show');
+  if (prev) {
+    showResult(t, prev);
+    setWorkTab('write');
+  }
+  renderSteps();
+  if (!fromRestore) scheduleModuleSave();
+}
+
+function resetHints(t){
+  S.hintOpen = false;
+  S.hintLevel = 0;
+  const btn = $('hintBtn');
+  const panel = $('hintPanel');
+  const more = $('hintMore');
+  btn.classList.remove('open');
+  btn.setAttribute('aria-expanded', 'false');
+  $('hintBtnLabel').textContent = 'Vinkki (vapaaehtoinen)';
+  panel.classList.remove('show');
+  panel.hidden = true;
+  $('hintSteps').innerHTML = '';
+  more.hidden = true;
+  // Hide lamp if no hints defined
+  btn.style.display = (t.hints && t.hints.length) ? 'inline-flex' : 'none';
+}
+
+function toggleHint(){
+  const t = TICKETS.find(x => x.id === S.open);
+  if (!t || !t.hints || !t.hints.length) return;
+  S.hintOpen = !S.hintOpen;
+  const btn = $('hintBtn');
+  const panel = $('hintPanel');
+  btn.classList.toggle('open', S.hintOpen);
+  btn.setAttribute('aria-expanded', S.hintOpen ? 'true' : 'false');
+  $('hintBtnLabel').textContent = S.hintOpen ? 'Piilota vinkki' : 'Vinkki (vapaaehtoinen)';
+  if (S.hintOpen) {
+    if (S.hintLevel < 1) S.hintLevel = 1;
+    renderHintSteps(t);
+    panel.hidden = false;
+    panel.classList.add('show');
+  } else {
+    panel.classList.remove('show');
+    panel.hidden = true;
+  }
+}
+
+function showMoreHint(){
+  const t = TICKETS.find(x => x.id === S.open);
+  if (!t || !t.hints) return;
+  if (S.hintLevel < t.hints.length) S.hintLevel++;
+  renderHintSteps(t);
+}
+
+function renderHintSteps(t){
+  const steps = t.hints.slice(0, S.hintLevel);
+  $('hintSteps').innerHTML = steps.map((h, i) =>
+    `<div class="hint-step"><span class="hint-n">Vinkki ${i + 1}</span>${esc(h)}</div>`
+  ).join('');
+  const more = $('hintMore');
+  more.hidden = S.hintLevel >= t.hints.length;
+}
+
+function closeWork(){
+  if (S.open) {
+    const input = $('auditInput');
+    if (input && !input.disabled) S.drafts[S.open] = input.value;
+  }
+  S.open = null;
+  $('workMode').classList.remove('open');
+  $('workMode').setAttribute('data-tab', 'doc');
+  $('listMode').style.display = 'block';
+  renderList();
+  renderSteps();
+  scheduleModuleSave();
+}
+
+function scoreWrite(t, text){
+  const hits=[], misses=[];
+  t.findings.forEach(f => (hit(text,f)?hits:misses).push(f));
+  const ok = text.length>=t.minLen && hits.length>=t.passNeed;
+  const partial = text.length>=t.minLen && hits.length>=Math.max(3, t.passNeed-2);
+  return {hits,misses, grade: ok?'ok':(partial?'partial':'bad')};
+}
+
+function scoreRewrite(t, text){
+  const forbiddenHits = t.forbidden.filter(f=>hit(text,f));
+  const requiredHits = t.required.filter(f=>hit(text,f));
+  const clean = forbiddenHits.length===0;
+  const fullReq = requiredHits.length===t.required.length;
+  const ok = text.length>=t.minLen && clean && fullReq;
+  const partial = text.length>=t.minLen && clean && requiredHits.length>0;
+  return {forbiddenHits, requiredHits, requiredMiss:t.required.filter(f=>!hit(text,f)), grade: ok?'ok':(!clean?'bad':(partial?'partial':'bad'))};
+}
+
+async function submitWork(){
+  const t = TICKETS.find(x=>x.id===S.open);
+  if (!t || S.done[t.id]) return;
+  const text = $('auditInput').value.trim();
+  if (text.length < t.minLen){
+    alert('Kirjoita vähän pidempi vastaus (vähintään '+t.minLen+' merkkiä).');
+    return;
+  }
+  const scored = t.type==='rewrite' ? scoreRewrite(t,text) : scoreWrite(t,text);
+
+  $('auditInput').disabled = true;
+  $('btnSubmit').disabled = true;
+  $('btnSubmit').textContent = 'Tarkistetaan…';
+  $('btnRetry').classList.remove('show');
+  $('btnNext').classList.remove('show');
+  const el = $('result');
+  el.className = 'result show loading';
+  el.innerHTML = '<div class="verdict">Hetki…</div><p>Claude lukee vastauksesi ja kertoo, menikö oikein.</p>';
+
+  let ai = null;
+  try { ai = await fetchAiFeedback(t, text); } catch (_) { ai = null; }
+
+  // Prefer AI grade when available; else local keyword score
+  let grade = scored.grade;
+  if (ai && ai.score) {
+    grade = ai.score >= 3 ? 'ok' : (ai.score === 2 ? 'partial' : 'bad');
+  }
+
+  S.done[t.id] = { text, ...scored, grade, ai };
+  delete S.drafts[t.id];
+  $('btnSubmit').style.display = 'none';
+  $('btnSubmit').textContent = 'Lähetä vastaus';
+  showResult(t, S.done[t.id]);
+  renderSteps();
+  scheduleModuleSave();
+  if (Object.keys(S.done).length===TICKETS.length) $('btnNext').textContent = 'Katso yhteenveto →';
+}
+
+async function fetchAiFeedback(t, studentText){
+  const checklist = t.type==='rewrite'
+    ? ('Poista nämä / älä sisällytä: ' + t.forbidden.map(f=>f.label).join(', ') + '. Tarvitaan myös: ' + t.required.map(f=>f.label).join(', ') + '.')
+    : ('Hyvässä vastauksessa pitäisi näkyä mm.: ' + t.findings.map(f=>f.label).join(', ') + '.');
+
+  const system = `Olet ystävällinen tietosuojakouluttaja kurssin ENSIMMÄISESSÄ modulissa (Claude).
+Opiskelijat ovat vasta alussa — he eivät välttämättä tunne sanaa "prompti". Käytä sanoja kuten "teksti ChatGPT:lle" tai "viesti AI:lle".
+Arvioi vastaus context hygienestä (mitä ei saa laittaa tekoälylle).
+Ole rohkaiseva ja selkeä. Lyhyet lauseet. Suomeksi.
+Vastaa VAIN JSON: {"score":1|2|3,"verdict":"lyhyt otsikko suomeksi","feedback":"2-4 lausetta: mitä meni hyvin ja mitä puuttuu","next_step":"yksi konkreettinen vinkki"}
+score 3=hyvä/erinomainen, 2=osittain, 1=puuttuu oleellista.`;
+
+  const userMsg = `TILANNE:\n${t.situation || t.title}\n\nTEHTÄVÄ OPPILAALLE:\n${t.composeTitle}\n${t.composeHelp}\n\nTARKISTUSLISTA:\n${checklist}\n\nMALLIVASTAUKSEN IDEA:\n${t.model}\n\nOPISKELIJAN VASTAUS:\n${studentText}`;
+
+  let raw = '';
+  const res = await fetch('/api/ai/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      system,
+      messages: [{ role: 'user', content: userMsg }],
+      max_tokens: 700
+    })
+  });
+  const data = await res.json().catch(()=>({}));
+  if (res.ok && (data.text || data.reply || data.content)) {
+    raw = data.text || data.reply || data.content || '';
+  } else if (typeof window.aiClaude === 'function') {
+    raw = await window.aiClaude(system, userMsg, 700);
+  } else {
+    throw new Error(data.error || ('claude_' + res.status));
+  }
+
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start < 0 || end < 0) throw new Error('parse');
+  const parsed = JSON.parse(raw.slice(start, end + 1));
+  return {
+    score: Math.min(3, Math.max(1, Number(parsed.score) || 2)),
+    verdict: parsed.verdict || '',
+    feedback: parsed.feedback || raw,
+    next_step: parsed.next_step || ''
+  };
+}
+
+function showResult(t, r){
+  const el = $('result');
+  let chips='';
+  if (t.type==='rewrite'){
+    chips = t.forbidden.map(f=>{
+      const bad = (r.forbiddenHits||[]).some(h=>h.id===f.id);
+      return `<span class="chip ${bad?'miss':'hit'}">${bad?'vielä mukana':'pois'}: ${esc(f.label)}</span>`;
+    }).join('') + t.required.map(f=>{
+      const ok = (r.requiredHits||[]).some(h=>h.id===f.id);
+      return `<span class="chip ${ok?'hit':'miss'}">${ok?'✓':'○'} ${esc(f.label)}</span>`;
+    }).join('');
+  } else {
+    chips = t.findings.map(f=>{
+      const ok = (r.hits||[]).some(h=>h.id===f.id);
+      return `<span class="chip ${ok?'hit':'miss'}">${ok?'✓':'○'} ${esc(f.label)}</span>`;
+    }).join('');
+  }
+
+  const fallbackTitle = r.grade==='ok'?'Hyvä vastaus':(r.grade==='partial'?'Melkein — täydennä vielä':'Vielä puuttuu oleellista');
+  const title = (r.ai && r.ai.verdict) ? r.ai.verdict : fallbackTitle;
+  const aiBlock = r.ai
+    ? `<div class="ai-fb"><strong>Claude-palaute</strong>${esc(r.ai.feedback)}${r.ai.next_step?`<br><br><em>Seuraava askel: ${esc(r.ai.next_step)}</em>`:''}</div>`
+    : `<div class="ai-fb"><strong>Palaute</strong>Claude-palautetta ei juuri nyt saatu (kirjaudu sisään jos tarvitset). Alla näet silti tarkistuslistan.</div>`;
+
+  el.className = 'result show '+r.grade;
+  el.innerHTML = `<div class="verdict">${esc(title)}</div>${aiBlock}<div class="chips">${chips}</div><div class="model"><strong>Malli:</strong> ${esc(t.model)}</div>`;
+  $('btnNext').classList.add('show');
+  if (r.grade !== 'ok') $('btnRetry').classList.add('show');
+  else $('btnRetry').classList.remove('show');
+}
+
+function retryWork(){
+  const id = S.open;
+  if (!id) return;
+  const keep = S.done[id]?.text || '';
+  delete S.done[id];
+  S.drafts[id] = keep;
+  $('auditInput').disabled = false;
+  $('auditInput').value = keep;
+  $('btnSubmit').disabled = false;
+  $('btnSubmit').style.display = 'block';
+  $('btnSubmit').textContent = 'Lähetä vastaus';
+  $('result').className = 'result';
+  $('btnNext').classList.remove('show');
+  $('btnRetry').classList.remove('show');
+  renderSteps();
+  setWorkTab('write');
+  $('auditInput').focus();
+  scheduleModuleSave();
+}
+
+function nextTicket(){
+  if (Object.keys(S.done).length===TICKETS.length){ finish(); return; }
+  const n = TICKETS.find(t=>!S.done[t.id]);
+  if (n) openTicket(n.id); else closeWork();
+}
+
+function finish(fromRestore){
+  const total = TICKETS.length;
+  const pts = TICKETS.reduce((a,t)=>{
+    const g=S.done[t.id]?.grade;
+    return a+(g==='ok'?1:g==='partial'?0.5:0);
+  },0);
+  const pct = Math.round(pts/total*100);
+  const ring = $('ring');
+  ring.textContent = (pts%1?pts.toFixed(1):pts)+'/'+total;
+  ring.className = 'ring'+(pct>=85?'':pct>=55?' mid':' low');
+  $('dbTitle').textContent = pct>=85?'Ensimmäinen vuoro hoidettu':(pct>=55?'Hyvä alku — vielä tarkkuutta':'Harjoittele uudelleen');
+  $('dbLead').textContent = 'Pisteet '+pts+' / '+total+'. Osittainen löytö = ½. Oikeassa työssä yksi unohtunut hetu tai IBAN riittää riskiin.';
+  $('rev').innerHTML = TICKETS.map(t=>{
+    const d=S.done[t.id];
+    const g=d?.grade;
+    const m=g==='ok'?'✓':g==='partial'?'◐':'✗';
+    const fb = d?.ai?.feedback ? `<p style="margin-bottom:8px">${esc(d.ai.feedback)}</p>` : '';
+    return `<details><summary>${m} ${esc(t.id)} — ${esc(t.title)}</summary><div class="b">${fb}${esc(t.model)}</div></details>`;
+  }).join('');
+  if (fromRestore) {
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    $('screenDebrief').classList.add('active');
+    S.screen = 'screenDebrief';
+  } else {
+    show('screenDebrief');
+  }
+}
+
+function restart(){
+  S = { filter:'all', open:null, done:{}, drafts:{}, hintOpen:false, hintLevel:0, screen:'screenTheory' };
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>b.classList.toggle('on',i===0));
+  $('workMode').classList.remove('open');
+  $('listMode').style.display = 'block';
+  show('screenTheory');
+  scheduleModuleSave();
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const input = $('auditInput');
+  if (input) {
+    input.addEventListener('input', ()=>{
+      if (S.open && !input.disabled) {
+        S.drafts[S.open] = input.value;
+        scheduleModuleSave();
+      }
+    });
+  }
+  initAutosave();
+});
+</script>
+</body>
+</html>
