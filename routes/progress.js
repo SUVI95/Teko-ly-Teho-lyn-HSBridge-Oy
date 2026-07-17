@@ -89,7 +89,7 @@ router.post('/module/:moduleId/section/:sectionId', async (req, res) => {
   try {
     const { moduleId, sectionId } = req.params;
     const { completed, progressData, timeSpent } = req.body;
-    const userId = req.user?.id;
+    const userId = await resolveUserId(req);
     
     // If no user, just return success (progress won't be saved)
     if (!userId) {
@@ -122,7 +122,7 @@ router.post('/module/:moduleId/checklist/:itemId', async (req, res) => {
   try {
     const { moduleId, itemId } = req.params;
     const { completed } = req.body;
-    const userId = req.user?.id;
+    const userId = await resolveUserId(req);
     
     // If no user, just return success (checklist won't be saved)
     if (!userId) {

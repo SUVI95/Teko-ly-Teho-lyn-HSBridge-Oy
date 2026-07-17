@@ -1056,11 +1056,21 @@
           // Osa 1: Perusmoduulit
           {
             id: 'moduuli1-tietosuoja',
-            title: 'Moduuli 1: Tietosuoja ja vastuullinen tekoälyn käyttö',
-            description: 'Opi mitä tietoja voit jakaa tekoälylle ja mitä ei koskaan.',
+            title: 'Moduuli 1: Tietosuoja — Context Hygiene',
+            description: 'CRM-harjoitus: mitä ei koskaan laiteta AI:lle (asiakas, HR, terveys, sopimukset).',
             icon: 'shield',
             order: 1,
             part: 1
+          },
+          {
+            id: 'moduuli1-tietosuoja-legacy',
+            title: 'Moduuli 1: Tietosuoja (vanha)',
+            description: 'Aiempi teoria+quiz-versio. Vain admin — voit palauttaa myöhemmin tarvittaessa.',
+            icon: 'shield',
+            order: 1.001,
+            part: 1,
+            cardBadge: 'Admin',
+            adminOnly: true
           },
           {
             id: 'moduuli2-tekoaly-uhka-vai-mahdollisuus',
@@ -1862,7 +1872,7 @@
         ];
         
         // Check which modules are completed (only count main modules, not homework)
-        const mainModules = modules.filter(m => !m.isHomework && !m.isOnboarding && !m.isExternal);
+        const mainModules = modules.filter(m => !m.isHomework && !m.isOnboarding && !m.isExternal && m.adminOnly !== true);
         const part1Modules = mainModules.filter(m => m.part === 1);
         const completedModules = new Set();
         let totalProgress = 0;
@@ -1924,8 +1934,8 @@
         // Check if module 4 is completed - if so, unlock all Part 1 modules
         const module4Completed = completedModules.has('moduuli4-prompt-tyonhakijalle');
         
-        // Check if all Part 1 modules (1-4) are completed
-        const part1MainModules = part1Modules.filter(m => !m.isHomework);
+        // Check if all Part 1 modules are completed (skip admin-only / homework)
+        const part1MainModules = part1Modules.filter(m => !m.isHomework && m.adminOnly !== true);
         let allPart1Completed = true;
         part1MainModules.forEach(module => {
           if (!completedModules.has(module.id)) {
@@ -2236,6 +2246,7 @@
       'moduuli7-ai-tyonhaussa',
       'moduuli-tyonhaku',
       'moduuli5-ai-creation-sprint-legacy',
+      'moduuli1-tietosuoja-legacy',
       'moduuli-esitykset-tarjoukset-viestinta-gamma-studio',
       'moduuli-elava-cv-editorial',
       'moduuli-elava-cv-veyssette',
@@ -2269,7 +2280,8 @@
     /** Osaamistaidot moduulikorteilla — näytetään "Opit"-chipseinä kuvauksen sijaan. */
     const moduleSkillsById = {
       onboarding: ['Tavoitteiden kirkastus', 'Oma lähtötaso', 'AI-käyttötarpeet', 'Henkilökohtainen polku'],
-      'moduuli1-tietosuoja': ['GDPR AI:ssa', 'Mitä ei jaeta AI:lle', 'Vastuullinen käyttö', 'Turvalliset promptit'],
+      'moduuli1-tietosuoja': ['Context Hygiene', 'CRM-harjoitus', 'Mitä ei jaeta AI:lle', 'Claude-palaute'],
+      'moduuli1-tietosuoja-legacy': ['Vanha teoria+quiz', 'Admin-esikatselu'],
       'moduuli2-tekoaly-uhka-vai-mahdollisuus': ['Tekoälyn perusteet', 'Työn muutos', 'Mahdollisuudet vs riskit', 'Kriittinen suhtautuminen'],
       'moduuli3-master-prompt': ['Promptin rakenne', 'Selkeä ohje AI:lle', 'Tulosten parantaminen', 'Iterointi'],
       'moduuli-ai-tyokalut-tutuksi': ['ChatGPT', 'Claude', 'Copilot', 'Gemini', 'Työkalujen vertailu'],

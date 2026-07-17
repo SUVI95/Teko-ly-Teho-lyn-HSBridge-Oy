@@ -2,2971 +2,1335 @@
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Moduuli 1 – Tietosuoja ja vastuullinen tekoälyn käyttö</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Moduuli 1: Tietosuoja — Context Hygiene</title>
+<script>window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+:root{
+  --ink:#1a1a2e;--ink2:#2d2d44;--paper:#f5f3ef;--paper2:#eeeae3;--warm:#e8e0d4;
+  --accent:#c75b3a;--accent2:#2563a8;--accent3:#2a7a4b;--gold:#b8860b;
+  --muted:#6b6880;--border:rgba(26,26,46,.12);
+  --shadow:0 2px 20px rgba(26,26,46,.08);--shadow-md:0 10px 40px rgba(26,26,46,.12);
+  --serif:'DM Serif Display',Georgia,serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --crm-sidebar:240px;--crm-compose:min(400px,42vw);
+  --safe-area-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.65;font-size:16px;-webkit-text-size-adjust:100%}
+button,textarea{font-family:inherit}
+button{cursor:pointer;border:none;background:none}
+body.large-text{font-size:18px}
+body.calm .pulse{animation:none!important}
 
-:root {
-  --ink:       #1a1a2e;
-  --ink2:      #2d2d44;
-  --paper:     #f5f3ef;
-  --paper2:    #eeeae3;
-  --warm:      #e8e0d4;
-  --accent:    #c75b3a;
-  --accent2:   #2563a8;
-  --accent3:   #2a7a4b;
-  --gold:      #b8860b;
-  --text:      #1a1a2e;
-  --muted:     #6b6880;
-  --border:    rgba(26,26,46,0.12);
-  --shadow:    0 2px 20px rgba(26,26,46,0.08);
-  --shadow-md: 0 8px 40px rgba(26,26,46,0.12);
-}
+.screen{display:none}
+.screen.active{display:block}
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-
-body {
-  background: var(--paper);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 400;
-  overflow-x: hidden;
-  line-height: 1.7;
-}
-
-/* ── PROGRESS BAR ── */
-#progress-bar {
-  position: fixed; top: 0; left: 0; height: 3px;
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-  z-index: 200; transition: width 0.4s ease;
-  width: 0%;
-}
-
-/* ── NAV ── */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  height: 64px;
-  background: rgba(245,243,239,0.92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center;
-  padding: 0 2.5rem;
-  justify-content: space-between;
-}
-.nav-left {
-  display: flex; align-items: center; gap: 1rem;
-}
-.nav-module {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.72rem; font-weight: 500;
-  color: var(--accent);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  background: rgba(199,91,58,0.08);
-  border: 1px solid rgba(199,91,58,0.2);
-  padding: 4px 12px; border-radius: 4px;
-}
-.nav-title {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--muted);
-}
-.nav-steps {
-  display: flex; gap: 5px; align-items: center;
-}
-.step-pip {
-  width: 28px; height: 4px; border-radius: 2px;
-  background: var(--warm);
-  transition: background 0.4s;
-  cursor: pointer;
-}
-.step-pip.active { background: var(--accent); }
-.step-pip.done { background: var(--accent3); }
-
-/* ── SECTIONS ── */
-.section {
-  min-height: 100vh;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 96px 2rem 5rem;
-  position: relative;
-}
-.section-inner { max-width: 820px; width: 100%; }
-
-/* ── HERO ── */
-#hero {
-  background: var(--ink);
-  min-height: 100vh;
-  display: flex; align-items: center; justify-content: center;
-  padding: 96px 2rem 5rem;
-  position: relative;
-  overflow: hidden;
-}
-#hero::before {
-  content: '';
-  position: absolute; inset: 0;
+/* ── THEORY (exciting first impression) ── */
+#screenTheory{
+  min-height:100vh;
   background:
-    radial-gradient(ellipse 80% 60% at 20% 50%, rgba(199,91,58,0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 80% 30%, rgba(37,99,168,0.10) 0%, transparent 60%);
+    radial-gradient(ellipse 80% 60% at 15% 0%,rgba(199,91,58,.1),transparent 55%),
+    radial-gradient(ellipse 60% 50% at 90% 20%,rgba(37,99,168,.08),transparent 50%),
+    var(--paper);
 }
-.hero-inner {
-  max-width: 820px; width: 100%;
-  position: relative; z-index: 1;
+.th-wrap{max-width:880px;margin:0 auto;padding:56px 28px 80px}
+.th-kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:1.25rem;display:flex;align-items:center;gap:12px}
+.th-kicker::after{content:'';width:40px;height:1px;background:rgba(199,91,58,.4)}
+.th-wrap h1{font-family:var(--serif);font-size:clamp(2.8rem,6vw,4.2rem);font-weight:400;line-height:1.05;letter-spacing:-.02em;margin-bottom:1.25rem;max-width:12ch}
+.th-wrap h1 em{font-style:italic;color:var(--accent)}
+.th-lead{font-size:1.2rem;font-weight:300;color:var(--muted);max-width:36ch;line-height:1.75;margin-bottom:2rem}
+.th-cta-row{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:3.5rem}
+.btn-go{
+  display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#fff;
+  font-weight:600;font-size:1rem;padding:16px 28px;border-radius:8px;transition:.25s;
 }
-.hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 10px;
-  margin-bottom: 2.5rem;
+.btn-go:hover{background:#b34e2f;transform:translateY(-2px);box-shadow:0 10px 28px rgba(199,91,58,.35)}
+.btn-link{color:var(--muted);font-size:.92rem;text-decoration:underline;text-underline-offset:3px}
+.btn-link:hover{color:var(--ink)}
+.a11y{display:flex;gap:8px;flex-wrap:wrap}
+.a11y button{background:#fff;border:1px solid var(--border);border-radius:999px;padding:8px 14px;font-size:.82rem;color:var(--ink2);box-shadow:var(--shadow)}
+.a11y button.on{border-color:rgba(199,91,58,.35);color:var(--accent);background:rgba(199,91,58,.06)}
+
+.th-section{margin:3.5rem 0;padding-top:2rem;border-top:1px solid var(--border)}
+.th-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
+.th-section h2{font-family:var(--serif);font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:400;line-height:1.15;margin-bottom:1rem}
+.th-section h2 em{font-style:italic;color:var(--accent)}
+.th-p{font-size:1.05rem;color:var(--ink2);line-height:1.8;max-width:40rem;margin-bottom:1rem;font-weight:300}
+.th-p strong{font-weight:600;color:var(--ink)}
+.quote{
+  font-family:var(--serif);font-style:italic;font-size:1.45rem;color:var(--accent);
+  border-left:3px solid var(--accent);padding-left:1.15rem;margin:1.75rem 0;line-height:1.35;
 }
-.eyebrow-num {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.72rem; font-weight: 500;
-  color: var(--accent); letter-spacing: 0.15em;
-  text-transform: uppercase;
+.flow{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:1.75rem 0;
 }
-.eyebrow-line {
-  width: 40px; height: 1px;
-  background: rgba(199,91,58,0.5);
+@media(max-width:700px){.flow{grid-template-columns:1fr 1fr}}
+.flow-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.1rem;text-align:center;box-shadow:var(--shadow)}
+.flow-card b{display:block;font-size:.92rem;margin-bottom:4px}
+.flow-card span{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:1.5rem 0}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+.rule-tile{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.25rem;box-shadow:var(--shadow)}
+.rule-tile h3{font-family:var(--serif);font-weight:400;font-size:1.15rem;margin-bottom:6px}
+.rule-tile p{font-size:.9rem;color:var(--muted);line-height:1.6}
+.gold-card{
+  background:#fff;border:1px solid var(--border);border-radius:18px;padding:1.75rem 2rem;
+  box-shadow:var(--shadow-md);margin:1.5rem 0;
 }
-.eyebrow-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.72rem; color: rgba(255,255,255,0.35);
-  letter-spacing: 0.1em; text-transform: uppercase;
+.gold-card .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.75rem}
+.gold-card blockquote{font-family:var(--serif);font-size:clamp(1.35rem,3vw,1.85rem);line-height:1.3;margin-bottom:1rem}
+.gold-card blockquote em{font-style:italic;color:var(--accent)}
+.gold-card p{color:var(--muted);font-size:.95rem;line-height:1.7}
+.never-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:1.5rem 0}
+@media(max-width:800px){.never-row{grid-template-columns:1fr 1fr}}
+.never{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.15rem;box-shadow:var(--shadow)}
+.never .code{font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;color:var(--accent);margin-bottom:8px}
+.never h3{font-family:var(--serif);font-weight:400;font-size:1.05rem;margin-bottom:4px}
+.never p{font-size:.82rem;color:var(--muted);line-height:1.55}
+.ok-strip{background:rgba(42,122,75,.07);border:1px solid rgba(42,122,75,.22);border-radius:14px;padding:1.35rem 1.5rem;margin-top:1.25rem}
+.ok-strip h3{font-family:var(--serif);font-weight:400;color:var(--accent3);font-size:1.25rem;margin-bottom:.5rem}
+.th-end{
+  margin-top:3rem;padding:2rem 0 1rem;border-top:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:flex-start;gap:14px;
+}
+.th-end p{font-size:1.05rem;color:var(--muted);font-weight:300;max-width:36ch;line-height:1.7}
+
+/* ── CRM APP ── */
+#screenDesk{height:100vh;height:100dvh;overflow:hidden}
+.crm{
+  height:100%;display:grid;
+  grid-template-rows:56px 1fr;
+  background:#eae6df;
+}
+.crm-top{
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:16px;padding:0 18px;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:.95rem}
+.brand-mark{
+  width:28px;height:28px;border-radius:7px;
+  background:linear-gradient(135deg,var(--accent),#a84a2f);color:#fff;
+  display:grid;place-items:center;font-family:var(--serif);font-size:12px;
+  box-shadow:0 3px 10px rgba(199,91,58,.3);
+}
+.brand small{font-family:var(--mono);font-weight:400;font-size:.72rem;color:var(--muted);margin-left:4px}
+.crm-search{
+  flex:1;max-width:380px;height:36px;background:var(--paper);border:1px solid var(--border);
+  border-radius:8px;padding:0 12px;display:flex;align-items:center;gap:8px;
+  color:var(--muted);font-size:.85rem;
+}
+.crm-meta{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.pill{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.04em;
+  background:rgba(199,91,58,.1);color:var(--accent);border:1px solid rgba(199,91,58,.22);
+  padding:5px 11px;border-radius:999px;font-weight:600;
+}
+.save-pill{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;
+  color:var(--muted);padding:4px 10px;border-radius:999px;background:var(--paper2);
+  border:1px solid var(--border);white-space:nowrap;
+}
+.save-pill.ok{color:var(--accent3);background:rgba(42,122,75,.08);border-color:rgba(42,122,75,.25)}
+.avatar{
+  display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);
+  border-radius:999px;padding:3px 12px 3px 3px;font-size:.8rem;box-shadow:var(--shadow);
+}
+.avatar i{
+  width:28px;height:28px;border-radius:50%;background:var(--ink);color:#f0c9a0;
+  display:grid;place-items:center;font-style:normal;font-family:var(--mono);font-size:9px;font-weight:600;
 }
 
-h1.hero-title {
-  font-family: 'DM Serif Display', serif;
-  font-size: clamp(3rem, 7vw, 6rem);
-  font-weight: 400;
-  line-height: 1.05;
-  color: #fff;
-  margin-bottom: 1.75rem;
-  letter-spacing: -0.01em;
+.crm-body{
+  display:grid;grid-template-columns:var(--crm-sidebar) 1fr;
+  min-height:0;height:100%;
 }
-h1.hero-title em {
-  font-style: italic;
-  color: #f0c9a0;
+.crm-nav{
+  background:#fff;border-right:1px solid var(--border);
+  padding:14px 10px;display:flex;flex-direction:column;gap:2px;overflow:auto;
+}
+.nav-h{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:12px 12px 8px}
+.nav-btn{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:10px 12px;border-radius:10px;font-size:.9rem;color:var(--ink2);transition:.15s;
+}
+.nav-btn:hover{background:var(--paper2)}
+.nav-btn.on{background:rgba(199,91,58,.08);color:var(--accent);font-weight:600;border:1px solid rgba(199,91,58,.18)}
+.nav-btn .n{margin-left:auto;font-family:var(--mono);font-size:.7rem;background:var(--paper2);padding:2px 7px;border-radius:999px;color:var(--muted)}
+.nav-btn.on .n{background:var(--accent);color:#fff}
+.nav-foot{margin-top:auto;padding:12px;font-size:.78rem;color:var(--muted);line-height:1.5;border-top:1px solid var(--border)}
+
+/* LIST MODE */
+.crm-main{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.list-head{
+  padding:18px 22px 12px;background:var(--paper);border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.list-head h1{font-family:var(--serif);font-size:1.55rem;font-weight:400}
+.list-head p{font-size:.88rem;color:var(--muted);font-weight:300;margin-top:4px}
+.steps{display:flex;gap:5px}
+.step{width:28px;height:4px;border-radius:2px;background:var(--warm)}
+.step.done{background:var(--accent3)}.step.cur{background:var(--accent)}.step.miss{background:#b91c1c}
+
+.ticket-table{flex:1;overflow:auto;padding:14px 18px 24px}
+.t-row{
+  display:grid;grid-template-columns:72px 1fr 140px 90px 70px;
+  gap:12px;align-items:center;
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;margin-bottom:8px;cursor:pointer;text-align:left;width:100%;
+  box-shadow:var(--shadow);transition:.2s;color:inherit;
+}
+.t-row:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:rgba(199,91,58,.3)}
+.t-row.done{opacity:.55}
+.t-id{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.t-title{font-weight:600;font-size:.95rem;color:var(--ink);margin-bottom:2px}
+.t-sub{font-size:.8rem;color:var(--muted)}
+.t-from{font-size:.82rem;color:var(--ink2)}
+.t-prio{font-family:var(--mono);font-size:.65rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px;justify-self:start}
+.t-prio.high{background:rgba(185,28,28,.08);color:#b91c1c;border:1px solid rgba(185,28,28,.18)}
+.t-prio.normal{background:var(--paper2);color:var(--muted)}
+.t-status{font-family:var(--mono);font-size:.7rem;color:var(--muted);text-align:right}
+@media(max-width:900px){
+  .t-row{grid-template-columns:1fr;gap:6px}
+  .t-from,.t-status{display:none}
+  .crm-body{grid-template-columns:1fr}
+  .crm-nav{display:none}
+  .crm-search{display:none}
+  .list-head{padding:14px 14px 10px}
+  .list-head h1{font-size:1.25rem}
+  .ticket-table{padding:10px 12px 88px}
+  .avatar span{display:none}
+  .th-wrap{padding:36px 18px 72px}
+  .th-wrap h1{font-size:clamp(2.2rem,9vw,3.2rem)}
+  .never-row{grid-template-columns:1fr 1fr}
+  .flow{grid-template-columns:1fr 1fr}
+  .grid2{grid-template-columns:1fr}
 }
 
-.hero-sub {
-  font-size: 1.15rem;
-  color: rgba(255,255,255,0.55);
-  max-width: 520px;
-  line-height: 1.75;
-  margin-bottom: 3rem;
-  font-weight: 300;
+/* WORK MODE — desktop split; phone uses tabs */
+.work{
+  flex:1;min-height:0;display:none;
+  grid-template-columns:1fr var(--crm-compose);
+  background:#ddd8cf;
 }
+.work.open{display:grid}
+.mobile-tabs{display:none}
+@media(max-width:900px){
+  .work.open{
+    grid-template-columns:1fr;
+    grid-template-rows:48px 1fr;
+  }
+  .mobile-tabs{
+    display:grid;grid-template-columns:1fr 1fr;gap:6px;
+    padding:8px 10px;background:#fff;border-bottom:1px solid var(--border);
+    grid-column:1/-1;
+  }
+  .mobile-tabs button{
+    padding:10px 8px;border-radius:10px;font-weight:600;font-size:.88rem;
+    background:var(--paper);color:var(--muted);border:1px solid var(--border);
+  }
+  .mobile-tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .work.open .doc-pane,
+  .work.open .compose{grid-row:2;grid-column:1}
+  .work.open[data-tab="doc"] .compose{display:none}
+  .work.open[data-tab="write"] .doc-pane{display:none}
+  .work.open[data-tab="write"] .compose{display:flex;border-left:none;border-top:none}
+  .doc-toolbar h2{font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .doc-toolbar .meta{display:none}
+  .doc-scroll{padding:14px 14px 28px}
+  .file-body{padding:16px 16px;font-size:.92rem}
+  .compose-head{padding:12px 14px 10px}
+  .compose-head h3{font-size:1.1rem}
+  .compose-body{padding:10px 14px}
+  #auditInput{min-height:160px;font-size:16px} /* 16px avoids iOS zoom */
+  .compose-foot{padding:10px 14px calc(14px + var(--safe-area-bottom))}
+  .result{max-height:40vh}
+  .crm-top{padding:0 10px;gap:8px}
+  .brand small{display:none}
+  .mobile-go-write{
+    display:block;padding:12px 14px calc(14px + var(--safe-area-bottom));
+    background:#fff;border-top:1px solid var(--border);flex-shrink:0;
+  }
+  .btn-go,.btn-submit,.btn-next{width:100%;justify-content:center;min-height:48px}
+  .th-cta-row{flex-direction:column;align-items:stretch}
+  .a11y{width:100%}
+  .a11y button{flex:1;min-height:44px}
+  .t-row{min-height:64px;padding:14px}
+  .save-pill{font-size:10px;padding:4px 8px}
+  .pill{display:none}
+  .never-row{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr}
+  .crm{height:100%}
+  .db{padding:36px 18px 80px}
+}
+.mobile-go-write{display:none}
 
-.hero-cta {
-  display: inline-flex; align-items: center; gap: 12px;
-  background: var(--accent);
-  color: #fff;
-  padding: 16px 36px;
-  border-radius: 6px;
-  font-weight: 600; font-size: 0.95rem;
-  cursor: pointer; text-decoration: none;
-  transition: all 0.25s;
-  letter-spacing: 0.01em;
+.doc-pane{
+  min-width:0;min-height:0;display:flex;flex-direction:column;
+  background:var(--paper);border-right:1px solid var(--border);
 }
-.hero-cta:hover { background: #b34e2f; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(199,91,58,0.35); }
-.hero-cta svg { transition: transform 0.25s; }
-.hero-cta:hover svg { transform: translateX(4px); }
+.doc-toolbar{
+  height:52px;flex-shrink:0;display:flex;align-items:center;gap:12px;
+  padding:0 16px;background:#fff;border-bottom:1px solid var(--border);
+}
+.back{
+  width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:#fff;
+  display:grid;place-items:center;font-size:1rem;color:var(--ink2);box-shadow:var(--shadow);
+}
+.back:hover{border-color:var(--accent);color:var(--accent)}
+.doc-toolbar h2{font-family:var(--serif);font-size:1.15rem;font-weight:400;line-height:1.2;flex:1;min-width:0}
+.doc-toolbar .meta{font-size:.75rem;color:var(--muted);font-family:var(--mono);white-space:nowrap}
+.doc-scroll{flex:1;overflow:auto;padding:24px 28px 40px}
+.doc-scroll::-webkit-scrollbar{width:10px}
+.doc-scroll::-webkit-scrollbar-thumb{background:rgba(26,26,46,.15);border-radius:8px}
 
-.hero-time {
-  display: flex; align-items: center; gap: 8px;
-  margin-top: 2rem;
-  font-size: 0.82rem; color: rgba(255,255,255,0.3);
+.msg{
+  background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;
+  margin-bottom:14px;box-shadow:var(--shadow);display:grid;grid-template-columns:40px 1fr;gap:12px;
 }
-.hero-time::before { content: '⏱'; font-size: 0.9rem; }
+.msg .av{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600}
+.msg .who{font-weight:600;font-size:.9rem}
+.msg .who span{font-weight:400;color:var(--muted);font-family:var(--mono);font-size:.72rem;margin-left:8px}
+.msg .body{font-size:.95rem;color:var(--ink2);margin-top:4px;line-height:1.65}
 
-/* ── CONTENT SECTIONS ── */
-.section-alt { background: var(--paper2); }
-.section-warm { background: var(--warm); }
-.section-dark { background: var(--ink); color: #fff; }
-.section-dark .section-label { color: rgba(255,255,255,0.4); }
-.section-dark .section-h2 { color: #fff; }
-.section-dark .section-h2 em { color: #f0c9a0; }
-.section-dark p { color: rgba(255,255,255,0.65); }
+.file{
+  background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;
+  box-shadow:var(--shadow-md);max-width:720px;
+}
+.file-bar{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:10px 16px;background:var(--paper2);border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:.72rem;color:var(--muted);
+}
+.file-body{padding:22px 26px;font-size:.95rem;line-height:1.75;color:var(--ink)}
+.file-body h3{font-family:var(--serif);font-weight:400;font-size:1.35rem;margin-bottom:14px}
+.art{padding:12px 0;border-bottom:1px solid var(--border)}
+.art:last-child{border-bottom:none}
+.art-n{font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.tag{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;margin-right:6px}
+.tag.c{background:rgba(37,99,168,.1);color:var(--accent2)}
+.tag.h{background:rgba(124,58,237,.1);color:#7c3aed}
+.tag.t{background:rgba(199,91,58,.1);color:var(--accent)}
+.tag.s{background:rgba(184,134,11,.12);color:var(--gold)}
 
-.section-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.7rem; font-weight: 500;
-  color: var(--muted);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  margin-bottom: 1rem;
-  display: flex; align-items: center; gap: 10px;
+/* COMPOSE — fixed, roomy, never fights document scroll */
+.compose{
+  min-height:0;display:flex;flex-direction:column;
+  background:#fff;border-left:1px solid var(--border);
 }
-.section-label::after {
-  content: '';
-  flex: 0 0 32px; height: 1px;
-  background: currentColor; opacity: 0.4;
+.compose-head{
+  flex-shrink:0;padding:16px 18px 12px;border-bottom:1px solid var(--border);
 }
+.compose-head .lbl{font-family:var(--mono);font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.compose-head h3{font-family:var(--serif);font-size:1.25rem;font-weight:400;line-height:1.25;margin-bottom:6px}
+.compose-head p{font-size:.88rem;color:var(--muted);line-height:1.55;font-weight:300}
+.compose-body{flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 18px}
+#auditInput{
+  flex:1;min-height:220px;width:100%;resize:none;
+  border:1px solid var(--border);border-radius:12px;padding:14px 16px;
+  font-size:.95rem;line-height:1.7;color:var(--ink);background:var(--paper);
+  outline:none;
+}
+#auditInput:focus{border-color:rgba(199,91,58,.45);box-shadow:0 0 0 3px rgba(199,91,58,.1);background:#fff}
+#auditInput:disabled{opacity:.7}
+.compose-foot{flex-shrink:0;padding:12px 18px 18px;border-top:1px solid var(--border);background:#fff}
+.btn-submit{
+  width:100%;background:var(--ink);color:#fff;font-weight:600;padding:14px;
+  border-radius:8px;font-size:.95rem;transition:.2s;
+}
+.btn-submit:hover{background:var(--ink2)}
+.btn-submit:disabled{opacity:.4;cursor:not-allowed}
+.btn-next{
+  display:none;width:100%;margin-top:10px;background:var(--accent);color:#fff;
+  font-weight:600;padding:14px;border-radius:8px;font-size:.95rem;
+}
+.btn-next.show{display:block}
+.btn-next:hover{background:#b34e2f}
+.result{display:none;margin-top:12px;padding:14px 16px;border-radius:12px;font-size:.9rem;line-height:1.7;max-height:280px;overflow:auto}
+.result.show{display:block}
+.result.ok{background:rgba(42,122,75,.08);border:1px solid rgba(42,122,75,.25);color:var(--ink2)}
+.result.partial{background:rgba(184,134,11,.1);border:1px solid rgba(184,134,11,.28);color:var(--ink2)}
+.result.bad{background:rgba(185,28,28,.07);border:1px solid rgba(185,28,28,.2);color:var(--ink2)}
+.result.loading{background:var(--paper);border:1px solid var(--border);color:var(--muted)}
+.result .verdict{font-family:var(--serif);font-size:1.15rem;font-weight:400;color:var(--ink);margin-bottom:8px}
+.result.ok .verdict{color:var(--accent3)}
+.result.partial .verdict{color:#92400e}
+.result.bad .verdict{color:#b91c1c}
+.ai-fb{margin:10px 0;padding:12px 14px;background:#fff;border-radius:10px;border:1px solid var(--border);color:var(--ink2);font-size:.9rem;line-height:1.7}
+.ai-fb strong{color:var(--ink);display:block;margin-bottom:4px;font-size:.72rem;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.chip{font-family:var(--mono);font-size:.65rem;padding:3px 8px;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--muted)}
+.chip.hit{background:rgba(42,122,75,.1);color:var(--accent3);border-color:rgba(42,122,75,.3)}
+.chip.miss{background:rgba(185,28,28,.07);color:#b91c1c;border-color:rgba(185,28,28,.2)}
+.model{margin-top:8px;color:var(--muted);font-size:.85rem;line-height:1.65}
+.btn-retry{display:none;width:100%;margin-top:8px;background:#fff;border:1px solid var(--border);color:var(--ink2);font-weight:600;padding:12px;border-radius:8px;font-size:.9rem}
+.btn-retry.show{display:block}
+.btn-retry:hover{border-color:var(--accent);color:var(--accent)}
 
-h2.section-h2 {
-  font-family: 'DM Serif Display', serif;
-  font-size: clamp(2rem, 4.5vw, 3.5rem);
-  font-weight: 400;
-  line-height: 1.1;
-  color: var(--ink);
-  margin-bottom: 1.5rem;
-  letter-spacing: -0.01em;
+/* Optional hint lamp */
+.hint-row{margin-top:12px}
+.hint-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:transparent;border:1px dashed rgba(184,134,11,.4);
+  color:var(--gold);border-radius:999px;padding:7px 14px 7px 10px;
+  font-size:.82rem;font-weight:500;transition:.2s;
 }
-h2.section-h2 em {
-  font-style: italic;
-  color: var(--accent);
+.hint-btn:hover{background:rgba(184,134,11,.08);border-style:solid}
+.hint-btn.open{background:rgba(184,134,11,.1);border-style:solid}
+.hint-btn .lamp{
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(184,134,11,.15);display:grid;place-items:center;
+  font-size:14px;line-height:1;
 }
-h2.section-h2 strong {
-  font-weight: 400;
-  color: var(--accent2);
+.hint-panel{
+  display:none;margin-top:10px;padding:12px 14px;
+  background:rgba(184,134,11,.07);border:1px solid rgba(184,134,11,.22);
+  border-radius:12px;font-size:.88rem;color:var(--ink2);line-height:1.65;
 }
+.hint-panel.show{display:block}
+.hint-panel .hint-step{margin-bottom:8px}
+.hint-panel .hint-step:last-child{margin-bottom:0}
+.hint-panel .hint-n{
+  font-family:var(--mono);font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--gold);display:block;margin-bottom:2px;
+}
+.hint-more{
+  margin-top:10px;background:none;border:none;color:var(--accent);
+  font-size:.82rem;font-weight:600;padding:0;text-decoration:underline;text-underline-offset:3px;
+}
+.hint-more:hover{color:var(--ink)}
+.hint-more[hidden]{display:none!important}
 
-.lead {
-  font-size: 1.1rem;
-  color: var(--muted);
-  max-width: 600px;
-  line-height: 1.8;
-  margin-bottom: 3rem;
-  font-weight: 300;
-}
-
-/* ── DIVIDER ── */
-.divider {
-  width: 48px; height: 2px;
-  background: var(--accent);
-  margin-bottom: 2rem;
-  border-radius: 1px;
-}
-
-/* ── INTRO PROSE ── */
-.prose {
-  font-size: 1.05rem;
-  line-height: 1.85;
-  color: var(--text);
-  max-width: 640px;
-}
-.prose p { margin-bottom: 1.25rem; }
-.prose p:last-child { margin-bottom: 0; }
-.prose strong { font-weight: 600; color: var(--ink); }
-.prose em { font-style: italic; }
-.prose .pull {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.35rem;
-  color: var(--accent2);
-  font-style: italic;
-  font-weight: 400;
-  border-left: 3px solid var(--accent2);
-  padding-left: 1.25rem;
-  margin: 2rem 0;
-  line-height: 1.5;
-}
-
-/* ── TWO-COL LAYOUT ── */
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-  align-items: start;
-}
-@media (max-width: 680px) { .two-col { grid-template-columns: 1fr; gap: 2rem; } }
-
-/* ── HIGHLIGHT BOX ── */
-.highlight-box {
-  background: #fff;
-  border-radius: 12px;
-  padding: 2.5rem;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border);
-  position: relative;
-}
-.highlight-box::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 4px; height: 100%;
-  background: var(--accent);
-  border-radius: 12px 0 0 12px;
-}
-
-/* ── THE LINKEDIN RULE ── */
-.rule-card {
-  background: var(--ink);
-  color: #fff;
-  border-radius: 16px;
-  padding: 3rem;
-  position: relative;
-  overflow: hidden;
-}
-.rule-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(ellipse 80% 60% at 10% 50%, rgba(199,91,58,0.15) 0%, transparent 60%);
-  pointer-events: none;
-}
-.rule-card .rule-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.68rem; color: rgba(199,91,58,0.8);
-  letter-spacing: 0.15em; text-transform: uppercase;
-  margin-bottom: 1.5rem;
-}
-.rule-card blockquote {
-  font-family: 'DM Serif Display', serif;
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  font-weight: 400; font-style: italic;
-  line-height: 1.4;
-  color: #fff;
-  margin-bottom: 1.5rem;
-  position: relative; z-index: 1;
-}
-.rule-card blockquote em { color: #f0c9a0; font-style: normal; }
-.rule-card p {
-  font-size: 0.95rem;
-  color: rgba(255,255,255,0.55);
-  line-height: 1.75;
-  position: relative; z-index: 1;
-  font-weight: 300;
-}
-
-/* ── SCENARIO EXERCISE ── */
-.exercise-header {
-  display: flex; align-items: center; gap: 14px;
-  margin-bottom: 2rem;
-}
-.exercise-num {
-  width: 44px; height: 44px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.2rem;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.exercise-header-text h3 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.3rem; font-weight: 400;
-  color: var(--ink); margin-bottom: 0.2rem;
-}
-.exercise-header-text p {
-  font-size: 0.85rem; color: var(--muted);
-}
-
-.scenario-stack {
-  display: flex; flex-direction: column; gap: 10px;
-}
-.scenario-row {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1.1rem 1.4rem;
-  display: flex; align-items: center;
-  justify-content: space-between;
-  gap: 1.25rem;
-  transition: all 0.25s;
-}
-.scenario-row:hover { border-color: rgba(26,26,46,0.22); box-shadow: var(--shadow); }
-.scenario-row.answered-yes { border-color: rgba(42,122,75,0.35); background: rgba(42,122,75,0.04); }
-.scenario-row.answered-no { border-color: rgba(199,91,58,0.35); background: rgba(199,91,58,0.04); }
-.scenario-row-text {
-  font-size: 0.93rem;
-  line-height: 1.55;
-  color: var(--text);
-  flex: 1;
-}
-.scenario-row-text em {
-  font-style: normal;
-  font-family: 'DM Mono', monospace;
-  font-size: 0.84rem;
-  background: rgba(26,26,46,0.06);
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-.scenario-btns { display: flex; gap: 8px; flex-shrink: 0; }
-.s-btn {
-  padding: 7px 18px;
-  border-radius: 6px;
-  font-size: 0.8rem; font-weight: 600;
-  cursor: pointer; border: 1px solid;
-  transition: all 0.2s; letter-spacing: 0.02em;
-  font-family: 'DM Sans', sans-serif;
-}
-.s-btn.yes-btn {
-  border-color: rgba(42,122,75,0.3);
-  color: var(--accent3);
-  background: rgba(42,122,75,0.06);
-}
-.s-btn.yes-btn:hover { background: rgba(42,122,75,0.15); }
-.s-btn.no-btn {
-  border-color: rgba(199,91,58,0.3);
-  color: var(--accent);
-  background: rgba(199,91,58,0.06);
-}
-.s-btn.no-btn:hover { background: rgba(199,91,58,0.15); }
-.s-btn:disabled { opacity: 0.35; cursor: default; }
-
-.scenario-feedback {
-  display: none;
-  font-size: 0.8rem;
-  margin-top: 0.6rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  line-height: 1.5;
-}
-.scenario-feedback.ok {
-  background: rgba(42,122,75,0.08);
-  color: #2a7a4b;
-  border: 1px solid rgba(42,122,75,0.2);
-}
-.scenario-feedback.warn {
-  background: rgba(199,91,58,0.08);
-  color: var(--accent);
-  border: 1px solid rgba(199,91,58,0.2);
-}
-
-/* Score result */
-.score-result {
-  display: none;
-  margin-top: 2rem;
-  padding: 2rem 2.5rem;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-md);
-}
-.score-result h3 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.5rem; font-weight: 400;
-  color: var(--ink); margin-bottom: 0.5rem;
-}
-.score-result p { font-size: 0.92rem; color: var(--muted); margin-bottom: 1.25rem; }
-.score-big {
-  font-family: 'DM Serif Display', serif;
-  font-size: 3.5rem;
-  color: var(--accent);
-  line-height: 1;
-  margin-bottom: 0.25rem;
-}
-
-/* Teams share */
-.teams-share {
-  display: flex; align-items: center; gap: 12px;
-  padding: 1rem 1.25rem;
-  background: rgba(37,99,168,0.06);
-  border: 1px solid rgba(37,99,168,0.15);
-  border-radius: 8px;
-  margin-top: 1.25rem;
-  flex-wrap: wrap;
-}
-.teams-share p { font-size: 0.83rem; color: var(--muted); flex: 1; min-width: 180px; margin: 0; }
-.teams-share p strong { color: var(--accent2); }
-.copy-btn {
-  padding: 7px 16px; border-radius: 6px;
-  font-size: 0.8rem; font-weight: 600;
-  cursor: pointer; white-space: nowrap;
-  background: rgba(37,99,168,0.1);
-  border: 1px solid rgba(37,99,168,0.25);
-  color: var(--accent2);
-  transition: all 0.2s;
-  font-family: 'DM Sans', sans-serif;
-}
-.copy-btn:hover { background: rgba(37,99,168,0.2); }
-.copy-btn.ok { background: rgba(42,122,75,0.1); border-color: rgba(42,122,75,0.25); color: var(--accent3); }
-
-/* ── OWN TEXT TESTER ── */
-.tester-wrap {
-  display: none;
-  margin-top: 2rem;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-.tester-wrap h4 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.1rem; font-weight: 400;
-  color: var(--ink); margin-bottom: 0.4rem;
-}
-.tester-wrap > p { font-size: 0.87rem; color: var(--muted); margin-bottom: 1.1rem; }
-.tester-input {
-  width: 100%;
-  background: var(--paper);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.9rem 1.1rem;
-  font-size: 0.92rem;
-  font-family: 'DM Sans', sans-serif;
-  color: var(--text);
-  resize: vertical; min-height: 80px;
-  outline: none; transition: border-color 0.2s;
-  line-height: 1.6;
-}
-.tester-input:focus { border-color: rgba(37,99,168,0.4); }
-.tester-input::placeholder { color: var(--muted); opacity: 0.6; }
-.analyze-btn {
-  margin-top: 0.75rem;
-  padding: 10px 24px;
-  border-radius: 6px;
-  font-size: 0.88rem; font-weight: 600;
-  cursor: pointer; border: none;
-  background: var(--ink);
-  color: #fff;
-  transition: all 0.25s;
-  font-family: 'DM Sans', sans-serif;
-}
-.analyze-btn:hover { background: var(--ink2); transform: translateY(-1px); }
-.analyze-btn:disabled { opacity: 0.45; cursor: default; transform: none; }
-.tester-output {
-  display: none;
-  margin-top: 1rem;
-  padding: 1rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.88rem;
-  line-height: 1.65;
-}
-.tester-output.safe { background: rgba(42,122,75,0.07); border: 1px solid rgba(42,122,75,0.2); color: #1d5c36; }
-.tester-output.unsafe { background: rgba(199,91,58,0.07); border: 1px solid rgba(199,91,58,0.2); color: #8b3a20; }
-.tester-output.loading { background: rgba(26,26,46,0.04); border: 1px solid var(--border); color: var(--muted); }
-
-/* ── PRACTICE WRAP (for new exercises) ── */
-.practice-wrap {
-  background: #fff;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border);
-  margin-top: 2.5rem;
-}
-.practice-header {
-  background: var(--ink);
-  padding: 1.75rem 2rem;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.practice-header-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(199,91,58,0.2);
-  border: 1px solid rgba(199,91,58,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  flex-shrink: 0;
-}
-.practice-header-text h3 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.15rem;
-  font-weight: 400;
-  color: #fff;
-  margin-bottom: 0.2rem;
-}
-.practice-header-text p {
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.45);
-  font-weight: 300;
-}
-.practice-body {
-  padding: 2rem;
-}
-.practice-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.68rem;
-  color: var(--accent);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  margin-bottom: 0.65rem;
-}
-.practice-textarea {
-  width: 100%;
-  background: var(--paper);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.9rem 1.1rem;
-  font-size: 0.92rem;
-  font-family: 'DM Sans', sans-serif;
-  color: var(--text);
-  resize: vertical;
-  min-height: 120px;
-  outline: none;
-  transition: border-color 0.2s;
-  line-height: 1.6;
-}
-.practice-textarea:focus {
-  border-color: rgba(199,91,58,0.4);
-}
-.practice-textarea::placeholder {
-  color: var(--muted);
-  opacity: 0.6;
-}
-.practice-btn {
-  margin-top: 0.75rem;
-  padding: 12px 28px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  background: var(--ink);
-  color: #fff;
-  transition: all 0.25s;
-  font-family: 'DM Sans', sans-serif;
-}
-.practice-btn:hover {
-  background: var(--ink2);
-}
-.practice-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-.practice-response {
-  display: none;
-  margin-top: 1.5rem;
-  background: var(--paper);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1.5rem;
-}
-.practice-response-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.65rem;
-  color: var(--muted);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 0.75rem;
-}
-.practice-response-text {
-  font-size: 0.9rem;
-  line-height: 1.8;
-  color: var(--text);
-  white-space: pre-wrap;
-}
-.practice-response-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 1.25rem;
-  flex-wrap: wrap;
-}
-.copy-resp-btn {
-  padding: 8px 18px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  background: var(--paper2);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  transition: all 0.2s;
-  font-family: 'DM Sans', sans-serif;
-}
-.copy-resp-btn:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-.copy-resp-btn.ok {
-  border-color: var(--accent3);
-  color: var(--accent3);
-  background: rgba(42,122,75,0.06);
-}
-.loading-dots span {
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--muted);
-  margin: 0 2px;
-  animation: ldot 1.2s infinite;
-}
-.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes ldot {
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-  40% { transform: scale(1); opacity: 1; }
-}
-
-/* ── NEVER SHARE SECTION ── */
-.danger-items {
-  display: flex; flex-direction: column; gap: 0;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  background: #fff;
-  box-shadow: var(--shadow);
-}
-.danger-row {
-  display: flex; align-items: flex-start; gap: 1.25rem;
-  padding: 1.5rem 1.75rem;
-  border-bottom: 1px solid var(--border);
-  transition: background 0.2s;
-}
-.danger-row:last-child { border-bottom: none; }
-.danger-row:hover { background: rgba(199,91,58,0.03); }
-.danger-icon {
-  font-size: 1.5rem;
-  flex-shrink: 0;
-  margin-top: 2px;
-  width: 36px;
-  text-align: center;
-}
-.danger-row-text h4 {
-  font-size: 0.97rem; font-weight: 600;
-  color: var(--ink); margin-bottom: 0.3rem;
-}
-.danger-row-text p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
-.danger-badge {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.63rem; font-weight: 500;
-  padding: 2px 8px; border-radius: 3px;
-  margin-left: 8px; vertical-align: middle;
-  letter-spacing: 0.08em;
-}
-.badge-red { background: rgba(199,91,58,0.12); color: var(--accent); }
-.badge-orange { background: rgba(184,134,11,0.12); color: var(--gold); }
-
-/* ── PRINCIPLES ── */
-.principles-list {
-  display: flex; flex-direction: column; gap: 0;
-  counter-reset: principle;
-}
-.principle-item {
-  display: flex; gap: 1.75rem; align-items: flex-start;
-  padding: 2rem 0;
-  border-bottom: 1px solid var(--border);
-  counter-increment: principle;
-}
-.principle-item:last-child { border-bottom: none; }
-.principle-count {
-  font-family: 'DM Serif Display', serif;
-  font-size: 2.5rem;
-  color: var(--paper2);
-  flex-shrink: 0;
-  line-height: 1;
-  min-width: 48px;
-  font-weight: 400;
-  transition: color 0.3s;
-}
-.principle-item:hover .principle-count { color: var(--accent); }
-.principle-body h4 {
-  font-size: 1rem; font-weight: 600;
-  color: var(--ink); margin-bottom: 0.4rem;
-}
-.principle-body p { font-size: 0.9rem; color: var(--muted); line-height: 1.65; }
-
-/* ── REFLECTION (replaces checklist) ── */
-.reflection-card {
-  background: var(--ink);
-  border-radius: 16px;
-  padding: 3rem;
-  color: #fff;
-  position: relative;
-  overflow: hidden;
-}
-.reflection-card::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse 70% 60% at 80% 20%, rgba(37,99,168,0.15) 0%, transparent 60%);
-  pointer-events: none;
-}
-.reflection-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.68rem; letter-spacing: 0.15em;
-  text-transform: uppercase; color: rgba(255,255,255,0.35);
-  margin-bottom: 1.25rem;
-}
-.reflection-card h3 {
-  font-family: 'DM Serif Display', serif;
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  font-weight: 400; color: #fff;
-  margin-bottom: 0.75rem;
-  position: relative; z-index: 1;
-}
-.reflection-card p {
-  font-size: 0.95rem; color: rgba(255,255,255,0.5);
-  margin-bottom: 1.75rem; line-height: 1.75; font-weight: 300;
-  position: relative; z-index: 1;
-}
-.reflection-textarea {
-  width: 100%;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  color: #fff;
-  font-size: 0.95rem;
-  font-family: 'DM Sans', sans-serif;
-  resize: none;
-  outline: none;
-  transition: border-color 0.2s;
-  line-height: 1.65;
-  min-height: 100px;
-  position: relative; z-index: 1;
-}
-.reflection-textarea:focus { border-color: rgba(255,255,255,0.3); }
-.reflection-textarea::placeholder { color: rgba(255,255,255,0.25); }
-.reflection-actions {
-  display: flex; gap: 10px; margin-top: 1rem;
-  flex-wrap: wrap; align-items: center;
-  position: relative; z-index: 1;
-}
-.reflection-save {
-  padding: 10px 24px; border-radius: 6px;
-  font-size: 0.88rem; font-weight: 600;
-  cursor: pointer; border: none;
-  background: var(--accent); color: #fff;
-  transition: all 0.25s;
-  font-family: 'DM Sans', sans-serif;
-}
-.reflection-save:hover { background: #b34e2f; }
-.reflection-share {
-  padding: 10px 24px; border-radius: 6px;
-  font-size: 0.88rem; font-weight: 600;
-  cursor: pointer;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.2);
-  color: rgba(255,255,255,0.6);
-  transition: all 0.25s;
-  font-family: 'DM Sans', sans-serif;
-}
-.reflection-share:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
-.reflection-share.ok { border-color: rgba(42,122,75,0.5); color: #68d391; }
-.reflection-confirm {
-  display: none;
-  font-size: 0.85rem; color: rgba(255,255,255,0.4);
-  margin-top: 0.75rem; position: relative; z-index: 1;
-}
-
-/* ── OUTRO ── */
-#outro {
-  background: var(--paper);
-  min-height: auto;
-  padding: 5rem 2rem 6rem;
-}
-.outro-inner { max-width: 820px; width: 100%; }
-.outro-line {
-  width: 100%; height: 1px;
-  background: var(--border);
-  margin-bottom: 3rem;
-}
-.outro-h2 {
-  font-family: 'DM Serif Display', serif;
-  font-size: clamp(1.8rem, 4vw, 3rem);
-  font-weight: 400; line-height: 1.2;
-  color: var(--ink); margin-bottom: 1rem;
-}
-.outro-h2 em { font-style: italic; color: var(--accent); }
-.outro-p { font-size: 1rem; color: var(--muted); max-width: 520px; line-height: 1.75; margin-bottom: 2.5rem; font-weight: 300; }
-.outro-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
-.btn-next {
-  display: inline-flex; align-items: center; gap: 10px;
-  background: var(--ink);
-  color: #fff; padding: 15px 32px;
-  border-radius: 6px; font-weight: 600;
-  font-size: 0.95rem; text-decoration: none;
-  transition: all 0.25s; letter-spacing: 0.01em;
-}
-.btn-next:hover { background: var(--ink2); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-.btn-next svg { transition: transform 0.25s; }
-.btn-next:hover svg { transform: translateX(4px); }
-.btn-back {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: transparent; color: var(--muted);
-  padding: 15px 24px; border-radius: 6px;
-  font-weight: 500; font-size: 0.95rem;
-  border: 1px solid var(--border); text-decoration: none;
-  transition: all 0.25s;
-}
-.btn-back:hover { color: var(--ink); border-color: rgba(26,26,46,0.3); }
-
-.scan-shell {
-  display:none;
-  margin-top: 1rem;
-  border:1px solid var(--border);
-  border-radius: 12px;
-  overflow:hidden;
-  background:#fff;
-}
-.scan-head {
-  background:#0f172a;
-  color:#e2e8f0;
-  font-family:'DM Mono', monospace;
-  font-size:.73rem;
-  letter-spacing:.09em;
-  text-transform:uppercase;
-  padding:.6rem .8rem;
-}
-.scan-bar-wrap { height: 10px; background:#e2e8f0; position:relative; }
-.scan-bar {
-  position:absolute; top:0; left:-30%;
-  width:30%; height:100%;
-  background: linear-gradient(90deg, transparent, #38bdf8, transparent);
-  animation: scanning 1.2s linear infinite;
-}
-@keyframes scanning { from { left:-30%; } to { left:100%; } }
-.class-doc {
-  padding: .85rem;
-}
-.class-row {
-  border:1px solid var(--border);
-  border-radius: 10px;
-  padding:.55rem .65rem;
-  margin-bottom:.5rem;
-  background:#fff;
-}
-.label-pill {
-  display:inline-block;
-  border-radius:999px;
-  padding:.12rem .52rem;
-  font-size:.72rem;
-  font-weight:700;
-  margin-right:.45rem;
-}
-.label-green { background:rgba(34,197,94,.15); color:#166534; }
-.label-yellow { background:rgba(234,179,8,.18); color:#854d0e; }
-.label-red { background:rgba(239,68,68,.15); color:#991b1b; }
-.checkin-wrap {
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:16px;
-  box-shadow:var(--shadow-md);
-  padding:2rem;
-}
-.check-step { display:none; opacity:0; transform:translateY(10px); transition:all .25s ease; }
-.check-step.active { display:block; opacity:1; transform:translateY(0); }
-.check-title {
-  font-family:'DM Serif Display',serif;
-  font-size:1.6rem; line-height:1.2;
-  color:var(--ink); margin-bottom:.4rem;
-}
-.emoji-choices { display:grid; grid-template-columns:repeat(5,1fr); gap:.6rem; }
-.emoji-choice {
-  border:1px solid var(--border); border-radius:12px; background:#fff;
-  padding:.75rem .35rem; cursor:pointer; text-align:center;
-}
-.emoji-choice.selected { border-color:var(--accent2); box-shadow:0 0 0 3px rgba(37,99,168,.14);}
-.chip-grid { display:flex; flex-wrap:wrap; gap:.55rem; margin-bottom:.85rem; }
-.where-chip { border:1px solid var(--border); border-radius:999px; padding:.44rem .72rem; background:#fff; cursor:pointer; font-size:.9rem; }
-.where-chip.selected { background:rgba(37,99,168,.1); border-color:var(--accent2); color:var(--accent2);}
-.mis-card-grid { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; }
-.mis-card {
-  border:1px solid var(--border); border-radius:12px; background:#fff; padding:.8rem; cursor:pointer; font-size:.92rem;
-}
-.mis-card.selected { border-color:var(--accent3); background:rgba(42,122,75,.08); }
-.big-stars { display:flex; gap:.45rem; font-size:2.1rem; line-height:1; }
-.big-star { color:#d4cfda; cursor:pointer; }
-.big-star.active { color:var(--gold); }
-.check-actions { margin-top:1rem; display:flex; gap:.6rem; flex-wrap:wrap; }
-.check-btn { border:1px solid var(--border); border-radius:8px; background:#fff; padding:.58rem .9rem; font-weight:700; cursor:pointer; }
-.check-btn.primary { background:var(--accent2); color:#fff; border-color:var(--accent2); }
-.check-btn.primary:disabled { opacity:.5; cursor:not-allowed; }
-.reflection-intro {
-  margin-top: 2.6rem;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.35rem 1.5rem;
-}
-@media (max-width: 820px) {
-  .emoji-grid, .emoji-choices { grid-template-columns: repeat(3,1fr); }
-  .mis-card-grid { grid-template-columns: 1fr; }
-}
-
-/* ── CASE STUDY CARDS ── */
-.case-study {
-  background: #fff;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  margin-bottom: 1.5rem;
-}
-.case-study-header {
-  background: var(--ink);
-  padding: 1.25rem 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.case-study-icon {
-  width: 36px; height: 36px;
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.1rem; flex-shrink: 0;
-}
-.case-study-icon.red { background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.3); }
-.case-study-icon.amber { background: rgba(234,179,8,0.2); border: 1px solid rgba(234,179,8,0.3); }
-.case-study-header h4 {
-  font-size: 0.95rem; font-weight: 600; color: #fff; margin: 0;
-}
-.case-study-header .case-tag {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.62rem; letter-spacing: 0.1em;
-  text-transform: uppercase; color: rgba(255,255,255,0.4);
-  margin-left: auto; white-space: nowrap;
-}
-.case-study-body {
-  padding: 1.5rem;
-}
-.case-study-body p { font-size: 0.9rem; line-height: 1.7; color: var(--text); margin-bottom: 0.75rem; }
-.case-study-body p:last-child { margin-bottom: 0; }
-.case-study-lesson {
-  margin-top: 1rem;
-  padding: 0.85rem 1rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  line-height: 1.6;
-}
-.case-study-lesson.warning {
-  background: rgba(199,91,58,0.06);
-  border: 1px solid rgba(199,91,58,0.2);
-  color: #8b3a20;
-}
-.case-study-lesson.info {
-  background: rgba(37,99,168,0.06);
-  border: 1px solid rgba(37,99,168,0.2);
-  color: #1a4f8a;
-}
-
-/* ── STAT GRID ── */
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin: 2rem 0;
-}
-@media (max-width: 680px) { .stat-grid { grid-template-columns: 1fr; } }
-.stat-card {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.5rem;
-  text-align: center;
-  box-shadow: var(--shadow);
-}
-.stat-card .stat-num {
-  font-family: 'DM Serif Display', serif;
-  font-size: 2.2rem;
-  color: var(--accent);
-  line-height: 1;
-  margin-bottom: 0.5rem;
-}
-.stat-card .stat-label {
-  font-size: 0.82rem;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-/* ── DATA FLOW DIAGRAM ── */
-.data-flow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 2rem 1rem;
-  flex-wrap: wrap;
-}
-.flow-node {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  text-align: center;
-  box-shadow: var(--shadow);
-  min-width: 120px;
-}
-.flow-node .flow-icon { font-size: 1.5rem; margin-bottom: 0.4rem; display: block; }
-.flow-node .flow-label { font-size: 0.82rem; font-weight: 600; color: var(--ink); }
-.flow-node .flow-sub { font-size: 0.72rem; color: var(--muted); }
-.flow-arrow {
-  font-size: 1.5rem;
-  color: var(--accent);
-  flex-shrink: 0;
-}
-
-/* ── ROLE-PLAY EXERCISE ── */
-.roleplay-wrap {
-  background: #fff;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border);
-}
-.roleplay-header {
-  background: linear-gradient(135deg, #1a1a2e, #2d2d44);
-  padding: 1.75rem 2rem;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.roleplay-header-icon {
-  width: 44px; height: 44px;
-  border-radius: 12px;
-  background: rgba(199,91,58,0.2);
-  border: 1px solid rgba(199,91,58,0.3);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.3rem; flex-shrink: 0;
-}
-.roleplay-header h3 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.2rem; font-weight: 400; color: #fff;
-}
-.roleplay-header p { font-size: 0.82rem; color: rgba(255,255,255,0.45); }
-.roleplay-body { padding: 2rem; }
-.roleplay-scenario {
-  background: var(--paper);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 1.25rem;
-}
-.roleplay-scenario-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.65rem;
-  color: var(--accent);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 0.5rem;
-}
-.roleplay-scenario p { font-size: 0.92rem; line-height: 1.7; color: var(--text); }
-.roleplay-response-area textarea {
-  width: 100%;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.9rem 1.1rem;
-  font-size: 0.92rem;
-  font-family: 'DM Sans', sans-serif;
-  color: var(--text);
-  resize: vertical;
-  min-height: 100px;
-  outline: none;
-  transition: border-color 0.2s;
-  line-height: 1.6;
-}
-.roleplay-response-area textarea:focus { border-color: rgba(199,91,58,0.4); }
-.roleplay-response-area textarea::placeholder { color: var(--muted); opacity: 0.6; }
-.roleplay-submit {
-  margin-top: 0.75rem;
-  padding: 12px 28px;
-  border-radius: 6px;
-  font-size: 0.9rem; font-weight: 600;
-  cursor: pointer; border: none;
-  background: var(--accent); color: #fff;
-  transition: all 0.25s;
-  font-family: 'DM Sans', sans-serif;
-}
-.roleplay-submit:hover { background: #b34e2f; transform: translateY(-1px); }
-.roleplay-submit:disabled { opacity: 0.45; cursor: default; transform: none; }
-.roleplay-feedback {
-  display: none;
-  margin-top: 1.25rem;
-  padding: 1.25rem;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  line-height: 1.7;
-}
-.roleplay-feedback.good { background: rgba(42,122,75,0.07); border: 1px solid rgba(42,122,75,0.2); color: #1d5c36; }
-.roleplay-feedback.needs-work { background: rgba(199,91,58,0.07); border: 1px solid rgba(199,91,58,0.2); color: #8b3a20; }
-.roleplay-progress {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 1.25rem;
-}
-.roleplay-pip {
-  flex: 1;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--warm);
-  transition: background 0.3s;
-}
-.roleplay-pip.done { background: var(--accent3); }
-.roleplay-pip.current { background: var(--accent); }
-.roleplay-score {
-  display: none;
-  text-align: center;
-  padding: 2rem;
-}
-.roleplay-score .score-circle {
-  width: 100px; height: 100px;
-  border-radius: 50%;
-  border: 4px solid var(--accent3);
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 1rem;
-  font-family: 'DM Serif Display', serif;
-  font-size: 2rem;
-  color: var(--accent3);
-}
-
-/* ── ANONYMIZE EXERCISE ── */
-.anon-wrap {
-  background: #fff;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border);
-  margin-top: 2.5rem;
-}
-.anon-header {
-  background: linear-gradient(135deg, #0f3460, #1a4f8a);
-  padding: 1.75rem 2rem;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.anon-header-icon {
-  width: 44px; height: 44px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.3rem; flex-shrink: 0;
-}
-.anon-header h3 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.2rem; font-weight: 400; color: #fff;
-}
-.anon-header p { font-size: 0.82rem; color: rgba(255,255,255,0.45); }
-.anon-body { padding: 2rem; }
-.anon-original {
-  background: rgba(239,68,68,0.04);
-  border: 1px solid rgba(239,68,68,0.2);
-  border-radius: 10px;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 1.25rem;
-  position: relative;
-}
-.anon-original::before {
-  content: '⚠️ SISÄLTÄÄ ARKALUONTEISIA TIETOJA';
-  font-family: 'DM Mono', monospace;
-  font-size: 0.62rem;
-  color: #991b1b;
-  letter-spacing: 0.1em;
-  display: block;
-  margin-bottom: 0.75rem;
-}
-.anon-original p { font-size: 0.9rem; line-height: 1.75; color: var(--text); }
-.anon-original .pii-highlight {
-  background: rgba(239,68,68,0.15);
-  padding: 1px 4px;
-  border-radius: 3px;
-  border-bottom: 2px solid rgba(239,68,68,0.4);
-}
-.anon-rewrite textarea {
-  width: 100%;
-  background: var(--paper);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.9rem 1.1rem;
-  font-size: 0.92rem;
-  font-family: 'DM Sans', sans-serif;
-  color: var(--text);
-  resize: vertical;
-  min-height: 120px;
-  outline: none;
-  transition: border-color 0.2s;
-  line-height: 1.6;
-}
-.anon-rewrite textarea:focus { border-color: rgba(37,99,168,0.4); }
-.anon-rewrite textarea::placeholder { color: var(--muted); opacity: 0.6; }
-.anon-check-btn {
-  margin-top: 0.75rem;
-  padding: 12px 28px;
-  border-radius: 6px;
-  font-size: 0.9rem; font-weight: 600;
-  cursor: pointer; border: none;
-  background: var(--ink); color: #fff;
-  transition: all 0.25s;
-  font-family: 'DM Sans', sans-serif;
-}
-.anon-check-btn:hover { background: var(--ink2); }
-.anon-check-btn:disabled { opacity: 0.45; cursor: default; }
-.anon-result {
-  display: none;
-  margin-top: 1.25rem;
-  padding: 1.25rem;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  line-height: 1.7;
-}
-.anon-result.pass { background: rgba(42,122,75,0.07); border: 1px solid rgba(42,122,75,0.2); color: #1d5c36; }
-.anon-result.partial { background: rgba(234,179,8,0.07); border: 1px solid rgba(234,179,8,0.2); color: #854d0e; }
-.anon-result.fail { background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2); color: #991b1b; }
-.anon-generate-btn {
-  padding: 10px 22px;
-  border-radius: 6px;
-  font-size: 0.85rem; font-weight: 600;
-  cursor: pointer; border: 1px solid var(--border);
-  background: #fff; color: var(--muted);
-  transition: all 0.25s;
-  font-family: 'DM Sans', sans-serif;
-}
-.anon-generate-btn:hover { border-color: var(--ink); color: var(--ink); }
-
-/* ── TRIAL EXERCISE ── */
-.trial-wrap {
-  background: #fff;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border);
-  margin-top: 2.5rem;
-}
-.trial-header {
-  background: linear-gradient(135deg, #2a1a0a, #4a2a10);
-  padding: 1.75rem 2rem;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.trial-header-icon {
-  width: 44px; height: 44px;
-  border-radius: 12px;
-  background: rgba(184,134,11,0.25);
-  border: 1px solid rgba(184,134,11,0.3);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.3rem; flex-shrink: 0;
-}
-.trial-header h3 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.2rem; font-weight: 400; color: #fff;
-}
-.trial-header p { font-size: 0.82rem; color: rgba(255,255,255,0.45); }
-.trial-body { padding: 2rem; }
-.trial-case {
-  background: var(--paper);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-.trial-case-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.65rem;
-  color: var(--gold);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 0.75rem;
-}
-.trial-case h4 { font-size: 1rem; font-weight: 600; color: var(--ink); margin-bottom: 0.5rem; }
-.trial-case p { font-size: 0.9rem; line-height: 1.7; color: var(--text); }
-.trial-round-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.68rem;
-  color: var(--muted);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 0.5rem;
-}
-.trial-chat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-  max-height: 300px;
-  overflow-y: auto;
-  padding-right: 0.5rem;
-}
-.trial-msg {
-  max-width: 85%;
-  padding: 0.85rem 1.1rem;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  line-height: 1.6;
-}
-.trial-msg.user {
-  align-self: flex-end;
-  background: var(--accent);
-  color: #fff;
-  border-bottom-right-radius: 3px;
-}
-.trial-msg.ai {
-  align-self: flex-start;
-  background: var(--paper);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-bottom-left-radius: 3px;
-}
-.trial-input-area textarea {
-  width: 100%;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.9rem 1.1rem;
-  font-size: 0.92rem;
-  font-family: 'DM Sans', sans-serif;
-  color: var(--text);
-  resize: vertical;
-  min-height: 80px;
-  outline: none;
-  transition: border-color 0.2s;
-  line-height: 1.6;
-}
-.trial-input-area textarea:focus { border-color: rgba(184,134,11,0.4); }
-.trial-input-area textarea::placeholder { color: var(--muted); opacity: 0.6; }
-.trial-submit {
-  margin-top: 0.75rem;
-  padding: 12px 28px;
-  border-radius: 6px;
-  font-size: 0.9rem; font-weight: 600;
-  cursor: pointer; border: none;
-  background: var(--gold); color: #fff;
-  transition: all 0.25s;
-  font-family: 'DM Sans', sans-serif;
-}
-.trial-submit:hover { filter: brightness(1.1); transform: translateY(-1px); }
-.trial-submit:disabled { opacity: 0.45; cursor: default; transform: none; }
-.trial-ruling {
-  display: none;
-  margin-top: 1.5rem;
-  background: var(--ink);
-  border-radius: 12px;
-  padding: 2rem;
-  color: #fff;
-}
-.trial-ruling h4 {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.2rem; font-weight: 400; color: #fff;
-  margin-bottom: 0.75rem;
-}
-.trial-ruling p { font-size: 0.9rem; color: rgba(255,255,255,0.7); line-height: 1.75; }
-.trial-ruling .verdict {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 4px 12px;
-  border-radius: 4px;
-  display: inline-block;
-  margin-bottom: 1rem;
-}
-.trial-ruling .verdict.guilty { background: rgba(239,68,68,0.2); color: #fca5a5; }
-.trial-ruling .verdict.innocent { background: rgba(42,122,75,0.2); color: #68d391; }
-.trial-ruling .verdict.partial { background: rgba(234,179,8,0.2); color: #fcd34d; }
-
-/* ── FADE IN ── */
-.fade-up {
-  opacity: 0; transform: translateY(28px);
-  transition: opacity 0.65s ease, transform 0.65s ease;
-}
-.fade-up.in { opacity: 1; transform: translateY(0); }
-
-/* ── RESPONSIVE ── */
-@media (max-width: 768px) {
-  nav { padding: 0 1.25rem; }
-  .nav-title { display: none; }
-  .section { padding: 80px 1.25rem 4rem; }
-  .rule-card { padding: 2rem; }
-  .reflection-card { padding: 2rem; }
-  .scenario-row { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
-  .principle-item { gap: 1rem; }
-  .principle-count { font-size: 2rem; min-width: 36px; }
-}
-
+/* DEBRIEF */
+#screenDebrief{min-height:100vh;padding:64px 24px 80px}
+.debrief{max-width:600px;margin:0 auto;text-align:center}
+.ring{
+  width:140px;height:140px;border-radius:50%;border:3px solid var(--accent3);
+  display:grid;place-items:center;margin:0 auto 1.5rem;font-family:var(--serif);font-size:2.2rem;
+  background:#fff;box-shadow:var(--shadow-md);
+}
+.ring.mid{border-color:var(--gold)}.ring.low{border-color:#b91c1c}
+.debrief h1{font-family:var(--serif);font-size:clamp(2rem,4vw,2.6rem);font-weight:400;margin-bottom:12px}
+.debrief .lead{color:var(--muted);font-weight:300;font-size:1.05rem;line-height:1.75;margin-bottom:2rem}
+.take{text-align:left;background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.35rem 1.5rem;margin-bottom:1.5rem;box-shadow:var(--shadow-md)}
+.take h3{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.take li{list-style:none;padding:10px 0;border-bottom:1px solid var(--border);font-size:.95rem;color:var(--ink2);display:flex;gap:10px}
+.take li:last-child{border-bottom:none}
+.take li::before{content:'✓';color:var(--accent3);font-weight:700}
+.rev{text-align:left;margin-bottom:1.75rem}
+.rev details{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow)}
+.rev summary{cursor:pointer;font-weight:500}
+.rev .b{margin-top:8px;font-size:.88rem;color:var(--muted);line-height:1.65}
 </style>
 </head>
 <body>
 
-<div id="progress-bar"></div>
-
-<nav>
-  <div class="nav-left">
-    <a href="/" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: var(--muted); margin-right: 1.5rem; transition: color 0.2s;" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--muted)'">
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-      </svg>
-      <span style="font-size: 0.85rem; font-weight: 500;">Etusivu</span>
-    </a>
-    <span class="nav-module">Moduuli 01</span>
-    <span class="nav-title">Tietosuoja &amp; vastuullinen tekoäly</span>
-  </div>
-  <div class="nav-steps" id="navSteps"></div>
-</nav>
-
-<!-- ═══════ HERO ═══════ -->
-<section class="section" id="hero" data-index="0">
-  <div class="hero-inner">
-    <div class="hero-eyebrow">
-      <span class="eyebrow-num">01 / 07</span>
-      <span class="eyebrow-line"></span>
-      <span class="eyebrow-label">Tekoäly työnhaussa</span>
+<!-- THEORY -->
+<section class="screen active" id="screenTheory">
+  <div class="th-wrap">
+    <div class="th-kicker">Moduuli 01 · Tietosuoja</div>
+    <h1>Käytä AI:ta <em>turvallisesti</em></h1>
+    <p class="th-lead">Ensimmäinen taito koko kurssilla. Kun tämä on hallussa, voit käyttää tekoälyä huoletta — töissä ja työnhaussa.</p>
+    <div class="th-cta-row">
+      <button type="button" class="btn-go" onclick="enterDesk()">Avaa Pohjola CRM →</button>
+      <div class="a11y">
+        <button type="button" id="btnLarge" onclick="toggleLarge()">Isompi teksti</button>
+        <button type="button" id="btnCalm" onclick="toggleCalm()">Rauhallinen</button>
+      </div>
     </div>
-    <h1 class="hero-title">Käytä AI:ta<br><em>turvallisesti</em><br>&amp; luottavaisesti</h1>
-    <p class="hero-sub">AI on uraasi varten — se auttaa sinua kirjoittamaan, suunnittelemaan ja löytämään mahdollisuuksia. Opi muutama pelisääntö, niin voit käyttää sitä huoletta.</p>
-    <a href="#miksi" class="hero-cta">
-      Aloita
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-      </svg>
-    </a>
-    <div class="hero-time">Noin 40 minuuttia</div>
+
+    <div class="th-section">
+      <div class="th-label">Miksi tämä ensin</div>
+      <h2>AI on työkalu. <em>Sinä päätät.</em></h2>
+      <p class="th-p">Tekoäly auttaa kirjoittamaan, suunnittelemaan ja löytämään mahdollisuuksia. Tällä kurssilla käytät sitä CV:hen, teksteihin, ideointiin ja oikeisiin työkaluihin.</p>
+      <div class="quote">"Kaikki mitä kirjoitat AI:lle menee internetin kautta ulkoiselle palvelimelle."</div>
+      <p class="th-p">Se on kuin juttelisit asiantuntijalle jonka tapaat ensimmäistä kertaa — <strong>jaat ammatillista tietoa, et henkilökohtaista tai työnantajan salaisuuksia.</strong></p>
+    </div>
+
+    <div class="th-section">
+      <div class="th-label">Miten data liikkuu</div>
+      <h2>GDPR tarkoittaa: <em>datasi on sinun</em></h2>
+      <div class="flow">
+        <div class="flow-card"><b>Sinä</b><span>Kirjoitat</span></div>
+        <div class="flow-card"><b>Internet</b><span>Salattu yhteys</span></div>
+        <div class="flow-card"><b>OpenAI / Google</b><span>USA:n palvelimet</span></div>
+        <div class="flow-card"><b>Tallennus</b><span>Jopa 30 päivää</span></div>
+      </div>
+      <p class="th-p">Ilmaisessa ChatGPT:ssä keskusteluja voidaan käyttää mallin kouluttamiseen (voit kytkeä pois). Kun jaat vain ammattitietoa — taidot, kokemus, tavoitteet — olet turvassa.</p>
+      <div class="grid2">
+        <div class="rule-tile"><h3>95% on riskitöntä</h3><p>Kun et jaa henkilötunnusta, pankkitietoja, salasanoja tai terveystietoja.</p></div>
+        <div class="rule-tile"><h3>Työsopimus-esimerkki</h3><p>Joku liitti sopimuksen AI:lle “onko tämä normaali?” — mukana nimi, palkka ja salassapito. Älä tee niin. Kysy yleistä ilman dokumenttia.</p></div>
+      </div>
+    </div>
+
+    <div class="th-section">
+      <div class="th-label">Kultainen sääntö</div>
+      <div class="gold-card">
+        <div class="lbl">LinkedIn-sääntö</div>
+        <blockquote>"Jos et julkaisisi sitä <em>LinkedInissä</em>, älä jaa sitä tekoälylle."</blockquote>
+        <p>Kun epäilet, kysy: näkyisikö tämä ammattilaisverkostolleni? Jos ei — se ei kuulu AI:lle.</p>
+      </div>
+    </div>
+
+    <div class="th-section">
+      <div class="th-label">Context hygiene</div>
+      <h2>Mitä ei koskaan <em>mene AI:lle</em></h2>
+      <div class="never-row">
+        <div class="never"><div class="code">ASIAKAS</div><h3>Asiakastiedot</h3><p>Nimet, sähköpostit, ostot, CRM-viennit, tilaukset.</p></div>
+        <div class="never"><div class="code">HR</div><h3>Henkilöstö</h3><p>Palkat, irtisanomiset, hakemukset, sisäiset arviot.</p></div>
+        <div class="never"><div class="code">TERVEYS</div><h3>Terveys</h3><p>Diagnoosit, sairauslomat, lääkitykset — myös kollegoiden.</p></div>
+        <div class="never"><div class="code">SOPIMUS</div><h3>Sopimukset</h3><p>Hinnat, sakot, salassapito, tarjousten luvut.</p></div>
+      </div>
+      <div class="ok-strip">
+        <h3>Kaikki muu? Käytä vapaasti.</h3>
+        <p class="th-p" style="margin:0">Ammattinimike, osaaminen, koulutus, tavoitteet, ideat, yleiset kysymykset, tekstiluonnokset ilman nimiä. Tämä on suurin osa AI:n käytöstä.</p>
+      </div>
+
+      <div class="th-end">
+        <p>Seuraavaksi: maanantai Pohjola Servicesin CRM:ssä. Sinä vastaat aamun AI-pyyntöihin.</p>
+        <button type="button" class="btn-go" onclick="enterDesk()">Kirjaudu työpöydälle →</button>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- ═══════ MIKSI ═══════ -->
-<section class="section" id="miksi" data-index="1">
-  <div class="section-inner fade-up">
-    <div class="section-label">Miksi tämä kannattaa</div>
-    <h2 class="section-h2">AI on sinun <em>uravalmentajasi</em></h2>
-    <div class="divider"></div>
-    <div class="two-col">
-      <div class="prose">
-        <p>Tekoäly — kuten ChatGPT tai Claude — on kuin henkilökohtainen avustaja joka ei koskaan väsy. Se auttaa sinua kirjoittamaan parempia hakemuksia, valmistautumaan haastatteluihin ja löytämään mahdollisuuksia.</p>
-        <p><strong>Tällä kurssilla tulet käyttämään AI:ta mm. näihin:</strong></p>
-        <ul style="list-style:none; display:flex; flex-direction:column; gap:0.6rem; margin: 1rem 0;">
-          <li style="display:flex; gap:10px;"><span style="color:var(--accent3);">→</span> <span>CV:n parantaminen ja ammattitekstin hiominen</span></li>
-          <li style="display:flex; gap:10px;"><span style="color:var(--accent3);">→</span> <span>Kuvien luominen ja visuaalisen sisällön tuottaminen</span></li>
-          <li style="display:flex; gap:10px;"><span style="color:var(--accent3);">→</span> <span>Liiketoimintasuunnitelmien ja budjettien tekeminen</span></li>
-          <li style="display:flex; gap:10px;"><span style="color:var(--accent3);">→</span> <span>Markkinointimateriaalien ja mainosten rakentaminen</span></li>
-        </ul>
-        <div class="pull">"AI on työkalu. Sinä päätät mitä sillä tehdään."</div>
-        <p>Ainoa mitä tarvitset on muutama yksinkertainen pelisääntö — ja ne opit nyt. Sen jälkeen voit käyttää AI:ta huoletta.</p>
+<!-- CRM -->
+<section class="screen" id="screenDesk">
+  <div class="crm">
+    <header class="crm-top">
+      <div class="brand"><div class="brand-mark">PS</div> Pohjola CRM <small>Workspace</small></div>
+      <div class="crm-search"><span>⌕</span> Hae tikettejä, asiakkaita, dokumentteja…</div>
+      <div class="crm-meta">
+        <span class="save-pill" id="savePill">—</span>
+        <span class="pill" id="openCount">5 avointa</span>
+        <div class="avatar"><i>SINÄ</i> <span>Context Hygiene</span></div>
       </div>
-      <div>
-        <div class="highlight-box">
-          <p style="font-size:0.82rem; font-family:'DM Mono',monospace; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1.25rem;">Näitä teet tällä kurssilla</p>
-          <ul style="list-style:none; display:flex; flex-direction:column; gap:0.85rem;">
-            <li style="display:flex; gap:10px; align-items:flex-start;">
-              <span style="color:var(--accent3); font-size:1rem; flex-shrink:0; margin-top:2px;">✓</span>
-              <span style="font-size:0.92rem; color:var(--ink);">Luot kuvia, tekstejä ja dokumentteja AI:lla</span>
-            </li>
-            <li style="display:flex; gap:10px; align-items:flex-start;">
-              <span style="color:var(--accent3); font-size:1rem; flex-shrink:0; margin-top:2px;">✓</span>
-              <span style="font-size:0.92rem; color:var(--ink);">Rakennat kokonaisen yrityspaketin 4 AI-työkalulla</span>
-            </li>
-            <li style="display:flex; gap:10px; align-items:flex-start;">
-              <span style="color:var(--accent3); font-size:1rem; flex-shrink:0; margin-top:2px;">✓</span>
-              <span style="font-size:0.92rem; color:var(--ink);">Opit "promptaamaan" — eli puhumaan AI:lle oikein</span>
-            </li>
-          </ul>
-          <div style="border-top:1px solid var(--border); margin-top:1.5rem; padding-top:1.25rem;">
-            <p style="font-size:0.82rem; font-family:'DM Mono',monospace; color:var(--accent3); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:0.85rem;">Mutta ensin: pelisäännöt</p>
-            <p style="font-size:0.9rem; color:var(--ink); line-height:1.65;">Kaikki mitä kirjoitat AI:lle menee internetin kautta ulkoiselle palvelimelle. Se on kuin juttelisit asiantuntijalle jonka tapaat ensimmäistä kertaa — <strong>jaat ammatillista tietoa, et henkilökohtaista</strong>. Yksi yksinkertainen sääntö, ja olet turvassa.</p>
+    </header>
+
+    <div class="crm-body">
+      <nav class="crm-nav">
+        <div class="nav-h">Työjono</div>
+        <button type="button" class="nav-btn on" data-f="all" onclick="setFilter(this,'all')">📥 Saapuneet <span class="n" id="navN">5</span></button>
+        <button type="button" class="nav-btn" data-f="contract" onclick="setFilter(this,'contract')">📄 Sopimukset</button>
+        <button type="button" class="nav-btn" data-f="customer" onclick="setFilter(this,'customer')">👤 Asiakkaat</button>
+        <button type="button" class="nav-btn" data-f="hr" onclick="setFilter(this,'hr')">👥 HR</button>
+        <button type="button" class="nav-btn" data-f="health" onclick="setFilter(this,'health')">✚ Työterveys</button>
+        <div class="nav-foot">Vuoro: maanantai 08:40<br>Rooli: AI-käytön tarkistus</div>
+      </nav>
+
+      <div class="crm-main">
+        <!-- LIST -->
+        <div id="listMode">
+          <div class="list-head">
+            <div>
+              <h1>AI-pyynnöt · tänään</h1>
+              <p>Avaa tiketti · lue liite · kirjoita vastaus · saat AI-palautteen heti</p>
+            </div>
+            <div class="steps" id="steps"></div>
           </div>
+          <div class="ticket-table" id="ticketTable"></div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
 
-<!-- ═══════ GDPR & TIEDON KULKU ═══════ -->
-<section class="section section-dark" id="gdpr-syvemmin" data-index="2">
-  <div class="section-inner fade-up">
-    <div class="section-label">Tietosuojan perusteet</div>
-    <h2 class="section-h2">Miten datasi <em>kulkee</em></h2>
-    <div class="divider"></div>
-    <p class="lead">Tämä ei ole pelottelua — tämä on tietoa joka tekee sinusta viisaamman AI-käyttäjän. Kun ymmärrät miten data liikkuu, osaat käyttää AI:ta luottavaisesti.</p>
-
-    <div class="data-flow" style="margin-bottom: 2.5rem;">
-      <div class="flow-node">
-        <span class="flow-icon">👤</span>
-        <span class="flow-label">Sinä</span>
-        <span class="flow-sub">Kirjoitat tekstiä</span>
-      </div>
-      <span class="flow-arrow">→</span>
-      <div class="flow-node">
-        <span class="flow-icon">🌐</span>
-        <span class="flow-label">Internet</span>
-        <span class="flow-sub">Salattu yhteys</span>
-      </div>
-      <span class="flow-arrow">→</span>
-      <div class="flow-node">
-        <span class="flow-icon">🏢</span>
-        <span class="flow-label">OpenAI / Google</span>
-        <span class="flow-sub">USA:n palvelimet</span>
-      </div>
-      <span class="flow-arrow">→</span>
-      <div class="flow-node">
-        <span class="flow-icon">💾</span>
-        <span class="flow-label">Tallennus</span>
-        <span class="flow-sub">Jopa 30 pv</span>
-      </div>
-    </div>
-
-    <div class="two-col" style="margin-bottom: 3rem;">
-      <div class="prose" style="color: rgba(255,255,255,0.75);">
-        <p><strong style="color:#fff;">GDPR (General Data Protection Regulation)</strong> on EU:n tietosuoja-asetus, joka suojaa sinun tietojasi. Se tarkoittaa: <strong style="color:#f0c9a0;">sinun datasi on sinun omaisuuttasi</strong> — yritykset eivät saa tehdä sillä mitä haluavat.</p>
-        <p>Käytännössä tämä tarkoittaa: kun käytät ilmaista ChatGPT:tä, keskustelusi voidaan käyttää mallin kouluttamiseen. Tämän voi kytkeä pois asetuksista — näytämme miten myöhemmin.</p>
-        <p style="color:rgba(255,255,255,.85);"><strong style="color:#68d391;">Hyvä uutinen:</strong> kun jaat vain ammatillista tietoa (taidot, kokemus, tavoitteet), olet 100% turvassa. Suurin osa AI:n käytöstä on täysin riskitöntä.</p>
-      </div>
-      <div>
-        <div class="highlight-box" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12);">
-          <p style="font-size:0.82rem; font-family:'DM Mono',monospace; color:rgba(199,91,58,0.8); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:1.25rem;">Sinun oikeutesi</p>
-          <ul style="list-style:none; display:flex; flex-direction:column; gap:1rem;">
-            <li style="display:flex; gap:10px; align-items:flex-start;">
-              <span style="font-size:1.4rem; flex-shrink:0; line-height:1;">🗑️</span>
-              <div><strong style="font-size:0.92rem; display:block; margin-bottom:0.2rem; color:#fff;">Oikeus tulla unohdetuksi</strong><span style="font-size:0.82rem; color:rgba(255,255,255,0.5);">GDPR:n artikla 17: voit pyytää OpenAI:ta poistamaan tietosi. Onnistuu privacy.openai.com-sivulta.</span></div>
-            </li>
-            <li style="display:flex; gap:10px; align-items:flex-start;">
-              <span style="font-size:1.4rem; flex-shrink:0; line-height:1;">🔍</span>
-              <div><strong style="font-size:0.92rem; display:block; margin-bottom:0.2rem; color:#fff;">Oikeus tietää mitä sinusta kerätään</strong><span style="font-size:0.82rem; color:rgba(255,255,255,0.5);">Voit pyytää koopion kaikesta datasta, jonka OpenAI on tallentanut sinusta. Asetukset → Data controls → Export.</span></div>
-            </li>
-            <li style="display:flex; gap:10px; align-items:flex-start;">
-              <span style="font-size:1.4rem; flex-shrink:0; line-height:1;">🇫🇮</span>
-              <div><strong style="font-size:0.92rem; display:block; margin-bottom:0.2rem; color:#fff;">Tietosuojavaltuutetun toimisto</strong><span style="font-size:0.82rem; color:rgba(255,255,255,0.5);">Jos epäilet tietojesi väärinkäyttöä, voit tehdä ilmoituksen: tietosuoja.fi. Ilmaista ja helppoa.</span></div>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <div class="stat-grid">
-      <div class="stat-card" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1);">
-        <div class="stat-num" style="color: var(--accent);">95%</div>
-        <div class="stat-label" style="color: rgba(255,255,255,0.5);">AI:n käytöstä on täysin riskitöntä — kunhan et jaa henkilötunnusta, pankkitietoja tai salasanoja</div>
-      </div>
-      <div class="stat-card" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1);">
-        <div class="stat-num" style="color: var(--accent);">4</div>
-        <div class="stat-label" style="color: rgba(255,255,255,0.5);">asiaa jotka pidät itsellasi: hetu, pankkitiedot, salasanat ja terveystiedot — kaikki muu on vapaata</div>
-      </div>
-      <div class="stat-card" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1);">
-        <div class="stat-num" style="color: var(--accent);">30 pv</div>
-        <div class="stat-label" style="color: rgba(255,255,255,0.5);">OpenAI säilyttää keskusteluhistoriasi oletuksena jopa 30 päivää palvelimillaan</div>
-      </div>
-    </div>
-
-    <div style="background:rgba(42,122,75,.15);border:1px solid rgba(42,122,75,.3);border-radius:12px;padding:1.5rem;margin:2rem 0;">
-      <strong style="display:block;color:#68d391;margin-bottom:.5rem;font-size:1.05rem;">Mitä tämä tarkoittaa sinulle käytännössä?</strong>
-      <p style="font-size:.92rem;color:rgba(255,255,255,.75);line-height:1.7;">Tällä kurssilla käytät AI:ta <strong style="color:#fff;">CV:n parantamiseen, tekstien hiomiseen ja ideoiden kehittämiseen</strong> — ja se on täysin turvallista. Sinun tarvitsee vain muistaa: älä jaa henkilötunnusta, pankkitietoja, salasanoja tai terveystietojasi. Osaamisesi, kokemuksesi ja tavoitteesi ovat juuri sitä tietoa, josta AI saa parhaan hyödyn irti. <strong style="color:#68d391;">Tämä kurssi opettaa sinulle miten.</strong></p>
-    </div>
-
-    <h3 style="font-family:'DM Serif Display',serif; font-size:1.5rem; color:#fff; margin: 2rem 0 1rem;">Mitä voi mennä pieleen — ja miten välttää se</h3>
-    <p style="font-size:.9rem;color:rgba(255,255,255,.5);margin-bottom:1.5rem;">Nämä tapaukset ovat ääriesimerkkejä. Ne eivät tapahdu sinulle jos muistat pelisäännöt.</p>
-
-    <div class="case-study">
-      <div class="case-study-header">
-        <div class="case-study-icon amber">📄</div>
-        <h4>Näin käytät AI:ta CV:n parantamiseen turvallisesti</h4>
-        <span class="case-tag">Käytännön esimerkki</span>
-      </div>
-      <div class="case-study-body">
-        <p>AI on erinomainen työkalu CV:n parantamiseen — ja tällä kurssilla käytät sitä juuri siihen. <strong>Osaamisesi, kokemuksesi, ammattinimikkeesi ja tavoitteesi ovat turvallista tietoa.</strong> Ainoa mitä kannattaa jättää pois ovat tarkat tunnistetiedot: kotiosoite, puhelinnumero ja henkilötunnus. Niitä AI ei tarvitse auttaakseen sinua.</p>
-        <div class="case-study-lesson info"><strong>Näin teet:</strong> Kirjoita AI:lle esim. "Olen tradenomi, 6v kokemusta asiakaspalvelusta, osaan Excelin ja projektinhallinnan. Paranna CV-tekstini." Saat ammattimaisen tuloksen — turvallisesti.</div>
-      </div>
-    </div>
-
-    <div class="case-study">
-      <div class="case-study-header">
-        <div class="case-study-icon red">⚖️</div>
-        <h4>Asianajaja ja tekaistut oikeustapaukset</h4>
-        <span class="case-tag">New York · 2023</span>
-      </div>
-      <div class="case-study-body">
-        <p>Newyorkilainen asianajaja Steven Schwartz käytti ChatGPT:tä oikeudelliseen tutkimukseen. Tekoäly generoi kuusi oikeustapausta viitteineen, jotka näyttivät todellsilta — mutta olivat täysin keksittyjä. Tuomari määräsi asianajajalle 5 000 dollarin sakot.</p>
-        <div class="case-study-lesson warning"><strong>Opetus:</strong> Tekoäly voi tuottaa vakuuttavan näköistä mutta täysin väärää tietoa. Tarkista aina faktat ennen käyttöä ammattilaistyössä.</div>
-      </div>
-    </div>
-
-    <div class="case-study">
-      <div class="case-study-header">
-        <div class="case-study-icon amber">💼</div>
-        <h4>Työsopimuksen ehdot AI:lle — mitä voi tapahtua?</h4>
-        <span class="case-tag">Yleinen tilanne</span>
-      </div>
-      <div class="case-study-body">
-        <p>Uusi työntekijä liitti työsopimuksensa ChatGPT:hen kysyäkseen "onko tämä normaali sopimus?" Sopimuksessa oli hänen nimensä, palkkansa, työnantajan nimi ja salassapitoehdot. Hän rikkoi samalla sekä omaa tietosuojaansa (palkka, nimi) että työnantajan luottamuksellisuutta (salassapitoehdot). Ilmaisversiossa nämä tiedot voivat päätyä koulutusaineistoon.</p>
-        <div class="case-study-lesson info"><strong>Opetus:</strong> Voit kysyä yleistä: "Mitä tarkoittaa kilpailukielto työsopimuksessa?" Mutta älä liitä itse sopimusta. Poista nimet, luvut ja yksityiskohdat — tai kysy yleistasolla.</div>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ═══════ LINKEDIN RULE ═══════ -->
-<section class="section section-alt" id="saanto" data-index="3">
-  <div class="section-inner fade-up">
-    <div class="section-label">Kultainen sääntö</div>
-    <h2 class="section-h2">Yksi sääntö,<br>kaikki tilanteet</h2>
-    <div class="divider"></div>
-    <div class="rule-card" style="margin-bottom:2rem;">
-      <div class="rule-label">LinkedIn-sääntö</div>
-      <blockquote>"Jos et julkaisisi sitä <em>LinkedInissä</em>,<br>älä jaa sitä tekoälylle."</blockquote>
-      <p>LinkedIn on ammatillinen verkosto — siellä jakamasi tiedot ovat käytännössä julkisia. Kun epäilet, kysy itseltäsi: haluaisinko, että tämä näkyy ammattilaisverkostolleni? Jos vastaus on ei, se ei kuulu tekoälylle.</p>
-    </div>
-
-    <div class="exercise-header">
-      <div class="exercise-num">?</div>
-      <div class="exercise-header-text">
-        <h3>Testaa sääntöä käytännössä</h3>
-        <p>Voisitko jakaa tämän tekoälylle? Vastaa jokaiseen.</p>
-      </div>
-    </div>
-
-    <div class="scenario-stack" id="scenarioStack">
-
-      <div class="scenario-row" data-correct="yes">
-        <div style="flex:1">
-          <div class="scenario-row-text">Ammattinimikkeesi: <em>Olen asiakaspalvelupäällikkö</em></div>
-          <div class="scenario-feedback"></div>
-        </div>
-        <div class="scenario-btns">
-          <button class="s-btn yes-btn" onclick="answer(this,'yes')">✓ Kyllä</button>
-          <button class="s-btn no-btn" onclick="answer(this,'no')">✗ Ei</button>
-        </div>
-      </div>
-
-      <div class="scenario-row" data-correct="no">
-        <div style="flex:1">
-          <div class="scenario-row-text">Henkilötunnuksesi: <em>010185-XXXX</em></div>
-          <div class="scenario-feedback"></div>
-        </div>
-        <div class="scenario-btns">
-          <button class="s-btn yes-btn" onclick="answer(this,'yes')">✓ Kyllä</button>
-          <button class="s-btn no-btn" onclick="answer(this,'no')">✗ Ei</button>
-        </div>
-      </div>
-
-      <div class="scenario-row" data-correct="yes">
-        <div style="flex:1">
-          <div class="scenario-row-text">Osaamisesi: <em>Osaan Excelin pivot-taulukot ja datan visualisoinnin</em></div>
-          <div class="scenario-feedback"></div>
-        </div>
-        <div class="scenario-btns">
-          <button class="s-btn yes-btn" onclick="answer(this,'yes')">✓ Kyllä</button>
-          <button class="s-btn no-btn" onclick="answer(this,'no')">✗ Ei</button>
-        </div>
-      </div>
-
-      <div class="scenario-row" data-correct="no">
-        <div style="flex:1">
-          <div class="scenario-row-text">Entisen työnantajasi sopimusluvut: <em>Meillä oli sopimus Yritys X kanssa, arvo 200 000 €</em></div>
-          <div class="scenario-feedback"></div>
-        </div>
-        <div class="scenario-btns">
-          <button class="s-btn yes-btn" onclick="answer(this,'yes')">✓ Kyllä</button>
-          <button class="s-btn no-btn" onclick="answer(this,'no')">✗ Ei</button>
-        </div>
-      </div>
-
-      <div class="scenario-row" data-correct="yes">
-        <div style="flex:1">
-          <div class="scenario-row-text">Ura-tavoitteesi: <em>Haluan siirtyä myyntityöstä markkinointiin</em></div>
-          <div class="scenario-feedback"></div>
-        </div>
-        <div class="scenario-btns">
-          <button class="s-btn yes-btn" onclick="answer(this,'yes')">✓ Kyllä</button>
-          <button class="s-btn no-btn" onclick="answer(this,'no')">✗ Ei</button>
-        </div>
-      </div>
-
-      <div class="scenario-row" data-correct="no">
-        <div style="flex:1">
-          <div class="scenario-row-text">Tilisaldosi: <em>Minulla on 4 500 € säästöjä — kuinka kauan kestän?</em></div>
-          <div class="scenario-feedback"></div>
-        </div>
-        <div class="scenario-btns">
-          <button class="s-btn yes-btn" onclick="answer(this,'yes')">✓ Kyllä</button>
-          <button class="s-btn no-btn" onclick="answer(this,'no')">✗ Ei</button>
-        </div>
-      </div>
-
-      <div class="scenario-row" data-correct="yes">
-        <div style="flex:1">
-          <div class="scenario-row-text">Koulutuksesi: <em>Valmistuin tradenomiksi Savonia-amk:sta 2018</em></div>
-          <div class="scenario-feedback"></div>
-        </div>
-        <div class="scenario-btns">
-          <button class="s-btn yes-btn" onclick="answer(this,'yes')">✓ Kyllä</button>
-          <button class="s-btn no-btn" onclick="answer(this,'no')">✗ Ei</button>
-        </div>
-      </div>
-
-      <div class="scenario-row" data-correct="no">
-        <div style="flex:1">
-          <div class="scenario-row-text">Terveystietosi: <em>Minulla on diabetes, miten se vaikuttaa työnhakuun?</em></div>
-          <div class="scenario-feedback"></div>
-        </div>
-        <div class="scenario-btns">
-          <button class="s-btn yes-btn" onclick="answer(this,'yes')">✓ Kyllä</button>
-          <button class="s-btn no-btn" onclick="answer(this,'no')">✗ Ei</button>
-        </div>
-      </div>
-
-    </div><!-- /scenario-stack -->
-
-    <div class="score-result" id="scoreResult">
-      <div class="score-big" id="scoreNum">—</div>
-      <h3 id="scoreTitle">Hyvä suoritus</h3>
-      <p id="scoreMsg">Olet sisäistänyt LinkedIn-säännön.</p>
-      <div class="teams-share">
-        <p>💬 <strong>Tiimikeskustelu:</strong> Mikä tilanne yllätti sinut eniten?</p>
-        <button class="copy-btn" id="copyScoreBtn" onclick="copyScore()">Kopioi tulos</button>
-      </div>
-    </div>
-
-    <div class="tester-wrap" id="testerWrap">
-      <h4>Testaa omaa tekstiäsi</h4>
-      <p>Kirjoita jokin tieto, jonka haluaisit ehkä jakaa tekoälylle. Tarkastetaan onko se turvallista.</p>
-      <textarea class="tester-input" id="testerInput" placeholder="Kirjoita tähän..."></textarea>
-      <div>
-        <button class="analyze-btn" id="analyzeBtn" onclick="analyzeText()">Analysoi LinkedIn-säännöllä</button>
-      </div>
-      <div class="tester-output" id="testerOutput"></div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ═══════ EI KOSKAAN ═══════ -->
-<section class="section" id="eikoskaan" data-index="4">
-  <div class="section-inner fade-up">
-    <div class="section-label">Pelisäännöt</div>
-    <h2 class="section-h2">Neljä asiaa jotka<br><em>pidät itsellasi</em></h2>
-    <div class="divider"></div>
-    <p class="lead">Tämä on lyhyt lista — kaikki muu on turvallista jakaa. Muista nämä neljä, ja voit käyttää AI:ta huoletta.</p>
-
-    <div class="danger-items">
-      <div class="danger-row">
-        <div class="danger-icon">🪪</div>
-        <div class="danger-row-text">
-          <h4>Henkilötunnus ja pankkitiedot</h4>
-          <p>Näitä ei tarvita AI:n käyttöön. Jos jokin pyytää hetua tai tilinumeroa, se ei ole aito AI-työkalu.</p>
-        </div>
-      </div>
-      <div class="danger-row">
-        <div class="danger-icon">🔑</div>
-        <div class="danger-row-text">
-          <h4>Salasanat</h4>
-          <p>AI ei tarvitse salasanojasi mihinkään. Ei koskaan mitään syytä jakaa.</p>
-        </div>
-      </div>
-      <div class="danger-row">
-        <div class="danger-icon">🏥</div>
-        <div class="danger-row-text">
-          <h4>Omat terveystiedot</h4>
-          <p>Voit kysyä yleistä tietoa ("Mitä on diabetes?") — mutta älä jaa omia diagnoosejasi tai lääkityksiäsi.</p>
-        </div>
-      </div>
-      <div class="danger-row">
-        <div class="danger-icon">🏢</div>
-        <div class="danger-row-text">
-          <h4>Työnantajan salaiset tiedot</h4>
-          <p>Sopimusluvut, sisäiset dokumentit, julkaisemattomat tuotteet. Nämä kuuluvat työpaikalle, eivät AI:lle.</p>
-        </div>
-      </div>
-    </div>
-
-    <div style="background:rgba(42,122,75,.06);border:2px solid rgba(42,122,75,.2);border-radius:16px;padding:2rem;margin-top:2.5rem;">
-      <h3 style="font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--accent3);margin-bottom:1rem;">Kaikki muu? Jaa vapaasti!</h3>
-      <p style="font-size:.92rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.7;">Tässä on KAIKKI mitä voit turvallisesti jakaa AI:lle — ja juuri näitä käytämme tällä kurssilla:</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-        <div style="background:#fff;border-radius:10px;padding:1.25rem;border:1px solid var(--border);">
-          <strong style="color:var(--accent3);display:block;margin-bottom:.5rem;">Uraasi liittyvää</strong>
-          <ul style="list-style:none;font-size:.88rem;color:var(--muted);display:flex;flex-direction:column;gap:.4rem;">
-            <li>✅ Ammattinimikkeesi ja osaamisesi</li>
-            <li>✅ Työhistoriasi (yleisellä tasolla)</li>
-            <li>✅ Koulutuksesi</li>
-            <li>✅ Ura-tavoitteesi ja kiinnostuksen kohteet</li>
-          </ul>
-        </div>
-        <div style="background:#fff;border-radius:10px;padding:1.25rem;border:1px solid var(--border);">
-          <strong style="color:var(--accent3);display:block;margin-bottom:.5rem;">Tehtäviin liittyvää</strong>
-          <ul style="list-style:none;font-size:.88rem;color:var(--muted);display:flex;flex-direction:column;gap:.4rem;">
-            <li>✅ Ideoita ja luonnoksia</li>
-            <li>✅ Yleistä tietoa alastasi</li>
-            <li>✅ Kysymyksiä mistä tahansa aiheesta</li>
-            <li>✅ Tekstejä jotka haluat parantaa</li>
-          </ul>
-        </div>
-      </div>
-      <p style="font-size:.9rem;color:var(--ink);margin-top:1.25rem;text-align:center;font-weight:600;">Tämä on 95% kaikesta AI:n käytöstä. Olet turvassa.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════ PERIAATTEET ═══════ -->
-<section class="section" id="harjoitukset" data-index="5">
-  <div class="section-inner fade-up">
-    <div class="section-label">Harjoitukset</div>
-    <h2 class="section-h2">Kokeile <em>käytännössä</em></h2>
-    <div class="divider"></div>
-    <p class="lead">Nyt kun tiedät pelisäännöt, kokeillaan niitä käytännössä! Kolme hauskaa harjoitusta joissa opit tunnistamaan turvalliset tiedot nopeasti.</p>
-
-    <!-- EXERCISE 1: TIETOSUOJA-AGENTTI -->
-    <div class="roleplay-wrap">
-      <div class="roleplay-header">
-        <div class="roleplay-header-icon">🔐</div>
-        <div>
-          <h3>Harjoitus 1: Tietosuoja-agentti</h3>
-          <p>Sinä olet tietosuojavastaava. Kollegasi pyytävät neuvoa — mitä vastaat?</p>
-        </div>
-      </div>
-      <div class="roleplay-body">
-        <div class="roleplay-progress" id="rpProgress"></div>
-        <div class="roleplay-scenario" id="rpScenario">
-          <div class="roleplay-scenario-label">Ladataan tilannetta...</div>
-          <p id="rpScenarioText">Hetki...</p>
-        </div>
-        <div class="roleplay-response-area" id="rpResponseArea">
-          <textarea id="rpInput" placeholder="Kirjoita neuvosi kollegallesi tietosuojavastaavana..."></textarea>
-          <button class="roleplay-submit" id="rpSubmitBtn" onclick="submitRoleplayAnswer()">Lähetä vastauksesi</button>
-        </div>
-        <div class="roleplay-feedback" id="rpFeedback"></div>
-        <div class="roleplay-score" id="rpScore">
-          <div class="score-circle" id="rpScoreCircle">–</div>
-          <h3 style="font-family:'DM Serif Display',serif; font-size:1.3rem; margin-bottom:0.5rem;" id="rpScoreTitle">Tulokset</h3>
-          <p style="color:var(--muted); font-size:0.9rem;" id="rpScoreMsg"></p>
-          <div class="teams-share" style="margin-top:1.25rem; text-align:left;">
-            <p>💬 <strong>Tiimikeskustelu:</strong> Mikä tilanne oli vaikein? Miksi?</p>
-            <button class="copy-btn" onclick="copyRoleplayScore()">Kopioi tulos</button>
+        <!-- WORK SPLIT -->
+        <div class="work" id="workMode" data-tab="doc">
+          <div class="mobile-tabs" role="tablist">
+            <button type="button" class="on" id="tabDoc" onclick="setWorkTab('doc')">1. Lue</button>
+            <button type="button" id="tabWrite" onclick="setWorkTab('write')">2. Kirjoita</button>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- EXERCISE 2: ANONYMISOI TEKSTI -->
-    <div class="anon-wrap">
-      <div class="anon-header">
-        <div class="anon-header-icon">🔍</div>
-        <div>
-          <h3>Harjoitus 2: Anonymisoi tämä teksti</h3>
-          <p>Poista arkaluonteiset tiedot — säilytä sisällön hyöty</p>
-        </div>
-      </div>
-      <div class="anon-body">
-        <p style="font-size:0.9rem; color:var(--muted); margin-bottom:1.25rem;">Alla on teksti, joka sisältää arkaluonteisia henkilötietoja. <strong style="color:var(--ink);">Tehtäväsi:</strong> kirjoita teksti uudelleen niin, että se on turvallista jakaa tekoälylle — mutta silti hyödyllistä.</p>
-        <div class="anon-original" id="anonOriginal">
-          <p id="anonOriginalText">Ladataan tekstiä...</p>
-        </div>
-        <div style="margin-bottom:1rem;">
-          <button class="anon-generate-btn" id="anonNewBtn" onclick="generateAnonText()">🔄 Uusi teksti</button>
-        </div>
-        <div class="anon-rewrite">
-          <textarea id="anonInput" placeholder="Kirjoita anonymisoitu versio tähän..."></textarea>
-          <button class="anon-check-btn" id="anonCheckBtn" onclick="checkAnonymization()">🔍 Tarkista anonymisointi</button>
-        </div>
-        <div class="anon-result" id="anonResult"></div>
-      </div>
-    </div>
-
-    <!-- EXERCISE 3: MITÄ TEKISIT? (Quiz) -->
-    <div class="trial-wrap">
-      <div class="trial-header">
-        <div class="trial-header-icon">🤔</div>
-        <div>
-          <h3>Harjoitus 3: Mitä tekisit?</h3>
-          <p>Valitse paras tapa toimia jokaisessa tilanteessa</p>
-        </div>
-      </div>
-      <div class="trial-body">
-        <div id="quizProgress" style="display:flex;gap:6px;margin-bottom:1.25rem;"></div>
-        <div class="trial-case" id="quizCase">
-          <div class="trial-case-label" id="quizLabel">Tilanne 1 / 4</div>
-          <h4 id="quizTitle">Ladataan...</h4>
-          <p id="quizDesc"></p>
-        </div>
-        <div id="quizOptions" style="display:flex;flex-direction:column;gap:0.75rem;margin-top:1.25rem;"></div>
-        <div id="quizFeedback" style="display:none;margin-top:1.25rem;padding:1.25rem;border-radius:10px;font-size:0.9rem;line-height:1.7;"></div>
-        <div id="quizNextWrap" style="display:none;margin-top:1rem;">
-          <button class="trial-submit" onclick="nextQuizQuestion()">Seuraava tilanne →</button>
-        </div>
-        <div id="quizScore" style="display:none;text-align:center;padding:2rem;">
-          <div style="width:100px;height:100px;border-radius:50%;border:4px solid var(--accent3);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-family:'DM Serif Display',serif;font-size:2rem;color:var(--accent3);" id="quizScoreCircle">–</div>
-          <h3 style="font-family:'DM Serif Display',serif;font-size:1.3rem;margin-bottom:0.5rem;" id="quizScoreTitle"></h3>
-          <p style="color:var(--muted);font-size:0.9rem;" id="quizScoreMsg"></p>
-          <div class="teams-share" style="margin-top:1.25rem;text-align:left;">
-            <p>💬 <strong>Tiimikeskustelu:</strong> Mikä tilanne oli vaikein?</p>
-            <button class="copy-btn" onclick="copyQuizScore()">Kopioi tulos</button>
+          <div class="doc-pane">
+            <div class="doc-toolbar">
+              <button type="button" class="back" onclick="closeWork()" aria-label="Takaisin">←</button>
+              <h2 id="workTitle">—</h2>
+              <div class="meta" id="workMeta">—</div>
+            </div>
+            <div class="doc-scroll" id="docScroll"></div>
+            <div class="mobile-go-write" id="mobileGoWriteWrap">
+              <button type="button" class="btn-submit" onclick="setWorkTab('write')">Siirry kirjoittamaan →</button>
+            </div>
           </div>
+          <aside class="compose">
+            <div class="compose-head">
+              <div class="lbl" id="composeLbl">Vastaus</div>
+              <h3 id="composeTitle">—</h3>
+              <p id="composeHelp">—</p>
+              <div class="hint-row">
+                <button type="button" class="hint-btn" id="hintBtn" onclick="toggleHint()" aria-expanded="false">
+                  <span class="lamp" aria-hidden="true">💡</span>
+                  <span id="hintBtnLabel">Vinkki (vapaaehtoinen)</span>
+                </button>
+                <div class="hint-panel" id="hintPanel" hidden>
+                  <div id="hintSteps"></div>
+                  <button type="button" class="hint-more" id="hintMore" onclick="showMoreHint()" hidden>Näytä toinen vinkki</button>
+                </div>
+              </div>
+            </div>
+            <div class="compose-body">
+              <textarea id="auditInput" placeholder="Kirjoita tähän…"></textarea>
+            </div>
+            <div class="compose-foot">
+              <button type="button" class="btn-submit" id="btnSubmit" onclick="submitWork()">Lähetä vastaus</button>
+              <div class="result" id="result"></div>
+              <button type="button" class="btn-retry" id="btnRetry" onclick="retryWork()">Muokkaa vastausta</button>
+              <button type="button" class="btn-next" id="btnNext" onclick="nextTicket()">Seuraava tiketti →</button>
+            </div>
+          </aside>
         </div>
       </div>
-    </div>
-
-  </div>
-</section>
-
-<section class="section section-warm" id="periaatteet" data-index="6">
-  <div class="section-inner fade-up">
-    <div class="section-label">Muistilista</div>
-    <h2 class="section-h2">Neljä ohjetta<br><em>viisaaseen AI-käyttöön</em></h2>
-    <div class="divider"></div>
-    <p class="lead">Nämä neljä ohjetta tekevät sinusta luottavaisen AI-käyttäjän. Muista nämä, ja olet valmiina!</p>
-
-    <div class="principles-list">
-      <div class="principle-item">
-        <div class="principle-count">01</div>
-        <div class="principle-body">
-          <h4>LinkedIn-sääntö: nopea tarkistus</h4>
-          <p>Ennen kuin kirjoitat jotain AI:lle, mieti: julkaisisinko tämän LinkedInissä? Jos kyllä → jaa vapaasti. Jos ei → jätä pois. Se on koko sääntö!</p>
-        </div>
-      </div>
-      <div class="principle-item">
-        <div class="principle-count">02</div>
-        <div class="principle-body">
-          <h4>Neljä asiaa jotka pidät itsellasi</h4>
-          <p>Hetu, pankkitiedot, salasanat, terveystiedot — nämä neljä riittää muistaa. Kaikki muu on vapaata ja hyödyllistä jakaa.</p>
-        </div>
-      </div>
-      <div class="principle-item">
-        <div class="principle-count">03</div>
-        <div class="principle-body">
-          <h4>AI parantaa — sinä päätät</h4>
-          <p>AI on kuin paras työkaveri: se auttaa sinua ilmaisemaan osaamisesi selkeämmin ja löytämään uusia näkökulmia. Käytä sitä parantamaan omaa työtäsi, ei korvaamaan sitä.</p>
-        </div>
-      </div>
-      <div class="principle-item">
-        <div class="principle-count">04</div>
-        <div class="principle-body">
-          <h4>Ole oma itsesi — AI auttaa sinua loistamaan</h4>
-          <p>Paras tulos syntyy kun AI auttaa sinua esittämään oikean osaamisesi selkeämmin. Sinun kokemuksesi ja taitosi ovat arvokkaita — AI vain auttaa ne näkyviin.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- EXERCISE 4: FIRST AI TASTE — IMPROVE YOUR INTRO -->
-    <div class="practice-wrap" style="margin-top:3rem;">
-      <div class="practice-header">
-        <div class="practice-header-icon">✨</div>
-        <div class="practice-header-text">
-          <h3>Harjoitus 4: Kokeile AI:ta heti — paranna esittelysi</h3>
-          <p>Kirjoita lyhyt esittely itsestäsi ja katso miten AI parantaa sen</p>
-        </div>
-      </div>
-      <div class="practice-body">
-        <p style="font-size:.9rem;color:var(--muted);margin-bottom:1rem;line-height:1.7;">Kirjoita 2–3 lausetta itsestäsi: ammattisi, osaamisesi ja mitä etsit. <strong style="color:var(--ink);">Käytä vain turvallista tietoa</strong> (LinkedIn-sääntö!). AI tekee siitä ammattimaisemman version — tämä on esimakua siitä mitä tulet tekemään tällä kurssilla!</p>
-        <div class="practice-label">Kirjoita lyhyt esittely itsestäsi</div>
-        <textarea class="practice-textarea" id="introInput" placeholder="Esim: Olen työskennellyt asiakaspalvelussa 6 vuotta. Osaan Excelin ja asiakasviestinnän. Haluan siirtyä markkinointiin tai viestintään."></textarea>
-        <button class="practice-btn" id="introBtn" onclick="improveIntro()">✨ Paranna AI:lla</button>
-        <div class="practice-response" id="introResponse">
-          <div class="practice-response-label">AI:n parantama versio</div>
-          <div class="practice-response-text" id="introText"></div>
-          <div class="practice-response-actions">
-            <button class="copy-resp-btn" id="copyIntroBtn" onclick="copyIntro()">📋 Kopioi teksti</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- EXERCISE 5: PERSONAL AI CHEAT SHEET -->
-    <div class="practice-wrap" style="margin-top:2rem;">
-      <div class="practice-header">
-        <div class="practice-header-icon">📝</div>
-        <div class="practice-header-text">
-          <h3>Harjoitus 5: Oma AI-muistilista</h3>
-          <p>AI luo sinulle henkilökohtaisen muistilistan — mitä sinä voit jakaa ja mitä et</p>
-        </div>
-      </div>
-      <div class="practice-body">
-        <p style="font-size:.9rem;color:var(--muted);margin-bottom:1rem;line-height:1.7;">Kerro lyhyesti alasi ja tilanteesi, niin AI rakentaa sinulle <strong style="color:var(--ink);">oman tietosuojakortin</strong> — konkreettisia esimerkkejä juuri sinun tilanteeseen: mitä tietoja voit jakaa AI:lle ja mitä kannattaa jättää pois. Voit tallentaa kortin itsellesi!</p>
-        <div class="practice-label">Kerro alasi ja tilanteesi</div>
-        <textarea class="practice-textarea" id="cheatInput" placeholder="Esim: Työskentelen hoitoalalla ja haen uutta työpaikkaa. Tai: Olen IT-alalla ja haluan käyttää AI:ta työssäni. Tai: Olen opiskelija ja etsin ensimmäistä työpaikkaa."></textarea>
-        <button class="practice-btn" id="cheatBtn" onclick="buildCheatSheet()">📝 Luo oma muistilista</button>
-        <div class="practice-response" id="cheatResponse">
-          <div class="practice-response-label">Sinun henkilökohtainen AI-muistilistasi</div>
-          <div class="practice-response-text" id="cheatText"></div>
-          <div class="practice-response-actions">
-            <button class="copy-resp-btn" id="copyCheatBtn" onclick="copyCheat()">📋 Kopioi muistilista</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="reflection-intro" id="taskCompleteCard" style="margin-top:2.6rem; display:none;">
-      <h3 style="font-size:1.4rem;line-height:1.2;margin-bottom:.5rem;color:var(--ink);">Hyvä työ — tehtävä valmis</h3>
-      <p id="taskSummaryText" style="color:var(--muted);">Todistit osaavasi erottaa turvalliset ja riskialttiit tiedot tekoälykäytössä.</p>
-      <p id="taskScoreLine" style="margin-top:.5rem;color:var(--accent2);font-weight:600;"></p>
-      <button class="check-btn primary" style="margin-top:.8rem;" onclick="startCheckinFlow()">Siirry loppureflektioon</button>
-    </div>
-
-    <div class="checkin-wrap" id="checkinWrap" style="margin-top:2rem; display:none;">
-      <div id="checkStep1" class="check-step active">
-        <div class="check-title">Miltä tuntuu nyt kun tiedät pelisäännöt?</div>
-        <div class="emoji-choices">
-          <button class="emoji-choice" onclick="pickMood(this, '😵 Ylikuormittunut')">😵<br><small>Ylikuormittunut</small></button>
-          <button class="emoji-choice" onclick="pickMood(this, '😐 Ok')">😐<br><small>Ok</small></button>
-          <button class="emoji-choice" onclick="pickMood(this, '🙂 Selvä juttu')">🙂<br><small>Selvä juttu</small></button>
-          <button class="emoji-choice" onclick="pickMood(this, '😊 Hyvä tietää')">😊<br><small>Hyvä tietää</small></button>
-          <button class="emoji-choice" onclick="pickMood(this, '🤩 Olin yllättynyt')">🤩<br><small>Yllättynyt</small></button>
-        </div>
-      </div>
-
-      <div id="checkStep2" class="check-step">
-        <div class="check-title">Missä aiot soveltaa tätä?</div>
-        <div class="chip-grid" id="applyWhereChips">
-          <button class="where-chip" onclick="toggleApplyWhere(this, '🤖 Ennen kuin käytän ChatGPT:tä')">🤖 Ennen kuin käytän ChatGPT:tä</button>
-          <button class="where-chip" onclick="toggleApplyWhere(this, '📄 CV:n kanssa')">📄 CV:n kanssa</button>
-          <button class="where-chip" onclick="toggleApplyWhere(this, '💼 Töissä yleisesti')">💼 Töissä yleisesti</button>
-          <button class="where-chip" onclick="toggleApplyWhere(this, '🏥 Terveyteen liittyvissä asioissa')">🏥 Terveyteen liittyvissä asioissa</button>
-          <button class="where-chip" onclick="toggleApplyWhere(this, '🔒 Kaikessa digitaalisessa')">🔒 Kaikessa digitaalisessa</button>
-        </div>
-        <textarea class="practice-textarea" id="applyWhereOther" placeholder="Muualla?" style="min-height:70px;"></textarea>
-      </div>
-
-      <div id="checkStep3" class="check-step">
-        <div class="check-title">Oliko sinulla jokin näistä väärinkäsityksistä ennen tätä?</div>
-        <div class="mis-card-grid">
-          <button class="mis-card" onclick="pickMisconception(this, 'Luulin että tekoäly säilyttää tiedot vain minulle')">💭 "Luulin että tekoäly säilyttää tiedot vain minulle"</button>
-          <button class="mis-card" onclick="pickMisconception(this, 'En tiennyt terveystiedot ovat niin suojattuja')">💭 "En tiennyt terveystiedot ovat niin suojattuja"</button>
-          <button class="mis-card" onclick="pickMisconception(this, 'En ajatellut työnantajan tietoja ollenkaan')">💭 "En ajatellut työnantajan tietoja ollenkaan"</button>
-          <button class="mis-card" onclick="pickMisconception(this, 'Tiesin jo kaiken tämän')">💭 "Tiesin jo kaiken tämän"</button>
-        </div>
-      </div>
-
-      <div id="checkStep4" class="check-step">
-        <div class="check-title">Mikä yllätti sinut eniten?</div>
-        <textarea class="practice-textarea" id="checkOpenReflection" placeholder="Ei väärää vastausta — kirjoita ensimmäinen asia joka tulee mieleen..."></textarea>
-      </div>
-
-      <div id="checkStep5" class="check-step">
-        <div class="check-title">Oliko tämä hyödyllistä?</div>
-        <div class="big-stars" id="checkStars">
-          <span class="big-star" onclick="pickCheckStar(1)">★</span>
-          <span class="big-star" onclick="pickCheckStar(2)">★</span>
-          <span class="big-star" onclick="pickCheckStar(3)">★</span>
-          <span class="big-star" onclick="pickCheckStar(4)">★</span>
-          <span class="big-star" onclick="pickCheckStar(5)">★</span>
-        </div>
-      </div>
-
-      <div id="checkStep6" class="check-step">
-        <div class="reflection-intro">
-          <h3 style="font-size:1.4rem;margin-bottom:.35rem;color:var(--ink);">Kiitos palautteesta</h3>
-          <p id="finalBadgeQuizScore" style="color:var(--accent2);font-weight:600;">Quiz score: -</p>
-          <p style="color:var(--muted);">Tiedät pelisäännöt — nyt alkaa varsinainen tekeminen AI:lla!</p>
-        </div>
-      </div>
-
-      <div class="check-actions">
-        <button class="check-btn" id="checkPrevBtn" onclick="prevCheckStep()" style="display:none;">← Edellinen</button>
-        <button class="check-btn primary" id="checkNextBtn" onclick="nextCheckStep()" disabled>Seuraava →</button>
-      </div>
-      <div class="reflection-confirm" id="reflConfirm">✓ Tallennettu. Olet valmis siirtymään eteenpäin.</div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ═══════ OUTRO ═══════ -->
-<section id="outro">
-  <div style="max-width:820px; margin:0 auto; padding:5rem 2rem 6rem;">
-    <div class="outro-line"></div>
-    <div class="outro-h2">Olet valmis.<br><em>AI odottaa sinua.</em></div>
-    <p class="outro-p">Tiedät pelisäännöt — nyt alkaa varsinainen tekeminen. Seuraavassa moduulissa opit miten tekoäly oikeasti toimii ja miten saat siitä irti kaiken.</p>
-    <div class="outro-actions">
-      <a href="/module/moduuli2-tekoaly-uhka-vai-mahdollisuus" class="btn-next">
-        Seuraava moduuli
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-        </svg>
-      </a>
-      <a href="#hero" class="btn-back">↑ Palaa alkuun</a>
     </div>
   </div>
 </section>
 
-<script src="/js/reflections.js"></script>
-<script src="/js/feedback.js"></script>
+<!-- DEBRIEF -->
+<section class="screen" id="screenDebrief">
+  <div class="debrief">
+    <div class="ring" id="ring">—</div>
+    <h1 id="dbTitle">Vuoro päättyi</h1>
+    <p class="lead" id="dbLead">—</p>
+    <div class="take">
+      <h3>Mukaan otettavaa</h3>
+      <ul>
+        <li>Lue dokumentti ennen kuin liität sen mihinkään AI:hin</li>
+        <li>Asiakas · HR · terveys · sopimusluvut — pois ennen kuin kirjoitat ChatGPT:lle</li>
+        <li>Turvallinen tapa: kysy yleistä tai anonymisoi ensin</li>
+        <li>Paine “tee nopeasti” ei ohita tietosuojaa</li>
+      </ul>
+    </div>
+    <div class="rev" id="rev"></div>
+    <a class="btn-go" href="/" style="text-decoration:none">Takaisin kurssiin →</a>
+    <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center">
+      <button type="button" class="btn-link" onclick="restart()">Uusi vuoro</button>
+      <button type="button" class="btn-link" onclick="show('screenTheory')">← Teoriaan</button>
+    </div>
+  </div>
+</section>
+
+<script src="/js/module-work.js"></script>
 <script>
-const sections = document.querySelectorAll('.section[data-index]');
-const navSteps = document.getElementById('navSteps');
-const progressBar = document.getElementById('progress-bar');
-
-sections.forEach((s, i) => {
-  const pip = document.createElement('div');
-  pip.className = 'step-pip' + (i === 0 ? ' active' : '');
-  pip.title = `Osio ${i + 1}`;
-  pip.addEventListener('click', () => s.scrollIntoView({ behavior: 'smooth' }));
-  navSteps.appendChild(pip);
-});
-
-function updateProgress() {
-  const st = window.scrollY;
-  const dh = document.documentElement.scrollHeight - window.innerHeight;
-  progressBar.style.width = (dh > 0 ? (st / dh) * 100 : 0) + '%';
-  const pips = navSteps.querySelectorAll('.step-pip');
-  let activeIdx = 0;
-  sections.forEach((s, i) => { if (s.getBoundingClientRect().top <= window.innerHeight * 0.5) activeIdx = i; });
-  pips.forEach((p, i) => {
-    p.classList.remove('active', 'done');
-    if (i === activeIdx) p.classList.add('active');
-    else if (i < activeIdx) p.classList.add('done');
-  });
-}
-window.addEventListener('scroll', updateProgress, { passive: true });
-
-const fadeEls = document.querySelectorAll('.fade-up');
-const fadeObs = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('in');
-      fadeObs.unobserve(e.target);
-    }
-  });
-}, { threshold: 0.12 });
-fadeEls.forEach(el => fadeObs.observe(el));
-
-const fb = {
-  yes: {
-    correct: '✓ Oikein. Tämä on ammatillista tietoa — turvallista jakaa, kuten LinkedInissäkin.',
-    wrong:   '→ Tarkista. Tämä tieto on itse asiassa turvallista jakaa tekoälylle — se on julkista ammatillista tietoa.'
+const MODULE_ID = 'moduuli1-tietosuoja';
+const TICKETS = [
+  {
+    id:'TK-2401', cat:'contract', prio:'high', time:'08:41',
+    from:'Sanna Peltonen · Markkinointi',
+    title:'Sopimusliite — “onko kilpailukielto normaali?”',
+    composeLbl:'Audit-muistio',
+    composeTitle:'Mitä tässä dokumentissa ei saa syöttää AI:lle?',
+    composeHelp:'Listaa mitä tietoja ei saa laittaa ChatGPT:lle — ja miten saman asian voi kysyä turvallisesti.',
+    minLen:100, passNeed:5,
+    situation:'Kollega liitti palvelusopimuksen ChatGPT:hen kysyäkseen kilpailukiellosta. Sinun pitää kertoa, mikä dokumentissa on riskiä.',
+    hints:[
+      'Lue koko dokumentti — myös liitteet ja allekirjoitus. Riski ei ole aina vain otsikossa.',
+      'Mieti LinkedIn-sääntöä: julkaisisitko hinnat, maksutiedot tai henkilön tunnisteen verkossa?'
+    ],
+    findings:[
+      {id:'parties', label:'Osapuolet / Y-tunnus', keys:['pohjola','nordic','y-tunnus','3124567','osapuolet']},
+      {id:'value', label:'Hinta / 184 000', keys:['184','arvo','hinta','7 667','7667','kuukausimaksu','euro']},
+      {id:'nc', label:'Kilpailukielto / sakko', keys:['kilpailukielto','sakko','50 000','50000','12 kk']},
+      {id:'nda', label:'Salassapito', keys:['salassapito','luottamuksell','5 vuotta','nda']},
+      {id:'iban', label:'IBAN / maksutiedot', keys:['iban','fi89','tili','maksu']},
+      {id:'hetu', label:'Henkilötunnus allekirjoituksessa', keys:['hetu','150385','henkilötunn']},
+      {id:'contact', label:'Yhteyshenkilö', keys:['maria','virtanen','040','sähköposti','@']}
+    ],
+    model:'Älä liitä sopimusta. Riskit: yritysnimet+Y-tunnus, hinta, kilpailukielto+sakko, salassapito, IBAN liitteessä, allekirjoittajan hetu, yhteyshenkilön yhteystiedot. Turvallinen kysymys: “Mitä kilpailukielto yleensä tarkoittaa B2B-palvelusopimuksessa Suomessa?” — ilman lukuja ja nimiä.',
+    doc:()=>`
+      <div class="msg">
+        <div class="av" style="background:#b8860b">SP</div>
+        <div>
+          <div class="who">Sanna Peltonen <span>08:41 · Teams</span></div>
+          <div class="body">Hei — liitin tän sopparin ChatGPT:hen jo kerran mutta vastaus oli epäselvä. Katso liite ja sano mulle voinko kysyä uudelleen. Tarviin vastauksen ennen 10:00.</div>
+        </div>
+      </div>
+      <div class="file">
+        <div class="file-bar"><span>PS-NT-MSA-2026-041.pdf</span><span>Luottamuksellinen · 6 sivua</span></div>
+        <div class="file-body">
+          <h3>Palvelusopimus (Master Service Agreement)</h3>
+          <div class="art"><div class="art-n">1. Osapuolet</div>
+            Pohjola Services Oy (Y-tunnus 3124567-8) ja NordicTech Oy (Y-tunnus 2871144-1).<br>
+            Yhteyshenkilö NordicTech: Maria Virtanen, maria.virtanen@nordictech.fi, 040-778 2211.</div>
+          <div class="art"><div class="art-n">2. Kohde ja hinnoittelu</div>
+            Asiakaspalvelun ulkoistus 24 kk. Kokonaisarvo 184 000 €. Kuukausimaksu 7 667 € + alv. Hintaa ei saa julkaista ilman kirjallista lupaa.</div>
+          <div class="art"><div class="art-n">3. Kilpailukielto</div>
+            Toimittaja sitoutuu 12 kk kilpailukieltoon sopimuksen päättymisestä. Sopimussakko rikkomuksesta 50 000 €.</div>
+          <div class="art"><div class="art-n">4. Salassapito</div>
+            Ehdot, hinnat ja asiakaslistat salassapidon alaisia 5 vuotta. Julkinen tuotekuvaus (liite A) ei kuulu salassapitoon.</div>
+          <div class="art"><div class="art-n">Liite B — Maksutiedot</div>
+            Laskutus: IBAN FI89 1234 5600 0007 85, BIC NDEAFIHH. Viitenumero 0041287.</div>
+          <div class="art"><div class="art-n">Allekirjoitus</div>
+            Jukka Laine, TJ, Pohjola Services Oy. Hetu 150385-123A. Helsinki 3.3.2026.</div>
+        </div>
+      </div>`
   },
-  no: {
-    correct: '✓ Oikein. Tätä tietoa ei pidä jakaa — se on yksityistä, arkaluonteista tai luottamuksellista.',
-    wrong:   '→ Huomioi. Tätä tietoa ei kannata jakaa tekoälylle — se on arkaluonteista tai luottamuksellista.'
+  {
+    id:'TK-2402', cat:'customer', prio:'high', time:'08:58',
+    from:'Minna Koivisto · Myynti',
+    title:'Korjaa teksti ennen kuin se menee ChatGPT:lle',
+    composeLbl:'Turvallinen viesti AI:lle',
+    composeTitle:'Kirjoita uusi teksti, jonka voi lähettää ChatGPT:lle',
+    composeHelp:'Säilytä tavoite (asiakkaiden ryhmittely). Poista kaikki, jolla henkilön voi tunnistaa — myös asiakasnumerot.',
+    minLen:60,
+    type:'rewrite',
+    situation:'Kollega haluaa pyytää ChatGPT:ltä apua asiakkaiden ryhmittelyyn. Alkuperäinen teksti sisältää nimiä, sähköposteja, puhelimia, yrityksiä ja CRM-asiakasnumeroita.',
+    hints:[
+      'Pelkkä puhelinnumeron poisto ei aina riitä. Mikä muu rivillä yksilöi ihmisen tai yrityksen?',
+      'Voitko kuvata datan yleisesti (esim. toimiala + ostosumma) ilman että kukaan on tunnistettavissa?'
+    ],
+    forbidden:[
+      {id:'names', label:'Nimet', keys:['laura','nieminen','jari','heikkil','sanna','virtanen']},
+      {id:'mail', label:'Sähköpostit', keys:['@','firma.fi','kauppa.fi']},
+      {id:'phone', label:'Puhelin', keys:['040','552','8811']},
+      {id:'crmid', label:'CRM-ID / asiakasnumero', keys:['crm-','a-90441','a-88102','a-77219','asiakasnumero']},
+      {id:'company', label:'Asiakasyritysten nimet', keys:['frostbite','lumina','kaamos']}
+    ],
+    required:[
+      {id:'seg', label:'Pyytää ryhmittelyä / apua', keys:['segment','ryhm','prior','luokit','jaot','auta','ehdota','järjest','asiakas']},
+      {id:'anon', label:'Ilman henkilötietoja', keys:['anonyymi','ilman nimi','ilman henkil','ei nimi','ei sähkö','ei puhelin','yleist','ei yksilö','kuvitteell','dummy','haarukka','toimiala','ostosum']}
+    ],
+    model:'Esimerkki turvallisesta tekstistä: “Minulla on 20 yrityksasiakasta ilman nimiä: toimiala, ostosumma-haarukka ja ostotiheys. Ehdota 3 ryhmää ja kenelle kannattaa olla yhteydessä ensin.”',
+    doc:()=>`
+      <div class="msg">
+        <div class="av" style="background:#2563a8">MK</div>
+        <div>
+          <div class="who">Minna Koivisto <span>08:58 · Slack #myynti</span></div>
+          <div class="body">Kirjoitin ChatGPT:lle tämän tekstin. Poistin jo osan puhelinnumeroista — voitko tehdä siitä turvallisen version? Palaveri 15 min.</div>
+        </div>
+      </div>
+      <div class="file">
+        <div class="file-bar"><span>chatgpt_luonnos_qbr.txt</span><span>Luonnos · ei hyväksytty</span></div>
+        <div class="file-body">
+          <h3>Minnan luonnos ChatGPT:lle</h3>
+          <p style="font-family:var(--mono);font-size:.86rem;background:var(--paper);padding:1rem;border-radius:10px;line-height:1.75;white-space:pre-wrap">Segmentoi nämä TOP-asiakkaat ja kerro kenelle soitetaan ensin:
+
+1. Laura Nieminen · Frostbite Oy · CRM-A-90441 · laura.nieminen@firma.fi · LTV 12 400 €
+2. Jari Heikkilä · Lumina Soft · CRM-A-88102 · 040-552 8811 · LTV 9 200 €
+3. Sanna Virtanen · Kaamos Group · CRM-A-77219 · sanna.v@kauppa.fi · LTV 7 800 €
+
+Käytä myös sisäistä “VIP-liputusta” jos ostot &gt; 10k.</p>
+        </div>
+      </div>`
+  },
+  {
+    id:'TK-2403', cat:'hr', prio:'high', time:'09:12',
+    from:'Jukka Laine · Toimitusjohtaja',
+    title:'Johdon palaveri — palkkavertailu AI:lla',
+    composeLbl:'Vastaus esimiehelle',
+    composeTitle:'Kirjoita vastaus Jukalle',
+    composeHelp:'Kirjoita esimiehelle: miksi taulukkoa ei voi laittaa ChatGPT:lle, ja miten vertailu silti saadaan.',
+    minLen:80, passNeed:3,
+    situation:'Toimitusjohtaja käskee liittää palkkataulukon ChatGPT:hen ennen johtoryhmää. Taulukossa on palkkoja ja terveyteen liittyvä merkintä.',
+    hints:[
+      'Kiire tai esimiehen pyyntö ei muuta sääntöä. Mitä taulukossa on ihmisten lisäksi?',
+      'Voisiko saman vertailun tehdä ilman nimiä — tai kysymällä yleistä markkinatietoa?'
+    ],
+    findings:[
+      {id:'refuse', label:'Kieltää liittämisen', keys:['ei voi','ei saa','älä','en liitä','ei liitet','ei chat','ei laiteta','kieltäyd','en voi']},
+      {id:'hr', label:'HR / palkat / henkilöt', keys:['palkka','hr','henkilö','nimi','luottamuksell','arkaluonte']},
+      {id:'pressure', label:'Paine ≠ poikkeus', keys:['palaveri','kiire','paine','esimies','silti','vaikka']},
+      {id:'alt', label:'Turvallinen vaihtoehto', keys:['yleinen','markkina','tilasto','anonyymi','ilman nimi','toimiala','mediaani','haastattelu']}
+    ],
+    model:'Ei voida liittää palkkalistaa ulkoiseen AI:hin. Sisältää henkilöt ja palkat; kiire ei muuta sääntöä. Vaihtoehto: kysyä yleistä markkinapalkkaa roolille/alueelle ilman nimiä, tai pyytää HR:ltä anonymisoitua vertailua sisäisesti.',
+    doc:()=>`
+      <div class="msg">
+        <div class="av" style="background:#7c3aed">JL</div>
+        <div>
+          <div class="who">Jukka Laine <span>09:12 · Email</span></div>
+          <div class="body">Tarvitsen vastauksen ennen johtoryhmää klo 10. Liitä oheinen taulukko ChatGPT:hen ja kysy onko tasomme markkinoiden mukainen. Tee se nyt.</div>
+        </div>
+      </div>
+      <div class="file">
+        <div class="file-bar"><span>JR_palkat_Q1_INTERNAL.xlsx</span><span>HR · vain johto</span></div>
+        <div class="file-body">
+          <h3>Palkkaote Q1</h3>
+          <div class="art"><div class="art-n">Rivit</div>
+            Anna Mäkinen — asiakaspalvelu — 3 450 €/kk — “suoritus: hyvä”<br>
+            Tommi Räsänen — myynti — 4 100 € + bonus — “neuvottelu kesken”<br>
+            Emilia Korhonen — tuki — 3 200 €/kk — “raskausvapaa 5/2026” (HR-muistiinpano)</div>
+          <div class="art"><div class="art-n">Kommentti HR:ltä</div>
+            Älä jaa taulukkoa tiimin ulkopuolelle. Sisältää terveyteen liittyvän merkinnän.</div>
+        </div>
+      </div>`
+  },
+  {
+    id:'TK-2404', cat:'health', prio:'high', time:'09:27',
+    from:'Lauri Heino · Harjoittelija',
+    title:'Skannattu todistus — “AI selittää diagnoosin”',
+    composeLbl:'Ohje Laurille',
+    composeTitle:'Mitä on pielessä ja miten toimia',
+    composeHelp:'Kerro Laurille selkeästi: miksi ei, ja mitä hän voi tehdä sen sijaan.',
+    minLen:70, passNeed:3,
+    situation:'Harjoittelija aikoo näyttää skannatun sairauslomatodistuksen ChatGPT:lle.',
+    hints:[
+      'Terveyteen liittyvä tieto on erityisen suojattua — myös kollegoiden.',
+      'Miten neuvoisin, jos haluaisin vain ymmärtää prosessia ilman henkilön papereita?'
+    ],
+    findings:[
+      {id:'health', label:'Terveys / diagnoosi', keys:['terveys','diagnoos','sairaus','masenn','f32','lääkär','potilas']},
+      {id:'person', label:'Nimi / henkilöllisyys', keys:['petri','salminen','nimi','henkilö']},
+      {id:'never', label:'Ei AI:lle', keys:['ei koskaan','ei saa','älä','kiellet','ei liitä','ei skann']},
+      {id:'alt', label:'Turvallinen polku', keys:['hr','esimies','yleinen','ilman nimi','ilman diag','työterveys','prosessi']}
+    ],
+    model:'Skannausta ei saa näyttää AI:lle. Sisältää nimen ja diagnoosin. Ohjaa Lauri esimiehelle/HR:lle. Yleistä voi kysyä ilman henkilöä (“miten sairauslomaprosessi etenee työnantajalla”).',
+    doc:()=>`
+      <div class="msg">
+        <div class="av" style="background:#c75b3a">LH</div>
+        <div>
+          <div class="who">Lauri Heino <span>09:27 · Teams</span></div>
+          <div class="body">Sain tämän skannattuna sähköpostiin. Ajattelin kysyä ChatGPT:ltä mitä F32.1 tarkoittaa työkyvyn kannalta, jotta osaan neuvoa Petriä. Okko?</div>
+        </div>
+      </div>
+      <div class="file">
+        <div class="file-bar"><span>IMG_1403_sairausloma.jpg</span><span>Liite · arkaluonteinen</span></div>
+        <div class="file-body">
+          <h3>Lääkärintodistus A</h3>
+          <div class="art"><div class="art-n">Potilas</div>Petri Salminen, s. 1987</div>
+          <div class="art"><div class="art-n">Diagnoosi</div>F32.1 Keskivaikea masennustila</div>
+          <div class="art"><div class="art-n">Sairausloma</div>14.3.2026 – 28.3.2026</div>
+          <div class="art"><div class="art-n">Lisätieto</div>Lääkitys aloitettu. Kontrolli työterveydessä.</div>
+        </div>
+      </div>`
+  },
+  {
+    id:'TK-2405', cat:'customer', prio:'normal', time:'09:51',
+    from:'Tukijono · Live-chat',
+    title:'Reklamaatio — apua ChatGPT:ltä ilman asiakastietoja',
+    composeLbl:'Turvallinen viesti AI:lle',
+    composeTitle:'Kirjoita ChatGPT:lle teksti anteeksipyynnön avuksi',
+    composeHelp:'Kerro tilanteesta yleisesti. Älä laita nimeä, osoitetta, tilausnumeroa, puhelinta tai sähköpostia.',
+    minLen:40,
+    type:'rewrite',
+    situation:'Asiakaspalvelija haluaa ChatGPT:n apua anteeksipyyntöön. Raaka chat-vienti sisältää paljon henkilötietoja.',
+    hints:[
+      'ChatGPT ei tarvitse asiakkaan nimeä kirjoittaakseen kohteliaan vastauksen.',
+      'Kuvaile tilanne yhdellä lauseella ilman osoitetta, puhelinta tai tilausnumeroa.'
+    ],
+    forbidden:[
+      {id:'name', label:'Nimi', keys:['otto','kallio']},
+      {id:'mail', label:'Sähköposti', keys:['@mail','otto.kallio']},
+      {id:'order', label:'Tilaus / lippu', keys:['44102','kg-2026','tk-8821']},
+      {id:'addr', label:'Osoite', keys:['keskuskatu','tampere','33100']},
+      {id:'phone', label:'Puhelin', keys:['050','441','2299']}
+    ],
+    required:[
+      {id:'tone', label:'Anteeksi / viallinen tuote', keys:['anteeksi','reklama','viall','rikkin','hyvitys','empat','kohtelias','asiakas','tuote','vastaus']}
+    ],
+    model:'Esimerkki: “Kirjoita kohtelias suomenkielinen vastaus asiakkaalle, jonka tuote saapui viallisena. Empatia, selkeä seuraava askel, ei syyttelyä. Älä käytä henkilötietoja.”',
+    doc:()=>`
+      <div class="msg">
+        <div class="av" style="background:#2a7a4b">BOT</div>
+        <div>
+          <div class="who">Tukijono <span>09:51 · automaatti</span></div>
+          <div class="body">Agentti pyytää lupaa liittää koko chat-ketju ChatGPT:hen. Päätös sinulla — tai kirjoita turvallinen versio.</div>
+        </div>
+      </div>
+      <div class="file">
+        <div class="file-bar"><span>chat_export_TK-8821.json</span><span>Asiakastuki</span></div>
+        <div class="file-body">
+          <h3>Chat-loki (raaka vienti)</h3>
+          <div class="art"><div class="art-n">Asiakas</div>Otto Kallio · otto.kallio@mail.fi · 050-441 2299</div>
+          <div class="art"><div class="art-n">Tilaus</div>KG-2026-44102 · sisäinen lippu TK-8821</div>
+          <div class="art"><div class="art-n">Viesti</div>“Tuote tuli rikkinäisenä. Haluan hyvityksen heti. Toimitus: Keskuskatu 4 A 12, 33100 Tampere.”</div>
+          <div class="art"><div class="art-n">Agentin luonnos</div>“Liitä yllä oleva ChatGPT:hen ja kirjoita anteeksipyyntö jossa mainitaan tilausnumero.”</div>
+        </div>
+      </div>`
   }
-};
+];
 
-let answered = 0, correct = 0;
-const total = document.querySelectorAll('.scenario-row').length;
-let lastScore = '';
+let S = { filter:'all', open:null, done:{}, drafts:{}, hintOpen:false, hintLevel:0, screen:'screenTheory' };
+let workApi = null;
+let savePillTimer = null;
+let restoring = false;
 
-function answer(btn, choice) {
-  const row = btn.closest('.scenario-row');
-  if (row.dataset.answered) return;
-  row.dataset.answered = '1';
-  const right = row.dataset.correct;
-  const isRight = choice === right;
-  row.classList.add(choice === 'yes' ? 'answered-yes' : 'answered-no');
-  row.querySelectorAll('.s-btn').forEach(b => b.disabled = true);
-  const fd = row.querySelector('.scenario-feedback');
-  fd.textContent = fb[right][isRight ? 'correct' : 'wrong'];
-  fd.className = 'scenario-feedback ' + (isRight ? 'ok' : 'warn');
-  fd.style.display = 'block';
-  if (isRight) correct++;
-  answered++;
-  if (answered === total) showScore();
+function $(id){ return document.getElementById(id); }
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  S.screen = id;
+  scheduleModuleSave();
+}
+function toggleLarge(){ document.body.classList.toggle('large-text'); $('btnLarge').classList.toggle('on'); scheduleModuleSave(); }
+function toggleCalm(){ document.body.classList.toggle('calm'); $('btnCalm').classList.toggle('on'); scheduleModuleSave(); }
+function norm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function hit(text, g){ const t=norm(text); return g.keys.some(k=>t.includes(norm(k))); }
+function esc(s){ return String(s).replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+function setSavePill(text, ok){
+  const pill = $('savePill');
+  if (!pill) return;
+  pill.textContent = text;
+  pill.classList.toggle('ok', !!ok);
+}
+function scheduleModuleSave(){
+  if (restoring) return;
+  if (workApi && typeof workApi.scheduleSave === 'function') {
+    workApi.scheduleSave();
+  }
+}
+function collectState(){
+  if (S.open) {
+    const input = $('auditInput');
+    if (input && !input.disabled) S.drafts[S.open] = input.value;
+  }
+  const doneN = Object.keys(S.done || {}).length;
+  return {
+    ts: Date.now(),
+    screen: S.screen || 'screenTheory',
+    filter: S.filter,
+    open: S.open,
+    done: S.done,
+    drafts: S.drafts,
+    largeText: document.body.classList.contains('large-text'),
+    calm: document.body.classList.contains('calm'),
+    finished: doneN >= TICKETS.length,
+    shown: { finished: doneN >= TICKETS.length }
+  };
+}
+function applyState(data){
+  if (!data || typeof data !== 'object') return;
+  restoring = true;
+  try {
+    if (data.done && typeof data.done === 'object') S.done = data.done;
+    if (data.drafts && typeof data.drafts === 'object') S.drafts = data.drafts;
+    if (data.filter) S.filter = data.filter;
+    if (data.largeText) { document.body.classList.add('large-text'); $('btnLarge')?.classList.add('on'); }
+    if (data.calm) { document.body.classList.add('calm'); $('btnCalm')?.classList.add('on'); }
+    document.querySelectorAll('.nav-btn').forEach(b=>{
+      b.classList.toggle('on', (b.getAttribute('data-f') || '') === S.filter);
+    });
+    const screen = data.screen || 'screenTheory';
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    if ($(screen)) { $(screen).classList.add('active'); S.screen = screen; }
+    else { $('screenTheory').classList.add('active'); S.screen = 'screenTheory'; }
+    if (screen === 'screenDesk' || screen === 'screenDebrief') {
+      renderList();
+      renderSteps();
+    }
+    if (screen === 'screenDebrief') {
+      finish(true);
+    } else if (data.open && TICKETS.some(t=>t.id===data.open)) {
+      openTicket(data.open, true);
+    }
+  } finally {
+    restoring = false;
+  }
+}
+async function initAutosave(){
+  if (!window.moduleWork || typeof window.moduleWork.initModuleWork !== 'function') {
+    setSavePill('paikallinen', false);
+    return;
+  }
+  try {
+    const api = await window.moduleWork.initModuleWork(MODULE_ID, {
+      collect: collectState,
+      apply: applyState,
+      summarize: function(d){
+        if (!d) return '';
+        const n = d.done ? Object.keys(d.done).length : 0;
+        return 'Context Hygiene · ' + n + '/' + TICKETS.length + ' tehtävää';
+      },
+      debounceMs: 800,
+      legacyPrefix: 'ctx_hygiene_',
+      fieldIds: ['auditInput']
+    });
+    const orig = api.scheduleSave;
+    api.scheduleSave = function(){
+      if (restoring) return;
+      setSavePill('tallennetaan…', false);
+      orig();
+      clearTimeout(savePillTimer);
+      savePillTimer = setTimeout(()=>setSavePill('tallennettu ✓', true), 1100);
+    };
+    workApi = api;
+    setSavePill('tallennettu ✓', true);
+  } catch (e) {
+    console.warn('[context-hygiene] autosave init failed', e);
+    setSavePill('ei tallennusta', false);
+  }
 }
 
-function showScore() {
-  const pct = correct / total;
-  let title;
-  let msg;
-  if (pct === 1) {
-    title = 'Täydellinen — ' + correct + '/' + total;
-    msg = 'Olet sisäistänyt LinkedIn-säännön täydellisesti.';
-  } else if (pct >= 0.75) {
-    title = 'Hyvä — ' + correct + '/' + total;
-    msg = 'Vahva ymmärrys. Käy läpi väärin menneet kohdat.';
+function enterDesk(){
+  show('screenDesk');
+  renderList();
+  renderSteps();
+}
+
+function setFilter(btn, f){
+  S.filter = f;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  closeWork();
+  renderList();
+  scheduleModuleSave();
+}
+
+function setWorkTab(tab){
+  const work = $('workMode');
+  if (!work) return;
+  work.setAttribute('data-tab', tab === 'write' ? 'write' : 'doc');
+  $('tabDoc')?.classList.toggle('on', tab !== 'write');
+  $('tabWrite')?.classList.toggle('on', tab === 'write');
+  if (tab === 'write') {
+    setTimeout(()=>{ try { $('auditInput')?.focus({ preventScroll:true }); } catch(_){ $('auditInput')?.focus(); } }, 80);
+  }
+}
+
+function renderSteps(){
+  $('steps').innerHTML = TICKETS.map(t=>{
+    const d = S.done[t.id];
+    let c = 'step';
+    if (d) c += d.grade==='ok'?' done':(d.grade==='partial'?' cur':' miss');
+    else if (S.open===t.id) c += ' cur';
+    return `<div class="${c}"></div>`;
+  }).join('');
+}
+
+function renderList(){
+  const open = TICKETS.filter(t=>!S.done[t.id]).length;
+  $('openCount').textContent = open ? open+' avointa' : 'Valmis';
+  $('navN').textContent = String(open);
+  const items = TICKETS.filter(t=>S.filter==='all'||t.cat===S.filter);
+  $('ticketTable').innerHTML = items.map(t=>{
+    const d = S.done[t.id];
+    const st = d ? (d.grade==='ok'?'Valmis':d.grade==='partial'?'Osittainen':'Uudelleen') : 'Avoin';
+    return `<button type="button" class="t-row${d?' done':''}" onclick="openTicket('${t.id}')">
+      <div class="t-id">${t.id}</div>
+      <div><div class="t-title">${esc(t.title)}</div><div class="t-sub"><span class="tag ${t.cat[0]}">${esc(t.cat)}</span>${esc(t.time)}</div></div>
+      <div class="t-from">${esc(t.from)}</div>
+      <div class="t-prio ${t.prio}">${t.prio==='high'?'Kiire':'Normaali'}</div>
+      <div class="t-status">${st}</div>
+    </button>`;
+  }).join('');
+}
+
+function openTicket(id, fromRestore){
+  const t = TICKETS.find(x=>x.id===id);
+  if (!t) return;
+  // Persist draft of previously open ticket
+  if (S.open && S.open !== id) {
+    const prevInput = $('auditInput');
+    if (prevInput && !prevInput.disabled) S.drafts[S.open] = prevInput.value;
+  }
+  S.open = id;
+  $('listMode').style.display = 'none';
+  $('workMode').classList.add('open');
+  setWorkTab('doc');
+  $('workTitle').textContent = t.title;
+  $('workMeta').textContent = t.id+' · '+t.time;
+  $('docScroll').innerHTML = t.doc();
+  $('docScroll').scrollTop = 0;
+  $('composeLbl').textContent = t.composeLbl;
+  $('composeTitle').textContent = t.composeTitle;
+  $('composeHelp').textContent = t.composeHelp;
+  resetHints(t);
+  const prev = S.done[id];
+  const input = $('auditInput');
+  input.value = prev ? prev.text : (S.drafts[id] || '');
+  input.disabled = !!prev;
+  $('btnSubmit').disabled = !!prev;
+  $('btnSubmit').style.display = prev ? 'none' : 'block';
+  $('result').className = 'result';
+  $('btnNext').classList.remove('show');
+  $('btnRetry').classList.remove('show');
+  if (prev) {
+    showResult(t, prev);
+    setWorkTab('write');
+  }
+  renderSteps();
+  if (!fromRestore) scheduleModuleSave();
+}
+
+function resetHints(t){
+  S.hintOpen = false;
+  S.hintLevel = 0;
+  const btn = $('hintBtn');
+  const panel = $('hintPanel');
+  const more = $('hintMore');
+  btn.classList.remove('open');
+  btn.setAttribute('aria-expanded', 'false');
+  $('hintBtnLabel').textContent = 'Vinkki (vapaaehtoinen)';
+  panel.classList.remove('show');
+  panel.hidden = true;
+  $('hintSteps').innerHTML = '';
+  more.hidden = true;
+  // Hide lamp if no hints defined
+  btn.style.display = (t.hints && t.hints.length) ? 'inline-flex' : 'none';
+}
+
+function toggleHint(){
+  const t = TICKETS.find(x => x.id === S.open);
+  if (!t || !t.hints || !t.hints.length) return;
+  S.hintOpen = !S.hintOpen;
+  const btn = $('hintBtn');
+  const panel = $('hintPanel');
+  btn.classList.toggle('open', S.hintOpen);
+  btn.setAttribute('aria-expanded', S.hintOpen ? 'true' : 'false');
+  $('hintBtnLabel').textContent = S.hintOpen ? 'Piilota vinkki' : 'Vinkki (vapaaehtoinen)';
+  if (S.hintOpen) {
+    if (S.hintLevel < 1) S.hintLevel = 1;
+    renderHintSteps(t);
+    panel.hidden = false;
+    panel.classList.add('show');
   } else {
-    title = correct + '/' + total + ' oikein';
-    msg = 'Lue selitykset huolella — ne ovat tärkeimmät oppimishetket.';
-  }
-
-  lastScore = `LinkedIn-sääntö — tulos: ${correct}/${total}. Mikä tilanne yllätti sinut?`;
-  document.getElementById('scoreNum').textContent = correct + ' / ' + total;
-  document.getElementById('scoreTitle').textContent = title;
-  document.getElementById('scoreMsg').textContent = msg;
-  const sr = document.getElementById('scoreResult');
-  sr.style.display = 'block';
-  sr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  setTimeout(() => { document.getElementById('testerWrap').style.display = 'block'; }, 700);
-  const taskCard = document.getElementById('taskCompleteCard');
-  if (taskCard) {
-    taskCard.style.display = 'block';
-    const scoreLine = document.getElementById('taskScoreLine');
-    if (scoreLine) scoreLine.textContent = `Quiz score: ${correct}/${total}`;
+    panel.classList.remove('show');
+    panel.hidden = true;
   }
 }
 
-function copyScore() {
-  navigator.clipboard.writeText(lastScore).then(() => {
-    const b = document.getElementById('copyScoreBtn');
-    b.textContent = '✓ Kopioitu!';
-    b.classList.add('ok');
-    setTimeout(() => { b.textContent = 'Kopioi tulos'; b.classList.remove('ok'); }, 2200);
-  });
+function showMoreHint(){
+  const t = TICKETS.find(x => x.id === S.open);
+  if (!t || !t.hints) return;
+  if (S.hintLevel < t.hints.length) S.hintLevel++;
+  renderHintSteps(t);
 }
 
-async function analyzeText() {
-  const input = document.getElementById('testerInput').value.trim();
-  if (!input) return;
-  const btn = document.getElementById('analyzeBtn');
-  const out = document.getElementById('testerOutput');
-  btn.disabled = true;
-  out.className = 'tester-output loading';
-  out.textContent = 'Analysoidaan...';
-  out.style.display = 'block';
-  try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 1000,
-        system: 'Olet tietosuoja-asiantuntija. Analysoi onko teksti turvallista jakaa tekoälylle LinkedIn-säännöllä. Aloita "TURVALLISTA:" tai "EI TURVALLISTA:" ja anna lyhyt syy.',
-        messages: [{ role: 'user', content: `Onko turvallista jakaa tekoälylle: "${input}"` }]
-      })
-    });
-    const data = await res.json();
-    const text = data.text || '';
-    out.className = 'tester-output ' + (text.toUpperCase().startsWith('TURVALLISTA') ? 'safe' : 'unsafe');
-    out.textContent = text;
-  } catch (e) {
-    out.className = 'tester-output unsafe';
-    out.textContent = 'Yhteysvirhe. Käytä sääntöä: julkaisisinko tämän LinkedIn-profiilissani?';
+function renderHintSteps(t){
+  const steps = t.hints.slice(0, S.hintLevel);
+  $('hintSteps').innerHTML = steps.map((h, i) =>
+    `<div class="hint-step"><span class="hint-n">Vinkki ${i + 1}</span>${esc(h)}</div>`
+  ).join('');
+  const more = $('hintMore');
+  more.hidden = S.hintLevel >= t.hints.length;
+}
+
+function closeWork(){
+  if (S.open) {
+    const input = $('auditInput');
+    if (input && !input.disabled) S.drafts[S.open] = input.value;
   }
-  btn.disabled = false;
+  S.open = null;
+  $('workMode').classList.remove('open');
+  $('workMode').setAttribute('data-tab', 'doc');
+  $('listMode').style.display = 'block';
+  renderList();
+  renderSteps();
+  scheduleModuleSave();
 }
 
-// ══════════════════════════════════════════════════════════════
-// EXERCISE 4: IMPROVE YOUR INTRO
-// ══════════════════════════════════════════════════════════════
-let introResultText = '';
-async function improveIntro() {
-  const input = document.getElementById('introInput').value.trim();
-  if (!input || input.length < 15) {
-    alert('Kirjoita vähintään 2-3 lausetta itsestäsi.');
+function scoreWrite(t, text){
+  const hits=[], misses=[];
+  t.findings.forEach(f => (hit(text,f)?hits:misses).push(f));
+  const ok = text.length>=t.minLen && hits.length>=t.passNeed;
+  const partial = text.length>=t.minLen && hits.length>=Math.max(3, t.passNeed-2);
+  return {hits,misses, grade: ok?'ok':(partial?'partial':'bad')};
+}
+
+function scoreRewrite(t, text){
+  const forbiddenHits = t.forbidden.filter(f=>hit(text,f));
+  const requiredHits = t.required.filter(f=>hit(text,f));
+  const clean = forbiddenHits.length===0;
+  const fullReq = requiredHits.length===t.required.length;
+  const ok = text.length>=t.minLen && clean && fullReq;
+  const partial = text.length>=t.minLen && clean && requiredHits.length>0;
+  return {forbiddenHits, requiredHits, requiredMiss:t.required.filter(f=>!hit(text,f)), grade: ok?'ok':(!clean?'bad':(partial?'partial':'bad'))};
+}
+
+async function submitWork(){
+  const t = TICKETS.find(x=>x.id===S.open);
+  if (!t || S.done[t.id]) return;
+  const text = $('auditInput').value.trim();
+  if (text.length < t.minLen){
+    alert('Kirjoita vähän pidempi vastaus (vähintään '+t.minLen+' merkkiä).');
     return;
   }
-  const btn = document.getElementById('introBtn');
-  const resp = document.getElementById('introResponse');
-  const textEl = document.getElementById('introText');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> AI parantaa...';
-  resp.style.display = 'block';
-  textEl.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
-  try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 600,
-        system: `Olet ammattimainen uravalmentaja. Käyttäjä antaa lyhyen esittelyn itsestään. Tehtäväsi:
-1. Kirjoita PARANNETTU VERSIO (ammattimaisempi, selkeämpi, vaikuttavampi — mutta rehellinen)
-2. Kirjoita 2-3 VINKKIÄ mitä muuta voisi lisätä
+  const scored = t.type==='rewrite' ? scoreRewrite(t,text) : scoreWrite(t,text);
 
-Vastaa suomeksi. Ole rohkaiseva ja positiivinen. Näytä konkreettisesti miten AI voi parantaa tekstiä.`,
-        messages: [{ role: 'user', content: `Paranna tämä esittely ammattimaisemmaksi:\n\n"${input}"` }]
-      })
-    });
-    const data = await res.json();
-    introResultText = data.text || '';
-    textEl.textContent = introResultText;
-    resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  } catch (e) {
-    textEl.textContent = 'Yhteysvirhe. Kokeile uudelleen hetken päästä.';
+  $('auditInput').disabled = true;
+  $('btnSubmit').disabled = true;
+  $('btnSubmit').textContent = 'Tarkistetaan…';
+  $('btnRetry').classList.remove('show');
+  $('btnNext').classList.remove('show');
+  const el = $('result');
+  el.className = 'result show loading';
+  el.innerHTML = '<div class="verdict">Hetki…</div><p>Claude lukee vastauksesi ja kertoo, menikö oikein.</p>';
+
+  let ai = null;
+  try { ai = await fetchAiFeedback(t, text); } catch (_) { ai = null; }
+
+  // Prefer AI grade when available; else local keyword score
+  let grade = scored.grade;
+  if (ai && ai.score) {
+    grade = ai.score >= 3 ? 'ok' : (ai.score === 2 ? 'partial' : 'bad');
   }
-  btn.disabled = false;
-  btn.textContent = '✨ Paranna AI:lla';
+
+  S.done[t.id] = { text, ...scored, grade, ai };
+  delete S.drafts[t.id];
+  $('btnSubmit').style.display = 'none';
+  $('btnSubmit').textContent = 'Lähetä vastaus';
+  showResult(t, S.done[t.id]);
+  renderSteps();
+  scheduleModuleSave();
+  if (Object.keys(S.done).length===TICKETS.length) $('btnNext').textContent = 'Katso yhteenveto →';
 }
 
-function copyIntro() {
-  if (!introResultText) return;
-  navigator.clipboard.writeText(introResultText).then(() => {
-    const b = document.getElementById('copyIntroBtn');
-    if (!b) return;
-    b.textContent = '✓ Kopioitu';
-    b.classList.add('ok');
-    setTimeout(() => { b.textContent = '📋 Kopioi teksti'; b.classList.remove('ok'); }, 2000);
+async function fetchAiFeedback(t, studentText){
+  const checklist = t.type==='rewrite'
+    ? ('Poista nämä / älä sisällytä: ' + t.forbidden.map(f=>f.label).join(', ') + '. Tarvitaan myös: ' + t.required.map(f=>f.label).join(', ') + '.')
+    : ('Hyvässä vastauksessa pitäisi näkyä mm.: ' + t.findings.map(f=>f.label).join(', ') + '.');
+
+  const system = `Olet ystävällinen tietosuojakouluttaja kurssin ENSIMMÄISESSÄ modulissa (Claude).
+Opiskelijat ovat vasta alussa — he eivät välttämättä tunne sanaa "prompti". Käytä sanoja kuten "teksti ChatGPT:lle" tai "viesti AI:lle".
+Arvioi vastaus context hygienestä (mitä ei saa laittaa tekoälylle).
+Ole rohkaiseva ja selkeä. Lyhyet lauseet. Suomeksi.
+Vastaa VAIN JSON: {"score":1|2|3,"verdict":"lyhyt otsikko suomeksi","feedback":"2-4 lausetta: mitä meni hyvin ja mitä puuttuu","next_step":"yksi konkreettinen vinkki"}
+score 3=hyvä/erinomainen, 2=osittain, 1=puuttuu oleellista.`;
+
+  const userMsg = `TILANNE:\n${t.situation || t.title}\n\nTEHTÄVÄ OPPILAALLE:\n${t.composeTitle}\n${t.composeHelp}\n\nTARKISTUSLISTA:\n${checklist}\n\nMALLIVASTAUKSEN IDEA:\n${t.model}\n\nOPISKELIJAN VASTAUS:\n${studentText}`;
+
+  let raw = '';
+  const res = await fetch('/api/ai/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      system,
+      messages: [{ role: 'user', content: userMsg }],
+      max_tokens: 700
+    })
   });
+  const data = await res.json().catch(()=>({}));
+  if (res.ok && (data.text || data.reply || data.content)) {
+    raw = data.text || data.reply || data.content || '';
+  } else if (typeof window.aiClaude === 'function') {
+    raw = await window.aiClaude(system, userMsg, 700);
+  } else {
+    throw new Error(data.error || ('claude_' + res.status));
+  }
+
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start < 0 || end < 0) throw new Error('parse');
+  const parsed = JSON.parse(raw.slice(start, end + 1));
+  return {
+    score: Math.min(3, Math.max(1, Number(parsed.score) || 2)),
+    verdict: parsed.verdict || '',
+    feedback: parsed.feedback || raw,
+    next_step: parsed.next_step || ''
+  };
 }
 
-// ══════════════════════════════════════════════════════════════
-// EXERCISE 5: PERSONAL AI CHEAT SHEET
-// ══════════════════════════════════════════════════════════════
-let cheatResultText = '';
-async function buildCheatSheet() {
-  const input = document.getElementById('cheatInput').value.trim();
-  if (!input || input.length < 10) {
-    alert('Kerro lyhyesti alasi ja tilanteesi.');
-    return;
+function showResult(t, r){
+  const el = $('result');
+  let chips='';
+  if (t.type==='rewrite'){
+    chips = t.forbidden.map(f=>{
+      const bad = (r.forbiddenHits||[]).some(h=>h.id===f.id);
+      return `<span class="chip ${bad?'miss':'hit'}">${bad?'vielä mukana':'pois'}: ${esc(f.label)}</span>`;
+    }).join('') + t.required.map(f=>{
+      const ok = (r.requiredHits||[]).some(h=>h.id===f.id);
+      return `<span class="chip ${ok?'hit':'miss'}">${ok?'✓':'○'} ${esc(f.label)}</span>`;
+    }).join('');
+  } else {
+    chips = t.findings.map(f=>{
+      const ok = (r.hits||[]).some(h=>h.id===f.id);
+      return `<span class="chip ${ok?'hit':'miss'}">${ok?'✓':'○'} ${esc(f.label)}</span>`;
+    }).join('');
   }
-  const btn = document.getElementById('cheatBtn');
-  const resp = document.getElementById('cheatResponse');
-  const textEl = document.getElementById('cheatText');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> Rakennetaan...';
-  resp.style.display = 'block';
-  textEl.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
-  try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 800,
-        system: `Olet tietosuoja-asiantuntija ja uravalmentaja. Käyttäjä kertoo alansa ja tilanteensa. Luo hänelle HENKILÖKOHTAINEN AI-MUISTILISTA:
 
-✅ TURVALLISTA JAKAA (5-6 konkreettista esimerkkiä juuri hänen alalleen)
-❌ PIDÄ ITSELLASI (3-4 konkreettista esimerkkiä juuri hänen alalleen)
-💡 NÄIN HYÖDYNNÄT AI:TA (3 konkreettista tapaa miten hän voi käyttää AI:ta alallaan)
+  const fallbackTitle = r.grade==='ok'?'Hyvä vastaus':(r.grade==='partial'?'Melkein — täydennä vielä':'Vielä puuttuu oleellista');
+  const title = (r.ai && r.ai.verdict) ? r.ai.verdict : fallbackTitle;
+  const aiBlock = r.ai
+    ? `<div class="ai-fb"><strong>Claude-palaute</strong>${esc(r.ai.feedback)}${r.ai.next_step?`<br><br><em>Seuraava askel: ${esc(r.ai.next_step)}</em>`:''}</div>`
+    : `<div class="ai-fb"><strong>Palaute</strong>Claude-palautetta ei juuri nyt saatu (kirjaudu sisään jos tarvitset). Alla näet silti tarkistuslistan.</div>`;
 
-Ole konkreettinen, positiivinen ja rohkaiseva. Painota miten PALJON hyödyllistä hän VOI tehdä AI:lla. Vastaa suomeksi.`,
-        messages: [{ role: 'user', content: `Luo henkilökohtainen AI-muistilista tälle henkilölle:\n\n"${input}"` }]
-      })
-    });
-    const data = await res.json();
-    cheatResultText = data.text || '';
-    textEl.textContent = cheatResultText;
-    resp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  } catch (e) {
-    textEl.textContent = 'Yhteysvirhe. Kokeile uudelleen hetken päästä.';
-  }
-  btn.disabled = false;
-  btn.textContent = '📝 Luo oma muistilista';
+  el.className = 'result show '+r.grade;
+  el.innerHTML = `<div class="verdict">${esc(title)}</div>${aiBlock}<div class="chips">${chips}</div><div class="model"><strong>Malli:</strong> ${esc(t.model)}</div>`;
+  $('btnNext').classList.add('show');
+  if (r.grade !== 'ok') $('btnRetry').classList.add('show');
+  else $('btnRetry').classList.remove('show');
 }
 
-function copyCheat() {
-  if (!cheatResultText) return;
-  navigator.clipboard.writeText(cheatResultText).then(() => {
-    const b = document.getElementById('copyCheatBtn');
-    if (!b) return;
-    b.textContent = '✓ Kopioitu';
-    b.classList.add('ok');
-    setTimeout(() => { b.textContent = '📋 Kopioi muistilista'; b.classList.remove('ok'); }, 2000);
+function retryWork(){
+  const id = S.open;
+  if (!id) return;
+  const keep = S.done[id]?.text || '';
+  delete S.done[id];
+  S.drafts[id] = keep;
+  $('auditInput').disabled = false;
+  $('auditInput').value = keep;
+  $('btnSubmit').disabled = false;
+  $('btnSubmit').style.display = 'block';
+  $('btnSubmit').textContent = 'Lähetä vastaus';
+  $('result').className = 'result';
+  $('btnNext').classList.remove('show');
+  $('btnRetry').classList.remove('show');
+  renderSteps();
+  setWorkTab('write');
+  $('auditInput').focus();
+  scheduleModuleSave();
+}
+
+function nextTicket(){
+  if (Object.keys(S.done).length===TICKETS.length){ finish(); return; }
+  const n = TICKETS.find(t=>!S.done[t.id]);
+  if (n) openTicket(n.id); else closeWork();
+}
+
+function markModuleProgress(){
+  const mid = encodeURIComponent(MODULE_ID);
+  const body = JSON.stringify({
+    completed: true,
+    progressData: { ticketsDone: Object.keys(S.done).length, total: TICKETS.length },
+    timeSpent: 0
   });
+  fetch('/api/progress/module/' + mid + '/section/context-hygiene', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body
+  }).catch(function(){});
 }
 
-let checkStep = 1;
-const checkData = {
-  mood_emoji: '',
-  apply_where: [],
-  misconception_had: '',
-  open_reflection: '',
-  helpfulness_rating: null
-};
-
-function startCheckinFlow() {
-  const wrap = document.getElementById('checkinWrap');
-  if (wrap) wrap.style.display = 'block';
-  setCheckStep(1);
-  wrap?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function setCheckStep(step) {
-  checkStep = step;
-  document.querySelectorAll('.check-step').forEach((el, idx) => {
-    el.classList.toggle('active', idx === (step - 1));
-  });
-  const prevBtn = document.getElementById('checkPrevBtn');
-  const nextBtn = document.getElementById('checkNextBtn');
-  if (prevBtn) prevBtn.style.display = step > 1 && step < 6 ? 'inline-flex' : 'none';
-  if (nextBtn) {
-    nextBtn.style.display = step < 6 ? 'inline-flex' : 'none';
-    nextBtn.disabled = !validateCheckStep(step);
-    nextBtn.textContent = step === 5 ? 'Tallenna →' : 'Seuraava →';
+function finish(fromRestore){
+  const total = TICKETS.length;
+  const pts = TICKETS.reduce((a,t)=>{
+    const g=S.done[t.id]?.grade;
+    return a+(g==='ok'?1:g==='partial'?0.5:0);
+  },0);
+  const pct = Math.round(pts/total*100);
+  const ring = $('ring');
+  ring.textContent = (pts%1?pts.toFixed(1):pts)+'/'+total;
+  ring.className = 'ring'+(pct>=85?'':pct>=55?' mid':' low');
+  $('dbTitle').textContent = pct>=85?'Ensimmäinen vuoro hoidettu':(pct>=55?'Hyvä alku — vielä tarkkuutta':'Harjoittele uudelleen');
+  $('dbLead').textContent = 'Pisteet '+pts+' / '+total+'. Osittainen löytö = ½. Oikeassa työssä yksi unohtunut hetu tai IBAN riittää riskiin.';
+  $('rev').innerHTML = TICKETS.map(t=>{
+    const d=S.done[t.id];
+    const g=d?.grade;
+    const m=g==='ok'?'✓':g==='partial'?'◐':'✗';
+    const fb = d?.ai?.feedback ? `<p style="margin-bottom:8px">${esc(d.ai.feedback)}</p>` : '';
+    return `<details><summary>${m} ${esc(t.id)} — ${esc(t.title)}</summary><div class="b">${fb}${esc(t.model)}</div></details>`;
+  }).join('');
+  if (fromRestore) {
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    $('screenDebrief').classList.add('active');
+    S.screen = 'screenDebrief';
+  } else {
+    show('screenDebrief');
   }
-  if (step === 6) {
-    const finalScore = document.getElementById('finalBadgeQuizScore');
-    if (finalScore) finalScore.textContent = `Quiz score: ${correct}/${total}`;
-  }
+  markModuleProgress();
+  scheduleModuleSave();
 }
 
-function validateCheckStep(step) {
-  if (step === 1) return !!checkData.mood_emoji;
-  if (step === 2) return checkData.apply_where.length > 0 || document.getElementById('applyWhereOther').value.trim().length > 0;
-  if (step === 3) return !!checkData.misconception_had;
-  if (step === 4) return true;
-  if (step === 5) return Number.isInteger(checkData.helpfulness_rating);
-  return true;
+function restart(){
+  S = { filter:'all', open:null, done:{}, drafts:{}, hintOpen:false, hintLevel:0, screen:'screenTheory' };
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>b.classList.toggle('on',i===0));
+  $('workMode').classList.remove('open');
+  $('listMode').style.display = 'block';
+  show('screenTheory');
+  scheduleModuleSave();
 }
 
-function prevCheckStep() {
-  if (checkStep > 1) setCheckStep(checkStep - 1);
-}
-
-async function nextCheckStep() {
-  if (!validateCheckStep(checkStep)) return;
-  if (checkStep === 4) {
-    checkData.open_reflection = document.getElementById('checkOpenReflection').value.trim();
-  }
-  if (checkStep === 5) {
-    const other = document.getElementById('applyWhereOther').value.trim();
-    const applyWhere = other ? [...checkData.apply_where, `Muualla: ${other}`] : checkData.apply_where;
-    try {
-      const res = await fetch('/api/feedback/module-reflection', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          module_name: 'moduuli1-tietosuoja',
-          mood_emoji: checkData.mood_emoji,
-          apply_where: applyWhere,
-          use_cases: applyWhere,
-          misconception_had: checkData.misconception_had,
-          open_reflection: checkData.open_reflection || null,
-          helpfulness_rating: checkData.helpfulness_rating,
-          quiz_score: correct
-        })
-      });
-      if (!res.ok) throw new Error('save_failed');
-      const confirmEl = document.getElementById('reflConfirm');
-      if (confirmEl) {
-        confirmEl.style.display = 'block';
-        setTimeout(() => { confirmEl.style.display = 'none'; }, 2500);
+document.addEventListener('DOMContentLoaded', ()=>{
+  const input = $('auditInput');
+  if (input) {
+    input.addEventListener('input', ()=>{
+      if (S.open && !input.disabled) {
+        S.drafts[S.open] = input.value;
+        scheduleModuleSave();
       }
-      setCheckStep(6);
-    } catch (e) {
-      alert('Tallennus epäonnistui. Yritä uudelleen.');
-    }
-    return;
-  }
-  setCheckStep(checkStep + 1);
-}
-
-function pickMood(btn, value) {
-  checkData.mood_emoji = value;
-  document.querySelectorAll('.emoji-choice').forEach((b) => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  setCheckStep(1);
-}
-
-function toggleApplyWhere(btn, value) {
-  const exists = checkData.apply_where.includes(value);
-  if (exists) {
-    checkData.apply_where = checkData.apply_where.filter((v) => v !== value);
-    btn.classList.remove('selected');
-  } else {
-    checkData.apply_where.push(value);
-    btn.classList.add('selected');
-  }
-  setCheckStep(2);
-}
-
-function pickMisconception(btn, value) {
-  checkData.misconception_had = value;
-  document.querySelectorAll('.mis-card').forEach((el) => el.classList.remove('selected'));
-  btn.classList.add('selected');
-  setCheckStep(3);
-}
-
-function pickCheckStar(star) {
-  checkData.helpfulness_rating = star;
-  document.querySelectorAll('#checkStars .big-star').forEach((el, idx) => {
-    el.classList.toggle('active', idx < star);
-  });
-  setCheckStep(5);
-}
-
-// ══════════════════════════════════════════════════════════════
-// EXERCISE 1: TIETOSUOJA-AGENTTI (Role-Play)
-// ══════════════════════════════════════════════════════════════
-const rpScenarios = [
-  {
-    label: 'Tilanne 1 / 5',
-    text: 'Kollegasi Minna sanoo: "Meidän pitää tehdä nopea asiakasanalyysi. Voitko liittää asiakasrekisterin (nimet, sähköpostit, ostohistoria) ChatGPT:hen, niin se tekee segmentoinnin puolestamme?"'
-  },
-  {
-    label: 'Tilanne 2 / 5',
-    text: 'Esimiehesi Jukka pyytää: "Kirjoita ChatGPT:llä sähköposti asiakkaalle. Laita siihen mukaan asiakkaan sopimuksen yksityiskohdat (arvo, kesto, erityisehdot) niin se osaa kirjoittaa tarkan viestin."'
-  },
-  {
-    label: 'Tilanne 3 / 5',
-    text: 'Harjoittelija Lauri kysyy: "Sain sairauslomatodistuksen työntekijältä. Voiko ChatGPT:ltä kysyä, miten tämä diagnoosi vaikuttaa työkyvyn arviointiin? Liitän kuvan todistuksesta."'
-  },
-  {
-    label: 'Tilanne 4 / 5',
-    text: 'Markkinointitiimin Sanna ehdottaa: "Haluaisin tehdä LinkedIniin julkaisun yrityksen arvoista ja tulevaisuuden suunnitelmista. Voiko ChatGPT:ltä pyytää apua tekstin hiomiseen, jos kerron julkista tietoa yrityksestä?"'
-  },
-  {
-    label: 'Tilanne 5 / 5',
-    text: 'IT-päällikkö Antti sanoo: "Meidän palvelimella on bugi. Voitko liittää virheilmoituksen ja osan palvelimen lokitiedoista ChatGPT:hen? Siellä saattaa näkyä käyttäjien IP-osoitteita ja kirjautumistietoja."'
-  }
-];
-
-let rpCurrent = 0;
-let rpCorrect = 0;
-let rpResults = [];
-
-function initRoleplay() {
-  const progress = document.getElementById('rpProgress');
-  if (!progress) return;
-  progress.innerHTML = rpScenarios.map((_, i) =>
-    `<div class="roleplay-pip${i === 0 ? ' current' : ''}"></div>`
-  ).join('');
-  loadRoleplayScenario(0);
-}
-
-function loadRoleplayScenario(idx) {
-  if (idx >= rpScenarios.length) {
-    showRoleplayScore();
-    return;
-  }
-  const s = rpScenarios[idx];
-  document.querySelector('#rpScenario .roleplay-scenario-label').textContent = s.label;
-  document.getElementById('rpScenarioText').textContent = s.text;
-  document.getElementById('rpInput').value = '';
-  document.getElementById('rpFeedback').style.display = 'none';
-  document.getElementById('rpResponseArea').style.display = 'block';
-  document.getElementById('rpSubmitBtn').disabled = false;
-  document.getElementById('rpSubmitBtn').textContent = 'Lähetä vastauksesi';
-  document.getElementById('rpSubmitBtn').onclick = submitRoleplayAnswer;
-}
-
-async function submitRoleplayAnswer() {
-  const input = document.getElementById('rpInput').value.trim();
-  if (!input || input.length < 15) { alert('Kirjoita vähintään lyhyt perustelu.'); return; }
-  const btn = document.getElementById('rpSubmitBtn');
-  const fb = document.getElementById('rpFeedback');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> Arvioidaan...';
-
-  const scenario = rpScenarios[rpCurrent];
-  try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 600,
-        system: `Olet tietosuojakouluttaja. Arvioi opiskelijan vastaus tietosuojatilanteeseen. 
-Vastaa JSON-muodossa: {"score": 1-3, "feedback": "...", "correct_approach": "..."}
-Score: 1=huono, 2=osittain oikein, 3=erinomainen. 
-Feedback: lyhyt arvio suomeksi. Correct_approach: oikea lähestymistapa 1-2 lauseella.
-Ole rohkaiseva mutta tarkka GDPR-vaatimusten suhteen.`,
-        messages: [{ role: 'user', content: `TILANNE: ${scenario.text}\n\nOPISKELIJAN VASTAUS: ${input}\n\nArvioi vastaus.` }]
-      })
     });
-    const data = await res.json();
-    const raw = data.text || '';
-    let parsed;
-    try {
-      const start = raw.indexOf('{');
-      const end = raw.lastIndexOf('}');
-      parsed = JSON.parse(raw.slice(start, end + 1));
-    } catch(e) {
-      parsed = { score: 2, feedback: raw, correct_approach: '' };
-    }
-
-    const score = Math.min(3, Math.max(1, parsed.score || 2));
-    rpResults.push(score);
-    if (score === 3) rpCorrect++;
-
-    fb.innerHTML = `<strong>${score === 3 ? '✓ Erinomainen!' : score === 2 ? '◐ Osittain oikein' : '✗ Tarkista'}</strong><br>${parsed.feedback || ''}${parsed.correct_approach ? `<br><br><em>Oikea lähestymistapa: ${parsed.correct_approach}</em>` : ''}`;
-    fb.className = 'roleplay-feedback ' + (score >= 2 ? 'good' : 'needs-work');
-    fb.style.display = 'block';
-
-    const pips = document.querySelectorAll('#rpProgress .roleplay-pip');
-    if (pips[rpCurrent]) {
-      pips[rpCurrent].classList.remove('current');
-      pips[rpCurrent].classList.add('done');
-    }
-
-    rpCurrent++;
-    if (rpCurrent < rpScenarios.length && pips[rpCurrent]) {
-      pips[rpCurrent].classList.add('current');
-    }
-
-    btn.textContent = rpCurrent < rpScenarios.length ? 'Seuraava tilanne →' : 'Näytä tulokset →';
-    btn.disabled = false;
-    btn.onclick = function() { loadRoleplayScenario(rpCurrent); };
-  } catch(e) {
-    fb.className = 'roleplay-feedback needs-work';
-    fb.textContent = 'Yhteysvirhe. Yritä uudelleen.';
-    fb.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Yritä uudelleen';
   }
-}
-
-function showRoleplayScore() {
-  document.getElementById('rpScenario').style.display = 'none';
-  document.getElementById('rpResponseArea').style.display = 'none';
-  document.getElementById('rpFeedback').style.display = 'none';
-  document.getElementById('rpProgress').style.display = 'none';
-
-  const totalPoints = rpResults.reduce((a, b) => a + b, 0);
-  const maxPoints = rpScenarios.length * 3;
-  const pct = Math.round((totalPoints / maxPoints) * 100);
-
-  document.getElementById('rpScoreCircle').textContent = pct + '%';
-  const scoreEl = document.getElementById('rpScore');
-  scoreEl.style.display = 'block';
-
-  let title, msg;
-  if (pct >= 85) {
-    title = 'Erinomainen tietosuojavastaava!';
-    msg = 'Tunnistat arkaluonteiset tiedot luotettavasti ja osaat neuvoa kollegoitasi oikein.';
-  } else if (pct >= 55) {
-    title = 'Hyvä perustaso!';
-    msg = 'Ymmärrät perusperiaatteet. Kertaa vaikeat tilanteet — erityisesti terveystiedot ja sopimusasiat.';
-  } else {
-    title = 'Harjoittelua tarvitaan';
-    msg = 'Tietosuojassa on tärkeää olla tarkka. Palaa teoriaosuuteen ja kokeile uudelleen.';
-  }
-  document.getElementById('rpScoreTitle').textContent = title;
-  document.getElementById('rpScoreMsg').textContent = msg;
-  scoreEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-let rpScoreText = '';
-function copyRoleplayScore() {
-  const totalPoints = rpResults.reduce((a, b) => a + b, 0);
-  const maxPoints = rpScenarios.length * 3;
-  rpScoreText = `Tietosuoja-agentti — tulos: ${Math.round((totalPoints/maxPoints)*100)}% (${totalPoints}/${maxPoints} pistettä)`;
-  navigator.clipboard.writeText(rpScoreText).then(() => {
-    event.target.textContent = '✓ Kopioitu!';
-    setTimeout(() => { event.target.textContent = 'Kopioi tulos'; }, 2200);
-  });
-}
-
-initRoleplay();
-
-// ══════════════════════════════════════════════════════════════
-// EXERCISE 2: ANONYMISOI TEKSTI
-// ══════════════════════════════════════════════════════════════
-const anonTexts = [
-  'Hei, olen <span class="pii-highlight">Matti Virtanen</span> (hetu <span class="pii-highlight">150385-1234</span>). Olen työskennellyt 6 vuotta <span class="pii-highlight">Finnair Oyj:ssä</span> asiakaspalvelupäällikkönä. Palkkani on <span class="pii-highlight">4 200 €/kk</span> ja pankkitilini on <span class="pii-highlight">FI21 1234 5678 0001 23</span>. Haluaisin siirtyä markkinointiin. Minulla on <span class="pii-highlight">tyypin 2 diabetes</span> ja käytän <span class="pii-highlight">metformiinia</span>. Osaamiseni: projektinhallinta, Excel, asiakasviestintä.',
-  'Nimeni on <span class="pii-highlight">Liisa Korhonen</span>, <span class="pii-highlight">44-vuotias</span>, ja asun osoitteessa <span class="pii-highlight">Mannerheimintie 12 B 45, Helsinki</span>. Olen ollut <span class="pii-highlight">Kesko Oyj:ssä</span> HR-asiantuntijana 3 vuotta. Irtisanomiset alkoivat ja sain tietää, että <span class="pii-highlight">35 henkilöä irtisanotaan ensi kuussa</span> — tämä on luottamuksellista. Palkkani on <span class="pii-highlight">3 800 €/kk</span>. Haluaisin CV-apua.',
-  'Terve! Olen <span class="pii-highlight">Ahmed Hassan</span>, sähköpostini on <span class="pii-highlight">ahmed.hassan@gmail.com</span> ja puhelinnumeroni <span class="pii-highlight">040-1234567</span>. Työskentelen <span class="pii-highlight">Wärtsilä Oyj:ssä</span> insinöörinä. Meillä on juuri solmittu sopimus <span class="pii-highlight">Saudi Aramcon</span> kanssa arvoltaan <span class="pii-highlight">2,4 miljoonaa euroa</span>. Haluaisin ChatGPT:n avulla kirjoittaa paremman LinkedIn-profiilin.'
-];
-let currentAnonIdx = 0;
-
-function generateAnonText() {
-  currentAnonIdx = (currentAnonIdx + 1) % anonTexts.length;
-  document.getElementById('anonOriginalText').innerHTML = anonTexts[currentAnonIdx];
-  document.getElementById('anonInput').value = '';
-  document.getElementById('anonResult').style.display = 'none';
-}
-
-function initAnon() {
-  document.getElementById('anonOriginalText').innerHTML = anonTexts[0];
-}
-
-async function checkAnonymization() {
-  const input = document.getElementById('anonInput').value.trim();
-  if (!input || input.length < 20) { alert('Kirjoita anonymisoitu versio ensin.'); return; }
-  const btn = document.getElementById('anonCheckBtn');
-  const result = document.getElementById('anonResult');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> Tarkistetaan...';
-
-  const originalPlain = document.getElementById('anonOriginalText').textContent;
-
-  try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 800,
-        system: `Olet tietosuoja-auditoija. Opiskelija on kirjoittanut UUDEN VERSION tekstistä, josta pitää poistaa arkaluonteiset tiedot.
-
-TEHTÄVÄSI: Tarkista VAIN opiskelijan kirjoittama teksti. Jos jokin arkaluonteinen tieto EI ESIINNY opiskelijan tekstissä, se on ONNISTUNEESTI POISTETTU.
-
-ARKALUONTEISTA (pitää poistaa alkuperäisestä):
-nimi, henkilötunnus, osoite, puhelin, sähköposti, pankkitili, tarkka palkka euroissa, terveystiedot, lääkitys, työnantajan luottamukselliset tiedot
-
-TURVALLISTA (saa ja pitää jäädä opiskelijan tekstiin):
-ammattinimike, kokemusvuodet, toimiala, osaaminen, ura-tavoitteet, koulutus
-
-ARVIOINTI:
-- Jos opiskelijan teksti EI sisällä mitään arkaluonteista → PASS
-- Jos opiskelijan teksti sisältää joitain arkaluonteisia → PARTIAL
-- Jos opiskelijan teksti sisältää nimen, hetun tai pankkitilin → FAIL
-
-Vastaa JSON: {"grade":"PASS|PARTIAL|FAIL","found_pii":["arkaluonteiset tiedot jotka ESIINTYVÄT opiskelijan tekstissä"],"removed_pii":["arkaluonteiset tiedot jotka opiskelija ONNISTUI poistamaan"],"feedback":"lyhyt rohkaiseva palaute","tip":"yksi parannus tai kehu"}
-Ole ROHKAISEVA. Jos opiskelija poisti arkaluonteiset tiedot ja säilytti ammatillisen sisällön, anna PASS ja kehu!`,
-        messages: [{ role: 'user', content: `ALKUPERÄINEN TEKSTI (sisältää arkaluonteisia tietoja):\n${originalPlain}\n\nOPISKELIJAN UUDELLEENKIRJOITTAMA VERSIO (tarkista VAIN tämä):\n${input}` }]
-      })
-    });
-    const data = await res.json();
-    const raw = data.text || '';
-    let parsed;
-    try {
-      const s = raw.indexOf('{'), e = raw.lastIndexOf('}');
-      parsed = JSON.parse(raw.slice(s, e + 1));
-    } catch(er) {
-      parsed = { grade: 'PARTIAL', feedback: raw, found_pii: [], removed_pii: [], tip: '' };
-    }
-
-    const grade = (parsed.grade || 'PARTIAL').toUpperCase();
-    const cls = grade === 'PASS' ? 'pass' : grade === 'FAIL' ? 'fail' : 'partial';
-    const icon = grade === 'PASS' ? '✓' : grade === 'FAIL' ? '✗' : '◐';
-    const title = grade === 'PASS' ? 'Erinomainen anonymisointi!' : grade === 'FAIL' ? 'Arkaluonteisia tietoja jäljellä' : 'Osittain anonymisoitu';
-
-    let html = `<strong>${icon} ${title}</strong><br>${parsed.feedback || ''}`;
-    if (parsed.found_pii && parsed.found_pii.length > 0) {
-      html += `<br><br><strong>Jäljellä olevat riskit:</strong> ${parsed.found_pii.join(', ')}`;
-    }
-    if (parsed.removed_pii && parsed.removed_pii.length > 0) {
-      html += `<br><strong>Onnistuneesti poistettu:</strong> ${parsed.removed_pii.join(', ')}`;
-    }
-    if (parsed.tip) {
-      html += `<br><br><em>Vinkki: ${parsed.tip}</em>`;
-    }
-    result.innerHTML = html;
-    result.className = 'anon-result ' + cls;
-    result.style.display = 'block';
-    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  } catch(e) {
-    result.className = 'anon-result partial';
-    result.textContent = 'Yhteysvirhe. Tarkista itse: onko nimiä, hetujen, osoitteiden tai terveysdatan jälkiä?';
-    result.style.display = 'block';
-  }
-  btn.disabled = false;
-  btn.textContent = '🔍 Tarkista anonymisointi';
-}
-
-initAnon();
-
-// ══════════════════════════════════════════════════════════════
-// EXERCISE 3: MITÄ TEKISIT? (Multiple Choice Quiz)
-// ══════════════════════════════════════════════════════════════
-const quizQuestions = [
-  {
-    title: 'Työsopimuksen tarkistus',
-    desc: 'Sait uuden työtarjouksen ja haluat tarkistaa onko sopimus normaali. Mitä teet?',
-    options: [
-      { text: 'Liitän koko sopimuksen ChatGPT:hen sellaisenaan', correct: false, feedback: 'Sopimuksessa on nimesi, palkkasi ja salassapitoehdot — nämä ovat arkaluonteisia. Älä liitä sopimusta sellaisenaan.' },
-      { text: 'Kysyn yleisesti: "Mitä tarkoittaa kilpailukielto työsopimuksessa?"', correct: true, feedback: 'Juuri näin! Yleinen kysymys on turvallinen ja saat saman hyödyn. Voit myös kysyä "onko 3kk koeaika normaali?" ilman henkilötietoja.' },
-      { text: 'En käytä AI:ta ollenkaan sopimusasioissa', correct: false, feedback: 'AI on oikeasti hyödyllinen sopimusasioissa — kunhan kysyt yleisellä tasolla. Ei tarvitse välttää kokonaan!' }
-    ]
-  },
-  {
-    title: 'Kaverin Kela-hakemus',
-    desc: 'Kaverisi pyytää: "Liitetään koko Kela-hakemus ChatGPT:hen, niin se tarkistaa onko kaikki oikein." Hakemuksessa on henkilötunnus, osoite ja terveystietoja. Mitä neuvot?',
-    options: [
-      { text: 'Hyvä idea — AI tarkistaa virheet nopeasti', correct: false, feedback: 'Hetu, osoite ja terveystiedot ovat juuri niitä 4 asiaa jotka pidetään itsellä. Kela-hakemusta ei saa liittää sellaisenaan.' },
-      { text: 'Poistetaan ensin hetu, osoite ja terveystiedot — sitten voidaan kysyä yleisesti', correct: true, feedback: 'Oikein! Voitte kysyä esim. "Mitä liitteitä Kela-hakemukseen tarvitaan?" tai "Miten täytän kohdan X?" ilman henkilötietoja.' },
-      { text: 'Ei kannata käyttää AI:ta Kela-asioissa ollenkaan', correct: false, feedback: 'AI voi auttaa Kela-asioissa — kunhan kysyt yleisellä tasolla. Esim. "Mitä tukia voi hakea työttömänä?" on täysin turvallista.' }
-    ]
-  },
-  {
-    title: 'CV:n parantaminen',
-    desc: 'Haluat parantaa CV:täsi AI:lla. Mitä teet?',
-    options: [
-      { text: 'Kirjoitan: "Olen tradenomi, 6v kokemusta asiakaspalvelusta, osaan Excelin. Paranna CV-tekstini."', correct: true, feedback: 'Täydellinen! Ammattinimike, kokemus, osaaminen ja tavoitteet ovat turvallista tietoa — juuri tätä AI tarvitsee auttaakseen sinua.' },
-      { text: 'Liitän koko CV:ni kaikkine yhteystietoineen', correct: false, feedback: 'CV:ssä on usein kotiosoite, puhelin ja syntymäaika — nämä kannattaa jättää pois. Kerro sen sijaan osaamisesi omin sanoin.' },
-      { text: 'En uskalla käyttää AI:ta CV:n kanssa', correct: false, feedback: 'Ei huolta! CV:n parantaminen on juuri sitä mihin AI on parhaimmillaan. Kerro vain osaamisesi ja kokemuksesi — se riittää.' }
-    ]
-  },
-  {
-    title: 'LinkedIn-profiilin päivitys',
-    desc: 'Kirjoitat ChatGPT:lle: "Olen Matti, 35v, työskentelen Firma Oy:ssä. Palkkani on 4500€/kk. Kirjoita parempi LinkedIn-esittely." Onko tässä ongelmaa?',
-    options: [
-      { text: 'Kaikki ok — nimi ja työpaikka ovat julkista tietoa', correct: false, feedback: 'Nimi ja työpaikka ovat ok (ne näkyvät LinkedInissä), mutta tarkka palkka on arkaluonteinen tieto. Jätä se pois.' },
-      { text: 'Palkka pitää jättää pois, muu on ok', correct: true, feedback: 'Oikein! Nimi, ikä, ammatti ja työnantaja ovat julkista tietoa — ne näkyvät LinkedInissä. Mutta tarkka palkka on yksityisasia.' },
-      { text: 'Kaikki henkilötiedot pitää poistaa', correct: false, feedback: 'Ei tarvitse niin varovainen olla! Nimi, ammatti ja työnantaja ovat julkista LinkedIn-tietoa. Ainoastaan palkka kannattaa jättää pois.' }
-    ]
-  }
-];
-
-let quizCurrent = 0;
-let quizCorrect = 0;
-let quizAnswered = false;
-
-function initQuiz() {
-  const progress = document.getElementById('quizProgress');
-  if (!progress) return;
-  progress.innerHTML = quizQuestions.map((_, i) =>
-    `<div class="roleplay-pip${i === 0 ? ' current' : ''}" style="flex:1;height:4px;border-radius:2px;background:${i === 0 ? 'var(--accent)' : 'var(--warm)'};transition:background 0.3s;"></div>`
-  ).join('');
-  loadQuizQuestion(0);
-}
-
-function loadQuizQuestion(idx) {
-  if (idx >= quizQuestions.length) { showQuizScore(); return; }
-  const q = quizQuestions[idx];
-  document.getElementById('quizLabel').textContent = `Tilanne ${idx + 1} / ${quizQuestions.length}`;
-  document.getElementById('quizTitle').textContent = q.title;
-  document.getElementById('quizDesc').textContent = q.desc;
-  document.getElementById('quizFeedback').style.display = 'none';
-  document.getElementById('quizNextWrap').style.display = 'none';
-  quizAnswered = false;
-
-  const optWrap = document.getElementById('quizOptions');
-  optWrap.innerHTML = q.options.map((opt, i) =>
-    `<button class="mis-card" style="text-align:left;font-size:0.92rem;padding:1rem 1.25rem;cursor:pointer;" onclick="pickQuizOption(${idx},${i})" id="qopt${i}">${opt.text}</button>`
-  ).join('');
-}
-
-function pickQuizOption(qIdx, optIdx) {
-  if (quizAnswered) return;
-  quizAnswered = true;
-  const q = quizQuestions[qIdx];
-  const opt = q.options[optIdx];
-
-  q.options.forEach((o, i) => {
-    const el = document.getElementById('qopt' + i);
-    if (!el) return;
-    el.style.pointerEvents = 'none';
-    if (i === optIdx && o.correct) {
-      el.style.borderColor = 'var(--accent3)';
-      el.style.background = 'rgba(42,122,75,0.08)';
-    } else if (i === optIdx && !o.correct) {
-      el.style.borderColor = 'var(--accent)';
-      el.style.background = 'rgba(199,91,58,0.06)';
-    }
-    if (o.correct && i !== optIdx) {
-      el.style.borderColor = 'var(--accent3)';
-      el.style.background = 'rgba(42,122,75,0.08)';
-    }
-  });
-
-  if (opt.correct) quizCorrect++;
-
-  const fb = document.getElementById('quizFeedback');
-  fb.innerHTML = `<strong>${opt.correct ? '✓ Oikein!' : '→ Ei aivan'}</strong><br>${opt.feedback}`;
-  fb.style.display = 'block';
-  fb.style.background = opt.correct ? 'rgba(42,122,75,0.07)' : 'rgba(199,91,58,0.07)';
-  fb.style.border = opt.correct ? '1px solid rgba(42,122,75,0.2)' : '1px solid rgba(199,91,58,0.2)';
-  fb.style.color = opt.correct ? '#1d5c36' : '#8b3a20';
-
-  const pips = document.querySelectorAll('#quizProgress .roleplay-pip');
-  if (pips[qIdx]) { pips[qIdx].style.background = opt.correct ? 'var(--accent3)' : 'var(--accent)'; }
-
-  if (qIdx + 1 < quizQuestions.length) {
-    document.getElementById('quizNextWrap').style.display = 'block';
-  } else {
-    setTimeout(() => showQuizScore(), 1200);
-  }
-}
-
-function nextQuizQuestion() {
-  quizCurrent++;
-  const pips = document.querySelectorAll('#quizProgress .roleplay-pip');
-  if (pips[quizCurrent]) pips[quizCurrent].style.background = 'var(--accent)';
-  loadQuizQuestion(quizCurrent);
-}
-
-function showQuizScore() {
-  document.getElementById('quizCase').style.display = 'none';
-  document.getElementById('quizOptions').style.display = 'none';
-  document.getElementById('quizFeedback').style.display = 'none';
-  document.getElementById('quizNextWrap').style.display = 'none';
-  document.getElementById('quizProgress').style.display = 'none';
-
-  const total = quizQuestions.length;
-  const scoreEl = document.getElementById('quizScore');
-  scoreEl.style.display = 'block';
-  document.getElementById('quizScoreCircle').textContent = `${quizCorrect}/${total}`;
-
-  let title, msg;
-  if (quizCorrect === total) {
-    title = 'Täydellinen!';
-    msg = 'Osaat erottaa turvalliset ja riskialttiit tilanteet. Olet valmis käyttämään AI:ta!';
-  } else if (quizCorrect >= total - 1) {
-    title = 'Hienosti!';
-    msg = 'Melkein täydet — lue vielä virheellisten kohtien palautteet.';
-  } else {
-    title = quizCorrect + '/' + total + ' oikein';
-    msg = 'Palaa teoriaosuuteen ja kertaa neljä asiaa jotka pidetään itsellä.';
-  }
-  document.getElementById('quizScoreTitle').textContent = title;
-  document.getElementById('quizScoreMsg').textContent = msg;
-  scoreEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-let quizScoreText = '';
-function copyQuizScore() {
-  quizScoreText = `Mitä tekisit? — tulos: ${quizCorrect}/${quizQuestions.length}`;
-  navigator.clipboard.writeText(quizScoreText).then(() => {
-    event.target.textContent = '✓ Kopioitu!';
-    setTimeout(() => { event.target.textContent = 'Kopioi tulos'; }, 2200);
-  });
-}
-
-initQuiz();
-
-updateProgress();
-</script>
-
-<!-- AI Chat Widget -->
-<script>
-fetch('/ai-chat-widget.html')
-  .then(r => r.text())
-  .then(html => {
-    document.body.insertAdjacentHTML('beforeend', html);
-  })
-  .catch(e => console.error('Failed to load AI chat widget:', e));
+  initAutosave();
+});
 </script>
 </body>
 </html>
