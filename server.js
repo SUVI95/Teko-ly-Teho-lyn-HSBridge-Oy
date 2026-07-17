@@ -532,7 +532,7 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli7-ai-tyonhaussa',
   'moduuli-tyonhaku',
   'moduuli5-ai-creation-sprint-legacy',
-  'moduuli1-tietosuoja-legacy', // superseded by CRM Context Hygiene — kept for admin rollback
+  'moduuli1-tietosuoja-legacy', // superseded by Turvatarkistus CRM — kept for admin rollback
   'moduuli-esitykset-tarjoukset-viestinta-gamma-studio',
   'moduuli-elava-cv-editorial',
   'moduuli-elava-cv-veyssette',
