@@ -257,6 +257,12 @@
       if (d.fields && d.fields.t6url) lines.push('Suno: ' + String(d.fields.t6url).slice(0, 160));
       if (d.done && d.done.length) lines.push('Valmiit osiot: ' + d.done.join(', '));
     }
+    if (moduleId.indexOf('musiikkikampanja') >= 0) {
+      if (d.curScreen) lines.push('Osio: ' + d.curScreen + '/8');
+      if (d.fields && d.fields.t1artist) lines.push('Artisti: ' + String(d.fields.t1artist).slice(0, 120));
+      if (d.fields && d.fields.t1track) lines.push('Julkaisu: ' + String(d.fields.t1track).slice(0, 120));
+      if (d.done && d.done.length) lines.push('Valmiit osiot: ' + d.done.join(', '));
+    }
     return escapeHtml(lines.filter(Boolean).join('\n\n') || parsed.summary || 'Tallennettu');
   }
 

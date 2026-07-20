@@ -60,6 +60,7 @@ function injectModulePersistenceScripts(html, moduleId) {
     moduleId !== 'moduuli1b-ai-automaatio' &&
     moduleId !== 'moduuli1c-ai-automaatio' &&
     moduleId !== 'moduuli-ai-musiikkituottaja' &&
+    moduleId !== 'moduuli-ai-musiikkikampanja' &&
     !html.includes('/js/module-autosave.js');
   const tags = [bootScript];
   if (needsModuleWork) tags.push('<script src="/js/module-work.js"></script>');

@@ -160,7 +160,7 @@ const GIFTS = {
     emails: parseEmailList(process.env.SANTTU_GIFT_EMAIL, ['korho.san97@proton.me', TEST_STUDENT_EMAIL])
   },
   musiikki: {
-    moduleId: 'moduuli-ai-musiikkituottaja',
+    moduleIds: ['moduuli-ai-musiikkituottaja', 'moduuli-ai-musiikkikampanja'],
     firstName: 'tomi',
     emails: parseEmailList(process.env.MUSIIKKI_GIFT_EMAIL, [
       'tomi.hiltunen31@gmail.com',

@@ -7,7 +7,8 @@ const MODULE_WORK_IDS = [
   'moduuli5-ai-creation-sprint__work',
   'moduuli8-ai-polku__work',
   'moduuli9-haastattelu__work',
-  'moduuli-ai-musiikkituottaja__work'
+  'moduuli-ai-musiikkituottaja__work',
+  'moduuli-ai-musiikkikampanja__work'
 ];
 
 async function resolveUserId(req) {
