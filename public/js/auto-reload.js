@@ -39,11 +39,12 @@
         var id = d && d.buildId ? String(d.buildId) : "";
         if (!id) return;
         var prev = read();
+        // Always record the current id first, so a reload can never loop
+        // (after reloading, prev === id and no further reload is triggered).
+        store(id);
         if (prev && prev !== id) {
           window.location.reload();
-          return;
         }
-        if (!prev) store(id);
       })
       .catch(function () {
         /* ignore */
