@@ -66,7 +66,9 @@ function injectModulePersistenceScripts(html, moduleId) {
   // Auto-reload open tabs after a deploy so students always see the current
   // module without having to know how to refresh the browser.
   if (!html.includes('/js/auto-reload.js')) {
-    tags.push('<script src="/js/auto-reload.js"></script>');
+    // Versioned URL busts any stale cached copy of the script (e.g. an earlier
+    // buggy build) since the module HTML itself is always served no-store.
+    tags.push('<script src="/js/auto-reload.js?v=4"></script>');
   }
   const inject = tags.join('');
   const bodyClose = '</body>';
@@ -172,7 +174,9 @@ app.get('/js/feedback.js', (req, res) => {
 app.get('/js/auto-reload.js', (req, res) => {
   const filePath = path.join(__dirname, 'public', 'js', 'auto-reload.js');
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, max-age=300');
+  // Never cache: a stale copy of this file can cause reload loops that are
+  // very hard to recover from on a student's open tab.
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(filePath, (err) => {
     if (err) {
       res.status(404).send('/* auto-reload.js not found */');
