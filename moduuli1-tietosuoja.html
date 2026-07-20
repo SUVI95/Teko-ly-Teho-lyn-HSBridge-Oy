@@ -710,7 +710,7 @@ const TICKETS = [
     title:'Korjaa teksti ennen kuin se menee ChatGPT:lle',
     composeLbl:'Turvallinen viesti tekoälylle',
     composeTitle:'Kirjoita uusi teksti, jonka voi lähettää ChatGPT:lle',
-    composeHelp:'Säilytä tavoite (asiakkaiden ryhmittely). Poista kaikki, jolla henkilön voi tunnistaa — myös asiakasnumerot.',
+    composeHelp:'Säilytä tavoite (asiakkaiden ryhmittely). Poista kaikki, jolla ihmisen tai yrityksen voi tunnistaa.',
     minLen:60,
     type:'rewrite',
     situation:'Kollega Minna (myynti) haluaa pyytää ChatGPT:ltä apua asiakkaiden ryhmittelyyn ennen soittokierrosta. Hänen luonnoksensa on alla sellaisena kuin hän aikoo sen tekoälylle lähettää.',
@@ -720,18 +720,17 @@ const TICKETS = [
       'Voisitko esittää saman pyynnön yleisesti, niin ettei kukaan ole tunnistettavissa?'
     ],
     forbidden:[
-      {id:'names', label:'Asiakkaiden nimet', keys:['laura','nieminen','jari','heikkil','sanna','virtanen','mikael','aho','riikka','salo']},
-      {id:'mail', label:'Sähköpostit', keys:['@','firma.fi','kauppa.fi','boreal.fi']},
-      {id:'phone', label:'Puhelinnumerot', keys:['040','552','8811','050','441','2093']},
-      {id:'crmid', label:'CRM-asiakasnumerot', keys:['crm-','a-90441','a-88102','a-77219','a-70558','a-69912','asiakasnumero']},
-      {id:'company', label:'Asiakasyritysten nimet', keys:['frostbite','lumina','kaamos','boreal','polaris']},
-      {id:'internal', label:'Sisäiset muistiinpanot / liikesalaisuus', keys:['maksuhäiri','kilpailij','harkitse','irtisano','tyytymät']}
+      {id:'names', label:'Asiakkaiden nimet', keys:['laura','nieminen','jari','heikkil','sanna','virtanen']},
+      {id:'mail', label:'Sähköposti', keys:['@','kauppa.fi','sanna.v']},
+      {id:'phone', label:'Puhelinnumero', keys:['040','552','8811']},
+      {id:'company', label:'Asiakasyritysten nimet', keys:['frostbite','lumina','kaamos']},
+      {id:'internal', label:'Sisäinen muistiinpano', keys:['maksuhäiri','sisäinen huom']}
     ],
     required:[
       {id:'seg', label:'Pyytää ryhmittelyä / apua', keys:['segment','ryhm','prior','luokit','jaot','auta','ehdota','järjest','asiakas']},
       {id:'anon', label:'Ilman henkilötietoja', keys:['anonyymi','ilman nimi','ilman henkil','ei nimi','ei sähkö','ei puhelin','yleist','ei yksilö','kuvitteell','dummy','haarukka','toimiala','ostosum']}
     ],
-    model:'Esimerkki turvallisesta tekstistä: “Minulla on noin 20 yritysasiakasta. En anna nimiä tai numeroita — vain toimiala, ostosummahaarukka (esim. 4–15 t€) ja ostotiheys. Ehdota 3 ryhmää ja kenelle kannattaa olla yhteydessä ensin.” Nimet, sähköpostit, puhelimet, yritysten nimet, CRM-numerot, tarkat summat ja sisäiset muistiinpanot jäävät pois.',
+    model:'Esimerkki turvallisesta tekstistä: “Minulla on noin 20 yritysasiakasta. En anna nimiä — vain toimiala, ostosummahaarukka (esim. 4–15 t€) ja ostotiheys. Ehdota 3 ryhmää ja kenelle kannattaa olla yhteydessä ensin.” Nimet, sähköposti, puhelin, yritysten nimet, tarkat summat ja sisäiset muistiinpanot jäävät pois.',
     doc:()=>`
       <div class="msg">
         <div class="av" style="background:#2563a8">MK</div>
@@ -747,19 +746,16 @@ const TICKETS = [
           <div class="art" style="background:rgba(37,99,168,.06);border:1px solid rgba(37,99,168,.18);border-radius:10px;padding:.85rem 1rem;margin-bottom:.9rem">
             <div class="art-n" style="color:#2563a8">Mitä nämä lyhenteet tarkoittavat?</div>
             <strong>LTV</strong> (Lifetime Value) = asiakkuuden elinkaariarvo — kuinka paljon rahaa asiakas on tuonut yhteensä.<br>
-            <strong>CRM-A-xxxxx</strong> = asiakkaan yksilöivä numero yrityksen asiakasrekisterissä (CRM). Sillä pääsee kaikkiin asiakkaan tietoihin.<br>
             <strong>VIP-liputus</strong> = sisäinen merkintä, jolla arvokkaimmat asiakkaat nostetaan jonon kärkeen.<br>
             <strong>“Sisäinen huom.”</strong> = myynnin omat muistiinpanot asiakkaasta.
           </div>
-          <p style="font-family:var(--mono);font-size:.86rem;background:var(--paper);padding:1rem;border-radius:10px;line-height:1.75;white-space:pre-wrap">Segmentoi nämä TOP-asiakkaat ja kerro kenelle soitetaan ensin:
+          <p style="font-family:var(--mono);font-size:.86rem;background:var(--paper);padding:1rem;border-radius:10px;line-height:1.9;white-space:pre-wrap">Auta minua priorisoimaan asiakkaat. Kenelle soitan ensin?
 
-1. Laura Nieminen · Frostbite Oy · CRM-A-90441 · laura.nieminen@firma.fi · LTV 12 400 € · sisäinen huom: maksuhäiriö 6/2025, harkitsee kilpailijaa
-2. Jari Heikkilä · Lumina Soft · CRM-A-88102 · 040-552 8811 · LTV 9 200 €
-3. Sanna Virtanen · Kaamos Group · CRM-A-77219 · sanna.v@kauppa.fi · LTV 7 800 €
-4. Mikael Aho · Boreal Data · CRM-A-70558 · mikael.aho@boreal.fi · LTV 15 100 €
-5. Riikka Salo · Polaris Oy · CRM-A-69912 · 050-441 2093 · LTV 4 300 € · sisäinen huom: tyytymätön, harkitsee irtisanomista
+1. Laura Nieminen · Frostbite Oy · LTV 12 400 € · sisäinen huom: maksuhäiriö
+2. Jari Heikkilä · Lumina Soft · 040-552 8811 · LTV 9 200 €
+3. Sanna Virtanen · Kaamos Group · sanna.v@kauppa.fi · LTV 7 800 €
 
-Käytä myös sisäistä “VIP-liputusta” jos asiakkaan ostot &gt; 10 000 €.</p>
+Käytä VIP-liputusta jos ostot &gt; 10 000 €.</p>
         </div>
       </div>`
   },
