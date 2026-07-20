@@ -63,13 +63,8 @@ function injectModulePersistenceScripts(html, moduleId) {
   const tags = [bootScript];
   if (needsModuleWork) tags.push('<script src="/js/module-work.js"></script>');
   if (needsAutoSave) tags.push('<script src="/js/module-autosave.js"></script>');
-  // Auto-reload open tabs after a deploy so students always see the current
-  // module without having to know how to refresh the browser.
-  if (!html.includes('/js/auto-reload.js')) {
-    // Versioned URL busts any stale cached copy of the script (e.g. an earlier
-    // buggy build) since the module HTML itself is always served no-store.
-    tags.push('<script src="/js/auto-reload.js?v=4"></script>');
-  }
+  // Auto-reload intentionally disabled: it caused a reload loop on a live
+  // student tab. Do NOT re-inject /js/auto-reload.js here.
   const inject = tags.join('');
   const bodyClose = '</body>';
   const idx = html.lastIndexOf(bodyClose);
