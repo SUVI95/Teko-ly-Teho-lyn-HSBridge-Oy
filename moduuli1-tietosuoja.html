@@ -710,13 +710,13 @@ const TICKETS = [
     title:'Korjaa teksti ennen kuin se menee ChatGPT:lle',
     composeLbl:'Turvallinen viesti tekoälylle',
     composeTitle:'Kirjoita uusi teksti, jonka voi lähettää ChatGPT:lle',
-    composeHelp:'Säilytä tavoite (asiakkaiden ryhmittely). Poista kaikki, jolla ihmisen tai yrityksen voi tunnistaa.',
+    composeHelp:'Säilytä tavoite (apu asiakkaiden tärkeysjärjestykseen). Poista kaikki, jolla henkilön tai yrityksen voi tunnistaa.',
     minLen:60,
     type:'rewrite',
-    situation:'Kollega Minna (myynti) haluaa pyytää ChatGPT:ltä apua asiakkaiden ryhmittelyyn ennen soittokierrosta. Hänen luonnoksensa on alla sellaisena kuin hän aikoo sen tekoälylle lähettää.',
+    situation:'Kollega Minna (myynti) haluaa pyytää ChatGPT:ltä apua asiakkaiden tärkeysjärjestykseen ennen soittokierrosta. Hänen luonnoksensa on alla sellaisena kuin hän aikoo sen tekoälylle lähettää.',
     hints:[
-      'Käy jokainen rivi läpi: mikä siinä yksilöi juuri tietyn ihmisen tai yrityksen? Pelkkä puhelinnumeron poisto harvoin riittää.',
-      'Katso myös rivien “sisäiset huomiot”. Kenelle ne on tarkoitettu — ja pitäisikö niiden lähteä talon ulkopuolelle?',
+      'Lue viesti läpi: mikä siinä paljastaa, kuka asiakas on tai mikä yritys on kyseessä?',
+      'Katso myös “sisäiset huomiot”. Kenelle ne on tarkoitettu — ja pitäisikö niiden lähteä talon ulkopuolelle?',
       'Voisitko esittää saman pyynnön yleisesti, niin ettei kukaan ole tunnistettavissa?'
     ],
     forbidden:[
@@ -724,13 +724,13 @@ const TICKETS = [
       {id:'mail', label:'Sähköposti', keys:['@','kauppa.fi','sanna.v']},
       {id:'phone', label:'Puhelinnumero', keys:['040','552','8811']},
       {id:'company', label:'Asiakasyritysten nimet', keys:['frostbite','lumina','kaamos']},
-      {id:'internal', label:'Sisäinen muistiinpano', keys:['maksuhäiri','sisäinen huom']}
+      {id:'internal', label:'Sisäiset muistiinpanot', keys:['maksuvaike','maksuhäiri','kilpailij','harkitse']}
     ],
     required:[
-      {id:'seg', label:'Pyytää ryhmittelyä / apua', keys:['segment','ryhm','prior','luokit','jaot','auta','ehdota','järjest','asiakas']},
-      {id:'anon', label:'Ilman henkilötietoja', keys:['anonyymi','ilman nimi','ilman henkil','ei nimi','ei sähkö','ei puhelin','yleist','ei yksilö','kuvitteell','dummy','haarukka','toimiala','ostosum']}
+      {id:'seg', label:'Pyytää apua järjestykseen', keys:['segment','ryhm','prior','luokit','jaot','auta','ehdota','järjest','asiakas','tärkeys','soitto']},
+      {id:'anon', label:'Ilman henkilötietoja', keys:['anonyymi','ilman nimi','ilman henkil','ei nimi','ei sähkö','ei puhelin','yleist','ei yksilö','kuvitteell','dummy','toimiala','tilanne']}
     ],
-    model:'Esimerkki turvallisesta tekstistä: “Minulla on noin 20 yritysasiakasta. En anna nimiä — vain toimiala, ostosummahaarukka (esim. 4–15 t€) ja ostotiheys. Ehdota 3 ryhmää ja kenelle kannattaa olla yhteydessä ensin.” Nimet, sähköposti, puhelin, yritysten nimet, tarkat summat ja sisäiset muistiinpanot jäävät pois.',
+    model:'Esimerkki turvallisesta tekstistä: “Minulla on muutama yritysasiakas, joille pitäisi soittaa tällä viikolla. En kerro nimiä tai yhteystietoja — kuvaan vain lyhyesti kunkin tilanteen (esim. iso asiakas jolla maksuvaikeuksia, tyytyväinen kanta-asiakas, uusi asiakas). Missä järjestyksessä kannattaisi soittaa ja miksi?” Nimet, yritykset, puhelin, sähköposti ja sisäiset muistiinpanot jäävät pois.',
     doc:()=>`
       <div class="msg">
         <div class="av" style="background:#2563a8">MK</div>
@@ -744,18 +744,19 @@ const TICKETS = [
         <div class="file-body">
           <h3>Minnan luonnos ChatGPT:lle</h3>
           <div class="art" style="background:rgba(37,99,168,.06);border:1px solid rgba(37,99,168,.18);border-radius:10px;padding:.85rem 1rem;margin-bottom:.9rem">
-            <div class="art-n" style="color:#2563a8">Mitä nämä lyhenteet tarkoittavat?</div>
-            <strong>LTV</strong> (Lifetime Value) = asiakkuuden elinkaariarvo — kuinka paljon rahaa asiakas on tuonut yhteensä.<br>
-            <strong>VIP-liputus</strong> = sisäinen merkintä, jolla arvokkaimmat asiakkaat nostetaan jonon kärkeen.<br>
-            <strong>“Sisäinen huom.”</strong> = myynnin omat muistiinpanot asiakkaasta.
+            <div class="art-n" style="color:#2563a8">Mitä nämä tarkoittavat?</div>
+            <strong>“Sisäinen huom.”</strong> = myynnin omat muistiinpanot asiakkaasta.<br>
+            <strong>VIP-liputus</strong> = sisäinen merkintä, jolla tärkeimmät asiakkaat nostetaan jonon kärkeen.
           </div>
-          <p style="font-family:var(--mono);font-size:.86rem;background:var(--paper);padding:1rem;border-radius:10px;line-height:1.9;white-space:pre-wrap">Auta minua priorisoimaan asiakkaat. Kenelle soitan ensin?
+          <p style="font-family:var(--sans);font-size:.92rem;background:var(--paper);padding:1rem 1.15rem;border-radius:10px;line-height:1.85;white-space:pre-wrap">Moi! Voitko auttaa? Tässä kolme tärkeää asiakasta, joille pitäisi soittaa tällä viikolla. Laita ne mielestäsi parhaaseen soittojärjestykseen ja kerro lyhyesti miksi.
 
-1. Laura Nieminen · Frostbite Oy · LTV 12 400 € · sisäinen huom: maksuhäiriö
-2. Jari Heikkilä · Lumina Soft · 040-552 8811 · LTV 9 200 €
-3. Sanna Virtanen · Kaamos Group · sanna.v@kauppa.fi · LTV 7 800 €
+• Laura Nieminen, Frostbite Oy — iso ja tärkeä asiakas. Sisäinen huom: maksuvaikeuksia, saattaa harkita kilpailijaa.
 
-Käytä VIP-liputusta jos ostot &gt; 10 000 €.</p>
+• Jari Heikkilä, Lumina Soft — tyytyväinen kanta-asiakas, ostaa säännöllisesti. Puh. 040-552 8811.
+
+• Sanna Virtanen, Kaamos Group — uudempi asiakas. Sähköposti sanna.v@kauppa.fi.
+
+Käytä myös sisäistä “VIP-liputusta” tärkeimmille asiakkaille.</p>
         </div>
       </div>`
   },
