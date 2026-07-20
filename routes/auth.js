@@ -188,7 +188,8 @@ router.post('/login', async (req, res) => {
         karpo_gift: isGiftRecipient('karpo', user),
         jani_gift: isGiftRecipient('jani', user),
         ella_gift: isGiftRecipient('ella', user),
-        santtu_gift: isGiftRecipient('santtu', user)
+        santtu_gift: isGiftRecipient('santtu', user),
+        musiikki_gift: isGiftRecipient('musiikki', user)
       }
     });
   } catch (error) {
@@ -301,7 +302,8 @@ router.get('/me', async (req, res) => {
         karpo_gift: isGiftRecipient('karpo', user),
         jani_gift: isGiftRecipient('jani', user),
         ella_gift: isGiftRecipient('ella', user),
-        santtu_gift: isGiftRecipient('santtu', user)
+        santtu_gift: isGiftRecipient('santtu', user),
+        musiikki_gift: isGiftRecipient('musiikki', user)
       }
     });
   } catch (error) {

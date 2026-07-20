@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-musiikkituottaja — henkilökohtainen moduuli</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#14141f;
+  --ink2:#1e1e2e;
+  --paper:#f3f0ea;
+  --white:#fff;
+  --accent:#c45c2a;
+  --accent-soft:rgba(196,92,42,.12);
+  --green:#2a7a4b;
+  --green-soft:rgba(42,122,75,.1);
+  --muted:#6b6880;
+  --border:rgba(20,20,31,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;-webkit-text-size-adjust:100%}
+nav{position:sticky;top:0;z-index:50;background:rgba(243,240,234,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:.8rem 1.25rem;display:flex;justify-content:space-between;align-items:center;gap:.75rem}
+.nav-name{font-weight:700;font-size:.92rem}
+.nav-sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+.tag{font-family:'DM Mono',monospace;font-size:.62rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent);padding:4px 10px;border-radius:4px;white-space:nowrap}
+.hero{background:var(--ink);color:#fff;padding:3.5rem 1.25rem 2.75rem;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 90% 10%,rgba(196,92,42,.22),transparent 55%),radial-gradient(ellipse 50% 50% at 10% 90%,rgba(42,122,75,.12),transparent 50%);pointer-events:none}
+.hero-inner{max-width:720px;margin:0 auto;position:relative;z-index:1}
+.hero .eyebrow{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:.85rem}
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(2rem,6vw,3.1rem);font-weight:400;line-height:1.12;margin-bottom:1rem}
+.hero h1 em{font-style:italic;color:#f0a070}
+.hero p{color:rgba(255,255,255,.62);font-size:1.02rem;max-width:560px;margin-bottom:1.25rem}
+.hero-box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:1.15rem 1.25rem;margin-top:1.5rem}
+.hero-box h3{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#f0a070;margin-bottom:.7rem}
+.hero-box ol{padding-left:1.15rem;color:rgba(255,255,255,.72);font-size:.9rem}
+.hero-box li{margin-bottom:.35rem}
+.tools{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.25rem}
+.tool-pill{font-size:.78rem;padding:5px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.75)}
+.wrap{max-width:720px;margin:0 auto;padding:2rem 1.25rem 5rem}
+.prog{display:flex;gap:5px;margin-bottom:1.75rem}
+.prog i{flex:1;height:4px;border-radius:2px;background:var(--border)}
+.prog i.on{background:var(--accent)}
+.prog i.done{background:var(--green)}
+.card{background:var(--white);border:1px solid var(--border);border-radius:16px;margin-bottom:1.35rem;overflow:hidden;opacity:.32;pointer-events:none;transition:opacity .35s}
+.card.open{opacity:1;pointer-events:auto}
+.card.passed{border-color:rgba(42,122,75,.35)}
+.card-head{padding:1.15rem 1.25rem;border-bottom:1px solid var(--border);display:flex;gap:1rem;align-items:flex-start}
+.num{width:38px;height:38px;border-radius:10px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0}
+.num.done{background:var(--green)}
+.card-head h2{font-family:'DM Serif Display',serif;font-size:1.28rem;font-weight:400;line-height:1.2}
+.time{font-size:.72rem;color:var(--muted);margin-top:.2rem}
+.body{padding:1.25rem}
+.body>p,.body .lead{margin-bottom:.9rem;color:var(--muted);font-size:.93rem}
+.body .lead strong,.body p strong{color:var(--ink)}
+.ohje{background:var(--paper);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:.9rem 1rem;margin:1rem 0;font-size:.88rem;color:var(--ink);line-height:1.65}
+.ohje b{display:block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.4rem;font-weight:500}
+.prompt-box{background:var(--ink2);color:rgba(255,255,255,.82);border-radius:10px;padding:1rem;font-size:.84rem;line-height:1.65;margin:1rem 0;white-space:pre-wrap;font-family:'DM Sans',sans-serif}
+.prompt-box .plabel{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:.55rem}
+label.fld{display:block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:1rem 0 .4rem}
+textarea,input[type=text],input[type=url]{width:100%;border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;font:inherit;font-size:.9rem;resize:vertical;background:#fff;color:var(--ink);outline:none}
+textarea:focus,input:focus{border-color:rgba(196,92,42,.45);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea{min-height:130px}
+.hint{font-size:.78rem;color:var(--muted);margin-top:.35rem;line-height:1.5}
+.row{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.85rem}
+.btn{border:none;border-radius:8px;padding:.72rem 1.05rem;font:inherit;font-size:.85rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-ink{background:var(--ink);color:#fff}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-soft{background:var(--paper);border:1px solid var(--border);color:var(--ink)}
+.btn-green{background:var(--green);color:#fff}
+.gate{display:none;margin-top:1rem;padding:1rem;border-radius:10px;font-size:.88rem;line-height:1.65;white-space:pre-wrap}
+.gate.fail{display:block;background:rgba(196,92,42,.08);border:1px solid rgba(196,92,42,.28);color:#8a3d1a}
+.gate.pass{display:block;background:var(--green-soft);border:1px solid rgba(42,122,75,.3);color:#1d5c36}
+.score-line{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);margin-top:.5rem}
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:1rem 0}
+@media(max-width:640px){.cmp-grid{grid-template-columns:1fr}}
+.cmp-col{background:var(--paper);border:1px solid var(--border);border-radius:10px;padding:.85rem}
+.cmp-col h4{font-size:.8rem;margin-bottom:.5rem}
+.checklist{list-style:none;margin:1rem 0}
+.checklist li{padding:.55rem 0;border-bottom:1px solid var(--border);font-size:.88rem;color:var(--muted);display:flex;gap:.55rem;align-items:flex-start}
+.checklist li::before{content:'→';color:var(--accent);font-weight:700;flex-shrink:0}
+.final-banner{display:none;background:var(--ink);color:#fff;border-radius:16px;padding:1.75rem 1.35rem;margin-top:1.5rem;text-align:center}
+.final-banner h3{font-family:'DM Serif Display',serif;font-size:1.6rem;font-weight:400;margin-bottom:.6rem}
+.final-banner p{color:rgba(255,255,255,.65);font-size:.95rem;margin-bottom:1rem}
+.ext-link{display:inline-flex;align-items:center;gap:.4rem;color:var(--accent);font-weight:600;font-size:.88rem;text-decoration:none;margin:.35rem 0}
+.ext-link:hover{text-decoration:underline}
+.step-note{font-size:.82rem;background:rgba(20,20,31,.04);border-radius:8px;padding:.7rem .9rem;margin:0.75rem 0;color:var(--muted)}
+.loading{opacity:.7}
+.live-prompt{position:relative}
+.live-prompt .plabel{display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap}
+.live-badge{font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:#f0a070;border:1px solid rgba(240,160,112,.35);padding:2px 7px;border-radius:4px}
+.live-prompt.dirty .live-badge{color:rgba(255,255,255,.35);border-color:rgba(255,255,255,.15)}
+.ph{color:rgba(255,255,255,.35);font-style:italic}
+.prompt-box .live-body{white-space:pre-wrap;margin:0;font-size:.82rem;line-height:1.55;overflow-wrap:anywhere;word-break:break-word}
+.step-bar{position:sticky;top:52px;z-index:45;background:rgba(243,240,234,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:.55rem 0;overflow:hidden}
+.step-bar-inner{display:flex;gap:.4rem;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 1rem 2px;scrollbar-width:none}
+.step-bar-inner::-webkit-scrollbar{display:none}
+.step-chip{flex:0 0 auto;min-width:2.4rem;height:2.4rem;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:.78rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 .7rem;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.step-chip.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.step-chip.done{border-color:rgba(42,122,75,.35);color:var(--green);background:var(--green-soft)}
+.step-chip:disabled{opacity:.35;cursor:default}
+.mobile-dock{display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(243,240,234,.97);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:.65rem 1rem calc(.65rem + env(safe-area-inset-bottom));gap:.5rem}
+.mobile-dock .btn{flex:1;min-height:48px;font-size:.9rem}
+.prog-label{font-size:.75rem;color:var(--muted);margin:-.85rem 0 1.1rem}
+@media(max-width:768px){
+  body{padding-bottom:88px}
+  nav{padding:.65rem .85rem;gap:.4rem;align-items:flex-start}
+  .nav-sub,.nav-time{display:none}
+  .nav-name{font-size:.86rem;line-height:1.25;max-width:58vw}
+  .hero{padding:2.1rem 1rem 1.75rem}
+  .hero h1{font-size:clamp(1.75rem,8vw,2.4rem)}
+  .hero p{font-size:.95rem}
+  .hero-box{padding:1rem}
+  .wrap{padding:1.15rem .9rem 2rem}
+  .card{border-radius:14px;margin-bottom:1rem}
+  .card:not(.open){display:none}
+  .card-head{padding:1rem;gap:.75rem}
+  .card-head h2{font-size:1.15rem}
+  .time{font-size:.7rem}
+  .body{padding:1rem}
+  .body>p,.body .lead,.ohje,.step-note,.hint,.checklist li{font-size:.9rem}
+  .prompt-box{padding:.85rem;font-size:.8rem;max-height:220px;overflow:auto}
+  label.fld{font-size:.68rem;margin:1.15rem 0 .45rem;line-height:1.35}
+  textarea,input[type=text],input[type=url]{
+    font-size:16px; /* iOS: no zoom on focus */
+    min-height:120px;
+    padding:.9rem;
+    border-radius:12px;
+    line-height:1.45;
+  }
+  input[type=text],input[type=url]{min-height:48px}
+  .row{flex-direction:column;gap:.5rem;margin-top:1rem}
+  .row .btn{width:100%;min-height:48px;justify-content:center}
+  .btn{padding:.85rem 1rem;border-radius:10px;-webkit-tap-highlight-color:transparent}
+  .mobile-dock{display:flex}
+  .cmp-grid{grid-template-columns:1fr;gap:.6rem}
+  .final-banner{padding:1.35rem 1.1rem}
+  .gate{font-size:.86rem;padding:.9rem}
+}
+@supports(padding:max(0px)){
+  @media(max-width:768px){
+    body{padding-bottom:max(88px, calc(72px + env(safe-area-inset-bottom)))}
+  }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div>
+    <div class="nav-name">Tomi — AI-musiikkituottaja</div>
+    <div class="nav-sub">Henkilökohtainen syventävä moduuli</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;justify-content:flex-end">
+    <span class="tag" id="savePill" style="background:rgba(42,122,75,.12);color:var(--green)">tallennetaan…</span>
+    <span class="tag nav-time">n. 2–2,5 h</span>
+  </div>
+</nav>
+
+<div class="step-bar" id="stepBar" aria-label="Osiot">
+  <div class="step-bar-inner" id="stepBarInner"></div>
+</div>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Sinulle · ChatGPT · Claude · Suno</div>
+    <h1>Älä pyydä biisiä.<br><em>Ohjaa sitä.</em></h1>
+    <p>Olet jo nähnyt perusjutut. Nyt: kolme äänimaailmaa, leikkauspöytä, Suno, äänijälki — sitten soolo/bändi, albumikansi + flyer ChatGPT-kuvalla, ja esitys opettajalle.</p>
+    <div class="tools">
+      <span class="tool-pill">ChatGPT</span>
+      <span class="tool-pill">Claude</span>
+      <span class="tool-pill">Suno</span>
+      <span class="tool-pill">ChatGPT Image</span>
+      <span class="tool-pill">Muistiinpanot</span>
+    </div>
+    <div class="hero-box">
+      <h3>Näin etenet</h3>
+      <ol>
+        <li>Kirjoitat ensin itse — sitten avaat työkalut.</li>
+        <li>Jokainen osio tarkistetaan. Liian löysä työ ei päästä eteenpäin.</li>
+        <li>Lopussa: biisi + soolo/bändi + kansi + flyer → esität kaiken Zoomissa.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="prog" id="prog" aria-hidden="true"></div>
+  <p class="prog-label" id="progLabel">Osio 1 / 9 · Brief</p>
+
+  <!-- ═══ 1 ═══ -->
+  <article class="card open" id="ex1">
+    <div class="card-head">
+      <div class="num" id="n1">1</div>
+      <div>
+        <h2>Oma idea — ilman tekoälyä</h2>
+        <div class="time">⏱ 15–20 min · älä avaa vielä ChatGPT:tä tai Claudea</div>
+      </div>
+    </div>
+    <div class="body">
+      <p class="lead"><strong>Miksi tämä ensin?</strong> Jos aloitat suoraan Sunosta, saat sattumanvaraisen biisin. Tuottaja tietää ensin, mitä hän haluaa kuulla — ja vasta sitten antaa ohjeita.</p>
+      <div class="ohje">
+        <b>Tee näin</b>
+        Vastaa kaikkiin kohtiin omin sanoin. Ole niin tarkka, että toinen tuottaja voisi tehdä biisin ohjeidesi perusteella ilman että kuulee ääntäsi.
+      </div>
+      <ul class="checklist">
+        <li>Genre + alalaji (esim. dark lo-fi trap, ei vain „hiphop”)</li>
+        <li>Kenelle biisi on — yksi kuulijatyyppi</li>
+        <li>Tunnelma kolmella sanalla</li>
+        <li>Miltä biisi ei saa kuulostaa (2–3 kieltoa)</li>
+        <li>Kappaleen tarina viidellä rivillä + työotsikko</li>
+      </ul>
+      <label class="fld" for="t1">Kirjoita briefisi tähän</label>
+      <p class="hint">Esimerkki tarkkuudesta: „Melankolinen neo-soul × drill, 78 BPM, sateinen illan tunnelma. Kuulija: 20-v. joka kävelee bussipysäkille. Ei pop-kliseitä, ei „dreams/fire/heart” -sanoja, ei liian kirkasta laulua.”</p>
+      <textarea id="t1"></textarea>
+      <div class="row">
+        <button class="btn btn-accent" id="btn1check" onclick="checkBrief()">Tarkista brief →</button>
+      </div>
+      <div class="gate" id="g1"></div>
+      <div class="score-line" id="s1"></div>
+      <div class="row" id="row1next" style="display:none">
+        <button class="btn btn-green" onclick="passStep(1)">Brief kelpaa — jatka →</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 2 ═══ -->
+  <article class="card" id="ex2">
+    <div class="card-head">
+      <div class="num" id="n2">2</div>
+      <div>
+        <h2>Sama tarina — kolme ääntä</h2>
+        <div class="time">⏱ 20–25 min · ChatGPT tai Claude</div>
+      </div>
+    </div>
+    <div class="body">
+      <p class="lead"><strong>Mitä saat tästä:</strong> kolme eri biisimaailmaa samasta tarinasta — ja päätöksen, missä maailmassa jatkat. Tuottaja ei juokse ensimmäiseen genreen.</p>
+      <div class="ohje">
+        <b>Tehtävä</b>
+        Ota briefisi tarina (osio 1). Pidä <strong>tunne ja tarina samana</strong>. Vaihda vain äänimaailmaa. Keksi kolme maailmaa jotka ovat oikeasti erilaisia — ei „trap / trap2 / trap3”. Esim. yksi voi olla epätyypillinen yhdistelmä (kansanlaulu × drill, kirkkourut × R&amp;B…).
+      </div>
+      <div class="prompt-box"><div class="plabel">Kopioi työkaluun — toista kolmelle maailmalle</div>Briefini tarina (älä muuta tarinaa):
+[LIITÄ]
+
+Äänimaailma nyt: [GENRE + 3 äänisanaa]
+
+Kirjoita vain KERTOÄE (4–8 riviä) tälle maailmalle.
+Säännöt: konkreettisia kuvia, ei unelma/sydän/tuli -kliseitä, kieli = [suomi/englanti].
+Ennen lyriikkaa: yksi lause siitä, miltä biisin pitäisi KUULOSTAA (ei miltä sen pitäisi tuntua).</div>
+      <label class="fld" for="t2core">Tarinan ydin yhdellä kappaleella (briefistä, omin sanoin)</label>
+      <textarea id="t2core" style="min-height:90px"></textarea>
+      <label class="fld" for="t2w1">Maailma 1 — genre + miksi se sopii + kertosäe (liitä tulos)</label>
+      <textarea id="t2w1"></textarea>
+      <label class="fld" for="t2w2">Maailma 2 — eri genre + miksi + kertosäe</label>
+      <textarea id="t2w2"></textarea>
+      <label class="fld" for="t2w3">Maailma 3 — rohkein / outoin vaihtoehto + kertosäe</label>
+      <textarea id="t2w3"></textarea>
+      <label class="fld" for="t2pick">Voittaja: mikä maailma jatkaa — ja mitä kuulijassa se herättää mitä muut eivät?</label>
+      <textarea id="t2pick" style="min-height:100px"></textarea>
+      <label class="fld" for="t2dir">Voittajamaailman ohje seuraavaan osioon (kopioit ChatGPT:lle + Claudelle)</label>
+      <p class="hint">Kirjoita yksi tiivis ohje: tarina, valittu genre, kieli, mitä vältetään, rakenne (säkeistö + kertosäe + bridge).</p>
+      <textarea id="t2dir" style="min-height:130px"></textarea>
+      <div class="row">
+        <button class="btn btn-soft" onclick="copyField('t2dir')">Kopioi voittajaohje</button>
+        <button class="btn btn-accent" onclick="checkPrompts(this)">Tarkista maailmat →</button>
+      </div>
+      <div class="gate" id="g2"></div>
+      <div class="row" id="row2next" style="display:none">
+        <button class="btn btn-green" onclick="passStep(2)">Maailma valittu — jatka →</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 3 ═══ -->
+  <article class="card" id="ex3">
+    <div class="card-head">
+      <div class="num" id="n3">3</div>
+      <div>
+        <h2>ChatGPT vs Claude — sama tehtävä</h2>
+        <div class="time">⏱ 20–25 min · molemmat työkalut</div>
+      </div>
+    </div>
+    <div class="body">
+      <p class="lead"><strong>Mitä saat tästä:</strong> tiedät kumpi työkalu kirjoittaa <em>sinun</em> biisillesi paremmin — ja sinulla on yhdistelmälyriikka, jossa on molempien parhaat rivit.</p>
+      <div class="ohje">
+        <b>Tee näin</b>
+        Kopioi <strong>täsmälleen sama voittajaohje</strong> (osio 2) sekä ChatGPT:hen että Claudeen. Älä muokkaa toista. Pyydä molemmilta koko kappaleen lyriikat (ei vain kertosäettä).
+      </div>
+      <a class="ext-link" href="https://chatgpt.com" target="_blank" rel="noopener">Avaa ChatGPT ↗</a>
+      &nbsp;·&nbsp;
+      <a class="ext-link" href="https://claude.ai" target="_blank" rel="noopener">Avaa Claude ↗</a>
+      <div class="cmp-grid">
+        <div class="cmp-col">
+          <h4>ChatGPT — liitä lyriikka</h4>
+          <textarea id="t3gpt" style="min-height:160px"></textarea>
+        </div>
+        <div class="cmp-col">
+          <h4>Claude — liitä lyriikka</h4>
+          <textarea id="t3claude" style="min-height:160px"></textarea>
+        </div>
+      </div>
+      <label class="fld" for="t3score">Pisteytä (1–5) ja perustele jokainen</label>
+      <p class="hint">Arvioi molemmat näillä: 1) kuvien konkreettisuus 2) kertosäkeen tarttuvuus 3) kliseiden välttäminen 4) ohjeen noudattaminen. Kirjoita taulukkomaisesti.</p>
+      <textarea id="t3score" style="min-height:150px"></textarea>
+      <label class="fld" for="t3hybrid">Yhdistelmäversio — paras riveiltä molemmista + omat korjaukset</label>
+      <textarea id="t3hybrid"></textarea>
+      <label class="fld" for="t3verdict">Tuomio: kumpi voitti missä, ja mitä käytät jatkossa mihinkin</label>
+      <textarea id="t3verdict" style="min-height:100px"></textarea>
+      <div class="row">
+        <button class="btn btn-accent" onclick="checkCompare(this)">Tarkista vertailu →</button>
+      </div>
+      <div class="gate" id="g3"></div>
+      <div class="row" id="row3next" style="display:none">
+        <button class="btn btn-green" onclick="passStep(3)">Vertailu ok — jatka →</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 4 ═══ -->
+  <article class="card" id="ex4">
+    <div class="card-head">
+      <div class="num" id="n4">4</div>
+      <div>
+        <h2>Leikkauspöytä — tapa rakkaat rivit</h2>
+        <div class="time">⏱ 20–25 min · sinä leikkaat, AI korjaa vain pyynnöstä</div>
+      </div>
+    </div>
+    <div class="body">
+      <p class="lead"><strong>Mitä saat tästä:</strong> lyhyemmän, terävämmän lyriikan. Tuottaja ei pyydä „parempaa” — hän poistaa heikon ja korjaa vain sen mikä pitää.</p>
+      <div class="ohje">
+        <b>Säännöt</b>
+        1) Liitä yhdistelmälyriikka osiosta 3.<br>
+        2) Leikkaa itse vähintään ~40 % riveistä. AI ei saa leikata puolestasi.<br>
+        3) Kirjaa mitkä rivit kuolivat ja miksi.<br>
+        4) Valitse 3 heikointa jäljellä olevaa riviä. Korjaa ne ChatGPT:llä tai Claudella <em>yksi rivi kerrallaan</em> — älä regeneroi koko biisiä.
+      </div>
+      <div class="prompt-box"><div class="plabel">Kirurginen korjaus — kopioi työkaluun (toista 3 kertaa)</div>Älä kirjoita biisiä uudelleen.
+Korvaa VAIN tämä yksi rivi. Pidä sävy, riimi ja tavumäärä lähellä alkuperäistä.
+
+Rivi nyt: „[RIVI]”
+Ongelma: [esim. klisee / epäselvä kuva / kuulostaa käännökseltä]
+Korvaa rivillä joka: [mitä haluat sen tekevän]
+
+Anna vain uusi rivi + yksi lause miksi se on parempi.</div>
+      <label class="fld" for="t4raw">Lähtölyriikka (yhdistelmä osiosta 3)</label>
+      <textarea id="t4raw" style="min-height:140px"></textarea>
+      <label class="fld" for="t4cut">Leikattu versio — mitä jäi jäljelle</label>
+      <textarea id="t4cut" style="min-height:140px"></textarea>
+      <label class="fld" for="t4killed">Mitä poistit — listaa 4–8 poistettua riviä / ideaa + miksi ne kuolivat</label>
+      <textarea id="t4killed"></textarea>
+      <label class="fld" for="t4surgery">Kolme kirurgista korjausta: vanha rivi → uusi rivi (ja lyhyt miksi)</label>
+      <textarea id="t4surgery"></textarea>
+      <label class="fld" for="t4final">Lopullinen lyriikka Sunoon (rakennemerkit [Verse] [Chorus] mukaan)</label>
+      <textarea id="t4final" style="min-height:160px"></textarea>
+      <div class="row">
+        <button class="btn btn-soft" onclick="copyField('t4final')">Kopioi lopullinen lyriikka</button>
+        <button class="btn btn-accent" onclick="checkIterate(this)">Tarkista leikkaus →</button>
+      </div>
+      <div class="gate" id="g4"></div>
+      <div class="row" id="row4next" style="display:none">
+        <button class="btn btn-green" onclick="passStep(4)">Lyriikka terävä — Suno-laboratorioon →</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 5 ═══ -->
+  <article class="card" id="ex5">
+    <div class="card-head">
+      <div class="num" id="n5">5</div>
+      <div>
+        <h2>Suno-laboratorio — yksi nuppi kerrallaan</h2>
+        <div class="time">⏱ 20–25 min · kuuntele, älä arvaa</div>
+      </div>
+    </div>
+    <div class="body">
+      <p class="lead"><strong>Mitä saat tästä:</strong> korvan tietoa — mitkä tyylisanat oikeasti muuttavat ääntä. Tämä on testi, ei julkaisu. Julkaisuversio tehdään vasta osiossa 6.</p>
+      <div class="ohje">
+        <b>Laboratoriosäännöt</b>
+        · Sama lyriikka kaikissa kolmessa kokeessa (osio 4 lopullinen).<br>
+        · Jokaisessa kokeessa muutat <strong>vain yhtä asiaa</strong> Style-kentässä.<br>
+        · A = perus. B = vaihda vain lauluääntä. C = vaihda vain rytmiä/rumpuja (tai aikakautta).<br>
+        · Kirjaa mitä <em>kuulit</em> — ei mitä toivoit kuulevasi.
+      </div>
+      <a class="ext-link" href="https://suno.com" target="_blank" rel="noopener">Avaa Suno ↗</a>
+      <div class="step-note">Vinkki: pidä Style lyhyenä (1–2 riviä). Mitä vähemmän sanoja vaihdat, sitä selkeämmin kuulet syyn.</div>
+      <label class="fld" for="t5lyrics">Lukittu lyriikka kokeisiin (liitä osiosta 4)</label>
+      <textarea id="t5lyrics" style="min-height:120px"></textarea>
+      <label class="fld" for="t5a">Koe A — Style-teksti + linkki/nimi + 3 havaintoa äänestä</label>
+      <textarea id="t5a"></textarea>
+      <label class="fld" for="t5b">Koe B — mitä YHTÄ asiaa muutit (esim. vocal) + Style + mitä muuttui korvissa</label>
+      <textarea id="t5b"></textarea>
+      <label class="fld" for="t5c">Koe C — mitä YHTÄ muuta asiaa muutit (rummut/era) + Style + havainto</label>
+      <textarea id="t5c"></textarea>
+      <label class="fld" for="t5win">Voittaja-Style seuraavaan osioon + yksi lause: mikä nuppi vaikutti eniten</label>
+      <textarea id="t5win" style="min-height:100px"></textarea>
+      <div class="row">
+        <button class="btn btn-soft" onclick="copyField('t5win')">Kopioi voittaja-Style</button>
+        <button class="btn btn-soft" onclick="copyField('t5lyrics')">Kopioi lyrics</button>
+        <button class="btn btn-accent" onclick="checkSunoPrep(this)">Tarkista laboratorio →</button>
+      </div>
+      <div class="gate" id="g5"></div>
+      <div class="row" id="row5next" style="display:none">
+        <button class="btn btn-green" onclick="passStep(5)">Korva oppi — lukitse Style ja julkaise →</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 6 ═══ -->
+  <article class="card" id="ex6">
+    <div class="card-head">
+      <div class="num" id="n6">6</div>
+      <div>
+        <h2>Julkaisuversio — korjaa korvan jälkeen</h2>
+        <div class="time">⏱ 15–20 min · yksi biisi ulos, ei uutta laboratoriota</div>
+      </div>
+    </div>
+    <div class="body">
+      <p class="lead"><strong>Ero osioon 5:</strong> laboratorio testasi Style-nuppeja. Tässä et enää kokeile genrejä — lukitset voittaja-Stylen, teet <em>yhden</em> julkaisuversion, ja korjaat sanoja sen mukaan mitä melodia tekee äänelle.</p>
+      <div class="ohje">
+        <b>Tee näin (järjestyksessä)</b>
+        1) Lukitse osiossa 5 valittu Style. Älä vaihda genreä enää.<br>
+        2) Generoi <strong>yksi</strong> kappale lopullisella lyriikalla.<br>
+        3) Kuuntele: missä sanat törmäävät melodiaan / fraasiin / hengitykseen?<br>
+        4) Korjaa 2–4 riviä (ChatGPT/Claude tai itse). Style pysyy samana.<br>
+        5) Generoi <strong>vain se korjattu julkaisuversio</strong> — tämä on se jonka soitat.
+      </div>
+      <div class="step-note">Kielletty tässä osiossa: uudet genretestit, „kokeillaan vielä R&amp;B:tä”, kolmen version Style-vertailu. Se oli osio 5.</div>
+      <label class="fld" for="t6style">Lukittu Style (kopioi osiosta 5 — ei saa vaihtua)</label>
+      <textarea id="t6style" style="min-height:70px"></textarea>
+      <label class="fld" for="t6v1">Ensimmäinen generointi — linkki/nimi + missä sanat / fraasit ontuvat</label>
+      <textarea id="t6v1"></textarea>
+      <label class="fld" for="t6fix">Korjatut 2–4 riviä: vanha → uusi (mikä kuulosti väärältä melodialla)</label>
+      <textarea id="t6fix"></textarea>
+      <label class="fld" for="t6v2">Julkaisuversio — linkki/nimi + yksi lause miksi tämä on se jonka soitat</label>
+      <textarea id="t6v2" style="min-height:90px"></textarea>
+      <label class="fld" for="t6url">Julkaisuversion linkki (Suno share / URL)</label>
+      <input type="url" id="t6url" placeholder="https://suno.com/...">
+      <p class="hint">Jos linkki ei aukea puhelimessa: kappaleen tarkka nimi + tili. Soitat silti Zoomissa.</p>
+      <label class="fld" for="t6honest">Studio-rehellisyys: jos tämä menisi oikeaan studioprojektiin, mitä korjaisit seuraavaksi (mix, arrange, lyriikka)?</label>
+      <textarea id="t6honest" style="min-height:100px"></textarea>
+      <div class="row">
+        <button class="btn btn-accent" onclick="checkTrack(this)">Tarkista julkaisuversio →</button>
+      </div>
+      <div class="gate" id="g6"></div>
+      <div class="row" id="row6next" style="display:none">
+        <button class="btn btn-green" onclick="passStep(6)">Biisi lukittu — valmistele esitys →</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 7 ═══ -->
+  <article class="card" id="ex7">
+    <div class="card-head">
+      <div class="num" id="n7">7</div>
+      <div>
+        <h2>Äänijälki + työkalupakki</h2>
+        <div class="time">⏱ 15–20 min · jää puhelimeen ensi viikoksi</div>
+      </div>
+    </div>
+    <div class="body">
+      <p class="lead"><strong>Mitä saat tästä:</strong> et kirjoita „yleistä tuottajaohjetta”. Tiivistät <em>tämän päivän päätökset</em> äänijäljeksi — ja rakennat 3 lyhyttä työkalua, joita oikeasti liität ChatGPT:hen / Claudeen seuraavalla biisillä.</p>
+      <div class="ohje">
+        <b>Rakenna äänijälki tämän päivän työstä</b>
+        Käytä vain asioita jotka jo teit: voittajamaailma (2), mitä leikkasit (4), mikä Style-nuppi muutti ääntä (5), julkaisuversion fiilis (6). Jos et muista — selaa ylös. Älä keksi uutta persoonaa tyhjästä.
+      </div>
+      <div class="prompt-box"><div class="plabel">Äänijälki-pohja — täydennä ja liitä työkaluun</div>Olet lyriikka- ja idea-kumppanini. Äänijälkeni:
+
+1) Maailma: [genre + 3 äänisanaa tämän päivän voittajasta]
+2) Kuvat joita käytän: [2–3 konkreettista kuvaa omasta biisistäsi]
+3) Kuvat/sanat jotka on KIELLETTY: [kliseet joita leikkasit tänään]
+4) Kertosäkeen sääntö: [mitä kertosäkeen pitää tehdä — yksi lause]
+5) Suno-Style ydin: [voittaja-Style tiivistettynä]
+6) Työtapa: ensin kertosäe → odota hyväksyntää → sitten säkeistöt. Jos ohje on epäselvä, kysy yksi tarkentava kysymys — älä arvaa.</div>
+      <label class="fld" for="t7dna">Oma äänijälki (täydennetty pohja — kokonaan)</label>
+      <textarea id="t7dna" style="min-height:180px"></textarea>
+      <div class="ohje" style="margin-top:1.25rem">
+        <b>Stressitesti</b>
+        Anna äänijälki ChatGPT:lle tai Claudelle + <strong>uusi</strong> biisi-idea (eri tarina kuin tänään). Pyydä vain kertosäe. Äänijäljen pitää kuulua — ei uutta random-artistia.
+      </div>
+      <label class="fld" for="t7new">Uusi biisi-idea (eri tarina, 3–5 riviä)</label>
+      <textarea id="t7new" style="min-height:80px"></textarea>
+      <label class="fld" for="t7test">Saatu kertosäe + tuomio: kuulostaako samalta artistilta? Jos ei — mitä lisäsit äänijälkeen?</label>
+      <textarea id="t7test"></textarea>
+      <div class="ohje" style="margin-top:1.25rem">
+        <b>Kolme työkalua taskuun</b>
+        Kirjoita jokaisesta <strong>valmis kopioitava ohje</strong> (lyhyt). Nämä ovat arvokkaampia kuin yksi pitkä „ole tuottaja” -teksti.
+      </div>
+      <label class="fld" for="t7tool1">Työkalu 1 — Klisee-tappaja (liitän heikon lyriikan → se tappaa kliseet ja ehdottaa korvaavat kuvat)</label>
+      <textarea id="t7tool1" style="min-height:90px"></textarea>
+      <label class="fld" for="t7tool2">Työkalu 2 — Kertosäe-puristin (max 6 riviä, tarttuva, briefiin kiinni)</label>
+      <textarea id="t7tool2" style="min-height:90px"></textarea>
+      <label class="fld" for="t7tool3">Työkalu 3 — Suno-Style-kääntäjä (suomenkielinen idea → 1–2 rivin Style englanniksi + mitä EI saa laittaa)</label>
+      <textarea id="t7tool3" style="min-height:90px"></textarea>
+      <div class="row">
+        <button class="btn btn-soft" onclick="copyField('t7dna')">Kopioi äänijälki</button>
+        <button class="btn btn-soft" onclick="copyPack()">Kopioi koko paketti</button>
+        <button class="btn btn-accent" onclick="checkSystem(this)">Tarkista paketti →</button>
+      </div>
+      <div class="gate" id="g7"></div>
+      <div class="row" id="row7next" style="display:none">
+        <button class="btn btn-green" onclick="passStep(7)">Paketti taskussa — rakenna artistibrändi →</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 8 ═══ -->
+  <article class="card" id="ex8">
+    <div class="card-head">
+      <div class="num" id="n8">8</div>
+      <div>
+        <h2>Soolo vai bändi — kansi + flyer</h2>
+        <div class="time">⏱ 20–25 min · ChatGPT kuva generointi</div>
+      </div>
+    </div>
+    <div class="body">
+      <p class="lead"><strong>Mitä saat tästä:</strong> ennen esitystä päätät <em>kuka julkaisee</em> — soolo vai bändi — ja teet kaksi kuvaa ChatGPT:llä: albumin kannen ja flyerin. Zoomissa näytät ne + soitat biisin.</p>
+
+      <div class="ohje">
+        <b>Vaihe A — päätä kokoonpano</b>
+        Älä hyppää kuvaan. Kirjaa ensin: soolo / duo / bändi, nimi, lyhyt tarina, ja jos bändi — ketkä ja mitä tekevät.
+      </div>
+      <label class="fld" for="t8form">Kokoonpano: SOOLO / DUO / BÄNDI — ja miksi juuri tämä biisille</label>
+      <textarea id="t8form" style="min-height:70px"></textarea>
+      <label class="fld" for="t8name">Artistin tai bändin nimi + yksi lauseen bio</label>
+      <textarea id="t8name" style="min-height:70px"></textarea>
+      <label class="fld" for="t8crew">Jos soolo: „minä + mahdollinen tuottaja/alias”. Jos bändi: jäsenet ja roolit (esim. vokaalit, biitit, basso)</label>
+      <textarea id="t8crew" style="min-height:80px"></textarea>
+      <label class="fld" for="t8album">Julkaisun nimi (single/EP/albumi) + yksi lause mistä se kertoo</label>
+      <textarea id="t8album" style="min-height:70px"></textarea>
+      <label class="fld" for="t8mood">3 tunnelmasanaa / genren fiilis (menee suoraan kuvaohjeeseen)</label>
+      <textarea id="t8mood" style="min-height:55px"></textarea>
+      <label class="fld" for="t8scene">Yksi konkreettinen kuva biisistä (esine, paikka, hetki — ei klisee)</label>
+      <textarea id="t8scene" style="min-height:55px"></textarea>
+      <label class="fld" for="t8look">Visuaalinen look yhdellä rivillä (esim. grainy night photo / bold graphic poster)</label>
+      <textarea id="t8look" style="min-height:55px"></textarea>
+      <label class="fld" for="t8event">Flyer-rivi: Out now / Live + paikka + päivä (saa olla keksitty)</label>
+      <textarea id="t8event" style="min-height:55px"></textarea>
+      <label class="fld" for="t8handle">Someliite flyerille (esim. @nimi) — tai kirjoita „ei vielä”</label>
+      <textarea id="t8handle" style="min-height:45px"></textarea>
+
+      <div class="ohje" style="margin-top:1.25rem">
+        <b>Vaihe B — albumin kansi (ChatGPT Image)</b>
+        Ohje alla <strong>päivittyy kun vastaat</strong>. Kun se näyttää hyvältä → Kopioi → ChatGPT → luo kuva. Voit vielä muokata ohjetta käsin.
+      </div>
+      <a class="ext-link" href="https://chatgpt.com" target="_blank" rel="noopener">Avaa ChatGPT (kuva) ↗</a>
+      <div class="step-note"><strong>Vinkki:</strong> mitä tarkempi „konkreettinen kuva” ja look, sitä vähemmän geneerinen kansi.</div>
+      <div class="prompt-box live-prompt" id="coverLiveWrap">
+        <div class="plabel"><span>Kansiohje · päivittyy vastauksista</span><span class="live-badge" id="coverLiveBadge">LIVE</span></div>
+        <pre class="live-body" id="coverPromptLive"></pre>
+      </div>
+      <div class="row">
+        <button class="btn btn-soft" type="button" onclick="copyLivePrompt('cover')">Kopioi kansiohje</button>
+        <button class="btn btn-soft" type="button" onclick="resyncPrompt('cover')">Päivitä taas vastauksista</button>
+      </div>
+      <label class="fld" for="t8coverprompt">Kansiohje (muokkaa jos haluat — muuten täyttyy automaattisesti)</label>
+      <textarea id="t8coverprompt" style="min-height:140px"></textarea>
+      <label class="fld" for="t8cover">Kansi valmis: kuvaile mitä sait + tallensitko (Kuvat / Zoomissa näytän). Jos regeneroit, mitä muutit ohjeessa?</label>
+      <textarea id="t8cover"></textarea>
+
+      <div class="ohje" style="margin-top:1.25rem">
+        <b>Vaihe C — flyer (keikka / julkaisu)</b>
+        Sama juttu: ohje päivittyy vastauksistasi. Kopioi ChatGPT:hen kun valmis.
+      </div>
+      <div class="prompt-box live-prompt" id="flyerLiveWrap">
+        <div class="plabel"><span>Flyer-ohje · päivittyy vastauksista</span><span class="live-badge" id="flyerLiveBadge">LIVE</span></div>
+        <pre class="live-body" id="flyerPromptLive"></pre>
+      </div>
+      <div class="row">
+        <button class="btn btn-soft" type="button" onclick="copyLivePrompt('flyer')">Kopioi flyer-ohje</button>
+        <button class="btn btn-soft" type="button" onclick="resyncPrompt('flyer')">Päivitä taas vastauksista</button>
+      </div>
+      <label class="fld" for="t8flyerprompt">Flyer-ohje (muokkaa jos haluat)</label>
+      <textarea id="t8flyerprompt" style="min-height:140px"></textarea>
+      <label class="fld" for="t8flyer">Flyer valmis: kuvaile tulos + missä se on tallessa esitystä varten</label>
+      <textarea id="t8flyer" style="min-height:90px"></textarea>
+      <label class="fld" for="t8match">Yhteensopivuus: kuuluvatko kansi + flyer + biisi samaan maailmaan? Mitä yhtenäistisit vielä?</label>
+      <textarea id="t8match" style="min-height:90px"></textarea>
+      <div class="row">
+        <button class="btn btn-accent" onclick="checkVisuals(this)">Tarkista brändipaketti →</button>
+      </div>
+      <div class="gate" id="g8"></div>
+      <div class="row" id="row8next" style="display:none">
+        <button class="btn btn-green" onclick="passStep(8)">Kansi + flyer valmiit — esitykseen →</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ═══ 9 ═══ -->
+  <article class="card" id="ex9">
+    <div class="card-head">
+      <div class="num" id="n9">9</div>
+      <div>
+        <h2>Esitä opettajalle</h2>
+        <div class="time">⏱ 10–15 min · biisi + kansi + flyer Zoomissa</div>
+      </div>
+    </div>
+    <div class="body">
+      <p class="lead"><strong>Tämä on lopputulos.</strong> Esittelet artistin/bändin, näytät kannen ja flyerin, soitat biisin — ja kerrot <em>miten ohjasit</em>, et vain „AI teki”.</p>
+      <div class="ohje">
+        <b>Esityksen runko (3–4 min)</b>
+        1) Soolo vai bändi + nimi yhdellä lauseella.<br>
+        2) Näytä albumikansi (puhelin / jaa näyttö).<br>
+        3) Näytä flyer.<br>
+        4) Soita julkaisuversio.<br>
+        5) Yksi tuotantovalinta (maailma / leikkaus / Style-nuppi).<br>
+        6) Yksi asia jonka teet ensi kerralla toisin.
+      </div>
+      <label class="fld" for="t9pitch">Kirjoita esityksesi tähän (voit lukea Zoomissa)</label>
+      <textarea id="t9pitch" style="min-height:160px"></textarea>
+      <label class="fld" for="reflectionText">Reflektio: milloin tekoäly on työkalu musiikissa — ja milloin se tekee työstä laiskaa?</label>
+      <textarea id="reflectionText" style="min-height:120px"></textarea>
+      <label class="fld" for="t9ready">Vahvista: olen valmis näyttämään kannen + flyerin ja soittamaan biisin</label>
+      <input type="text" id="t9ready" placeholder="Kirjoita: VALMIS">
+      <div class="row">
+        <button class="btn btn-accent" onclick="checkFinal(this)">Tarkista esitysvalmius →</button>
+        <button class="btn btn-ink" onclick="saveAllWork()">Tallenna työsi</button>
+      </div>
+      <div class="gate" id="g9"></div>
+      <div class="row" id="row9next" style="display:none">
+        <button class="btn btn-green" onclick="passStep(9)">Merkitse moduuli valmiiksi ✓</button>
+      </div>
+    </div>
+  </article>
+
+  <div class="final-banner" id="allDone">
+    <h3>Valmis.</h3>
+    <p>Sinulla on biisi, äänijälki, artistibrändi, albumikansi ja flyer. Avaa Zoom — näytä kuvat ja soita kappale opettajalle.</p>
+    <a class="btn btn-accent" href="/" style="display:inline-block;text-decoration:none">← Takaisin etusivulle</a>
+  </div>
+</div>
+
+<div class="mobile-dock" id="mobileDock">
+  <button type="button" class="btn btn-soft" id="dockSave" onclick="saveAllWork(false)">Tallenna</button>
+  <button type="button" class="btn btn-accent" id="dockJump" onclick="jumpToCurrent()">Nykyinen osio</button>
+</div>
+
+<script src="/js/reflections.js"></script>
+<script>
+/* Opt out of generic scraper — this module uses module-work → reflections DB */
+/* Persists as moduuli-ai-musiikkituottaja__work */
+window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;
+window.__MODULE_ID__ = 'moduuli-ai-musiikkituottaja';
+const MODULE_ID = 'moduuli-ai-musiikkituottaja';
+const KEY = 'musiikki_tuottaja_v3_';
+const TOTAL = 9;
+const PASS_SCORE = 7;
+
+let done = [];
+try { done = JSON.parse(localStorage.getItem(KEY + 'done') || '[]'); } catch (e) { done = []; }
+let mwApi = null;
+const STEP_LABELS = {
+  1: 'Brief', 2: '3 ääntä', 3: 'Vertailu', 4: 'Leikkaus',
+  5: 'Laboratorio', 6: 'Julkaisu', 7: 'Äänijälki', 8: 'Kansi', 9: 'Esitys'
+};
+
+const FIELDS = [
+  't1','t2core','t2w1','t2w2','t2w3','t2pick','t2dir',
+  't3gpt','t3claude','t3score','t3hybrid','t3verdict',
+  't4raw','t4cut','t4killed','t4surgery','t4final',
+  't5lyrics','t5a','t5b','t5c','t5win',
+  't6style','t6v1','t6fix','t6v2','t6url','t6honest',
+  't7dna','t7new','t7test','t7tool1','t7tool2','t7tool3',
+  't8form','t8name','t8crew','t8album','t8mood','t8scene','t8look','t8event','t8handle',
+  't8coverprompt','t8cover','t8flyerprompt','t8flyer','t8match',
+  't9pitch','reflectionText','t9ready'
+];
+
+const PROMPT_SOURCE_IDS = ['t8form','t8name','t8crew','t8album','t8mood','t8scene','t8look','t8event','t8handle'];
+let coverPromptDirty = false;
+let flyerPromptDirty = false;
+
+function val(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+function slot(text, fallback) {
+  const t = String(text || '').trim();
+  if (!t) return '‹ ' + fallback + ' ›';
+  return t;
+}
+
+function firstLine(text) {
+  const t = String(text || '').trim();
+  if (!t) return '';
+  return t.split(/\n/)[0].trim();
+}
+
+function buildCoverPrompt() {
+  const name = slot(firstLine(val('t8name')) || val('t8name'), 'artistin/bändin nimi');
+  const album = slot(firstLine(val('t8album')) || val('t8album'), 'julkaisun nimi');
+  const form = slot(val('t8form'), 'soolo / duo / bändi');
+  const crew = slot(val('t8crew'), 'kokoonpano / roolit');
+  const mood = slot(val('t8mood'), '3 tunnelmasanaa');
+  const scene = slot(val('t8scene'), 'konkreettinen kuva biisistä');
+  const look = slot(val('t8look'), 'visuaalinen look');
+  return (
+    'Create a square album cover for a music release.\n\n' +
+    'Act / lineup: ' + form + '\n' +
+    'Artist / band: ' + name + '\n' +
+    'Who is in it: ' + crew + '\n' +
+    'Release title: ' + album + '\n' +
+    'Mood / genre feel: ' + mood + '\n' +
+    'Visual concept (from the song): ' + scene + '\n' +
+    'Visual style: ' + look + '\n' +
+    'Composition: one strong focal point, square 1:1, print-ready, high detail\n' +
+    'Text on cover (large & readable only, or none): ' + name + ' / ' + album + '\n' +
+    'Avoid: blurry tiny text, real brand logos, celebrity lookalikes, generic stock-AI faces, cliché hearts/roses/fire'
+  );
+}
+
+function buildFlyerPrompt() {
+  const name = slot(firstLine(val('t8name')) || val('t8name'), 'artistin/bändin nimi');
+  const album = slot(firstLine(val('t8album')) || val('t8album'), 'julkaisun nimi');
+  const form = slot(val('t8form'), 'soolo / duo / bändi');
+  const mood = slot(val('t8mood'), '3 tunnelmasanaa');
+  const scene = slot(val('t8scene'), 'konkreettinen kuva biisistä');
+  const look = slot(val('t8look'), 'visuaalinen look');
+  const event = slot(val('t8event'), 'Out now / Live + paikka + päivä');
+  const handle = slot(val('t8handle'), '@handle');
+  return (
+    'Create a vertical concert / release flyer (portrait poster).\n\n' +
+    'Headliner: ' + name + ' (' + form + ')\n' +
+    'Release: ' + album + '\n' +
+    'Show or release line: ' + event + '\n' +
+    'Mood: ' + mood + '\n' +
+    'Visual world: same universe as the album cover — ' + scene + '\n' +
+    'Poster look: ' + look + ', high contrast, huge readable name at top, clear hierarchy\n' +
+    'Leave a clean empty box (bottom-right) for: ' + handle + '\n' +
+    'Avoid: unreadable paragraphs, fake sponsor logos, cluttered stickers, tiny text walls\n' +
+    'Portrait poster, bold typography, print look'
+  );
+}
+
+function setLiveBadge(kind, dirty) {
+  const wrap = document.getElementById(kind + 'LiveWrap');
+  const badge = document.getElementById(kind + 'LiveBadge');
+  if (wrap) wrap.classList.toggle('dirty', !!dirty);
+  if (badge) badge.textContent = dirty ? 'MUOKATTU' : 'LIVE';
+}
+
+function refreshLivePrompts(force) {
+  const cover = buildCoverPrompt();
+  const flyer = buildFlyerPrompt();
+  const coverLive = document.getElementById('coverPromptLive');
+  const flyerLive = document.getElementById('flyerPromptLive');
+  if (coverLive) coverLive.textContent = cover;
+  if (flyerLive) flyerLive.textContent = flyer;
+
+  const coverTa = document.getElementById('t8coverprompt');
+  const flyerTa = document.getElementById('t8flyerprompt');
+  if (coverTa && (force || !coverPromptDirty)) {
+    coverTa.value = cover;
+    saveField('t8coverprompt');
+  }
+  if (flyerTa && (force || !flyerPromptDirty)) {
+    flyerTa.value = flyer;
+    saveField('t8flyerprompt');
+  }
+  setLiveBadge('cover', coverPromptDirty);
+  setLiveBadge('flyer', flyerPromptDirty);
+}
+
+function resyncPrompt(kind) {
+  if (kind === 'cover') coverPromptDirty = false;
+  if (kind === 'flyer') flyerPromptDirty = false;
+  refreshLivePrompts(true);
+}
+
+function copyLivePrompt(kind) {
+  const id = kind === 'flyer' ? 't8flyerprompt' : 't8coverprompt';
+  refreshLivePrompts(false);
+  copyField(id);
+}
+
+function schedulePersist() {
+  if (mwApi) mwApi.scheduleSave();
+}
+
+function wireLivePrompts() {
+  PROMPT_SOURCE_IDS.forEach(function (id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', function () {
+      refreshLivePrompts(false);
+      schedulePersist();
+    });
+  });
+  const coverTa = document.getElementById('t8coverprompt');
+  const flyerTa = document.getElementById('t8flyerprompt');
+  if (coverTa) {
+    coverTa.addEventListener('input', function () {
+      coverPromptDirty = true;
+      setLiveBadge('cover', true);
+      const live = document.getElementById('coverPromptLive');
+      if (live) live.textContent = coverTa.value;
+      saveField('t8coverprompt');
+      schedulePersist();
+    });
+  }
+  if (flyerTa) {
+    flyerTa.addEventListener('input', function () {
+      flyerPromptDirty = true;
+      setLiveBadge('flyer', true);
+      const live = document.getElementById('flyerPromptLive');
+      if (live) live.textContent = flyerTa.value;
+      saveField('t8flyerprompt');
+      schedulePersist();
+    });
+  }
+  refreshLivePrompts(false);
+}
+
+function wc(s) {
+  return String(s || '').trim().split(/\s+/).filter(Boolean).length;
+}
+
+function saveField(id) {
+  const el = document.getElementById(id);
+  if (el) localStorage.setItem(KEY + id, el.value);
+}
+
+function loadField(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const v = localStorage.getItem(KEY + id);
+  if (v != null) el.value = v;
+}
+
+function copyField(id) {
+  const el = document.getElementById(id);
+  if (!el || !el.value.trim()) { alert('Kenttä on tyhjä.'); return; }
+  navigator.clipboard.writeText(el.value).then(function () {
+    alert('Kopioitu.');
+  }).catch(function () {
+    el.select();
+    document.execCommand('copy');
+    alert('Kopioitu.');
+  });
+}
+
+function copyPack() {
+  const parts = [
+    '=== ÄÄNIJÄLKI ===\n' + (document.getElementById('t7dna').value || ''),
+    '=== KLISEE-TAPPAJA ===\n' + (document.getElementById('t7tool1').value || ''),
+    '=== KERTOSÄE-PURISTIN ===\n' + (document.getElementById('t7tool2').value || ''),
+    '=== SUNO-STYLE-KÄÄNTÄJÄ ===\n' + (document.getElementById('t7tool3').value || '')
+  ];
+  const text = parts.join('\n\n');
+  if (wc(text) < 20) { alert('Paketti on vielä tyhjä.'); return; }
+  navigator.clipboard.writeText(text).then(function () {
+    alert('Koko paketti kopioitu.');
+  }).catch(function () {
+    alert('Kopioi käsin kentistä.');
+  });
+}
+
+function renderProg() {
+  const p = document.getElementById('prog');
+  if (!p) return;
+  p.innerHTML = '';
+  for (let i = 1; i <= TOTAL; i++) {
+    const el = document.createElement('i');
+    if (done.includes(i)) el.className = 'done';
+    else if (i === 1 || done.includes(i - 1)) el.className = 'on';
+    p.appendChild(el);
+  }
+  const cur = currentScreen();
+  const lbl = document.getElementById('progLabel');
+  if (lbl) {
+    lbl.textContent = done.length >= TOTAL
+      ? 'Kaikki 9 osiota valmiina'
+      : ('Osio ' + cur + ' / ' + TOTAL + ' · ' + (STEP_LABELS[cur] || ''));
+  }
+  renderStepBar();
+}
+
+function renderStepBar() {
+  const inner = document.getElementById('stepBarInner');
+  if (!inner) return;
+  inner.innerHTML = '';
+  for (let i = 1; i <= TOTAL; i++) {
+    const open = i === 1 || done.includes(i - 1) || done.includes(i);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'step-chip';
+    btn.textContent = done.includes(i) ? ('✓' + i) : String(i);
+    btn.title = STEP_LABELS[i] || ('Osio ' + i);
+    btn.setAttribute('aria-label', 'Osio ' + i + ': ' + (STEP_LABELS[i] || ''));
+    if (done.includes(i)) btn.classList.add('done');
+    else if (i === currentScreen()) btn.classList.add('on');
+    if (!open) {
+      btn.disabled = true;
+    } else {
+      btn.addEventListener('click', function () {
+        const card = document.getElementById('ex' + i);
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+    inner.appendChild(btn);
+  }
+}
+
+function jumpToCurrent() {
+  const cur = currentScreen();
+  const card = document.getElementById('ex' + cur) || document.getElementById('allDone');
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function unlock() {
+  for (let i = 1; i <= TOTAL; i++) {
+    const card = document.getElementById('ex' + i);
+    const open = i === 1 || done.includes(i - 1) || done.includes(i);
+    card.classList.toggle('open', open);
+    card.classList.toggle('passed', done.includes(i));
+    const n = document.getElementById('n' + i);
+    if (done.includes(i)) {
+      n.textContent = '✓';
+      n.classList.add('done');
+    } else {
+      n.textContent = String(i);
+      n.classList.remove('done');
+    }
+  }
+  document.getElementById('allDone').style.display = done.length === TOTAL ? 'block' : 'none';
+  renderProg();
+}
+
+function passStep(n) {
+  if (!done.includes(n)) done.push(n);
+  done.sort(function (a, b) { return a - b; });
+  localStorage.setItem(KEY + 'done', JSON.stringify(done));
+  unlock();
+  const next = document.getElementById('ex' + (n + 1));
+  if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  else document.getElementById('allDone').scrollIntoView({ behavior: 'smooth' });
+  if (mwApi) mwApi.saveNow();
+  else saveAllWork(true);
+}
+
+function currentScreen() {
+  if (done.length >= TOTAL) return TOTAL;
+  if (!done.length) return 1;
+  return Math.min(TOTAL, Math.max.apply(null, done) + 1);
+}
+
+function collectWorkState() {
+  const fields = {};
+  FIELDS.forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) fields[id] = el.value;
+  });
+  return {
+    v: 1,
+    ts: Date.now(),
+    curScreen: currentScreen(),
+    done: done.slice(),
+    coverPromptDirty: !!coverPromptDirty,
+    flyerPromptDirty: !!flyerPromptDirty,
+    fields: fields,
+    shown: { finished: done.length >= TOTAL }
+  };
+}
+
+function applyWorkState(data) {
+  if (!data || typeof data !== 'object') return;
+  if (Array.isArray(data.done)) {
+    done = data.done.map(Number).filter(function (n) { return n >= 1 && n <= TOTAL; });
+    try { localStorage.setItem(KEY + 'done', JSON.stringify(done)); } catch (e) {}
+  }
+  if (typeof data.coverPromptDirty === 'boolean') coverPromptDirty = data.coverPromptDirty;
+  if (typeof data.flyerPromptDirty === 'boolean') flyerPromptDirty = data.flyerPromptDirty;
+  if (data.fields && typeof data.fields === 'object') {
+    Object.keys(data.fields).forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el && data.fields[id] != null) {
+        el.value = data.fields[id];
+        try { localStorage.setItem(KEY + id, el.value); } catch (e) {}
+      }
+    });
+  }
+  unlock();
+  // Keep saved cover/flyer text if user had edited; otherwise rebuild from answers
+  const coverLive = document.getElementById('coverPromptLive');
+  const flyerLive = document.getElementById('flyerPromptLive');
+  if (coverPromptDirty || flyerPromptDirty) {
+    if (coverLive) coverLive.textContent = val('t8coverprompt') || buildCoverPrompt();
+    if (flyerLive) flyerLive.textContent = val('t8flyerprompt') || buildFlyerPrompt();
+    setLiveBadge('cover', coverPromptDirty);
+    setLiveBadge('flyer', flyerPromptDirty);
+  } else {
+    refreshLivePrompts(false);
+  }
+  setTimeout(jumpToCurrent, 80);
+}
+
+function summarizeWork(data) {
+  const n = (data && data.done && data.done.length) || 0;
+  const name = data && data.fields && data.fields.t8name ? String(data.fields.t8name).split('\n')[0].trim() : '';
+  const bits = ['AI-musiikkituottaja', n + '/' + TOTAL + ' osiota'];
+  if (name) bits.push(name.slice(0, 40));
+  if (data && data.shown && data.shown.finished) bits.push('valmis');
+  return bits.join(' · ');
+}
+
+function setSavePill(text, ok) {
+  const pill = document.getElementById('savePill');
+  if (!pill) return;
+  pill.textContent = text;
+  pill.style.background = ok ? 'rgba(42,122,75,.12)' : 'rgba(196,92,42,.12)';
+  pill.style.color = ok ? 'var(--green)' : 'var(--accent)';
+}
+
+async function initBackendWork() {
+  if (!window.moduleWork || typeof window.moduleWork.initModuleWork !== 'function') {
+    setSavePill('paikallinen tallennus', false);
+    return;
+  }
+  try {
+    mwApi = await window.moduleWork.initModuleWork(MODULE_ID, {
+      collect: collectWorkState,
+      apply: applyWorkState,
+      summarize: summarizeWork,
+      debounceMs: 600,
+      legacyPrefix: KEY,
+      fieldIds: FIELDS.slice()
+    });
+    const orig = mwApi.scheduleSave;
+    const origSaveNow = mwApi.saveNow;
+    let t = null;
+    mwApi.scheduleSave = function () {
+      setSavePill('tallennetaan…', false);
+      orig();
+      clearTimeout(t);
+      t = setTimeout(function () { setSavePill('tallennettu ✓', true); }, 900);
+    };
+    mwApi.saveNow = function () {
+      setSavePill('tallennetaan…', false);
+      const p = origSaveNow();
+      Promise.resolve(p).finally(function () { setSavePill('tallennettu ✓', true); });
+      return p;
+    };
+    // Extra flush hooks for mobile tab switches / Zoom multitasking
+    window.addEventListener('pagehide', function () { try { mwApi.saveNow(); } catch (e) {} });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') {
+        try { mwApi.saveNow(); } catch (e) {}
+      }
+    });
+    setSavePill('tallennettu ✓', true);
+  } catch (e) {
+    console.warn('[musiikki] module-work init failed', e);
+    setSavePill('paikallinen tallennus', false);
+  }
+}
+
+function setGate(id, ok, text) {
+  const g = document.getElementById(id);
+  g.className = 'gate ' + (ok ? 'pass' : 'fail');
+  g.textContent = text;
+  const row = document.getElementById('row' + id.slice(1) + 'next');
+  if (row) row.style.display = ok ? 'flex' : 'none';
+}
+
+function setBtnLoading(btn, loading, label) {
+  if (!btn) return;
+  btn.disabled = !!loading;
+  if (loading) {
+    btn.dataset.prev = btn.textContent;
+    btn.textContent = 'Tarkistaa…';
+    btn.classList.add('loading');
+  } else {
+    btn.textContent = label || btn.dataset.prev || 'Tarkista';
+    btn.classList.remove('loading');
+  }
+}
+
+async function aiGrade(system, user, maxTokens) {
+  const r = await fetch('/api/ai/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      max_tokens: maxTokens || 700,
+      system: system,
+      messages: [{ role: 'user', content: user }]
+    })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'AI-virhe');
+  return d.text || '';
+}
+
+function parseGradeJson(text) {
+  const m = String(text).match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try { return JSON.parse(m[0]); } catch (e) { return null; }
+}
+
+const GRADE_SYS = `Olet tiukka mutta reilu musiikkituotannon opettaja Suomessa.
+Arvioit opiskelijan vastauksen. Vastaa AINA vain JSON-muodossa, ilman muuta tekstiä:
+{"score":0-10,"pass":true/false,"feedback":"2-5 lausetta suomeksi: mitä puuttuu tai mikä on hyvää, yksi konkreettinen korjaus"}
+Säännöt:
+- pass=true vain jos score >= ${PASS_SCORE}
+- Hylkää geneerinen, lyhyt tai epäselvä työ
+- Älä käytä sanoja kuten prompt engineering, few-shot, chain-of-thought, meta-prompt
+- Puhu selkeää suomea: ohje, maailma, leikkaus, koe, tyyli, lyriikka
+- Suosi konkreettisuutta, kuunteluhavaintoja ja omaa ajattelua
+- Hylkää työ jossa opiskelija vain toistaa samaa ilman valintaa tai kuuntelua`;
+
+async function runGate(btn, gateId, localOk, localMsg, userPayload) {
+  if (!localOk) {
+    setGate(gateId, false, localMsg);
+    return;
+  }
+  setBtnLoading(btn, true);
+  try {
+    const raw = await aiGrade(GRADE_SYS, userPayload, 550);
+    const g = parseGradeJson(raw);
+    if (!g) {
+      setGate(gateId, false, 'Tarkistus ei onnistunut. Yritä uudelleen.\n\n' + raw.slice(0, 400));
+      return;
+    }
+    const ok = !!g.pass && Number(g.score) >= PASS_SCORE;
+    setGate(gateId, ok, (ok ? '✓ Hyväksytty · ' : '✗ Ei vielä · ') + 'Pisteet ' + g.score + '/10\n\n' + (g.feedback || ''));
+    const scoreEl = document.getElementById('s' + gateId.slice(1));
+    if (scoreEl) scoreEl.textContent = 'Viimeisin tulos: ' + g.score + '/10';
+  } catch (e) {
+    setGate(gateId, false, 'Yhteysvirhe: ' + e.message + '\nTarkista että olet kirjautunut. Voit silti jatkaa kirjoittamista.');
+  } finally {
+    setBtnLoading(btn, false, 'Tarkista uudelleen →');
+  }
+}
+
+async function checkBrief() {
+  const t = document.getElementById('t1').value.trim();
+  const btn = document.getElementById('btn1check');
+  const localOk = wc(t) >= 80;
+  await runGate(
+    btn, 'g1', localOk,
+    'Kirjoita vähintään noin 80 sanaa. Käy läpi genre, kuulija, tunnelma, kiellot ja tarina.',
+    `Osio 1 — brief ilman tekoälyä.\nVaadi: genre+alalaji, kuulija, 3 tunnelmasanaa, 2–3 kieltoa, tarina+otsikko. Hylkää jos liian yleinen.\n\nTeksti:\n${t}`
+  );
+}
+
+async function checkPrompts(btn) {
+  const core = document.getElementById('t2core').value.trim();
+  const w1 = document.getElementById('t2w1').value.trim();
+  const w2 = document.getElementById('t2w2').value.trim();
+  const w3 = document.getElementById('t2w3').value.trim();
+  const pick = document.getElementById('t2pick').value.trim();
+  const dir = document.getElementById('t2dir').value.trim();
+  const localOk = wc(core) >= 25 && wc(w1) >= 40 && wc(w2) >= 40 && wc(w3) >= 40 && wc(pick) >= 30 && wc(dir) >= 50;
+  await runGate(
+    btn, 'g2', localOk,
+    'Tarvitset: tarinan ytimen, kolme erilaista maailmaa kertosäkeineen, perustellun voittajan ja voittajaohjeen (≥50 sanaa).',
+    `Osio 2 — sama tarina, kolme ääntä.\nVaadi että kolme genremaailmaa ovat oikeasti erilaisia (ei pieniä variaatioita samasta). Vaadi kertosäkeet, perusteltu valinta ja käyttökelpoinen voittajaohje seuraavaan työhön.\n\nYdin:\n${core}\n\nM1:\n${w1}\n\nM2:\n${w2}\n\nM3:\n${w3}\n\nValinta:\n${pick}\n\nOhje:\n${dir}`
+  );
+}
+
+async function checkCompare(btn) {
+  const gpt = document.getElementById('t3gpt').value.trim();
+  const claude = document.getElementById('t3claude').value.trim();
+  const score = document.getElementById('t3score').value.trim();
+  const hybrid = document.getElementById('t3hybrid').value.trim();
+  const verdict = document.getElementById('t3verdict').value.trim();
+  const localOk = wc(gpt) >= 40 && wc(claude) >= 40 && wc(score) >= 50 && wc(hybrid) >= 40 && wc(verdict) >= 40;
+  await runGate(
+    btn, 'g3', localOk,
+    'Liitä molemmat lyriikat, pisteytä perustellen, tee yhdistelmäversio ja kirjoita tuomio (≥40 sanaa).',
+    `Osio 3 — ChatGPT vs Claude.\nVaadi oikea vertailu kriteereillä, ei „Claude on parempi” ilman syytä. Vaadi hybridiversio jossa näkyy valintoja.\n\nGPT:\n${gpt}\n\nClaude:\n${claude}\n\nPisteet:\n${score}\n\nHybridi:\n${hybrid}\n\nTuomio:\n${verdict}`
+  );
+}
+
+async function checkIterate(btn) {
+  const raw = document.getElementById('t4raw').value.trim();
+  const cut = document.getElementById('t4cut').value.trim();
+  const killed = document.getElementById('t4killed').value.trim();
+  const surgery = document.getElementById('t4surgery').value.trim();
+  const fin = document.getElementById('t4final').value.trim();
+  const shorter = wc(cut) > 0 && wc(cut) < wc(raw) * 0.85;
+  const hasTags = /\[(verse|chorus|bridge|hook|intro|outro)\]/i.test(fin);
+  const localOk = wc(raw) >= 60 && wc(cut) >= 40 && shorter && wc(killed) >= 40 && wc(surgery) >= 50 && wc(fin) >= 50 && hasTags;
+  await runGate(
+    btn, 'g4', localOk,
+    'Lähtölyriikka, selvästi lyhyempi leikattu versio, poistolista syineen, 3 rivikorjausta ja lopullinen lyriikka rakennemerkkeineen ([Verse]/[Chorus]).',
+    `Osio 4 — leikkauspöytä.\nVaadi että leikattu versio on selvästi lyhyempi. Vaadi perustellut poistot (ei „poistin turhia”). Vaadi kolme konkreettista rivikorjausta (vanha→uusi). Vaadi rakennemerkit lopullisessa.\n\nLähtö (${wc(raw)} sanaa):\n${raw}\n\nLeikattu (${wc(cut)} sanaa):\n${cut}\n\nPoistot:\n${killed}\n\nKorjaukset:\n${surgery}\n\nLopullinen:\n${fin}`
+  );
+}
+
+async function checkSunoPrep(btn) {
+  const lyrics = document.getElementById('t5lyrics').value.trim();
+  const a = document.getElementById('t5a').value.trim();
+  const b = document.getElementById('t5b').value.trim();
+  const c = document.getElementById('t5c').value.trim();
+  const win = document.getElementById('t5win').value.trim();
+  const localOk = wc(lyrics) >= 40 && wc(a) >= 40 && wc(b) >= 40 && wc(c) >= 40 && wc(win) >= 30;
+  await runGate(
+    btn, 'g5', localOk,
+    'Tarvitset lukitun lyriikan ja kolme koetta (A/B/C) kuunteluhavaintoineen sekä voittaja-Stylen. Jokaisessa B/C:ssä pitää näkyä mikä YKSI asia muuttui.',
+    `Osio 5 — Suno-laboratorio.\nVaadi kolme eri koetta samalla lyriikalla. Vaadi että B ja C muuttavat vain yhtä muuttujaa (ei koko tyylin uudelleenkirjoitusta). Vaadi korvalla tehdyt havainnot (mitä kuulosti), ei vain „parempi”. Vaadi voittaja-Style.\n\nLyrics:\n${lyrics}\n\nA:\n${a}\n\nB:\n${b}\n\nC:\n${c}\n\nVoittaja:\n${win}`
+  );
+}
+
+async function checkTrack(btn) {
+  const style = document.getElementById('t6style').value.trim();
+  const v1 = document.getElementById('t6v1').value.trim();
+  const fix = document.getElementById('t6fix').value.trim();
+  const v2 = document.getElementById('t6v2').value.trim();
+  const url = document.getElementById('t6url').value.trim();
+  const honest = document.getElementById('t6honest').value.trim();
+  const localOk = wc(style) >= 8 && wc(v1) >= 30 && wc(fix) >= 30 && wc(v2) >= 20 && wc(honest) >= 30 && (url.length >= 8 || /suno|biisi|kappale/i.test(v2 + url));
+  await runGate(
+    btn, 'g6', localOk,
+    'Tarvitset lukitun Stylen, ensimmäisen generoinnin kuunteluhuomiot, 2–4 rivikorjausta (vanha→uusi), julkaisuversion linkin/nimen ja studio-rehellisyyden.',
+    `Osio 6 — julkaisuversio (EI uusi Style-laboratorio).\nVaadi että Style on lukittu. Vaadi että korjaukset koskevat sanoja/fraaseja kuuntelun jälkeen (ei uutta genrekokeilua). Vaadi julkaisuversio + linkki/nimi + mitä korjaisi oikeassa studiossa.\n\nStyle:\n${style}\n\nEnsimmäinen generointi:\n${v1}\n\nRivikorjaukset:\n${fix}\n\nJulkaisu:\n${v2}\n\nURL:\n${url}\n\nStudio:\n${honest}`
+  );
+}
+
+async function checkSystem(btn) {
+  const dna = document.getElementById('t7dna').value.trim();
+  const neu = document.getElementById('t7new').value.trim();
+  const test = document.getElementById('t7test').value.trim();
+  const t1 = document.getElementById('t7tool1').value.trim();
+  const t2 = document.getElementById('t7tool2').value.trim();
+  const t3 = document.getElementById('t7tool3').value.trim();
+  const localOk = wc(dna) >= 80 && wc(neu) >= 20 && wc(test) >= 40 && wc(t1) >= 25 && wc(t2) >= 25 && wc(t3) >= 25;
+  await runGate(
+    btn, 'g7', localOk,
+    'Tarvitset: äänijäljen (≥80 sanaa, pohjan kohdat täytettyinä), uuden biisi-idean, stressitestin tuloksen, ja 3 kopioitavaa työkalua.',
+    `Osio 7 — äänijälki + työkalupakki.\nVaadi että äänijälki nojaa päivän työhön (genre, kiellot, style) — ei geneeriseen „ole luova tuottaja”. Vaadi stressitesti UUDELLA idealla + arvio pysyikö ääni. Vaadi kolme lyhyttä, käyttökelpoista työkalua (klisee-tappaja, kertosäe-puristin, Suno-Style-kääntäjä) — ei pelkkiä otsikoita.\n\nÄänijälki:\n${dna}\n\nUusi idea:\n${neu}\n\nTesti:\n${test}\n\nTyökalu1:\n${t1}\n\nTyökalu2:\n${t2}\n\nTyökalu3:\n${t3}`
+  );
+}
+
+async function checkVisuals(btn) {
+  const form = val('t8form');
+  const name = val('t8name');
+  const crew = val('t8crew');
+  const album = val('t8album');
+  const mood = val('t8mood');
+  const scene = val('t8scene');
+  const look = val('t8look');
+  const event = val('t8event');
+  const cp = val('t8coverprompt');
+  const cover = val('t8cover');
+  const fp = val('t8flyerprompt');
+  const flyer = val('t8flyer');
+  const match = val('t8match');
+  const localOk = wc(form) >= 12 && wc(name) >= 12 && wc(crew) >= 12 && wc(album) >= 12 &&
+    wc(mood) >= 3 && wc(scene) >= 5 && wc(look) >= 3 && wc(event) >= 3 &&
+    wc(cp) >= 40 && wc(cover) >= 25 && wc(fp) >= 40 && wc(flyer) >= 20 && wc(match) >= 25 &&
+    !/‹ /.test(cp) && !/‹ /.test(fp);
+  await runGate(
+    btn, 'g8', localOk,
+    'Täytä kokoonpano, nimi, julkaisu, tunnelma, konkreettinen kuva, look ja flyer-rivi — kunnes LIVE-ohjeissa ei näy enää ‹ … › -paikkamerkkejä. Generoi kuvat ja kuvaile tulokset.',
+    `Osio 8 — soolo/bändi + kansi + flyer.\nVaadi selkeä päätös soolo vs bändi. Vaadi että kuvaohjeet sisältävät opiskelijan omat tiedot (ei tyhjiä paikkamerkkejä). Vaadi generoidut kuvat kuvailtuna. Vaadi yhteensopivuus.\n\nMuoto:\n${form}\n\nNimi:\n${name}\n\nKokoonpano:\n${crew}\n\nJulkaisu:\n${album}\n\nTunnelma:\n${mood}\n\nKuva:\n${scene}\n\nLook:\n${look}\n\nEvent:\n${event}\n\nKansiohje:\n${cp}\n\nKansi:\n${cover}\n\nFlyer-ohje:\n${fp}\n\nFlyer:\n${flyer}\n\nYhteensopivuus:\n${match}`
+  );
+}
+
+async function checkFinal(btn) {
+  const pitch = document.getElementById('t9pitch').value.trim();
+  const reflect = document.getElementById('reflectionText').value.trim();
+  const ready = document.getElementById('t9ready').value.trim().toUpperCase();
+  const localOk = wc(pitch) >= 70 && wc(reflect) >= 40 && ready === 'VALMIS';
+  await runGate(
+    btn, 'g9', localOk,
+    'Kirjoita esityspuhe (≥70 sanaa: brändi + kuvat + biisi), reflektio (≥40 sanaa) ja kenttään sana VALMIS.',
+    `Osio 9 — esitys opettajalle.\nVaadi että puheessa on: soolo/bändi, kansi, flyer, biisin soitto, yksi tuotantovalinta. Opiskelijan pitää olla valmis näyttämään kuvat ja soittamaan.\n\nPuhe:\n${pitch}\n\nReflektio:\n${reflect}\n\nValmis-kenttä:\n${ready}`
+  );
+}
+
+async function saveAllWork(silent) {
+  setSavePill('tallennetaan…', false);
+  if (mwApi) {
+    await mwApi.saveNow();
+  } else if (window.moduleWork && window.moduleWork.saveModuleWork) {
+    await window.moduleWork.saveModuleWork(MODULE_ID, collectWorkState(), summarizeWork(collectWorkState()));
+  } else {
+    try {
+      localStorage.setItem(KEY + 'snapshot', JSON.stringify(collectWorkState()));
+    } catch (e) {}
+  }
+
+  if (!silent) {
+    const refl = document.getElementById('reflectionText');
+    if (refl && refl.value.trim()) {
+      try {
+        await fetch('/api/reflections/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ moduleId: MODULE_ID, reflectionText: refl.value.trim() })
+        });
+      } catch (e) {}
+    }
+    setSavePill('tallennettu ✓', true);
+    alert('Työ tallennettu palvelimelle.');
+  } else {
+    setSavePill('tallennettu ✓', true);
+  }
+}
+
+FIELDS.forEach(function (id) {
+  loadField(id);
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener('input', function () {
+      saveField(id);
+      if (mwApi) mwApi.scheduleSave();
+    });
+  }
+});
+
+wireLivePrompts();
+unlock();
+
+document.addEventListener('DOMContentLoaded', async function () {
+  // Wait a tick so server-injected /js/module-work.js is available
+  await new Promise(function (r) { setTimeout(r, 0); });
+  if (!window.moduleWork) {
+    await new Promise(function (r) { setTimeout(r, 50); });
+  }
+  await initBackendWork();
+  if (typeof window.loadReflection === 'function') {
+    window.loadReflection(MODULE_ID);
+  }
+});
+</script>
+</body>
+</html>

@@ -251,6 +251,12 @@
       if (d.S && d.S.appText) lines.push('Hakemus tallessa');
       if (d.curScreen) lines.push('Vaihe: ' + d.curScreen + '/12');
     }
+    if (moduleId.indexOf('musiikkituottaja') >= 0) {
+      if (d.curScreen) lines.push('Osio: ' + d.curScreen + '/9');
+      if (d.fields && d.fields.t8name) lines.push('Artisti/bändi: ' + String(d.fields.t8name).slice(0, 120));
+      if (d.fields && d.fields.t6url) lines.push('Suno: ' + String(d.fields.t6url).slice(0, 160));
+      if (d.done && d.done.length) lines.push('Valmiit osiot: ' + d.done.join(', '));
+    }
     return escapeHtml(lines.filter(Boolean).join('\n\n') || parsed.summary || 'Tallennettu');
   }
 

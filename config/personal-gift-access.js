@@ -1,7 +1,7 @@
 /**
  * Personal gift modules (Sonja, Satu, …).
  * Email allowlist + first-name fallback when registration email differs.
- * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL / VILLE_GIFT_EMAIL / MINNA_GIFT_EMAIL / SANTERI_GIFT_EMAIL (comma-separated).
+ * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL / VILLE_GIFT_EMAIL / MINNA_GIFT_EMAIL / SANTERI_GIFT_EMAIL / MUSIIKKI_GIFT_EMAIL (comma-separated).
  */
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -158,6 +158,14 @@ const GIFTS = {
     moduleId: 'moduuli-bottityypit',
     firstName: 'santtu',
     emails: parseEmailList(process.env.SANTTU_GIFT_EMAIL, ['korho.san97@proton.me', TEST_STUDENT_EMAIL])
+  },
+  musiikki: {
+    moduleId: 'moduuli-ai-musiikkituottaja',
+    firstName: 'tomi',
+    emails: parseEmailList(process.env.MUSIIKKI_GIFT_EMAIL, [
+      'tomi.hiltunen31@gmail.com',
+      TEST_STUDENT_EMAIL
+    ])
   }
 };
 

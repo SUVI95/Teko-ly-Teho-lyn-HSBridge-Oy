@@ -6,7 +6,8 @@ const router = express.Router();
 const MODULE_WORK_IDS = [
   'moduuli5-ai-creation-sprint__work',
   'moduuli8-ai-polku__work',
-  'moduuli9-haastattelu__work'
+  'moduuli9-haastattelu__work',
+  'moduuli-ai-musiikkituottaja__work'
 ];
 
 async function resolveUserId(req) {
@@ -157,43 +158,54 @@ router.get('/summary', async (req, res) => {
       return res.json({ modules: [], checklists: [], module_work: [] });
     }
 
-    const progressResult = await pool.query(
-      `SELECT module_id,
-              COUNT(*) as total_sections,
-              SUM(CASE WHEN completed THEN 1 ELSE 0 END) as completed_sections,
-              SUM(time_spent) as total_time_spent
-       FROM student_progress
-       WHERE user_id = $1
-       GROUP BY module_id`,
-      [userId]
-    );
+    let modules = [];
+    let checklists = [];
+    let module_work = [];
 
-    const checklistResult = await pool.query(
-      `SELECT module_id,
-              COUNT(*) as total_items,
-              SUM(CASE WHEN completed THEN 1 ELSE 0 END) as completed_items
-       FROM checklist_items
-       WHERE user_id = $1
-       GROUP BY module_id`,
-      [userId]
-    );
+    try {
+      const progressResult = await pool.query(
+        `SELECT module_id,
+                COUNT(*) as total_sections,
+                SUM(CASE WHEN completed THEN 1 ELSE 0 END) as completed_sections,
+                SUM(time_spent) as total_time_spent
+         FROM student_progress
+         WHERE user_id = $1
+         GROUP BY module_id`,
+        [userId]
+      );
+      modules = progressResult.rows;
+    } catch (e) {
+      console.warn('Get summary: student_progress unavailable:', e.message);
+    }
 
-    const workResult = await pool.query(
-      `SELECT module_id, reflection_text, updated_at
-       FROM reflections
-       WHERE user_id = $1 AND module_id = ANY($2::text[])`,
-      [userId, MODULE_WORK_IDS]
-    );
+    try {
+      const checklistResult = await pool.query(
+        `SELECT module_id,
+                COUNT(*) as total_items,
+                SUM(CASE WHEN completed THEN 1 ELSE 0 END) as completed_items
+         FROM checklist_items
+         WHERE user_id = $1
+         GROUP BY module_id`,
+        [userId]
+      );
+      checklists = checklistResult.rows;
+    } catch (e) {
+      console.warn('Get summary: checklist_items unavailable:', e.message);
+    }
 
-    const module_work = workResult.rows
-      .map(parseModuleWorkRow)
-      .filter(Boolean);
+    try {
+      const workResult = await pool.query(
+        `SELECT module_id, reflection_text, updated_at
+         FROM reflections
+         WHERE user_id = $1 AND module_id = ANY($2::text[])`,
+        [userId, MODULE_WORK_IDS]
+      );
+      module_work = workResult.rows.map(parseModuleWorkRow).filter(Boolean);
+    } catch (e) {
+      console.warn('Get summary: module_work unavailable:', e.message);
+    }
 
-    res.json({
-      modules: progressResult.rows,
-      checklists: checklistResult.rows,
-      module_work
-    });
+    res.json({ modules, checklists, module_work });
   } catch (error) {
     console.error('Get summary error:', error);
     res.json({
