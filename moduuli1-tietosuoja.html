@@ -664,6 +664,15 @@ const TICKETS = [
         <div class="file-bar"><span>PS-NT-MSA-2026-041.pdf</span><span>Luottamuksellinen · 6 sivua</span></div>
         <div class="file-body">
           <h3>Palvelusopimus (Master Service Agreement)</h3>
+          <div class="art" style="background:rgba(184,134,11,.07);border:1px solid rgba(184,134,11,.22);border-radius:10px;padding:.85rem 1rem;margin-bottom:.9rem">
+            <div class="art-n" style="color:#b8860b">Mitä nämä termit tarkoittavat?</div>
+            <strong>MSA</strong> (Master Service Agreement) = puitesopimus, joka määrittää palvelun ehdot.<br>
+            <strong>Y-tunnus</strong> = yrityksen yksilöivä tunnus (kuten henkilötunnus, mutta yritykselle).<br>
+            <strong>Kilpailukielto</strong> = ehto, joka estää toimittajaa työskentelemästä kilpailijalle. <strong>Sopimussakko</strong> = rahamäärä, joka maksetaan jos ehtoa rikotaan.<br>
+            <strong>Salassapito (NDA)</strong> = sopimus, joka kieltää tietojen jakamisen ulkopuolisille.<br>
+            <strong>IBAN / BIC</strong> = pankkitilin numero ja pankin tunnus. <strong>Hetu</strong> = henkilötunnus.<br>
+            <em>Yritysten nimet, hinnat, tilinumerot ja henkilötunnus ovat tunnistetietoja — ne eivät kuulu tekoälylle.</em>
+          </div>
           <div class="art"><div class="art-n">1. Osapuolet</div>
             Pohjola Services Oy (Y-tunnus 3124567-8) ja NordicTech Oy (Y-tunnus 2871144-1).<br>
             Yhteyshenkilö NordicTech: Maria Virtanen, maria.virtanen@nordictech.fi, 040-778 2211.</div>
@@ -689,23 +698,25 @@ const TICKETS = [
     composeHelp:'Säilytä tavoite (asiakkaiden ryhmittely). Poista kaikki, jolla henkilön voi tunnistaa — myös asiakasnumerot.',
     minLen:60,
     type:'rewrite',
-    situation:'Kollega haluaa pyytää ChatGPT:ltä apua asiakkaiden ryhmittelyyn. Alkuperäinen teksti sisältää nimiä, sähköposteja, puhelimia, yrityksiä ja CRM-asiakasnumeroita.',
+    situation:'Kollega Minna (myynti) haluaa pyytää ChatGPT:ltä apua asiakkaiden ryhmittelyyn ennen soittokierrosta. Hänen luonnoksensa sisältää oikeita asiakkaita: nimiä, sähköposteja, puhelinnumeroita, yritysten nimiä, CRM-asiakasnumeroita, rahasummia ja sisäisiä muistiinpanoja. Kaikki tämä yksilöi ihmisiä ja yrityksiä — eikä se kuulu ulkoiselle tekoälylle.',
     hints:[
-      'Pelkkä puhelinnumeron poisto ei aina riitä. Mikä muu rivillä yksilöi ihmisen tai yrityksen?',
-      'Voitko kuvata tiedot yleisesti (esim. toimiala + ostosumma) ilman että kukaan on tunnistettavissa?'
+      'Pelkkä puhelinnumeron poisto ei riitä. Nimi, sähköposti, yrityksen nimi ja CRM-numero yksilöivät asiakkaan yhtä hyvin.',
+      'Sisäiset muistiinpanot (esim. “harkitsee kilpailijaa”, “maksuhäiriö”) ovat liikesalaisuutta — ne eivät kuulu tekoälylle lainkaan.',
+      'Voit kuvata tiedot yleisesti: toimiala + ostosummahaarukka + ostotiheys, ilman että kukaan on tunnistettavissa.'
     ],
     forbidden:[
-      {id:'names', label:'Nimet', keys:['laura','nieminen','jari','heikkil','sanna','virtanen']},
-      {id:'mail', label:'Sähköpostit', keys:['@','firma.fi','kauppa.fi']},
-      {id:'phone', label:'Puhelin', keys:['040','552','8811']},
-      {id:'crmid', label:'CRM-ID / asiakasnumero', keys:['crm-','a-90441','a-88102','a-77219','asiakasnumero']},
-      {id:'company', label:'Asiakasyritysten nimet', keys:['frostbite','lumina','kaamos']}
+      {id:'names', label:'Asiakkaiden nimet', keys:['laura','nieminen','jari','heikkil','sanna','virtanen','mikael','aho','riikka','salo']},
+      {id:'mail', label:'Sähköpostit', keys:['@','firma.fi','kauppa.fi','boreal.fi']},
+      {id:'phone', label:'Puhelinnumerot', keys:['040','552','8811','050','441','2093']},
+      {id:'crmid', label:'CRM-asiakasnumerot', keys:['crm-','a-90441','a-88102','a-77219','a-70558','a-69912','asiakasnumero']},
+      {id:'company', label:'Asiakasyritysten nimet', keys:['frostbite','lumina','kaamos','boreal','polaris']},
+      {id:'internal', label:'Sisäiset muistiinpanot / liikesalaisuus', keys:['maksuhäiri','kilpailij','harkitse','irtisano','tyytymät']}
     ],
     required:[
       {id:'seg', label:'Pyytää ryhmittelyä / apua', keys:['segment','ryhm','prior','luokit','jaot','auta','ehdota','järjest','asiakas']},
       {id:'anon', label:'Ilman henkilötietoja', keys:['anonyymi','ilman nimi','ilman henkil','ei nimi','ei sähkö','ei puhelin','yleist','ei yksilö','kuvitteell','dummy','haarukka','toimiala','ostosum']}
     ],
-    model:'Esimerkki turvallisesta tekstistä: “Minulla on 20 yritysasiakasta ilman nimiä: toimiala, ostosummahaarukka ja ostotiheys. Ehdota 3 ryhmää ja kenelle kannattaa olla yhteydessä ensin.”',
+    model:'Esimerkki turvallisesta tekstistä: “Minulla on noin 20 yritysasiakasta. En anna nimiä tai numeroita — vain toimiala, ostosummahaarukka (esim. 4–15 t€) ja ostotiheys. Ehdota 3 ryhmää ja kenelle kannattaa olla yhteydessä ensin.” Nimet, sähköpostit, puhelimet, yritysten nimet, CRM-numerot, tarkat summat ja sisäiset muistiinpanot jäävät pois.',
     doc:()=>`
       <div class="msg">
         <div class="av" style="background:#2563a8">MK</div>
@@ -718,13 +729,22 @@ const TICKETS = [
         <div class="file-bar"><span>chatgpt_luonnos_qbr.txt</span><span>Luonnos · ei hyväksytty</span></div>
         <div class="file-body">
           <h3>Minnan luonnos ChatGPT:lle</h3>
+          <div class="art" style="background:rgba(37,99,168,.06);border:1px solid rgba(37,99,168,.18);border-radius:10px;padding:.85rem 1rem;margin-bottom:.9rem">
+            <div class="art-n" style="color:#2563a8">Mitä nämä lyhenteet tarkoittavat?</div>
+            <strong>LTV</strong> (Lifetime Value) = asiakkuuden elinkaariarvo — kuinka paljon rahaa asiakas on tuonut yhteensä.<br>
+            <strong>CRM-A-xxxxx</strong> = asiakkaan yksilöivä numero yrityksen asiakasrekisterissä (CRM). Sillä pääsee kaikkiin asiakkaan tietoihin.<br>
+            <strong>VIP-liputus</strong> = sisäinen merkintä, jolla arvokkaimmat asiakkaat nostetaan jonon kärkeen. Ei näytetä asiakkaalle.<br>
+            <strong>“Sisäinen huom.”</strong> = myynnin omat muistiinpanot. Ne ovat luottamuksellisia — eivät kuulu ulkopuolisille eivätkä tekoälylle.
+          </div>
           <p style="font-family:var(--mono);font-size:.86rem;background:var(--paper);padding:1rem;border-radius:10px;line-height:1.75;white-space:pre-wrap">Segmentoi nämä TOP-asiakkaat ja kerro kenelle soitetaan ensin:
 
-1. Laura Nieminen · Frostbite Oy · CRM-A-90441 · laura.nieminen@firma.fi · LTV 12 400 €
+1. Laura Nieminen · Frostbite Oy · CRM-A-90441 · laura.nieminen@firma.fi · LTV 12 400 € · sisäinen huom: maksuhäiriö 6/2025, harkitsee kilpailijaa
 2. Jari Heikkilä · Lumina Soft · CRM-A-88102 · 040-552 8811 · LTV 9 200 €
 3. Sanna Virtanen · Kaamos Group · CRM-A-77219 · sanna.v@kauppa.fi · LTV 7 800 €
+4. Mikael Aho · Boreal Data · CRM-A-70558 · mikael.aho@boreal.fi · LTV 15 100 €
+5. Riikka Salo · Polaris Oy · CRM-A-69912 · 050-441 2093 · LTV 4 300 € · sisäinen huom: tyytymätön, harkitsee irtisanomista
 
-Käytä myös sisäistä “VIP-liputusta” jos ostot &gt; 10k.</p>
+Käytä myös sisäistä “VIP-liputusta” jos asiakkaan ostot &gt; 10 000 €.</p>
         </div>
       </div>`
   },
@@ -736,10 +756,11 @@ Käytä myös sisäistä “VIP-liputusta” jos ostot &gt; 10k.</p>
     composeTitle:'Kirjoita vastaus Jukalle',
     composeHelp:'Kirjoita esimiehelle: miksi taulukkoa ei voi laittaa ChatGPT:lle, ja miten vertailu silti saadaan.',
     minLen:80, passNeed:3,
-    situation:'Toimitusjohtaja käskee liittää palkkataulukon ChatGPT:hen ennen johtoryhmää. Taulukossa on palkkoja ja terveyteen liittyvä merkintä.',
+    situation:'Toimitusjohtaja käskee liittää koko palkkataulukon ChatGPT:hen ennen johtoryhmää klo 10. Taulukossa on työntekijöiden nimet, tehtävät, tarkat palkat, bonukset ja HR:n muistiinpanoja — mukana myös terveyteen ja perhevapaaseen liittyviä merkintöjä. Nämä ovat arkaluonteisia henkilötietoja.',
     hints:[
-      'Kiire tai esimiehen pyyntö ei muuta sääntöä. Mitä taulukossa on ihmisten lisäksi?',
-      'Voisiko saman vertailun tehdä ilman nimiä — tai kysymällä yleistä markkinatietoa?'
+      'Kiire tai esimiehen pyyntö ei muuta sääntöä. Mitä taulukossa on ihmisten nimien lisäksi — palkat, bonukset, terveysmerkinnät?',
+      'Raskausvapaa ja sairauspoissaolo ovat terveyteen/perheeseen liittyviä erityisen suojattuja tietoja. Ne eivät kuulu ulkoiselle tekoälylle koskaan.',
+      'Saman vertailun voi tehdä ilman nimiä: kysy yleistä markkinapalkkaa roolille ja alueelle, tai pyydä HR:ltä nimetön vertailu sisäisesti.'
     ],
     findings:[
       {id:'refuse', label:'Kieltää liittämisen', keys:['ei voi','ei saa','älä','en liitä','ei liitet','ei chat','ei laiteta','kieltäyd','en voi']},
@@ -760,12 +781,21 @@ Käytä myös sisäistä “VIP-liputusta” jos ostot &gt; 10k.</p>
         <div class="file-bar"><span>JR_palkat_Q1_INTERNAL.xlsx</span><span>HR · vain johto</span></div>
         <div class="file-body">
           <h3>Palkkaote Q1</h3>
+          <div class="art" style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.18);border-radius:10px;padding:.85rem 1rem;margin-bottom:.9rem">
+            <div class="art-n" style="color:#7c3aed">Mitä tässä lukee?</div>
+            <strong>Q1</strong> = vuoden ensimmäinen neljännes (tammi–maaliskuu). <strong>Palkkaote</strong> = lista työntekijöiden palkoista.<br>
+            <strong>€/kk</strong> = kuukausipalkka. <strong>+ bonus</strong> = tulospalkkio palkan päälle.<br>
+            <strong>HR</strong> = henkilöstöhallinto. <strong>PIP</strong> (Performance Improvement Plan) = suorituksen parannussuunnitelma, käytännössä varoitus että työsuoritus ei riitä.<br>
+            <em>Nimi + palkka on henkilötieto. Terveys- ja perhevapaamerkinnät (sairausloma, raskausvapaa) ovat erityisen arkaluonteisia.</em>
+          </div>
           <div class="art"><div class="art-n">Rivit</div>
             Anna Mäkinen — asiakaspalvelu — 3 450 €/kk — “suoritus: hyvä”<br>
-            Tommi Räsänen — myynti — 4 100 € + bonus — “neuvottelu kesken”<br>
-            Emilia Korhonen — tuki — 3 200 €/kk — “raskausvapaa 5/2026” (HR-muistiinpano)</div>
+            Tommi Räsänen — myynti — 4 100 €/kk + bonus 1 800 € — “palkkaneuvottelu kesken”<br>
+            Emilia Korhonen — tuki — 3 200 €/kk — “raskausvapaa alkaa 5/2026” (HR-muistiinpano)<br>
+            Pekka Halla — logistiikka — 3 050 €/kk — “sairauspoissaoloja paljon, työterveys selvittää” (HR-muistiinpano)<br>
+            Noora Aalto — myynti — 3 900 €/kk — “PIP käynnissä, suoritus ei riitä”</div>
           <div class="art"><div class="art-n">Kommentti HR:ltä</div>
-            Älä jaa taulukkoa tiimin ulkopuolelle. Sisältää terveyteen liittyvän merkinnän.</div>
+            Älä jaa taulukkoa tiimin ulkopuolelle. Sisältää palkat, terveyteen liittyviä merkintöjä ja tulevan perhevapaan. Jakaminen ilman lupaa rikkoo tietosuojaa (GDPR) ja työsopimusta.</div>
         </div>
       </div>`
   },
@@ -777,10 +807,11 @@ Käytä myös sisäistä “VIP-liputusta” jos ostot &gt; 10k.</p>
     composeTitle:'Mitä on pielessä ja miten toimia',
     composeHelp:'Kerro Laurille selkeästi: miksi ei, ja mitä hän voi tehdä sen sijaan.',
     minLen:70, passNeed:3,
-    situation:'Harjoittelija aikoo näyttää skannatun sairauslomatodistuksen ChatGPT:lle.',
+    situation:'Harjoittelija Lauri aikoo näyttää kollegan skannatun sairauslomatodistuksen ChatGPT:lle ymmärtääkseen diagnoosikoodin. Todistuksessa on henkilön nimi, syntymävuosi, lääketieteellinen diagnoosi ja lääkitystieto. Terveystieto on lain mukaan erityisen arkaluonteista — sitä ei saa syöttää ulkoiseen tekoälyyn, vaikka tarkoitus olisi hyvä.',
     hints:[
-      'Terveyteen liittyvä tieto on erityisen suojattua — myös kollegoiden.',
-      'Miten neuvoisin, jos haluaisin vain ymmärtää prosessia ilman henkilön papereita?'
+      'Terveyteen liittyvä tieto on erityisen suojattua — myös kollegan. Nimi + diagnoosi yhdessä on pahin yhdistelmä.',
+      'Hyvä aikomus (auttaa Petriä) ei tee siitä sallittua. Ohjaa Lauri esimiehelle tai työterveyteen.',
+      'Jos haluat vain ymmärtää prosessia, kysy yleisesti ilman kenenkään papereita: “miten sairauslomaprosessi etenee työnantajalla?”'
     ],
     findings:[
       {id:'health', label:'Terveys / diagnoosi', keys:['terveys','diagnoos','sairaus','masenn','f32','lääkär','potilas']},
@@ -801,10 +832,17 @@ Käytä myös sisäistä “VIP-liputusta” jos ostot &gt; 10k.</p>
         <div class="file-bar"><span>IMG_1403_sairausloma.jpg</span><span>Liite · arkaluonteinen</span></div>
         <div class="file-body">
           <h3>Lääkärintodistus A</h3>
+          <div class="art" style="background:rgba(199,91,58,.07);border:1px solid rgba(199,91,58,.2);border-radius:10px;padding:.85rem 1rem;margin-bottom:.9rem">
+            <div class="art-n" style="color:#c75b3a">Mitä koodit tarkoittavat?</div>
+            <strong>Lääkärintodistus A</strong> = lääkärin kirjoittama todistus lyhyestä sairauspoissaolosta.<br>
+            <strong>F32.1</strong> = kansainvälisen tautiluokituksen (ICD-10) diagnoosikoodi. F32 = masennustila, tarkenne .1 = keskivaikea aste.<br>
+            <strong>s. 1987</strong> = syntymävuosi. <strong>Kontrolli työterveydessä</strong> = seurantakäynti työterveyslääkärillä.<br>
+            <em>Nimi + diagnoosi = arkaluonteinen terveystieto. Tätä ei saa syöttää tekoälyyn eikä jakaa ilman lupaa.</em>
+          </div>
           <div class="art"><div class="art-n">Potilas</div>Petri Salminen, s. 1987</div>
           <div class="art"><div class="art-n">Diagnoosi</div>F32.1 Keskivaikea masennustila</div>
           <div class="art"><div class="art-n">Sairausloma</div>14.3.2026 – 28.3.2026</div>
-          <div class="art"><div class="art-n">Lisätieto</div>Lääkitys aloitettu. Kontrolli työterveydessä.</div>
+          <div class="art"><div class="art-n">Lisätieto</div>Lääkitys aloitettu (SSRI). Kontrolli työterveydessä 2 viikon kuluttua.</div>
         </div>
       </div>`
   },
@@ -817,22 +855,23 @@ Käytä myös sisäistä “VIP-liputusta” jos ostot &gt; 10k.</p>
     composeHelp:'Kerro tilanteesta yleisesti. Älä laita nimeä, osoitetta, tilausnumeroa, puhelinta tai sähköpostia.',
     minLen:40,
     type:'rewrite',
-    situation:'Asiakaspalvelija haluaa ChatGPT:n apua anteeksipyyntöön. Raaka keskusteluvienti sisältää paljon henkilötietoja.',
+    situation:'Asiakaspalvelija haluaa ChatGPT:n apua anteeksipyyntöön ja liittäisi koko asiakaschatin sellaisenaan. Raaka keskusteluvienti sisältää asiakkaan nimen, sähköpostin, puhelimen, tilausnumeron, sisäisen pyyntötunnisteen ja kotiosoitteen. Kohteliaan vastauksen kirjoittamiseen ei tarvita mitään näistä.',
     hints:[
-      'ChatGPT ei tarvitse asiakkaan nimeä kirjoittaakseen kohteliaan vastauksen.',
-      'Kuvaile tilanne yhdellä lauseella ilman osoitetta, puhelinta tai tilausnumeroa.'
+      'ChatGPT ei tarvitse asiakkaan nimeä, osoitetta tai tilausnumeroa kirjoittaakseen kohteliaan vastauksen.',
+      'Kotiosoite ja puhelinnumero ovat henkilötietoja. Ne eivät kuulu ulkoiselle tekoälylle vaikka asiakas itse ne kirjoitti.',
+      'Kuvaile tilanne yhdellä lauseella: “tuote saapui viallisena, asiakas haluaa hyvityksen” — ei nimeä, osoitetta, puhelinta tai numeroita.'
     ],
     forbidden:[
-      {id:'name', label:'Nimi', keys:['otto','kallio']},
+      {id:'name', label:'Asiakkaan nimi', keys:['otto','kallio']},
       {id:'mail', label:'Sähköposti', keys:['@mail','otto.kallio']},
-      {id:'order', label:'Tilaus / sisäinen pyyntö', keys:['44102','kg-2026','tk-8821']},
-      {id:'addr', label:'Osoite', keys:['keskuskatu','tampere','33100']},
+      {id:'order', label:'Tilaus- ja pyyntönumero', keys:['44102','kg-2026','tk-8821']},
+      {id:'addr', label:'Kotiosoite', keys:['keskuskatu','tampere','33100']},
       {id:'phone', label:'Puhelin', keys:['050','441','2299']}
     ],
     required:[
       {id:'tone', label:'Anteeksi / viallinen tuote', keys:['anteeksi','reklama','viall','rikkin','hyvitys','empat','kohtelias','asiakas','tuote','vastaus']}
     ],
-    model:'Esimerkki: “Kirjoita kohtelias suomenkielinen vastaus asiakkaalle, jonka tuote saapui viallisena. Empatia, selkeä seuraava askel, ei syyttelyä. Älä käytä henkilötietoja.”',
+    model:'Esimerkki: “Kirjoita kohtelias suomenkielinen vastaus asiakkaalle, jonka tuote saapui viallisena ja joka haluaa hyvityksen. Empatia, selkeä seuraava askel, ei syyttelyä. Älä käytä nimeä, osoitetta, puhelinta tai tilausnumeroa.”',
     doc:()=>`
       <div class="msg">
         <div class="av" style="background:#2a7a4b">BOT</div>
@@ -845,6 +884,13 @@ Käytä myös sisäistä “VIP-liputusta” jos ostot &gt; 10k.</p>
         <div class="file-bar"><span>chat_export_TK-8821.json</span><span>Asiakastuki</span></div>
         <div class="file-body">
           <h3>Keskusteluloki (raaka vienti)</h3>
+          <div class="art" style="background:rgba(42,122,75,.07);border:1px solid rgba(42,122,75,.2);border-radius:10px;padding:.85rem 1rem;margin-bottom:.9rem">
+            <div class="art-n" style="color:#2a7a4b">Mitä tässä lukee?</div>
+            <strong>Keskusteluloki / raaka vienti</strong> = suoraan asiakaschatista kopioitu keskustelu, jota ei ole siivottu.<br>
+            <strong>.json</strong> = tiedostomuoto, johon järjestelmä tallentaa datan sellaisenaan.<br>
+            <strong>KG-2026-44102</strong> = tilausnumero. <strong>TK-8821</strong> = sisäinen tukipyynnön tunniste.<br>
+            <strong>Toimitusosoite</strong> = asiakkaan kotiosoite. <em>Nimi, sähköposti, puhelin, osoite ja tilausnumero ovat henkilötietoja — ne eivät kuulu tekoälylle.</em>
+          </div>
           <div class="art"><div class="art-n">Asiakas</div>Otto Kallio · otto.kallio@mail.fi · 050-441 2299</div>
           <div class="art"><div class="art-n">Tilaus</div>KG-2026-44102 · sisäinen pyyntö TK-8821</div>
           <div class="art"><div class="art-n">Viesti</div>“Tuote tuli rikkinäisenä. Haluan hyvityksen heti. Toimitus: Keskuskatu 4 A 12, 33100 Tampere.”</div>
