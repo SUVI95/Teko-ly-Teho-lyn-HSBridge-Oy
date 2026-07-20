@@ -63,6 +63,11 @@ function injectModulePersistenceScripts(html, moduleId) {
   const tags = [bootScript];
   if (needsModuleWork) tags.push('<script src="/js/module-work.js"></script>');
   if (needsAutoSave) tags.push('<script src="/js/module-autosave.js"></script>');
+  // Auto-reload open tabs after a deploy so students always see the current
+  // module without having to know how to refresh the browser.
+  if (!html.includes('/js/auto-reload.js')) {
+    tags.push('<script src="/js/auto-reload.js"></script>');
+  }
   const inject = tags.join('');
   const bodyClose = '</body>';
   const idx = html.lastIndexOf(bodyClose);
