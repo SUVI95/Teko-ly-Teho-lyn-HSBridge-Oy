@@ -370,6 +370,46 @@ h2.h em { font-style:italic; color:var(--orange); }
 .ice-item { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:.7rem .8rem; font-size:.8rem; line-height:1.5; }
 .ice-item strong { color:#7dd3fc; display:block; margin-bottom:.2rem; font-size:.85rem; }
 
+/* ===== Phone / small screens — all sections + builder exercises ===== */
+@media(max-width:820px){
+  .section{padding:clamp(2.4rem,6vh,4rem) 1rem;}
+  #hero{padding:clamp(4rem,10vh,5.5rem) 1rem clamp(2.5rem,6vh,3.5rem);}
+  .hero-cta,.btn-next{width:100%;justify-content:center;min-height:48px;box-sizing:border-box;}
+  .def-grid,.scen-grid,.done-tiles,.incident-grid,.ice-hidden{grid-template-columns:1fr!important;}
+  .builder-shell{border-radius:10px;margin:1rem 0;}
+  .builder-topbar{height:auto;min-height:48px;flex-wrap:wrap;padding:.55rem .65rem;gap:.5rem;}
+  .bt-toggle{display:none;}
+  .bt-run,.ai-btn,.email-confirm-btn,.diag-opt,.incident-card,.bug-pill{min-height:48px;}
+  .bt-run{padding:12px 18px;font-size:.88rem;}
+  .builder-main{flex-direction:column;min-height:0;position:relative;}
+  .palette{width:100%!important;max-height:none;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border-right:none;border-bottom:1px solid var(--panel-line);padding:.55rem;gap:.45rem;}
+  .palette-h{position:sticky;left:0;background:#fff;z-index:2;writing-mode:horizontal-tb;padding:.35rem .5rem .35rem 0;align-self:center;white-space:nowrap;}
+  .pal-node{flex:0 0 auto;min-width:118px;min-height:48px;padding:.65rem .7rem;}
+  .canvas-wrap{width:100%;min-height:340px;height:52vh;min-width:0;}
+  .canvas-wrap.fix-settings-only{height:auto;min-height:300px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .params{position:absolute;left:0;right:0;bottom:0;width:100%!important;max-height:0;overflow:hidden;border-left:none;border-top:0;z-index:30;transition:max-height .25s ease;background:#fff;}
+  .params.open,.params.params-pinned{max-height:58vh;overflow-y:auto;border-top:1px solid var(--panel-line);box-shadow:0 -12px 32px rgba(0,0,0,.14);}
+  .params-in,.params-head{width:100%!important;box-sizing:border-box;}
+  .params-close{min-width:44px;min-height:44px;font-size:1.4rem;}
+  .node{touch-action:none;width:min(172px,46vw);}
+  .node .del{display:flex!important;width:28px;height:28px;font-size:1rem;top:-10px;left:-10px;}
+  .port{width:18px;height:18px;}
+  .port.in{left:-10px;} .port.out{right:-10px;}
+  .ai-q{padding:1.15rem 1.1rem;}
+  .ai-area,.p-input,.p-select,.p-area,textarea,input[type="email"],input[type="text"]{font-size:16px!important;}
+  .fix-level{padding:1.1rem;}
+  .toast{left:12px;right:12px;max-width:none;width:auto;transform:translateY(20px);bottom:max(16px,env(safe-area-inset-bottom));}
+  .toast.show{transform:translateY(0);left:12px;}
+  .static-flow{flex-wrap:nowrap;}
+}
+@media(max-width:480px){
+  .nav-tag{font-size:.58rem;padding:2px 7px;}
+  .nav-home span{font-size:.78rem;}
+  .canvas-wrap{height:48vh;min-height:300px;}
+  .chal-brief,.ai-q-text{font-size:1.05rem;}
+  .pal-node{min-width:104px;}
+}
+
 </style>
 </head>
 <body>
@@ -1595,10 +1635,10 @@ function makeCanvas(cfg){
   function closeParams(){ const p=document.getElementById(cfg.paramsId); if(p&&!p.classList.contains('params-pinned')) p.classList.remove('open'); canvas.querySelectorAll('.node').forEach(n=>n.classList.remove('selected')); state.sel=null; }
   function wireNode(id){
     const el=document.getElementById(id);
-    el.addEventListener('mousedown', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; startNodeDrag(ev,id); });
+    el.addEventListener('pointerdown', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; if(ev.pointerType==='mouse'&&ev.button!==0)return; startNodeDrag(ev,id); });
     el.addEventListener('click', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; if(state.touchWireSrc&&state.touchWireSrc!==id){connect(state.touchWireSrc,id);state.touchWireSrc=null;document.getElementById(id)?.classList.remove('wiring-src');return;} selectNode(id); });
     el.querySelector('.del')?.addEventListener('click', ev=>{ ev.stopPropagation(); deleteNode(id); });
-    el.querySelector('.port.out').addEventListener('mousedown', ev=>{ ev.stopPropagation(); startWire(ev,id); });
+    el.querySelector('.port.out').addEventListener('pointerdown', ev=>{ if(ev.pointerType==='touch'||ev.pointerType==='pen')return; ev.stopPropagation(); startWire(ev,id); });
     el.querySelector('.port.out').addEventListener('click', ev=>{ ev.stopPropagation(); touchWireStart(id); });
   }
   function addNode(type,x,y,opts){
@@ -1613,12 +1653,12 @@ function makeCanvas(cfg){
     wireNode(id); renderEdges();
     return node;
   }
-  function startNodeDrag(ev,id){ state.dragNode=id; const node=state.nodes.find(n=>n.id===id); const cr=canvas.getBoundingClientRect(); state.dragOff={x:ev.clientX-cr.left-node.x,y:ev.clientY-cr.top-node.y}; document.addEventListener('mousemove',onNodeDrag); document.addEventListener('mouseup',stopNodeDrag); }
-  function onNodeDrag(ev){ if(!state.dragNode)return; const node=state.nodes.find(n=>n.id===state.dragNode); const cr=canvas.getBoundingClientRect(); node.x=Math.max(6,Math.min(ev.clientX-cr.left-state.dragOff.x,canvas.clientWidth-184)); node.y=Math.max(6,Math.min(ev.clientY-cr.top-state.dragOff.y,canvas.clientHeight-100)); const el=document.getElementById(state.dragNode); el.style.left=node.x+'px'; el.style.top=node.y+'px'; renderEdges(); }
-  function stopNodeDrag(){ state.dragNode=null; document.removeEventListener('mousemove',onNodeDrag); document.removeEventListener('mouseup',stopNodeDrag); }
-  function startWire(ev,id){ state.wireSrc=id; document.getElementById(id).classList.add('wiring-src'); canvas.querySelectorAll('.node .port.in').forEach(p=>{ if(p.closest('.node').id!==id) p.classList.add('can-target'); }); state.tempPath=document.createElementNS('http://www.w3.org/2000/svg','path'); state.tempPath.setAttribute('class','edge-path'); edgesSvg.appendChild(state.tempPath); document.addEventListener('mousemove',onWire); document.addEventListener('mouseup',stopWire); }
+  function startNodeDrag(ev,id){ state.dragNode=id; try{ev.currentTarget.setPointerCapture(ev.pointerId);}catch(e){} const node=state.nodes.find(n=>n.id===id); const cr=canvas.getBoundingClientRect(); state.dragOff={x:ev.clientX-cr.left-node.x,y:ev.clientY-cr.top-node.y}; document.addEventListener('pointermove',onNodeDrag); document.addEventListener('pointerup',stopNodeDrag); document.addEventListener('pointercancel',stopNodeDrag); }
+  function onNodeDrag(ev){ if(!state.dragNode)return; ev.preventDefault(); const node=state.nodes.find(n=>n.id===state.dragNode); const cr=canvas.getBoundingClientRect(); const maxX=Math.max(6,canvas.clientWidth-Math.min(184,canvas.clientWidth*0.5)); node.x=Math.max(6,Math.min(ev.clientX-cr.left-state.dragOff.x,maxX)); node.y=Math.max(6,Math.min(ev.clientY-cr.top-state.dragOff.y,canvas.clientHeight-100)); const el=document.getElementById(state.dragNode); el.style.left=node.x+'px'; el.style.top=node.y+'px'; renderEdges(); }
+  function stopNodeDrag(){ state.dragNode=null; document.removeEventListener('pointermove',onNodeDrag); document.removeEventListener('pointerup',stopNodeDrag); document.removeEventListener('pointercancel',stopNodeDrag); }
+  function startWire(ev,id){ state.wireSrc=id; document.getElementById(id).classList.add('wiring-src'); canvas.querySelectorAll('.node .port.in').forEach(p=>{ if(p.closest('.node').id!==id) p.classList.add('can-target'); }); state.tempPath=document.createElementNS('http://www.w3.org/2000/svg','path'); state.tempPath.setAttribute('class','edge-path'); edgesSvg.appendChild(state.tempPath); document.addEventListener('pointermove',onWire); document.addEventListener('pointerup',stopWire); }
   function onWire(ev){ if(!state.wireSrc)return; const cr=canvas.getBoundingClientRect(); const pa=portPos(canvas,state.wireSrc,'out'); const mx=ev.clientX-cr.left,my=ev.clientY-cr.top; const dx=Math.max(40,(mx-pa.x)*0.5); state.tempPath.setAttribute('d',`M ${pa.x} ${pa.y} C ${pa.x+dx} ${pa.y}, ${mx-dx} ${my}, ${mx} ${my}`); }
-  function stopWire(ev){ document.removeEventListener('mousemove',onWire); document.removeEventListener('mouseup',stopWire); canvas.querySelectorAll('.port.can-target').forEach(p=>p.classList.remove('can-target')); if(state.wireSrc) document.getElementById(state.wireSrc)?.classList.remove('wiring-src'); if(state.tempPath){ state.tempPath.remove(); state.tempPath=null; } const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('.node'); if(target && state.wireSrc && target.id!==state.wireSrc && target.closest('#'+cfg.canvasId)){ connect(state.wireSrc,target.id); } state.wireSrc=null; }
+  function stopWire(ev){ document.removeEventListener('pointermove',onWire); document.removeEventListener('pointerup',stopWire); canvas.querySelectorAll('.port.can-target').forEach(p=>p.classList.remove('can-target')); if(state.wireSrc) document.getElementById(state.wireSrc)?.classList.remove('wiring-src'); if(state.tempPath){ state.tempPath.remove(); state.tempPath=null; } const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('.node'); if(target && state.wireSrc && target.id!==state.wireSrc && target.closest('#'+cfg.canvasId)){ connect(state.wireSrc,target.id); } state.wireSrc=null; }
   function touchWireStart(id){ if(state.touchWireSrc===id){ state.touchWireSrc=null; document.getElementById(id).classList.remove('wiring-src'); return; } state.touchWireSrc=id; document.getElementById(id).classList.add('wiring-src'); toast('Napauta palikkaa, johon kytketään'); }
   function connect(a,b){ if(a===b)return; if(state.edges.some(([x,y])=>x===a&&y===b))return; state.edges.push([a,b]); renderEdges(); toast('Kytketty'); }
   function removeEdge(a,b){ state.edges=state.edges.filter(([x,y])=>!(x===a&&y===b)); renderEdges(); }
@@ -1629,7 +1669,7 @@ function makeCanvas(cfg){
     document.querySelectorAll('#'+cfg.paletteId+' .pal-node').forEach(pn=>{
       pn.addEventListener('dragstart', e=>{ state.dragType=pn.dataset.type; pn.classList.add('dragging'); e.dataTransfer.effectAllowed='copy'; });
       pn.addEventListener('dragend', ()=>{ pn.classList.remove('dragging'); if(cfg.dropId) document.getElementById(cfg.dropId)?.classList.remove('on'); });
-      pn.addEventListener('click', ()=>{ const n=state.nodes.length; addNode(pn.dataset.type, 30+(n%3)*200, 30+Math.floor(n/3)*130); selectNode(state.nodes[state.nodes.length-1].id); });
+      pn.addEventListener('click', ()=>{ const n=state.nodes.length; const col=Math.max(140, Math.min(200, Math.floor(canvas.clientWidth/2)-20)); addNode(pn.dataset.type, 20+(n%2)*col, 20+Math.floor(n/2)*110); selectNode(state.nodes[state.nodes.length-1].id); });
     });
     canvas.addEventListener('dragover', e=>{ e.preventDefault(); if(cfg.dropId) document.getElementById(cfg.dropId)?.classList.add('on'); });
     canvas.addEventListener('dragleave', e=>{ if(e.target===canvas && cfg.dropId) document.getElementById(cfg.dropId)?.classList.remove('on'); });

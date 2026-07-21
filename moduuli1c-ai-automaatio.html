@@ -513,6 +513,55 @@ h2.h em { font-style:italic; color:var(--orange); }
 .day-banner .db-dot { width:7px; height:7px; border-radius:50%; background:var(--green); }
 .day-banner .db-time { color:var(--orange); }
 
+/* ===== Phone / small screens — all sections + builder exercises ===== */
+@media(max-width:820px){
+  .section{padding:clamp(2.4rem,6vh,4rem) 1rem;}
+  #hero{padding:clamp(4rem,10vh,5.5rem) 1rem clamp(2.5rem,6vh,3.5rem);}
+  .hero-cta,.btn-next,.slack-btn,.email-confirm-btn{width:100%;justify-content:center;min-height:48px;box-sizing:border-box;}
+  .def-grid,.scen-grid,.done-tiles{grid-template-columns:1fr!important;}
+  .signals{grid-template-columns:1fr!important;}
+  .chal-tabs{gap:.4rem;}
+  .chal-tab{min-width:calc(50% - .25rem);min-height:56px;padding:.85rem;}
+  .verdicts{flex-direction:column;}
+  .verdict{min-width:0;min-height:48px;}
+  .marja{flex-direction:column;gap:.75rem;padding:1.1rem;}
+  .task-card{padding:1.1rem;}
+  .stage-track{flex-wrap:wrap;}
+  .builder-shell{border-radius:10px;margin:1rem 0;}
+  .builder-topbar{height:auto;min-height:48px;flex-wrap:wrap;padding:.55rem .65rem;gap:.5rem;}
+  .bt-toggle{display:none;}
+  .bt-run,.ai-btn{min-height:48px;padding:12px 18px;font-size:.88rem;}
+  .builder-main{flex-direction:column;min-height:0;position:relative;}
+  .palette{width:100%!important;max-height:none;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border-right:none;border-bottom:1px solid var(--panel-line);padding:.55rem;gap:.45rem;}
+  .palette-h{position:sticky;left:0;background:#fff;z-index:2;align-self:center;white-space:nowrap;padding:.35rem .5rem .35rem 0;}
+  .pal-node{flex:0 0 auto;min-width:118px;min-height:48px;padding:.65rem .7rem;}
+  .canvas-wrap{width:100%;min-height:340px;height:52vh;min-width:0;}
+  .params{position:absolute;left:0;right:0;bottom:0;width:100%!important;max-height:0;overflow:hidden;border-left:none;z-index:30;transition:max-height .25s ease;background:#fff;}
+  .params.open{max-height:58vh;overflow-y:auto;border-top:1px solid var(--panel-line);box-shadow:0 -12px 32px rgba(0,0,0,.14);}
+  .params-in,.params-head{width:100%!important;box-sizing:border-box;}
+  .params-close{min-width:44px;min-height:44px;font-size:1.4rem;}
+  .node{touch-action:none;width:min(172px,46vw);}
+  .node .del{display:flex!important;width:28px;height:28px;font-size:1rem;top:-10px;left:-10px;}
+  .port{width:18px;height:18px;}
+  .port.in{left:-10px;} .port.out{right:-10px;}
+  .ai-q,.chal-brief{padding:1.15rem 1.1rem;}
+  .ai-area,.p-input,.p-select,.p-area,.p-email-input,.cc-input,textarea,input[type="email"],input[type="text"]{font-size:16px!important;}
+  .claude-chat{width:calc(100vw - 24px);right:0;left:0;margin:0 auto;bottom:calc(100% + 8px);}
+  .cc-send,.cc-chip{min-height:44px;}
+  .cc-send{width:44px;height:44px;}
+  .slack-pop{left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));width:auto;max-width:none;}
+  .toast{left:12px;right:12px;max-width:none;width:auto;transform:translateY(20px);bottom:max(16px,env(safe-area-inset-bottom));}
+  .toast.show{transform:translateY(0);left:12px;}
+  .wrinkle{padding:1.1rem;}
+}
+@media(max-width:480px){
+  .nav-tag{font-size:.58rem;padding:2px 7px;}
+  .canvas-wrap{height:48vh;min-height:300px;}
+  .chal-tab{min-width:100%;}
+  .pal-node{min-width:104px;}
+  .signal{min-height:52px;padding:.9rem .75rem;}
+}
+
 </style>
 </head>
 <body>
@@ -1190,7 +1239,7 @@ let dragType=null;
 document.querySelectorAll('#palette .pal-node').forEach(pn=>{
   pn.addEventListener('dragstart', e=>{ dragType=pn.dataset.type; pn.classList.add('dragging'); e.dataTransfer.effectAllowed='copy'; });
   pn.addEventListener('dragend', ()=>{ pn.classList.remove('dragging'); document.getElementById('dropHi').classList.remove('on'); });
-  pn.addEventListener('click', ()=>{ const n=buildNodes.length; addNode(pn.dataset.type, 30+(n%3)*200, 30+Math.floor(n/3)*130); });
+  pn.addEventListener('click', ()=>{ const n=buildNodes.length; const col=Math.max(140, Math.min(200, Math.floor(canvas.clientWidth/2)-20)); addNode(pn.dataset.type, 20+(n%2)*col, 20+Math.floor(n/2)*110); });
 });
 canvas.addEventListener('dragover', e=>{ e.preventDefault(); document.getElementById('dropHi').classList.add('on'); });
 canvas.addEventListener('dragleave', e=>{ if(e.target===canvas) document.getElementById('dropHi').classList.remove('on'); });
@@ -1205,20 +1254,20 @@ function addNode(type,x,y){
 }
 function wireNode(id){
   const el=document.getElementById(id);
-  el.addEventListener('mousedown', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; startNodeDrag(ev,id); });
+  el.addEventListener('pointerdown', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; if(ev.pointerType==='mouse'&&ev.button!==0)return; startNodeDrag(ev,id); });
   el.addEventListener('click', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; if(touchWireSrc&&touchWireSrc!==id){connect(touchWireSrc,id);touchWireSrc=null;document.getElementById(id)?.classList.remove('wiring-src');return;} selectNode(id); });
   el.querySelector('.del').addEventListener('click', ev=>{ ev.stopPropagation(); deleteNode(id); });
-  el.querySelector('.port.out').addEventListener('mousedown', ev=>{ ev.stopPropagation(); startWire(ev,id); });
+  el.querySelector('.port.out').addEventListener('pointerdown', ev=>{ if(ev.pointerType==='touch'||ev.pointerType==='pen')return; ev.stopPropagation(); startWire(ev,id); });
   el.querySelector('.port.out').addEventListener('click', ev=>{ ev.stopPropagation(); touchWireStart(id); });
 }
 let dragNode=null, dragOff={x:0,y:0};
-function startNodeDrag(ev,id){ dragNode=id; const node=buildNodes.find(n=>n.id===id); const cr=canvas.getBoundingClientRect(); dragOff={x:ev.clientX-cr.left-node.x,y:ev.clientY-cr.top-node.y}; document.addEventListener('mousemove',onNodeDrag); document.addEventListener('mouseup',stopNodeDrag); }
-function onNodeDrag(ev){ if(!dragNode)return; const node=buildNodes.find(n=>n.id===dragNode); const cr=canvas.getBoundingClientRect(); node.x=Math.max(6,Math.min(ev.clientX-cr.left-dragOff.x,canvas.clientWidth-184)); node.y=Math.max(6,Math.min(ev.clientY-cr.top-dragOff.y,canvas.clientHeight-100)); const el=document.getElementById(dragNode); el.style.left=node.x+'px'; el.style.top=node.y+'px'; renderEdges(); }
-function stopNodeDrag(){ dragNode=null; document.removeEventListener('mousemove',onNodeDrag); document.removeEventListener('mouseup',stopNodeDrag); }
+function startNodeDrag(ev,id){ dragNode=id; try{ev.currentTarget.setPointerCapture(ev.pointerId);}catch(e){} const node=buildNodes.find(n=>n.id===id); const cr=canvas.getBoundingClientRect(); dragOff={x:ev.clientX-cr.left-node.x,y:ev.clientY-cr.top-node.y}; document.addEventListener('pointermove',onNodeDrag); document.addEventListener('pointerup',stopNodeDrag); document.addEventListener('pointercancel',stopNodeDrag); }
+function onNodeDrag(ev){ if(!dragNode)return; ev.preventDefault(); const node=buildNodes.find(n=>n.id===dragNode); const cr=canvas.getBoundingClientRect(); const maxX=Math.max(6,canvas.clientWidth-Math.min(184,canvas.clientWidth*0.5)); node.x=Math.max(6,Math.min(ev.clientX-cr.left-dragOff.x,maxX)); node.y=Math.max(6,Math.min(ev.clientY-cr.top-dragOff.y,canvas.clientHeight-100)); const el=document.getElementById(dragNode); el.style.left=node.x+'px'; el.style.top=node.y+'px'; renderEdges(); }
+function stopNodeDrag(){ dragNode=null; document.removeEventListener('pointermove',onNodeDrag); document.removeEventListener('pointerup',stopNodeDrag); document.removeEventListener('pointercancel',stopNodeDrag); }
 let wireSrc=null, tempPath=null;
-function startWire(ev,id){ wireSrc=id; document.getElementById(id).classList.add('wiring-src'); document.querySelectorAll('#canvas .node .port.in').forEach(p=>{ if(p.closest('.node').id!==id) p.classList.add('can-target'); }); tempPath=document.createElementNS('http://www.w3.org/2000/svg','path'); tempPath.setAttribute('class','edge-path'); edgesSvg.appendChild(tempPath); document.addEventListener('mousemove',onWire); document.addEventListener('mouseup',stopWire); }
+function startWire(ev,id){ wireSrc=id; document.getElementById(id).classList.add('wiring-src'); document.querySelectorAll('#canvas .node .port.in').forEach(p=>{ if(p.closest('.node').id!==id) p.classList.add('can-target'); }); tempPath=document.createElementNS('http://www.w3.org/2000/svg','path'); tempPath.setAttribute('class','edge-path'); edgesSvg.appendChild(tempPath); document.addEventListener('pointermove',onWire); document.addEventListener('pointerup',stopWire); }
 function onWire(ev){ if(!wireSrc)return; const cr=canvas.getBoundingClientRect(); const pa=portPos(canvas,wireSrc,'out'); const mx=ev.clientX-cr.left,my=ev.clientY-cr.top; const dx=Math.max(40,(mx-pa.x)*0.5); tempPath.setAttribute('d',`M ${pa.x} ${pa.y} C ${pa.x+dx} ${pa.y}, ${mx-dx} ${my}, ${mx} ${my}`); }
-function stopWire(ev){ document.removeEventListener('mousemove',onWire); document.removeEventListener('mouseup',stopWire); document.querySelectorAll('.port.can-target').forEach(p=>p.classList.remove('can-target')); if(wireSrc) document.getElementById(wireSrc)?.classList.remove('wiring-src'); if(tempPath){ tempPath.remove(); tempPath=null; } const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('.node'); if(target && wireSrc && target.id!==wireSrc && target.closest('#canvas')){ connect(wireSrc,target.id); } wireSrc=null; }
+function stopWire(ev){ document.removeEventListener('pointermove',onWire); document.removeEventListener('pointerup',stopWire); document.querySelectorAll('.port.can-target').forEach(p=>p.classList.remove('can-target')); if(wireSrc) document.getElementById(wireSrc)?.classList.remove('wiring-src'); if(tempPath){ tempPath.remove(); tempPath=null; } const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('.node'); if(target && wireSrc && target.id!==wireSrc && target.closest('#canvas')){ connect(wireSrc,target.id); } wireSrc=null; }
 let touchWireSrc=null;
 function touchWireStart(id){ if(touchWireSrc===id){ touchWireSrc=null; document.getElementById(id).classList.remove('wiring-src'); return; } touchWireSrc=id; document.getElementById(id).classList.add('wiring-src'); toast('Napauta palikkaa, johon kytketään'); }
 function connect(a,b){ if(a===b)return; if(buildEdges.some(([x,y])=>x===a&&y===b))return; buildEdges.push([a,b]); renderEdges(); toast('Kytketty'); }
@@ -1581,7 +1630,7 @@ function attachCasePalette(){
   document.querySelectorAll('#casePalette .pal-node').forEach(pn=>{
     pn.addEventListener('dragstart', e=>{ cDragType=pn.dataset.type; pn.classList.add('dragging'); e.dataTransfer.effectAllowed='copy'; });
     pn.addEventListener('dragend', ()=>{ pn.classList.remove('dragging'); document.getElementById('caseDropHi').classList.remove('on'); });
-    pn.addEventListener('click', ()=>{ const n=cNodes.length; caseAddNode(pn.dataset.type, 30+(n%3)*200, 30+Math.floor(n/3)*130); });
+    pn.addEventListener('click', ()=>{ const n=cNodes.length; const col=Math.max(140, Math.min(200, Math.floor(cCanvas.clientWidth/2)-20)); caseAddNode(pn.dataset.type, 20+(n%2)*col, 20+Math.floor(n/2)*110); });
   });
 }
 cCanvas.addEventListener('dragover', e=>{ e.preventDefault(); document.getElementById('caseDropHi').classList.add('on'); });
@@ -1600,20 +1649,20 @@ function caseAddNode(type,x,y){
 }
 function caseWire(id){
   const el=document.getElementById(id);
-  el.addEventListener('mousedown', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; cStartDrag(ev,id); });
+  el.addEventListener('pointerdown', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; if(ev.pointerType==='mouse'&&ev.button!==0)return; cStartDrag(ev,id); });
   el.addEventListener('click', ev=>{ if(ev.target.classList.contains('port')||ev.target.classList.contains('del'))return; if(cTouchSrc&&cTouchSrc!==id){caseConnect(cTouchSrc,id);cTouchSrc=null;document.getElementById(id)?.classList.remove('wiring-src');return;} caseSelect(id); });
   el.querySelector('.del').addEventListener('click', ev=>{ ev.stopPropagation(); caseDelete(id); });
-  el.querySelector('.port.out').addEventListener('mousedown', ev=>{ ev.stopPropagation(); cStartWire(ev,id); });
+  el.querySelector('.port.out').addEventListener('pointerdown', ev=>{ if(ev.pointerType==='touch'||ev.pointerType==='pen')return; ev.stopPropagation(); cStartWire(ev,id); });
   el.querySelector('.port.out').addEventListener('click', ev=>{ ev.stopPropagation(); cTouchWire(id); });
 }
 let cDragNode=null, cDragOff={x:0,y:0};
-function cStartDrag(ev,id){ cDragNode=id; const node=cNodes.find(n=>n.id===id); const cr=cCanvas.getBoundingClientRect(); cDragOff={x:ev.clientX-cr.left-node.x,y:ev.clientY-cr.top-node.y}; document.addEventListener('mousemove',cOnDrag); document.addEventListener('mouseup',cStopDrag); }
-function cOnDrag(ev){ if(!cDragNode)return; const node=cNodes.find(n=>n.id===cDragNode); const cr=cCanvas.getBoundingClientRect(); node.x=Math.max(6,Math.min(ev.clientX-cr.left-cDragOff.x,cCanvas.clientWidth-184)); node.y=Math.max(6,Math.min(ev.clientY-cr.top-cDragOff.y,cCanvas.clientHeight-100)); const el=document.getElementById(cDragNode); el.style.left=node.x+'px'; el.style.top=node.y+'px'; caseRenderEdges(); }
-function cStopDrag(){ cDragNode=null; document.removeEventListener('mousemove',cOnDrag); document.removeEventListener('mouseup',cStopDrag); }
+function cStartDrag(ev,id){ cDragNode=id; try{ev.currentTarget.setPointerCapture(ev.pointerId);}catch(e){} const node=cNodes.find(n=>n.id===id); const cr=cCanvas.getBoundingClientRect(); cDragOff={x:ev.clientX-cr.left-node.x,y:ev.clientY-cr.top-node.y}; document.addEventListener('pointermove',cOnDrag); document.addEventListener('pointerup',cStopDrag); document.addEventListener('pointercancel',cStopDrag); }
+function cOnDrag(ev){ if(!cDragNode)return; ev.preventDefault(); const node=cNodes.find(n=>n.id===cDragNode); const cr=cCanvas.getBoundingClientRect(); const maxX=Math.max(6,cCanvas.clientWidth-Math.min(184,cCanvas.clientWidth*0.5)); node.x=Math.max(6,Math.min(ev.clientX-cr.left-cDragOff.x,maxX)); node.y=Math.max(6,Math.min(ev.clientY-cr.top-cDragOff.y,cCanvas.clientHeight-100)); const el=document.getElementById(cDragNode); el.style.left=node.x+'px'; el.style.top=node.y+'px'; caseRenderEdges(); }
+function cStopDrag(){ cDragNode=null; document.removeEventListener('pointermove',cOnDrag); document.removeEventListener('pointerup',cStopDrag); document.removeEventListener('pointercancel',cStopDrag); }
 let cWireSrc=null, cTempPath=null;
-function cStartWire(ev,id){ cWireSrc=id; document.getElementById(id).classList.add('wiring-src'); cCanvas.querySelectorAll('.node .port.in').forEach(p=>{ if(p.closest('.node').id!==id) p.classList.add('can-target'); }); cTempPath=document.createElementNS('http://www.w3.org/2000/svg','path'); cTempPath.setAttribute('class','edge-path'); cEdgesSvg.appendChild(cTempPath); document.addEventListener('mousemove',cOnWire); document.addEventListener('mouseup',cStopWire); }
+function cStartWire(ev,id){ cWireSrc=id; document.getElementById(id).classList.add('wiring-src'); cCanvas.querySelectorAll('.node .port.in').forEach(p=>{ if(p.closest('.node').id!==id) p.classList.add('can-target'); }); cTempPath=document.createElementNS('http://www.w3.org/2000/svg','path'); cTempPath.setAttribute('class','edge-path'); cEdgesSvg.appendChild(cTempPath); document.addEventListener('pointermove',cOnWire); document.addEventListener('pointerup',cStopWire); }
 function cOnWire(ev){ if(!cWireSrc)return; const cr=cCanvas.getBoundingClientRect(); const pa=portPos(cCanvas,cWireSrc,'out'); const mx=ev.clientX-cr.left,my=ev.clientY-cr.top; const dx=Math.max(40,(mx-pa.x)*0.5); cTempPath.setAttribute('d',`M ${pa.x} ${pa.y} C ${pa.x+dx} ${pa.y}, ${mx-dx} ${my}, ${mx} ${my}`); }
-function cStopWire(ev){ document.removeEventListener('mousemove',cOnWire); document.removeEventListener('mouseup',cStopWire); cCanvas.querySelectorAll('.port.can-target').forEach(p=>p.classList.remove('can-target')); if(cWireSrc) document.getElementById(cWireSrc)?.classList.remove('wiring-src'); if(cTempPath){ cTempPath.remove(); cTempPath=null; } const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('.node'); if(target && cWireSrc && target.id!==cWireSrc && target.closest('#caseCanvas')){ caseConnect(cWireSrc,target.id); } cWireSrc=null; }
+function cStopWire(ev){ document.removeEventListener('pointermove',cOnWire); document.removeEventListener('pointerup',cStopWire); cCanvas.querySelectorAll('.port.can-target').forEach(p=>p.classList.remove('can-target')); if(cWireSrc) document.getElementById(cWireSrc)?.classList.remove('wiring-src'); if(cTempPath){ cTempPath.remove(); cTempPath=null; } const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('.node'); if(target && cWireSrc && target.id!==cWireSrc && target.closest('#caseCanvas')){ caseConnect(cWireSrc,target.id); } cWireSrc=null; }
 let cTouchSrc=null;
 function cTouchWire(id){ if(cTouchSrc===id){ cTouchSrc=null; document.getElementById(id).classList.remove('wiring-src'); return; } cTouchSrc=id; document.getElementById(id).classList.add('wiring-src'); toast('Napauta palikkaa, johon kytketään'); }
 function caseConnect(a,b){ if(a===b)return; if(cEdges.some(([x,y])=>x===a&&y===b))return; cEdges.push([a,b]); caseRenderEdges(); toast('Kytketty'); }
