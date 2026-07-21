@@ -627,6 +627,14 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'moduuli-tekoaly-kirjoituskumppanina'
 ]);
 
+/**
+ * Soft-lock early access on /module/:id (must match public/index.html).
+ * Module stays locked for the group; these gift keys may open it.
+ */
+const STUDENT_LOCKED_EARLY_ACCESS = {
+  'moduuli-prompt-hiomo': ['musiikki']
+};
+
 // Personal gift HTML only via /module/:id (recipient + admin gate)
 Object.values(GIFTS).forEach((gift) => {
   app.get(`/${gift.moduleId}.html`, (req, res) => {
@@ -695,7 +703,26 @@ app.get('/module/:moduleId', async (req, res) => {
   }
 
   if (STUDENT_LOCKED_MODULE_IDS.has(moduleId) && !viewerIsAdmin) {
-    return res.redirect(302, '/');
+    const earlyKeys = STUDENT_LOCKED_EARLY_ACCESS[moduleId] || [];
+    let earlyAllowed = false;
+    if (earlyKeys.length && token) {
+      try {
+        const r = await pool.query(
+          `SELECT u.email, u.name FROM sessions s JOIN users u ON s.user_id = u.id
+           WHERE s.session_token = $1 AND s.expires_at > NOW() AND u.is_active = TRUE`,
+          [token]
+        );
+        if (r.rows.length) {
+          const giftUser = { email: r.rows[0].email, name: r.rows[0].name };
+          earlyAllowed = earlyKeys.some((key) => isGiftRecipient(key, giftUser));
+        }
+      } catch (e) {
+        console.error('Student-locked early access check:', e);
+      }
+    }
+    if (!earlyAllowed) {
+      return res.redirect(302, '/');
+    }
   }
 
   if (getGiftKeyForModuleId(moduleId) && !viewerIsAdmin && !isPublicStudentModule(moduleId)) {
