@@ -2397,20 +2397,14 @@
     ]);
 
     /**
-     * Päivä 1 — lukitse (näkyy, ei avaudu). Auki kaikille: Aloitus + M1–M5.
-     * Tomi 1/2 auki vain musiikki-giftille (ei tässä listassa).
-     * Poista id tästä kun avaat seuraavan päivän moduuleja.
+     * Päivä 1 — näkyy lukittuna (ei avaudu). Auki: Aloitus + M1–M5 (+ Tomi 1/2 giftille).
      */
     const studentSoftLockedModuleIds = new Set([
-      // Part 1 bonus
       'moduuli6-hallusinaatiot',
-      // Käytännön AI-taidot (bridge)
       'moduuli8-ai-polku',
       'moduuli9-haastattelu',
       'moduuli-elava-cv',
       'moduuli-perplexity-notebooklm',
-      'external-mina-meidan-osana-unelmatyo',
-      'external-mina-meidan-osana-itseluottamus',
       'moduuli-esitykset-tarjoukset-viestinta',
       'moduuli-lovable',
       'moduuli-visibility-growth-automation',
@@ -2419,17 +2413,32 @@
       'moduuli-ai-maisema',
       'moduuli-ai-liidien-hankinta',
       'moduuli-ai-simulation-lab',
-      'moduuli-excel-copilot-masterclass',
-      'moduuli-recap-game',
       'moduuli-bottityypit',
-      'moduuli-eu-ai-act-moduuli5',
       'moduuli-prompt-hiomo',
       'moduuli-hitl-architect',
       'moduuli-asiakaspalvelu-live-puhelu',
       'moduuli1-ai-automaatio',
       'moduuli1b-ai-automaatio',
-      'moduuli1c-ai-automaatio',
-      // Day 2+
+      'moduuli1c-ai-automaatio'
+    ]);
+
+    /**
+     * Piilotettu opiskelijoilta (vain admin näkee). Päivä 1.
+     * Poista id kun julkaiset opiskelijoille.
+     */
+    const temporarilyLockedModuleIds = new Set([
+      'external-mina-meidan-osana-unelmatyo',
+      'external-mina-meidan-osana-itseluottamus',
+      'loppumoduuli-sina-ja-tekoaly',
+      'myytinmurtaja',
+      'rikkinainen-prompti',
+      'tuomioistuin',
+      'tyokalurakentaja',
+      'moduuli-eu-ai-act-moduuli5',
+      'moduuli-excel-copilot-masterclass',
+      'moduuli-recap-game',
+      'palaute',
+      // Day 2–4
       'moduuli-voice-deep-search',
       'moduuli10-ai-tyonhakutyokalut',
       'moduuli11-ai-etikka',
@@ -2441,7 +2450,7 @@
       'moduuli9-ai-oppimisessa',
       'moduuli10b-digitaaliset-perustaidot',
       'moduuli10d-yrittajyys',
-      // Industry
+      // Sovella omaan alaasi
       'moduuli5-ai-myynnissa-ja-markkinoinnissa',
       'moduuli6-ai-taloushallinnossa',
       'moduuli-hoitoala',
@@ -2450,17 +2459,10 @@
       'moduuli-ravintola',
       'moduuli-logistiikka',
       'moduuli-it',
-      // Loppuosi + palaute
-      'loppumoduuli-sina-ja-tekoaly',
-      'myytinmurtaja',
-      'rikkinainen-prompti',
-      'tuomioistuin',
-      'tyokalurakentaja',
-      'palaute'
-    ]);
-
-    /** Piilotettu kokonaan — pidä tyhjänä päivä 1:llä (käytä soft-lockia yllä). */
-    const temporarilyLockedModuleIds = new Set([
+      // Jani/Karpo oma polku — piilossa opiskelijoilta tänään (admin näkee)
+      'moduuli-ai-tietosuoja',
+      'moduuli-tutkimusnaytto',
+      'moduuli-tekoaly-kirjoituskumppanina'
     ]);
     
     function isAdminUser() {
@@ -2504,12 +2506,10 @@
 
     function shouldShowInOmaPolku(m, path) {
       if (!m || !path) return false;
+      // Päivä 1: oma polku vain adminille (ei Testi / Jani -kortteja opiskelijoille)
+      if (!isAdminUser()) return false;
       const ids = path === 'jani' ? JANI_OMA_POLKU_IDS : ANNE_OMA_POLKU_IDS;
-      if (isAdminUser()) return ids.indexOf(m.id) !== -1;
-      const entry = OMA_POLKU_GIFT_KEY[m.id];
-      if (!entry) return false;
-      const key = entry[path];
-      return key ? isPersonalGiftRecipient(key) : false;
+      return ids.indexOf(m.id) !== -1;
     }
 
     function getPersonalGiftKey(m) {
@@ -2578,10 +2578,11 @@
 
     function isModuleHiddenFromStudent(m) {
       if (isAdminUser()) return false;
+      // Päivä 1 -piilotus voittaa myös publicTyonhaku-listan
+      if (temporarilyLockedModuleIds.has(m.id)) return true;
       if (publicTyonhakuModuleIds.has(m.id)) return false;
       if (isPersonalGiftModule(m)) return !shouldShowPersonalGiftModule(m);
       if (adminOnlyModuleIds.has(m.id) || m.adminOnly === true) return true;
-      if (temporarilyLockedModuleIds.has(m.id)) return true;
       return false;
     }
 

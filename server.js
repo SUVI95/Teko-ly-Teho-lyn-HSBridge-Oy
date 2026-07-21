@@ -568,10 +568,11 @@ const STRICT_ADMIN_ONLY_MODULE_IDS = new Set([
 ]);
 
 /**
- * Päivä 1: näkyvät dashboardilla lukittuina, /module/ ohjaa etusivulle.
- * Auki: Aloitus + M1–M5 (+ Tomi 1/2 giftille). Pidä synkassa index.html soft-lock -listan kanssa.
+ * Päivä 1: /module/ lukittu opiskelijoilta (dashboard soft-lock + piilotetut).
+ * Auki: Aloitus + M1–M5 (+ Tomi 1/2 giftille).
  */
 const STUDENT_LOCKED_MODULE_IDS = new Set([
+  // Soft-lock (näkyy lukittuna)
   'moduuli6-hallusinaatiot',
   'moduuli8-ai-polku',
   'moduuli9-haastattelu',
@@ -585,16 +586,17 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'moduuli-ai-maisema',
   'moduuli-ai-liidien-hankinta',
   'moduuli-ai-simulation-lab',
-  'moduuli-excel-copilot-masterclass',
-  'moduuli-recap-game',
   'moduuli-bottityypit',
-  'moduuli-eu-ai-act-moduuli5',
   'moduuli-prompt-hiomo',
   'moduuli-hitl-architect',
   'moduuli-asiakaspalvelu-live-puhelu',
   'moduuli1-ai-automaatio',
   'moduuli1b-ai-automaatio',
   'moduuli1c-ai-automaatio',
+  // Hidden from students (admin only on dashboard)
+  'moduuli-eu-ai-act-moduuli5',
+  'moduuli-excel-copilot-masterclass',
+  'moduuli-recap-game',
   'moduuli-voice-deep-search',
   'moduuli10-ai-tyonhakutyokalut',
   'moduuli11-ai-etikka',
@@ -619,7 +621,10 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'rikkinainen-prompti',
   'tuomioistuin',
   'tyokalurakentaja',
-  'palaute'
+  'palaute',
+  'moduuli-ai-tietosuoja',
+  'moduuli-tutkimusnaytto',
+  'moduuli-tekoaly-kirjoituskumppanina'
 ]);
 
 // Personal gift HTML only via /module/:id (recipient + admin gate)
