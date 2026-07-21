@@ -259,8 +259,8 @@
     }
     if (moduleId.indexOf('musiikkikampanja') >= 0) {
       if (d.curScreen) lines.push('Osio: ' + d.curScreen + '/8');
-      if (d.fields && d.fields.t1artist) lines.push('Artisti: ' + String(d.fields.t1artist).slice(0, 120));
-      if (d.fields && d.fields.t1track) lines.push('Julkaisu: ' + String(d.fields.t1track).slice(0, 120));
+      if (d.fields && d.fields.t4pick) lines.push('Valittu työkalu: ' + String(d.fields.t4pick).slice(0, 80));
+      if (d.fields && d.fields.t7stack) lines.push('AI-pino: ' + String(d.fields.t7stack).slice(0, 200));
       if (d.done && d.done.length) lines.push('Valmiit osiot: ' + d.done.join(', '));
     }
     return escapeHtml(lines.filter(Boolean).join('\n\n') || parsed.summary || 'Tallennettu');
