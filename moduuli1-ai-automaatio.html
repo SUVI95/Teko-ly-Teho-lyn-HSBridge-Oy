@@ -238,17 +238,6 @@ h2.h em { font-style:italic; color:var(--orange); }
 .result-card h4 { font-family:'Playfair Display',serif; font-size:1.15rem; margin-bottom:.5rem; color:var(--green); }
 .result-out { white-space:pre-wrap; font-size:.9rem; color:var(--ink2); line-height:1.7; background:var(--cream2); border-radius:8px; padding:.9rem 1rem; margin-top:.6rem; }
 
-/* scenario picker */
-.scen-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; margin:1.6rem 0; }
-.scen-card { background:#fff; border:2px solid var(--border); border-radius:var(--r); padding:1.3rem; cursor:pointer; transition:border-color .18s,transform .1s,box-shadow .18s; text-align:left; }
-.scen-card:hover { border-color:var(--orange-mid); transform:translateY(-2px); box-shadow:var(--shadow); }
-.scen-card.sel { border-color:var(--orange); box-shadow:0 0 0 3px var(--orange-light); }
-.scen-ic { font-size:1.7rem; margin-bottom:.6rem; }
-.scen-card h4 { font-family:'Playfair Display',serif; font-size:1.12rem; margin-bottom:.3rem; }
-.scen-card p { font-size:.84rem; color:var(--ink3); line-height:1.55; }
-.scen-card .tags { margin-top:.7rem; display:flex; flex-wrap:wrap; gap:.35rem; }
-.scen-card .tag { font-size:.66rem; font-family:'DM Mono',monospace; background:var(--cream2); color:var(--ink3); padding:3px 8px; border-radius:5px; }
-.scen-lock { text-align:center; padding:2rem 1rem; color:var(--ink4); font-size:.9rem; }
 
 /* sample data viewer (the "inbox"/"feed") */
 .sample-wrap { background:#fff; border:1px solid var(--border); border-radius:var(--r); overflow:hidden; margin:1.3rem 0; box-shadow:var(--shadow); }
@@ -379,8 +368,10 @@ h2.h em { font-style:italic; color:var(--orange); }
 .reality .r-rule::before { content:'\2713'; color:var(--green); flex-shrink:0; }
 .pattern-list { display:flex; flex-direction:column; gap:1rem; margin:1.8rem 0; }
 .pattern { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:1.2rem 1.3rem; box-shadow:var(--shadow); }
-.pattern-name { font-family:'DM Mono',monospace; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--orange); margin-bottom:.3rem; }
-.pattern-desc { font-size:.9rem; color:var(--ink3); line-height:1.55; margin-bottom:.9rem; }
+.pattern-name { font-family:'DM Sans',sans-serif; font-size:1.02rem; font-weight:700; color:var(--ink); margin-bottom:.45rem; line-height:1.3; }
+.pattern-trigger { display:inline-flex; align-items:center; gap:.4rem; background:var(--amber-light); border:1px solid var(--amber); border-radius:6px; padding:.35rem .7rem; font-size:.94rem; font-weight:600; color:var(--ink2); margin-bottom:.6rem; line-height:1.4; }
+.pattern-desc strong { color:var(--ink); }
+.pattern-desc { font-size:1.06rem; color:var(--ink2); line-height:1.7; margin-bottom:1rem; }
 .pattern-flow { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
 .pf-step { background:var(--cream2); border:1px solid var(--border); border-radius:8px; padding:.55rem .8rem; font-size:.82rem; font-weight:600; color:var(--ink2); display:flex; align-items:center; gap:.4rem; }
 .pf-step .pf-ic { font-size:.95rem; }
@@ -623,39 +614,44 @@ h2.h em { font-style:italic; color:var(--orange); }
     <div class="ad-note">Tämä on kaava <strong>Kysy → Hae → Muotoile → Vastaa</strong>. Sama kaava toimii sadassa eri tilanteessa.</div>
   </div>
 
-  <p class="body reveal">Tässä ovat yleisimmät kaavat. Huomaa miten kaikki noudattavat samaa ideaa: jokin alkaa, jotain tapahtuu, jotain valmistuu.</p>
+  <p class="body reveal">Melkein kaikki automaatiot ovat muunnelmia viidestä kaavasta. Kaavat eroavat toisistaan lähinnä yhdessä asiassa: <strong>mikä ne käynnistää</strong>. Siksi jokaisen kaavan kohdalla lukee ensin laukaisin — se on aina ketjun ensimmäinen palikka. Lue esimerkki ensin, kaava aukeaa sen jälkeen itsestään.</p>
 
   <div class="pattern-list reveal">
     <div class="pattern">
-      <div class="pattern-name">Kaava 1</div>
-      <div class="pattern-desc">Perusautomaatio — jokin käynnistää, kone tekee työn, tulos syntyy.</div>
-      <div class="pattern-flow"><span class="pf-step"><span class="pf-ic">🕐</span>Laukaisin</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">⚙️</span>Käsittely</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">📤</span>Toiminto</span></div>
+      <div class="pattern-name">Kaava 1 · Kello soi, kone tekee</div>
+      <div class="pattern-trigger">🕐 Laukaisin: kello — tietty aika tai päivä</div>
+      <div class="pattern-desc"><strong>Esimerkki:</strong> Joka perjantai kello 15 kone kokoaa viikon myynnit yhteen ja lähettää ne sinulle sähköpostiin. Kukaan ei paina mitään — <strong>aika itsessään on laukaisin</strong>.<br><span style="color:var(--ink4);">Käytä tätä, kun jokin toistuu säännöllisesti.</span></div>
+      <div class="pattern-flow"><span class="pf-step"><span class="pf-ic">🕐</span>Kello tulee</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">⚙️</span>Kone kokoaa</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">📤</span>Saat viestin</span></div>
     </div>
     <div class="pattern">
-      <div class="pattern-name">Kaava 2</div>
-      <div class="pattern-desc">Tiedon siirto — hae jotain, muuta sen muotoa, tallenna se.</div>
-      <div class="pattern-flow"><span class="pf-step"><span class="pf-ic">📥</span>Hae</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">🔄</span>Muunna</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">🗄️</span>Tallenna</span></div>
+      <div class="pattern-name">Kaava 2 · Siirrä tieto paikasta toiseen</div>
+      <div class="pattern-trigger">📥 Laukaisin: uusi tieto saapuu johonkin</div>
+      <div class="pattern-desc"><strong>Esimerkki:</strong> Joku täyttää verkkolomakkeen. <strong>Juuri se täyttäminen on laukaisin</strong> — kone herää siitä. Se poimii nimen ja puhelinnumeron ja kirjaa ne asiakasrekisteriin oikeille riveille. Ei enää kopiointia käsin.<br><span style="color:var(--ink4);">Käytä tätä, kun kopioit samaa tietoa paikasta toiseen.</span></div>
+      <div class="pattern-flow"><span class="pf-step"><span class="pf-ic">📥</span>Tieto saapuu</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">🔄</span>Kone järjestää</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">🗄️</span>Tallentuu paikalleen</span></div>
     </div>
     <div class="pattern">
-      <div class="pattern-name">Kaava 3</div>
-      <div class="pattern-desc">Älykäs ilmoitus — vastaanota, anna tekoälyn analysoida, ilmoita.</div>
-      <div class="pattern-flow"><span class="pf-step"><span class="pf-ic">📨</span>Vastaanota</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">🤖</span>Analysoi</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">🔔</span>Ilmoita</span></div>
+      <div class="pattern-name">Kaava 3 · Kone lukee ja hälyttää</div>
+      <div class="pattern-trigger">📨 Laukaisin: viesti saapuu</div>
+      <div class="pattern-desc"><strong>Esimerkki:</strong> Asiakaspalveluun tulee sata viestiä päivässä. <strong>Jokainen saapuva viesti laukaisee ketjun omalla vuorollaan</strong>. Tekoäly lukee sen ja päättelee, onko se kiireellinen. Vain ne kolme kiireellistä hälyttävät puhelimeesi — loput odottavat rauhassa.<br><span style="color:var(--ink4);">Käytä tätä, kun tietoa tulee liikaa luettavaksi käsin.</span></div>
+      <div class="pattern-flow"><span class="pf-step"><span class="pf-ic">📨</span>Viesti saapuu</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">🤖</span>Tekoäly lukee</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">🔔</span>Hälyttää vain tärkeistä</span></div>
     </div>
     <div class="pattern">
-      <div class="pattern-name">Kaava 4</div>
-      <div class="pattern-desc">Kysy ja vastaa — kysy jotain, hae palvelusta, saa vastaus. (Tämä oli äskeinen avustaja!)</div>
-      <div class="pattern-flow"><span class="pf-step"><span class="pf-ic">🙋</span>Kysy</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">🔌</span>Hae palvelusta</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">💬</span>Vastaus</span></div>
+      <div class="pattern-name">Kaava 4 · Kysyt, kone hakee vastauksen</div>
+      <div class="pattern-trigger">🙋 Laukaisin: sinä kysyt</div>
+      <div class="pattern-desc"><strong>Esimerkki:</strong> Kysyt "mitä kokouksia minulla on tänään?". <strong>Kysymyksesi on laukaisin</strong> — tässä kaavassa ihminen käynnistää koneen, ei kello eikä saapuva viesti. Kone käy katsomassa kalenterisi ja kertoo vastauksen selkokielellä. <strong>Tämän rakensit juuri äsken.</strong><br><span style="color:var(--ink4);">Käytä tätä, kun haluat vastauksen kysymykseen.</span></div>
+      <div class="pattern-flow"><span class="pf-step"><span class="pf-ic">🙋</span>Sinä kysyt</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">🔌</span>Kone käy hakemassa</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">💬</span>Saat vastauksen</span></div>
     </div>
     <div class="pattern">
-      <div class="pattern-name">Kaava 5</div>
-      <div class="pattern-desc">Ihminen hyväksyy — ihminen tarkistaa, sitten automaatio jatkaa. Tärkeä kun päätöksellä on seurauksia.</div>
-      <div class="pattern-flow"><span class="pf-step"><span class="pf-ic">👤</span>Ihminen hyväksyy</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">⚙️</span>Automaatio</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">✅</span>Valmis</span></div>
+      <div class="pattern-name">Kaava 5 · Ihminen sanoo kyllä ensin</div>
+      <div class="pattern-trigger">👤 Laukaisin: ihminen painaa hyväksy</div>
+      <div class="pattern-desc"><strong>Esimerkki:</strong> Kone kirjoittaa laskun valmiiksi, mutta pysähtyy siihen. Sinä luet sen ja painat "hyväksy". <strong>Se painallus on laukaisin</strong> — vasta siitä loppuketju lähtee liikkeelle ja lasku menee asiakkaalle.<br><span style="color:var(--ink4);">Käytä tätä aina, kun virheellä olisi oikeita seurauksia: raha, sopimus, asiakkaalle lähtevä viesti.</span></div>
+      <div class="pattern-flow"><span class="pf-step"><span class="pf-ic">👤</span>Sinä tarkistat</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">⚙️</span>Kone jatkaa</span><span class="pf-arrow">→</span><span class="pf-step"><span class="pf-ic">✅</span>Valmis</span></div>
     </div>
   </div>
 
   <div class="insight reveal">
     <h4>💡 Miksi tämä on tärkeää</h4>
-    <p>Kun tunnistat nämä kaavat, et opettele "Makea" tai "Zapieria" — opettelet <strong>automaation ajattelua</strong>. Vaihdat työkalun, mutta kaava pysyy. Siksi osaat tarttua mihin tahansa uuteen tekoälytyökaluun ilman että aloitat alusta.</p>
+    <p>Kun tunnistat nämä viisi kaavaa, et opettele yksittäistä työkalua — opettelet <strong>automaation ajattelua</strong>. Työkalu vaihtuu, kaava pysyy. Siksi osaat tarttua mihin tahansa uuteen tekoälytyökaluun ilman että aloitat alusta.</p>
   </div>
 </section>
 
@@ -757,40 +753,9 @@ h2.h em { font-style:italic; color:var(--orange); }
 
 <div class="sep"></div>
 
-<!-- ============ OSA 2: VALITSE MAAILMASI ============ -->
-<section class="section" id="valinta" data-index="5">
-  <div class="kicker reveal">Osa 5 · Valitse maailmasi</div>
-  <h2 class="h reveal">Mihin haluat <em>oman</em> koneesi?</h2>
-  <p class="lead reveal">Rakennat kohta oikean automaation, joka ajetaan aidolla esimerkkidatalla. Valitse ensin tilanne, joka on lähimpänä omaa arkeasi. Rakennat saman koneen — mutta sinun valitsemassasi maailmassa. Voit vaihtaa myöhemmin.</p>
-
-  <div class="scen-grid reveal">
-    <button class="scen-card" data-scen="tyonhaku" onclick="pickScenario('tyonhaku')">
-      <div class="scen-ic">🔍</div>
-      <h4>Työnhaku</h4>
-      <p>Kone, joka seuraa uusia työpaikkoja ja lähettää sinulle aamulla vain parhaat, valmiiksi tiivistettynä.</p>
-      <div class="tags"><span class="tag">postilaatikko</span><span class="tag">paikkafeed</span></div>
-    </button>
-    <button class="scen-card" data-scen="raportointi" onclick="pickScenario('raportointi')">
-      <div class="scen-ic">🌲</div>
-      <h4>Raportointi &amp; ala</h4>
-      <p>Kone, joka muuttaa sekavat kenttämuistiinpanot siistiksi raportiksi ja poimii kiireelliset asiat esiin.</p>
-      <div class="tags"><span class="tag">muistiinpanot</span><span class="tag">raportti</span></div>
-    </button>
-    <button class="scen-card" data-scen="asiakas" onclick="pickScenario('asiakas')">
-      <div class="scen-ic">✉️</div>
-      <h4>Asiakasposti</h4>
-      <p>Kone, joka lukee saapuneet asiakasviestit, tunnistaa kiireelliset ja luonnostelee vastaukset puolestasi.</p>
-      <div class="tags"><span class="tag">postilaatikko</span><span class="tag">vastaukset</span></div>
-    </button>
-  </div>
-  <p class="body reveal" id="scenChosen" style="display:none; text-align:center; color:var(--green); font-weight:600;"></p>
-</section>
-
-<div class="sep"></div>
-
 <!-- ============ OSA 3: KATSO OIKEA AUTOMAATIO ============ -->
-<section class="section" id="katso" data-index="6">
-  <div class="kicker reveal">Osa 6 · Katso yksi toiminnassa</div>
+<section class="section" id="katso" data-index="5">
+  <div class="kicker reveal">Osa 5 · Katso yksi toiminnassa</div>
   <h2 class="h reveal">Näin valmis kone <em>näyttää</em></h2>
   <p class="lead reveal">Ennen kuin rakennat oman, katso valmis esimerkki. Alla on toimiva automaatio — samat palikat, jotka juuri opit, kytkettynä ketjuksi. Aja se painamalla <strong>▶ Suorita</strong> ja katso, miten tieto virtaa palikasta toiseen.</p>
 
@@ -827,8 +792,8 @@ h2.h em { font-style:italic; color:var(--orange); }
 <div class="sep"></div>
 
 <!-- ============ OSA 4: RAKENNA OMASI (4 HAASTETTA) ============ -->
-<section class="section" id="rakenna" data-index="7" style="max-width:1100px;">
-  <div class="kicker reveal">Osa 7 · Rakenna omasi</div>
+<section class="section" id="rakenna" data-index="6" style="max-width:1100px;">
+  <div class="kicker reveal">Osa 6 · Rakenna omasi</div>
   <h2 class="h reveal">Nyt <em>sinä</em> rakennat — 10 haastetta</h2>
   <p class="lead reveal">Tässä on tyhjä työpöytä, sama näkymä kuin n8n:ssä. Mutta huomaa: <strong>palikoita on enemmän kuin tarvitset.</strong> Jokaisessa haasteessa sinun on itse päätettävä, mitkä palikat kuuluvat koneeseen ja mitkä eivät. Lue tehtävä, mieti ketju, rakenna se, testaa. Oikea rakentaja ei raahaa kaikkea — hän valitsee.</p>
 
@@ -988,8 +953,8 @@ h2.h em { font-style:italic; color:var(--orange); }
 <div class="sep"></div>
 
 <!-- ============ OSA 5: TESTAA YMMÄRRYS ============ -->
-<section class="section" id="testaa" data-index="8">
-  <div class="kicker reveal">Osa 8 · Testaa ymmärryksesi</div>
+<section class="section" id="testaa" data-index="7">
+  <div class="kicker reveal">Osa 7 · Testaa ymmärryksesi</div>
   <h2 class="h reveal">Osaatko selittää sen <em>omin sanoin?</em></h2>
   <p class="lead reveal">Rakensit koneen ja ajoit sen. Nyt tekoäly kysyy sinulta kaksi kysymystä ja antaa palautetta vastaustesi perusteella. Tavoite ei ole "oikea vastaus" — vaan että ymmärrät, mitä rakensit ja miksi.</p>
 
@@ -1019,6 +984,29 @@ h2.h em { font-style:italic; color:var(--orange); }
     </div>
   </div>
 
+  <!-- OIKEAT TYÖKALUT -->
+  <div class="reveal" style="margin:2.2rem 0;">
+    <h2 style="font-size:clamp(1.3rem,3vw,1.6rem); margin-bottom:.7rem;">Missä tätä tehdään oikeasti</h2>
+    <p class="body">Rakensit koneen tällä sivulla. Samat palikat, sama logiikka ja sama näkymä löytyvät oikeista työkaluista. Tässä kaksi, jotka kannattaa tietää. Molemmissa on ilmainen kokeilu, eikä sinun tarvitse avata niitä nyt — riittää, että tiedät mistä ne löytyvät.</p>
+
+    <div class="reality-grid">
+      <div class="reality r-key">
+        <h3 style="font-size:1.05rem; margin-bottom:.5rem;">n8n</h3>
+        <p style="font-size:.9rem; color:var(--ink3); line-height:1.65;">Raahaat palikat ruudulle ja kytket ne yhteen — täsmälleen kuten tässä moduulissa. Sinä päätät jokaisen askeleen itse. Sopii, kun haluat nähdä ja hallita, mitä kone tekee.</p>
+        <p class="real" style="margin-top:.7rem;"><a href="https://n8n.io" target="_blank" rel="noopener" style="color:var(--ink3);">n8n.io</a></p>
+      </div>
+      <div class="reality r-hallu">
+        <h3 style="font-size:1.05rem; margin-bottom:.5rem;">Pinkfish</h3>
+        <p style="font-size:.9rem; color:var(--ink3); line-height:1.65;">Kirjoitat tavallisella kielellä, mitä haluat koneen tekevän, ja työkalu rakentaa ketjun puolestasi. Nopeampi aloittaa, mutta näet vähemmän konepellin alle.</p>
+        <p class="real" style="margin-top:.7rem;"><a href="https://pinkfish.ai" target="_blank" rel="noopener" style="color:var(--ink3);">pinkfish.ai</a></p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-body"><strong>Muista:</strong> työkalu vaihtuu, rakenne ei. Laukaisin → toiminto → tekoäly → tulos toimii kaikkialla. Kun ymmärrät ketjun, opit uuden työkalun päivässä.</div>
+    </div>
+  </div>
+
   <!-- DONE -->
   <div class="done-wrap reveal" id="doneWrap" style="display:none;">
     <h3>🎉 Sinulla on nyt ensimmäinen koneesi</h3>
@@ -1037,6 +1025,7 @@ h2.h em { font-style:italic; color:var(--orange); }
 
 <div class="toast" id="toast"></div>
 
+<script src="/js/module-work.js"></script>
 <script src="/js/ai-helper.js"></script>
 <script>
 /* ---- AI chat: Claude → OpenAI via server (API keys stay server-side) ---- */
@@ -1707,15 +1696,6 @@ function addIOBlock(logEl, label, content){
 }
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
-/* Osa 2 legacy picker — now just a soft warm-up, no coupling to builder */
-function pickScenario(key){
-  document.querySelectorAll('.scen-card').forEach(c=>c.classList.toggle('sel', c.dataset.scen===key));
-  const el=document.getElementById('scenChosen'); el.style.display='block';
-  const names={tyonhaku:'Työnhaku',raportointi:'Raportointi & ala',asiakas:'Asiakasposti'};
-  el.textContent='✓ Kiinnostava valinta: '+names[key]+'. Osassa 4 rakennat oikeita koneita — vieritä alas.';
-  m1ScheduleSave();
-}
-
 /* ============================================================
    CHALLENGE ENGINE (Osa 4)
 ============================================================ */
@@ -2235,7 +2215,13 @@ function markChallengeDone(i){
   m1ScheduleSave();
   // if all done, reveal a note
   const allDone=CHALLENGES.every((c,idx)=>document.querySelector(`.chal-tab[data-chal="${idx}"]`).classList.contains('done'));
-  if(allDone) toast('🏆 Kaikki 10 haastetta suoritettu! Olet rakentaja.');
+  if(allDone){
+    toast('🏆 Kaikki 10 haastetta suoritettu! Olet rakentaja.');
+    markM1Progress('haasteet', true, { challengesDone: CHALLENGES.length, total: CHALLENGES.length });
+  } else {
+    const n=document.querySelectorAll('.chal-tab.done').length;
+    markM1Progress('haasteet', false, { challengesDone: n, total: CHALLENGES.length });
+  }
 }
 
 /* ============================================================
@@ -2260,18 +2246,46 @@ async function askInterview(n){
     interviewDone[n]=true;
     m1ScheduleSave();
     if(n===1){ const w=document.getElementById('q2wrap'); w.style.opacity='1'; w.style.pointerEvents='auto'; }
-    if(interviewDone[1]&&interviewDone[2]){ const dw=document.getElementById('doneWrap'); dw.style.display='block'; dw.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+    if(interviewDone[1]&&interviewDone[2]){
+      const dw=document.getElementById('doneWrap'); dw.style.display='block'; dw.scrollIntoView({behavior:'smooth',block:'nearest'});
+      markM1Progress('haastattelu', true, { q1:true, q2:true });
+    } else {
+      markM1Progress('haastattelu', false, { q1:!!interviewDone[1], q2:!!interviewDone[2] });
+    }
   }catch(e){
     txt.textContent='Yhteysvirhe. Vastauksesi tallennettiin — voit jatkaa eteenpäin.';
     interviewDone[n]=true;
+    m1ScheduleSave();
     if(n===1){ const w=document.getElementById('q2wrap'); w.style.opacity='1'; w.style.pointerEvents='auto'; }
+    if(interviewDone[1]&&interviewDone[2]){
+      const dw=document.getElementById('doneWrap'); if(dw) dw.style.display='block';
+      markM1Progress('haastattelu', true, { q1:true, q2:true });
+    }
   }
   btn.disabled=false; btn.textContent='Lähetä uudelleen';
 }
 
 /* ============================================================
-   PERSISTENCE — all exercises via module-work
+   PERSISTENCE — all exercises via module-work + progress API
 ============================================================ */
+function markM1Progress(sectionId, completed, progressData){
+  try{
+    fetch('/api/progress/module/' + encodeURIComponent(M1_MODULE_ID) + '/section/' + encodeURIComponent(sectionId), {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body:JSON.stringify({ completed:!!completed, progressData:progressData||{}, timeSpent:0 })
+    }).catch(function(){});
+  }catch(e){}
+}
+function summarizeM1State(d){
+  if(!d) return '';
+  const researchN=d.research?Object.values(d.research).filter(v=>v&&String(v).trim().length>=10).length:0;
+  const chalN=Array.isArray(d.challengesDone)?d.challengesDone.length:0;
+  const qDone=(d.interviewDone&&d.interviewDone[1]?1:0)+(d.interviewDone&&d.interviewDone[2]?1:0);
+  const cur=typeof d.currentChallenge==='number'?(d.currentChallenge+1):1;
+  return 'Tutkimus '+researchN+'/6 · Haasteet '+chalN+'/'+CHALLENGES.length+' (auki #'+cur+') · Haastattelu '+qDone+'/2';
+}
 function migrateLegacyM1(data){
   data=data||{};
   try{
@@ -2300,12 +2314,9 @@ function collectM1State(){
   for(let i=0;i<CHALLENGES.length;i++){
     if(document.querySelector(`.chal-tab[data-chal="${i}"]`)?.classList.contains('done')) challengesDone.push(i);
   }
-  let scenario=null;
-  document.querySelectorAll('.scen-card').forEach(c=>{ if(c.classList.contains('sel')) scenario=c.dataset.scen; });
   return {
     ts:Date.now(),
     research:research,
-    scenario:scenario,
     currentChallenge:currentChallenge,
     challengesDone:challengesDone,
     interpretUnlocked:interpretUnlocked,
@@ -2315,6 +2326,9 @@ function collectM1State(){
     improveOutputs:document.getElementById('improveOutputs')?.value||'',
     q1:document.getElementById('q1')?.value||'',
     q2:document.getElementById('q2')?.value||'',
+    q1Feedback:document.getElementById('q1text')?.textContent||'',
+    q2Feedback:document.getElementById('q2text')?.textContent||'',
+    interpretFeedback:document.getElementById('interpretFeedback')?.textContent||'',
     interviewDone:{1:!!interviewDone[1],2:!!interviewDone[2]},
     userEmail:userEmail,
     challengeSnapshots:JSON.parse(JSON.stringify(challengeSnapshots))
@@ -2336,7 +2350,6 @@ function applyM1State(data){
     }
     updateResearchProgress();
   }
-  if(data.scenario) pickScenario(data.scenario);
   if(data.interpretUnlocked) setInterpretUnlocked();
   if(data.improveUnlocked) setImproveUnlocked();
   if(data.interpretInput&&document.getElementById('interpretInput')) document.getElementById('interpretInput').value=data.interpretInput;
@@ -2345,6 +2358,18 @@ function applyM1State(data){
   if(data.userEmail) userEmail=data.userEmail;
   if(data.q1&&document.getElementById('q1')) document.getElementById('q1').value=data.q1;
   if(data.q2&&document.getElementById('q2')) document.getElementById('q2').value=data.q2;
+  if(data.q1Feedback){
+    const r=document.getElementById('q1resp'); const t=document.getElementById('q1text');
+    if(r&&t&&String(data.q1Feedback).trim()){ r.style.display='block'; t.textContent=data.q1Feedback; }
+  }
+  if(data.q2Feedback){
+    const r=document.getElementById('q2resp'); const t=document.getElementById('q2text');
+    if(r&&t&&String(data.q2Feedback).trim()){ r.style.display='block'; t.textContent=data.q2Feedback; }
+  }
+  if(data.interpretFeedback){
+    const r=document.getElementById('interpretResp'); const t=document.getElementById('interpretFeedback');
+    if(r&&t&&String(data.interpretFeedback).trim()){ r.style.display='block'; t.textContent=data.interpretFeedback; }
+  }
   if(data.interviewDone){
     if(data.interviewDone[1]) interviewDone[1]=true;
     if(data.interviewDone[2]) interviewDone[2]=true;
@@ -2364,11 +2389,15 @@ function applyM1State(data){
   updateInterpretGate(CHALLENGES[currentChallenge]);
 }
 async function initM1Work(){
-  if(!window.moduleWork||typeof window.moduleWork.initModuleWork!=='function') return;
+  if(!window.moduleWork||typeof window.moduleWork.initModuleWork!=='function'){
+    console.warn('[m1] module-work.js missing — autosave unavailable');
+    return;
+  }
   try{
     window._m1Work=await window.moduleWork.initModuleWork(M1_MODULE_ID,{
       collect:collectM1State,
       apply:applyM1State,
+      summarize:summarizeM1State,
       debounceMs:900,
       legacyPrefix:'m1_',
       fieldIds:['r0','r1','r2','r3','r4','r5','interpretInput','improveAiSketch','improveOutputs','q1','q2']
@@ -2389,12 +2418,18 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   if(!window._m1Work||!window._m1Work.data){
     applyM1State(migrateLegacyM1({ currentChallenge:0 }));
   }
+  let lastResearchProgressN=-1;
   for(let i=0;i<6;i++){
     const ta=document.getElementById('r'+i);
     if(ta) ta.addEventListener('input', function(){
       if(this.value.trim().length>=10) researchSaved[i]=true;
       updateResearchProgress();
       m1ScheduleSave();
+      const n=Object.keys(researchSaved).length;
+      if(n!==lastResearchProgressN && n>0){
+        lastResearchProgressN=n;
+        markM1Progress('tutkimus', n>=6, { answered:n, total:6 });
+      }
     });
   }
   const nextM1b=document.getElementById('nextToM1b');

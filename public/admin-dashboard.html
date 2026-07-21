@@ -1826,6 +1826,21 @@ nav {
       if (!d) return `<div class="content-item-text">${escapeHtml((workRow && workRow.reflection_text) || '—')}</div>`;
       const bits = [];
       if (parsed.summary) bits.push(`<p style="color:var(--muted);font-size:0.88rem;margin-bottom:0.75rem;">${escapeHtml(parsed.summary)}</p>`);
+      // Automaatio A (moduuli1-ai-automaatio)
+      if (d.research && typeof d.research === 'object') {
+        const rn = Object.values(d.research).filter(v => v && String(v).trim().length >= 10).length;
+        if (rn) bits.push(`<p><strong>Tutkimus:</strong> ${rn}/6 vastausta</p>`);
+      }
+      if (Array.isArray(d.challengesDone)) {
+        bits.push(`<p><strong>Haasteet:</strong> ${d.challengesDone.length}/10 valmis · auki #${(typeof d.currentChallenge === 'number' ? d.currentChallenge + 1 : 1)}</p>`);
+      }
+      if (d.interpretInput) bits.push(`<p><strong>Tulkinta:</strong> ${escapeHtml(String(d.interpretInput).slice(0, 160))}${String(d.interpretInput).length > 160 ? '…' : ''}</p>`);
+      if (d.improveAiSketch) bits.push(`<p><strong>Parannus · AI-ohje:</strong> ${escapeHtml(String(d.improveAiSketch).slice(0, 120))}…</p>`);
+      if (d.q1) bits.push(`<p><strong>Haastattelu 1:</strong> ${escapeHtml(String(d.q1).slice(0, 140))}${String(d.q1).length > 140 ? '…' : ''}</p>`);
+      if (d.q2) bits.push(`<p><strong>Haastattelu 2:</strong> ${escapeHtml(String(d.q2).slice(0, 140))}${String(d.q2).length > 140 ? '…' : ''}</p>`);
+      if (d.q1Feedback) bits.push(`<p style="color:var(--muted);"><strong>Claude 1:</strong> ${escapeHtml(String(d.q1Feedback).slice(0, 180))}…</p>`);
+      if (d.q2Feedback) bits.push(`<p style="color:var(--muted);"><strong>Claude 2:</strong> ${escapeHtml(String(d.q2Feedback).slice(0, 180))}…</p>`);
+      // Automaatio B / older fields
       if (d.gallery && d.gallery.find) bits.push(`<p><strong>Galleria:</strong> ${escapeHtml(String(d.gallery.find).slice(0, 120))}</p>`);
       if (d.flowOrder && Array.isArray(d.flowOrder.done)) {
         const n = d.flowOrder.done.filter(Boolean).length;
@@ -1837,6 +1852,15 @@ nav {
       if (d.makeHunt && d.makeHunt.template) bits.push(`<p><strong>Make-template:</strong> ${escapeHtml(String(d.makeHunt.template).slice(0, 120))}</p>`);
       if (d.prompt && d.prompt.out) bits.push(`<p><strong>Prompti:</strong> ${escapeHtml(String(d.prompt.out).slice(0, 100))}…</p>`);
       if (d.chat && Array.isArray(d.chat.history) && d.chat.history.length) bits.push(`<p><strong>Haastattelu:</strong> ${d.chat.history.length} viestiä</p>`);
+      // Automaatio C
+      if (d.tasks && typeof d.tasks === 'object') {
+        const td = Object.values(d.tasks).filter(t => t && t.done).length;
+        if (td) bits.push(`<p><strong>Työpäivä-tehtävät:</strong> ${td}/3</p>`);
+      }
+      if (Array.isArray(d.casesDone)) {
+        const cd = d.casesDone.filter(Boolean).length;
+        if (cd) bits.push(`<p><strong>Tapaukset:</strong> ${cd}/5</p>`);
+      }
       return bits.length ? bits.join('') : `<div class="content-item-text">${escapeHtml(parsed.summary || 'Tallennettu')}</div>`;
     }
 
