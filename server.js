@@ -556,10 +556,6 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-elava-cv-shane',
   'moduuli-elava-cv-callum',
   'moduuli-elava-cv-reeni',
-  'moduuli-voice-deep-search',
-  'moduuli-ideasta-tuotteeksi',
-  'moduuli-alanavaihtajan-kartta',
-  'moduuli-ai-maisema',
   'moduuli-jani-tutkimus-kirjoitus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
   'moduuli-karpo-tutkimus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
   'moduuli-anne-tyonhaku-2026', // removed from dashboard — kept on disk for admin reference only
@@ -571,9 +567,59 @@ const STRICT_ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-ella-myyntisprintti',
 ]);
 
-/** Soft-locked modules: visible on dashboard with lock badge but only admin can open. */
+/**
+ * Päivä 1: näkyvät dashboardilla lukittuina, /module/ ohjaa etusivulle.
+ * Auki: Aloitus + M1–M5 (+ Tomi 1/2 giftille). Pidä synkassa index.html soft-lock -listan kanssa.
+ */
 const STUDENT_LOCKED_MODULE_IDS = new Set([
-  // moduuli8-ai-polku, moduuli9-haastattelu, moduuli-elava-cv — avattu kaikille
+  'moduuli6-hallusinaatiot',
+  'moduuli8-ai-polku',
+  'moduuli9-haastattelu',
+  'moduuli-elava-cv',
+  'moduuli-perplexity-notebooklm',
+  'moduuli-esitykset-tarjoukset-viestinta',
+  'moduuli-lovable',
+  'moduuli-visibility-growth-automation',
+  'moduuli-ideasta-tuotteeksi',
+  'moduuli-alanavaihtajan-kartta',
+  'moduuli-ai-maisema',
+  'moduuli-ai-liidien-hankinta',
+  'moduuli-ai-simulation-lab',
+  'moduuli-excel-copilot-masterclass',
+  'moduuli-recap-game',
+  'moduuli-bottityypit',
+  'moduuli-eu-ai-act-moduuli5',
+  'moduuli-prompt-hiomo',
+  'moduuli-hitl-architect',
+  'moduuli-asiakaspalvelu-live-puhelu',
+  'moduuli1-ai-automaatio',
+  'moduuli1b-ai-automaatio',
+  'moduuli1c-ai-automaatio',
+  'moduuli-voice-deep-search',
+  'moduuli10-ai-tyonhakutyokalut',
+  'moduuli11-ai-etikka',
+  'moduuli10c-freelance',
+  'moduuli9d-henkilobrandi',
+  'moduuli8-ai-haastattelussa',
+  'moduuli9b-palkkaneuvottelu',
+  'moduuli9c-hylkays',
+  'moduuli9-ai-oppimisessa',
+  'moduuli10b-digitaaliset-perustaidot',
+  'moduuli10d-yrittajyys',
+  'moduuli5-ai-myynnissa-ja-markkinoinnissa',
+  'moduuli6-ai-taloushallinnossa',
+  'moduuli-hoitoala',
+  'moduuli-rakennusala',
+  'moduuli-markkinointi',
+  'moduuli-ravintola',
+  'moduuli-logistiikka',
+  'moduuli-it',
+  'loppumoduuli-sina-ja-tekoaly',
+  'myytinmurtaja',
+  'rikkinainen-prompti',
+  'tuomioistuin',
+  'tyokalurakentaja',
+  'palaute'
 ]);
 
 // Personal gift HTML only via /module/:id (recipient + admin gate)
