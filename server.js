@@ -61,6 +61,7 @@ function injectModulePersistenceScripts(html, moduleId) {
     moduleId !== 'moduuli1c-ai-automaatio' &&
     moduleId !== 'moduuli-ai-musiikkituottaja' &&
     moduleId !== 'moduuli-ai-musiikkikampanja' &&
+    moduleId !== 'moduuli2-tekoaly-uhka-vai-mahdollisuus' &&
     !html.includes('/js/module-autosave.js');
   const tags = [bootScript];
   if (needsModuleWork) tags.push('<script src="/js/module-work.js"></script>');
@@ -92,6 +93,7 @@ const moduleAiRoutes = require('./routes/module-ai');
 const bonusModuleRoutes = require('./routes/bonus-module');
 const csCallRoutes = require('./routes/cs-call');
 const realtimeTokenRoutes = require('./routes/realtime-token');
+const audioRoutes = require('./routes/audio');
 const automaatioEmailRoutes = require('./routes/automaatio-email');
 const { authenticateToken, authenticatePage } = require('./middleware/auth');
 
@@ -133,6 +135,14 @@ app.use('/api/module-ai', moduleAiRoutes);
 app.use('/api/bonus-module', bonusModuleRoutes);
 app.use('/api/cs-call', csCallRoutes);
 app.use('/api/realtime-token', realtimeTokenRoutes);
+app.use('/api/audio', audioRoutes);
+app.use(
+  '/audio-cache',
+  express.static(audioRoutes.CACHE_DIR || path.join(__dirname, 'data', 'audio-cache'), {
+    maxAge: process.env.NODE_ENV === 'production' ? '30d' : 0,
+    immutable: process.env.NODE_ENV === 'production'
+  })
+);
 app.use('/api', automaatioEmailRoutes);
 
 // Health check

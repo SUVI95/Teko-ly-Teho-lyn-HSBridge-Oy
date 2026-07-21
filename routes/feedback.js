@@ -40,6 +40,15 @@ async function ensureCourseStartProfilesTable() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  await pool.query(`ALTER TABLE course_start_profiles ADD COLUMN IF NOT EXISTS checkin_type TEXT DEFAULT 'course_start'`);
+  await pool.query(`ALTER TABLE course_start_profiles ADD COLUMN IF NOT EXISTS view_shift TEXT`);
+  await pool.query(`ALTER TABLE course_start_profiles ADD COLUMN IF NOT EXISTS learned_items JSONB DEFAULT '[]'::jsonb`);
+  await pool.query(`ALTER TABLE course_start_profiles ADD COLUMN IF NOT EXISTS learned_nothing_new BOOLEAN DEFAULT FALSE`);
+  await pool.query(`ALTER TABLE course_start_profiles ADD COLUMN IF NOT EXISTS reflection TEXT`);
+  await pool.query(`ALTER TABLE course_start_profiles ADD COLUMN IF NOT EXISTS reflection_skipped BOOLEAN DEFAULT FALSE`);
+  try {
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_csp_checkin ON course_start_profiles (checkin_type, module_name)`);
+  } catch (e) { /* ignore */ }
 }
 
 // Save feedback
@@ -122,18 +131,12 @@ router.post('/module-reflection', authenticateToken, async (req, res) => {
   }
 });
 
-// Save course start profile (module 2)
+// Save course start profile (module 0) OR module-end check-in (module 2)
 router.post('/course-start-profile', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const {
-      module_name,
-      ai_experience_level,
-      tools_known,
-      wants_to_learn,
-      biggest_worry,
-      personal_goal
-    } = req.body || {};
+    const b = req.body || {};
+    const module_name = b.module_name;
 
     if (!module_name) {
       return res.status(400).json({ error: 'module_name is required' });
@@ -141,13 +144,46 @@ router.post('/course-start-profile', authenticateToken, async (req, res) => {
 
     await ensureCourseStartProfilesTable();
 
+    const type = b.checkin_type === 'module_end' ? 'module_end' : 'course_start';
+
+    if (type === 'module_end') {
+      const allowed = ['myonteisempi', 'varovaisempi', 'molemmat', 'ennallaan'];
+      if (!allowed.includes(b.view_shift)) {
+        return res.status(400).json({ error: 'invalid_view_shift' });
+      }
+      await pool.query(
+        `INSERT INTO course_start_profiles
+           (user_id, module_name, checkin_type, view_shift,
+            learned_items, learned_nothing_new, reflection, reflection_skipped, created_at)
+         VALUES ($1, $2, 'module_end', $3, $4::jsonb, $5, $6, $7, NOW())`,
+        [
+          userId,
+          String(module_name).slice(0, 120),
+          b.view_shift,
+          JSON.stringify(Array.isArray(b.learned_items) ? b.learned_items : []),
+          !!b.learned_nothing_new,
+          b.reflection ? String(b.reflection).slice(0, 2000) : null,
+          !!b.reflection_skipped
+        ]
+      );
+      return res.json({ success: true, ok: true });
+    }
+
+    const {
+      ai_experience_level,
+      tools_known,
+      wants_to_learn,
+      biggest_worry,
+      personal_goal
+    } = b;
+
     const safeToolsKnown = Array.isArray(tools_known) ? tools_known : [];
     const safeWantsToLearn = Array.isArray(wants_to_learn) ? wants_to_learn : [];
 
     await pool.query(
       `INSERT INTO course_start_profiles
-      (user_id, module_name, ai_experience_level, tools_known, wants_to_learn, biggest_worry, personal_goal)
-      VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7)`,
+      (user_id, module_name, checkin_type, ai_experience_level, tools_known, wants_to_learn, biggest_worry, personal_goal)
+      VALUES ($1, $2, 'course_start', $3, $4::jsonb, $5::jsonb, $6, $7)`,
       [
         userId,
         module_name,

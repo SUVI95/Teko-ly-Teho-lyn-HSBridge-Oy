@@ -988,7 +988,7 @@ nav {
 
       <div class="profile-panel">
         <div class="section-header" style="margin-bottom:0.75rem;">
-          <h2 class="section-title" style="font-size:1.6rem;">Opiskelijan profiili <span class="profile-badge">Kurssin aloitusprofiili</span></h2>
+          <h2 class="section-title" style="font-size:1.6rem;">Opiskelijan profiili <span class="profile-badge">Aloitus + Moduuli 2 päätös</span></h2>
         </div>
         <div id="courseStartProfileContainer">
           <div class="loading">Ladataan aloitusprofiileja...</div>
@@ -1483,15 +1483,43 @@ nav {
         container.innerHTML = `
           <div class="empty-state">
             <div class="empty-state-icon">🧭</div>
-            <p>Ei aloitusprofiileja vielä</p>
+            <p>Ei aloitusprofiileja / Moduuli 2 -vastauksia vielä</p>
           </div>
         `;
         return;
       }
 
+      const m2 = courseStartProfiles.filter((p) => p.checkin_type === 'module_end');
+      const starts = courseStartProfiles.filter((p) => p.checkin_type !== 'module_end');
+      const nothingN = m2.filter((p) => p.learned_nothing_new).length;
+      const nothingPct = m2.length ? Math.round((nothingN / m2.length) * 100) : 0;
+
       container.innerHTML = `
+        ${m2.length ? `
+          <div style="margin-bottom:1.25rem;padding:1rem 1.15rem;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fafafa;">
+            <strong>Moduuli 2 päätöskysely</strong>
+            <div style="margin-top:.35rem;font-size:.9rem;color:#555;">
+              Vastauksia: ${m2.length}
+              · “Ei mitään uutta”: ${nothingN} (${nothingPct}%)
+              ${nothingPct >= 30 ? ' · <span style="color:#b45309;">⚠ yli 30 % — sisältö voi olla liian helppo</span>' : ''}
+            </div>
+          </div>
+          <div class="profile-grid" style="margin-bottom:2rem;">
+            ${m2.map((p) => `
+              <div class="profile-card">
+                <h4>${escapeHtml(p.name || 'Nimetön')} <span class="profile-badge">Moduuli 2</span></h4>
+                <div class="profile-meta">${escapeHtml(p.email || '')} · ${formatDate(p.created_at) || '-'}</div>
+                <div class="profile-row"><strong>Käsityksen muutos:</strong> ${escapeHtml(p.view_shift || '-')}</div>
+                <div class="profile-row"><strong>Uutta:</strong> ${formatArray(p.learned_items)}</div>
+                <div class="profile-row"><strong>Ei mitään uutta:</strong> ${p.learned_nothing_new ? 'Kyllä' : 'Ei'}</div>
+                <div class="profile-row"><strong>Omat sanat:</strong> ${escapeHtml(p.reflection || (p.reflection_skipped ? '(ohitettu)' : '-'))}</div>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+        <h3 style="margin:0 0 1rem;font-size:1.05rem;">Kurssin aloitusprofiilit</h3>
         <div class="profile-grid">
-          ${courseStartProfiles.map((p) => `
+          ${starts.length ? starts.map((p) => `
             <div class="profile-card">
               <h4>${escapeHtml(p.name || 'Nimetön')}</h4>
               <div class="profile-meta">${escapeHtml(p.email || '')} · ${formatDate(p.created_at) || '-'}</div>
@@ -1501,7 +1529,7 @@ nav {
               <div class="profile-row"><strong>Suurin huoli:</strong> ${escapeHtml(p.biggest_worry || '-')}</div>
               <div class="profile-row"><strong>2 viikon tavoite:</strong> ${escapeHtml(p.personal_goal || '-')}</div>
             </div>
-          `).join('')}
+          `).join('') : '<p style="color:#777;">Ei aloitusprofiileja vielä.</p>'}
         </div>
       `;
     }

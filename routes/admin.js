@@ -51,6 +51,12 @@ async function ensureCourseStartProfilesTable() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  await pool.query(`ALTER TABLE course_start_profiles ADD COLUMN IF NOT EXISTS checkin_type TEXT DEFAULT 'course_start'`);
+  await pool.query(`ALTER TABLE course_start_profiles ADD COLUMN IF NOT EXISTS view_shift TEXT`);
+  await pool.query(`ALTER TABLE course_start_profiles ADD COLUMN IF NOT EXISTS learned_items JSONB DEFAULT '[]'::jsonb`);
+  await pool.query(`ALTER TABLE course_start_profiles ADD COLUMN IF NOT EXISTS learned_nothing_new BOOLEAN DEFAULT FALSE`);
+  await pool.query(`ALTER TABLE course_start_profiles ADD COLUMN IF NOT EXISTS reflection TEXT`);
+  await pool.query(`ALTER TABLE course_start_profiles ADD COLUMN IF NOT EXISTS reflection_skipped BOOLEAN DEFAULT FALSE`);
 }
 
 // Get all reflections
@@ -560,20 +566,35 @@ router.get('/onboarding-profiles', authenticateToken, requireAdmin, async (req, 
   }
 });
 
-// Get course start profiles (module 2 "Kerro meille sinusta")
+// Get course start profiles + module 2 end check-ins
 router.get('/course-start-profiles', authenticateToken, requireAdmin, async (req, res) => {
   try {
     await ensureCourseStartProfilesTable();
     const result = await pool.query(`
-      SELECT csp.id, csp.module_name, csp.ai_experience_level, csp.tools_known, csp.wants_to_learn,
-             csp.biggest_worry, csp.personal_goal, csp.created_at,
+      SELECT csp.id, csp.module_name, csp.checkin_type,
+             csp.ai_experience_level, csp.tools_known, csp.wants_to_learn,
+             csp.biggest_worry, csp.personal_goal,
+             csp.view_shift, csp.learned_items, csp.learned_nothing_new,
+             csp.reflection, csp.reflection_skipped, csp.created_at,
              u.id AS user_id, u.name, u.email
       FROM course_start_profiles csp
       JOIN users u ON u.id = csp.user_id
       ORDER BY csp.created_at DESC
       LIMIT 500
     `);
-    res.json({ courseStartProfiles: result.rows });
+    const rows = result.rows;
+    const moduleEnd = rows.filter((r) => r.checkin_type === 'module_end');
+    const learnedNothingRate = moduleEnd.length
+      ? moduleEnd.filter((r) => r.learned_nothing_new).length / moduleEnd.length
+      : 0;
+    res.json({
+      courseStartProfiles: rows,
+      module2Stats: {
+        moduleEndCount: moduleEnd.length,
+        learnedNothingNewCount: moduleEnd.filter((r) => r.learned_nothing_new).length,
+        learnedNothingNewRate: learnedNothingRate
+      }
+    });
   } catch (error) {
     console.error('Get course start profiles error:', error);
     res.status(500).json({ error: 'Failed to get course start profiles' });
