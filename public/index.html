@@ -2423,6 +2423,14 @@
     ]);
 
     /**
+     * Soft-lock early access: module stays "Ei käytössä tänään" for the group,
+     * but these gift keys can open it (Tomi + testi.opiskelija via musiikki_gift).
+     */
+    const softLockEarlyAccessGiftKeys = {
+      'moduuli-prompt-hiomo': ['musiikki']
+    };
+
+    /**
      * Piilotettu opiskelijoilta (vain admin näkee). Päivä 1.
      * Poista id kun julkaiset opiskelijoille.
      */
@@ -2806,7 +2814,11 @@
 
       /** Soft-lock: opiskelija näkee kortin mutta ei voi klikata; admin voi avata. */
       const softLockActive = studentSoftLockedModuleIds.has(module.id);
-      const softLockBlocksStudent = softLockActive && !isAdminUser();
+      const softLockEarlyKeys = softLockEarlyAccessGiftKeys[module.id] || [];
+      const softLockEarlyAccess = softLockEarlyKeys.some(function (k) {
+        return isPersonalGiftRecipient(k);
+      });
+      const softLockBlocksStudent = softLockActive && !isAdminUser() && !softLockEarlyAccess;
 
       const personalGiftKey = getPersonalGiftKey(module);
       const requireGiftCompletion = module.requireGiftCompletion !== false;
