@@ -179,7 +179,7 @@ textarea{min-height:130px}
       <h3>Näin etenet</h3>
       <ol>
         <li>Kirjoitat ensin itse — sitten avaat työkalut.</li>
-        <li>Jokainen osio tarkistetaan. Liian löysä työ ei päästä eteenpäin.</li>
+        <li>Kaikki 9 osiota ovat auki — voit hypätä mihin tahansa. Tarkistus antaa palautetta, mutta ei lukitse etenemistä.</li>
         <li>Lopussa: biisi + soolo/bändi + kansi + flyer → esität kaiken Zoomissa.</li>
       </ol>
     </div>
@@ -649,6 +649,9 @@ const MODULE_ID = 'moduuli-ai-musiikkituottaja';
 const KEY = 'musiikki_tuottaja_v3_';
 const TOTAL = 9;
 const PASS_SCORE = 7;
+/** Tomi: kaikki osiot auki; AI-tarkistus = palaute, ei portti */
+const OPEN_ALL_STEPS = true;
+const GATES_ADVISORY = true;
 
 let done = [];
 try { done = JSON.parse(localStorage.getItem(KEY + 'done') || '[]'); } catch (e) { done = []; }
@@ -860,6 +863,10 @@ function copyPack() {
   });
 }
 
+function isStepOpen(i) {
+  return OPEN_ALL_STEPS || i === 1 || done.includes(i - 1) || done.includes(i);
+}
+
 function renderProg() {
   const p = document.getElementById('prog');
   if (!p) return;
@@ -867,7 +874,7 @@ function renderProg() {
   for (let i = 1; i <= TOTAL; i++) {
     const el = document.createElement('i');
     if (done.includes(i)) el.className = 'done';
-    else if (i === 1 || done.includes(i - 1)) el.className = 'on';
+    else if (isStepOpen(i)) el.className = 'on';
     p.appendChild(el);
   }
   const cur = currentScreen();
@@ -875,7 +882,9 @@ function renderProg() {
   if (lbl) {
     lbl.textContent = done.length >= TOTAL
       ? 'Kaikki 9 osiota valmiina'
-      : ('Osio ' + cur + ' / ' + TOTAL + ' · ' + (STEP_LABELS[cur] || ''));
+      : (OPEN_ALL_STEPS
+        ? (done.length + '/' + TOTAL + ' merkitty valmiiksi · voit avata minkä tahansa osion')
+        : ('Osio ' + cur + ' / ' + TOTAL + ' · ' + (STEP_LABELS[cur] || '')));
   }
   renderStepBar();
 }
@@ -885,7 +894,7 @@ function renderStepBar() {
   if (!inner) return;
   inner.innerHTML = '';
   for (let i = 1; i <= TOTAL; i++) {
-    const open = i === 1 || done.includes(i - 1) || done.includes(i);
+    const open = isStepOpen(i);
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'step-chip';
@@ -915,7 +924,7 @@ function jumpToCurrent() {
 function unlock() {
   for (let i = 1; i <= TOTAL; i++) {
     const card = document.getElementById('ex' + i);
-    const open = i === 1 || done.includes(i - 1) || done.includes(i);
+    const open = isStepOpen(i);
     card.classList.toggle('open', open);
     card.classList.toggle('passed', done.includes(i));
     const n = document.getElementById('n' + i);
@@ -925,6 +934,11 @@ function unlock() {
     } else {
       n.textContent = String(i);
       n.classList.remove('done');
+    }
+    // Free progress: jatka-napit aina näkyvissä (ei AI-porttia)
+    if (OPEN_ALL_STEPS) {
+      const row = document.getElementById('row' + i + 'next');
+      if (row) row.style.display = 'flex';
     }
   }
   document.getElementById('allDone').style.display = done.length === TOTAL ? 'block' : 'none';
@@ -1119,20 +1133,36 @@ async function runGate(btn, gateId, localOk, localMsg, userPayload) {
     setGate(gateId, false, localMsg);
     return;
   }
+  // Advisory mode: pituus/kentät riittävät → jatka-nappi aukeaa heti
+  if (GATES_ADVISORY) {
+    setGate(gateId, true, '✓ Voit jatkaa. Saat vielä lyhyen palautteen…');
+  }
   setBtnLoading(btn, true);
   try {
     const raw = await aiGrade(GRADE_SYS, userPayload, 550);
     const g = parseGradeJson(raw);
     if (!g) {
-      setGate(gateId, false, 'Tarkistus ei onnistunut. Yritä uudelleen.\n\n' + raw.slice(0, 400));
+      if (GATES_ADVISORY) {
+        setGate(gateId, true, '✓ Voit jatkaa.\n\nPalaute ei latautunut — ei haittaa, eteneminen on auki.');
+      } else {
+        setGate(gateId, false, 'Tarkistus ei onnistunut. Yritä uudelleen.\n\n' + raw.slice(0, 400));
+      }
       return;
     }
-    const ok = !!g.pass && Number(g.score) >= PASS_SCORE;
-    setGate(gateId, ok, (ok ? '✓ Hyväksytty · ' : '✗ Ei vielä · ') + 'Pisteet ' + g.score + '/10\n\n' + (g.feedback || ''));
+    const aiOk = !!g.pass && Number(g.score) >= PASS_SCORE;
+    const ok = GATES_ADVISORY ? true : aiOk;
+    const head = GATES_ADVISORY
+      ? (aiOk ? '✓ Hyvä palaute · ' : '✓ Voit jatkaa · palaute: ')
+      : (ok ? '✓ Hyväksytty · ' : '✗ Ei vielä · ');
+    setGate(gateId, ok, head + 'Pisteet ' + g.score + '/10\n\n' + (g.feedback || ''));
     const scoreEl = document.getElementById('s' + gateId.slice(1));
     if (scoreEl) scoreEl.textContent = 'Viimeisin tulos: ' + g.score + '/10';
   } catch (e) {
-    setGate(gateId, false, 'Yhteysvirhe: ' + e.message + '\nTarkista että olet kirjautunut. Voit silti jatkaa kirjoittamista.');
+    if (GATES_ADVISORY) {
+      setGate(gateId, true, '✓ Voit jatkaa.\n\nYhteysvirhe palautteeseen: ' + e.message);
+    } else {
+      setGate(gateId, false, 'Yhteysvirhe: ' + e.message + '\nTarkista että olet kirjautunut. Voit silti jatkaa kirjoittamista.');
+    }
   } finally {
     setBtnLoading(btn, false, 'Tarkista uudelleen →');
   }
