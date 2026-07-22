@@ -417,7 +417,7 @@ pre.prompt-pre{background:var(--ink);color:rgba(255,255,255,.85);border-radius:v
     <span class="label">Osa 3 — Haastattelu</span>
     <h2 class="sh2">DuuniJobs AI haastattelee<br><em>sinut — 5 kysymystä</em></h2>
     <div class="divider"></div>
-    <p class="lead">Viisi lyhyttä kysymystä. Yksi kerrallaan. Tavoite: yksi konkreettinen ihminen, jonka arkea sovelluksesi helpottaa — ei “kohderyhmä”, vaan tarina.</p>
+    <p class="lead">Viisi lyhyttä kysymystä. Yksi kerrallaan. Neljä ensimmäistä koskevat ihmistä, jonka arkea sovelluksesi helpottaa — ei “kohderyhmää”, vaan tarinaa. Viimeinen koskee sinua: miltä sovelluksen pitää näyttää ja tuntua, jotta se on sinun näköisesi eikä kenen tahansa.</p>
 
     <div class="interview-wrap">
       <div class="interview-header">
@@ -750,6 +750,12 @@ function getOpenAIChatUrl() {
   return (window.location.origin || '') + base + '/api/ai/chat';
 }
 
+function getClaudeApiUrl() {
+  var pathname = window.location.pathname || '';
+  var base = pathname.indexOf('/module/') > 0 ? pathname.substring(0, pathname.indexOf('/module/')) : '';
+  return (window.location.origin || '') + base + '/api/ai/claude';
+}
+
 function requestTimeoutSignal(ms) {
   if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
     return AbortSignal.timeout(ms);
@@ -778,12 +784,6 @@ async function postAIJson(url, payload, timeoutMs) {
     throw new Error(data.error || data.message || 'Tekoälypalvelu ei ole juuri nyt saatavilla. Vastaukset on tallennettu.');
   }
   return data;
-}
-
-function getClaudeApiUrl() {
-  var pathname = window.location.pathname || '';
-  var base = pathname.indexOf('/module/') > 0 ? pathname.substring(0, pathname.indexOf('/module/')) : '';
-  return (window.location.origin || '') + base + '/api/ai/claude';
 }
 
 async function duunijobsAIApi(system, messages, maxTokens) {
@@ -832,6 +832,7 @@ const S = {
   appName: '',
   chatHistory: [],
   questionCount: 0,
+  sending: false,
   interviewDone: false,
   generatedPrompt: '',
   finalPrompt: '',
@@ -985,7 +986,7 @@ The user just answered your fifth and final interview question. Reply ONLY with 
     2:'Walk through one real day with the app — from opening the phone to closing the app. What happens step by step? Invite storytelling; use "sinä".',
     3:'The "aha" moment — when does the user feel "this was worth opening"? Ask for one concrete scene.',
     4:'What would make them quit after 3 days? What must this app absolutely avoid?',
-    5:'If 1000 people in Finland used this app for 6 months — what would be different in their everyday lives?'
+    5:'BRAND & IDENTITY — this is the question that makes the app look like THEIRS, not a template. Ask them, in one flowing question, to describe the FEELING the app should give and where that feeling comes from in their own life. Prompt them concretely for: (a) a place, object, season or memory the app should feel like; (b) 2-3 colours they connect to it, in ordinary words like "sammaleen vihreä" or "iltataivas" — NOT hex codes; (c) whether it should feel calm or energetic, warm or sharp, playful or serious; (d) what the logo could show — a shape, letter, or simple object. Tell them there are no wrong answers and that this is what stops the app looking like every other app. Keep it warm and concrete, 3-5 sentences, still ONE question.'
   };
   const nextQ=S.questionCount+1;
 
@@ -993,7 +994,7 @@ The user just answered your fifth and final interview question. Reply ONLY with 
 
 ${ctx}
 
-The FIRST question (user persona) was already asked. The user has answered ${S.questionCount} question(s). Now ask question ${nextQ} of 5 only.
+The FIRST question (user persona) was already asked. The user has answered ${S.questionCount} question(s). Now ask question ${nextQ} of 5 only.${nextQ===5?' THIS IS THE FINAL QUESTION. Ask it as ONE question and do not promise or hint at any further questions.':''}
 
 TOPIC FOR THIS MESSAGE: ${qGuide[nextQ]}
 
@@ -1019,9 +1020,15 @@ function startInterview(){
 }
 
 async function sendChat(){
+  // Hard guard: once the interview is complete nothing may re-open it.
+  // The input row is hidden on completion, but the textarea keeps its
+  // onkeydown handler, so Enter could otherwise push questionCount past 5.
+  if(S.interviewDone || S.questionCount >= 5) return;
+  if(S.sending) return;              // guard against double-send races
   const inp=document.getElementById('chatInput');
   const txt=inp.value.trim();
   if(!txt)return;
+  S.sending=true;
   inp.value='';inp.style.height='auto';
   document.getElementById('chatSendBtn').disabled=true;
   addBubble('user',txt);
@@ -1029,8 +1036,13 @@ async function sendChat(){
   S.questionCount++;
   updateDots();
   appWorkSaveNow();
-  await askDuunijobsAI();
-  document.getElementById('chatSendBtn').disabled=false;
+  try{
+    await askDuunijobsAI();
+  } finally {
+    S.sending=false;
+    const btn=document.getElementById('chatSendBtn');
+    if(btn) btn.disabled=false;
+  }
 }
 
 function buildOfflineInterviewFollowup() {
@@ -1041,7 +1053,7 @@ function buildOfflineInterviewFollowup() {
     1: 'Hyva aloitus. Seuraavaksi kuvaa yksi tavallinen paiva kayttajan kanssa: milloin ongelma osuu, mita han yrittää tehda, ja mihin kohtaan nykyinen ratkaisu kaatuu?',
     2: 'Tarkennetaan "aha-hetki": mika yksi hetki saisi kayttajan ajattelemaan "tama kannatti avata"? Kuvaa se mahdollisimman konkreettisesti.',
     3: 'Mika saisi kayttajan lopettamaan sovelluksen kayton 3 paivassa? Nimea 1-2 asiaa, jotka sovelluksen on pakko valttaa.',
-    4: 'Kuvitellaan 1000 kayttajaa Suomessa 6 kuukauden paahan. Mita konkreettista muuttuu arjessa, jos sovellus onnistuu?',
+    4: 'Viimeinen kysymys, ja tama tekee sovelluksesta sinun nakoisesi. Milta sovelluksen pitaisi tuntua — ja mista se tunne tulee sinun omassa elamassasi? Kerro jokin paikka, esine tai vuodenaika johon se liittyy, 2-3 varia tavallisin sanoin (esim. sammaleen vihrea, iltataivas), tuntuuko se rauhalliselta vai energiselta, ja mita logo voisi esittaa. Vaaria vastauksia ei ole.',
   };
   return promptsByStep[S.questionCount] || 'Jatka yhdella konkreettisella esimerkillä kayttajan arjesta.';
 }
@@ -1049,7 +1061,13 @@ function buildOfflineInterviewFollowup() {
 function completeInterview() {
   if (S.interviewDone) return;
   S.interviewDone = true;
-  document.getElementById('chatInputRow').style.display = 'none';
+  var row = document.getElementById('chatInputRow');
+  if (row) row.style.display = 'none';
+  // Disable the controls too — hiding alone leaves Enter and the button live.
+  var ci = document.getElementById('chatInput');
+  if (ci) { ci.disabled = true; ci.value = ''; }
+  var sb = document.getElementById('chatSendBtn');
+  if (sb) sb.disabled = true;
   document.getElementById('toPromptBtn').classList.remove('hidden');
   document.getElementById('startInterviewBtn').classList.add('hidden');
   updateDots(true);
@@ -1061,19 +1079,27 @@ async function askDuunijobsAI(){
   try{
     const t=await duunijobsAIApi(buildSystem(),S.chatHistory,1000);
     hideTyping();
-    const display=formatChatDisplay(t.replace('INTERVIEW_COMPLETE — ',''));
+    const forceDone = S.questionCount >= 5;
+    const aiSaidDone = t.includes('INTERVIEW_COMPLETE');
+    // After the 5th answer the interview is over. If the model ignored the
+    // instruction and asked yet another question, do NOT show it — the input
+    // is about to close and a dangling question looks like a broken loop.
+    const display = (forceDone && !aiSaidDone)
+      ? 'Kiitos — vastauksesi riittävät. Paina nappia, niin kokoan sovelluspromtin juuri sinulle.'
+      : formatChatDisplay(t.replace('INTERVIEW_COMPLETE — ',''));
     addBubble('ai',display);
     S.chatHistory.push({role:'assistant',content:t});
-    // Force-complete after the 5th answer regardless of AI wording
-    if(t.includes('INTERVIEW_COMPLETE') || S.questionCount >= 5){
+    if(aiSaidDone || forceDone){
       completeInterview();
     }
     appWorkSaveNow();
   }catch(e){
     hideTyping();
     const fallbackRaw = buildOfflineInterviewFollowup();
-    const fallbackDisplay = formatChatDisplay(fallbackRaw.replace('INTERVIEW_COMPLETE — ', ''))
-      + (S.questionCount < 5 ? '\n\n(AI-yhteys katkesi hetkeksi — kirjoita vastauksesi ja jatka.)' : '');
+    const fallbackDisplay = (S.questionCount >= 5)
+      ? 'Kiitos — vastauksesi riittävät. Paina nappia, niin kokoan sovelluspromtin juuri sinulle.'
+      : formatChatDisplay(fallbackRaw.replace('INTERVIEW_COMPLETE — ', ''))
+        + '\n\n(AI-yhteys katkesi hetkeksi — kirjoita vastauksesi ja jatka.)';
     addBubble('ai', fallbackDisplay);
     S.chatHistory.push({ role: 'assistant', content: fallbackRaw });
     if (fallbackRaw.includes('INTERVIEW_COMPLETE') || S.questionCount >= 5) {
@@ -1136,6 +1162,11 @@ const PGEN=[
   'Viimeistellään tekninen spesifikaatio...'
 ];
 
+function lastUserAnswer() {
+  var ua = (S.chatHistory || []).filter(function (m) { return m.role === 'user'; });
+  return ua.length ? ua[ua.length - 1].content : '';
+}
+
 function buildOfflinePromptDraft() {
   var convo = S.chatHistory.map(function (m) {
     return (m.role === 'user' ? 'USER' : 'AI') + ': ' + m.content;
@@ -1166,10 +1197,21 @@ function buildOfflinePromptDraft() {
     '- ActivityLog { id, userId, action, createdAt, context }',
     '- Store data in browser local storage with clear key names.',
     '',
-    'VISUAL DESIGN',
-    '- Palette: #0B1020 (ink), #2563A8 (primary), #2A7A4B (success), #F5F3EF (background), #1A1A2E (text).',
-    '- Typography: clean sans-serif, strong heading contrast, generous line-height.',
-    '- Card radius 12px, subtle shadows, calm professional look.',
+    'BRAND IDENTITY — BUILD THIS FROM THE ANSWER BELOW, DO NOT USE A GENERIC PALETTE',
+    '- The user described the feeling, colours and logo idea for this app in their own words here:',
+    '  "' + (lastUserAnswer() || 'ei vastausta') + '"',
+    '- Translate those described colours into 4-5 exact hex codes and name the source of each.',
+    '- If no colours were described, derive them from the problem and the user, never default to startup blue.',
+    '- Typography and card style must match the stated mood (calm/energetic, warm/sharp, playful/serious).',
+    '',
+    'LOGO',
+    '- Simple inline SVG logo based on the shape, letter or object the user mentioned.',
+    '- Basic shapes only (circle, rounded rect, path, letterform). No external image files.',
+    '- Placement: app header, login screen, favicon. Include a monochrome version.',
+    '',
+    'COVER & IMAGERY',
+    '- Hero/cover area on the main screen in the brand mood, built from CSS gradients or SVG shapes.',
+    '- Empty-state illustrations in the same style. Every screen must look like the same app.',
     '',
     'ANIMATIONS & MICRO-INTERACTIONS',
     '- Smooth page fade/slide transitions.',
@@ -1233,13 +1275,39 @@ MANDATORY SECTIONS — include ALL of them:
    - Relationships between entities
    - At least 5 realistic, culturally Finnish mock records per main entity
 
-5. VISUAL DESIGN
-   - Color palette: 3-5 exact hex codes with usage (primary, secondary, accent, background, text)
-   - Typography: font style (modern/humanist/geometric), heading vs body contrast
-   - Card styles, border radius, shadow depth
-   - Overall mood: professional/warm/energetic/calm
+5. BRAND IDENTITY — DERIVED FROM THE BUILDER, NOT INVENTED
+   CRITICAL: the user described a feeling, a place, colours in ordinary words, and a logo idea
+   in the final interview answer. That answer is the ONLY source for this section.
+   Do NOT default to generic startup blue/white/purple. Do NOT invent a palette that ignores
+   what they said. If they said "sammaleen vihreä ja savi", the app is green and clay — not blue.
+   - Translate THEIR described colours into 4-5 exact hex codes. For each one, name the source
+     in a comment, e.g. "#2D6A4F — the moss green they described from their grandmother's yard".
+   - Typography chosen to match THEIR stated mood (calm/energetic, warm/sharp, playful/serious),
+     with the reasoning stated in one line.
+   - Card style, border radius and shadow depth that match that same mood — soft and rounded for
+     warm/calm, tighter and flatter for sharp/professional.
+   - State the brand feeling in one sentence, in the user's own words where possible.
 
-6. ANIMATIONS & MICRO-INTERACTIONS
+6. LOGO — MUST BE INCLUDED
+   - Describe a simple logo based on the shape, letter or object the user mentioned.
+   - Specify it as inline SVG, drawable with basic shapes: circle, rounded rect, path, or a
+     styled letterform. No photographic detail, no external image files, no icon-font dependency.
+   - Give its exact placement: app header (left of the name), login screen, and browser favicon.
+   - Give a monochrome version for small sizes.
+   - The logo must use the palette above.
+
+7. COVER & IMAGERY
+   - A hero/cover area on the main screen: describe exactly what it shows, in the brand mood.
+   - Prefer CSS gradients, soft geometric shapes, or SVG illustration built from the palette —
+     these always render, unlike external photos.
+   - If photographs are used, describe the subject and mood in words so the builder can source them.
+   - Empty-state illustrations drawn in the same style, not generic clipart.
+   - Every screen must feel like it belongs to the same brand.
+
+8. VISUAL CONSISTENCY CHECK
+   - State in one line how a stranger would recognise two screenshots as the same app.
+
+9. ANIMATIONS & MICRO-INTERACTIONS
    - Page transition animation (slide, fade, scale)
    - List item appearance (stagger, slide up)
    - Button press states
@@ -1247,22 +1315,35 @@ MANDATORY SECTIONS — include ALL of them:
    - Loading states (skeleton screens, spinners)
    - At least 3 "wow" moments — interactions that make user smile
 
-7. MOBILE-FIRST BEHAVIOR
+10. MOBILE-FIRST BEHAVIOR
    - Bottom tab navigation on mobile
    - Touch-friendly button sizes (min 44px)
    - Swipe gestures if applicable
 
-8. FEEDBACK & ERRORS
+11. FEEDBACK & ERRORS
    - Toast notification style and timing
    - Inline form validation
    - Empty state illustrations/messages
    - Error recovery (what happens when something fails)
 
-9. FINNISH LANGUAGE
+12. FINNISH LANGUAGE
    - All UI text must be in Finnish
    - Include the actual Finnish strings for: navigation labels, button text, placeholder text, empty states, success messages
 
-The app solves a Finnish job market problem. Make it feel genuinely useful — not a toy. Make the user proud they built this.`;
+The app solves a Finnish job market problem. Make it feel genuinely useful — not a toy.
+
+FINAL RULE — THIS IS WHAT SEPARATES A GOOD PROMPT FROM A GENERIC ONE:
+This app must be unmistakably THIS person's. Two learners solving similar problems must end up with
+visibly different apps, because their brand answers were different. Before you finish, re-read the
+user's final interview answer and verify that their described feeling, colours and logo idea are
+actually present in sections 5-8. If the palette could belong to any app, you have failed the task —
+rewrite it using what they told you. Make the user proud they built this.`;
+
+  const brandAnswer = (S.chatHistory || [])
+    .filter(m => m.role === 'user')
+    .slice(-1)
+    .map(m => m.content)
+    .join('') || '(ei vastausta — johda tunnelma ongelmakuvauksesta äläkä käytä geneeristä sinistä)';
 
   const usr=`Build the complete prompt for this app:
 
@@ -1271,10 +1352,13 @@ PROBLEM AREA: ${marketAreaLabel()}
 PROBLEM: ${S.problemDesc}
 ONE-LINER: "${S.problemOneliner}"
 
+BRAND & IDENTITY ANSWER (the user's own words — sections 5-8 MUST be built from this, not invented):
+${brandAnswer}
+
 FULL INTERVIEW TRANSCRIPT:
 ${convo}
 
-Now write the complete, exhaustive app build prompt. This person built this with no coding experience. Make them blow their own mind when they see what gets generated.`;
+Now write the complete, exhaustive app build prompt. This person built this with no coding experience. The app must look like theirs and nobody else's. Make them blow their own mind when they see what gets generated.`;
 
   try{
     const t=await duunijobsAIApi(sys,[{role:'user',content:usr}],4000);
@@ -1301,8 +1385,9 @@ function showPromptOut(text){
   const qbar=document.getElementById('promptQualityBar');
   qbar.innerHTML='';
   [
-    ['✓ Animaatiot','green'],['✓ Esimerkkidata','green'],['✓ Väripaletti','green'],
-    ['✓ Kaikki näytöt','green'],['✓ Suomi UI','green'],['⚡ Valmis rakentamiseen','amber']
+    ['✓ Sinun värisi','green'],['✓ Logo','green'],['✓ Kansikuva','green'],
+    ['✓ Animaatiot','green'],['✓ Esimerkkidata','green'],['✓ Kaikki näytöt','green'],
+    ['✓ Suomi UI','green'],['⚡ Valmis rakentamiseen','amber']
   ].forEach(([l,c])=>{
     const s=document.createElement('span');
     s.className='pq-chip '+c;s.textContent=l;qbar.appendChild(s);
@@ -1438,7 +1523,7 @@ function applyAppBuilderWork(d) {
   S.problemOneliner = d.problemOneliner || '';
   S.appName = d.appName || '';
   S.chatHistory = d.chatHistory || [];
-  S.questionCount = d.questionCount || 0;
+  S.questionCount = Math.min(5, Math.max(0, Number(d.questionCount) || 0));
   // Backfill interviewDone in case it was never saved correctly (e.g. old sessions)
   S.interviewDone = !!d.interviewDone || S.questionCount >= 5;
   S.generatedPrompt = d.generatedPrompt || '';
