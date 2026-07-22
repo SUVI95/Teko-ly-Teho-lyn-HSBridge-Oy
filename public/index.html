@@ -1302,7 +1302,7 @@
             title: 'Rakenna oikea nettisivu — Lovable',
             description: 'Suunnittele, rakenna ja julkaise monisivuinen nettisivu ilman koodia. Koko päivän moduuli — lopuksi oma linkki jaettavaksi.',
             icon: 'sparkles',
-            order: 6,
+            order: 5.65,
             part: 2,
             day: 'bridge'
           },
@@ -1311,7 +1311,7 @@
             title: 'Esitykset & visuaalit — Gamma ja Canva',
             description: 'Valitse polku: Gamma-esitys ja Canva-banneri. Noin 75 min — lopuksi jaat työn ryhmälle.',
             icon: 'sparkles',
-            order: 7,
+            order: 5.8,
             part: 2,
             day: 'bridge'
           },
@@ -1320,7 +1320,7 @@
             title: 'Esitykset — Gamma Studio (admin, uusi)',
             description: 'Uudempi Gamma Studio + ChatGPT-polku. Vain admin-esikatselu — voit palauttaa opiskelijoille myöhemmin.',
             icon: 'sparkles',
-            order: 7.001,
+            order: 5.81,
             part: 2,
             day: 'bridge',
             cardBadge: 'Admin',
@@ -2022,9 +2022,16 @@
         const hasAnneOmaPolku = anneOmaPolkuModules.length > 0;
 
         // Group Part 2 modules by day (loppuosi injektoidaan AI-maisema -kortin jälkeen)
+        // Hard sequence for key bridge cards (Lovable before Esitykset), then numeric order.
+        const bridgeOrderOverride = {
+          'moduuli-lovable': 5.65,
+          'moduuli-esitykset-tarjoukset-viestinta': 5.8,
+          'moduuli-esitykset-tarjoukset-viestinta-gamma-studio': 5.81
+        };
+        const bridgeSortKey = (m) => (bridgeOrderOverride[m.id] != null ? bridgeOrderOverride[m.id] : Number(m.order) || 0);
         const day1_5Modules = visibleForStudent(part2Modules
           .filter(m => m.day === 'bridge' && !injectedIds.has(m.id))
-          .sort((a, b) => a.order - b.order));
+          .sort((a, b) => bridgeSortKey(a) - bridgeSortKey(b) || String(a.id).localeCompare(String(b.id))));
         const day2Modules = visibleForStudent(part2Modules.filter(m => m.day === 2).sort((a, b) => a.order - b.order));
         const day3Modules = visibleForStudent(part2Modules.filter(m => m.day === 3).sort((a, b) => a.order - b.order));
         const day4Modules = visibleForStudent(part2Modules.filter(m => m.day === 4).sort((a, b) => a.order - b.order));
@@ -2326,9 +2333,9 @@
       'moduuli9-haastattelu': ['STAR-metodi', 'Hissipuhe', 'Spot the flaw', 'Tilannepeli', 'Haastatteluvalmistelu'],
       'moduuli-elava-cv': ['CV-upload', 'AI-haastattelu', 'Premium-portfolio', 'Julkaisu linkillä'],
       'moduuli-tyonhaku': ['Taitokarttoitus', 'ATS-optimointi', 'Hakemusteksti AI:lla', 'Promptikirjasto', 'Oikea hakemus oikeaan paikkaan'],
+      'moduuli-lovable': ['Suunnittelu', 'Lovable-rakentaminen', 'Monisivuinen sivusto', 'Julkaisu', 'Siirrettävä taito'],
       'moduuli-esitykset-tarjoukset-viestinta': ['Valitse polku', 'Gamma-esitys', 'Canva-banneri', 'Show & tell'],
       'moduuli-esitykset-tarjoukset-viestinta-gamma-studio': ['Gamma Studio', 'ChatGPT-promptit', 'Canva CV/LinkedIn', 'Admin-varmuuskopio'],
-      'moduuli-lovable': ['Suunnittelu', 'Lovable-rakentaminen', 'Monisivuinen sivusto', 'Julkaisu', 'Siirrettävä taito'],
       'moduuli-visibility-growth-automation': ['Ongelman määrittely', 'AI-haastattelu', 'Base44-rakentaminen', 'Portfolio-teksti', 'Tuoteajattelu'],
       'moduuli-perplexity-notebooklm': ['Yritystutkimus', 'Perplexity', 'NotebookLM', 'Työpaikkailmoitus', 'Haastatteluvalmistelu'],
       'moduuli-ideasta-tuotteeksi': ['Think-gates', 'NotebookLM → Base44', 'Haastattelutarina', 'Julkaistu työkalu'],
