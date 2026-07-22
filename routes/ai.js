@@ -221,14 +221,59 @@ function claudeModelCandidates(requestedModel, preferSmart) {
   };
   push(requestedModel);
   if (preferSmart) {
-    // Smartest → strong Opus → platform default Sonnet
+    // One smart try, then Sonnet (reliable). Opus last — avoid burning the
+    // client/Vercel budget on two slow unavailable/hanging premium models.
     push(claudeSmartModel());
     push('claude-fable-5');
+    push(claudeTextModel());
+    push('claude-sonnet-4-5');
     push('claude-opus-4-8');
+  } else {
+    push(claudeTextModel());
+    push('claude-sonnet-4-5');
   }
-  push(claudeTextModel());
-  push('claude-sonnet-4-5');
   return list;
+}
+
+/** Pull visible assistant text from Anthropic content blocks (skips thinking). */
+function extractAnthropicText(data) {
+  const blocks = Array.isArray(data && data.content) ? data.content : [];
+  const parts = [];
+  for (const block of blocks) {
+    if (!block) continue;
+    if (block.type === 'text' && block.text) parts.push(String(block.text));
+    else if (typeof block.text === 'string' && block.text && block.type !== 'thinking') {
+      parts.push(block.text);
+    }
+  }
+  // Legacy/single-block fallback
+  if (!parts.length && blocks[0] && typeof blocks[0].text === 'string') {
+    parts.push(blocks[0].text);
+  }
+  return parts.join('\n').trim();
+}
+
+/** Anthropic Messages API: first turn should be user; no consecutive same roles. */
+function normalizeAnthropicMessages(messages) {
+  const msgs = (Array.isArray(messages) ? messages : [])
+    .map((m) => ({
+      role: m && m.role === 'assistant' ? 'assistant' : 'user',
+      content: String((m && m.content) || '').trim()
+    }))
+    .filter((m) => m.content);
+  if (!msgs.length) msgs.push({ role: 'user', content: 'Aloita.' });
+  if (msgs[0].role !== 'user') {
+    msgs.unshift({ role: 'user', content: 'Aloitetaan.' });
+  }
+  const merged = [];
+  for (const m of msgs) {
+    if (merged.length && merged[merged.length - 1].role === m.role) {
+      merged[merged.length - 1].content += `\n\n${m.content}`;
+    } else {
+      merged.push(m);
+    }
+  }
+  return merged;
 }
 
 /** OpenAI chat completion — returns plain text (used as Claude fallback + voice helpers). */
@@ -290,24 +335,31 @@ async function callOpenAIText({ system, messages, max_tokens = 1000, temperature
  */
 async function callClaudeText({ system, messages, max_tokens = 2000, timeout_ms, max_retries, model, smart }) {
   const anthropicKey = envTrim('ANTHROPIC_API_KEY');
+  const normalizedMessages = normalizeAnthropicMessages(messages);
   if (!anthropicKey) {
     console.warn('Anthropic API key not configured, using OpenAI for written text');
-    return callOpenAIText({ system, messages, max_tokens });
+    return callOpenAIText({ system, messages: normalizedMessages, max_tokens });
   }
 
   const preferSmart = smart === true || smart === 'true' || smart === 1 || smart === '1';
   const models = claudeModelCandidates(model, preferSmart);
-  const maxRetries = max_retries == null ? 2 : max_retries;
-  const requestTimeout = timeout_ms || (preferSmart ? STUDIO_ANTHROPIC_TIMEOUT_MS : ANTHROPIC_TIMEOUT_MS);
+  // Smart cascade: one attempt per model so we reach Sonnet before client/Vercel timeout.
+  const maxRetries = max_retries == null ? (preferSmart ? 1 : 2) : max_retries;
+  const defaultTimeout = preferSmart ? STUDIO_ANTHROPIC_TIMEOUT_MS : ANTHROPIC_TIMEOUT_MS;
+  const sonnetId = claudeTextModel();
 
   for (const modelId of models) {
+    // Premium smart models get a shorter leash; Sonnet gets the full studio budget.
+    const isSonnetish = modelId === sonnetId || /sonnet/i.test(modelId);
+    const requestTimeout = timeout_ms || (preferSmart && !isSonnetish ? 20000 : defaultTimeout);
+
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       if (attempt > 0) await new Promise((r) => setTimeout(r, 600));
 
       const body = {
         model: modelId,
         max_tokens,
-        messages
+        messages: normalizedMessages
       };
       if (system) body.system = system;
 
@@ -331,7 +383,13 @@ async function callClaudeText({ system, messages, max_tokens = 2000, timeout_ms,
 
       if (response.ok) {
         const data = await response.json();
-        const text = String(data.content?.[0]?.text || '').trim();
+        // Fable/thinking models return [{type:'thinking',...},{type:'text',text:'...'}]
+        // — never assume content[0] is the text block.
+        const text = extractAnthropicText(data);
+        if (!text) {
+          console.warn(`Anthropic empty text (${modelId}), trying next:`, JSON.stringify(data.content || []).slice(0, 200));
+          break;
+        }
         return { text, usage: data.usage, model: modelId, provider: 'anthropic' };
       }
 
@@ -352,7 +410,7 @@ async function callClaudeText({ system, messages, max_tokens = 2000, timeout_ms,
   }
 
   console.warn('Claude text exhausted model candidates, falling back to OpenAI');
-  return callOpenAIText({ system, messages, max_tokens });
+  return callOpenAIText({ system, messages: normalizedMessages, max_tokens });
 }
 
 // DuuniJobs AI (Anthropic) — deep analysis; /claude kept for older clients

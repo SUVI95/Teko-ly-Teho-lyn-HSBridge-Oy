@@ -776,7 +776,10 @@ async function postAIJson(url, payload, timeoutMs) {
       signal: requestTimeoutSignal(timeoutMs || 35000)
     });
   } catch (err) {
-    throw new Error('Yhteys tekoälypalveluun katkesi. Vastaukset on tallennettu, yritä uudelleen.');
+    var aborted = err && (err.name === 'AbortError' || /abort/i.test(String(err.message || '')));
+    throw new Error(aborted
+      ? 'Tekoälyvastaus kesti liian kauan. Yritä uudelleen.'
+      : 'Yhteys tekoälypalveluun katkesi. Vastaukset on tallennettu, yritä uudelleen.');
   }
   var data = {};
   try { data = await resp.json(); } catch (e) {}
@@ -786,36 +789,77 @@ async function postAIJson(url, payload, timeoutMs) {
   return data;
 }
 
-async function duunijobsAIApi(system, messages, maxTokens) {
-  var data;
-  // Smartest Claude first (server cascades Opus/Fable → Sonnet)
-  try {
-    data = await postAIJson(getClaudeApiUrl(), {
-      system: system,
-      messages: messages,
-      max_tokens: maxTokens || 1000,
-      smart: true
-    }, 45000);
-    return data.text || data.reply || '';
-  } catch (claudeErr) {
-    console.warn('Smart Claude endpoint failed, trying DuuniJobs alias:', claudeErr && claudeErr.message);
+/** Anthropic prefers user-first turns and rejects consecutive same-role messages. */
+function normalizeClaudeMessages(messages) {
+  var msgs = (messages || []).map(function (m) {
+    return {
+      role: m && m.role === 'assistant' ? 'assistant' : 'user',
+      content: String((m && m.content) || '').trim()
+    };
+  }).filter(function (m) { return m.content; });
+  if (!msgs.length) msgs = [{ role: 'user', content: 'Aloita.' }];
+  if (msgs[0].role !== 'user') {
+    msgs.unshift({ role: 'user', content: 'Aloitetaan haastattelu.' });
   }
-  try {
-    data = await postAIJson(getDuunijobsAIApiUrl(), {
-      system: system,
-      messages: messages,
-      max_tokens: maxTokens || 1000,
-      smart: true
-    }, 45000);
-    return data.text || data.reply || '';
-  } catch (primaryErr) {
-    console.warn('DuuniJobs AI endpoint failed, trying OpenAI chat endpoint:', primaryErr && primaryErr.message);
+  var merged = [];
+  msgs.forEach(function (m) {
+    if (merged.length && merged[merged.length - 1].role === m.role) {
+      merged[merged.length - 1].content += '\n\n' + m.content;
+    } else {
+      merged.push(m);
+    }
+  });
+  return merged;
+}
+
+/**
+ * Claude first (smart → standard Sonnet), OpenAI only as last resort.
+ * /api/ai/duunijobs is the same Claude handler — do not double-call it after /claude.
+ */
+async function duunijobsAIApi(system, messages, maxTokens, opts) {
+  opts = opts || {};
+  var timeoutMs = opts.timeoutMs || 80000;
+  var preferSmart = opts.smart !== false;
+  var normalized = normalizeClaudeMessages(messages);
+  var payload = {
+    system: system,
+    messages: normalized,
+    max_tokens: maxTokens || 1000
+  };
+  var data;
+  var text;
+
+  // 1) Smartest Claude (server cascades Fable → Sonnet)
+  if (preferSmart) {
+    try {
+      data = await postAIJson(getClaudeApiUrl(), Object.assign({}, payload, { smart: true }), timeoutMs);
+      text = data.text || data.reply || '';
+      if (text) {
+        if (data.provider) console.log('AI provider:', data.provider, data.model || '');
+        return text;
+      }
+    } catch (claudeErr) {
+      console.warn('Smart Claude failed, retrying standard Claude:', claudeErr && claudeErr.message);
+    }
   }
 
+  // 2) Standard Claude (Sonnet) — still Anthropic, faster path
+  try {
+    data = await postAIJson(getClaudeApiUrl(), payload, Math.min(timeoutMs, 60000));
+    text = data.text || data.reply || '';
+    if (text) {
+      if (data.provider) console.log('AI provider:', data.provider, data.model || '');
+      return text;
+    }
+  } catch (sonnetErr) {
+    console.warn('Standard Claude failed, trying OpenAI fallback:', sonnetErr && sonnetErr.message);
+  }
+
+  // 3) OpenAI last resort only
   data = await postAIJson(getOpenAIChatUrl(), {
     model: 'gpt-4o-mini',
     system: system,
-    messages: messages,
+    messages: normalized,
     max_tokens: maxTokens || 1000
   }, 35000);
   return data.text || data.reply || '';
@@ -1077,7 +1121,7 @@ function completeInterview() {
 async function askDuunijobsAI(){
   showTyping();
   try{
-    const t=await duunijobsAIApi(buildSystem(),S.chatHistory,1000);
+    const t=await duunijobsAIApi(buildSystem(),S.chatHistory,1000,{timeoutMs:70000,smart:true});
     hideTyping();
     const forceDone = S.questionCount >= 5;
     const aiSaidDone = t.includes('INTERVIEW_COMPLETE');
@@ -1361,7 +1405,8 @@ ${convo}
 Now write the complete, exhaustive app build prompt. This person built this with no coding experience. The app must look like theirs and nobody else's. Make them blow their own mind when they see what gets generated.`;
 
   try{
-    const t=await duunijobsAIApi(sys,[{role:'user',content:usr}],4000);
+    // Base44 prompt is long — give Claude up to ~85s (under Vercel 90s limit)
+    const t=await duunijobsAIApi(sys,[{role:'user',content:usr}],4000,{timeoutMs:85000,smart:true});
     clearInterval(iv);
     S.generatedPrompt=t;
     S.finalPrompt=t;

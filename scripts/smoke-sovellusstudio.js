@@ -111,6 +111,9 @@ async function main() {
   ok('loads ai-helper.js', html.includes('/js/ai-helper.js'));
   ok('getClaudeApiUrl', mustFn(html, 'getClaudeApiUrl') || html.includes('function getClaudeApiUrl'));
   ok('Claude smart:true', /smart:\s*true/.test(html));
+  ok('normalizeClaudeMessages', mustFn(html, 'normalizeClaudeMessages'));
+  ok('prompt Claude timeout 85s', /timeoutMs:\s*85000/.test(html));
+  ok('no redundant DuuniJobs alias retry', !/trying DuuniJobs alias/.test(html));
   ok('MODULE_USE_SMART_CLAUDE', html.includes('MODULE_USE_SMART_CLAUDE'));
   ok('MODULE_USE_CLAUDE', html.includes('MODULE_USE_CLAUDE'));
   ok('initModuleWork', html.includes('initModuleWork'));

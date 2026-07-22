@@ -65,7 +65,13 @@ async function callAnthropic({ system, messages, max_tokens }) {
   }
 
   const data = await response.json();
-  return String(data.content?.[0]?.text || '').trim();
+  const blocks = Array.isArray(data.content) ? data.content : [];
+  const text = blocks
+    .filter((b) => b && b.type === 'text' && b.text)
+    .map((b) => String(b.text))
+    .join('\n')
+    .trim();
+  return text || String(blocks[0]?.text || '').trim();
 }
 
 async function callOpenAI({ system, messages, max_tokens }) {
