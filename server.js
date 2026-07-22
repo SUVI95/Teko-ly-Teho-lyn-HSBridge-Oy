@@ -583,11 +583,8 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'moduuli9-haastattelu',
   'moduuli-elava-cv',
   'moduuli-ai-simulation-lab',
-  'moduuli-bottityypit',
-  'moduuli-prompt-hiomo',
   'moduuli-hitl-architect',
   'moduuli-asiakaspalvelu-live-puhelu',
-  'moduuli1-ai-automaatio',
   'moduuli1b-ai-automaatio',
   'moduuli1c-ai-automaatio',
   // Hidden from students (admin only on dashboard)
@@ -633,7 +630,6 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
  * Module stays locked for the group; these gift keys may open it.
  */
 const STUDENT_LOCKED_EARLY_ACCESS = {
-  'moduuli-prompt-hiomo': ['musiikki']
 };
 
 // Personal gift HTML only via /module/:id (recipient + admin gate)
