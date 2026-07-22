@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  var LOCAL_KEY = "hitl-architect-state-v3";
+  var LOCAL_KEY = "hitl-architect-state-v4";
   var AI_SECTIONS = [
     { section: "ex1-ghost-policy", box: "ex1Ai" },
     { section: "ex2-empathy-override", box: "ex2Ai" },
@@ -89,7 +89,7 @@
     var exercises = window.__hitlExercises || {};
     var progressive = window.__hitlProgressive || {};
     return {
-      v: 3,
+      v: 4,
       ts: Date.now(),
       phases: collectPhases(),
       fields: collectFields(),
@@ -278,7 +278,9 @@
     }
 
     if (state.unlocked && window.__hitlProgressive && window.__hitlProgressive.setUnlocked) {
-      window.__hitlProgressive.setUnlocked(state.unlocked);
+      var restoredUnlocked = Object.assign({}, state.unlocked);
+      if (Number(state.v || 0) < 4) delete restoredUnlocked["s-ex3"];
+      window.__hitlProgressive.setUnlocked(restoredUnlocked);
     }
 
     restorePhases(state.phases);

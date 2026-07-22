@@ -4,8 +4,8 @@
 
   if (!document.body.classList.contains("hitl-progressive")) return;
 
-  var STORAGE_KEY = "hitl-architect-unlock-v1";
-  var PERSIST_KEY = "hitl-architect-state-v3";
+  var STORAGE_KEY = "hitl-architect-unlock-v2";
+  var PERSIST_KEY = "hitl-architect-state-v4";
 
   window.__hitlProgressive = {
     getUnlocked: function () {
@@ -141,7 +141,7 @@
         },
       ];
 
-  var unlocked = { "s-teoria": true, "s-portti": true, "s-ex3": true };
+  var unlocked = { "s-teoria": true, "s-portti": true };
 
   function loadProgress() {
     try {
@@ -149,7 +149,7 @@
       if (persisted) {
         var state = JSON.parse(persisted);
         if (state && state.unlocked) {
-          mergeUnlockedFromState({ unlocked: state.unlocked });
+          mergeUnlockedFromState({ v: state.v, unlocked: state.unlocked });
           return;
         }
       }
@@ -173,6 +173,7 @@
   function mergeUnlockedFromState(state) {
     if (!state || !state.unlocked) return;
     Object.keys(state.unlocked).forEach(function (id) {
+      if (id === "s-ex3" && Number(state.v || 0) < 4) return;
       if (state.unlocked[id]) unlocked[id] = true;
     });
   }
@@ -240,14 +241,22 @@
         var tgt = a.getAttribute("data-tgt");
         if (!tgt || !isStepLocked(tgt)) return;
         e.preventDefault();
-        unlockSection(tgt, true);
+        if (isLocalPreview()) unlockSection(tgt, true);
       });
     });
+  }
+
+  function isLocalPreview() {
+    return (
+      /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname) &&
+      new URLSearchParams(window.location.search).get("preview") === "1"
+    );
   }
 
   function unlockFromHash() {
     var hash = (window.location.hash || "").replace("#", "");
     if (!hash || !isStepLocked(hash)) return;
+    if (!isLocalPreview()) return;
     unlockSection(hash, false);
     var sec = document.getElementById(hash);
     if (sec) sec.scrollIntoView({ behavior: "auto", block: "start" });
@@ -483,7 +492,6 @@
 
   function init() {
     loadProgress();
-    unlocked["s-ex3"] = true;
     document.addEventListener("bonus-module:ready", function () {
       if (window.BonusModule && window.BonusModule.getEntry) {
         try {

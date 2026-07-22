@@ -134,6 +134,13 @@ router.post('/', async (req, res) => {
       try {
         text = await callAnthropic({ system, messages: msgs, max_tokens });
       } catch (e) {
+        if (anthropic_only === true) {
+          console.error('module-ai Claude-only request failed:', e.message);
+          return res.status(503).json({
+            error: 'Claude ei ole juuri nyt saatavilla. Yritä hetken kuluttua uudelleen.',
+            content: [{ type: 'text', text: '' }]
+          });
+        }
         console.warn('module-ai Anthropic failed, using OpenAI fallback:', e.message);
       }
     }

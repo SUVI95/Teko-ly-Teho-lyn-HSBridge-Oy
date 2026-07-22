@@ -99,6 +99,59 @@
     showAi(boxId, '<span class="ai-loading">Claude arvioi vastaustasi…</span>');
   }
 
+  var EXERCISE_CONTEXTS = {
+    ex1: {
+      role: "Olet viimeinen tarkistaja ennen kuin AI:n viesti lähtee asiakkaalle.",
+      boundary: "Virallinen sääntö: 30 pv; yli 30 pv vain takuukorjaus tai 15 € lahjakortti; yli 50 € lupaus vaatii esimiehen.",
+      goal: "Pysäytä keksitty 60 pv VIP-poikkeus ja täysi automaattihyvitys.",
+    },
+    ex2: {
+      role: "Olet NordFlow’n asiakaspalvelija ja saat ottaa chatin tekoälyltä.",
+      boundary: "Botti hoitaa tavalliset peruutukset. Poikkeustilanteessa saat poistaa turhan byrokratian, mutta et keksi maksuja tai etuja.",
+      goal: "Huomaa surutilanne, ota vastuu ja hoida peruutus asiakkaalle kevyesti.",
+    },
+    ex3: {
+      role: "Olet ScaleNordin AI-vuoronjohtaja ja päätät, kuka ottaa vastuun.",
+      boundary: "Selvä rutiini → AI. Poikkeus → AI valmistelee, ihminen päättää. Arkaluonteinen, julkinen tai epäselvä → ihminen.",
+      goal: "Rakenna turvallinen työnjako ilman numeroita tai laskemista.",
+    },
+    ex4: {
+      role: "Olet hyväksymisportin AI-valvoja ja tarkistat pysäytetyt toimet.",
+      boundary: "Asiakkaan oikeuksiin, rahaan tai henkilötietoihin vaikuttava peruuttamaton päätös vaatii ihmisen.",
+      goal: "Päästä selvä rutiini eteenpäin ja pysäytä GDPR-, iso raha- ja uhkatilanteet.",
+    },
+    ex5: {
+      role: "Olet juurisyyanalyytikko: korjaat sekä asiakkaan tilanteen että AI:n tietolähteen.",
+      boundary: "Botti käytti vanhaa 15 € palautusmaksua, mutta marraskuun B2C-kampanja lupaa ilmaiset palautukset.",
+      goal: "Yhdistä todisteet, vastaa asiakkaalle ja estä saman virheen toistuminen.",
+    },
+  };
+
+  function injectPersistentContexts() {
+    Object.keys(EXERCISE_CONTEXTS).forEach(function (prefix) {
+      var context = EXERCISE_CONTEXTS[prefix];
+      document.querySelectorAll("." + prefix + "-phase").forEach(function (phase) {
+        if (phase.firstElementChild && phase.firstElementChild.classList.contains("phase-context-pin")) return;
+        var pin = document.createElement("div");
+        pin.className = "phase-context-pin";
+        pin.setAttribute("role", "note");
+        pin.setAttribute("aria-label", "Työrooli ja päätöksen konteksti");
+        pin.innerHTML =
+          '<span class="pcp-claude">Claude arvioi lopussa</span>' +
+          '<span class="pcp-item"><strong>Roolisi</strong>' +
+          context.role +
+          "</span>" +
+          '<span class="pcp-item"><strong>Pidä mielessä</strong>' +
+          context.boundary +
+          "</span>" +
+          '<span class="pcp-item"><strong>Tavoite</strong>' +
+          context.goal +
+          "</span>";
+        phase.insertBefore(pin, phase.firstChild);
+      });
+    });
+  }
+
   // Lisää "Kokeile uudestaan" -painike palautelaatikon alle. Tyhjentää
   // palautteen ja vie takaisin harjoituksen ensimmäiseen vaiheeseen, jotta
   // opiskelija voi muokata vastaustaan ja lähettää uudelleen.
@@ -600,38 +653,95 @@
     });
   }
 
-  function ex3ActiveScenarios() {
-    if (!HITL_BEGINNER) return EX3_SCENARIOS;
-    return EX3_SCENARIOS.filter(function (sc) {
-      return sc.id === "sc3" || sc.id === "sc4";
-    });
-  }
+  /* ── Exercise 3 — AI shift supervisor, no calculations ── */
+  var EX3_INBOX_CASES = [
+    {
+      id: "tracking",
+      title: "Toimituksen seuranta",
+      quote: "“Missä tilaukseni on? Seurantalinkki ei auennut.”",
+      expect: "ai",
+      reason: "routine",
+      why: "Tavallinen toimituskysymys. Yrityksen ohje ja seurantatieto ovat valmiina.",
+    },
+    {
+      id: "return",
+      title: "Tavalliset palautusohjeet",
+      quote: "“Haluan palauttaa avaamattoman tuotteen. Miten aloitan palautuksen?”",
+      expect: "ai",
+      reason: "routine",
+      why: "Tavallinen palautusohje ei vaadi poikkeusta eikä ihmisen päätöstä.",
+    },
+    {
+      id: "exception",
+      title: "Poikkeus yrityksen sääntöön",
+      quote: "“Olen pitkäaikainen asiakas. Voitteko hyväksyä palautuksen, vaikka tavallinen palautusehto ei enää täyty?”",
+      expect: "review",
+      reason: "exception",
+      why: "Tekoäly voi koota tiedot ja luonnoksen, mutta ihminen päättää poikkeuksesta.",
+    },
+    {
+      id: "privacy",
+      title: "Henkilötietojen poistaminen",
+      quote: "“Poistakaa kaikki minua koskevat tiedot järjestelmistänne ja vahvistakaa poisto.”",
+      expect: "human",
+      reason: "sensitive",
+      why: "Arkaluonteinen henkilötietopyyntö vaatii vastuullisen ihmiskäsittelyn.",
+    },
+    {
+      id: "public",
+      title: "Julkinen mainehaitta",
+      quote: "“Julkaisin Instagramissa kokemukseni ja merkitsin yrityksenne. Haluan vastauksen julkisesti.”",
+      expect: "human",
+      reason: "public",
+      why: "Julkinen vastaus voi vaikuttaa yrityksen maineeseen. Ihminen ottaa vastuun.",
+    },
+  ];
 
-  /* ── Exercise 3 ── */
-  var EX3_SCENARIOS = [
+  var EX3_MISTAKE_CASES = [
     {
-      id: "sc1",
-      meta: "Chat · 95 € hyvitys · 🟡 epävarma · neutraali",
-      quote: '"Tuote viallinen — haluan 95 € hyvityksen tai vaihdon."',
-      ambiguous: true,
+      id: "privacy",
+      title: "Tekoälyn päätös: “Hoidan tietojen poistamisen itse.”",
+      quote: "Asiakas pyytää kaikkien henkilötietojensa poistamista.",
+      expect: "human",
+      why: "Korjaa: henkilötietopyyntö kuuluu ihmiselle.",
     },
     {
-      id: "sc2",
-      meta: "Sähköposti · 340 € · 🟡 melko varma · turhautunut",
-      quote: '"Kolmas rikkinäinen lähetys. Haluan täyden 340 € hyvityksen."',
-      expect: "human",
+      id: "tracking",
+      title: "Tekoälyn päätös: “Näytän asiakkaalle tilauksen seurannan.”",
+      quote: "Asiakas kysyy tavallista toimituksen tilannetta.",
+      expect: "accept",
+      why: "Hyväksy: tämä on selvä rutiiniasia.",
     },
     {
-      id: "sc3",
-      meta: "Lomake · GDPR · 🟢 varma · neutraali",
-      quote: '"Poistakaa kaikki tietoni heti GDPR:n perusteella."',
-      expect: "human",
+      id: "exception",
+      title: "Tekoälyn päätös: “Lupaan asiakkaalle poikkeuksen.”",
+      quote: "Asiakas pyytää ratkaisua, jota yrityksen tavallinen ohje ei kata.",
+      expect: "review",
+      why: "Korjaa: tekoäly voi valmistella, mutta ihminen päättää poikkeuksesta.",
+    },
+  ];
+
+  var EX3_FINAL_CASES = [
+    {
+      id: "label",
+      title: "Palautuslinkki",
+      quote: "“Mistä löydän tavallisen palautuslomakkeen?”",
+      expect: "ai",
+      why: "Selvä rutiiniohje kuuluu tekoälylle.",
     },
     {
-      id: "sc4",
-      meta: "Twitter/X julkinen · 0 € · 🔴 ei luota · erittäin negatiivinen",
-      quote: '"@ScaleNord kolmas kerta kun pakettinne katoaa. Peruutan tilaukseni JULKISESTI."',
+      id: "special",
+      title: "Erityinen hyvitys",
+      quote: "“Tuote hajosi oudolla tavalla. Ohjeenne ei kerro tästä tilanteesta — mitä voitte tarjota?”",
+      expect: "review",
+      why: "Tekoäly valmistelee tiedot, mutta ihminen tekee poikkeuspäätöksen.",
+    },
+    {
+      id: "social",
+      title: "Julkinen reklamaatio",
+      quote: "“Kerron tästä nyt julkisesti ja liitän mukaan kuvakaappaukset tilauksestani.”",
       expect: "human",
+      why: "Julkinen ja henkilötietoja mahdollisesti sisältävä tapaus kuuluu ihmiselle.",
     },
   ];
 
@@ -652,230 +762,232 @@
     return el ? el.value : null;
   }
 
-  function ex3EvidenceQuality(text) {
-    var t = (text || "").toLowerCase();
-    var facts = (
-      t.match(
-        /\d+\s*%|\d+\s*€|5\s*000|4\s*000|62|18|5\s*€|200|erittäin yleinen|yleinen|harvinainen|hyvin harvinainen|nykyinen|sääntö|ihmiselle|tekoäly|varma|epävarma/g,
-      ) || []
-    ).length;
-    return wordCount(text) >= 15 && facts >= 2;
+  function ex3RouteLabel(route) {
+    return {
+      ai: "Tekoäly hoitaa",
+      review: "Tekoäly valmistelee — ihminen hyväksyy",
+      human: "Ihminen hoitaa",
+    }[route] || route;
   }
 
-  function ex3RulesQuality(text) {
-    var t = (text || "").toLowerCase();
-    var josCount = (t.match(/\bjos\b/g) || []).length;
-    if (HITL_BEGINNER) {
-      return (
-        josCount >= 2 &&
-        /aina|gdpr|some|confidence|hyvitys|200|€/.test(t) &&
-        wordCount(text) >= 35
-      );
-    }
+  function ex3ReasonOptions() {
     return (
-      josCount >= 3 &&
-      /aina|gdpr|200|some|confidence|hyvitys|raha|€/.test(t) &&
-      (/syy|vaikutus|riski/.test(t) || wordCount(text) >= 60)
+      '<option value="">Valitse päätöksen syy…</option>' +
+      '<option value="routine">Tavallinen pyyntö ja selvä yrityksen ohje</option>' +
+      '<option value="exception">Tarvitaan poikkeus tai ihmisen päätös</option>' +
+      '<option value="sensitive">Arkaluonteiset henkilötiedot</option>' +
+      '<option value="public">Julkinen tai maineeseen vaikuttava tilanne</option>'
     );
   }
 
-  function ex3InjectRefPanels() {
-    var refAside =
-      '<aside class="ex2-ref-col ex3-ref-col" aria-label="Black Friday -tilanne ja taulukko">' +
-      '<div class="ex3-ref-mission"><strong>Black Friday klo 14:00</strong> · 4 000 ihmistä jonossa · tavoite alle 1 000</div>' +
-      '<div class="ex3-ref-goal"><strong>Aina ihmiselle:</strong> GDPR · yli 200 € hyvitykset · julkinen some</div>' +
-      '<table class="data-table ex3-ref-table"><thead><tr><th>Asiatyyppi</th><th>Yleisyys</th><th>Varmuus</th><th>Nyt</th></tr></thead><tbody>' +
-      '<tr class="danger"><td>Pienet hyvitykset</td><td>Erittäin yleinen</td><td>🟢</td><td>→ Ihminen</td></tr>' +
-      '<tr><td>Osoite/salasana</td><td>Yleinen</td><td>🟢</td><td>Tekoäly</td></tr>' +
-      '<tr><td>Isot hyvitykset</td><td>Harvinainen</td><td>🟡</td><td>→ Ihminen</td></tr>' +
-      '<tr><td>GDPR</td><td>Harvinainen</td><td>🟡</td><td>Riski!</td></tr>' +
-      '<tr><td>Julkinen some</td><td>Hyvin harv.</td><td>🔴</td><td>Maine-riski</td></tr>' +
-      '<tr><td>Neg. asiakas</td><td>Hyvin harv.</td><td>🔴</td><td>→ Ihminen</td></tr>' +
-      "</tbody></table>" +
-      '<p class="ex1-ref-hint">🔴 tai 🟡 → ihminen katsokoon. 🟢 + matala riski → tekoäly voi hoitaa.</p></aside>';
+  function ex3RenderRouteCases(listId, prefix, cases, withReason) {
+    var list = document.getElementById(listId);
+    if (!list || list.children.length) return;
+    cases.forEach(function (sc) {
+      var card = document.createElement("div");
+      card.className = "h3-case";
+      card.setAttribute("data-case", prefix + sc.id);
+      card.innerHTML =
+        '<div class="h3-case-head"><strong>' +
+        sc.title +
+        '</strong><span class="h3-route-tag">Päätä työnjako</span></div>' +
+        "<p>" +
+        sc.quote +
+        "</p>" +
+        '<div class="choice-row">' +
+        '<label><input type="radio" name="' +
+        prefix +
+        sc.id +
+        '" value="ai"> Tekoäly hoitaa</label>' +
+        '<label><input type="radio" name="' +
+        prefix +
+        sc.id +
+        '" value="review"> AI valmistelee, ihminen hyväksyy</label>' +
+        '<label><input type="radio" name="' +
+        prefix +
+        sc.id +
+        '" value="human"> Ihminen hoitaa</label>' +
+        "</div>" +
+        (withReason
+          ? '<select class="h3-reason" id="' + prefix + sc.id + 'Reason">' + ex3ReasonOptions() + "</select>"
+          : "") +
+        '<div class="h3-case-feedback" id="' +
+        prefix +
+        sc.id +
+        'Fb"></div>';
+      list.appendChild(card);
 
-    ["ex3PhaseBottleneck", "ex3PhaseLearn", "ex3PhaseRules", "ex3PhaseCapacity", "ex3PhaseSpot"].forEach(
-      function (id) {
-        var phase = document.getElementById(id);
-        if (!phase || phase.querySelector(".ex3-ref-col")) return;
-        var layout = document.createElement("div");
-        layout.className = "ex2-work-layout";
-        layout.innerHTML = refAside;
-        var taskCol = document.createElement("div");
-        taskCol.className = "ex2-task-col";
-        while (phase.firstChild) taskCol.appendChild(phase.firstChild);
-        layout.appendChild(taskCol);
-        phase.appendChild(layout);
-      },
+      function updateFeedback() {
+        var route = ex3Radio(prefix + sc.id);
+        var reasonEl = document.getElementById(prefix + sc.id + "Reason");
+        var reason = reasonEl ? reasonEl.value : sc.reason;
+        var fb = document.getElementById(prefix + sc.id + "Fb");
+        if (!fb || !route || (withReason && !reason)) return;
+        var ok = route === sc.expect && (!withReason || reason === sc.reason);
+        fb.className = "h3-case-feedback show " + (ok ? "ok" : "fix");
+        fb.textContent = ok
+          ? "Hyvä päätös. " + sc.why
+          : "Tarkista työnjako. Tässä tilanteessa oikea reitti on: " + ex3RouteLabel(sc.expect) + ". " + sc.why;
+      }
+
+      card.querySelectorAll('input[type="radio"]').forEach(function (input) {
+        input.addEventListener("change", updateFeedback);
+      });
+      var reasonSelect = document.getElementById(prefix + sc.id + "Reason");
+      if (reasonSelect) reasonSelect.addEventListener("change", updateFeedback);
+    });
+  }
+
+  function ex3RenderMistakes() {
+    var list = document.getElementById("ex3MistakeCases");
+    if (!list || list.children.length) return;
+    EX3_MISTAKE_CASES.forEach(function (sc) {
+      var card = document.createElement("div");
+      card.className = "h3-case";
+      card.innerHTML =
+        '<div class="h3-case-head"><strong>' +
+        sc.title +
+        '</strong><span class="h3-route-tag">Tarkista päätös</span></div>' +
+        "<p>" +
+        sc.quote +
+        "</p>" +
+        '<div class="choice-row">' +
+        '<label><input type="radio" name="ex3mistake-' +
+        sc.id +
+        '" value="accept"> Hyväksyn päätöksen</label>' +
+        '<label><input type="radio" name="ex3mistake-' +
+        sc.id +
+        '" value="review"> Muutan: AI valmistelee, ihminen hyväksyy</label>' +
+        '<label><input type="radio" name="ex3mistake-' +
+        sc.id +
+        '" value="human"> Siirrän ihmiselle</label>' +
+        "</div>" +
+        '<div class="h3-case-feedback" id="ex3mistake-' +
+        sc.id +
+        'Fb"></div>';
+      list.appendChild(card);
+      card.querySelectorAll('input[type="radio"]').forEach(function (input) {
+        input.addEventListener("change", function () {
+          var picked = ex3Radio("ex3mistake-" + sc.id);
+          var fb = document.getElementById("ex3mistake-" + sc.id + "Fb");
+          var ok = picked === sc.expect;
+          fb.className = "h3-case-feedback show " + (ok ? "ok" : "fix");
+          fb.textContent = ok ? "Hyvä valvontapäätös. " + sc.why : sc.why;
+        });
+      });
+    });
+  }
+
+  function ex3CasesCorrect(prefix, cases, withReason) {
+    return cases.every(function (sc) {
+      var route = ex3Radio(prefix + sc.id);
+      var reasonEl = document.getElementById(prefix + sc.id + "Reason");
+      return route === sc.expect && (!withReason || (reasonEl && reasonEl.value === sc.reason));
+    });
+  }
+
+  function ex3MistakesCorrect() {
+    return EX3_MISTAKE_CASES.every(function (sc) {
+      return ex3Radio("ex3mistake-" + sc.id) === sc.expect;
+    });
+  }
+
+  function ex3PlaybookCorrect() {
+    return (
+      document.getElementById("ex3RuleRoutine").value === "ai" &&
+      document.getElementById("ex3RuleException").value === "review" &&
+      document.getElementById("ex3RuleSensitive").value === "human" &&
+      document.getElementById("ex3RulePublic").value === "human"
     );
+  }
+
+  function ex3DecisionSummary(prefix, cases) {
+    return cases
+      .map(function (sc) {
+        return sc.title + ": " + ex3RouteLabel(ex3Radio(prefix + sc.id) || "ei valintaa");
+      })
+      .join("\n");
   }
 
   function initEx3() {
-    ex3InjectRefPanels();
-    var list = document.getElementById("ex3Scenarios");
-    if (!list) return;
+    var missionBtn = document.getElementById("ex3MissionContinue");
+    if (!missionBtn) return;
+    ex3RenderRouteCases("ex3InboxCases", "ex3inbox-", EX3_INBOX_CASES, true);
+    ex3RenderMistakes();
+    ex3RenderRouteCases("ex3FinalCases", "ex3final-", EX3_FINAL_CASES, false);
 
-    document.getElementById("ex3MissionContinue").addEventListener("click", function () {
-      ex3ShowPhase("ex3PhaseBottleneck");
+    missionBtn.addEventListener("click", function () {
+      ex3ShowPhase("ex3PhaseInbox");
     });
 
-    document.getElementById("ex3BottleneckContinue").addEventListener("click", function () {
-      var row = ex3Radio("ex3row");
-      var evidence = document.getElementById("ex3Evidence").value.trim();
-      if (!row) {
-        showAi("ex3BottleneckFb", "Valitse yksi taulukon rivi.");
+    document.getElementById("ex3InboxContinue").addEventListener("click", function () {
+      if (!ex3CasesCorrect("ex3inbox-", EX3_INBOX_CASES, true)) {
+        showAi("ex3InboxFb", "Tarkista vielä työjono. Jokaisessa kortissa näkyy vihje oikeasta työnjaosta.");
         return;
       }
-      if (!ex3EvidenceQuality(evidence)) {
-        showAi("ex3BottleneckFb", "Kerro miksi valitsit tämän rivin — mainitse vähintään kaksi asiaa taulukosta (esim. kuinka yleinen se on tai mitä nykyinen sääntö tekee).");
+      document.getElementById("ex3InboxFb").classList.remove("show");
+      ex3ShowPhase("ex3PhaseMistakes");
+    });
+
+    document.getElementById("ex3MistakesContinue").addEventListener("click", function () {
+      if (!ex3MistakesCorrect()) {
+        showAi("ex3MistakesFb", "Tarkista vielä tekoälyn kolme päätöstä. Hyväksy vain turvallinen rutiiniratkaisu.");
         return;
       }
-      if (row !== "small") {
-        showAi("ex3BottleneckFb", "Usein suurin pullonkaula on pienet hyvitykset — ne tulevat useimmin ja nykyinen 5 € raja lähettää kaiken ihmiselle. Jatka silti.");
-      } else {
-        showAi("ex3BottleneckFb", "");
-        document.getElementById("ex3BottleneckFb").classList.remove("show");
-      }
-      ex3ShowPhase(HITL_BEGINNER ? "ex3PhaseRules" : "ex3PhaseLearn");
+      document.getElementById("ex3MistakesFb").classList.remove("show");
+      ex3ShowPhase("ex3PhasePlaybook");
     });
 
-    document.getElementById("ex3LearnContinue").addEventListener("click", function () {
-      ex3ShowPhase("ex3PhaseRules");
-    });
-
-    document.getElementById("ex3RulesContinue").addEventListener("click", function () {
-      var rules = document.getElementById("ex3Rules").value.trim();
-      if (!ex3RulesQuality(rules)) {
+    document.getElementById("ex3PlaybookContinue").addEventListener("click", function () {
+      if (!ex3PlaybookCorrect()) {
         showAi(
-          "ex3RulesFb",
-          HITL_BEGINNER
-            ? "Kirjoita vähintään kaksi JOS–NIIN-sääntöä ja mainitse GDPR, iso raha tai some → aina ihminen."
-            : "Kirjoita vähintään kolme JOS–NIIN-sääntöä, AINA eskaloi -lista (GDPR/some/200 €) sekä syy tai vaikutus.",
+          "ex3PlaybookFb",
+          "Tarkista käsikirja: selvä rutiini → tekoäly, poikkeus → AI valmistelee ja ihminen päättää, arkaluonteinen tai julkinen/epäselvä → ihminen.",
         );
         return;
       }
-      showAi("ex3RulesFb", "");
-      document.getElementById("ex3RulesFb").classList.remove("show");
-      ex3ShowPhase(HITL_BEGINNER ? "ex3PhaseSpot" : "ex3PhaseCapacity");
+      document.getElementById("ex3PlaybookFb").classList.remove("show");
+      ex3ShowPhase("ex3PhaseFinal");
     });
-
-    document.getElementById("ex3CapacityContinue").addEventListener("click", function () {
-      var est = parseInt(document.getElementById("ex3QueueEst").value, 10);
-      var trade = document.getElementById("ex3Tradeoff").value.trim();
-      if (isNaN(est) || est < 0 || est > 5000) {
-        showAi("ex3CapacityFb", "Arvioi ihmisjonon koko numeroina (0–5000).");
-        return;
-      }
-      if (est > 1000) {
-        showAi("ex3CapacityFb", "Tavoite on alle 1 000 — tarkista sääntösi tai perustele miksi jono on suurempi.");
-        return;
-      }
-      if (wordCount(trade) < 20 || !/(gdpr|200|yleinen|harvinainen|ihminen|tekoäly|riski|jono|\d)/i.test(trade)) {
-        showAi("ex3CapacityFb", "Kerro lyhyesti mitä riskiä hyväksyt ja mitä vältät — viittaa taulukkoon (esim. erittäin yleinen, GDPR, 200 €).");
-        return;
-      }
-      showAi("ex3CapacityFb", "");
-      document.getElementById("ex3CapacityFb").classList.remove("show");
-      ex3ShowPhase("ex3PhaseSpot");
-    });
-
-    if (!list.children.length) {
-      ex3ActiveScenarios().forEach(function (sc, i) {
-        var card = document.createElement("div");
-        card.className = "scenario-card";
-        card.innerHTML =
-          "<div class='sc-meta'>Tapaustesti " +
-          (i + 1) +
-          " · " +
-          sc.meta +
-          (sc.ambiguous ? " · <em>rajatapaus</em>" : "") +
-          "</div>" +
-          "<div class='sc-quote'>" +
-          sc.quote +
-          "</div>" +
-          "<div class='choice-row'>" +
-          "<label><input type='radio' name='" +
-          sc.id +
-          "' value='ai'> Tekoäly hoitaa</label>" +
-          "<label><input type='radio' name='" +
-          sc.id +
-          "' value='human'> Ihminen hoitaa</label>" +
-          "</div>" +
-          "<textarea class='ex-ta' id='" +
-          sc.id +
-          "-why' rows='2' placeholder='Perustelu viitaten omaan sääntöösi…'></textarea>";
-        list.appendChild(card);
-      });
-    }
 
     document.getElementById("ex3Submit").addEventListener("click", async function () {
-      var row = ex3Radio("ex3row");
-      var evidence = document.getElementById("ex3Evidence").value.trim();
-      var rules = document.getElementById("ex3Rules").value.trim();
-      var estEl = document.getElementById("ex3QueueEst");
-      var est = estEl ? estEl.value : "";
-      var tradeEl = document.getElementById("ex3Tradeoff");
-      var trade = tradeEl ? tradeEl.value.trim() : "";
-      var compare = document.getElementById("ex3Compare").value.trim();
-
-      if (!row || !ex3EvidenceQuality(evidence) || !ex3RulesQuality(rules)) {
-        showAi("ex3Ai", "Täytä pullonkaula ja säännöt ennen lähettämistä.");
+      if (!ex3CasesCorrect("ex3inbox-", EX3_INBOX_CASES, true) || !ex3MistakesCorrect() || !ex3PlaybookCorrect()) {
+        showAi("ex3Ai", "Palaa aiempiin vaiheisiin ja viimeistele työjono, valvontapäätökset sekä käsikirja.");
         return;
       }
-
-      var spots = "";
-      var spotOk = true;
-      ex3ActiveScenarios().forEach(function (sc) {
-        var picked = document.querySelector('input[name="' + sc.id + '"]:checked');
-        var whyEl = document.getElementById(sc.id + "-why");
-        var why = whyEl ? whyEl.value.trim() : "";
-        if (!picked || wordCount(why) < 12) spotOk = false;
-        if (sc.expect && picked && picked.value !== sc.expect) spotOk = false;
-        spots +=
-          sc.id +
-          ": " +
-          (picked ? picked.value : "ei valintaa") +
-          " — " +
-          why +
-          "\n";
-      });
-      if (!spotOk) {
-        showAi(
-          "ex3Ai",
-          HITL_BEGINNER
-            ? "Tee päätös ja perustelu molemmista spot-checkeistä. GDPR ja julkinen some → ihminen."
-            : "Tee päätös ja perustelu jokaisesta spot-checkistä. GDPR, 340 € ja some → ihminen.",
-        );
+      if (!ex3CasesCorrect("ex3final-", EX3_FINAL_CASES, false)) {
+        showAi("ex3Ai", "Tarkista loppuvuoron tapaukset. Rutiini kuuluu tekoälylle, poikkeus ihmisen hyväksyttäväksi ja julkinen riskitilanne ihmiselle.");
         return;
       }
 
       setLoading("ex3Ai");
       try {
         var payload =
-          "PULLONKAULA: " +
-          row +
-          "\nTODISTEET:\n" +
-          evidence +
-          "\n\nSÄÄNNÖT:\n" +
-          rules +
-          (est || trade
-            ? "\n\nJONO-ARVIO: " + est + "\nLASKENTA:\n" + trade
-            : "") +
-          "\n\nSPOT-CHECKIT:\n" +
-          spots +
-          (compare ? "\nVERTAILU AMMATTILAISIIN:\n" + compare : "");
+          "TYÖJONON PÄÄTÖKSET:\n" +
+          ex3DecisionSummary("ex3inbox-", EX3_INBOX_CASES) +
+          "\n\nVALVONTAPÄÄTÖKSET:\n" +
+          EX3_MISTAKE_CASES.map(function (sc) {
+            return sc.title + ": " + (ex3Radio("ex3mistake-" + sc.id) || "ei valintaa");
+          }).join("\n") +
+          "\n\nKÄSIKIRJA:\n" +
+          "Rutiini: tekoäly hoitaa\n" +
+          "Poikkeus: tekoäly valmistelee, ihminen päättää\n" +
+          "Arkaluonteinen: ihminen hoitaa\n" +
+          "Julkinen tai epäselvä: ihminen hoitaa\n" +
+          "\nLOPPUVUORO:\n" +
+          ex3DecisionSummary("ex3final-", EX3_FINAL_CASES);
         var fb = await callAI(
           GRADE_SYS +
-            " Juurisyy: 5€ raja eskaloi 62% pienistä hyvityksistä (~3100/5000). Anna ✅ ja 8–10 pistettä jos tunnistaa matalan rajan pullonkaulaksi JA ehdottaa rajan nostoa sekä pitää korkean riskin tapaukset (GDPR/uhat/iso raha) ihmisellä — ei vaadi täydellistä laskentaa. " +
-            "🔄 vain jos suunnitelma jättää pienet hyvitykset ihmiselle (ei pura pullonkaulaa) tai päästää korkean riskin tapaukset automaatille.",
+            " Tehtävässä EI ole laskentaa. Opiskelija toimii AI-vuoronjohtajana ja jakaa työn kolmeen reittiin: selvä rutiini → tekoäly hoitaa; poikkeus joka tarvitsee päätöksen → tekoäly valmistelee ja ihminen hyväksyy; arkaluonteinen, julkinen tai epäselvä tilanne → ihminen hoitaa. " +
+            "Anna ✅ ja 9–10 pistettä, kun työnjako noudattaa tätä mallia. Keskity siihen, että opiskelija osaa käyttää tekoälyä rutiineissa mutta säilyttää ihmisen vastuun harkintaa vaativissa tilanteissa.",
           payload,
           "ex3-escalation-plan",
         );
         renderFeedback("ex3Ai", fb);
         addRetryButton("ex3Ai", ex3ShowPhase, "ex3PhaseMission");
         document.dispatchEvent(new CustomEvent("hitl:state-changed"));
-        var reveal = document.getElementById("ex3ProReveal");
-        if (reveal) reveal.classList.add("show");
+        var success = document.getElementById("ex3Success");
+        if (success) success.hidden = false;
       } catch (e) {
         showAi("ex3Ai", "Virhe: " + e.message);
       }
@@ -1400,12 +1512,11 @@
       { id: "ex2PhaseReflect", label: "Reflektio" },
     ],
     ex3: [
-      { id: "ex3PhaseMission", label: "Tehtävä" },
-      { id: "ex3PhaseBottleneck", label: "Pullonkaula" },
-      { id: "ex3PhaseLearn", label: "Opi" },
-      { id: "ex3PhaseRules", label: "Säännöt" },
-      { id: "ex3PhaseCapacity", label: "Kapasiteetti" },
-      { id: "ex3PhaseSpot", label: "Spot-check" },
+      { id: "ex3PhaseMission", label: "Työnjako" },
+      { id: "ex3PhaseInbox", label: "Työjono" },
+      { id: "ex3PhaseMistakes", label: "Valvonta" },
+      { id: "ex3PhasePlaybook", label: "Käsikirja" },
+      { id: "ex3PhaseFinal", label: "Loppuvuoro" },
     ],
     ex4: [
       { id: "ex4PhaseMission", label: "Tehtävä" },
@@ -1424,6 +1535,7 @@
   };
 
   var navOrder = {};
+  var navMaxReached = {};
 
   function stepShowFns(prefix) {
     return {
@@ -1439,10 +1551,12 @@
     if (!nav) return;
     var order = navOrder[prefix] || [];
     var idx = order.indexOf(id);
+    if (idx >= 0) navMaxReached[prefix] = Math.max(navMaxReached[prefix] || 0, idx);
     nav.querySelectorAll("button").forEach(function (b) {
       var bi = order.indexOf(b.getAttribute("data-phase"));
       b.classList.toggle("on", bi >= 0 && bi === idx);
       b.classList.toggle("done", idx >= 0 && bi >= 0 && bi < idx);
+      if (prefix === "ex3") b.disabled = bi > (navMaxReached[prefix] || 0);
     });
   }
 
@@ -1469,6 +1583,7 @@
         b.setAttribute("data-phase", it.id);
         b.textContent = i + 1 + " · " + it.label;
         b.addEventListener("click", function () {
+          if (b.disabled) return;
           var fn = stepShowFns(prefix);
           if (fn) fn(it.id);
         });
@@ -1488,6 +1603,7 @@
   }
 
   function init() {
+    injectPersistentContexts();
     initEx1();
     initEx2();
     initEx3();
