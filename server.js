@@ -577,7 +577,6 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'moduuli8-ai-polku',
   'moduuli9-haastattelu',
   'moduuli-elava-cv',
-  'moduuli-perplexity-notebooklm',
   'moduuli-ai-simulation-lab',
   'moduuli-bottityypit',
   'moduuli-prompt-hiomo',
