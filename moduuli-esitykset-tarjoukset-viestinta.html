@@ -324,6 +324,7 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
     <h2 class="section-h2">Mistä <em>lähdet?</em></h2>
     <div class="divider"></div>
     <p class="lead">Valitse yksi polku. Vaihtoehto C on helpoin jos et tiedä miten aloittaa — ChatGPT haastattelee sinut valmiilla promptilla.</p>
+    <p style="font-size:.82rem;color:var(--ink4);margin:.2rem 0 1rem;">Edistymisesi tallentuu automaattisesti. <span id="visualsSavePill" style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink4);">—</span></p>
 
     <div class="path-pick">
       <button type="button" class="path-card selected" id="pathCardA" onclick="setModulePath('a')">
@@ -1041,24 +1042,63 @@ window.addEventListener('scroll',function(){
 },{passive:true});
 
 /* ── PER-USER WORK (server + scoped cache) ── */
+window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;
 var VISUALS_MODULE_ID = 'moduuli-esitykset-tarjoukset-viestinta';
 var moduleWorkApi = null;
+var applyingVisualsWork = false;
+var visualsSaveTimer = null;
+
+function visualsSetPill(text, ok) {
+  var pill = document.getElementById('visualsSavePill');
+  if (!pill) return;
+  pill.textContent = text;
+  pill.classList.toggle('ok', !!ok);
+}
+function visualsSavedOk() { visualsSetPill('tallennettu ✓', true); }
 
 function saveLocal(key, val) {
-  if (moduleWorkApi) moduleWorkApi.scheduleSave();
+  if (applyingVisualsWork) return;
+  if (moduleWorkApi) {
+    visualsSetPill('tallennetaan…', false);
+    moduleWorkApi.scheduleSave();
+    clearTimeout(visualsSaveTimer);
+    visualsSaveTimer = setTimeout(visualsSavedOk, 1000);
+  }
 }
 
 function loadLocal(key) {
   return '';
 }
 
+function migrateLegacyVisuals(data) {
+  data = data || {};
+  try {
+    var keys = [
+      'canvaName','canvaRole','canvaTagline','canvaFormat','gammaLink','modulePath',
+      'pdCompany','pdRole','pdCompanyKnowledge','pdName','pdAchievements','pdFit',
+      'pdProblem','pdValue','canvaReflection','gptTopicTopic','gptSlideCount','pitchPromptData'
+    ];
+    keys.forEach(function (k) {
+      if (data[k]) return;
+      var v = localStorage.getItem('mod_visuals_' + k);
+      if (v) data[k] = v;
+    });
+  } catch (e) {}
+  return data;
+}
+
 function collectVisualsWork() {
   var ids = [
     'canvaName', 'canvaRole', 'canvaTagline', 'canvaFormat', 'gammaLink', 'modulePath',
     'pdCompany', 'pdRole', 'pdCompanyKnowledge', 'pdName', 'pdAchievements', 'pdFit',
-    'pdProblem', 'pdValue', 'canvaReflection', 'gptTopicTopic', 'gptSlideCount'
+    'pdProblem', 'pdValue', 'canvaReflection', 'gptTopicTopic', 'gptSlideCount', 'reflectionText'
   ];
-  var o = { pitchPromptData: pitchPromptData || '' };
+  var o = {
+    ts: Date.now(),
+    pitchPromptData: pitchPromptData || '',
+    canvaDesignText: (document.getElementById('canvaDesignText') && document.getElementById('canvaDesignText').textContent) || '',
+    canvaFeedbackText: (document.getElementById('canvaFeedbackText') && document.getElementById('canvaFeedbackText').textContent) || ''
+  };
   ids.forEach(function (id) {
     var el = document.getElementById(id);
     if (el) o[id] = el.value;
@@ -1075,26 +1115,52 @@ function summarizeVisualsWork(d) {
   if (d.pdRole) parts.push('Ongelma: ' + d.pdRole);
   if (d.gammaLink) parts.push('Gamma: ' + d.gammaLink);
   if (d.canvaName) parts.push('Canva: ' + d.canvaName);
+  if (d.reflectionText) parts.push('Reflektio tallessa');
   return parts.join(' · ');
 }
 
 function applyVisualsWork(d) {
   if (!d) return;
-  Object.keys(d).forEach(function (key) {
-    if (key === 'pitchPromptData') {
-      pitchPromptData = d.pitchPromptData || '';
-      pitchPromptData = normalizeGammaPromptOutput(pitchPromptData);
-      var txt = document.getElementById('pitchPromptText');
-      if (txt && pitchPromptData) {
-        txt.value = pitchPromptData;
-        document.getElementById('pitchPromptResult').classList.add('show');
+  applyingVisualsWork = true;
+  try {
+    Object.keys(d).forEach(function (key) {
+      if (key === 'pitchPromptData') {
+        pitchPromptData = d.pitchPromptData || '';
+        pitchPromptData = normalizeGammaPromptOutput(pitchPromptData);
+        var txt = document.getElementById('pitchPromptText');
+        if (txt && pitchPromptData) {
+          txt.value = pitchPromptData;
+          var wrap = document.getElementById('pitchPromptResult');
+          if (wrap) wrap.classList.add('show');
+        }
+        return;
       }
-      return;
-    }
-    var el = document.getElementById(key);
-    if (el && d[key] != null) el.value = d[key];
-  });
-  if (d.modulePath) setModulePath(d.modulePath);
+      if (key === 'canvaDesignText') {
+        var cdt = document.getElementById('canvaDesignText');
+        if (cdt && d[key]) {
+          cdt.textContent = d[key];
+          var box = cdt.closest('.ai-result');
+          if (box) box.classList.add('show');
+        }
+        return;
+      }
+      if (key === 'canvaFeedbackText') {
+        var cft = document.getElementById('canvaFeedbackText');
+        if (cft && d[key]) {
+          cft.textContent = d[key];
+          var fbox = cft.closest('.ai-result');
+          if (fbox) fbox.classList.add('show');
+        }
+        return;
+      }
+      if (key === 'ts') return;
+      var el = document.getElementById(key);
+      if (el && d[key] != null) el.value = d[key];
+    });
+    if (d.modulePath) setModulePath(d.modulePath);
+  } finally {
+    applyingVisualsWork = false;
+  }
 }
 
 var modulePath = 'a';
@@ -1358,22 +1424,14 @@ function normalizeGammaPromptOutput(raw) {
 }
 
 async function aiCall(system,user,maxTokens){
-  if(window.aiClaude){
+  // Claude-first (aiClaude falls back to OpenAI if Anthropic is down)
+  if(typeof window.aiClaude==='function'){
     return normalizeGammaPromptOutput(await window.aiClaude(system,user,maxTokens||800));
   }
-  var pathname=window.location.pathname||'';
-  var base=pathname.indexOf('/module/')>0?pathname.substring(0,pathname.indexOf('/module/')):'';
-  var url=(window.location.origin||'')+base+'/api/ai/claude';
-  var resp=await fetch(url,{
-    method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',
-    body:JSON.stringify({max_tokens:maxTokens||800,system:system,messages:[{role:'user',content:user}]})
-  });
-  var data={};
-  try{data=await resp.json();}catch(e){}
-  if(!resp.ok)throw new Error(data.error||data.message||'Claude API -virhe');
-  var raw=data.text||data.reply||'';
-  if(!raw)throw new Error('Tekoäly ei palauttanut tekstiä. Yritä uudelleen.');
-  return normalizeGammaPromptOutput(raw);
+  if(typeof window.aiChat==='function'){
+    return normalizeGammaPromptOutput(await window.aiChat(system,user,maxTokens||800));
+  }
+  throw new Error('Tekoälypalvelu ei ole vielä ladattu. Päivitä sivu.');
 }
 
 /* ── PITCH DECK LIVE PREVIEW ── */
@@ -1614,6 +1672,7 @@ async function generateBannerDesign(){
       document.getElementById('bannerPreview').style.background=hexes[0];
     }
     updateMockup();
+    if(moduleWorkApi) moduleWorkApi.saveNow();
   }catch(e){txt.textContent=(e&&e.message)||'Yhteysvirhe — tarkista ANTHROPIC_API_KEY.';}
   btn.disabled=false;btn.textContent='🎨 Suunnittele mainos AI:lla';
 }
@@ -1634,6 +1693,7 @@ async function getBannerFeedback(){
       'Aihe: '+name+' ('+role+')\nKuvaus: '+refl,
       600);
     txt.textContent=feedback;
+    if(moduleWorkApi) moduleWorkApi.saveNow();
   }catch(e){txt.textContent=(e&&e.message)||'Yhteysvirhe — tarkista ANTHROPIC_API_KEY.';}
   btn.disabled=false;btn.textContent='🔍 Pyydä AI:lta palautetta kuvastasi';
 }
@@ -1643,6 +1703,7 @@ async function saveReflection(){
   try{
     if(window.saveReflectionToAPI)await window.saveReflectionToAPI('m_esitykset_reflection');
     else{try{localStorage.setItem('m_esitykset_reflection',document.getElementById('reflectionText').value);}catch(e){}}
+    if(moduleWorkApi) moduleWorkApi.saveNow();
     var c=document.getElementById('reflConfirm');
     if(c){c.style.display='block';setTimeout(function(){c.style.display='none';},3000);}
   }catch(e){alert('Virhe tallennuksessa.');}
@@ -1650,22 +1711,45 @@ async function saveReflection(){
 
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded',async function(){
+  var legacySeed=migrateLegacyVisuals({ts:0});
   if(window.moduleWork){
     moduleWorkApi=await window.moduleWork.initModuleWork(VISUALS_MODULE_ID,{
-      legacyPrefix:'mod_visuals_',
       collect:collectVisualsWork,
-      apply:applyVisualsWork,
+      apply:function(data){
+        var chosen=data;
+        if((!data||!Object.keys(data).length)&&legacySeed) chosen=legacySeed;
+        else if(legacySeed&&(!data||!(data.ts||0))&&Object.keys(legacySeed).length>1){
+          chosen=Object.assign({},legacySeed,data||{});
+        }
+        applyVisualsWork(chosen);
+      },
       summarize:summarizeVisualsWork,
+      debounceMs:700,
       fieldIds:[
         'canvaName','canvaRole','canvaTagline','canvaFormat','gammaLink',
         'pdCompany','pdRole','pdCompanyKnowledge','pdName','pdAchievements',
-        'pdFit','pdProblem','pdValue','canvaReflection','gptTopicTopic','gptSlideCount'
+        'pdFit','pdProblem','pdValue','canvaReflection','gptTopicTopic','gptSlideCount','reflectionText'
       ]
     });
+    try{ if(window.moduleWork.clearLegacyPrefix) window.moduleWork.clearLegacyPrefix('mod_visuals_'); }catch(e){}
+    var orig=moduleWorkApi.scheduleSave;
+    moduleWorkApi.scheduleSave=function(){
+      if(applyingVisualsWork) return;
+      visualsSetPill('tallennetaan…', false);
+      orig();
+      clearTimeout(visualsSaveTimer);
+      visualsSaveTimer=setTimeout(visualsSavedOk,1000);
+    };
     modulePath=(collectVisualsWork().modulePath)||'a';
     setModulePath(modulePath);
+    if(legacySeed&&Object.keys(legacySeed).length>1&&(!moduleWorkApi.data||!Object.keys(moduleWorkApi.data).length)){
+      try{ moduleWorkApi.saveNow(); }catch(e){}
+    } else {
+      visualsSavedOk();
+    }
   } else {
-    setModulePath('a');
+    if(legacySeed) applyVisualsWork(legacySeed);
+    setModulePath(modulePath||'a');
   }
   if (modulePath !== 'c') applyPathCopy();
   else updateGptPromptTexts();
@@ -1679,6 +1763,10 @@ document.addEventListener('DOMContentLoaded',async function(){
     var el=document.getElementById(id);
     if(el)el.addEventListener('input',updatePdPreview);
   });
+  var refl=document.getElementById('reflectionText');
+  if(refl){
+    refl.addEventListener('input',function(){ saveLocal('reflectionText', this.value); });
+  }
 
   // Gamma link success indicator
   var gl=document.getElementById('gammaLink');
@@ -1693,6 +1781,10 @@ document.addEventListener('DOMContentLoaded',async function(){
       if(s)s.style.display='block';
     }
   }
+  window.addEventListener('pagehide',function(){ try{ if(moduleWorkApi&&moduleWorkApi.saveNow) moduleWorkApi.saveNow(); }catch(e){} });
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='hidden'){ try{ if(moduleWorkApi&&moduleWorkApi.saveNow) moduleWorkApi.saveNow(); }catch(e){} }
+  });
 });
 </script>
 

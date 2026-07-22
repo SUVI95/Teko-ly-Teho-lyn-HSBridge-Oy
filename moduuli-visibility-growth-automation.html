@@ -256,6 +256,7 @@ pre.prompt-pre{background:var(--ink);color:rgba(255,255,255,.85);border-radius:v
     </a>
     <span class="nav-badge">Sovellus</span>
     <span class="nav-title">Rakenna oma sovellus</span>
+    <span id="appSavePill" style="margin-left:.6rem;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);">—</span>
   </div>
   <div class="nav-steps" id="navSteps"></div>
 </nav>
@@ -733,6 +734,7 @@ pre.prompt-pre{background:var(--ink);color:rgba(255,255,255,.85);border-radius:v
   </div>
 </section>
 
+<script>window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;</script>
 <script src="/js/module-work.js"></script>
 <script src="/js/ai-helper.js"></script>
 <script>
@@ -778,8 +780,25 @@ async function postAIJson(url, payload, timeoutMs) {
   return data;
 }
 
+function getClaudeApiUrl() {
+  var pathname = window.location.pathname || '';
+  var base = pathname.indexOf('/module/') > 0 ? pathname.substring(0, pathname.indexOf('/module/')) : '';
+  return (window.location.origin || '') + base + '/api/ai/claude';
+}
+
 async function duunijobsAIApi(system, messages, maxTokens) {
   var data;
+  // Claude first (/api/ai/claude === Anthropic; same handler as /duunijobs)
+  try {
+    data = await postAIJson(getClaudeApiUrl(), {
+      system: system,
+      messages: messages,
+      max_tokens: maxTokens || 1000
+    }, 35000);
+    return data.text || data.reply || '';
+  } catch (claudeErr) {
+    console.warn('Claude endpoint failed, trying DuuniJobs alias:', claudeErr && claudeErr.message);
+  }
   try {
     data = await postAIJson(getDuunijobsAIApiUrl(), {
       system: system,
@@ -1476,9 +1495,25 @@ function applyAppBuilderWork(d) {
   }
 }
 
+function appSetSavePill(text, ok) {
+  var pill = document.getElementById('appSavePill');
+  if (!pill) return;
+  pill.textContent = text;
+  pill.style.color = ok ? '#86efac' : 'rgba(255,255,255,.45)';
+}
 function appWorkSaveNow() {
-  if (appModuleWorkApi) return appModuleWorkApi.saveNow();
-  return Promise.resolve();
+  if (!appModuleWorkApi) return Promise.resolve();
+  appSetSavePill('tallennetaan…', false);
+  var p = appModuleWorkApi.saveNow();
+  Promise.resolve(p).finally(function () { appSetSavePill('tallennettu ✓', true); });
+  return p;
+}
+function appWorkScheduleSave() {
+  if (!appModuleWorkApi) return;
+  appSetSavePill('tallennetaan…', false);
+  appModuleWorkApi.scheduleSave();
+  clearTimeout(window._appSavePillT);
+  window._appSavePillT = setTimeout(function () { appSetSavePill('tallennettu ✓', true); }, 1100);
 }
 
 function copyPortfolioText(){
@@ -1514,18 +1549,32 @@ document.addEventListener('DOMContentLoaded', async function () {
     collect: collectAppBuilderWork,
     apply: applyAppBuilderWork,
     summarize: summarizeAppBuilderWork,
-    debounceMs: 1200,
+    debounceMs: 800,
     fieldIds: [
       'problemDesc', 'problemOneliner', 'appName', 'customMarketBrief',
       'refinedPrompt', 'appUrl', 'dq1', 'dq2', 'dq3', 'dq4'
     ]
+  });
+  var orig = appModuleWorkApi.scheduleSave;
+  appModuleWorkApi.scheduleSave = function () {
+    appSetSavePill('tallennetaan…', false);
+    orig();
+    clearTimeout(window._appSavePillT);
+    window._appSavePillT = setTimeout(function () { appSetSavePill('tallennettu ✓', true); }, 1100);
+  };
+  appSetSavePill('tallennettu ✓', true);
+  window.addEventListener('pagehide', function () { try { appWorkSaveNow(); } catch (e) {} });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') { try { appWorkSaveNow(); } catch (e) {} }
   });
 });
 </script>
 <script>
 fetch('/ai-chat-widget.html').then(function(r){return r.text();}).then(function(h){
   document.body.insertAdjacentHTML('beforeend',h);
+  // DuuniJobs AI = Claude (Anthropic) on the server
   window.MODULE_USE_DUUNIJOBS_AI=true;
+  window.MODULE_USE_CLAUDE=true;
 }).catch(function(){});
 </script>
 </body>

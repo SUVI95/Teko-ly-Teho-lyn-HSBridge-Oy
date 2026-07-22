@@ -120,8 +120,17 @@
 
   /* CHECKLIST */
   .check{list-style:none;margin:14px 0;padding:0;display:grid;gap:9px;}
-  .check li{background:#fcfbf8;border:1px solid var(--line);border-radius:10px;padding:11px 14px 11px 42px;position:relative;font-size:14.5px;}
-  .check li::before{content:"";position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;border:2px solid var(--teal);border-radius:4px;}
+  .check li{background:#fcfbf8;border:1px solid var(--line);border-radius:10px;padding:11px 14px 11px 42px;position:relative;font-size:14.5px;cursor:pointer;user-select:none;}
+  .check li::before{content:"";position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;border:2px solid var(--teal);border-radius:4px;background:#fff;}
+  .check li.done{border-color:#9fd0c6;background:#f3faf8;}
+  .check li.done::before{background:var(--teal);box-shadow:inset 0 0 0 3px #fff;}
+  .choice.selected{border-color:var(--teal);box-shadow:0 0 0 2px rgba(58,122,134,.18);}
+  .field{margin:12px 0;}
+  .field label{display:block;font-size:13px;font-weight:700;color:var(--teal-deep);margin-bottom:6px;}
+  .field textarea,.field input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font:inherit;font-size:15px;background:#fff;color:var(--ink);box-sizing:border-box;}
+  .field textarea{min-height:78px;resize:vertical;line-height:1.5;}
+  .save-pill{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94a2ab;margin-left:8px;}
+  .save-pill.ok{color:var(--teal);}
 
   /* PUBLISH (peak) */
   .publish-card{background:linear-gradient(150deg,#fbf0df 0%,#f6ede1 100%);border:1px solid #f0dcb8;border-radius:16px;padding:clamp(20px,4vw,28px);margin:14px 0;}
@@ -229,6 +238,7 @@
   <div class="inner">
     <a class="back" href="/">← Takaisin hallintapaneeliin</a>
     <span class="crumb">Moduuli · Lovable</span>
+    <span class="save-pill" id="lovableSavePill">—</span>
   </div>
 </nav>
 
@@ -284,13 +294,23 @@
     <div class="step-body">
       <p>Hyvä sivu syntyy ajatuksesta, ei sattumasta. Ennen kuin avaat työkalun, vastaa neljään kysymykseen. Kirjoita vastaukset ylös – tarvitset niitä pian, kun ohjaat Lovablea.</p>
       <div class="sheet">
-        <div class="sheet-h">Suunnittelupohja – täytä omin sanoin</div>
-        <ol>
-          <li><b>Mistä sivu kertoo?</b> <span class="hint">Yksi lause. Esim. ”paikallinen lukupiiri, joka etsii uusia jäseniä”.</span></li>
-          <li><b>Kenelle se on?</b> <span class="hint">Kuka sen näkee ja mitä hän etsii? Mitä selkeämpi kohderyhmä, sitä parempi sivu.</span></li>
-          <li><b>Mitä haluat, että kävijä tekee tai tuntee?</b> <span class="hint">Esim. ottaa yhteyttä, ilmoittautuu, ihastuu aiheeseen.</span></li>
-          <li><b>Mitä sisältöä sinulla jo on?</b> <span class="hint">Tekstiä, kuvia, yhteystiedot, esimerkkejä. Listaa, mitä löytyy – loput keksitään matkalla.</span></li>
-        </ol>
+        <div class="sheet-h">Suunnittelupohja – täytä omin sanoin <span class="save-pill" id="lovableSavePill2">—</span></div>
+        <div class="field">
+          <label for="lovPlanAbout">1. Mistä sivu kertoo?</label>
+          <textarea id="lovPlanAbout" placeholder="Yksi lause. Esim. paikallinen lukupiiri, joka etsii uusia jäseniä."></textarea>
+        </div>
+        <div class="field">
+          <label for="lovPlanAudience">2. Kenelle se on?</label>
+          <textarea id="lovPlanAudience" placeholder="Kuka sen näkee ja mitä hän etsii?"></textarea>
+        </div>
+        <div class="field">
+          <label for="lovPlanAction">3. Mitä haluat, että kävijä tekee tai tuntee?</label>
+          <textarea id="lovPlanAction" placeholder="Esim. ottaa yhteyttä, ilmoittautuu, ihastuu aiheeseen."></textarea>
+        </div>
+        <div class="field">
+          <label for="lovPlanAssets">4. Mitä sisältöä sinulla jo on?</label>
+          <textarea id="lovPlanAssets" placeholder="Tekstiä, kuvia, yhteystiedot, esimerkkejä…"></textarea>
+        </div>
       </div>
       <div class="note"><b>Miksi tämä kannattaa:</b> kun tiedät, kenelle ja miksi, osaat pyytää työkalulta oikeaa asiaa etkä tyydy siihen, mitä se ensin tarjoaa. Sama ajattelu toimii kaikessa tekoälyn käytössä.</div>
     </div>
@@ -304,33 +324,37 @@
     </div>
     <div class="step-body">
       <p class="choose-lede">Valitse aihe, joka on sinulle aidosti merkityksellinen. Päivä on pitkä – on mukavampaa rakentaa jotain, mistä välität. Kaikki vaihtoehdot johtavat samaan: omaan julkaistuun sivuun.</p>
-      <div class="choices">
-        <div class="choice">
+      <div class="choices" id="lovTopicChoices">
+        <div class="choice" data-topic="business" role="button" tabindex="0">
           <span class="ico">🏪</span>
           <h3>Idea tai pieni yritys</h3>
           <p>Liikeidea, jota olet miettinyt, tai palvelu jonka voisit tarjota.</p>
           <p class="egs"><b>Esim.</b> kahvila, korjausapu, leivonnaiset, valmennus, pieni verkkokauppa.</p>
         </div>
-        <div class="choice">
+        <div class="choice" data-topic="hobby" role="button" tabindex="0">
           <span class="ico">🎨</span>
           <h3>Harrastus tai yhteisö</h3>
           <p>Jokin mistä pidät tai jonka parissa toimit. Tee sille koti verkkoon.</p>
           <p class="egs"><b>Esim.</b> lukupiiri, urheiluseura, käsityöt, bändi, puutarha, yhdistys.</p>
         </div>
-        <div class="choice">
+        <div class="choice" data-topic="event" role="button" tabindex="0">
           <span class="ico">📣</span>
           <h3>Asia tai tapahtuma</h3>
           <p>Jokin, mistä haluat kertoa muille tai jolle haluat näkyvyyttä.</p>
           <p class="egs"><b>Esim.</b> tapahtuma, kerho, hyväntekeväisyys, oma projekti.</p>
         </div>
-        <div class="choice own">
+        <div class="choice own" data-topic="own" role="button" tabindex="0">
           <span class="ico">💡</span>
           <h3>Ihan oma valintasi</h3>
           <p>Mikä tahansa, mikä kiinnostaa juuri sinua. Tämä on sinun päiväsi.</p>
           <p class="egs"><b>Täysin vapaa</b> – sinä päätät aiheen.</p>
         </div>
       </div>
-      <div class="tip"><b>💡 Vinkki:</b> Anna aiheellesi <b>nimi</b> ja <b>yksi lause</b> siitä, mitä se tarjoaa. Esim. ”Lukupiiri Sivu &amp; Sana – yhdessä lukemisen ilo.” Kirjoita se suunnittelupohjaasi.</div>
+      <div class="field">
+        <label for="lovTopicName">Aiheesi nimi + yksi lause</label>
+        <input id="lovTopicName" type="text" placeholder='Esim. ”Lukupiiri Sivu &amp; Sana – yhdessä lukemisen ilo.”'>
+      </div>
+      <div class="tip"><b>💡 Vinkki:</b> Anna aiheellesi <b>nimi</b> ja <b>yksi lause</b> siitä, mitä se tarjoaa. Kirjoita se yllä olevaan kenttään — se tallentuu automaattisesti.</div>
     </div>
   </section>
 
@@ -393,12 +417,12 @@
     </div>
     <div class="step-body">
       <p>Palaa vaiheessa 1 tekemääsi suunnitelmaan. Katso sivuasi kävijän silmin ja kysy: <b>tekeekö se sen, mitä halusit?</b> Käy tämä lista läpi ja korjaa sen, mikä ontuu:</p>
-      <ul class="check">
-        <li>Ymmärtääkö kävijä viidessä sekunnissa, mistä sivu kertoo?</li>
-        <li>Näkeekö hän heti, mitä häneltä toivotaan (yhteydenotto, ilmoittautuminen…)?</li>
-        <li>Toimiiko valikko, ja pääseekö jokaiselle sivulle?</li>
-        <li>Ovatko tekstit omiasi – ei täytettä?</li>
-        <li>Näyttääkö sivu hyvältä myös puhelimella?</li>
+      <ul class="check" id="lovCheckList">
+        <li data-check="0">Ymmärtääkö kävijä viidessä sekunnissa, mistä sivu kertoo?</li>
+        <li data-check="1">Näkeekö hän heti, mitä häneltä toivotaan (yhteydenotto, ilmoittautuminen…)?</li>
+        <li data-check="2">Toimiiko valikko, ja pääseekö jokaiselle sivulle?</li>
+        <li data-check="3">Ovatko tekstit omiasi – ei täytettä?</li>
+        <li data-check="4">Näyttääkö sivu hyvältä myös puhelimella?</li>
       </ul>
       <p>Korjaa pyytämällä. Esimerkiksi: ”tee otsikosta selkeämpi”, ”siirrä yhteystiedot ylemmäs”, ”tarkista, että sivu toimii puhelimella”. Sinä päätät, milloin sivu on riittävän hyvä – täydellistä ei tarvita.</p>
       <div class="note"><b>Tämä on tärkein taito:</b> arvioida lopputulosta ja ohjata sitä paremmaksi. Sama pätee mihin tahansa tekoälyyn – kone ehdottaa, sinä päätät ja korjaat.</div>
@@ -422,6 +446,10 @@
           <li><b>Kopioi linkki talteen.</b> Tämän sinä teit tänään.</li>
         </ol>
       </div>
+      <div class="field">
+        <label for="lovPublishUrl">Julkaistu linkkisi</label>
+        <input id="lovPublishUrl" type="url" placeholder="https://….lovable.app">
+      </div>
       <div class="tip"><b>💡 Testaa:</b> avaa linkki myös puhelimellasi. Kun se toimii pienelläkin näytöllä, sivu on aidosti julkaistu ja valmis jaettavaksi.</div>
     </div>
   </section>
@@ -436,11 +464,18 @@
       <p>Tänään opit taidon, et vain tehnyt yhtä sivua. Ota hetki ja mieti, mihin voisit hyödyntää sitä elämässäsi tai työssäsi. Vastaa itsellesi – ja jaa halutessasi muille.</p>
       <div class="reflect-card">
         <h4>Pohdi näitä</h4>
-        <ul class="reflect-list">
-          <li><span class="q">1</span><span>Mitä rakensit tänään ja mikä siinä yllätti sinut?</span></li>
-          <li><span class="q">2</span><span>Mainitse <b>kolme tilannetta</b>, joissa voisit käyttää tätä taitoa.</span></li>
-          <li><span class="q">3</span><span>Mikä olisi seuraava sivu, jonka haluaisit tehdä?</span></li>
-        </ul>
+        <div class="field">
+          <label for="lovReflect1">1. Mitä rakensit tänään ja mikä siinä yllätti sinut?</label>
+          <textarea id="lovReflect1" placeholder="Kirjoita omin sanoin…"></textarea>
+        </div>
+        <div class="field">
+          <label for="lovReflect2">2. Mainitse kolme tilannetta, joissa voisit käyttää tätä taitoa.</label>
+          <textarea id="lovReflect2" placeholder="1) … 2) … 3) …"></textarea>
+        </div>
+        <div class="field">
+          <label for="lovReflect3">3. Mikä olisi seuraava sivu, jonka haluaisit tehdä?</label>
+          <textarea id="lovReflect3" placeholder="Kirjoita omin sanoin…"></textarea>
+        </div>
         <div class="ideas">
           <span>🔎 Työnhaku: portfolio tai näytesivu</span>
           <span>🤝 Harrastus tai yhdistys</span>
@@ -481,19 +516,129 @@
 
 <button class="totop" id="totop" aria-label="Takaisin sivun alkuun" title="Takaisin alkuun">↑</button>
 
+<script>window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;</script>
+<script src="/js/module-work.js"></script>
 <script>
-  (function(){
-    var btn = document.getElementById('totop');
-    function onScroll(){
-      if (window.scrollY > 600){ btn.classList.add('show'); }
-      else { btn.classList.remove('show'); }
-    }
-    window.addEventListener('scroll', onScroll, {passive:true});
-    btn.addEventListener('click', function(){
-      window.scrollTo({top:0, behavior:'smooth'});
+(function(){
+  var btn = document.getElementById('totop');
+  function onScroll(){
+    if (window.scrollY > 600){ btn.classList.add('show'); }
+    else { btn.classList.remove('show'); }
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  btn.addEventListener('click', function(){
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+  onScroll();
+})();
+
+window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;
+var LOVABLE_MODULE_ID = 'moduuli-lovable';
+var lovApi = null;
+var lovTopic = '';
+var lovApplying = false;
+var lovSaveT = null;
+var LOV_FIELDS = ['lovPlanAbout','lovPlanAudience','lovPlanAction','lovPlanAssets','lovTopicName','lovPublishUrl','lovReflect1','lovReflect2','lovReflect3'];
+
+function lovSetPill(text, ok){
+  ['lovableSavePill','lovableSavePill2'].forEach(function(id){
+    var p = document.getElementById(id);
+    if(!p) return;
+    p.textContent = text;
+    p.classList.toggle('ok', !!ok);
+  });
+}
+function lovScheduleSave(){
+  if(lovApplying) return;
+  lovSetPill('tallennetaan…', false);
+  if(lovApi) lovApi.scheduleSave();
+  clearTimeout(lovSaveT);
+  lovSaveT = setTimeout(function(){ lovSetPill('tallennettu ✓', true); }, 1000);
+}
+function collectLovableWork(){
+  var o = { ts: Date.now(), topic: lovTopic || '', checks: [] };
+  LOV_FIELDS.forEach(function(id){
+    var el = document.getElementById(id);
+    o[id] = el ? el.value : '';
+  });
+  document.querySelectorAll('#lovCheckList li').forEach(function(li){
+    o.checks.push(li.classList.contains('done'));
+  });
+  return o;
+}
+function summarizeLovableWork(d){
+  if(!d) return '';
+  var parts = [];
+  if(d.lovTopicName) parts.push(d.lovTopicName);
+  if(d.lovPublishUrl) parts.push('Julkaistu');
+  var done = Array.isArray(d.checks) ? d.checks.filter(Boolean).length : 0;
+  if(done) parts.push('Checklist '+done+'/5');
+  return parts.join(' · ');
+}
+function applyLovableWork(d){
+  if(!d) return;
+  lovApplying = true;
+  try{
+    lovTopic = d.topic || '';
+    document.querySelectorAll('#lovTopicChoices .choice').forEach(function(c){
+      c.classList.toggle('selected', !!lovTopic && c.getAttribute('data-topic') === lovTopic);
     });
-    onScroll();
-  })();
+    LOV_FIELDS.forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && d[id] != null) el.value = d[id];
+    });
+    if(Array.isArray(d.checks)){
+      document.querySelectorAll('#lovCheckList li').forEach(function(li, i){
+        li.classList.toggle('done', !!d.checks[i]);
+      });
+    }
+  } finally {
+    lovApplying = false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async function(){
+  document.querySelectorAll('#lovTopicChoices .choice').forEach(function(card){
+    card.addEventListener('click', function(){
+      lovTopic = card.getAttribute('data-topic') || '';
+      document.querySelectorAll('#lovTopicChoices .choice').forEach(function(c){ c.classList.remove('selected'); });
+      card.classList.add('selected');
+      lovScheduleSave();
+    });
+    card.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); card.click(); }
+    });
+  });
+  document.querySelectorAll('#lovCheckList li').forEach(function(li){
+    li.addEventListener('click', function(){
+      li.classList.toggle('done');
+      lovScheduleSave();
+    });
+  });
+  LOV_FIELDS.forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('input', lovScheduleSave);
+    el.addEventListener('change', lovScheduleSave);
+  });
+
+  if(window.moduleWork){
+    lovApi = await window.moduleWork.initModuleWork(LOVABLE_MODULE_ID, {
+      collect: collectLovableWork,
+      apply: applyLovableWork,
+      summarize: summarizeLovableWork,
+      debounceMs: 700,
+      fieldIds: LOV_FIELDS.slice()
+    });
+    lovSetPill('tallennettu ✓', true);
+  } else {
+    lovSetPill('paikallinen tallennus', false);
+  }
+  window.addEventListener('pagehide', function(){ try{ if(lovApi&&lovApi.saveNow) lovApi.saveNow(); }catch(e){} });
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='hidden'){ try{ if(lovApi&&lovApi.saveNow) lovApi.saveNow(); }catch(e){} }
+  });
+});
 </script>
 </body>
 </html>

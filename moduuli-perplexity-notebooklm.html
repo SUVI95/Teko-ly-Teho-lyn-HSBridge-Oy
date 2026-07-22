@@ -1844,6 +1844,7 @@
 <section class="section" id="topic">
   <div class="section-inner">
     <span class="section-label">Valitse aihe</span>
+    <p style="font-size:.82rem;color:var(--muted);margin:.35rem 0 0;">Edistymisesi tallentuu automaattisesti. <span id="perplexitySavePill" style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;">—</span></p>
     <h2 class="section-h2">Valitse aihe — <em>se jota käytät työnhaussa</em></h2>
     <div class="section-divider"></div>
     <p class="lead">Nämä eivät ole harjoitusaiheita. Ne ovat oikeita tilanteita joissa Perplexity ja NotebookLM auttavat sinua erottumaan muista hakijoista.</p>
@@ -2241,6 +2242,7 @@
   </div>
 </section>
 
+<script>window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;</script>
 <script src="/js/module-work.js"></script>
 <script src="/js/ai-helper.js"></script>
 <script>
@@ -2249,19 +2251,52 @@
   const PERPLEXITY_FALLBACK_KEY = 'moduuli-perplexity-notebooklm-work';
   let perplexityModuleWorkApi = null;
   let applyingPerplexityWork = false;
+  let perplexitySaveTimer = null;
+
+  function perplexitySetPill(text, ok) {
+    ['perplexitySavePill', 'perplexitySavePill2'].forEach(function (id) {
+      var pill = document.getElementById(id);
+      if (!pill) return;
+      pill.textContent = text;
+      pill.style.color = ok ? 'var(--green,#059669)' : 'var(--muted,#6b7280)';
+    });
+  }
+
+  function collectGeneratedQuestions() {
+    return Array.from(document.querySelectorAll('#genQList .gen-q-edit')).map(function (ta) {
+      var modeEl = ta.parentElement && ta.parentElement.querySelector('div');
+      return {
+        mode: modeEl ? modeEl.textContent.replace(/-tila$/i, '').trim() : '',
+        text: ta.value || ''
+      };
+    }).filter(function (q) { return q.text.trim(); });
+  }
+
+  function restoreGeneratedQuestions(list) {
+    var wrap = document.getElementById('genQList');
+    var result = document.getElementById('genQResult');
+    if (!wrap || !Array.isArray(list) || !list.length) return;
+    wrap.innerHTML = '';
+    list.forEach(function (q) {
+      wrap.appendChild(renderQuestionCard(q.mode || 'WEB', q.text || ''));
+    });
+    if (result) result.style.display = 'block';
+  }
 
   function collectPerplexityWork() {
     const selectedCard = document.querySelector('.topic-card.selected');
     const ownInput = document.getElementById('topic-own-input');
     const companyInput = document.getElementById('topic-company-input');
     return {
+      ts: Date.now(),
       selectedTopic: selectedTopic || '',
       selectedTopicCard: selectedCard ? selectedCard.dataset.topic : '',
       ownTopicInput: ownInput ? ownInput.value : '',
       companyTopicInput: companyInput ? companyInput.value : '',
       checkedBoxes: Array.from(document.querySelectorAll('.check-box')).map(function (b) {
         return b.classList.contains('checked');
-      })
+      }),
+      generatedQuestions: collectGeneratedQuestions()
     };
   }
 
@@ -2272,6 +2307,7 @@
     var parts = [];
     if (d.selectedTopic) parts.push('Aihe: ' + d.selectedTopic);
     if (total > 0) parts.push('Checklist: ' + done + '/' + total);
+    if (d.generatedQuestions && d.generatedQuestions.length) parts.push('Kysymykset: ' + d.generatedQuestions.length);
     return parts.join(' · ');
   }
 
@@ -2305,6 +2341,7 @@
       selectedTopic = d.selectedTopic || '';
       if (selectedTopic) showTopicBanner(selectedTopic);
       else hideTopicNextSteps();
+      restoreGeneratedQuestions(d.generatedQuestions);
     } finally {
       applyingPerplexityWork = false;
       updateProgress();
@@ -2319,11 +2356,15 @@
 
   function schedulePerplexitySave() {
     if (applyingPerplexityWork) return;
+    perplexitySetPill('tallennetaan…', false);
     if (perplexityModuleWorkApi) {
       perplexityModuleWorkApi.scheduleSave();
+      clearTimeout(perplexitySaveTimer);
+      perplexitySaveTimer = setTimeout(function () { perplexitySetPill('tallennettu ✓', true); }, 1000);
       return;
     }
     savePerplexityFallback();
+    perplexitySetPill('tallennettu ✓', true);
   }
 
   async function initPerplexityModuleWork() {
@@ -2332,7 +2373,17 @@
         collect: collectPerplexityWork,
         apply: applyPerplexityWork,
         summarize: summarizePerplexityWork,
+        debounceMs: 700,
         fieldIds: ['topic-own-input', 'topic-company-input']
+      });
+      perplexitySetPill('tallennettu ✓', true);
+      window.addEventListener('pagehide', function () {
+        try { if (perplexityModuleWorkApi && perplexityModuleWorkApi.saveNow) perplexityModuleWorkApi.saveNow(); } catch (e) {}
+      });
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') {
+          try { if (perplexityModuleWorkApi && perplexityModuleWorkApi.saveNow) perplexityModuleWorkApi.saveNow(); } catch (e) {}
+        }
       });
       return;
     }
@@ -2341,6 +2392,7 @@
       if (!raw) return;
       const parsed = JSON.parse(raw);
       applyPerplexityWork(parsed);
+      perplexitySetPill('tallennettu ✓', true);
     } catch (e) {}
   }
 
@@ -2417,6 +2469,7 @@
       '<button type="button" class="gen-q-copy" style="padding:6px 14px;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.2);color:var(--accent);font-family:\'DM Sans\',sans-serif;">📋 Kopioi Perplexityyn</button>' +
       '</div>';
     div.querySelector('.gen-q-edit').value = questionText;
+    div.querySelector('.gen-q-edit').addEventListener('input', schedulePerplexitySave);
     div.querySelector('.gen-q-copy').addEventListener('click', function () {
       var ta = div.querySelector('.gen-q-edit');
       copyText(this, ta ? ta.value.trim() : questionText);
