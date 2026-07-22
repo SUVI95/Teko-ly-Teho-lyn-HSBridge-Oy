@@ -3,6 +3,7 @@
   "use strict";
 
   var LOCAL_KEY = "bottityypit-state-v1";
+  var WORK_MODULE_ID = "moduuli-bottityypit__work";
   var saveTimer = null;
   var restored = false;
 
@@ -68,6 +69,34 @@
     });
   }
 
+  function saveToReflections(json, opts) {
+    opts = opts || {};
+    return fetch("/api/reflections/save", {
+      method: "POST",
+      credentials: "include",
+      keepalive: !!opts.keepalive,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ moduleId: WORK_MODULE_ID, reflectionText: json }),
+    }).catch(function () {});
+  }
+
+  function loadFromReflections() {
+    return fetch("/api/reflections/module/" + encodeURIComponent(WORK_MODULE_ID), {
+      credentials: "include",
+    })
+      .then(function (r) {
+        return r.ok ? r.json() : null;
+      })
+      .then(function (d) {
+        return d && d.reflection && d.reflection.reflection_text
+          ? d.reflection.reflection_text
+          : null;
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
   window.saveBottityypitState = function (opts) {
     opts = opts || {};
     var json = JSON.stringify(collectSnapshot());
@@ -76,12 +105,13 @@
     } catch (e) {
       /* ignore */
     }
+    var jobs = [saveToReflections(json, opts)];
     if (window.BonusModule && typeof window.BonusModule.saveEntry === "function") {
-      return window.BonusModule.saveEntry("_state", json, null, null, opts).then(function () {
-        if (!opts.silent && window.__bonusShowSaved) window.__bonusShowSaved();
-      });
+      jobs.push(window.BonusModule.saveEntry("_state", json, null, null, opts));
     }
-    return Promise.resolve();
+    return Promise.all(jobs).then(function () {
+      if (window.__bonusShowSaved) window.__bonusShowSaved();
+    });
   };
 
   function flushSaveNow(opts) {
@@ -177,25 +207,38 @@
     document.addEventListener("bottityypit:state-changed", scheduleSave);
   }
 
+  var readyStarted = false;
   function onReady() {
+    if (readyStarted) return;
+    readyStarted = true;
     bindAutosave();
     bindPageLeaveSave();
-    var serverRaw = null;
+    var bonusRaw = null;
     if (window.BonusModule && typeof window.BonusModule.getEntry === "function") {
-      serverRaw = window.BonusModule.getEntry("_state");
+      bonusRaw = window.BonusModule.getEntry("_state");
     }
-    var best = pickBestSnapshot(serverRaw);
-    if (best) {
-      restored = false;
-      window.restoreBottityypitState(best);
-    }
+    loadFromReflections().then(function (workRaw) {
+      var best = pickBestSnapshot(bonusRaw);
+      var workSnap = parseSnapshot(workRaw);
+      var local = readLocalSnapshot();
+      if (workSnap && (!best || (workSnap.ts || 0) > (best.ts || 0))) best = workSnap;
+      if (local && (!best || (local.ts || 0) >= (best.ts || 0))) best = local;
+      if (best) {
+        restored = false;
+        window.restoreBottityypitState(best);
+      }
+      if (window.__bonusShowSaved) window.__bonusShowSaved();
+    });
+  }
+
+  function boot() {
+    document.addEventListener("bonus-module:ready", onReady, { once: true });
+    setTimeout(onReady, 2500);
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () {
-      document.addEventListener("bonus-module:ready", onReady, { once: true });
-    });
+    document.addEventListener("DOMContentLoaded", boot);
   } else {
-    document.addEventListener("bonus-module:ready", onReady, { once: true });
+    boot();
   }
 })();

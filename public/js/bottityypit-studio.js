@@ -5,6 +5,7 @@
   "use strict";
 
   var LOCAL_KEY = "bottityypit-studio-v2";
+  var WORK_MODULE_ID = "moduuli-bottityypit-studio__work";
   var SHIPPED_TEMPLATES = {
     role:
       "Olet uravalmentaja joka auttaa työnhaussa. Vertaat CV:tä työpaikkoihin, analysoit ATS-sopivuutta ja ehdotat hakemustekstejä. Et lupaa työpaikkaa.",
@@ -58,8 +59,31 @@
     ];
   }
 
-  function localStorageKey() {
-    return LOCAL_KEY + ":" + (cachedUserId || "anon");
+  function localStorageKey(uid) {
+    return LOCAL_KEY + ":" + (uid || cachedUserId || "anon");
+  }
+
+  function migrateAnonLocal() {
+    if (!cachedUserId || cachedUserId === "anon") return;
+    try {
+      var anonKey = localStorageKey("anon");
+      var userKey = localStorageKey(cachedUserId);
+      var anonRaw = localStorage.getItem(anonKey);
+      if (!anonRaw) return;
+      var userRaw = localStorage.getItem(userKey);
+      if (!userRaw) {
+        localStorage.setItem(userKey, anonRaw);
+      } else {
+        var a = parseSnapshot(anonRaw);
+        var u = parseSnapshot(userRaw);
+        if (a && (!u || (a.ts || 0) > (u.ts || 0))) {
+          localStorage.setItem(userKey, anonRaw);
+        }
+      }
+      localStorage.removeItem(anonKey);
+    } catch (e) {
+      /* ignore */
+    }
   }
 
   function loadUserId() {
@@ -71,12 +95,46 @@
       .then(function (d) {
         cachedUserId = d && d.user && d.user.id ? String(d.user.id) : "anon";
         userIdLoaded = true;
+        migrateAnonLocal();
         return cachedUserId;
       })
       .catch(function () {
         cachedUserId = "anon";
         userIdLoaded = true;
         return cachedUserId;
+      });
+  }
+
+  function saveToReflections(json, opts) {
+    opts = opts || {};
+    return fetch("/api/reflections/save", {
+      method: "POST",
+      credentials: "include",
+      keepalive: !!opts.keepalive,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ moduleId: WORK_MODULE_ID, reflectionText: json }),
+    })
+      .then(function (r) {
+        return r.ok;
+      })
+      .catch(function () {
+        return false;
+      });
+  }
+
+  function loadFromReflections() {
+    return fetch("/api/reflections/module/" + encodeURIComponent(WORK_MODULE_ID), {
+      credentials: "include",
+    })
+      .then(function (r) {
+        return r.ok ? r.json() : null;
+      })
+      .then(function (d) {
+        var text = d && d.reflection && d.reflection.reflection_text;
+        return parseSnapshot(text);
+      })
+      .catch(function () {
+        return null;
       });
   }
 
@@ -122,7 +180,7 @@
     }
     if (!opts.silent) setSaveStatus("Tallennetaan…", false);
 
-    return fetch("/api/bonus-module/responses", {
+    var bonusSave = fetch("/api/bonus-module/responses", {
       method: "POST",
       credentials: "include",
       keepalive: !!opts.keepalive,
@@ -135,27 +193,29 @@
     })
       .then(function (res) {
         return res.json().then(function (data) {
-          return { res: res, data: data };
+          return !!(data && data.success);
         });
       })
-      .then(function (out) {
-        if (out.data && out.data.success) {
-          if (!opts.silent) setSaveStatus("Tallennettu", true);
-          else setSaveStatus("Tallennettu automaattisesti", true);
-          return true;
-        }
-        if (!opts.silent) {
-          setSaveStatus("Tallennettu selaimessa — kirjaudu tallentaaksesi pilveen", true);
-        } else {
-          setSaveStatus("Tallennettu paikallisesti", true);
-        }
-        return false;
-      })
       .catch(function () {
-        if (!opts.silent) setSaveStatus("Tallennettu vain selaimessa", true);
-        else setSaveStatus("Tallennettu paikallisesti", true);
         return false;
       });
+
+    var workSave = saveToReflections(json, opts);
+
+    return Promise.all([bonusSave, workSave]).then(function (flags) {
+      var cloudOk = !!(flags[0] || flags[1]);
+      if (cloudOk) {
+        setSaveStatus(opts.silent ? "Tallennettu automaattisesti" : "Tallennettu", true);
+        return true;
+      }
+      setSaveStatus(
+        opts.silent
+          ? "Tallennettu paikallisesti"
+          : "Tallennettu selaimessa — kirjaudu tallentaaksesi pilveen",
+        true
+      );
+      return false;
+    });
   }
 
   function scheduleSave() {
@@ -235,15 +295,17 @@
     return snap;
   }
 
-  function pickBestSnapshot(serverRaw) {
-    var server = stripLegacyDemoSnapshot(stripTemplateOnlySnapshot(parseSnapshot(serverRaw)));
-    var local = stripLegacyDemoSnapshot(stripTemplateOnlySnapshot(readLocalSnapshot()));
-    if (server && local) {
-      return (local.ts || 0) >= (server.ts || 0) ? local : server;
+  function pickBestSnapshot() {
+    var candidates = [];
+    for (var i = 0; i < arguments.length; i++) {
+      var snap = stripLegacyDemoSnapshot(stripTemplateOnlySnapshot(parseSnapshot(arguments[i])));
+      if (snap && hasMeaningfulSnapshot(snap)) candidates.push(snap);
     }
-    var best = server || local;
-    if (best && !hasMeaningfulSnapshot(best)) return null;
-    return best;
+    if (!candidates.length) return null;
+    candidates.sort(function (a, b) {
+      return (b.ts || 0) - (a.ts || 0);
+    });
+    return candidates[0];
   }
 
   function hasMeaningfulSnapshot(snap) {
@@ -1226,42 +1288,59 @@
     window.addEventListener("pagehide", function () {
       saveStudio({ silent: true, keepalive: true });
     });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") {
+        saveStudio({ silent: true, keepalive: true });
+      }
+    });
   }
 
+  var readyStarted = false;
   function onReady() {
+    if (readyStarted) return;
+    readyStarted = true;
+    setSaveStatus("Automaattinen tallennus päällä", true);
     loadUserId().then(function () {
       try {
         localStorage.removeItem("bottityypit-studio-v1");
-        localStorage.removeItem(LOCAL_KEY);
       } catch (e) {
         /* ignore */
       }
-      var serverRaw = null;
+      var bonusRaw = null;
       if (window.BonusModule && typeof window.BonusModule.getEntry === "function") {
-        serverRaw = window.BonusModule.getEntry("_studio");
+        bonusRaw = window.BonusModule.getEntry("_studio");
       }
-      var serverSnap = parseSnapshot(serverRaw);
-      var best = pickBestSnapshot(serverRaw);
-      wire();
-      wireCvUpload();
-      syncPrompt();
-      if (best) restoreSnapshot(best);
-      else syncPrompt();
-      renderChips();
-      if (!restored) {
-        renderSitePreview();
-        updateTrainStatus();
-      }
-      purgeLegacyDemoPersistence(serverSnap);
+      return loadFromReflections().then(function (workSnap) {
+        var serverSnap = parseSnapshot(bonusRaw);
+        var best = pickBestSnapshot(bonusRaw, workSnap, readLocalSnapshot());
+        wire();
+        wireCvUpload();
+        syncPrompt();
+        if (best) restoreSnapshot(best);
+        else {
+          syncPrompt();
+          setSaveStatus("Automaattinen tallennus päällä", true);
+        }
+        renderChips();
+        if (!restored) {
+          renderSitePreview();
+          updateTrainStatus();
+        }
+        purgeLegacyDemoPersistence(serverSnap);
+      });
     });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () {
-      document.addEventListener("bonus-module:ready", onReady, { once: true });
-    });
-  } else {
+  function boot() {
     document.addEventListener("bonus-module:ready", onReady, { once: true });
+    // Fallback if bonus runtime fails to fire ready
+    setTimeout(onReady, 2500);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
   }
 
   window.BottityypitStudio = {
