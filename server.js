@@ -565,6 +565,7 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-alanavaihtajan-kartta',
   'moduuli-ai-maisema',
   'moduuli-ai-liidien-hankinta',
+  'moduuli-ai-simulation-lab',
 ]);
 
 /** Admin-only modules that also block personal-gift recipients (no /module/ bypass). */
@@ -582,7 +583,6 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'moduuli8-ai-polku',
   'moduuli9-haastattelu',
   'moduuli-elava-cv',
-  'moduuli-ai-simulation-lab',
   'moduuli-hitl-architect',
   'moduuli-asiakaspalvelu-live-puhelu',
   'moduuli1b-ai-automaatio',
@@ -595,6 +595,7 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'moduuli-alanavaihtajan-kartta',
   'moduuli-ai-maisema',
   'moduuli-ai-liidien-hankinta',
+  'moduuli-ai-simulation-lab',
   'moduuli-voice-deep-search',
   'moduuli10-ai-tyonhakutyokalut',
   'moduuli11-ai-etikka',
