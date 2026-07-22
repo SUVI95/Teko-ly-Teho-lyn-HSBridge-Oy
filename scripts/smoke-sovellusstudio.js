@@ -229,8 +229,8 @@ async function main() {
 
   // Nav order
   console.log('\n6) Navigation');
-  ok('prev → Esitykset', html.includes('/module/moduuli-esitykset-tarjoukset-viestinta'));
-  ok('next → Perplexity', html.includes('/module/moduuli-perplexity-notebooklm'));
+  ok('prev → Lovable', html.includes('/module/moduuli-lovable'));
+  ok('next → Esitykset', html.includes('/module/moduuli-esitykset-tarjoukset-viestinta'));
 
   // ── 7. Live Claude: interview turn ─────────────────────────
   console.log('\n7) Live Claude — interview turn');
