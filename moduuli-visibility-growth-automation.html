@@ -788,23 +788,25 @@ function getClaudeApiUrl() {
 
 async function duunijobsAIApi(system, messages, maxTokens) {
   var data;
-  // Claude first (/api/ai/claude === Anthropic; same handler as /duunijobs)
+  // Smartest Claude first (server cascades Opus/Fable → Sonnet)
   try {
     data = await postAIJson(getClaudeApiUrl(), {
       system: system,
       messages: messages,
-      max_tokens: maxTokens || 1000
-    }, 35000);
+      max_tokens: maxTokens || 1000,
+      smart: true
+    }, 45000);
     return data.text || data.reply || '';
   } catch (claudeErr) {
-    console.warn('Claude endpoint failed, trying DuuniJobs alias:', claudeErr && claudeErr.message);
+    console.warn('Smart Claude endpoint failed, trying DuuniJobs alias:', claudeErr && claudeErr.message);
   }
   try {
     data = await postAIJson(getDuunijobsAIApiUrl(), {
       system: system,
       messages: messages,
-      max_tokens: maxTokens || 1000
-    }, 35000);
+      max_tokens: maxTokens || 1000,
+      smart: true
+    }, 45000);
     return data.text || data.reply || '';
   } catch (primaryErr) {
     console.warn('DuuniJobs AI endpoint failed, trying OpenAI chat endpoint:', primaryErr && primaryErr.message);
@@ -1572,9 +1574,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 <script>
 fetch('/ai-chat-widget.html').then(function(r){return r.text();}).then(function(h){
   document.body.insertAdjacentHTML('beforeend',h);
-  // DuuniJobs AI = Claude (Anthropic) on the server
+  // DuuniJobs AI = Claude (Anthropic) on the server — prefer smartest model
   window.MODULE_USE_DUUNIJOBS_AI=true;
   window.MODULE_USE_CLAUDE=true;
+  window.MODULE_USE_SMART_CLAUDE=true;
 }).catch(function(){});
 </script>
 </body>

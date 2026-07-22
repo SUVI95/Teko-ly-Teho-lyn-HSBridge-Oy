@@ -208,14 +208,23 @@ async function sendAIChatMessage() {
   try {
     const systemPrompt = 'Olet auttava tekoälyassistentti, joka auttaa käyttäjiä oppimaan tekoälystä ja sen käytöstä työnhaussa. Vastaa suomeksi, ystävällisesti ja käytännönläheisesti. Pidä vastaukset tiiviinä mutta informatiivisina.';
     let responseText;
-    var djAi = window.duunijobsAI || window.aiClaude;
-    if ((window.MODULE_USE_DUUNIJOBS_AI || window.MODULE_USE_CLAUDE) && djAi) {
+    var djAi = window.MODULE_USE_SMART_CLAUDE
+      ? (window.aiClaudeSmart || window.duunijobsAI || window.aiClaude)
+      : (window.duunijobsAI || window.aiClaude);
+    if ((window.MODULE_USE_DUUNIJOBS_AI || window.MODULE_USE_CLAUDE || window.MODULE_USE_SMART_CLAUDE) && djAi) {
       const historyBlock = aiChatHistory.length
         ? 'Aiemmat viestit:\n' + aiChatHistory.map(function(m) {
             return (m.role === 'user' ? 'Käyttäjä' : 'Assistentti') + ': ' + m.content;
           }).join('\n') + '\n\n'
         : '';
-      responseText = await djAi(systemPrompt, historyBlock + 'Kysymys: ' + message, 500);
+      var chatOpts = window.MODULE_USE_SMART_CLAUDE ? { smart: true } : undefined;
+      if (djAi === window.aiClaudeSmart) {
+        responseText = await djAi(systemPrompt, historyBlock + 'Kysymys: ' + message, 700);
+      } else if (chatOpts && djAi.length >= 4) {
+        responseText = await djAi(systemPrompt, historyBlock + 'Kysymys: ' + message, 700, chatOpts);
+      } else {
+        responseText = await djAi(systemPrompt, historyBlock + 'Kysymys: ' + message, 700);
+      }
     } else {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',

@@ -1424,9 +1424,12 @@ function normalizeGammaPromptOutput(raw) {
 }
 
 async function aiCall(system,user,maxTokens){
-  // Claude-first (aiClaude falls back to OpenAI if Anthropic is down)
+  // Smartest Claude first (Opus/Fable cascade on server; OpenAI only if Anthropic is down)
+  if(typeof window.aiClaudeSmart==='function'){
+    return normalizeGammaPromptOutput(await window.aiClaudeSmart(system,user,maxTokens||1200));
+  }
   if(typeof window.aiClaude==='function'){
-    return normalizeGammaPromptOutput(await window.aiClaude(system,user,maxTokens||800));
+    return normalizeGammaPromptOutput(await window.aiClaude(system,user,maxTokens||1200,{smart:true}));
   }
   if(typeof window.aiChat==='function'){
     return normalizeGammaPromptOutput(await window.aiChat(system,user,maxTokens||800));
@@ -1796,6 +1799,7 @@ document.addEventListener('DOMContentLoaded',async function(){
 fetch('/ai-chat-widget.html').then(function(r){return r.text();}).then(function(h){
   document.body.insertAdjacentHTML('beforeend',h);
   window.MODULE_USE_CLAUDE=true;
+  window.MODULE_USE_SMART_CLAUDE=true;
 }).catch(function(){});
 </script>
 </body>

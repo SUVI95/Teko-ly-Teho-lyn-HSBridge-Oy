@@ -207,6 +207,30 @@ function claudeTextModel() {
   return envTrim('ANTHROPIC_MODEL') || 'claude-sonnet-4-5';
 }
 
+/** Smartest Claude for high-stakes student coaching (Gamma/Canva, Lovable, Sovellusstudio). */
+function claudeSmartModel() {
+  // Override with ANTHROPIC_MODEL_SMART if you want a pinned model (e.g. claude-opus-4-8).
+  return envTrim('ANTHROPIC_MODEL_SMART') || 'claude-fable-5';
+}
+
+function claudeModelCandidates(requestedModel, preferSmart) {
+  const list = [];
+  const push = (m) => {
+    const id = String(m || '').trim();
+    if (id && list.indexOf(id) === -1) list.push(id);
+  };
+  push(requestedModel);
+  if (preferSmart) {
+    // Smartest → strong Opus → platform default Sonnet
+    push(claudeSmartModel());
+    push('claude-fable-5');
+    push('claude-opus-4-8');
+  }
+  push(claudeTextModel());
+  push('claude-sonnet-4-5');
+  return list;
+}
+
 /** OpenAI chat completion — returns plain text (used as Claude fallback + voice helpers). */
 async function callOpenAIText({ system, messages, max_tokens = 1000, temperature = 0.7, timeoutMs = OPENAI_TIMEOUT_MS, models = null }) {
   const openaiApiKey = envTrim('OPENAI_API_KEY');
@@ -264,74 +288,84 @@ async function callOpenAIText({ system, messages, max_tokens = 1000, temperature
  * Student-facing written text (feedback, interview copy, coaching).
  * Claude first — OpenAI only as fallback. Voice/realtime stay on OpenAI elsewhere.
  */
-async function callClaudeText({ system, messages, max_tokens = 2000, timeout_ms, max_retries }) {
+async function callClaudeText({ system, messages, max_tokens = 2000, timeout_ms, max_retries, model, smart }) {
   const anthropicKey = envTrim('ANTHROPIC_API_KEY');
   if (!anthropicKey) {
     console.warn('Anthropic API key not configured, using OpenAI for written text');
     return callOpenAIText({ system, messages, max_tokens });
   }
 
-  const body = {
-    model: claudeTextModel(),
-    max_tokens,
-    messages
-  };
-  if (system) body.system = system;
-
+  const preferSmart = smart === true || smart === 'true' || smart === 1 || smart === '1';
+  const models = claudeModelCandidates(model, preferSmart);
   const maxRetries = max_retries == null ? 2 : max_retries;
-  const requestTimeout = timeout_ms || ANTHROPIC_TIMEOUT_MS;
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    if (attempt > 0) await new Promise((r) => setTimeout(r, 600));
+  const requestTimeout = timeout_ms || (preferSmart ? STUDIO_ANTHROPIC_TIMEOUT_MS : ANTHROPIC_TIMEOUT_MS);
 
-    let response;
-    try {
-      response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify(body),
-        signal: timeoutSignal(requestTimeout)
-      });
-    } catch (err) {
-      console.warn(`Anthropic fetch failed (attempt ${attempt + 1}/${maxRetries}):`, err.message);
-      if (attempt < maxRetries - 1) continue;
+  for (const modelId of models) {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 600));
+
+      const body = {
+        model: modelId,
+        max_tokens,
+        messages
+      };
+      if (system) body.system = system;
+
+      let response;
+      try {
+        response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify(body),
+          signal: timeoutSignal(requestTimeout)
+        });
+      } catch (err) {
+        console.warn(`Anthropic fetch failed (${modelId}, attempt ${attempt + 1}/${maxRetries}):`, err.message);
+        if (attempt < maxRetries - 1) continue;
+        break;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = String(data.content?.[0]?.text || '').trim();
+        return { text, usage: data.usage, model: modelId, provider: 'anthropic' };
+      }
+
+      const errorData = await response.text().catch(() => '');
+      if (response.status === 529 || response.status === 503 || response.status === 429) {
+        console.warn(`Anthropic API retryable status ${response.status} (${modelId}):`, errorData);
+        continue;
+      }
+      // Unknown/unavailable model → try next candidate
+      if (response.status === 404 || response.status === 400) {
+        console.warn(`Anthropic model unavailable (${modelId}), trying next:`, errorData.slice(0, 200));
+        break;
+      }
+
+      console.warn(`Anthropic API non-retryable status ${response.status} (${modelId}):`, errorData);
       break;
     }
-
-    if (response.ok) {
-      const data = await response.json();
-      const text = String(data.content?.[0]?.text || '').trim();
-      return { text, usage: data.usage, model: claudeTextModel(), provider: 'anthropic' };
-    }
-
-    const errorData = await response.text().catch(() => '');
-    if (response.status === 529 || response.status === 503 || response.status === 429) {
-      console.warn(`Anthropic API retryable status ${response.status} (attempt ${attempt + 1}/${maxRetries}):`, errorData);
-      continue;
-    }
-
-    console.warn(`Anthropic API non-retryable status ${response.status}, using OpenAI fallback:`, errorData);
-    return callOpenAIText({ system, messages, max_tokens });
   }
 
-  console.warn('Claude text exhausted retries, falling back to OpenAI');
+  console.warn('Claude text exhausted model candidates, falling back to OpenAI');
   return callOpenAIText({ system, messages, max_tokens });
 }
 
 // DuuniJobs AI (Anthropic) — deep analysis; /claude kept for older clients
 async function handleDuunijobsAi(req, res) {
   try {
-    const { messages, system, max_tokens = 2000 } = req.body;
+    const { messages, system, max_tokens = 2000, model, smart } = req.body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Messages array is required' });
     }
 
-    const result = await callClaudeText({ system, messages, max_tokens });
-    return res.json({ text: result.text, usage: result.usage });
+    const result = await callClaudeText({ system, messages, max_tokens, model, smart });
+    return res.json({ text: result.text, usage: result.usage, model: result.model, provider: result.provider });
   } catch (error) {
     console.error('Error calling Claude/OpenAI for written text:', error.message);
     res.status(500).json({

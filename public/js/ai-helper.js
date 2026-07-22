@@ -1,6 +1,7 @@
 /**
  * AI chat helper - works with any deployment path.
  * Detects base path from current URL (e.g. /teko-ly) for subpath deployments.
+ * Claude-first via /api/ai/claude (optional smart:true → Opus / Fable cascade).
  */
 (function() {
   function getApiUrl() {
@@ -50,18 +51,30 @@
     return origin + base + '/api/ai/claude';
   }
 
-  window.aiClaude = async function(systemPrompt, userMessage, maxTokens) {
+  /**
+   * @param {string} systemPrompt
+   * @param {string} userMessage
+   * @param {number} [maxTokens]
+   * @param {{ smart?: boolean, model?: string }|boolean} [opts] — pass true or {smart:true} for smartest Claude
+   */
+  window.aiClaude = async function(systemPrompt, userMessage, maxTokens, opts) {
+    var options = opts;
+    if (options === true) options = { smart: true };
+    if (!options || typeof options !== 'object') options = {};
     try {
       var url = getClaudeUrl();
+      var body = {
+        max_tokens: maxTokens || 2000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMessage }]
+      };
+      if (options.smart) body.smart = true;
+      if (options.model) body.model = options.model;
       var res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          max_tokens: maxTokens || 2000,
-          system: systemPrompt,
-          messages: [{ role: 'user', content: userMessage }]
-        })
+        body: JSON.stringify(body)
       });
 
       var data = {};
@@ -78,4 +91,8 @@
     }
   };
   window.duunijobsAI = window.aiClaude;
+  /** Convenience: always prefer the smartest Claude available on the server. */
+  window.aiClaudeSmart = function(systemPrompt, userMessage, maxTokens) {
+    return window.aiClaude(systemPrompt, userMessage, maxTokens, { smart: true });
+  };
 })();

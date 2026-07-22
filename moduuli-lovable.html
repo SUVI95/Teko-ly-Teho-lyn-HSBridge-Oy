@@ -131,6 +131,14 @@
   .field textarea{min-height:78px;resize:vertical;line-height:1.5;}
   .save-pill{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94a2ab;margin-left:8px;}
   .save-pill.ok{color:var(--teal);}
+  .ai-btn{display:inline-flex;align-items:center;gap:8px;background:var(--teal);color:#fff;border:none;border-radius:10px;padding:12px 18px;font:inherit;font-weight:700;font-size:14.5px;cursor:pointer;margin:10px 0;}
+  .ai-btn:hover{filter:brightness(1.05);}
+  .ai-btn:disabled{opacity:.55;cursor:not-allowed;}
+  .ai-btn.secondary{background:#fff;color:var(--teal-deep);border:1px solid var(--teal);}
+  .ai-out{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:none;}
+  .ai-out.show{display:block;}
+  .ai-out textarea{width:100%;min-height:160px;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;font-size:14.5px;line-height:1.55;resize:vertical;box-sizing:border-box;}
+  .ai-out .ai-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
 
   /* PUBLISH (peak) */
   .publish-card{background:linear-gradient(150deg,#fbf0df 0%,#f6ede1 100%);border:1px solid #f0dcb8;border-radius:16px;padding:clamp(20px,4vw,28px);margin:14px 0;}
@@ -365,7 +373,17 @@
       <div><span class="ph">Vaihe 3 · Rakenna</span><h2>Rakenna sivun runko</h2><p class="step-time">⏱️ 45 min</p></div>
     </div>
     <div class="step-body">
-      <p>Mene osoitteeseen <a class="link" href="https://lovable.dev" target="_blank" rel="noopener">lovable.dev</a>, kirjaudu sisään ja aloita uusi projekti. Nyt käytät suunnitelmaasi: mitä tarkemmin kerrot, sitä parempi sivu. Käytä tätä pohjaa ja vaihda <span style="color:#b8860b;font-weight:700;">keltaiset kohdat</span> omiksi teksteiksesi:</p>
+      <p>Mene osoitteeseen <a class="link" href="https://lovable.dev" target="_blank" rel="noopener">lovable.dev</a>, kirjaudu sisään ja aloita uusi projekti. Täytä ensin vaiheen 1 suunnittelupohja — sitten Claude rakentaa sinulle valmiin Lovable-promptin omista vastauksistasi.</p>
+      <button type="button" class="ai-btn" id="lovGenPromptBtn" onclick="generateLovablePrompt()">✦ Generoi Lovable-prompt Claudella</button>
+      <div class="ai-out" id="lovPromptOut">
+        <label for="lovPromptText" style="display:block;font-size:13px;font-weight:700;color:var(--teal-deep);margin-bottom:6px;">Valmis prompt Lovableen (muokkaa tarvittaessa)</label>
+        <textarea id="lovPromptText" placeholder="Generoi ensin prompt yllä olevalla napilla…"></textarea>
+        <div class="ai-actions">
+          <button type="button" class="ai-btn secondary" onclick="copyLovablePrompt()">📋 Kopioi Lovableen</button>
+          <a class="ai-btn secondary" href="https://lovable.dev" target="_blank" rel="noopener" style="text-decoration:none;">Avaa Lovable →</a>
+        </div>
+      </div>
+      <p style="margin-top:16px;">Tai käytä tätä pohjaa ja vaihda <span style="color:#b8860b;font-weight:700;">keltaiset kohdat</span> omiksi teksteiksesi:</p>
       <div class="prompt">
         <span class="row"><span class="lab">Tee nettisivu nimelle</span> <span class="blank">”Lukupiiri Sivu &amp; Sana”</span>.</span>
         <span class="row"><span class="lab">Mikä se on:</span> <span class="blank">paikallinen lukupiiri, joka kokoontuu kerran kuussa</span>.</span>
@@ -476,6 +494,10 @@
           <label for="lovReflect3">3. Mikä olisi seuraava sivu, jonka haluaisit tehdä?</label>
           <textarea id="lovReflect3" placeholder="Kirjoita omin sanoin…"></textarea>
         </div>
+        <button type="button" class="ai-btn" id="lovReflectBtn" onclick="getLovableReflectFeedback()">💬 Pyydä Claudelta palaute pohdinnoista</button>
+        <div class="ai-out" id="lovReflectOut">
+          <div id="lovReflectFeedback" style="font-size:14.5px;line-height:1.6;white-space:pre-wrap;"></div>
+        </div>
         <div class="ideas">
           <span>🔎 Työnhaku: portfolio tai näytesivu</span>
           <span>🤝 Harrastus tai yhdistys</span>
@@ -518,6 +540,7 @@
 
 <script>window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;</script>
 <script src="/js/module-work.js"></script>
+<script src="/js/ai-helper.js"></script>
 <script>
 (function(){
   var btn = document.getElementById('totop');
@@ -538,7 +561,77 @@ var lovApi = null;
 var lovTopic = '';
 var lovApplying = false;
 var lovSaveT = null;
-var LOV_FIELDS = ['lovPlanAbout','lovPlanAudience','lovPlanAction','lovPlanAssets','lovTopicName','lovPublishUrl','lovReflect1','lovReflect2','lovReflect3'];
+var LOV_FIELDS = ['lovPlanAbout','lovPlanAudience','lovPlanAction','lovPlanAssets','lovTopicName','lovPublishUrl','lovReflect1','lovReflect2','lovReflect3','lovPromptText'];
+
+async function lovClaude(system, user, maxTokens){
+  if(typeof window.aiClaudeSmart==='function') return window.aiClaudeSmart(system, user, maxTokens||1200);
+  if(typeof window.aiClaude==='function') return window.aiClaude(system, user, maxTokens||1200, {smart:true});
+  throw new Error('Claude ei ole vielä ladattu. Päivitä sivu.');
+}
+
+async function generateLovablePrompt(){
+  var about=(document.getElementById('lovPlanAbout')||{}).value||'';
+  var audience=(document.getElementById('lovPlanAudience')||{}).value||'';
+  var action=(document.getElementById('lovPlanAction')||{}).value||'';
+  var assets=(document.getElementById('lovPlanAssets')||{}).value||'';
+  var name=(document.getElementById('lovTopicName')||{}).value||'';
+  if(about.trim().length<8 && name.trim().length<3){
+    alert('Täytä ensin vaiheesta 1 ainakin “Mistä sivu kertoo?” tai anna aiheelle nimi.');
+    return;
+  }
+  var btn=document.getElementById('lovGenPromptBtn');
+  var out=document.getElementById('lovPromptOut');
+  var ta=document.getElementById('lovPromptText');
+  btn.disabled=true; btn.textContent='⏳ Claude rakentaa promptia…';
+  out.classList.add('show');
+  ta.value='Generoidaan…';
+  try{
+    var text=await lovClaude(
+      'Olet Lovable.dev-asiantuntija. Kirjoita valmis suomenkielinen copy-paste-prompt, jonka oppija liittää Lovableen. Promptin pitää pyytää monisivuista sivustoa (etusivu, galleria/sisältö, yhteystiedot), ylävalikkoa, selkeää CTA:ta, sopivia kuvia ja kevyttä liikettä. Älä selitä — anna vain prompt-teksti.',
+      'Aihe/nimi: '+(name||'(ei nimeä)')+'\nMistä sivu kertoo: '+about+'\nKenelle: '+audience+'\nMitä kävijän pitäisi tehdä: '+action+'\nMitä sisältöä on jo: '+assets+'\n\nKirjoita yksi valmis Lovable-prompt suomeksi.',
+      1400
+    );
+    ta.value=(text||'').trim();
+    lovScheduleSave();
+  }catch(e){
+    ta.value=(e&&e.message)||'Yhteysvirhe — yritä hetken päästä uudelleen.';
+  }
+  btn.disabled=false; btn.textContent='✦ Generoi Lovable-prompt Claudella';
+}
+
+function copyLovablePrompt(){
+  var ta=document.getElementById('lovPromptText');
+  var text=(ta&&ta.value||'').trim();
+  if(!text||text==='Generoidaan…'){ alert('Generoi ensin prompt.'); return; }
+  navigator.clipboard.writeText(text).then(function(){
+    alert('Kopioitu — liitä Lovablen chat-kenttään.');
+  });
+}
+
+async function getLovableReflectFeedback(){
+  var r1=(document.getElementById('lovReflect1')||{}).value||'';
+  var r2=(document.getElementById('lovReflect2')||{}).value||'';
+  var r3=(document.getElementById('lovReflect3')||{}).value||'';
+  if((r1+r2+r3).trim().length<40){ alert('Kirjoita ensin pohdintoihin hieman pidemmät vastaukset.'); return; }
+  var btn=document.getElementById('lovReflectBtn');
+  var out=document.getElementById('lovReflectOut');
+  var fb=document.getElementById('lovReflectFeedback');
+  btn.disabled=true; btn.textContent='⏳ Claude lukee…';
+  out.classList.add('show');
+  fb.textContent='Ajatellaan…';
+  try{
+    var text=await lovClaude(
+      'Olet kannustava tekoälyopettaja suomalaisella AI-kurssilla. Anna lyhyt (4–7 lausetta) palaute oppijan pohdinnoista. Kehu konkreettista ajattelua, täydennä ystävällisesti jos jotain puuttuu. Suomeksi, selkeästi. Älä anna pisteitä.',
+      '1) Mitä rakensi / mikä yllätti:\n'+r1+'\n\n2) Kolme tilannetta joissa taitoa voisi käyttää:\n'+r2+'\n\n3) Seuraava sivu:\n'+r3,
+      700
+    );
+    fb.textContent=(text||'Hyvää pohdintaa — jatka samalla tavalla.').trim();
+    lovScheduleSave();
+  }catch(e){
+    fb.textContent=(e&&e.message)||'Yhteysvirhe — vastauksesi on silti tallessa.';
+  }
+  btn.disabled=false; btn.textContent='💬 Pyydä Claudelta palaute pohdinnoista';
+}
 
 function lovSetPill(text, ok){
   ['lovableSavePill','lovableSavePill2'].forEach(function(id){
@@ -561,6 +654,8 @@ function collectLovableWork(){
     var el = document.getElementById(id);
     o[id] = el ? el.value : '';
   });
+  var fb = document.getElementById('lovReflectFeedback');
+  o.lovReflectFeedback = fb ? (fb.textContent || '') : '';
   document.querySelectorAll('#lovCheckList li').forEach(function(li){
     o.checks.push(li.classList.contains('done'));
   });
@@ -571,6 +666,7 @@ function summarizeLovableWork(d){
   var parts = [];
   if(d.lovTopicName) parts.push(d.lovTopicName);
   if(d.lovPublishUrl) parts.push('Julkaistu');
+  if(d.lovPromptText) parts.push('Lovable-prompt');
   var done = Array.isArray(d.checks) ? d.checks.filter(Boolean).length : 0;
   if(done) parts.push('Checklist '+done+'/5');
   return parts.join(' · ');
@@ -587,6 +683,16 @@ function applyLovableWork(d){
       var el = document.getElementById(id);
       if(el && d[id] != null) el.value = d[id];
     });
+    if(d.lovPromptText){
+      var pout = document.getElementById('lovPromptOut');
+      if(pout) pout.classList.add('show');
+    }
+    if(d.lovReflectFeedback){
+      var fb = document.getElementById('lovReflectFeedback');
+      var rout = document.getElementById('lovReflectOut');
+      if(fb) fb.textContent = d.lovReflectFeedback;
+      if(rout) rout.classList.add('show');
+    }
     if(Array.isArray(d.checks)){
       document.querySelectorAll('#lovCheckList li').forEach(function(li, i){
         li.classList.toggle('done', !!d.checks[i]);
@@ -639,6 +745,13 @@ document.addEventListener('DOMContentLoaded', async function(){
     if(document.visibilityState==='hidden'){ try{ if(lovApi&&lovApi.saveNow) lovApi.saveNow(); }catch(e){} }
   });
 });
+</script>
+<script>
+fetch('/ai-chat-widget.html').then(function(r){return r.text();}).then(function(h){
+  document.body.insertAdjacentHTML('beforeend', h);
+  window.MODULE_USE_CLAUDE = true;
+  window.MODULE_USE_SMART_CLAUDE = true;
+}).catch(function(){});
 </script>
 </body>
 </html>
