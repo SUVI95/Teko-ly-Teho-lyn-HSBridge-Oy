@@ -560,6 +560,11 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-karpo-tutkimus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
   'moduuli-anne-tyonhaku-2026', // removed from dashboard — kept on disk for admin reference only
   'moduuli-ella-myyntisprintti', // temporarily admin-only — no student/gift access
+  // Bridge — hidden from students, admin preview only
+  'moduuli-ideasta-tuotteeksi',
+  'moduuli-alanavaihtajan-kartta',
+  'moduuli-ai-maisema',
+  'moduuli-ai-liidien-hankinta',
 ]);
 
 /** Admin-only modules that also block personal-gift recipients (no /module/ bypass). */
@@ -589,6 +594,7 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'moduuli-eu-ai-act-moduuli5',
   'moduuli-excel-copilot-masterclass',
   'moduuli-recap-game',
+  'moduuli-ideasta-tuotteeksi',
   'moduuli-alanavaihtajan-kartta',
   'moduuli-ai-maisema',
   'moduuli-ai-liidien-hankinta',
