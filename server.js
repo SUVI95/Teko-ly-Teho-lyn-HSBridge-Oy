@@ -52,10 +52,13 @@ function injectModulePersistenceScripts(html, moduleId) {
   if (!html || typeof html !== 'string') return html;
   const bootScript = `<script>window.__MODULE_ID__=${JSON.stringify(String(moduleId || ''))};</script>`;
   const needsModuleWork =
-    moduleId !== 'moduuli-bottityypit-studio' && !html.includes('/js/module-work.js');
+    moduleId !== 'moduuli-bottityypit-studio' &&
+    moduleId !== 'moduuli-prompt-hiomo' &&
+    !html.includes('/js/module-work.js');
   const needsAutoSave =
     moduleId !== 'moduuli-bottityypit-studio' &&
     moduleId !== 'moduuli-bottityypit' &&
+    moduleId !== 'moduuli-prompt-hiomo' &&
     moduleId !== 'moduuli1-ai-automaatio' &&
     moduleId !== 'moduuli1b-ai-automaatio' &&
     moduleId !== 'moduuli1c-ai-automaatio' &&
