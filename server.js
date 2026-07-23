@@ -587,11 +587,13 @@ const STRICT_ADMIN_ONLY_MODULE_IDS = new Set([
  * Auki: Aloitus + M1–M5 (+ Tomi 1/2 giftille).
  */
 const STUDENT_LOCKED_MODULE_IDS = new Set([
-  // Soft-lock (näkyy lukittuna)
+  // Soft-lock (näkyy lukittuna) — auki vain Tomille + testiopiskelijalle (musiikki) + adminille
+  'moduuli-prompt-hiomo',
+  'moduuli-bottityypit',
+  'moduuli1-ai-automaatio',
   'moduuli6-hallusinaatiot',
-  // moduuli8-ai-polku, moduuli9-haastattelu, moduuli-elava-cv: open to all
-  // students (part of the "Tekoäly työnhaun työkaluna" section on the dashboard).
-  'moduuli-hitl-architect',
+  // moduuli8-ai-polku, moduuli9-haastattelu, moduuli-elava-cv, moduuli-hitl-architect:
+  // open to all students (part of the "Tekoäly työnhaun työkaluna" / bonus path).
   'moduuli-asiakaspalvelu-live-puhelu',
   'moduuli1b-ai-automaatio',
   'moduuli1c-ai-automaatio',
@@ -638,6 +640,9 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
  * Module stays locked for the group; these gift keys may open it.
  */
 const STUDENT_LOCKED_EARLY_ACCESS = {
+  'moduuli-prompt-hiomo': ['musiikki'],
+  'moduuli-bottityypit': ['musiikki'],
+  'moduuli1-ai-automaatio': ['musiikki']
 };
 
 // Personal gift HTML only via /module/:id (recipient + admin gate)

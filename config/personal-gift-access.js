@@ -201,6 +201,7 @@ const PUBLIC_STUDENT_MODULE_IDS = new Set([
   'moduuli-elava-cv',
   'moduuli-perplexity-notebooklm',
   'moduuli-bottityypit',
+  'moduuli-ai-laatulaboratorio',
   'moduuli1-ai-automaatio',
   'moduuli1b-ai-automaatio',
   'moduuli1c-ai-automaatio'
