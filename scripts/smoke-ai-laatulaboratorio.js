@@ -198,8 +198,8 @@ async function main() {
     })`);
     assert(afterNav.active && afterNav.collapsed, 'osiolinkki siirtää videoklippeihin ja sulkee valikon');
 
-    // Automation arc: judgment exercise + Claude/Anne review + build target + teacher email.
-    assert(await evaluate(`!!document.querySelector('[data-drawer-nav="auto-decide"]')&&!!document.querySelector('[data-screen="auto-build"]')&&!!document.querySelector('[data-screen="auto-bot"]')&&!!document.querySelector('[data-screen="auto-send"]')`), 'automaatioarc lisää arvioi-, rakenna-, botti- ja lähetä-näytöt');
+    // Automation arc: judgment exercise + Claude/Anne review + build target + acceptance test.
+    assert(await evaluate(`!!document.querySelector('[data-drawer-nav="auto-decide"]')&&!!document.querySelector('[data-screen="auto-build"]')&&!!document.querySelector('[data-screen="auto-bot"]')&&!!document.querySelector('[data-screen="acceptance"]')`), 'automaatioarc lisää arvioi-, rakenna-, botti- ja vastaanottotestinäytöt');
     assert(await evaluate(`typeof window.reviewBot==='function' && document.body.innerText.includes('asiakasbotti')`), 'Poe-asiakasbotti-harjoitus on lisätty');
     await evaluate(`document.querySelector('[data-drawer-nav="auto-decide"]').click()`);
     await waitFor(() => evaluate(`!!document.querySelector('[data-screen="auto-decide"]') && document.querySelector('[data-screen="auto-decide"]').classList.contains('active')`), 'automaation arviointinäyttöön siirtyminen');
@@ -210,9 +210,9 @@ async function main() {
     await waitFor(() => evaluate(`document.getElementById('decide-feedback').style.display!=='none' && document.getElementById('decide-feedback-text').innerText.length>40`), 'Annen arvion näkyminen offline-tilassa');
     assert(await evaluate(`document.getElementById('decide-feedback-text').innerText.length>40`), 'Anne (Claude/varapalaute) haastaa automaatiopäätökset');
 
-    await evaluate(`document.querySelector('[data-drawer-nav="auto-send"]').click()`);
-    await waitFor(() => evaluate(`document.querySelector('[data-screen="auto-send"]').classList.contains('active')`), 'lähetysnäyttöön siirtyminen');
-    assert(await evaluate(`document.body.innerText.includes('suvi@duunijobs.com') && typeof window.openMail==='function' && !!document.getElementById('mailtoLink')`), 'viimeinen askel ohjaa lähettämään sähköpostin opettajalle');
+    await evaluate(`document.querySelector('[data-drawer-nav="acceptance"]').click()`);
+    await waitFor(() => evaluate(`document.querySelector('[data-screen="acceptance"]').classList.contains('active')`), 'vastaanottotestinäyttöön siirtyminen');
+    assert(await evaluate(`!!document.getElementById('orb-acceptance') && !!document.getElementById('rubric-acceptance') && typeof window.startCall==='function' && document.body.innerText.includes('Puolusta viikkosi työ')`), 'viimeinen koe on Annen ääni-vastaanottotesti (puolusta valintasi)');
 
     // Pedagogy layer: skill headers, osaamispassi, case file.
     assert(await evaluate(`(()=>{const h=document.querySelector('[data-screen="ex1"] .skill-header');return !!h && /Opit tämän/.test(h.innerText) && /Käytä tosielämässä/.test(h.innerText) && /Onnistut kun/.test(h.innerText);})()`), 'jokaisella harjoituksella on taito-otsikko (opit / käytä tosielämässä / mittari)');

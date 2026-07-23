@@ -57,6 +57,8 @@ const allow = new Set([
   'reklamaatio', 'reklamaatioita', 'sheets', 'sheetiin', 'kuittaa', 'kuittauksen',
   'suvi', 'duunijobs', 'mailto', 'execute', 'rutiinia', 'arvostelukyky',
   'trigger', 'manual', 'form', 'edit', 'fields', 'set',
+  'vastaanottotesti', 'vastaanottotestiin', 'vastaanottotestin',
+  'ympäripyöreästi', 'ympäripyöreä', 'freelancerillesi', 'freelancer',
   'canva', 'poe', 'chatbase', 'asiakasbotti', 'asiakasbotin', 'asiakasbotille',
   'koontilistaan', 'asiakaspalvelubotti', 'text', 'video',
   'prompti', 'promptin', 'promptia', 'promptissa', 'promptisi', 'promptiisi',
