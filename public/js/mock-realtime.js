@@ -209,6 +209,20 @@
     return true;
   };
 
+  MockRealtimeInterview.prototype.submitAnswer = function () {
+    // Manual "Lähetä vastaus" — force the server to finalize the current input
+    // audio buffer so the answer is transcribed NOW instead of waiting for the
+    // slow semantic VAD. Only valid while it is the candidate's turn to speak.
+    if (!this.connected) return false;
+    if (this.aiResponding || this.awaitingWrapUp || this.pausedForReview) return false;
+    if (!this.awaitingUserAnswer) return false;
+    this.onStatus('Lähetetään vastaustasi — hetki...');
+    // With server VAD this may report an empty buffer if VAD already committed;
+    // that error is harmless and ignored by handleServerEvent.
+    this.sendEvent({ type: 'input_audio_buffer.commit' });
+    return true;
+  };
+
   MockRealtimeInterview.prototype.retryCurrentTurn = function () {
     if (!this.pausedForReview) return false;
     if (this.answerCount < 1) return false;

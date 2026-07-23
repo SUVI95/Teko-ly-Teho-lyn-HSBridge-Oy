@@ -1747,7 +1747,7 @@ function callsForSave(){
   return out;
 }
 function collect(){
-  return {ts:Date.now(),idx:idx,completed:Object.keys(completed),calls:callsForSave(),fields:persistFields(),auto:{verdicts:auto.verdicts,pick:auto.pick,move:auto.move,fb:auto.fb},shift:{active:shift.active,order:shift.order,ptr:shift.ptr,results:shift.results}};
+  return {ts:Date.now(),idx:idx,completed:Object.keys(completed),calls:callsForSave(),fields:persistFields(),auto:{verdicts:auto.verdicts,pick:auto.pick,move:auto.move,fb:auto.fb},shift:{active:shift.active,order:shift.order,ptr:shift.ptr,results:shift.results,skips:shift.skips}};
 }
 function apply(data){
   if(!data||typeof data!=='object')return;
@@ -1774,6 +1774,7 @@ function apply(data){
     shift.order=Array.isArray(data.shift.order)?data.shift.order:[];
     shift.ptr=data.shift.ptr||0;
     shift.results=Array.isArray(data.shift.results)?data.shift.results:[];
+    shift.skips=(typeof data.shift.skips==='number')?data.shift.skips:null;
   }
   applyFields(data.fields);
   Object.keys(EX).forEach(function(k){renderTranscript(k);if(calls[k].scored)renderResult(k,true);});
@@ -2315,7 +2316,8 @@ var REFLEX=[
    the monikanava IRQ model: unscheduled popups on top of the real task. */
 var INTERRUPTIBLE={'theory-voice':1,'theory-prod':1,'ex4a':1,'ex4b':1,'ex4img':1,'ex4c':1,'auto-brief':1,'auto-decide':1,'auto-design':1,'auto-build':1,'auto-bot':1};
 var SHIFT_TOTAL=6;              // interruptions per shift, drawn at random from the pool
-var shift={active:false,order:[],ptr:0,results:[],timer:null,open:false,locked:false,cd:null,auto:true};
+var shift={active:false,order:[],ptr:0,results:[],timer:null,open:false,locked:false,cd:null,auto:true,skips:null};
+function randGap(){return 1+Math.floor(Math.random()*2);} // skip 1–2 interruptible pages, then show one
 function shuffleIdx(n){var a=[];for(var i=0;i<n;i++)a.push(i);for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function startShift(){
   if(shift.active)return;
@@ -2326,16 +2328,22 @@ function startShift(){
     for(var i=rest.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=rest[i];rest[i]=rest[j];rest[j]=t;}
     shift.order=(op>=0?[op]:[]).concat(rest).slice(0,SHIFT_TOTAL);
   }
+  if(shift.skips==null)shift.skips=randGap();
   scheduleSave();
 }
 function shiftPending(){return shift.ptr<shift.order.length;}
 function shiftGood(){return shift.results.filter(function(r){return r==='good';}).length;}
 function shiftDone(){return shift.active&&!shiftPending();}
-/* Called every render: schedule a random popup if we're on an interruptible screen. */
+/* Called on every page change. One interruption per page MAX, spread across pages:
+   skip a random 1–2 interruptible pages, then the next one is "due" and pops up
+   shortly after you land. A due interruption is NOT consumed by leaving — it stays
+   due and follows you to the next interruptible page, so it always shows. */
 function armShift(screenId){
   if(shift.timer){clearTimeout(shift.timer);shift.timer=null;}
   if(!shift.active||!shift.auto||shift.open||!INTERRUPTIBLE[screenId]||!shiftPending())return;
-  var delay=7000+Math.random()*13000;                 // 7–20 s, feels unpredictable
+  if(shift.skips==null)shift.skips=randGap();
+  if(shift.skips>0){shift.skips-=1;return;}            // this page is a "skip" — no popup here
+  var delay=2000+Math.random()*2500;                   // 2–4.5 s after landing: feels mid-work but reliable
   shift.timer=setTimeout(function(){maybeFire(screenId);},delay);
 }
 function maybeFire(shouldBeScreen){
@@ -2431,9 +2439,11 @@ function reflexAdvance(){
   el('reflexOverlay').classList.remove('open');
   renderShift();renderPassport();renderDrawer();scheduleSave();
   var cur=SCREENS[idx]?SCREENS[idx].id:'';
-  // On the shift dashboard, chain straight into the next catch-up; elsewhere re-arm the random timer.
+  // On the shift dashboard, chain straight into the next catch-up. Elsewhere: set a
+  // fresh page gap and DON'T re-fire on this page — the next one shows after skipping
+  // 1–2 more interruptible pages (one interruption per page).
   if(cur==='reflex'&&shiftPending()){setTimeout(runRemainingInterrupts,450);}
-  else armShift(cur);
+  else shift.skips=randGap();
 }
 function renderShift(){
   var launch=el('reflex-launch');if(!launch)return;
