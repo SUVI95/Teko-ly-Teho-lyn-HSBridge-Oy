@@ -220,6 +220,12 @@ async function main() {
     assert(await evaluate(`!!document.querySelector('[data-passport]') && document.querySelector('[data-passport]').innerText.includes('Osaamispassi')`), 'osaamispassi näkyy ja listaa taidot');
     assert(await evaluate(`typeof window.openCaseFile==='function' && !!document.getElementById('casefilePanel') && !!document.getElementById('casefileBtn')`), 'muistio (case file) -paneeli ja -painike ovat olemassa');
 
+    // Capstone: Claude assesses the whole module, gives an overall score + per-area retry for low scores.
+    assert(await evaluate(`typeof window.assessAll==='function' && typeof window.gotoScreen==='function' && !!document.getElementById('capAssessBtn') && !!document.getElementById('cap-score') && !!document.getElementById('cap-areas')`), 'loppuarvio: Claude-arviopainike, kokonaispisteet ja harjoituskohtainen koonti ovat olemassa');
+    // Offline path renders overall score + a retry button for a low-scoring (empty) area.
+    assert(await evaluate(`(()=>{const d=window.capAssessOffline();return !!d && Array.isArray(d.areas) && d.areas.length>=11;})()`), 'loppuarvion offline-kooste tuottaa arviot kaikista harjoituksista');
+    assert(await evaluate(`(()=>{const d=window.capAssessOffline();window.renderAssess(d);return document.getElementById('cap-areas').innerText.length>40 && /uudelleen/.test(document.getElementById('cap-areas').innerText);})()`), 'heikoista harjoituksista syntyy "tee uudelleen" -painike');
+
     // Random interruption shift (adapted from monikanava IRQ): popups fire mid-work, not a start-button screen.
     assert(await evaluate(`typeof window.runRemainingInterrupts==='function' && typeof window.reflexAdvance==='function' && typeof window.fireInterruptNow==='function' && !!document.getElementById('reflexOverlay')`), 'satunnainen keskeytysmoottori ja popup-overlay ovat olemassa');
     assert(await evaluate(`(()=>{const s=document.querySelector('[data-screen="reflex"]');return !!s && !s.querySelector('#reflexStartBtn') && !!document.getElementById('reflex-tally') && !!document.getElementById('reflexRunBtn');})()`), 'keskeytysnäyttö on koontinäkymä (ei erillistä aloita-nappia)');

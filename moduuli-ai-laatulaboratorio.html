@@ -1472,6 +1472,34 @@ label{display:block;font-size:14px;font-weight:600;color:var(--ink-2);margin:12p
     <h1>Loppukoe suoritettu.</h1>
     <p style="max-width:500px;margin:14px auto 0;color:var(--ink-2)">Kolme vaikeaa puhelua, mainos alusta loppuun, toimiva automaatio, asiakasbotti, nopeat päätökset paineessa, kriisin johtaminen, sama totuus kolmelle yleisölle — ja lopuksi puolustit jokaisen valintasi Annelle. Perustelut pitivät: pilotti alkaa lokakuussa, ja Rivon haluaa sinut mukaan. Kiitos.</p>
   </div>
+
+  <div class="card" id="cap-assess-card">
+    <div class="eyebrow" style="color:var(--rivon-2)">Loppuarvio</div>
+    <h3>Claude arvioi koko viikkosi — rehellisesti</h3>
+    <p class="small" style="margin:0 0 12px">Claude lukee läpi kaikki vastauksesi ja harjoituksesi: puhelut, mainoksen, automaation, botin, kriisin ja perustelusi. Saat kokonaispisteet, aidon kehun siitä mikä meni hyvin — ja suoran palautteen siitä, mitä kannattaa vielä hioa. Heikoista kohdista pääset yhdellä napilla tekemään ne uudelleen.</p>
+    <div class="actions"><button class="btn rivon" id="capAssessBtn" onclick="assessAll()">Pyydä Claudelta loppuarvio →</button></div>
+  </div>
+  <div id="cap-assess-result" style="display:none">
+    <div class="score-band">
+      <div><div class="label">Kokonaisarvio</div><div class="num" id="cap-score">—</div></div>
+      <div class="side"><div class="label">Vahvat / hiottavat</div><div class="side-val" id="cap-split">—</div></div>
+    </div>
+    <div class="card" style="border:1px solid var(--rivon)">
+      <div class="eyebrow" style="color:var(--rivon-2)">Mikä meni hyvin</div>
+      <div id="cap-praise" style="font-size:16px;line-height:1.55;margin-top:6px"></div>
+    </div>
+    <div class="card dark">
+      <div class="eyebrow" style="color:#E9C6B8">Mitä hioa — rehellisesti</div>
+      <div id="cap-growth" style="font-size:16px;line-height:1.55;margin-top:6px"></div>
+    </div>
+    <div class="card">
+      <h3>Arvio harjoituksittain</h3>
+      <p class="tiny" style="margin:0 0 4px">Punaisella merkityistä pääset suoraan tekemään harjoituksen uudelleen ja parantamaan tulostasi.</p>
+      <div id="cap-areas"></div>
+    </div>
+    <div class="actions"><button class="btn ghost" onclick="assessAll()">Päivitä arvio</button></div>
+  </div>
+
   <div class="cert" id="certificate"></div>
   <div class="passport" data-passport></div>
   <div class="card">
@@ -2520,6 +2548,103 @@ async function reviewBot(){
   if(btn)btn.disabled=false;completed['auto-bot']=true;renderDrawer();scheduleSave();
 }
 
+/* ---------- capstone: Claude assesses the whole module ---------- */
+var CAP_AREAS=[
+  {id:'ex1',        label:'Latu-neuvottelu',    screen:'ex1'},
+  {id:'ex2',        label:'Myynti Torissa',     screen:'ex2'},
+  {id:'ex3',        label:'Kaupungin pitch',    screen:'ex3'},
+  {id:'media',      label:'Mainoksen tuotanto', screen:'ex4a'},
+  {id:'auto-decide',label:'Mitä automatisoida', screen:'auto-decide'},
+  {id:'auto-design',label:'Ketjun suunnittelu', screen:'auto-design'},
+  {id:'auto-bot',   label:'Asiakasbotti',       screen:'auto-bot'},
+  {id:'reflex',     label:'Nopeat päätökset',   screen:'reflex'},
+  {id:'crisis',     label:'Kriisin johtaminen', screen:'crisis'},
+  {id:'voices',     label:'Kolme yleisöä',      screen:'voices'},
+  {id:'acceptance', label:'Vastaanottotesti',   screen:'acceptance'}
+];
+function fieldVal(id){var n=el(id);return n?String(n.value||'').trim():'';}
+function clampScore(n){n=Math.round(Number(n));if(isNaN(n))return null;return Math.max(0,Math.min(100,n));}
+function capDigest(){
+  function v(ex){var c=calls[ex];if(!c)return '(ei tehty)';var mine=(c.turns||[]).filter(function(t){return t.who==='you';}).map(function(t){return t.text;}).join(' / ').slice(0,500);return 'pisteet '+(c.score==null?'ei arvioitu':c.score+'/100')+', tulos: '+(c.outcome||'—')+', omat vuorot: '+(mine||'(ei omia vastauksia)');}
+  var L=[];
+  L.push('ex1 Latu-neuvottelu — '+v('ex1'));
+  L.push('ex2 Myynti Torissa — '+v('ex2'));
+  L.push('ex3 Kaupungin pitch — '+v('ex3'));
+  L.push('media Mainoksen tuotanto — promptti: '+(fieldVal('ex4-prompt')||'(tyhjä)').slice(0,350)+' || tekoälyn mainos: '+(fieldVal('ex4-generated')||'(tyhjä)').slice(0,350)+' || kuvaprompti: '+(fieldVal('ex4img-prompt')||'(tyhjä)').slice(0,220)+' || liikeprompti: '+(fieldVal('ex4c-motion')||'(tyhjä)').slice(0,150));
+  var verd=Object.keys(auto.verdicts||{}).map(function(k){return k+'='+auto.verdicts[k];}).join(', ');
+  L.push('auto-decide Mitä automatisoida — valinnat: '+(verd||'—')+', rakennettava: '+(auto.pick||'—')+', perustelut A/B/C: '+(fieldVal('reason-A')||'—')+' | '+(fieldVal('reason-B')||'—')+' | '+(fieldVal('reason-C')||'—'));
+  L.push('auto-design Ketjun suunnittelu — liipaisin: '+(fieldVal('chain-trigger')||'—')+', vaiheet: '+(fieldVal('chain-steps')||'—')+', ihmisen tarkistus: '+(fieldVal('chain-human')||'—')+', tulos: '+(fieldVal('chain-output')||'—')+', riski: '+(fieldVal('chain-risk')||'—'));
+  L.push('auto-bot Asiakasbotti — ohje: '+(fieldVal('bot-role')||'(tyhjä)').slice(0,350)+', eskalointi ihmiselle: '+(fieldVal('bot-escalation')||'—'));
+  L.push('reflex Nopeat päätökset paineessa — oikein '+shiftGood()+' / '+(shift.results||[]).length+' keskeytyksessä');
+  L.push('crisis Kriisin johtaminen — ensisiirto: '+(MOVE_LABELS[auto.move]||'—')+'; '+v('crisis'));
+  L.push('voices Kolme yleisöä — some: '+(fieldVal('voices-public')||'—').slice(0,240)+' || kaupunki: '+(fieldVal('voices-city')||'—').slice(0,240)+' || tiimi: '+(fieldVal('voices-team')||'—').slice(0,240));
+  L.push('acceptance Vastaanottotesti Annelle — '+v('acceptance'));
+  return L.join('\n');
+}
+async function assessAll(){
+  var btn=el('capAssessBtn');if(btn){btn.disabled=true;btn.textContent='Claude arvioi koko viikkoasi…';}
+  announce('Claude arvioi koko moduulin.');
+  var data;
+  try{data=await capAssess();}catch(e){data=capAssessOffline();}
+  renderAssess(data);
+  el('cap-assess-result').style.display='block';
+  if(btn){btn.disabled=false;btn.textContent='Päivitä arvio uudelleen →';}
+  el('cap-assess-result').scrollIntoView({behavior:'smooth',block:'start'});
+  scheduleSave();
+}
+async function capAssess(){
+  var areasList=CAP_AREAS.map(function(a){return a.id+' = '+a.label;}).join('; ');
+  var system='Olet suomalainen, kokenut ja REHELLINEN arvioija. Sait yhden opiskelijan (Tomi) koko AI-kurssin loppukokeen työt. Arvioi ne aidosti ja täsmällisesti — älä imartele. Kehu se, mikä on oikeasti hyvin, mutta sano suoraan ja ystävällisesti, missä meni pieleen tai mikä jäi vajaaksi. Perusta arvio VAIN annettuun materiaaliin: jos jokin osa on tyhjä tai ohut, anna siitä matala pistemäärä ja kerro konkreettisesti mitä puuttuu. Puhuttele Tomia suoraan (sinä). Palauta VAIN JSON, ei mitään muuta tekstiä. Muoto tarkalleen: {"overall":kokonaisluku 0-100,"praise":"2-4 lausetta aitoa, ansaittua kehua","growth":"2-4 lausetta suoraa ja rakentavaa palautetta siitä mitä hioa","areas":[{"id":"ex1","score":kokonaisluku 0-100,"note":"1-2 lausetta suomeksi, konkreettinen"}]}. areas-listassa on täsmälleen nämä tunnisteet (ja vain nämä): '+areasList+'.';
+  var user='OPISKELIJAN TYÖT KOKO MODUULISTA:\n'+capDigest();
+  var text=await claudeCall(system,user,900,90000);
+  var p=extractJson(text);
+  if(p&&typeof p.overall!=='undefined'&&Array.isArray(p.areas))return normalizeAssess(p);
+  return capAssessOffline();
+}
+function normalizeAssess(p){
+  var byId={};(p.areas||[]).forEach(function(a){if(a&&a.id)byId[a.id]={id:a.id,score:clampScore(a.score),note:String(a.note||'')};});
+  var areas=CAP_AREAS.map(function(a){return byId[a.id]||{id:a.id,score:null,note:'Ei arvioitavaa materiaalia — harjoitus näyttää jääneen kesken.'};});
+  return {overall:clampScore(p.overall),praise:String(p.praise||''),growth:String(p.growth||''),areas:areas};
+}
+function capAssessOffline(){
+  var areas=CAP_AREAS.map(function(a){
+    var sc=null,note='';
+    if(calls[a.id]&&calls[a.id].scored){sc=calls[a.id].score;note='Arvio perustuu puhelun rubriikkiin.';}
+    else if(a.id==='media'){var m=(fieldVal('ex4-prompt')+fieldVal('ex4-generated')).length;sc=m>120?70:(m>0?45:0);note=m>120?'Mainoksen promptti ja käsikirjoitus tehty.':'Mainostyö jäi ohueksi tai kesken.';}
+    else if(a.id==='auto-decide'){var ok=Object.keys(auto.verdicts||{}).length>=3&&auto.pick;sc=ok?70:30;note=ok?'Päätökset ja rakennuskohde valittu.':'Automatisointipäätökset jäivät kesken.';}
+    else if(a.id==='auto-design'){var d=(fieldVal('chain-trigger')+fieldVal('chain-steps')+fieldVal('chain-human')+fieldVal('chain-output')).length;sc=d>60?70:(d>0?45:0);note=d>60?'Ketju suunniteltu neljään lohkoon.':'Ketju jäi vajaaksi.';}
+    else if(a.id==='auto-bot'){var b=fieldVal('bot-role').length;sc=b>60?70:(b>0?45:0);note=b>60?'Botin ohje ja rajat kirjoitettu.':'Botin ohje puuttuu tai on ohut.';}
+    else if(a.id==='reflex'){var t=(shift.results||[]).length;sc=t?Math.round(shiftGood()/t*100):null;note=t?('Oikein '+shiftGood()+' / '+t+' keskeytyksessä.'):'Keskeytyksiä ei vielä hoidettu.';}
+    else if(a.id==='voices'){var vv=(fieldVal('voices-public')+fieldVal('voices-city')+fieldVal('voices-team')).length;sc=vv>120?70:(vv>0?45:0);note=vv>120?'Kolme sävyversiota kirjoitettu.':'Yleisöviestit jäivät kesken.';}
+    else{sc=calls[a.id]?calls[a.id].score:0;note='Ei arvioitu — harjoitus näyttää kesken.';}
+    return {id:a.id,score:sc,note:note};
+  });
+  var nums=areas.map(function(a){return a.score;}).filter(function(n){return typeof n==='number';});
+  var overall=nums.length?Math.round(nums.reduce(function(x,y){return x+y;},0)/nums.length):null;
+  return {overall:overall,praise:'Kävit koko viikon läpi ja jätit näkyvän jäljen jokaiseen harjoitukseen — se on jo iso saavutus. (Claude-yhteys ei juuri nyt vastannut, joten tämä on automaattinen kooste omista tuloksistasi.)',growth:'Käy alla punaisella merkityt kohdat uudelleen ja pyydä niissä arvio, niin saat tarkemman palautteen.',areas:areas};
+}
+function renderAssess(d){
+  setText('cap-score',d.overall==null?'—':d.overall);
+  var strong=0,weak=0,byId={};(d.areas||[]).forEach(function(a){byId[a.id]=a;});
+  var rows=CAP_AREAS.map(function(a){
+    var r=byId[a.id]||{score:null,note:''};
+    var sc=(typeof r.score==='number')?r.score:null;
+    if(sc!=null&&sc>=70)strong++;if(sc!=null&&sc<60)weak++;
+    var low=sc!=null&&sc<60;
+    var color=sc==null?'var(--muted)':(sc>=70?'var(--rivon-2)':(sc>=60?'#B8860B':'#C0432E'));
+    var badge='<span style="font-weight:800;font-size:17px;color:'+color+'">'+(sc==null?'—':sc)+'</span>';
+    var retry=low?'<div class="actions" style="margin-top:8px"><button class="btn ghost small" onclick="gotoScreen(\''+a.screen+'\')">Tee «'+a.label+'» uudelleen →</button></div>':'';
+    return '<div style="padding:12px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><strong>'+a.label+'</strong>'+badge+'</div><div class="small" style="margin-top:4px">'+(r.note||'')+'</div>'+retry+'</div>';
+  }).join('');
+  el('cap-areas').innerHTML=rows;
+  setText('cap-split',strong+' vahvaa · '+weak+' hiottavaa');
+  el('cap-praise').innerHTML=fmtParas(d.praise||'');
+  el('cap-growth').innerHTML=fmtParas(d.growth||'');
+}
+function gotoScreen(id){
+  for(var i=0;i<SCREENS.length;i++){if(SCREENS[i].id===id){idx=i;render();scheduleSave();window.scrollTo({top:0,behavior:'smooth'});return;}}
+}
+
 function finish(){
   completed.capstone=true;scheduleSave();
   if(work&&work.saveNow)work.saveNow();
@@ -2541,6 +2666,7 @@ window.addEventListener('pagehide',function(){
 window.next=next;window.prev=prev;window.openDrawer=openDrawer;window.closeDrawer=closeDrawer;
 window.startCall=startCall;window.endCall=endCall;window.toggleText=toggleText;window.sendText=sendText;
 window.retry=retry;window.generateAd=generateAd;window.copyScript=copyScript;window.finish=finish;
+window.assessAll=assessAll;window.gotoScreen=gotoScreen;window.capAssessOffline=capAssessOffline;window.renderAssess=renderAssess;
 window.pickVerdict=pickVerdict;window.pickBuild=pickBuild;window.reviewDecide=reviewDecide;
 window.reviewDesign=reviewDesign;window.reviewBot=reviewBot;window.scheduleSaveNow=scheduleSaveNow;
 window.pickMove=pickMove;window.openCaseFile=openCaseFile;window.closeCaseFile=closeCaseFile;
