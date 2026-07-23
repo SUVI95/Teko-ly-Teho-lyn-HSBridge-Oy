@@ -359,7 +359,7 @@
     this.onStatus('Toistetaan kysymys...');
 
     var instructions = lastQ
-      ? ('Toista tämä kysymys SANASTA SANAAN uudelleen suomeksi, ilman lisäyksiä: "' + lastQ + '". Älä muuta mitään. Lopeta heti kysymyksen jälkeen.')
+      ? ('Toista tämä kysymys SANASTA SANAAN uudelleen suomeksi, ilman lisäyksiä: "' + lastQ + '". Älä muuta mitään. Älä lisää wait/odota/lopeta loppuun.')
       : this.buildResponseInstructions(qIndex, this.buildContext(this.userAnswers.intro || ''));
 
     this.sendEvent({
