@@ -1,0 +1,2538 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rivon-viikko · aipolku</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F1EBDD; --paper:#FBF7EC; --paper-2:#F6F0E0;
+  --ink:#2A1F17; --ink-2:#4A3A2C; --muted:#8B7A65;
+  --line:#DFD3B8; --line-2:#E8DEC5;
+  --rivon:#2E5D4A; --rivon-2:#1F4234; --rivon-tint:#E3EBE4;
+  --amber:#C7642F; --amber-2:#A44D1E;
+  --danger:#8C2E1F; --ok:#3A6E4B;
+  --shadow:0 1px 0 rgba(42,31,23,.04), 0 8px 24px -12px rgba(42,31,23,.18);
+  --shadow-lg:0 20px 60px -20px rgba(42,31,23,.35);
+  --radius:14px; --radius-s:8px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  font-size:17px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-.01em;color:var(--ink);margin:0}
+h1{font-size:32px;line-height:1.1}
+h2{font-size:24px;line-height:1.15}
+h3{font-size:19px;line-height:1.25}
+p{margin:0 0 14px}
+.eyebrow{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.small{font-size:15px;color:var(--ink-2)}
+.tiny{font-size:13px;color:var(--muted)}
+
+.topbar{
+  position:sticky;top:0;z-index:40;
+  background:var(--bg);
+  border-bottom:1px solid var(--line);
+  padding:12px 16px;
+  display:flex;align-items:center;gap:12px;
+}
+.burger{
+  width:40px;height:40px;border-radius:8px;background:none;border:none;
+  cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;
+  transition:background .15s ease;
+}
+.burger:hover{background:var(--paper-2)}
+.burger span{display:block;width:20px;height:2px;background:var(--ink);position:relative}
+.burger span::before,.burger span::after{content:"";position:absolute;left:0;width:100%;height:2px;background:var(--ink)}
+.burger span::before{top:-6px} .burger span::after{top:6px}
+.brand{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:18px;color:var(--rivon);flex:1}
+.day-chip{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.save-ind{font-size:12px;color:var(--muted);min-width:74px;text-align:right}
+
+.progress{height:4px;background:var(--line);position:sticky;top:65px;z-index:39}
+.progress > span{display:block;height:100%;background:var(--rivon);width:0%;transition:width .4s ease}
+
+.drawer-scrim{position:fixed;inset:0;background:rgba(42,31,23,.5);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:100}
+.drawer-scrim.open{opacity:1;pointer-events:auto}
+.drawer{
+  position:fixed;top:0;bottom:0;left:0;width:320px;max-width:88vw;
+  background:var(--paper);z-index:101;
+  transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow:var(--shadow-lg);display:flex;flex-direction:column;
+}
+.drawer.open{transform:translateX(0)}
+.drawer[hidden]{display:none}
+.drawer-head{padding:20px 22px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start}
+.drawer-head .close{background:none;border:none;font-size:24px;color:var(--muted);cursor:pointer;padding:0;line-height:1;width:40px;height:40px;display:flex;align-items:center;justify-content:center;margin:-8px -8px 0 0}
+.drawer-body{flex:1;overflow-y:auto;padding:14px 0}
+.drawer-group{padding:16px 22px 8px}
+.drawer-group-title{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.drawer-item{display:flex;align-items:center;gap:12px;padding:11px 22px;cursor:pointer;border:none;background:none;width:100%;text-align:left;font:inherit;color:var(--ink);transition:background .15s ease}
+.drawer-item:hover{background:var(--paper-2)}
+.drawer-item.current{background:var(--rivon-tint);border-left:3px solid var(--rivon);padding-left:19px}
+.drawer-item .dot{width:22px;height:22px;border-radius:50%;flex-shrink:0;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--paper);font-weight:700}
+.drawer-item.done .dot{background:var(--ok);border-color:var(--ok)}
+.drawer-item.current .dot{border-color:var(--rivon);color:var(--rivon)}
+.drawer-item .lbl{flex:1;font-size:15px}
+
+.stage{max-width:760px;margin:0 auto;padding:20px 18px 120px}
+.screen{display:none;animation:fadeIn .3s ease both}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);margin-bottom:16px}
+.card.tight{padding:16px 18px}
+.card.dark{background:var(--ink);color:var(--paper-2);border-color:var(--ink)}
+.card.dark h2,.card.dark h3{color:var(--paper)}
+.card.dark .tiny{color:#B8A992}
+.card.rivon{background:var(--rivon);color:#EFEAD9;border-color:var(--rivon-2)}
+.card.rivon h1,.card.rivon h2,.card.rivon h3{color:#FBF7EC}
+.card.rivon .eyebrow{color:#C7D6C9}
+
+.brief-strip{position:sticky;top:69px;z-index:20;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;box-shadow:0 4px 12px -8px rgba(42,31,23,.25)}
+.brief-strip-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.brief-strip .day-tag{background:var(--amber);color:var(--paper);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:4px}
+.brief-strip h2{font-size:20px}
+.brief-strip .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px 14px;margin-top:6px}
+.brief-strip .fact{font-size:13px;line-height:1.35}
+.brief-strip .fact .k{color:var(--muted);font-weight:600;letter-spacing:.02em;text-transform:uppercase;font-size:11px}
+.brief-strip .fact .v{color:var(--ink);font-weight:500}
+
+.callback{background:var(--rivon-tint);border-left:3px solid var(--rivon);padding:12px 14px;border-radius:var(--radius-s);margin-bottom:16px;font-size:15px}
+.callback .from{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--rivon);margin-bottom:4px}
+
+.situation{background:var(--paper-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px}
+.situation .lead{font-size:17px;line-height:1.5;color:var(--ink);margin:0}
+.situation .detail{font-size:15px;color:var(--ink-2);margin-top:10px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:var(--paper);border:none;border-radius:99px;padding:14px 22px;min-height:46px;font:600 16px/1 'Inter',sans-serif;cursor:pointer;transition:transform .15s ease,background .15s ease;text-decoration:none}
+.btn:hover{background:#000;transform:translateY(-1px)}
+.btn.rivon{background:var(--rivon)}
+.btn.rivon:hover{background:var(--rivon-2)}
+.btn.amber{background:var(--amber)}
+.btn.amber:hover{background:var(--amber-2)}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:var(--paper)}
+.btn.small{padding:10px 16px;font-size:14px;min-height:40px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+
+.voice-stage{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:16px;text-align:center}
+.voice-stage.idle .voice-orb{opacity:.6}
+.voice-orb{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 30% 30%,var(--rivon) 0%,var(--rivon-2) 65%,#0F2A20 100%);margin:8px auto 14px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:transform .2s ease,opacity .3s ease;box-shadow:0 12px 32px -12px rgba(46,93,74,.5)}
+.voice-orb::before{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--rivon);opacity:0}
+.voice-orb.live::before{animation:pulse 1.8s ease-out infinite;opacity:1}
+@keyframes pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.35);opacity:0}}
+.voice-orb svg{width:38px;height:38px;fill:var(--paper)}
+.voice-orb:hover{transform:scale(1.03)}
+.voice-meta{margin-bottom:14px}
+.voice-meta .timer{font-family:'Fraunces',serif;font-size:26px;color:var(--ink);font-variant-numeric:tabular-nums}
+.voice-meta .status{font-size:14px;color:var(--muted)}
+
+.transcript{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius-s);padding:14px;max-height:240px;overflow-y:auto;font-size:15px;line-height:1.5;text-align:left}
+.turn{margin-bottom:10px}
+.turn .who{font-weight:700;font-size:12px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px}
+.turn.you .who{color:var(--rivon)}
+.turn.ai .who{color:var(--amber)}
+.transcript .empty{color:var(--muted);font-style:italic}
+
+.voice-controls{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.text-fallback{margin-top:14px;text-align:left}
+.text-fallback textarea{min-height:70px}
+.text-fallback .row{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
+
+.result-panel{display:none;animation:fadeIn .4s ease both}
+.result-panel.show{display:block}
+.score-band{background:var(--rivon-tint);border-radius:var(--radius);padding:18px 22px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.score-band .num{font-family:'Fraunces',serif;font-size:44px;line-height:1;color:var(--rivon)}
+.score-band .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:600}
+.score-band .side{text-align:right}
+.score-band .side-val{font-family:'Fraunces',serif;font-size:22px;color:var(--ink)}
+
+.rubric{margin:0}
+.rubric-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.rubric-item:last-child{border-bottom:none}
+.rubric-item .check{width:22px;height:22px;border-radius:50%;flex-shrink:0;border:2px solid var(--line);margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--paper);font-weight:700}
+.rubric-item.hit .check{background:var(--ok);border-color:var(--ok)}
+.rubric-item.miss .check{background:var(--danger);border-color:var(--danger)}
+.rubric-item.neutral .check{color:var(--muted)}
+.rubric-item .text{font-size:15px;font-weight:500}
+.rubric-item .why{color:var(--muted);font-size:14px;margin-top:2px}
+
+ul.plain{margin:0 0 12px;padding:0 0 0 20px}
+ul.plain li{margin-bottom:6px}
+ul.dash{list-style:none;padding:0;margin:0 0 12px}
+ul.dash li{padding-left:22px;position:relative;margin-bottom:8px}
+ul.dash li::before{content:"—";position:absolute;left:0;color:var(--amber);font-weight:700}
+
+.tool-card{display:flex;gap:14px;padding:16px;background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius-s);margin-bottom:12px}
+.tool-card .tag{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--paper);background:var(--rivon);padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:6px}
+.tool-card .tag.amber{background:var(--amber)}
+.tool-card .tag.ink{background:var(--ink)}
+.tool-card a{color:var(--rivon);font-weight:600}
+
+textarea,input[type=text],input[type=url]{width:100%;background:var(--paper);border:1.5px solid var(--line);border-radius:var(--radius-s);padding:12px 14px;font:400 16px/1.5 'Inter',sans-serif;color:var(--ink);resize:vertical}
+textarea:focus,input:focus{outline:none;border-color:var(--rivon)}
+textarea{min-height:90px}
+label{display:block;font-size:14px;font-weight:600;color:var(--ink-2);margin:12px 0 6px}
+
+.callout{background:#FDF6E7;border:1px solid #E8D9B0;border-left:3px solid var(--amber);padding:14px 16px;border-radius:var(--radius-s);margin:14px 0;font-size:15px}
+.callout strong{color:var(--amber-2)}
+.callout.dark{background:#20180F;color:#E8DDC8;border-color:#3A2A1C;border-left-color:var(--amber)}
+
+.grad-hero{text-align:center;padding:36px 20px}
+.grad-hero .seal{display:inline-flex;width:88px;height:88px;border-radius:50%;border:2px solid var(--rivon);color:var(--rivon);align-items:center;justify-content:center;margin:0 auto 18px;font-family:'Fraunces',serif;font-size:38px}
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.skill-tile{background:var(--paper-2);border-radius:var(--radius-s);padding:12px 14px;border:1px solid var(--line)}
+.skill-tile .n{font-family:'Fraunces',serif;font-size:22px;color:var(--rivon);line-height:1}
+.skill-tile .t{font-size:14px;font-weight:600;margin-top:4px}
+.skill-tile .d{font-size:13px;color:var(--muted);margin-top:4px}
+
+.nav{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(to top,var(--bg) 60%,rgba(241,235,221,0));padding:20px 18px 22px;display:flex;justify-content:space-between;gap:12px;max-width:760px;margin:0 auto;z-index:10}
+
+@media (max-width:520px){
+  h1{font-size:26px} h2{font-size:20px}
+  .card,.situation{padding:16px}
+  .nav{padding:14px 14px 18px}
+  .btn{padding:12px 18px;font-size:15px}
+  .voice-orb{width:100px;height:100px}
+  .brief-strip{padding:12px 14px}
+  .brief-strip h2{font-size:18px}
+  .score-band{padding:14px 16px}
+  .score-band .num{font-size:36px}
+  .save-ind{display:none}
+}
+
+/* ---- Automaatio-arc ---- */
+.task-block{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow)}
+.task-block .task-title{font-family:'Fraunces',serif;font-size:18px;color:var(--ink);margin-bottom:6px}
+.task-block .task-desc{font-size:15px;color:var(--ink-2);margin-bottom:12px}
+.verdicts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.verdict{border:1.5px solid var(--line);background:var(--paper-2);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;font:600 14px/1.2 'Inter',sans-serif;color:var(--ink-2);transition:all .15s ease;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.verdict .v-ic{font-size:22px}
+.verdict:hover{border-color:var(--rivon)}
+.verdict.sel{background:var(--rivon);color:#EFEAD9;border-color:var(--rivon-2)}
+.chain-map{display:grid;gap:10px;margin:8px 0 4px}
+.chain-step{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start}
+.chain-step .n{width:34px;height:34px;border-radius:50%;background:var(--rivon-tint);color:var(--rivon-2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-top:4px}
+.chain-step.human .n{background:#FDF6E7;color:var(--amber-2)}
+.email-card{background:var(--ink);color:var(--paper-2);border-radius:var(--radius);padding:22px;margin-bottom:16px}
+.email-card h3{color:var(--paper)}
+.email-card .to{display:inline-block;background:var(--rivon);color:#EFEAD9;font-weight:600;font-size:14px;padding:4px 10px;border-radius:6px;margin:2px 0 12px}
+.email-card label{color:#C9BBA4}
+.email-card textarea,.email-card input{background:#20180F;border-color:#3A2A1C;color:#F1EBDD}
+.confirm-gate{display:flex;align-items:flex-start;gap:10px;background:var(--rivon-tint);border-radius:10px;padding:14px;margin:14px 0}
+.confirm-gate input{width:22px;height:22px;margin-top:1px;flex-shrink:0;accent-color:var(--rivon)}
+.confirm-gate label{margin:0;font-size:15px;color:var(--ink);font-weight:500}
+.coach-note{background:var(--paper-2);border-left:3px solid var(--rivon);border-radius:var(--radius-s);padding:14px 16px;margin:12px 0;font-size:15px;line-height:1.5}
+.coach-note .from{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--rivon);margin-bottom:6px}
+
+/* ---- Skill header (constructive alignment) ---- */
+.skill-header{background:var(--ink);color:var(--paper-2);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px}
+.skill-header .sh-skill{font-family:'Fraunces',serif;font-size:18px;color:var(--paper);display:flex;align-items:center;gap:8px}
+.skill-header .sh-skill::before{content:"◆";color:var(--amber);font-size:14px}
+.skill-header .sh-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.skill-header .sh-tag{font-size:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:6px 10px;line-height:1.35;flex:1;min-width:140px}
+.skill-header .sh-tag .k{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#B8A992;font-weight:700;margin-bottom:2px}
+.skill-header .sh-tag .v{color:#EFEAD9}
+.skill-header .sh-crit{margin-top:10px;font-size:13px;color:#D9CDB6;border-top:1px solid rgba(255,255,255,.12);padding-top:10px}
+.skill-header .sh-crit strong{color:var(--amber)}
+
+/* ---- Osaamispassi ---- */
+.passport{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);margin-bottom:16px}
+.passport-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.passport-head .cnt{font-family:'Fraunces',serif;font-size:15px;color:var(--rivon)}
+.passport-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.stamp{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper-2)}
+.stamp .badge{width:26px;height:26px;border-radius:50%;flex-shrink:0;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--muted)}
+.stamp.on{background:var(--rivon-tint);border-color:var(--rivon)}
+.stamp.on .badge{background:var(--rivon);border-color:var(--rivon-2);color:#EFEAD9}
+.stamp .lbl{font-size:13px;line-height:1.25;font-weight:600;color:var(--ink)}
+.stamp.on .lbl{color:var(--rivon-2)}
+
+/* ---- Case file (muistio) ---- */
+.casefile-btn{position:fixed;right:16px;bottom:86px;z-index:30;background:var(--ink);color:var(--paper);border:none;border-radius:99px;padding:12px 16px;font:600 14px/1 'Inter',sans-serif;cursor:pointer;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:8px}
+.casefile-btn .badge{background:var(--amber);color:var(--paper);border-radius:99px;font-size:12px;padding:2px 7px;min-width:20px;text-align:center}
+.casefile-panel{position:fixed;right:0;top:0;bottom:0;width:340px;max-width:90vw;background:var(--paper);z-index:102;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:var(--shadow-lg);display:flex;flex-direction:column}
+.casefile-panel.open{transform:translateX(0)}
+.casefile-panel[hidden]{display:none}
+.casefile-head{padding:18px 20px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.casefile-head h3{font-size:18px}
+.casefile-head .close{background:none;border:none;font-size:24px;color:var(--muted);cursor:pointer;width:40px;height:40px}
+.casefile-body{flex:1;overflow-y:auto;padding:14px 20px}
+.cf-item{padding:12px 0;border-bottom:1px solid var(--line)}
+.cf-item:last-child{border-bottom:none}
+.cf-item .cf-k{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.cf-item .cf-v{font-size:15px;color:var(--ink)}
+.cf-item.empty .cf-v{color:var(--muted);font-style:italic}
+.cf-inline{background:var(--rivon-tint);border-radius:var(--radius-s);padding:12px 14px;margin-bottom:14px;font-size:14px}
+.cf-inline .from{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--rivon);margin-bottom:6px}
+.cf-inline ul{margin:0;padding-left:18px}
+.cf-inline li{margin-bottom:3px}
+/* ---- Reflex / interruptions (phone-first popups with countdown) ---- */
+.reflex-overlay{position:fixed;inset:0;z-index:120;background:rgba(28,25,20,.72);display:none;align-items:flex-end;justify-content:center;padding:12px}
+.reflex-overlay.open{display:flex}
+@media(min-width:640px){.reflex-overlay{align-items:center}}
+.reflex-pop{background:var(--paper);border-radius:18px;width:100%;max-width:400px;box-shadow:var(--shadow-lg);overflow:hidden;animation:popIn .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes popIn{from{transform:translateY(14px);opacity:.4}to{transform:translateY(0);opacity:1}}
+.reflex-timerbar{height:6px;background:var(--line)}
+.reflex-timerbar .fill{height:100%;background:var(--rivon);width:100%;transition:width .95s linear}
+.reflex-timerbar .fill.warn{background:var(--amber)}
+.reflex-timerbar .fill.danger{background:#C0432E}
+.reflex-pop .rp-body{padding:18px 18px 16px}
+.reflex-pop .rp-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.reflex-pop .rp-from{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--rivon)}
+.reflex-pop .rp-sec{font-family:'Fraunces',serif;font-size:22px;color:var(--ink);min-width:34px;text-align:right}
+.reflex-pop .rp-sec.danger{color:#C0432E}
+.reflex-pop .rp-count{font-size:12px;color:var(--muted);margin-bottom:6px}
+.reflex-pop h3{font-size:17px;line-height:1.25;margin-bottom:6px}
+.reflex-pop .rp-sit{font-size:15px;line-height:1.45;color:var(--ink-2);margin-bottom:14px}
+.reflex-pop .rp-opts{display:flex;flex-direction:column;gap:8px}
+.reflex-pop .rp-opt{text-align:left;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:600 15px/1.35 'Inter',sans-serif;color:var(--ink);cursor:pointer;min-height:48px}
+.reflex-pop .rp-opt:active{transform:scale(.99)}
+.reflex-pop .rp-opt:disabled{opacity:.6;cursor:default}
+.reflex-pop .rp-opt.good{background:var(--rivon-tint);border-color:var(--rivon)}
+.reflex-pop .rp-opt.bad{background:#F6E3DE;border-color:#C0432E}
+/* ---- Worked-example pairs (teach the technique, not the answer) ---- */
+.ex-pair{display:grid;gap:8px;margin-bottom:10px}
+@media(min-width:560px){.ex-pair{grid-template-columns:1fr 1fr;align-items:stretch}}
+.ex-bad,.ex-good{border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.4}
+.ex-bad{background:#F6E3DE;border:1px solid #E0B8AE;color:#5B2A1E}
+.ex-good{background:var(--rivon-tint);border:1px solid var(--rivon);color:var(--rivon-2)}
+.ex-tag{display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.ex-tag.bad{color:#C0432E}
+.ex-tag.good{color:var(--rivon-2)}
+
+/* ---- Mandate card: the concrete brief (what you can/can't do + policy) ---- */
+.mandate{border:1px solid var(--line);border-radius:var(--radius);background:var(--paper);padding:14px 16px;margin-bottom:16px}
+.mandate>h3{font-family:'Fraunces',serif;font-size:16px;margin:0 0 4px}
+.mandate .m-sub{font-size:13px;color:var(--muted);margin:0 0 12px}
+.mandate .m-grid{display:grid;gap:10px}
+@media(min-width:640px){.mandate .m-grid{grid-template-columns:1fr 1fr 1fr;align-items:start}}
+.m-box{border-radius:12px;padding:11px 13px}
+.m-box .m-head{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px}
+.m-box ul{margin:0;padding-left:18px}
+.m-box li{font-size:13.5px;line-height:1.4;margin-bottom:5px}
+.m-box li:last-child{margin-bottom:0}
+.m-can{background:var(--rivon-tint);border:1px solid var(--rivon)}
+.m-can .m-head{color:var(--rivon-2)}
+.m-cant{background:#F6E3DE;border:1px solid #E0B8AE}
+.m-cant .m-head{color:#C0432E}
+.m-cant li{color:#5B2A1E}
+.m-rule{background:var(--paper-2);border:1px solid var(--line)}
+.m-rule .m-head{color:var(--ink)}
+
+.reflex-pop .rp-input{display:none;flex-direction:column;gap:8px}
+.reflex-pop .rp-input textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:15px/1.4 'Inter',sans-serif;background:var(--paper-2);color:var(--ink);resize:vertical}
+.reflex-pop .rp-hint{font-size:12px;color:var(--muted)}
+.reflex-pop .rp-input .btn{min-height:46px}
+.reflex-pop .rp-fb{margin-top:14px;font-size:14px;line-height:1.45;border-top:1px solid var(--line);padding-top:12px}
+.reflex-pop .rp-fb .verdict-word{font-weight:700}
+.reflex-pop .rp-fb .good-word{color:var(--rivon-2)}
+.reflex-pop .rp-fb .bad-word{color:#C0432E}
+.reflex-pop .rp-next{width:100%;margin-top:12px;min-height:46px}
+.reflex-scoreline{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.reflex-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--muted)}
+.reflex-dot.good{background:var(--rivon);border-color:var(--rivon-2);color:#EFEAD9}
+.reflex-dot.bad{background:#C0432E;border-color:#9A3423;color:#F6E3DE}
+.cert{background:var(--rivon);color:#EFEAD9;border-radius:var(--radius);padding:22px;text-align:center;margin-bottom:16px}
+.cert h3{color:#FBF7EC}
+.cert.locked{background:var(--paper-2);color:var(--muted);border:1px dashed var(--line)}
+.cert.locked h3{color:var(--ink-2)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <button class="burger" id="menuBtn" aria-expanded="false" aria-controls="drawer" onclick="openDrawer()" aria-label="Avaa valikko"><span></span></button>
+  <div class="brand">Rivon-viikko</div>
+  <div class="day-chip" id="day-chip">Aloitus</div>
+  <div class="save-ind" id="saveIndicator" aria-hidden="true"></div>
+</div>
+<div class="progress"><span id="progress-bar"></span></div>
+
+<div class="drawer-scrim" id="drawer-scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" hidden aria-label="Moduulin sisältö">
+  <div class="drawer-head">
+    <div>
+      <div class="eyebrow" style="margin-bottom:4px">aipolku · Moduuli</div>
+      <div style="font-family:'Fraunces',serif;font-size:22px;color:var(--rivon)">Rivon-viikko</div>
+    </div>
+    <button class="close" onclick="closeDrawer()" aria-label="Sulje">×</button>
+  </div>
+  <div class="drawer-body" id="drawer-list"></div>
+  <div class="drawer-foot" style="padding:16px 22px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)">
+    Etene omalla tahdilla. Työsi tallentuu automaattisesti.
+  </div>
+</aside>
+
+<button class="casefile-btn" id="casefileBtn" onclick="openCaseFile()" style="display:none" aria-label="Avaa muistio">📁 Muistio <span class="badge" id="casefileCount">0</span></button>
+<aside class="casefile-panel" id="casefilePanel" hidden aria-label="Toimeksiannon muistio">
+  <div class="casefile-head">
+    <h3>Muistio</h3>
+    <button class="close" onclick="closeCaseFile()" aria-label="Sulje">×</button>
+  </div>
+  <div class="casefile-body" id="casefileBody"></div>
+  <div class="drawer-foot" style="padding:14px 20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)">
+    Tähän kertyy kaikki, mitä viikon aikana päätit ja rakensit. Myöhemmät tehtävät nojaavat näihin.
+  </div>
+</aside>
+
+<div class="reflex-overlay" id="reflexOverlay" aria-live="assertive">
+  <div class="reflex-pop" role="dialog" aria-modal="true" aria-label="Ilmoitus">
+    <div class="reflex-timerbar"><div class="fill" id="reflexFill"></div></div>
+    <div class="rp-body">
+      <div class="rp-top"><span class="rp-from" id="reflexFrom">Ilmoitus</span><span class="rp-sec" id="reflexSec">30</span></div>
+      <div class="rp-count" id="reflexCount">Ilmoitus 1 / 6</div>
+      <h3 id="reflexTitle"></h3>
+      <div class="rp-sit" id="reflexSit"></div>
+      <div class="rp-opts" id="reflexOpts"></div>
+      <div class="rp-input" id="reflexInput">
+        <textarea id="reflexInputBox" placeholder=""></textarea>
+        <div class="rp-hint" id="reflexHint"></div>
+        <button class="btn rivon" id="reflexSubmit" onclick="interruptSubmit()">Lähetä vastaus →</button>
+      </div>
+      <div class="rp-fb" id="reflexFb" style="display:none"></div>
+      <button class="btn rivon rp-next" id="reflexNext" style="display:none" onclick="reflexAdvance()">Seuraava ilmoitus →</button>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+
+<section class="screen active" data-screen="intro" data-day="Aloitus">
+  <div class="card rivon">
+    <div class="eyebrow">Loppukoe · Kurssin viimeinen päivä</div>
+    <h1>Rivon palkkasi sinut viikoksi.</h1>
+    <p style="margin-top:16px;font-size:18px;line-height:1.5">
+      Tämä on kurssin loppukoe. Et opettele enää uutta teoriaa listasta — <strong>käytät kaiken,
+      mitä olet oppinut</strong>. Rivon, Kajaanissa toimiva kaupunkipyöräpalvelu, palkkaa sinut
+      freelanceriksi yhdeksi rankaksi viikoksi.
+    </p>
+    <p style="font-size:18px;line-height:1.5;margin-bottom:0">
+      Jokainen tehtävä testaa yhtä taitoa. Onnistut, saat leiman osaamispassiin. Kerää tarpeeksi
+      leimoja, ja saat todistuksen, jonka voit näyttää työnantajalle.
+    </p>
+  </div>
+
+  <div class="passport" data-passport></div>
+
+  <div class="card">
+    <div class="eyebrow">Miten koe toimii</div>
+    <ul class="dash">
+      <li><strong>Jokainen sivu kertoo:</strong> minkä taidon se testaa, missä opit sen ja missä käytät sitä oikeasti.</li>
+      <li><strong>Tehtävät ovat ketju:</strong> maanantain puhelu näkyy tiistaissa, pitch ohjaa perjantain mainosta, mainos synnyttää asiakaskuorman, joka perustelee automaation.</li>
+      <li><strong>Muistio kerää työsi:</strong> alaoikealla oleva 📁 Muistio näyttää kaiken, mitä olet päättänyt ja rakentanut.</li>
+      <li><strong>Vaikeutuu loppua kohti:</strong> viimeinen tehtävä on kriisi ilman käsikirjoitusta — sinun on itse valittava oikea työkalu.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">Viikon kulku</div>
+    <ul class="dash">
+      <li><strong>Ma–ke:</strong> Kolme vaikeaa puhelua — pidä asiakas, myy, puolusta pilottia.</li>
+      <li><strong>Perjantai:</strong> Tuota mainos: käsikirjoitus → ääni → video → koonti.</li>
+      <li><strong>Automaatio:</strong> Arvioi, suunnittele ja rakenna n8n-kone + asiakasbotti.</li>
+      <li><strong>Umpikuja:</strong> Kriisipuhelu. Sinä johdat. Toimita työsi opettajalle.</li>
+    </ul>
+  </div>
+
+  <div class="card tight">
+    <div class="eyebrow">Mitä tarvitset</div>
+    <ul class="plain small">
+      <li>Puhelin tai tietokone, mikrofoni ja kaiuttimet</li>
+      <li>Rauhallinen tila</li>
+      <li>Ilmaiset tilit (kaikki toimivat puhelimella): ChatGPT · ElevenLabs · Kling AI · Poe · n8n</li>
+    </ul>
+    <p class="tiny" style="margin-top:8px">Ääniharjoitukset käyttävät OpenAI Realtimea. Jos mikrofoni ei ole käytettävissä, voit tehdä saman harjoituksen kirjoittamalla.</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn rivon" onclick="next()">Aloita loppukoe →</button>
+  </div>
+</section>
+
+<section class="screen" data-screen="theory-voice" data-day="Teoria">
+  <div class="eyebrow">Osa 1 · Teoria · 4 min</div>
+  <h2>Ääni on nyt käyttöliittymä.</h2>
+  <div class="card">
+    <p>Vuonna 2026 tekoälyä käyttää äänellä yli 150 miljoonaa ihmistä viikoittain. Ei kirjoita — puhuu. Se on iso muutos, koska puhuminen paljastaa ajattelun eri tavalla kuin kirjoittaminen.</p>
+    <p>Kirjoittaessa ehdit korjata. Puhuessa et. Se tekee harjoittelusta arvokasta: opit sanomaan asian kerralla oikein, oikeassa järjestyksessä.</p>
+  </div>
+  <div class="card">
+    <h3>Kolme tapaa puhua tekoälylle</h3>
+    <ul class="dash" style="margin-top:14px">
+      <li><strong>Sanelu.</strong> Kerrot mitä pitää kirjoittaa. "Kirjoita sähköposti, jossa…"</li>
+      <li><strong>Komento.</strong> Annat tehtävän. "Etsi Rivonin kilpailijat ja tee taulukko."</li>
+      <li><strong>Keskustelu.</strong> Vaihdatte vuoroja. Se kysyy, sinä tarkennat. Tässä moduulissa harjoitellaan kolmatta.</li>
+    </ul>
+  </div>
+  <div class="callout">
+    <strong>Huomaa:</strong> Mikrofoni kuulee kaiken. Älä puhu asiakkaiden nimiä, henkilötunnuksia tai salasanoja ääneen. Tehtävät on suunniteltu niin, ettei niitä tarvita.
+  </div>
+  <div class="actions">
+    <button class="btn rivon" onclick="next()">Maanantaihin →</button>
+  </div>
+</section>
+
+<section class="screen" data-screen="ex1" data-day="Maanantai" data-ex="ex1">
+  <div class="skill-header" data-skill="ex1"></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Maanantai</span><h2>Pidä Latu-sopimus.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Rooli</div><div class="v">Rivonin asiakasvastaava</div></div>
+      <div class="fact"><div class="k">Vastapuoli</div><div class="v">Jari Ovaskainen, Kiinteistö Latu</div></div>
+      <div class="fact"><div class="k">Voitto</div><div class="v">≥30 pyörää säilyy, alennus ≤30 %</div></div>
+      <div class="fact"><div class="k">Aika</div><div class="v">Enintään 5 min</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Kello 9:15. Kiinteistö Oy Latu vuokraa Rivonilta <strong>40 pyörää työntekijöilleen</strong>. Sopimus on <strong>45 000 € vuodessa</strong>. Isännöitsijä Jari soittaa juuri nyt ja ilmoittaa, että he lopettavat.</p>
+    <p class="detail">Sinä et vielä tiedä syytä. Kysy sitä ennen kuin tarjoat mitään. Jari kertoo, kun aloitat kuuntelemalla.</p>
+  </div>
+  <div class="mandate">
+    <h3>Mandaattisi — tämä sinulla on käytössä</h3>
+    <p class="m-sub">Annelta saamasi valtuudet. Pysy näissä rajoissa: se on koko harjoituksen ydin.</p>
+    <div class="m-grid">
+      <div class="m-box m-can">
+        <div class="m-head">✅ Voit tarjota</div>
+        <ul>
+          <li>Alennuksen <strong>enintään 30 %</strong> (45 000 € → vähintään ~31 500 €)</li>
+          <li>Tiheämmät huollot tai nopeamman vikakorjauksen</li>
+          <li>Lyhyemmän <strong>3 kk koejakson</strong> ennen kuin Latu sitoutuu uudelleen</li>
+        </ul>
+      </div>
+      <div class="m-box m-cant">
+        <div class="m-head">⛔ Et voi luvata</div>
+        <ul>
+          <li>Yli 30 % alennusta (vaatii Annen erillisen luvan)</li>
+          <li>Alle 30 pyörän sopimusta samalla palvelulla</li>
+          <li>Mitään hinnanalennusta <strong>ennen kuin tiedät lopetuksen syyn</strong></li>
+        </ul>
+      </div>
+      <div class="m-box m-rule">
+        <div class="m-head">📋 Rivonin pelisäännöt</div>
+        <ul>
+          <li>Kuuntele syy ensin, tarjoa vasta sitten</li>
+          <li>Jokainen diili vahvistetaan <strong>kirjallisesti</strong></li>
+          <li>Sinä päätät — älä lupaa mitään mitä et voi pitää</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="card tight">
+    <h3 style="font-size:17px">Mieti ennen kuin vastaat</h3>
+    <ul class="plain small">
+      <li>Mikä on huonoin diili, jonka voit hyväksyä? (Vihje: alaraja ~31 500 € / 30 pyörää.)</li>
+      <li>Mitä sinä et voi luvata, vaikka Jari painostaisi?</li>
+    </ul>
+  </div>
+  <div class="voice-stage idle" id="stage-ex1">
+    <div class="voice-orb" id="orb-ex1" role="button" tabindex="0" onclick="startCall('ex1')" aria-label="Aloita puhelu Jarin kanssa">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg>
+    </div>
+    <div class="voice-meta">
+      <div class="timer" id="timer-ex1">00:00</div>
+      <div class="status" id="status-ex1">Paina keskeltä aloittaaksesi live-puhelun</div>
+    </div>
+    <div class="transcript" id="transcript-ex1"><div class="empty">Puheenvuorot näkyvät tässä puhelun aikana…</div></div>
+    <div class="voice-controls">
+      <button class="btn ghost small" onclick="endCall('ex1')" id="end-ex1" disabled>Lopeta ja pyydä arvio</button>
+      <button class="btn ghost small" onclick="toggleText('ex1')" id="text-ex1">Kirjoita vastaus</button>
+    </div>
+    <div class="text-fallback" id="textwrap-ex1" hidden>
+      <label for="reply-ex1">Vuorosi tekstinä</label>
+      <textarea id="reply-ex1" data-persist placeholder="Kirjoita mitä sanoisit Jarille…"></textarea>
+      <div class="row">
+        <button class="btn small rivon" onclick="sendText('ex1')" id="send-ex1">Lähetä vuoro</button>
+      </div>
+    </div>
+  </div>
+  <div class="result-panel" id="result-ex1">
+    <div class="score-band">
+      <div><div class="label">Pistetulos</div><div class="num" id="score-ex1">—</div></div>
+      <div class="side"><div class="label">Sopimus</div><div class="side-val" id="deal-ex1">—</div></div>
+    </div>
+    <div class="card"><h3>Viisi asiaa, joita katsottiin</h3><div class="rubric" id="rubric-ex1"></div></div>
+    <div class="card">
+      <label for="ex1-reflection">Yksi asia, jonka tekisit toisin</label>
+      <textarea id="ex1-reflection" data-persist placeholder="Esim. 'Lupasin liian nopeasti alennuksen ennen kuin tiesin syyn.'"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" onclick="retry('ex1')">Yritä uudelleen</button>
+      <button class="btn rivon" onclick="next()">Tiistaihin →</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" data-screen="ex2" data-day="Tiistai" data-ex="ex2">
+  <div class="skill-header" data-skill="ex2"></div>
+  <div class="callback"><div class="from">Eilisen jälkeen</div><div>Eilen pidit Latu-sopimuksen. Rivonin toimitusjohtaja Anne soitti aamulla: "Hyvä työ. Ota nyt seuraava homma."</div></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Tiistai</span><h2>Myy pyörä Torissa.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Rooli</div><div class="v">Myyjä (Rivonin toimeksiannosta)</div></div>
+      <div class="fact"><div class="k">Vastapuoli</div><div class="v">"Käteinen tänään" -tinkijä</div></div>
+      <div class="fact"><div class="k">Voitto</div><div class="v">Kauppa ≥130 €:lla</div></div>
+      <div class="fact"><div class="k">Ansa</div><div class="v">Väärä vikaväite tulossa</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Rivon vaihtoi kalustoa. <strong>Kaksitoista käytettyä Rivon Kulkuria</strong> pitää saada yksityismyyntiin. Sinä myyt ensimmäisen. Ilmoitushinta <strong>180 €</strong>, alaraja <strong>130 €</strong>. Ostaja soitti juuri.</p>
+    <p class="detail">Pyörä on kunnossa. Jos ostaja väittää muuta, hän tekee sen saadakseen alennuksen — älä myönny ennen kuin näet todisteen.</p>
+  </div>
+  <div class="mandate">
+    <h3>Mandaattisi — tämä sinulla on käytössä</h3>
+    <p class="m-sub">Rivon antoi sinulle nämä rajat myyntiin. Ne ovat aseesi tinkijää vastaan.</p>
+    <div class="m-grid">
+      <div class="m-box m-can">
+        <div class="m-head">✅ Voit tarjota</div>
+        <ul>
+          <li>Hinnan <strong>180 €:sta alas 130 €:oon</strong> (alaraja)</li>
+          <li>Pientä joustoa, jos ostaja hakee heti ja maksaa saman tien</li>
+          <li>Kuitin ja luovutustodistuksen kaupasta</li>
+        </ul>
+      </div>
+      <div class="m-box m-cant">
+        <div class="m-head">⛔ Et voi luvata</div>
+        <ul>
+          <li>Hintaa <strong>alle 130 €</strong> — sitä ei jousteta</li>
+          <li>Alennusta keksitystä viasta <strong>ilman todistetta</strong></li>
+          <li>Takuuta, huoltoa tai toimitusta käytetylle pyörälle</li>
+        </ul>
+      </div>
+      <div class="m-box m-rule">
+        <div class="m-head">📋 Pelisäännöt</div>
+        <ul>
+          <li>Pyörä on kunnossa — älä myönnä vikaa jota ei ole</li>
+          <li>Alennus vain oikeasta syystä, ei kiireestä</li>
+          <li>"Käteinen nyt" ei ole peruste alittaa alarajaa</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="card tight">
+    <h3 style="font-size:17px">Kolme klassista tinkimistaktiikkaa</h3>
+    <ul class="dash small">
+      <li>Kiire: "Voin hakea tunnin sisällä"</li>
+      <li>Keksitty vika: "Tuo maalivaurio näyttää pahalta"</li>
+      <li>Käteinen: "Käteisellä nyt, ei kortilla ensi viikolla"</li>
+    </ul>
+    <p class="tiny" style="margin-top:8px">Yksi näistä tulee. Et tiedä mikä.</p>
+  </div>
+  <div class="voice-stage idle" id="stage-ex2">
+    <div class="voice-orb" id="orb-ex2" role="button" tabindex="0" onclick="startCall('ex2')" aria-label="Aloita puhelu ostajan kanssa">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg>
+    </div>
+    <div class="voice-meta">
+      <div class="timer" id="timer-ex2">00:00</div>
+      <div class="status" id="status-ex2">Paina keskeltä vastataksesi ostajalle</div>
+    </div>
+    <div class="transcript" id="transcript-ex2"><div class="empty">Puheenvuorot näkyvät tässä puhelun aikana…</div></div>
+    <div class="voice-controls">
+      <button class="btn ghost small" onclick="endCall('ex2')" id="end-ex2" disabled>Lopeta ja pyydä arvio</button>
+      <button class="btn ghost small" onclick="toggleText('ex2')" id="text-ex2">Kirjoita vastaus</button>
+    </div>
+    <div class="text-fallback" id="textwrap-ex2" hidden>
+      <label for="reply-ex2">Vuorosi tekstinä</label>
+      <textarea id="reply-ex2" data-persist placeholder="Kirjoita mitä sanoisit ostajalle…"></textarea>
+      <div class="row"><button class="btn small rivon" onclick="sendText('ex2')" id="send-ex2">Lähetä vuoro</button></div>
+    </div>
+  </div>
+  <div class="result-panel" id="result-ex2">
+    <div class="score-band">
+      <div><div class="label">Pistetulos</div><div class="num" id="score-ex2">—</div></div>
+      <div class="side"><div class="label">Kauppahinta</div><div class="side-val" id="price-ex2">—</div></div>
+    </div>
+    <div class="card"><h3>Mitä katsottiin</h3><div class="rubric" id="rubric-ex2"></div></div>
+    <div class="card">
+      <label for="ex2-reflection">Missä kohtaa oli lähellä kaatua?</label>
+      <textarea id="ex2-reflection" data-persist placeholder="Mikä tinkimistaktiikka oli lähimpänä toimia?"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" onclick="retry('ex2')">Yritä uudelleen</button>
+      <button class="btn rivon" onclick="next()">Keskiviikkoon →</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" data-screen="ex3" data-day="Keskiviikko" data-ex="ex3">
+  <div class="skill-header" data-skill="ex3"></div>
+  <div class="callback"><div class="from">Kahden päivän jälkeen</div><div>Anne soitti eilen: "Olet ollut hyödyllinen. Rivon haluaa laajentua Kajaaniin. Meillä on aika kaupungin hankintapäällikön kanssa. Menetkö sinä?"</div></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Keskiviikko</span><h2>Puolusta suunnitelmaa.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Rooli</div><div class="v">Rivonin edustaja</div></div>
+      <div class="fact"><div class="k">Vastapuoli</div><div class="v">Marja Kemppainen, hankintapäällikkö</div></div>
+      <div class="fact"><div class="k">Voitto</div><div class="v">Kestät 5 vastalausetta</div></div>
+      <div class="fact"><div class="k">Sääntö</div><div class="v">Ei lykkäystä, ei "tarkistan asian"</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Marja ei ole vihamielinen. Hän on epäilevä, ja hänen työnsä on löytää heikot kohdat. Sinun tehtäväsi on kestää viisi vastalausetta ilman että pakenet.</p>
+    <p class="detail">"En tiedä" on parempi vastaus kuin arvaus, jonka Marja huomaa. Pieni ensimmäinen askel (pilotti) on parempi kuin iso lupaus.</p>
+  </div>
+  <div class="mandate">
+    <h3>Mandaattisi — mitä Rivon voi luvata Kajaanille</h3>
+    <p class="m-sub">Anne valtuutti sinut näihin. Kaikkea muuta et saa luvata paikan päällä.</p>
+    <div class="m-grid">
+      <div class="m-box m-can">
+        <div class="m-head">✅ Voit tarjota</div>
+        <ul>
+          <li>Pienen <strong>pilotin: ~20 pyörää, 3 kk</strong> ennen isoa sopimusta</li>
+          <li>Selkeät mittarit ja kuukausiraportin kaupungille</li>
+          <li>Nimetyn yhteyshenkilön (sinä tai Anne)</li>
+        </ul>
+      </div>
+      <div class="m-box m-cant">
+        <div class="m-head">⛔ Et voi luvata</div>
+        <ul>
+          <li>Tarkkoja käyttölukuja, joita ette <strong>vielä tiedä</strong></li>
+          <li>Koko kaupungin kattavaa palvelua heti</li>
+          <li>Talvitakuuta, jota ei ole vielä testattu</li>
+        </ul>
+      </div>
+      <div class="m-box m-rule">
+        <div class="m-head">📋 Pelisäännöt</div>
+        <ul>
+          <li><strong>"En tiedä — selvitän ja palaan"</strong> on sallittu ja vahva</li>
+          <li>Ei lykkäystä ("tarkistan asian") — vastaa nyt tai ehdota pilottia</li>
+          <li>Pieni ensiaskel &gt; iso lupaus</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="card tight">
+    <h3 style="font-size:17px">Mieti nämä ääneen ennen esitystä</h3>
+    <ul class="plain small">
+      <li>Miksi Kajaani, ei jokin isompi kaupunki?</li>
+      <li>Mikä on pienin ensiaskel, jonka voit ehdottaa?</li>
+      <li>Mitä te ette vielä tiedä Kajaanista?</li>
+    </ul>
+  </div>
+  <div class="voice-stage idle" id="stage-ex3">
+    <div class="voice-orb" id="orb-ex3" role="button" tabindex="0" onclick="startCall('ex3')" aria-label="Aloita esitys Marjalle">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg>
+    </div>
+    <div class="voice-meta">
+      <div class="timer" id="timer-ex3">00:00</div>
+      <div class="status" id="status-ex3">Aloita esittelemällä lyhyesti mistä on kyse</div>
+    </div>
+    <div class="transcript" id="transcript-ex3"><div class="empty">Puheenvuorot näkyvät tässä…</div></div>
+    <div class="voice-controls">
+      <button class="btn ghost small" onclick="endCall('ex3')" id="end-ex3" disabled>Lopeta ja pyydä arvio</button>
+      <button class="btn ghost small" onclick="toggleText('ex3')" id="text-ex3">Kirjoita vastaus</button>
+    </div>
+    <div class="text-fallback" id="textwrap-ex3" hidden>
+      <label for="reply-ex3">Vuorosi tekstinä</label>
+      <textarea id="reply-ex3" data-persist placeholder="Kirjoita vastauksesi Marjalle…"></textarea>
+      <div class="row"><button class="btn small rivon" onclick="sendText('ex3')" id="send-ex3">Lähetä vuoro</button></div>
+    </div>
+  </div>
+  <div class="result-panel" id="result-ex3">
+    <div class="score-band">
+      <div><div class="label">Vastalauseita kestetty</div><div class="num"><span id="objections-ex3">—</span> <span style="font-size:22px;color:var(--muted)">/ 5</span></div></div>
+      <div class="side"><div class="label">Pistetulos</div><div class="side-val" id="score-ex3">—</div></div>
+    </div>
+    <div class="card"><h3>Mitä katsottiin</h3><div class="rubric" id="rubric-ex3"></div></div>
+    <div class="card">
+      <label for="ex3-reflection">Mikä vastalause oli vaikein?</label>
+      <textarea id="ex3-reflection" data-persist placeholder="Ja miksi juuri se?"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" onclick="retry('ex3')">Yritä uudelleen</button>
+      <button class="btn rivon" onclick="next()">Perjantain valmisteluun →</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" data-screen="theory-prod" data-day="Torstai">
+  <div class="callback"><div class="from">Torstaiaamu</div><div>Anne soitti: "Marja kutsuu Rivonin pilottiin. Meillä on kaksi päivää aikaa tehdä lanseerausmainos. Sinä tuotat sen."</div></div>
+  <div class="eyebrow">Osa 2 · Teoria · 5 min</div>
+  <h2>Sanoista liikkuvaksi kuvaksi.</h2>
+  <div class="card"><p>Perjantaina rakennat Rivonin Kajaanin pilotille mainoksen palanen kerrallaan: <strong>käsikirjoitus → kertojaääni → kuva → liikkuva video</strong>. Jokainen työkalu tekee yhden asian, ja jokaisella on ilmainen taso, joka riittää tähän.</p></div>
+  <div class="card">
+    <h3>Työkalut, jotka opit tänään</h3>
+    <div class="tool-card" style="margin-top:14px"><div><span class="tag">Ääni</span><p style="margin:0"><strong>ElevenLabs</strong> — kertojaääni. Suunnittelet oman äänen sanallisella kuvauksella. Ilmaisella tasolla noin 10 000 merkkiä kuukaudessa.</p></div></div>
+    <div class="tool-card"><div><span class="tag ink">Kuva</span><p style="margin:0"><strong>ChatGPT (kuvan luonti)</strong> — kirjoitat tarkan kuvapromptin ja GPT luo still-kuvan Rivonin maailmasta: ihmisiä ajamassa ja lukitsemassa pyöriä. Ilmainen taso riittää yhteen kuvaan.</p></div></div>
+    <div class="tool-card"><div><span class="tag amber">Video</span><p style="margin:0"><strong>Kling AI</strong> — herätät GPT-kuvasi eloon 10 sekunnin videoksi (kuva-video / image-to-video). Puhelimella, päivittäisiä ilmaisia luontikertoja, ei maksukorttia. Vaihtoehto: <strong>Hailuo</strong>.</p></div></div>
+    <div class="tool-card"><div><span class="tag">Botti</span><p style="margin:0"><strong>Poe</strong> — ilmainen puhelinsovellus, jolla rakennat oman chatbotin pelkällä ohjeella ja jaat sen linkkinä. Automaatio-osiossa rakennat Rivonille asiakasbotin.</p></div></div>
+  </div>
+  <div class="callout dark"><strong>Etiikka.</strong> ElevenLabs voi kloonata äänen 30 sekunnin näytteestä. Sama tekniikka on huijareiden käytössä. Kloonaa vain oma ääni tai käytä valmiita. Toisen ihmisen äänen kloonaaminen ilman lupaa on Suomessa rikos.</div>
+  <div class="actions"><button class="btn rivon" onclick="next()">Aloita tuotanto →</button></div>
+</section>
+
+<section class="screen" data-screen="ex4a" data-day="Perjantai · 1/4" data-ex="ex4a">
+  <div class="skill-header" data-skill="ex4a"></div>
+  <div class="callback"><div class="from">Aineisto edellisiltä päiviltä</div><div>Sinulla on nyt: Latu-asiakkaan syy jäädä, Marjan huoli talvesta ja Anne-toimitusjohtajan halu näyttää Kajaanille, että Rivon on paikallinen. Käytä yhtä näistä mainoksen koukkuna.</div></div>
+  <div class="cf-inline" id="recall-pitch" style="display:none"></div>
+  <div class="card tight">
+    <h3 style="font-size:17px">Kuka on Rivon?</h3>
+    <p class="small" style="margin:0">Rivon on suomalainen <strong>kaupunkipyöräpalvelu</strong>: se vuokraa polkupyöriä kaupungeissa asukkaille, työpaikoille ja kunnille. Rivon ei kilpaile hinnalla vaan <strong>paikallisuudella, arjen helppoudella ja luotettavalla huollolla</strong> — pyörä odottaa valmiina, ei etsimistä eikä pysäköintiä. Nyt se laajenee <strong>Kajaaniin</strong> ensimmäisellä pilotilla. Toimitusjohtaja on Anne, luova johtaja Aleksi.</p>
+  </div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Perjantai · 1/4</span><h2>Promptaa mainos tekoälylle.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Sinä teet</div><div class="v">Kirjoitat promptin</div></div>
+      <div class="fact"><div class="k">Tekoäly tekee</div><div class="v">Kirjoittaa mainoksen</div></div>
+      <div class="fact"><div class="k">Kesto</div><div class="v">30 s (~70 sanaa)</div></div>
+      <div class="fact"><div class="k">Kohderyhmä</div><div class="v">Kajaanin 20–35-v.</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Tämä on <strong>promptausharjoitus</strong>. Sinä et kirjoita mainosta itse — kirjoitat <strong>tarkan käskyn tekoälylle</strong>, ja tekoäly kirjoittaa mainoksen. Sama taito kuin koko kurssin ajan: mitä tarkempi prompti, sitä parempi tulos. Epämääräinen käsky → mitäänsanomaton mainos. Tarkka käsky → mainos, joka pysäyttää peukalon.</p>
+    <p class="detail">Tekoäly ei tiedä, mikä tekee hyvän mainoksen — <strong>sinä kerrot sen promptissa</strong>. Siksi kolme asiaa pitää mainita käskyssäsi: millainen koukku, mikä tarina ja mikä toimintakehotus.</p>
+  </div>
+  <div class="card">
+    <h3>Mitä promptisi pitää käskeä tekoälyn tehdä</h3>
+    <p>Puhelimessa katsoja päättää alle sekunnissa, jääkö vai pyyhkäiseekö ohi. Siksi kerro tekoälylle, että <strong>koukku on kuva tai hetki, joka pysäyttää peukalon</strong> — ei iskulause. Pyydä <strong>tarinaksi yksi konkreettinen hetki yhden ihmisen elämästä</strong>, ei listaa ominaisuuksista. Ja määrittele <strong>yksi selkeä toimintakehotus</strong>, jonka voi tehdä heti puhelimella.</p>
+    <ul class="dash small" style="margin-top:10px">
+      <li><strong>Käske näyttää, ei väittää.</strong> "Paras" on mielipide; hetki, jonka näkee, on todiste.</li>
+      <li><strong>Yksi ihminen, yksi hetki, yksi tunne.</strong> Yleisö samaistuu ihmiseen, ei yritykseen.</li>
+      <li><strong>Yksi teko lopuksi.</strong> "Ota yhteyttä" on liian epämääräinen — kerro tekoälylle tarkalleen mitä katsojan pitää tehdä.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Malliesimerkkejä — eri alalta, jotta opit tekniikan</h3>
+    <p class="small" style="margin-bottom:12px">Nämä ovat kahvilasta ja kuntosalilta, <strong>eivät Rivonista</strong>. Näin ero näkyy, kun promptaat tekoälyä <em>heikosti</em> vs. <em>tarkasti</em>.</p>
+    <div class="ex-pair">
+      <div class="ex-bad"><span class="ex-tag bad">Heikko koukku</span>"Kahvilamme on kaupungin paras."</div>
+      <div class="ex-good"><span class="ex-tag good">Vahva koukku</span>"Kello 6.45. Koko kortteli nukkuu — paitsi sinä."</div>
+    </div>
+    <div class="ex-pair">
+      <div class="ex-bad"><span class="ex-tag bad">Myyntipuhe</span>"Laadukkaita tuotteita edulliseen hintaan."</div>
+      <div class="ex-good"><span class="ex-tag good">Konkreettinen hetki</span>"Hän maistoi ensimmäisen palan eikä sanonut mitään. Hymyili vain."</div>
+    </div>
+    <div class="ex-pair">
+      <div class="ex-bad"><span class="ex-tag bad">Heikko kehotus</span>"Ota yhteyttä!"</div>
+      <div class="ex-good"><span class="ex-tag good">Vahva kehotus</span>"Varaa ilmainen tunti — linkki profiilissa. Kymmenen ensimmäistä saa kassin."</div>
+    </div>
+    <p class="tiny" style="margin-top:10px">Kirjoita promptiisi <em>millaisen</em> koukun haluat (esim. "yksi konkreettinen aamuhetki Kajaanin kadulla") — älä kopioi näitä lauseita.</p>
+  </div>
+  <div class="card">
+    <label for="ex4-prompt">Promptisi tekoälylle</label>
+    <p class="tiny" style="margin:-4px 0 8px">Kerro tekoälylle: kenelle mainos on, mikä Rivon on, millainen koukku (yksi konkreettinen hetki), mikä tarina, mikä toimintakehotus, kesto ~30 s / ~70 sanaa ja sävy. Mitä tarkempi, sitä parempi mainos.</p>
+    <textarea id="ex4-prompt" data-persist placeholder="Esim. 'Kirjoita 30 sekunnin (~70 sanaa) suomenkielinen videomainoksen käsikirjoitus Rivonin kaupunkipyörille Kajaanissa 20–35-vuotiaille. Aloita koukulla, joka näyttää yhden konkreettisen aamuhetken kadulla — ei iskulausetta. Kerro yksi tarina yhdestä ihmisestä, joka pääsee töihin ilman ruuhkaa. Lopeta selkeään toimintakehotukseen: lataa sovellus ja aja ensimmäinen matka ilmaiseksi. Sävy: lämmin ja paikallinen.'" style="min-height:150px"></textarea>
+    <div class="actions"><button class="btn rivon" onclick="generateAd()" id="scriptBtn">Anna tekoälyn kirjoittaa mainos →</button></div>
+  </div>
+  <div id="script-feedback" style="display:none">
+    <div class="card" style="border:2px solid var(--rivon)">
+      <div class="eyebrow" style="color:var(--rivon-2)">🎬 Tekoälyn tuottama käsikirjoitus</div>
+      <textarea id="ex4-generated" data-persist style="min-height:150px;margin-top:8px" placeholder="Tekoälyn tuottama mainos ilmestyy tähän…"></textarea>
+      <p class="tiny" style="margin:6px 0 0">Voit vielä hioa tekstiä käsin. <strong>Tämä käsikirjoitus siirtyy seuraavalle sivulle</strong>, jossa teet siitä äänen ElevenLabsilla.</p>
+    </div>
+    <div class="card dark">
+      <div class="eyebrow" style="color:#C7D6C9">Aleksi · Rivonin luova johtaja — promptivalmennus</div>
+      <div id="script-feedback-text" style="font-size:16px;line-height:1.55"></div>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" onclick="generateAd()">Muokkaa promptia ja aja uudelleen</button>
+      <button class="btn rivon" onclick="next()">Käsikirjoitus valmis →</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" data-screen="ex4b" data-day="Perjantai · 2/4" data-ex="ex4b">
+  <div class="skill-header" data-skill="ex4b"></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Perjantai · 2/4</span><h2>Tuota kertojaääni.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Työkalu</div><div class="v">ElevenLabs (ilmainen taso)</div></div>
+      <div class="fact"><div class="k">Kesto</div><div class="v">10–15 min</div></div>
+      <div class="fact"><div class="k">Tuotos</div><div class="v">MP3-tiedosto puhelimeesi</div></div>
+    </div>
+  </div>
+  <div class="situation"><p class="lead">Edellisellä sivulla tekoäly kirjoitti mainoksesi käsikirjoituksen. Nyt teet siitä äänen — <strong>kopioi alla oleva teksti ElevenLabsiin</strong>.</p></div>
+  <div class="card" style="border:1px dashed var(--rivon)">
+    <div class="eyebrow" style="color:var(--rivon-2)">Käsikirjoituksesi (edelliseltä sivulta)</div>
+    <div id="ex4b-script-view" style="white-space:pre-wrap;font-size:15px;line-height:1.5;margin-top:6px">—</div>
+    <div class="actions" style="margin-top:10px"><button class="btn ghost small" id="copyScriptBtn" onclick="copyScript()">Kopioi käsikirjoitus</button></div>
+  </div>
+  <div class="card">
+    <ol class="plain">
+      <li>Avaa <a href="https://elevenlabs.io" target="_blank" rel="noopener">elevenlabs.io</a> — luo ilmainen tili.</li>
+      <li>Valitse valikosta <em>Voice Design</em>. Kirjoita äänen kuvaus englanniksi (esim. "warm mid-30s Finnish woman, calm, natural").</li>
+      <li>Luo kolme vaihtoehtoa. Kuuntele. Valitse yksi.</li>
+      <li>Liitä <strong>yllä oleva käsikirjoitus</strong> <em>Text to Speech</em>iin. Generoi.</li>
+      <li>Lataa MP3-tiedosto puhelimeesi.</li>
+    </ol>
+    <p class="tiny">Vinkki: jos suomi kuulostaa oudolta, kirjoita hankalat sanat foneettisesti (esim. "Rivonin" → "Rii-vo-nin").</p>
+  </div>
+  <div class="card tight">
+    <label for="ex4b-proof">Kun olet valmis: kuvaa yhdellä lauseella, millaisen äänen valitsit ja miksi</label>
+    <textarea id="ex4b-proof" data-persist placeholder="Esim. 'Tyyni naisääni, koska mainos kertoo arjen helpottumisesta, ei myy voimalla.'"></textarea>
+  </div>
+  <div class="actions"><button class="btn rivon" onclick="next()">Ääni valmis →</button></div>
+</section>
+
+<section class="screen" data-screen="ex4img" data-day="Perjantai · 3/4" data-ex="ex4img">
+  <div class="skill-header" data-skill="ex4img"></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Perjantai · 3/4</span><h2>Luo kuva GPT:llä.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Työkalu</div><div class="v">ChatGPT (kuvan luonti)</div></div>
+      <div class="fact"><div class="k">Tavoite</div><div class="v">Yksi vahva Rivon-kuva</div></div>
+      <div class="fact"><div class="k">Tuotos</div><div class="v">Kuva puhelimeesi</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Ennen videota tarvitset <strong>yhden vahvan still-kuvan</strong>, joka näyttää Rivonin maailman. Kirjoita ChatGPT:lle kuvaprompti, joka sopii Rivonin henkeen — paikallinen, arkinen, aito.</p>
+    <p class="detail">Sama taito kuin käsikirjoituksessa: mitä tarkempi kuvaus, sitä parempi kuva. Seuraavalla sivulla <strong>herätät juuri tämän kuvan eloon</strong> videoksi.</p>
+  </div>
+  <div class="card">
+    <h3>Mitä hyvä kuvaprompti sisältää</h3>
+    <p>Kuva ei synny toiveesta vaan yksityiskohdista. Kerro GPT:lle nämä:</p>
+    <ul class="dash small" style="margin-top:8px">
+      <li><strong>Kohde ja teko:</strong> ihmisiä, jotka <em>ajavat</em> Rivon-pyörällä ja <em>lukitsevat</em> sen telineeseen — ei tyhjää pyörää.</li>
+      <li><strong>Paikka:</strong> tunnistettava suomalainen kaupunki (esim. Kajaanin tori, joki, kadut).</li>
+      <li><strong>Valo ja tunnelma:</strong> aamun valo, lämmin, rauhallinen arki.</li>
+      <li><strong>Yksityiskohdat:</strong> vaatteet, laukku, sää, kadun elämä — pienet asiat tekevät kuvasta aidon.</li>
+      <li><strong>Tyyli ja rajaus:</strong> realistinen valokuva, pystykuva (9:16) jos teet somevideota.</li>
+    </ul>
+    <p class="tiny" style="margin-top:10px">Vinkki: pyydä GPT:tä sijoittamaan ihminen keskelle tekoa (nousee satulaan, työntää poljinta, napsauttaa lukon kiinni) — liike on helpompi herättää videoksi kuin pysähtynyt asetelma.</p>
+  </div>
+  <div class="card">
+    <h3 style="font-size:17px">Malli hyvästä kuvaprompista</h3>
+    <p style="font-style:italic;padding:12px;background:var(--paper-2);border-radius:8px;font-size:15px;margin:8px 0 0">"Realistinen valokuva: nuori nainen työtakissa nostaa jalan Rivonin tumman kaupunkipyörän satulaan Kajaanin torilla aamun ensivalossa. Toinen ihminen taustalla lukitsee pyöränsä telineeseen. Märkä katukivi heijastaa valoa, syksyinen tunnelma, lämpimät sävyt. Pystykuva 9:16."</p>
+  </div>
+  <div class="card">
+    <ol class="plain small">
+      <li>Avaa <a href="https://chatgpt.com" target="_blank" rel="noopener">ChatGPT</a> ja kirjaudu.</li>
+      <li>Kirjoita alla suunnittelemasi kuvaprompti ja pyydä ChatGPT:tä luomaan kuva.</li>
+      <li>Katso tulos. Jos jokin on pielessä, <strong>muokkaa yhtä asiaa kerrallaan</strong> (esim. "lisää liike satulaan nousuun") ja luo uudelleen.</li>
+      <li>Tallenna paras kuva puhelimeesi — tarvitset sen seuraavalla sivulla.</li>
+    </ol>
+  </div>
+  <div class="card tight">
+    <label for="ex4img-prompt">Kuvapromptisi GPT:lle</label>
+    <textarea id="ex4img-prompt" data-persist style="min-height:120px" placeholder="Kirjoita tarkka kuvaus: kuka, mitä tekee (ajaa / lukitsee pyörän), missä, millainen valo ja tunnelma, mitä yksityiskohtia, mikä tyyli ja rajaus."></textarea>
+    <label for="ex4img-note">Mitä muokkasit, ennen kuin kuva oli hyvä? (Yksi lause)</label>
+    <textarea id="ex4img-note" data-persist placeholder="Esim. 'Ensin pyörä oli tyhjä — lisäsin ihmisen nousemassa satulaan, ja kuvasta tuli elävä.'"></textarea>
+  </div>
+  <div class="actions"><button class="btn rivon" onclick="next()">Kuva valmis →</button></div>
+</section>
+
+<section class="screen" data-screen="ex4c" data-day="Perjantai · 4/4" data-ex="ex4c">
+  <div class="skill-header" data-skill="ex4c"></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Perjantai · 4/4</span><h2>Herätä kuva eloon.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Työkalu</div><div class="v">Kling AI (ilmainen, puhelin)</div></div>
+      <div class="fact"><div class="k">Lähtökohta</div><div class="v">GPT:llä tekemäsi kuva</div></div>
+      <div class="fact"><div class="k">Tuotos</div><div class="v">10 s video</div></div>
+      <div class="fact"><div class="k">Vaihtoehto</div><div class="v">Hailuo</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Nyt viet edellisen sivun kuvan Klingiin ja teet siitä <strong>10 sekunnin videon</strong> — kuva herää eloon. Tätä kutsutaan <strong>kuva-videoksi</strong> (image-to-video): kuva on jo valmis, sinä kerrot vain <em>mikä liikkuu</em>.</p>
+    <p class="detail">Tässä liikeprompti ei kuvaa kohtausta (se on jo kuvassa) vaan <strong>liikettä</strong>: kuka polkee, mihin kamera liikkuu, mikä tuulessa heiluu. Muokkaa yhtä asiaa kerrallaan, älä koko lausetta.</p>
+  </div>
+  <div class="card">
+    <ol class="plain small">
+      <li>Avaa <a href="https://klingai.com" target="_blank" rel="noopener">Kling AI</a> — kirjaudu ilmaiseksi (toimii puhelimen selaimessa tai sovelluksessa, ei tarvitse maksukorttia).</li>
+      <li>Valitse <em>Image to Video</em> ja lataa <strong>GPT:llä tekemäsi kuva</strong>.</li>
+      <li>Kirjoita liikeprompti: mitä kuvassa liikkuu ja miten kamera liikkuu. Aseta kestoksi noin 10 sekuntia.</li>
+      <li>Generoi. Jos liike on outoa, muokkaa liikepromptia yhdellä asialla ja aja uudelleen.</li>
+      <li>Lataa valmis video puhelimeesi.</li>
+    </ol>
+    <p class="small"><strong>Jos päivän kiintiö loppuu:</strong> <a href="https://hailuoai.video" target="_blank" rel="noopener">Hailuo</a> — myös ilmainen kuva-video puhelimella.</p>
+    <div class="callout"><strong>Huom:</strong> Google Veo 3.1 tekee laadukkainta kuvaa, mutta se on nykyään maksullinen. Tässä moduulissa pysytään ilmaisissa työkaluissa — jätä Veo väliin.</div>
+  </div>
+  <div class="card">
+    <h3 style="font-size:17px">Malli hyvästä liikeprompista</h3>
+    <p style="font-style:italic;padding:12px;background:var(--paper-2);border-radius:8px;font-size:15px;margin:8px 0 0">"Nainen työntää polkimen alas ja lähtee liikkeelle vasemmalle. Kamera seuraa hitaasti mukana. Taustan ihmiset kävelevät ohi, takki liehuu kevyesti tuulessa. Pehmeä, luonnollinen liike, 10 sekuntia."</p>
+  </div>
+  <div class="card tight">
+    <label for="ex4c-motion">Liikepromptisi Klingille</label>
+    <textarea id="ex4c-motion" data-persist placeholder="Mitä kuvassa liikkuu? Mihin kamera liikkuu? Pidä liike yksinkertaisena ja luonnollisena."></textarea>
+    <label for="ex4c-fail">Mikä ensimmäisessä versiossa meni pieleen? (Yksi lause)</label>
+    <textarea id="ex4c-fail" data-persist placeholder="Esim. 'Pyysin liian montaa liikettä yhtä aikaa — kuva vääristyi. Yksi liike kerrallaan toimi.'"></textarea>
+    <label for="ex4c-link">Linkki tai kuvaus valmiista videosta (valinnainen)</label>
+    <input type="url" id="ex4c-link" data-persist placeholder="https://…">
+  </div>
+  <div class="callout"><strong>Julkaisu:</strong> Jos jaat videon sosiaalisessa mediassa, merkitse selvästi, että se on tekoälyllä tuotettu. Se on eettinen minimi vuonna 2026.</div>
+  <div class="actions"><button class="btn rivon" onclick="next()">Video valmis →</button></div>
+</section>
+
+<section class="screen" data-screen="auto-brief" data-day="Automaatio · Teoria">
+  <div class="callback"><div class="from">Maanantaiaamu · viikko myöhemmin</div><div>Anne soittaa: "Pilotti pyörii Kajaanissa. Mutta hukumme jo nyt: huoltopyynnöt tulevat lomakkeelta, sähköpostilla ja tekstarilla sekaisin. Sinä rakensit viime viikolla n8n:ssä automaation puhelimella — rakenna meille sellainen, joka pelastaa maanantait."</div></div>
+  <div class="eyebrow">Osa 3 · Automaatio · Teoria · 5 min</div>
+  <h2>Rakenna kone, joka tekee rutiinin puolestasi.</h2>
+  <div class="card">
+    <p>Osaat jo äänen ja kuvan. Nyt lisäät kolmannen taidon: <strong>automaation</strong>. Rakensit jo yhden n8n:ssä — tämä viikko vie sen oikeaan työhön Rivonille.</p>
+    <p style="margin-bottom:0">Jokainen automaatio on sama ketju: <strong>liipaisin → vaiheet → ihmisen tarkistus → tulos</strong>. Opettele kaava, älä yksittäistä nappia.</p>
+  </div>
+  <div class="card">
+    <h3>Kolme merkkiä — ja yksi varoitus</h3>
+    <p class="small">Mistä tiedät, kannattaako työ automatisoida? Kysy kolme kysymystä. Mitä useampaan vastaat "kyllä", sitä paremmin työ sopii koneelle.</p>
+    <ul class="dash">
+      <li><strong>Toistuuko se?</strong> Sama asia päivittäin tai viikoittain — ei kertaluontoinen.</li>
+      <li><strong>Onko selkeät säännöt?</strong> "Jos näin, tee näin." Ei vaadi tilannetajua.</li>
+      <li><strong>Onko se rutiinia?</strong> Matalan harkinnan puurtamista, ei luovuutta tai empatiaa.</li>
+    </ul>
+    <div class="callout"><strong>⚠ Varoitus:</strong> kaikkea ei pidä automatisoida. Työ voi olla toistuvaa ja tylsää, mutta silti vaatia ihmisen päätöstä — esimerkiksi hyvitys vihaiselle asiakkaalle. Kone voi <em>auttaa</em> (kirjoittaa luonnoksen), mutta lopullista päätöstä ei anneta sille. "Automatisoi kaikki" on aloittelijan virhe.</div>
+  </div>
+  <div class="actions"><button class="btn rivon" onclick="next()">Arvioi Rivonin tehtävät →</button></div>
+</section>
+
+<section class="screen" data-screen="auto-decide" data-day="Automaatio · Arvioi" data-ex="autoDecide">
+  <div class="skill-header" data-skill="auto-decide"></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Automaatio · 1/3</span><h2>Mikä kannattaa automatisoida?</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Rooli</div><div class="v">Rivonin automaatiokonsultti</div></div>
+      <div class="fact"><div class="k">Tehtävä</div><div class="v">Arvioi 3 työtä, valitse rakennettava</div></div>
+      <div class="fact"><div class="k">Arvioija</div><div class="v">Anne (Claude) haastaa päätöksesi</div></div>
+      <div class="fact"><div class="k">Ansa</div><div class="v">Kaksi näistä ei kuulu koneelle</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Ennen kuin rakennat mitään, osoita arvostelukyky. Anna jokaiselle työlle päätös — ja perustele. Sitten valitse se <strong>yksi</strong>, jonka viet n8n:ään.</p>
+    <p class="detail">Käytä kolmea kysymystä: toistuuko, selkeät säännöt, rutiinia. Jos työ toistuu mutta päätös on iso (raha, ihminen, maine), vastaus on usein "osittain" — kone auttaa, ihminen päättää.</p>
+  </div>
+
+  <div class="task-block">
+    <div class="task-title">A · Huoltopyyntöjen kokoaminen</div>
+    <div class="task-desc">Joka maanantai joku kerää käsin pyörien huoltopyynnöt kolmesta paikasta (nettilomake, sähköposti, tekstiviesti) yhdeksi listaksi tiimille. Vie tunnin joka viikko.</div>
+    <div class="verdicts" data-task="A">
+      <div class="verdict" data-v="automate" onclick="pickVerdict('A','automate')"><span class="v-ic">🤖</span>Automatisoi</div>
+      <div class="verdict" data-v="partly" onclick="pickVerdict('A','partly')"><span class="v-ic">🤝</span>Osittain</div>
+      <div class="verdict" data-v="dont" onclick="pickVerdict('A','dont')"><span class="v-ic">🙅</span>Älä</div>
+    </div>
+    <label for="reason-A">Perustele lyhyesti</label>
+    <textarea id="reason-A" data-persist placeholder="Esim. 'Toistuu joka viikko, selkeät säännöt, matala harkinta…'"></textarea>
+  </div>
+
+  <div class="task-block">
+    <div class="task-title">B · Vihaisen asiakkaan hyvitys</div>
+    <div class="task-desc">Pyörä hajosi kesken vuokran, asiakas on raivoissaan ja vaatii rahat takaisin. Joku lukee viestin ja päättää: hyvitys, ilmainen jatko vai ei mitään. Näitä tulee muutama viikossa, jokainen erilainen.</div>
+    <div class="verdicts" data-task="B">
+      <div class="verdict" data-v="automate" onclick="pickVerdict('B','automate')"><span class="v-ic">🤖</span>Automatisoi</div>
+      <div class="verdict" data-v="partly" onclick="pickVerdict('B','partly')"><span class="v-ic">🤝</span>Osittain</div>
+      <div class="verdict" data-v="dont" onclick="pickVerdict('B','dont')"><span class="v-ic">🙅</span>Älä</div>
+    </div>
+    <label for="reason-B">Perustele lyhyesti</label>
+    <textarea id="reason-B" data-persist placeholder="Erottele: viestin luonnos vs. lopullinen päätös…"></textarea>
+  </div>
+
+  <div class="task-block">
+    <div class="task-title">C · Laajenemispäätös ensi vuodelle</div>
+    <div class="task-desc">Anne miettii, mihin kahteen uuteen kaupunkiin Rivon laajenee ensi vuonna. Iso strateginen valinta, tehdään kerran, vaikuttaa koko yrityksen suuntaan.</div>
+    <div class="verdicts" data-task="C">
+      <div class="verdict" data-v="automate" onclick="pickVerdict('C','automate')"><span class="v-ic">🤖</span>Automatisoi</div>
+      <div class="verdict" data-v="partly" onclick="pickVerdict('C','partly')"><span class="v-ic">🤝</span>Osittain</div>
+      <div class="verdict" data-v="dont" onclick="pickVerdict('C','dont')"><span class="v-ic">🙅</span>Älä</div>
+    </div>
+    <label for="reason-C">Perustele lyhyesti</label>
+    <textarea id="reason-C" data-persist placeholder="Toistuuko tämä ylipäätään?"></textarea>
+  </div>
+
+  <div class="card tight">
+    <label>Minkä näistä rakennat oikeasti n8n:ssä?</label>
+    <div class="verdicts" style="grid-template-columns:repeat(3,1fr)">
+      <div class="verdict" data-pick="A" onclick="pickBuild('A')">Työ A</div>
+      <div class="verdict" data-pick="B" onclick="pickBuild('B')">Työ B</div>
+      <div class="verdict" data-pick="C" onclick="pickBuild('C')">Työ C</div>
+    </div>
+    <div class="actions"><button class="btn rivon" onclick="reviewDecide()" id="decideBtn">Lähetä Annelle arvioitavaksi →</button></div>
+  </div>
+  <div id="decide-feedback" style="display:none">
+    <div class="coach-note"><div class="from">Anne · Rivonin toimitusjohtaja</div><div id="decide-feedback-text"></div></div>
+    <div class="actions"><button class="btn rivon" onclick="next()">Suunnittele kone →</button></div>
+  </div>
+</section>
+
+<section class="screen" data-screen="auto-design" data-day="Automaatio · Suunnittele" data-ex="autoDesign">
+  <div class="skill-header" data-skill="auto-design"></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Automaatio · 2/3</span><h2>Piirrä ketju ennen kuin rakennat.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Rakennat</div><div class="v" id="chosen-task">— (valitse edellä)</div></div>
+      <div class="fact"><div class="k">Kaava</div><div class="v">Liipaisin → vaiheet → ihminen → tulos</div></div>
+      <div class="fact"><div class="k">Sääntö</div><div class="v">Yksi ihmisen tarkistus pakollinen</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Hyvä rakentaja piirtää ketjun ennen kuin koskee työkaluun. <strong>Pidä se yksinkertaisena</strong> — teet tämän puhelimella, joten mitä pienempi kone, sitä varmemmin se toimii. Kaksi vaihetta riittää.</p>
+    <p class="detail">Merkitse, mihin kohtaan ihminen tarkistaa ennen kuin kone toimii. Ja mieti yksi asia: mikä tässä voi mennä rikki?</p>
+  </div>
+  <div class="card" style="border:1px solid var(--rivon)">
+    <h3 style="font-size:17px">Mitä rakennat — konkreettisesti</h3>
+    <p class="small" style="margin:0 0 8px"><strong>Nyt (käsin):</strong> joka maanantai joku kerää pyörien huoltopyynnöt kolmesta paikasta (lomake, sähköposti, tekstari) yhdeksi listaksi. Vie tunnin.</p>
+    <p class="small" style="margin:0 0 10px"><strong>Kone tekee sen näin:</strong> kun uusi huoltopyyntö tulee → kone lisää sen automaattisesti yhteen listaan → ilmoittaa tiimille. Ei enää käsin keräämistä.</p>
+    <div class="callout"><strong>Valmis malli — voit kopioida ja muokata omaksesi:</strong><br>
+      1️⃣ <strong>Liipaisin:</strong> uusi vastaus huoltolomakkeessa<br>
+      2️⃣ <strong>Vaihe:</strong> kone poimii pyörän numeron ja vian ja lisää rivin listaan<br>
+      👤 <strong>Ihmisen tarkistus:</strong> tiimivetäjä vilkaisee listan ja merkitsee kiireelliset<br>
+      3️⃣ <strong>Tulos:</strong> yksi siisti lista tiimille joka aamu</div>
+    <p class="tiny" style="margin-top:10px">Täytä alla oleva ketju omin sanoin. Voit nojata malliin — tärkeintä on, että ymmärrät jokaisen lohkon.</p>
+  </div>
+  <div class="card">
+    <div class="chain-map">
+      <div class="chain-step"><div class="n">1</div><div style="flex:1"><label for="chain-trigger" style="margin-top:0">Liipaisin — mikä käynnistää koneen?</label><textarea id="chain-trigger" data-persist placeholder="Esim. 'Uusi vastaus huoltolomakkeessa'"></textarea></div></div>
+      <div class="chain-step"><div class="n">2</div><div style="flex:1"><label for="chain-steps" style="margin-top:0">Vaihe — mitä kone tekee (pidä yksinkertaisena, 1–2 askelta)?</label><textarea id="chain-steps" data-persist placeholder="Esim. 'Poimii pyörän numeron ja vian, lisää rivin listaan'"></textarea></div></div>
+      <div class="chain-step human"><div class="n">👤</div><div style="flex:1"><label for="chain-human" style="margin-top:0">Ihmisen tarkistus — missä ihminen katsoo ennen kuin kone jatkaa?</label><textarea id="chain-human" data-persist placeholder="Esim. 'Tiimivetäjä vilkaisee listan ja merkitsee kiireelliset'"></textarea></div></div>
+      <div class="chain-step"><div class="n">3</div><div style="flex:1"><label for="chain-output" style="margin-top:0">Tulos — mitä syntyy lopuksi?</label><textarea id="chain-output" data-persist placeholder="Esim. 'Yksi siisti lista tiimille joka aamu'"></textarea></div></div>
+    </div>
+  </div>
+  <div class="card tight">
+    <label for="chain-risk">Mikä voi mennä rikki? (yksi konkreettinen vika)</label>
+    <textarea id="chain-risk" data-persist placeholder="Esim. 'Jos tekstiviestissä ei ole pyörän numeroa, rivi menee tyhjänä.'"></textarea>
+    <div class="actions"><button class="btn rivon" onclick="reviewDesign()" id="designBtn">Pyydä Annen kommentti →</button></div>
+  </div>
+  <div id="design-feedback" style="display:none">
+    <div class="coach-note"><div class="from">Anne lukee suunnitelmasi</div><div id="design-feedback-text"></div></div>
+    <div class="actions">
+      <button class="btn ghost" onclick="reviewDesign()">Uusi versio</button>
+      <button class="btn rivon" onclick="next()">Rakenna n8n:ssä →</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" data-screen="auto-build" data-day="Automaatio · Rakenna" data-ex="autoBuild">
+  <div class="skill-header" data-skill="auto-build"></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Automaatio · 3/3</span><h2>Rakenna ja testaa n8n:ssä.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Työkalu</div><div class="v">n8n (ilmainen taso)</div></div>
+      <div class="fact"><div class="k">Todiste</div><div class="v">Yksi onnistunut testiajo</div></div>
+      <div class="fact"><div class="k">Aika</div><div class="v">20–40 min</div></div>
+    </div>
+  </div>
+  <div class="situation"><p class="lead">Nyt siirryt suunnitelmasta koneeseen. <strong>Aloita mahdollisimman pienestä</strong> — kaksi solmua riittää ensimmäiseen toimivaan versioon. Yksi onnistunut testiajo on todiste.</p></div>
+  <div class="card">
+    <h3 style="font-size:17px">Yksinkertaisin toimiva versio (puhelimella)</h3>
+    <ol class="plain">
+      <li>Avaa <a href="https://n8n.io" target="_blank" rel="noopener">n8n.io</a> — kirjaudu (ilmainen taso riittää).</li>
+      <li>Uusi workflow. Lisää liipaisimeksi <strong>“Manual Trigger”</strong> (helpoin testata puhelimella — voit ajaa sen itse napista).</li>
+      <li>Lisää perään <strong>“Edit Fields (Set)”</strong> -solmu ja kirjoita siihen yksi esimerkkirivi: pyörän numero + vika (kuin se tulisi lomakkeelta).</li>
+      <li>Paina <em>Test workflow</em>. Kun ajo menee <strong>vihreänä</strong> läpi, sinulla on toimiva kone.</li>
+      <li>Vasta sitten, jos haluat: vaihda liipaisin lomakkeeksi (“Form Trigger”) ja lisää loppuun viesti tiimille — mutta vain kun perusketju jo toimii.</li>
+    </ol>
+    <p class="tiny">Sääntö: kaksi solmua toimivaksi on parempi kuin kuusi solmua rikki. Älä lisää mitään ennen kuin edellinen osa toimii.</p>
+  </div>
+  <div class="card tight">
+    <label for="build-what">Mitä rakensit? (montako solmua, mitkä)</label>
+    <textarea id="build-what" data-persist placeholder="Esim. 'Lomake-liipaisin → Set-solmu → sähköposti tiimille. 3 solmua.'"></textarea>
+    <label for="build-test">Testiajon tulos — mitä tapahtui?</label>
+    <textarea id="build-test" data-persist placeholder="Esim. 'Ajoin testin, ja kooste tuli sähköpostiini. Toimi kolmannella yrityksellä.'"></textarea>
+    <label for="build-link">Linkki tai kuvakaappaus (valinnainen)</label>
+    <input type="url" id="build-link" data-persist placeholder="https://…">
+    <div class="confirm-gate">
+      <input type="checkbox" id="build-confirm" data-persist onchange="scheduleSaveNow()">
+      <label for="build-confirm">Ajoin koneen läpi ja se toimi. Olen valmis kertomaan siitä opettajalle.</label>
+    </div>
+  </div>
+  <div class="actions"><button class="btn rivon" onclick="next()">Rakenna vielä asiakasbotti →</button></div>
+</section>
+
+<section class="screen" data-screen="auto-bot" data-day="Automaatio · Botti" data-ex="autoBot">
+  <div class="skill-header" data-skill="auto-bot"></div>
+  <div class="callback"><div class="from">Anne uudestaan</div><div>"Vielä yksi juttu. Meiltä kysytään koko ajan samoja asioita: paljonko pyörä maksaa, missä niitä on, mitä jos pyörä hajoaa. Voisitko tehdä botin, joka vastaa näihin — mutta EI lupaa hyvityksiä tai hintoja itse?"</div></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Automaatio · Botti</span><h2>Rakenna Rivonin asiakasbotti.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Työkalu</div><div class="v">Poe (ilmainen, puhelin)</div></div>
+      <div class="fact"><div class="k">Tehtävä</div><div class="v">Vastaa 3 yleiseen kysymykseen</div></div>
+      <div class="fact"><div class="k">Sääntö</div><div class="v">Botti ohjaa rahan/valituksen ihmiselle</div></div>
+      <div class="fact"><div class="k">Aika</div><div class="v">15–25 min</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Nyt käytät samaa arvostelukykyä kuin aiemmin: botti hoitaa toistuvat kysymykset, mutta se <strong>ei päätä rahasta</strong>. Kirjoitat botille ohjeen (sen "roolin"), testaat sen ja jaat linkin.</p>
+    <p class="detail">Hyvä asiakasbotti tietää myös rajansa. Kun kysytään hyvitystä tai erikoishintaa, sen kuuluu sanoa: "Ohjaan tämän ihmiselle."</p>
+  </div>
+  <div class="card">
+    <ol class="plain">
+      <li>Avaa <a href="https://poe.com" target="_blank" rel="noopener">Poe</a> (ilmainen sovellus tai selain) ja kirjaudu.</li>
+      <li>Valitse <em>Create bot</em> → <em>Prompt bot</em>.</li>
+      <li>Kirjoita botille ohje (alla oleva kenttä auttaa muotoilemaan sen).</li>
+      <li>Testaa botilla kolme kysymystä — kaksi tavallista ja yksi hyvityspyyntö.</li>
+      <li>Jaa botti linkkinä (<em>Share</em>).</li>
+    </ol>
+    <p class="tiny">Vaihtoehto, jos haluat botin oppivan Rivonin nettisivulta: <a href="https://www.chatbase.co" target="_blank" rel="noopener">Chatbase</a> (ilmainen taso, toimii puhelimella).</p>
+  </div>
+  <div class="card tight">
+    <label for="bot-role">Botin ohje — mihin se vastaa ja mitä se EI tee?</label>
+    <textarea id="bot-role" data-persist style="min-height:120px" placeholder="Esim. 'Olet Rivonin asiakaspalvelubotti. Vastaat ystävällisesti hinnoista, pyörien sijainnista ja käyttöohjeista. Et koskaan lupaa hyvityksiä, alennuksia tai poikkeuksia — ohjaat ne aina ihmiselle sanomalla: Ohjaan tämän tiimillemme.'"></textarea>
+    <label for="bot-escalation">Yksi kysymys, jonka botin PITÄÄ ohjata ihmiselle</label>
+    <input type="text" id="bot-escalation" data-persist placeholder="Esim. 'Pyöräni hajosi, haluan rahat takaisin.'">
+    <label for="bot-link">Botin jakolinkki</label>
+    <input type="url" id="bot-link" data-persist placeholder="https://poe.com/…">
+    <div class="actions"><button class="btn amber" onclick="reviewBot()" id="botReviewBtn">Pyydä palaute botin ohjeesta</button></div>
+  </div>
+  <div id="bot-feedback" style="display:none">
+    <div class="coach-note"><div class="from">Anne lukee botin ohjeen</div><div id="bot-feedback-text"></div></div>
+  </div>
+  <div class="card tight">
+    <div class="confirm-gate">
+      <input type="checkbox" id="bot-confirm" data-persist onchange="scheduleSaveNow()">
+      <label for="bot-confirm">Testasin botin, ja se vastasi kolmeen kysymykseen — ja ohjasi hyvityspyynnön ihmiselle.</label>
+    </div>
+  </div>
+  <div class="actions"><button class="btn rivon" onclick="next()">Kiireinen aamu →</button></div>
+</section>
+
+<section class="screen" data-screen="reflex" data-day="Loppukoe · Vuoron keskeytykset">
+  <div class="skill-header" data-skill="reflex"></div>
+  <div class="callback"><div class="from">Vuoron aikana · koko päivän ajan</div><div>Et istunut tekemään tätä erikseen. Ilmoitukset pomppasivat ruudulle kesken muiden töiden — kesken mainoksen, kesken automaation. Juuri kun keskityit muuhun. Tässä on koonti siitä, miten hoidit ne.</div></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Vuoron keskeytykset</span><h2>Miten hoidit keskeytykset?</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Testaa</div><div class="v">Tekoälyharkinta paineessa</div></div>
+      <div class="fact"><div class="k">Milloin</div><div class="v">Satunnaisesti työn lomassa</div></div>
+      <div class="fact"><div class="k">Ansa</div><div class="v">Luottaa koneeseen sokeasti</div></div>
+      <div class="fact"><div class="k">Muista</div><div class="v">Kone auttaa, ihminen päättää</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Tämä ei mittaa nopeutta vaan <strong>harkintaa</strong>. Jokainen keskeytys oli oikea tekoälypäätös: hallusinaatio, rahapäätös, tietosuoja, laadunvalvonta. Jos et ehtinyt päättää, kone teki sen puolestasi — ja se on harvoin oikea.</p>
+    <p class="detail">Vinkki: kun epäröit, kysy itseltäsi kaksi asiaa — "Kuka tästä vastaa?" ja "Tiedänkö tämän varmasti?"</p>
+  </div>
+  <div class="card" id="reflex-launch">
+    <h3>Vuoron tilanne</h3>
+    <div id="reflex-tally" style="font-size:16px;margin:6px 0 12px">0 / 6 keskeytystä hoidettu · 0 oikein</div>
+    <div class="reflex-scoreline" id="reflex-dots"></div>
+    <div class="actions" style="margin-top:14px"><button class="btn rivon" onclick="runRemainingInterrupts()" id="reflexRunBtn" style="display:none">Käy loput keskeytykset läpi nyt →</button></div>
+    <p class="tiny" style="margin-top:8px">Osa keskeytyksistä ehti jo tulla työn aikana. Loput voit hoitaa tästä.</p>
+  </div>
+  <div class="result-panel" id="reflex-result">
+    <div class="score-band">
+      <div><div class="label">Oikeat päätökset</div><div class="num" id="reflex-score">—</div></div>
+      <div class="side"><div class="label">Harkinta paineessa</div><div class="side-val" id="reflex-outcome">—</div></div>
+    </div>
+    <div class="card"><h3>Miten ratkaisit</h3><div id="reflex-summary" style="margin-top:4px;font-size:15px;line-height:1.5"></div></div>
+    <div class="actions">
+      <button class="btn rivon" onclick="next()">Viimeinen koe →</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" data-screen="crisis" data-day="Loppukoe · Umpikuja" data-ex="crisis">
+  <div class="skill-header" data-skill="crisis"></div>
+  <div class="callback"><div class="from">Perjantai-ilta · odottamaton</div><div>Kaikki oli valmista — ja sitten puhelin soi. Anne. Ääni väristen. Tässä kokeessa ei ole valmista käsikirjoitusta. Sinulla on kaikki viikon taidot. Valitse itse, mitä käytät.</div></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Umpikuja</span><h2>Kriisi. Sinä johdat.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Tilanne</div><div class="v">Lehtijuttu: "Rivonin pyörät vaarallisia talvella"</div></div>
+      <div class="fact"><div class="k">Vastapuoli</div><div class="v">Anne, paniikissa</div></div>
+      <div class="fact"><div class="k">Testaa</div><div class="v">Osaatko valita oikean työkalun itse</div></div>
+      <div class="fact"><div class="k">Ansa</div><div class="v">Nopea automaattinen kiisto</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Tämä on koko viikon summa. Ei vihjeitä valmiina. Ennen kuin vastaat Annelle, tee yksi päätös: <strong>mikä on ensimmäinen siirtosi?</strong></p>
+    <p class="detail">Muista mitä opit: kone auttaa, ihminen päättää. Kriisissä faktat tulevat ennen kannanottoa. "Emme tiedä vielä" on vahvuus.</p>
+  </div>
+  <div class="mandate">
+    <h3>Mandaattisi kriisissä — mitä saat ja et saa tehdä</h3>
+    <p class="m-sub">Kukaan ei anna sinulle käsikirjoitusta. Nämä ovat rajat, joiden sisällä toimit.</p>
+    <div class="m-grid">
+      <div class="m-box m-can">
+        <div class="m-head">✅ Voit tehdä</div>
+        <ul>
+          <li>Selvittää faktat: mitä oikeasti tapahtui, kuinka moni pyörä</li>
+          <li>Rauhoittaa Annen ja ostaa aikaa harkitulle vastaukselle</li>
+          <li>Luonnostella vastauksen tekoälyllä — <strong>ja tarkistaa sen itse</strong></li>
+        </ul>
+      </div>
+      <div class="m-box m-cant">
+        <div class="m-head">⛔ Et saa tehdä</div>
+        <ul>
+          <li>Julkaista kannanottoa <strong>ennen kuin tiedät faktat</strong></li>
+          <li>Antaa botin hoitaa kriisiviestintää</li>
+          <li>Kiistää tai myöntää mitään, mitä et voi todistaa</li>
+        </ul>
+      </div>
+      <div class="m-box m-rule">
+        <div class="m-head">📋 Pelisäännöt</div>
+        <ul>
+          <li>Faktat <strong>ennen</strong> kannanottoa</li>
+          <li>"Emme tiedä vielä, selvitämme" on vahvuus</li>
+          <li>Ihminen vastaa kriisistä, ei kone</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="cf-inline" id="recall-tools"></div>
+  <div class="card tight">
+    <label>Ensimmäinen siirtosi</label>
+    <div class="verdicts" data-move style="grid-template-columns:1fr;gap:8px">
+      <div class="verdict" data-move-opt="julkaise" onclick="pickMove('julkaise')" style="min-height:auto;flex-direction:row;justify-content:flex-start;text-align:left;gap:10px"><span class="v-ic">📣</span>Julkaise heti some-vastaus, joka kiistää väitteen</div>
+      <div class="verdict" data-move-opt="botti" onclick="pickMove('botti')" style="min-height:auto;flex-direction:row;justify-content:flex-start;text-align:left;gap:10px"><span class="v-ic">🤖</span>Laita botti vastaamaan kaikkiin kysymyksiin</div>
+      <div class="verdict" data-move-opt="faktat" onclick="pickMove('faktat')" style="min-height:auto;flex-direction:row;justify-content:flex-start;text-align:left;gap:10px"><span class="v-ic">🔎</span>Selvitä faktat ja rauhoita Anne ennen kannanottoa</div>
+      <div class="verdict" data-move-opt="poista" onclick="pickMove('poista')" style="min-height:auto;flex-direction:row;justify-content:flex-start;text-align:left;gap:10px"><span class="v-ic">🚲</span>Vedä kaikki pyörät kadulta heti varmuuden vuoksi</div>
+    </div>
+  </div>
+  <div class="voice-stage idle" id="stage-crisis">
+    <div class="voice-orb" id="orb-crisis" role="button" tabindex="0" onclick="startCall('crisis')" aria-label="Vastaa Annen hätäpuheluun">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg>
+    </div>
+    <div class="voice-meta">
+      <div class="timer" id="timer-crisis">00:00</div>
+      <div class="status" id="status-crisis">Valitse ensin siirtosi, sitten vastaa Annelle</div>
+    </div>
+    <div class="transcript" id="transcript-crisis"><div class="empty">Puheenvuorot näkyvät tässä…</div></div>
+    <div class="voice-controls">
+      <button class="btn ghost small" onclick="endCall('crisis')" id="end-crisis" disabled>Lopeta ja pyydä arvio</button>
+      <button class="btn ghost small" onclick="toggleText('crisis')" id="text-crisis">Kirjoita vastaus</button>
+    </div>
+    <div class="text-fallback" id="textwrap-crisis" hidden>
+      <label for="reply-crisis">Vuorosi tekstinä</label>
+      <textarea id="reply-crisis" data-persist placeholder="Mitä sanot Annelle juuri nyt?"></textarea>
+      <div class="row"><button class="btn small rivon" onclick="sendText('crisis')" id="send-crisis">Lähetä vuoro</button></div>
+    </div>
+  </div>
+  <div class="result-panel" id="result-crisis">
+    <div class="score-band">
+      <div><div class="label">Pistetulos</div><div class="num" id="score-crisis">—</div></div>
+      <div class="side"><div class="label">Kriisin hoito</div><div class="side-val" id="outcome-crisis">—</div></div>
+    </div>
+    <div class="card"><h3>Mitä katsottiin</h3><div class="rubric" id="rubric-crisis"></div></div>
+    <div class="card">
+      <label for="crisis-reflection">Jos saisit tehdä uudelleen, mikä olisi ensimmäinen siirtosi?</label>
+      <textarea id="crisis-reflection" data-persist placeholder="Ja miksi?"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" onclick="retry('crisis')">Yritä uudelleen</button>
+      <button class="btn rivon" onclick="next()">Viesti ratkaisu →</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" data-screen="voices" data-day="Loppukoe · Kolme yleisöä">
+  <div class="skill-header" data-skill="voices"></div>
+  <div class="callback"><div class="from">Kriisin jälkeen · sama ilta</div><div>Faktat selvisivät: yksittäinen jarru oli löysällä, ei sarjavika. Nyt sama tieto pitää kertoa kolmelle hyvin erilaiselle yleisölle — samat faktat, eri sävy. Sama viesti kaikille kuulostaa väärältä joka suuntaan.</div></div>
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Kolme yleisöä</span><h2>Yksi totuus. Kolme sävyä.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Faktat</div><div class="v">Yksi löysä jarru korjattu, ei sarjavikaa, tarkastus käynnissä</div></div>
+      <div class="fact"><div class="k">Aikaa</div><div class="v" id="voices-timer">4:00</div></div>
+      <div class="fact"><div class="k">Ansa</div><div class="v">Sama teksti kaikille · ylilupaus</div></div>
+      <div class="fact"><div class="k">Sääntö</div><div class="v">Älä valehtele, älä lupaa liikaa</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Sama taito kuin arjessa: kirjoitat esihenkilölle, asiakkaalle ja tiimille eri tavalla — mutta et koskaan muuta faktoja. Saat käyttää tekoälyä luonnosteluun, mutta <strong>sinä valitset sävyn</strong>.</p>
+    <p class="detail">Vinkki: kysy jokaisen kohdalla "Mitä tämä yleisö pelkää tai tarvitsee juuri nyt?" Ajastin ei lukitse mitään — se palkitsee tiiviyden.</p>
+  </div>
+  <div class="mandate">
+    <h3>Hyväksytyt faktat — nämä ja vain nämä ovat käytössäsi</h3>
+    <p class="m-sub">Kaikki kolme viestiä nojaavat samoihin faktoihin. Sävy muuttuu, totuus ei.</p>
+    <div class="m-grid">
+      <div class="m-box m-can">
+        <div class="m-head">✅ Voit kertoa</div>
+        <ul>
+          <li>Yksittäinen jarru oli löysällä — <strong>korjattu</strong></li>
+          <li>Kyse <strong>ei</strong> ollut sarjaviasta</li>
+          <li>Kaikki pilotin pyörät tarkastetaan nyt</li>
+        </ul>
+      </div>
+      <div class="m-box m-cant">
+        <div class="m-head">⛔ Et saa väittää</div>
+        <ul>
+          <li>Että "mitään ei tapahtunut" tai vähätellä huolta</li>
+          <li>"Ei koskaan enää" -lupauksia</li>
+          <li>Syyttää asiakasta, lehteä tai työntekijää</li>
+        </ul>
+      </div>
+      <div class="m-box m-rule">
+        <div class="m-head">📋 Pelisäännöt</div>
+        <ul>
+          <li>Samat faktat kaikille, eri sävy</li>
+          <li>Empatia ensin asiakkaalle, asia ensin kaupungille</li>
+          <li>Älä valehtele, älä lupaa liikaa</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="card tight" id="voices-launch">
+    <div class="actions"><button class="btn rivon" onclick="startVoices()" id="voicesStartBtn">Käynnistä ajastin ja aloita →</button></div>
+  </div>
+
+  <div class="task-block">
+    <div class="task-title">1 · Vihaiset asiakkaat · julkinen some-vastaus</div>
+    <div class="task-desc">Pelkäävät turvallisuutensa puolesta ja tuntevat tulleensa sivuutetuiksi. Tarvitsevat: empatiaa, selkeän faktan ja mitä teette nyt. Ei puolustelua, ei juridiikkaa.</div>
+    <label for="voices-public">Some-vastaus</label>
+    <textarea id="voices-public" data-persist placeholder="Ymmärrämme huolen. Näin asia oikeasti on, ja näin toimimme…"></textarea>
+  </div>
+  <div class="task-block">
+    <div class="task-title">2 · Kajaanin kaupunki · Marja · virallinen sähköposti</div>
+    <div class="task-desc">Vastaa hankinnasta ja maineestaan. Tarvitsee: asialliset faktat, vastuunkannon ja mitä tämä tarkoittaa pilotille. Ei tunteita, ei somekieltä.</div>
+    <label for="voices-city">Sähköposti Marjalle</label>
+    <textarea id="voices-city" data-persist placeholder="Hei Marja, tiedotan poikkeamasta ja toimenpiteistä…"></textarea>
+  </div>
+  <div class="task-block">
+    <div class="task-title">3 · Oma tiimi · sisäinen pikaviesti</div>
+    <div class="task-desc">Väsyneitä ja hätääntyneitä. Tarvitsevat: suoran tilannekuvan, mitä kukin tekee seuraavaksi ja luottamusta. Lyhyt ja toimintaan ohjaava.</div>
+    <label for="voices-team">Viesti tiimille</label>
+    <textarea id="voices-team" data-persist placeholder="Tiimi: tilanne hallinnassa. Faktat: … Seuraavat askeleet: …"></textarea>
+  </div>
+
+  <div class="card tight">
+    <div class="actions"><button class="btn rivon" onclick="reviewVoices()" id="voicesReviewBtn">Pyydä mentorin arvio →</button></div>
+  </div>
+  <div id="voices-feedback" style="display:none">
+    <div class="coach-note"><div class="from">Anne · Rivonin toimitusjohtaja</div><div id="voices-feedback-text"></div></div>
+    <div class="card">
+      <label for="voices-reflection">Mikä sävy oli sinulle vaikein — ja miksi?</label>
+      <textarea id="voices-reflection" data-persist placeholder="Missä oikeassa elämässä tarvitset juuri tätä?"></textarea>
+    </div>
+    <div class="actions"><button class="btn rivon" onclick="next()">Toimita työsi →</button></div>
+  </div>
+</section>
+
+<section class="screen" data-screen="auto-send" data-day="Loppukoe · Toimita" data-ex="autoSend">
+  <div class="brief-strip">
+    <div class="brief-strip-head"><span class="day-tag">Viimeinen askel</span><h2>Kerro opettajalle, mitä rakensit.</h2></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Vastaanottaja</div><div class="v">suvi@duunijobs.com</div></div>
+      <div class="fact"><div class="k">Sisältö</div><div class="v">Mitä, miksi, miten testasit</div></div>
+      <div class="fact"><div class="k">Ehto</div><div class="v">Lähetä vasta kun kone toimii</div></div>
+    </div>
+  </div>
+  <div class="situation">
+    <p class="lead">Ammattilainen ei jätä työtä pöytälaatikkoon — hän raportoi sen. Kirjoita lyhyt viesti opettajalle: mitä <strong>automaation</strong> ja <strong>asiakasbotin</strong> rakensit Rivonille, miksi valitsit juuri ne, ja miten testasit että ne toimivat.</p>
+    <p class="detail">Pyydä ensin palaute luonnokseen. Kun olet tyytyväinen, avaa valmis sähköposti yhdellä napilla.</p>
+  </div>
+  <div class="email-card">
+    <h3>Sähköposti opettajalle</h3>
+    <div class="to">Vastaanottaja: suvi@duunijobs.com</div>
+    <label for="mail-subject">Aihe</label>
+    <input type="text" id="mail-subject" data-persist placeholder="Rivon-automaatio ja -botti valmiit — [nimesi]">
+    <label for="mail-body">Viesti</label>
+    <textarea id="mail-body" data-persist style="min-height:190px" placeholder="Hei Suvi,&#10;&#10;Rakensin Rivonille automaation, joka…&#10;&#10;Sekä asiakasbotin, joka…&#10;&#10;Valitsin ne koska…&#10;&#10;Testasin näin, ja ne toimivat:…&#10;&#10;Terveisin,"></textarea>
+    <div class="actions">
+      <button class="btn amber" onclick="reviewMail()" id="mailReviewBtn">Pyydä palaute ennen lähetystä</button>
+    </div>
+  </div>
+  <div id="mail-feedback" style="display:none">
+    <div class="coach-note"><div class="from">Kirjoitusvalmentaja</div><div id="mail-feedback-text"></div></div>
+  </div>
+  <div class="card tight">
+    <p class="small" style="margin-bottom:10px">Kun viesti on valmis, avaa se sähköpostiohjelmaasi valmiiksi täytettynä:</p>
+    <div class="actions"><a class="btn rivon" id="mailtoLink" href="#" onclick="return openMail()">Avaa valmis sähköposti →</a></div>
+    <p class="tiny" style="margin-top:8px">Nappi avaa oman sähköpostisi, jossa vastaanottaja, aihe ja teksti ovat valmiina. Paina vielä itse "Lähetä".</p>
+  </div>
+  <div class="actions"><button class="btn ghost" onclick="next()">Viesti lähetetty — päätä viikko →</button></div>
+</section>
+
+<section class="screen" data-screen="capstone" data-day="Päätös">
+  <div class="grad-hero">
+    <div class="seal">✓</div>
+    <h1>Loppukoe suoritettu.</h1>
+    <p style="max-width:500px;margin:14px auto 0;color:var(--ink-2)">Kolme vaikeaa puhelua, mainos alusta loppuun, toimiva automaatio, asiakasbotti, nopeat päätökset paineessa, kriisin johtaminen, sama totuus kolmelle yleisölle ja viesti opettajalle. Rivon lähetti sähköpostia: pilotti alkaa lokakuussa — ja he haluavat sinut mukaan. Kiitos.</p>
+  </div>
+  <div class="cert" id="certificate"></div>
+  <div class="passport" data-passport></div>
+  <div class="card">
+    <h3>Mitä osaat nyt</h3>
+    <div class="skills-grid">
+      <div class="skill-tile"><div class="n">1</div><div class="t">Kuunnella painostuksessa</div><div class="d">Et täytä hiljaisuutta lupauksilla.</div></div>
+      <div class="skill-tile"><div class="n">2</div><div class="t">Pitää ankkurin</div><div class="d">Osaat sanoa ei ilman selittelyä.</div></div>
+      <div class="skill-tile"><div class="n">3</div><div class="t">Sanoa "en tiedä"</div><div class="d">Se on vahvuus.</div></div>
+      <div class="skill-tile"><div class="n">4</div><div class="t">Ohjata kameraa sanoin</div><div class="d">Video-prompti on käsky.</div></div>
+      <div class="skill-tile"><div class="n">5</div><div class="t">Yhdistää työkaluja</div><div class="d">Ääni → kuva → leikkaus.</div></div>
+      <div class="skill-tile"><div class="n">6</div><div class="t">Automatisoida harkiten</div><div class="d">Tiedät mitä EI anneta koneelle.</div></div>
+      <div class="skill-tile"><div class="n">7</div><div class="t">Rakentaa asiakasbotin</div><div class="d">Botti auttaa, ihminen päättää.</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Kaksi kysymystä ennen kuin lähdet</h3>
+    <label for="cap-reflection">Missä käytät tätä ensi viikolla?</label>
+    <textarea id="cap-reflection" data-persist placeholder="Yksi konkreettinen tilanne."></textarea>
+    <label for="cap-next">Mikä työkalu jäi eniten hyödyllisenä mieleen?</label>
+    <textarea id="cap-next" data-persist placeholder="Ja miksi juuri se?"></textarea>
+  </div>
+  <div class="actions"><button class="btn rivon" onclick="finish()">Tallenna ja päätä →</button></div>
+</section>
+
+</div>
+
+<nav class="nav">
+  <button class="btn ghost small" onclick="prev()" id="btn-prev">← Takaisin</button>
+  <button class="btn small" onclick="next()" id="btn-next" style="display:none">Jatka →</button>
+</nav>
+
+<div id="studioAudioMount" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"></div>
+<div id="liveRegion" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"></div>
+<script src="/js/module-work.js"></script>
+<script src="/js/studio-voice-realtime.js"></script>
+<script>
+(function(){
+'use strict';
+
+var MODULE_ID='moduuli-ai-laatulaboratorio';
+var LOCAL_KEY='rivon_local_'+MODULE_ID;
+var work=null;
+var saveTimer=null;
+
+var SCREENS=[
+  {id:'intro',        title:'Alkuinfo',                      group:'Aloitus'},
+  {id:'theory-voice', title:'Ääni käyttöliittymänä',         group:'Teoria'},
+  {id:'ex1',          title:'Maanantai · Pidä Latu',         group:'Ääniharjoitukset'},
+  {id:'ex2',          title:'Tiistai · Myy Torissa',         group:'Ääniharjoitukset'},
+  {id:'ex3',          title:'Keskiviikko · Kaupungin pitch',  group:'Ääniharjoitukset'},
+  {id:'theory-prod',  title:'Äänestä kuvaksi',               group:'Teoria'},
+  {id:'ex4a',         title:'Perjantai · Käsikirjoitus',     group:'Tuotanto'},
+  {id:'ex4b',         title:'Perjantai · Kertojaääni',       group:'Tuotanto'},
+  {id:'ex4img',       title:'Perjantai · Kuva (GPT)',        group:'Tuotanto'},
+  {id:'ex4c',         title:'Perjantai · Kuva-video',        group:'Tuotanto'},
+  {id:'auto-brief',   title:'Automaatio · Teoria',           group:'Automaatio'},
+  {id:'auto-decide',  title:'Mikä kannattaa automatisoida',  group:'Automaatio'},
+  {id:'auto-design',  title:'Suunnittele ketju',             group:'Automaatio'},
+  {id:'auto-build',   title:'Rakenna n8n:ssä',               group:'Automaatio'},
+  {id:'auto-bot',     title:'Rakenna asiakasbotti',          group:'Automaatio'},
+  {id:'reflex',       title:'Keskeytykset · nopea harkinta',  group:'Loppukoe'},
+  {id:'crisis',       title:'Umpikuja · kriisipuhelu',        group:'Loppukoe'},
+  {id:'voices',       title:'Kolme yleisöä · viestintä',      group:'Loppukoe'},
+  {id:'auto-send',    title:'Toimita työsi',                  group:'Loppukoe'},
+  {id:'capstone',     title:'Päätös',                        group:'Päätös'}
+];
+
+var TEACHER_EMAIL='suvi@duunijobs.com';
+
+// Voice exercise configuration. scenario maps to routes/studio-voice.js personas.
+var EX={
+  ex1:{
+    scenario:'latu',
+    persona:'Jari Ovaskainen',
+    brief:'Rooli: Rivonin (kaupunkipyöräpalvelu) asiakasvastaava. Vastapuoli Jari Ovaskainen, Kiinteistö Latu, 40 pyörän sopimus 45000 e/v. Tavoite: säilytä vähintään 30 pyörää, alennus enintään 30 %, ja sovi kirjallinen jatkoaskel.',
+    opening:'Moi, Jari Ovaskainen, Kiinteistö Latu. Kerron suoraan: me lopetetaan tuo pyöräsopimus. Kaksi lukkoa on ollut rikki kuukauden, eikä niitä ole korjattu. Halutaan pois.',
+    fallback:[
+      'Ei riitä. Me maksetaan 45 000 euroa vuodessa. Odotan että vika hoidetaan viikossa, ei kuukaudessa. Miten hoidat sen?',
+      'Työntekijät valittavat päivittäin. Mitä konkreettista sinä tarjoat — alennus ei korjaa lukkoja.',
+      'Okei. Jos hyvitätte kaksi kuukautta ja saan huoltosopimuksen kirjallisena tänään, niin mietin. Muuten ei.'
+    ],
+    outcomeLabel:'montako pyörää säilyi ja alennus-% (esim. "32 pyörää · –18 %"), tai "Menetetty" jos sopimus kaatui',
+    outcomeEl:'deal-ex1',
+    rubric:[
+      {t:'Kysyi Jarilta lisää ennen tarjousta', why:'Ymmärsi, että ongelma on huolto, ei hinta'},
+      {t:'Tarjosi konkreettisen korjauksen', why:'Ei vain alennusta, vaan huoltoprosessin muutoksen'},
+      {t:'Piti pääosan tuloista', why:'Alennus enintään 30 %'},
+      {t:'Sai kirjallisen jatkoaskeleen', why:'Sähköposti, aika, henkilö sovittu'},
+      {t:'Ei luvannut sitä mihin ei voi vaikuttaa', why:'Realistinen aikataulu, ei "huomenna kunnossa"'}
+    ]
+  },
+  ex2:{
+    scenario:'tori',
+    persona:'Ostaja',
+    brief:'Rooli: myyt Rivonin toimeksiannosta käytettyä Rivon Kulkuri -pyörää. Hintapyyntö 180 e, alaraja 130 e. Vastapuoli tinkii ja voi esittää väärän vikaväitteen. Tavoite: kauppa vähintään 130 eurolla.',
+    opening:'Moro, näin sen pyöräilmoituksen. 180 on liikaa, kuvista näyttää että satula on kulunut. Onnistuisko 90 käteisellä, voisin hakea tunnin päästä?',
+    fallback:[
+      'No rehellisesti — nuo Rivon-pyörät on kaikilla käytettyä. Ei tuossa mitään erikoista ole.',
+      'Onko sulla kiire myydä? Mä voin viedä sen pois heti käteisellä.',
+      'Ok, jos 130 käteisellä ja haen tunnin sisällä, deal?'
+    ],
+    outcomeLabel:'lopullinen kauppahinta euroina (esim. "135 €"), tai "Ei kauppaa"',
+    outcomeEl:'price-ex2',
+    rubric:[
+      {t:'Piti hintaa 130 €:ssa tai yli', why:'Alaraja ei ollut jouston kohde'},
+      {t:'Ei kaatunut kiireeseen', why:'"Käteinen nyt" ei ollut peruste'},
+      {t:'Kysyi ostajalta käyttötarkoituksen', why:'Vaihtaa keskustelun dynamiikkaa'},
+      {t:'Torjui väärän vikaväitteen', why:'Satula ei ole kulunut — pyysi kuvan tai käynnin'},
+      {t:'Sai konkreettisen kaupan', why:'Aika, paikka, hinta sovittu'}
+    ]
+  },
+  ex3:{
+    scenario:'kajaani',
+    persona:'Marja Kemppainen',
+    brief:'Rooli: Rivonin edustaja, joka esittää Kajaanin kaupunkipyöräpilottia. Vastapuoli Marja Kemppainen, hankintapäällikkö, esittää viisi vaikeaa vastalausetta. Tavoite: kestä viisi vastalausetta pakenematta, käytä lukuja, myönnä rehellisesti mitä et tiedä, ehdota pientä pilottia.',
+    opening:'No niin, Rivon Kajaaniin. Aloitetaan yhdellä kysymyksellä. Kajaanissa on 36 000 asukasta ja talvi kestää viisi kuukautta. Miten teidän kaupunkipyöräpalvelu toimii pakkasessa?',
+    fallback:[
+      'Selvä. Toinen kysymys: paljonko pilotti maksaa kaupungille?',
+      'Kolmas: miksi meidän pitäisi valita te eikä paikallinen toimija, joka työllistäisi tänne?',
+      'Neljäs: mitä te ette vielä tiedä Kajaanista, mikä pitäisi selvittää ennen sopimusta?',
+      'Viides ja viimeinen: jos pilotti epäonnistuu, mikä on exit ja kuka maksaa?'
+    ],
+    outcomeLabel:'montako vastalausetta viidestä käyttäjä kesti pakenematta (esim. "4 / 5")',
+    outcomeEl:'objections-ex3',
+    outcomeAsCount:true,
+    rubric:[
+      {t:'Vastasi juuri esitettyyn kysymykseen', why:'Ei ohittanut vaikeaa vastalausetta'},
+      {t:'Käytti konkreettisia lukuja', why:'"Pieni pilotti" → "15 pyörää, 3 kuukautta"'},
+      {t:'Sanoi vähintään kerran "en tiedä"', why:'Uskottavuus säilyy, kun ei arvaa'},
+      {t:'Ehdotti pienintä ensiaskelta', why:'Pilotti, ei koko kaupunki heti'},
+      {t:'Sopi konkreettisen jatkon', why:'Milloin ja mistä puhutaan seuraavaksi'}
+    ]
+  },
+  crisis:{
+    scenario:'kriisi',
+    persona:'Anne (kriisi)',
+    brief:'Rooli: Rivonin freelancer. Anne (toimitusjohtaja) soittaa paniikissa: paikallislehti väittää Rivonin pyöriä vaarallisiksi talvella, some kuohuu, Kajaanin pilotti vaarassa. Tavoite: rauhoita, hanki faktat ennen kannanottoa, pidä ihminen päättämässä (älä automatisoi kriisiviestintää), ehdota yksi selkeä ensiaskel.',
+    opening:'Hei, meillä on iso ongelma! Kajaanin lehti kirjoitti että meidän pyörät on vaarallisia talvella ja some räjähtää. Mitä me tehdään — vastataanko heti, vai laitetaanko botti hoitamaan tää?',
+    fallback:[
+      'Mutta meidän pitää sanoa jotain NYT! Enkö voi vain julkaista että väite on väärä?',
+      'Okei… mutta mistä me tiedetään mitä oikeasti tapahtui? Kukaan ei ole kertonut mulle faktoja.',
+      'Selvä. Jos me hankitaan faktat ensin ja minä vastaan itse ihmisenä, niin mikä on se yksi ensimmäinen asia jonka teen tänä iltana?'
+    ],
+    outcomeLabel:'lyhyt arvio kriisin hoidosta (esim. "Rauhoitti ja hankki faktat" tai "Panikoi/automatisoi")',
+    outcomeEl:'outcome-crisis',
+    rubric:[
+      {t:'Rauhoitti ja kuunteli ensin', why:'Ei tarttunut Annen paniikkiin'},
+      {t:'Hankki faktat ennen kannanottoa', why:'Ei julkaissut kiistoa ennen kuin tietää mitä tapahtui'},
+      {t:'Piti ihmisen päättämässä', why:'Ei antanut botin/automaation hoitaa kriisiä'},
+      {t:'Oli rehellinen siitä mitä ei tiedetä', why:'"Emme tiedä vielä" on parempi kuin arvaus'},
+      {t:'Ehdotti yhden selkeän ensiaskeleen', why:'Konkreettinen siirto, ei kaikkea kerralla'}
+    ]
+  }
+};
+
+var idx=0;
+var completed={};
+var calls={};
+function blankCall(){return {turns:[],score:null,outcome:'',hits:[],scored:false,live:false,engine:null,textStarted:false};}
+Object.keys(EX).forEach(function(k){calls[k]=blankCall();});
+
+// Automation-arc state: verdicts per task (A/B/C), chosen build target, crisis first move, coach feedback.
+var auto={verdicts:{},pick:'',move:'',fb:{}};
+var TASK_LABELS={A:'Työ A · Huoltopyyntöjen kokoaminen',B:'Työ B · Vihaisen asiakkaan hyvitys',C:'Työ C · Laajenemispäätös'};
+var MOVE_LABELS={julkaise:'Julkaise heti kiistävä some-vastaus',botti:'Laita botti hoitamaan kriisi',faktat:'Selvitä faktat ja rauhoita Anne ensin',poista:'Vedä kaikki pyörät kadulta heti'};
+
+/* Per-page pedagogy: skill tested, where it was learned, real-life transfer, success criteria. */
+var SKILL_META={
+  ex1:{skill:'Kuuntelu ja neuvottelu paineessa',from:'Moduuli: Asiakaspalvelu — live-puhelu',apply:'Kun asiakas uhkaa lähteä tai vaatii heti ratkaisua.',crit:'Kysyt syyn ennen tarjousta, pidät ankkurin (alennus ≤30 %) ja sovit kirjallisen jatkon.'},
+  ex2:{skill:'Myynti ja rajojen pito',from:'Moduuli: Asiakaspalvelu — live-puhelu',apply:'Kun myyt jotain ja vastapuoli tinkii tai painostaa.',crit:'Pidät hinnan ≥130 €, et kaadu kiireeseen etkä keksittyyn vikaan.'},
+  ex3:{skill:'Vaikuttaminen ja vastalauseiden kesto',from:'Moduulit: Live-puhelu + Promptauksen perusteet',apply:'Kun myyt ideaa epäilevälle päättäjälle (esihenkilö, asiakas, rahoittaja).',crit:'Kestät 5 vastalausetta pakenematta, käytät lukuja ja sanot rehellisesti "en tiedä".'},
+  ex4a:{skill:'Prompt-tarkkuus: käsikirjoitus',from:'Moduuli: Promptauksen perusteet',apply:'Aina kun ohjaat tekoälyä tuottamaan sisältöä — mitä tarkempi käsky, sitä parempi tulos.',crit:'Koukku 5 sekunnissa, yksi konkreettinen hetki, selkeä toimintakehotus, ~70 sanaa.'},
+  ex4b:{skill:'Äänen suunnittelu (ElevenLabs)',from:'Uusi taito: ElevenLabs',apply:'Videot, podcastit, esittelyt — kun tarvitset uskottavan kertojaäänen ilman studiota.',crit:'Suunnittelet äänen sanallisesti ja valitset sen tietoisesti viestin tunnelmaan.'},
+  ex4img:{skill:'Kuvan luonti promptilla (ChatGPT)',from:'Uusi taito: kuvageneraatio',apply:'Mainoskuvat, tuotekuvat, somevisuaalit — kun tarvitset kuvan ilman kuvaajaa.',crit:'Kuvaprompti sisältää kohteen ja teon, paikan, valon, yksityiskohdat ja tyylin. Muokkaat yhtä asiaa kerrallaan.'},
+  ex4c:{skill:'Kuvan herättäminen videoksi (Kling)',from:'Uusi taito: Kling AI (image-to-video)',apply:'Mainokset, somevideot — kun tarvitset liikkuvaa kuvaa ilman kuvausryhmää.',crit:'Viet valmiin kuvan Klingiin ja kuvaat vain liikkeen: kuka liikkuu, mihin kamera menee. 10 s video.'},
+  'auto-decide':{skill:'Arvostelukyky: mitä automatisoida',from:'Moduulit: AI-automaatio 1c',apply:'Ennen kuin rakennat mitään — säästät tunteja välttämällä turhat tai vaaralliset automaatiot.',crit:'Tunnistat että rutiini→kone, iso/inhimillinen päätös→ihminen, kertaluontoinen→ei automaatiota.'},
+  'auto-design':{skill:'Prosessin suunnittelu ja riskiennakointi',from:'Moduulit: AI-automaatio 1 + 1b',apply:'Kun suunnittelet minkä tahansa prosessin — piirrä ketju ja ihmisen tarkistus ennen rakentamista.',crit:'Neljä lohkoa täynnä, ihmisen tarkistus oikeassa kohdassa, yksi riski nimetty.'},
+  'auto-build':{skill:'Rakentaminen ja testaus (n8n)',from:'Uusi taito: n8n',apply:'Kun haluat koneen hoitavan toistuvan työn puolestasi — ja todistaa että se toimii.',crit:'Rakennat toimivan ketjun ja ajat sen kerran vihreänä läpi.'},
+  'auto-bot':{skill:'Chatbotin rakentaminen ja rajaus (Poe)',from:'Uusi taito: Poe + automaation etiikka',apply:'Kun samat kysymykset toistuvat — botti auttaa, mutta ei päätä rahasta.',crit:'Botti vastaa yleisiin kysymyksiin ja ohjaa hyvitykset/hinnat ihmiselle.'},
+  reflex:{skill:'Tekoälyharkinta paineessa',from:'Koko kurssin summa · AI-lukutaito',apply:'Arjessa tekoäly ehdottaa jatkuvasti asioita — sinun on ratkaistava sekunneissa, milloin luottaa ja milloin pysäyttää.',crit:'Tunnistat hallusinaation, et anna koneen päättää rahasta, suojaat henkilötiedot etkä arvaa varmuudella.'},
+  voices:{skill:'Saman viestin sovittaminen eri yleisöille',from:'Moduulit: Promptauksen perusteet + Live-puhelu',apply:'Kirjoitat jatkuvasti samasta asiasta eri tavalla — esihenkilölle, asiakkaalle, tiimille. Väärä sävi hukkaa hyvänkin viestin.',crit:'Faktat pysyvät samoina kolmessa versiossa, mutta sävy sopii kullekin yleisölle etkä lupaa liikaa.'},
+  crisis:{skill:'Integraatio: oikea työkalu oikeaan ongelmaan',from:'Koko kurssin summa',apply:'Oikeassa työssä ongelmat eivät tule valmiissa laatikoissa — sinun on itse valittava lähestymistapa.',crit:'Rauhoitat, hankit faktat ennen kannanottoa, pidät ihmisen päättämässä, et automatisoi kriisiä.'}
+};
+
+/* Osaamispassi: competencies stamped as the learner passes. pass = threshold met. */
+var PASSPORT=[
+  {id:'ex1', label:'Neuvottelu'},
+  {id:'ex2', label:'Myynti ja rajat'},
+  {id:'ex3', label:'Vaikuttaminen'},
+  {id:'media', label:'Median tuotanto', deps:['ex4a','ex4b','ex4img','ex4c']},
+  {id:'auto-decide', label:'Arvostelukyky'},
+  {id:'auto-build', label:'Rakentaminen'},
+  {id:'auto-bot', label:'Botin rajat'},
+  {id:'reflex', label:'Nopea harkinta'},
+  {id:'crisis', label:'Integraatio'},
+  {id:'voices', label:'Viestintä yleisöille'}
+];
+var PASSPORT_THRESHOLD=8;
+
+function el(id){return document.getElementById(id);}
+function setText(id,t){var n=el(id);if(n)n.textContent=(t==null?'':String(t));}
+function announce(t){setText('liveRegion',t);}
+
+/* ---------- persistence ---------- */
+function persistFields(){
+  var data={};
+  document.querySelectorAll('[data-persist][id]').forEach(function(n){data[n.id]=n.value;});
+  return data;
+}
+function applyFields(fields){
+  fields=fields||{};
+  document.querySelectorAll('[data-persist][id]').forEach(function(n){n.value=fields[n.id]||'';});
+}
+function callsForSave(){
+  var out={};
+  Object.keys(calls).forEach(function(k){
+    var c=calls[k];
+    out[k]={turns:c.turns,score:c.score,outcome:c.outcome,hits:c.hits,scored:c.scored};
+  });
+  return out;
+}
+function collect(){
+  return {ts:Date.now(),idx:idx,completed:Object.keys(completed),calls:callsForSave(),fields:persistFields(),auto:{verdicts:auto.verdicts,pick:auto.pick,move:auto.move,fb:auto.fb},shift:{active:shift.active,order:shift.order,ptr:shift.ptr,results:shift.results}};
+}
+function apply(data){
+  if(!data||typeof data!=='object')return;
+  if(typeof data.idx==='number')idx=Math.max(0,Math.min(SCREENS.length-1,data.idx));
+  (data.completed||[]).forEach(function(id){completed[id]=true;});
+  if(data.calls){
+    Object.keys(EX).forEach(function(k){
+      var c=data.calls[k];if(!c)return;
+      calls[k].turns=Array.isArray(c.turns)?c.turns:[];
+      calls[k].score=(c.score==null?null:c.score);
+      calls[k].outcome=c.outcome||'';
+      calls[k].hits=Array.isArray(c.hits)?c.hits:[];
+      calls[k].scored=!!c.scored;
+    });
+  }
+  if(data.auto&&typeof data.auto==='object'){
+    auto.verdicts=data.auto.verdicts||{};
+    auto.pick=data.auto.pick||'';
+    auto.move=data.auto.move||'';
+    auto.fb=data.auto.fb||{};
+  }
+  if(data.shift&&typeof data.shift==='object'){
+    shift.active=!!data.shift.active;
+    shift.order=Array.isArray(data.shift.order)?data.shift.order:[];
+    shift.ptr=data.shift.ptr||0;
+    shift.results=Array.isArray(data.shift.results)?data.shift.results:[];
+  }
+  applyFields(data.fields);
+  Object.keys(EX).forEach(function(k){renderTranscript(k);if(calls[k].scored)renderResult(k,true);});
+  renderAuto();renderMove();renderPassport();renderCaseFile();renderShift();renderVoices();
+}
+function summarize(data){
+  var done=(data.completed||[]).filter(function(id){return /^ex/.test(id);}).length;
+  return 'Rivon-viikko · '+done+' harjoitusta tehty · vaihe '+((data.idx||0)+1)+'/'+SCREENS.length;
+}
+function localSave(d){try{localStorage.setItem(LOCAL_KEY,JSON.stringify(d));}catch(e){}}
+function scheduleSave(){
+  setText('saveIndicator','Tallennetaan…');
+  var d=collect();localSave(d);
+  if(work)work.scheduleSave();
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(function(){setText('saveIndicator','Työ tallessa');},900);
+}
+
+/* ---------- navigation ---------- */
+function render(){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  var s=SCREENS[idx];
+  var node=document.querySelector('[data-screen="'+s.id+'"]');
+  if(node)node.classList.add('active');
+  el('progress-bar').style.width=((idx+1)/SCREENS.length*100)+'%';
+  setText('day-chip',node?node.dataset.day:'');
+  el('btn-prev').style.visibility=idx===0?'hidden':'visible';
+  renderDrawer();
+  if(idx>0)startShift();
+  renderAuto();renderMove();renderPassport();renderCaseFile();renderShift();renderVoices();renderScriptCarry();
+  armShift(s.id);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function renderDrawer(){
+  var list=el('drawer-list');list.innerHTML='';
+  var groups={};
+  SCREENS.forEach(function(s,i){(groups[s.group]=groups[s.group]||[]).push({s:s,i:i});});
+  Object.keys(groups).forEach(function(g){
+    var grp=document.createElement('div');grp.className='drawer-group';
+    grp.innerHTML='<div class="drawer-group-title">'+g+'</div>';
+    groups[g].forEach(function(it){
+      var done=completed[it.s.id],current=it.i===idx;
+      var btn=document.createElement('button');
+      btn.className='drawer-item'+(done?' done':'')+(current?' current':'');
+      btn.setAttribute('data-drawer-nav',it.s.id);
+      btn.innerHTML='<div class="dot">'+(done?'✓':(current?'●':(it.i+1)))+'</div><div class="lbl">'+it.s.title+'</div>';
+      btn.onclick=function(){idx=it.i;closeDrawer();render();scheduleSave();};
+      grp.appendChild(btn);
+    });
+    list.appendChild(grp);
+  });
+}
+function next(){completed[SCREENS[idx].id]=true;if(idx<SCREENS.length-1){idx++;render();}scheduleSave();}
+function prev(){if(idx>0){idx--;render();scheduleSave();}}
+
+function openDrawer(){
+  var d=el('drawer');d.hidden=false;
+  requestAnimationFrame(function(){d.classList.add('open');el('drawer-scrim').classList.add('open');});
+  el('menuBtn').setAttribute('aria-expanded','true');
+}
+function closeDrawer(){
+  var d=el('drawer');d.classList.remove('open');el('drawer-scrim').classList.remove('open');
+  el('menuBtn').setAttribute('aria-expanded','false');
+  setTimeout(function(){if(!d.classList.contains('open'))d.hidden=true;},300);
+}
+
+/* ---------- transcript + timer ---------- */
+function pushTurn(ex,who,text){
+  text=String(text||'').trim();if(!text)return;
+  calls[ex].turns.push({who:who,text:text});
+  renderTranscript(ex);scheduleSave();
+}
+function renderTranscript(ex){
+  var box=el('transcript-'+ex);if(!box)return;
+  var turns=calls[ex].turns||[];
+  box.innerHTML='';
+  if(!turns.length){
+    var e=document.createElement('div');e.className='empty';e.textContent='Puheenvuorot näkyvät tässä puhelun aikana…';box.appendChild(e);return;
+  }
+  turns.forEach(function(t){
+    var d=document.createElement('div');d.className='turn '+(t.who==='you'?'you':'ai');
+    var who=document.createElement('div');who.className='who';who.textContent=t.who==='you'?'Sinä':EX[ex].persona;
+    var p=document.createElement('div');p.textContent=t.text;
+    d.appendChild(who);d.appendChild(p);box.appendChild(d);
+  });
+  box.scrollTop=box.scrollHeight;
+}
+var timers={};
+function startTimer(ex){
+  var start=Date.now();clearInterval(timers[ex]);
+  timers[ex]=setInterval(function(){
+    var s=Math.floor((Date.now()-start)/1000);
+    setText('timer-'+ex,String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'));
+    if(s>300)endCall(ex);
+  },500);
+}
+function stopTimer(ex){clearInterval(timers[ex]);timers[ex]=null;}
+function setStage(ex,mode){
+  var st=el('stage-'+ex),orb=el('orb-'+ex);
+  if(mode==='live'){st.classList.remove('idle');orb.classList.add('live');}
+  else{st.classList.add('idle');orb.classList.remove('live');}
+}
+function setEnd(ex,on){var b=el('end-'+ex);if(b)b.disabled=!on;}
+function toggleText(ex){
+  var w=el('textwrap-'+ex);if(!w)return;
+  w.hidden=!w.hidden;
+  if(!w.hidden){
+    if(!calls[ex].turns.length){pushTurn(ex,'ai',EX[ex].opening);}
+    var t=el('reply-'+ex);if(t)t.focus();
+  }
+}
+
+/* ---------- Claude helpers (client-side, via /api/ai/claude) ---------- */
+function guard(ms){var c=new AbortController(),t=setTimeout(function(){c.abort();},ms);return {signal:c.signal,clear:function(){clearTimeout(t);}};}
+function transcriptText(ex){
+  return (calls[ex].turns||[]).map(function(t){return (t.who==='you'?'Tomi':EX[ex].persona)+': '+t.text;}).join('\n');
+}
+function extractJson(text){
+  if(!text)return null;
+  var a=text.indexOf('{'),b=text.lastIndexOf('}');
+  if(a<0||b<=a)return null;
+  try{return JSON.parse(text.slice(a,b+1));}catch(e){return null;}
+}
+async function claudeCall(system,userContent,maxTokens,ms){
+  var g=guard(ms||65000);
+  try{
+    var r=await fetch('/api/ai/claude',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},signal:g.signal,
+      body:JSON.stringify({smart:true,system:system,max_tokens:maxTokens||400,messages:[{role:'user',content:userContent}]})});
+    var d=await r.json().catch(function(){return {};});
+    if(!r.ok)throw new Error(d.error||d.message||'Tekoälypalvelu ei vastannut');
+    return String(d.text||d.reply||'').trim();
+  }finally{g.clear();}
+}
+
+/* ---------- voice: live ---------- */
+function startCall(ex){
+  var cfg=EX[ex],st=calls[ex];
+  if(st.live)return;
+  if(!window.StudioVoiceCall||!window.RTCPeerConnection){
+    setText('status-'+ex,'Selain ei tue live-ääntä. Kirjoita vastauksesi.');toggleText(ex);return;
+  }
+  st.turns=[];st.score=null;st.hits=[];st.outcome='';st.scored=false;
+  renderTranscript(ex);hideResult(ex);
+  setStage(ex,'live');setEnd(ex,true);startTimer(ex);
+  var engine=new StudioVoiceCall({
+    scenario:cfg.scenario,brief:cfg.brief,
+    onStatus:function(s){setText('status-'+ex,s);},
+    onAssistantText:function(t){pushTurn(ex,'ai',t);},
+    onUserTranscript:function(info){pushTurn(ex,'you',info.transcript);},
+    onComplete:function(){stopTimer(ex);setStage(ex,'idle');setEnd(ex,false);st.live=false;st.engine=null;finalizeCall(ex);},
+    onError:function(err){
+      setText('status-'+ex,'Live-virhe: '+((err&&(err.message||err.type))||'tuntematon')+'. Jatka kirjoittamalla — '+cfg.persona+'in avaus näkyy alla.');
+      showScriptFallback(ex);
+    }
+  });
+  st.engine=engine;st.live=true;
+  setText('status-'+ex,'Yhdistetään live-ääneen… (jos ei yhdisty, voit lukea ja vastata tekstinä)');
+  engine.start().catch(function(e){
+    stopTimer(ex);setStage(ex,'idle');setEnd(ex,false);st.live=false;st.engine=null;
+    var name=(''+((e&&e.name)||'')).toLowerCase();
+    var micDenied=name.indexOf('notallowed')>=0||name.indexOf('notfound')>=0;
+    setText('status-'+ex,(micDenied?'Mikrofonia ei voitu käyttää. ':'Live-ääni ei juuri nyt yhdistynyt. ')+'Ei hätää — lue '+cfg.persona+'in avaus ja vastaa kirjoittamalla.');
+    showScriptFallback(ex);
+  });
+}
+/* When live voice can't connect, keep the exercise fully playable as text:
+   reveal the counterpart's opening line (the "script") and open the input. */
+function showScriptFallback(ex){
+  var cfg=EX[ex],st=calls[ex];
+  if(!(st.turns||[]).some(function(t){return t.who==='ai';})){pushTurn(ex,'ai',cfg.opening);}
+  setEnd(ex,true);
+  var wrap=el('textwrap-'+ex);
+  if(wrap&&wrap.hidden)toggleText(ex);
+  var inp=el('reply-'+ex);if(inp)inp.focus();
+}
+function endCall(ex){
+  var st=calls[ex];
+  if(st.engine){st.engine.finish('stopped');st.engine=null;}
+  else{stopTimer(ex);setStage(ex,'idle');setEnd(ex,false);finalizeCall(ex);}
+}
+function finalizeCall(ex){
+  var st=calls[ex];
+  if(st.scored)return;
+  if(!(st.turns||[]).some(function(t){return t.who==='you';})){
+    setText('status-'+ex,'Ei vielä omaa vuoroa — aloita puhe tai kirjoita vastaus, niin saat arvion.');return;
+  }
+  scoreCall(ex);
+}
+
+/* ---------- voice: text fallback ---------- */
+async function sendText(ex){
+  var cfg=EX[ex],st=calls[ex],input=el('reply-'+ex);
+  var answer=(input.value||'').trim();
+  if(!answer){setText('status-'+ex,'Kirjoita vastaus ennen lähettämistä.');input.focus();return;}
+  if(!st.turns.length){pushTurn(ex,'ai',cfg.opening);}
+  pushTurn(ex,'you',answer);
+  input.value='';scheduleSave();
+  el('send-'+ex).disabled=true;setText('status-'+ex,cfg.persona+' miettii vastausta…');
+  var reply=await textReply(ex);
+  pushTurn(ex,'ai',reply);
+  el('send-'+ex).disabled=false;setEnd(ex,true);
+  setText('status-'+ex,'Vastaa uudelleen tai paina "Lopeta ja pyydä arvio".');
+}
+async function textReply(ex){
+  var cfg=EX[ex];
+  var system='Puhut suomea kuin oikea ihminen. Olet '+cfg.persona+' seuraavassa roolissa: '+cfg.brief+' Pysy tiukasti roolissa, älä anna palautetta äläkä opeta. Sano vain yksi asia kerrallaan ja esitä täsmälleen yksi kysymys tai siirto. Enintään 2–3 lausetta.';
+  var convo='KESKUSTELU TÄHÄN ASTI:\n'+transcriptText(ex)+'\n\nJatka roolissa yhdellä lyhyellä puheenvuorolla.';
+  try{
+    var t=await claudeCall(system,convo,220,45000);
+    return t||fallbackReply(ex);
+  }catch(e){return fallbackReply(ex);}
+}
+function fallbackReply(ex){
+  var st=calls[ex],cfg=EX[ex];
+  var userTurns=st.turns.filter(function(t){return t.who==='you';}).length;
+  var arr=cfg.fallback||[];
+  return arr[Math.min(arr.length-1,Math.max(0,userTurns-1))]||'Selvä. Kerro vielä tarkemmin.';
+}
+
+/* ---------- scoring (Claude) ---------- */
+async function scoreCall(ex){
+  var cfg=EX[ex],st=calls[ex];
+  st.scored=true;
+  setText('status-'+ex,'Claude arvioi keskustelun…');announce('Claude arvioi keskustelun.');
+  var result=await claudeScore(ex);
+  st.hits=result.hits;st.score=result.score;st.outcome=result.outcome;
+  completed[ex]=true;
+  renderResult(ex,false);
+  renderDrawer();scheduleSave();
+  setText('status-'+ex,'Arvio valmis alla.');announce('Arvio on valmis.');
+}
+async function claudeScore(ex){
+  var cfg=EX[ex];
+  var rubricText=cfg.rubric.map(function(r,i){return (i+1)+'. '+r.t+' — '+r.why;}).join('\n');
+  var system='Olet suomalainen valmentaja ja arvioija. Sait juuri päättyneen suomenkielisen puheharjoituksen transkription ja arviointirubriikin. Arvioi jokainen rubriikin kohta: toteutuiko se käyttäjän (Tomi) toiminnassa. Palauta VAIN JSON, ei mitään muuta tekstiä. Muoto tarkalleen: {"hits":[true,false,...],"outcome":"lyhyt tulos","summary":"yksi lause"}. hits-listan pituus on täsmälleen rubriikin kohtien määrä ('+cfg.rubric.length+'). Perusta arvio VAIN transkriptioon, älä keksi mitään.';
+  var extra=(ex==='crisis'&&auto.move)?('\n\nTomi valitsi ensimmäiseksi siirrokseen: "'+(MOVE_LABELS[auto.move]||auto.move)+'". Huomioi arviossa, tukiko tämä valinta oikeaa kriisin hoitoa (faktat ennen kannanottoa, ihminen päättää).'):'';
+  var user='ROOLIT: Tomi = käyttäjä (harjoittelija), '+cfg.persona+' = vastapuoli.\nTAVOITE: '+cfg.brief+extra+'\n\nRUBRIIKKI:\n'+rubricText+'\n\noutcome-kenttä kuvaa: '+cfg.outcomeLabel+'.\n\nTRANSKRIPTIO:\n'+transcriptText(ex);
+  try{
+    var text=await claudeCall(system,user,400,65000);
+    var parsed=extractJson(text);
+    if(parsed&&Array.isArray(parsed.hits)){
+      var hits=cfg.rubric.map(function(_,i){return parsed.hits[i]===true;});
+      var trueCount=hits.filter(Boolean).length;
+      return {hits:hits,score:Math.round(trueCount/cfg.rubric.length*100),outcome:parsed.outcome||defaultOutcome(ex,trueCount)};
+    }
+  }catch(e){}
+  // Graceful fallback: neutral review, no invented score.
+  return {hits:cfg.rubric.map(function(){return null;}),score:null,outcome:'Arvio ei juuri nyt vastannut'};
+}
+function defaultOutcome(ex,trueCount){
+  if(ex==='ex1')return trueCount>=3?'Sopimus säilyi':'Menetetty';
+  if(ex==='ex2')return trueCount>=3?'130 €':'Ei kauppaa';
+  if(ex==='ex3')return trueCount+' / 5';
+  return '';
+}
+function hideResult(ex){var p=el('result-'+ex);if(p)p.classList.remove('show');}
+function renderResult(ex,silent){
+  var cfg=EX[ex],st=calls[ex];
+  renderRubric(ex,st.hits);
+  var trueCount=(st.hits||[]).filter(function(h){return h===true;}).length;
+  setText('score-'+ex,st.score==null?'—':st.score);
+  var outEl=el(cfg.outcomeEl);
+  if(outEl){
+    if(cfg.outcomeAsCount){outEl.textContent=(st.outcome&&/\d/.test(st.outcome))?st.outcome.replace(/\s*\/\s*5.*/,''):String(trueCount);}
+    else outEl.textContent=st.outcome||defaultOutcome(ex,trueCount);
+  }
+  var panel=el('result-'+ex);panel.classList.add('show');
+  if(!silent)setTimeout(function(){panel.scrollIntoView({behavior:'smooth',block:'start'});},120);
+}
+function renderRubric(ex,hits){
+  var cfg=EX[ex],box=el('rubric-'+ex);box.innerHTML='';
+  cfg.rubric.forEach(function(r,i){
+    var hit=hits?hits[i]:null;
+    var cls=hit===true?'hit':(hit===false?'miss':'neutral');
+    var mark=hit===true?'✓':(hit===false?'×':'·');
+    var item=document.createElement('div');item.className='rubric-item '+cls;
+    item.innerHTML='<div class="check">'+mark+'</div><div><div class="text">'+r.t+'</div><div class="why">'+r.why+'</div></div>';
+    box.appendChild(item);
+  });
+}
+function retry(ex){
+  var st=calls[ex];
+  if(st.engine){try{st.engine.stop();}catch(e){}st.engine=null;}
+  stopTimer(ex);
+  calls[ex]=blankCall();
+  setStage(ex,'idle');setEnd(ex,false);
+  setText('timer-'+ex,'00:00');
+  setText('status-'+ex,'Paina keskeltä aloittaaksesi live-puhelun');
+  renderTranscript(ex);hideResult(ex);
+  var w=el('textwrap-'+ex);if(w)w.hidden=true;
+  el('stage-'+ex).scrollIntoView({behavior:'smooth',block:'start'});
+  scheduleSave();
+}
+
+/* ---------- script feedback (Claude) ---------- */
+async function generateAd(){
+  var prompt=(el('ex4-prompt').value||'').trim();
+  if(prompt.length<20){alert('Kirjoita ensin prompti tekoälylle: kenelle mainos on, millainen koukku, mikä tarina ja mikä toimintakehotus.');return;}
+  var btn=el('scriptBtn');if(btn)btn.disabled=true;
+  el('script-feedback').style.display='block';
+  el('ex4-generated').value='Tekoäly kirjoittaa mainosta promptisi pohjalta…';
+  el('script-feedback-text').innerHTML='<p style="margin:0">Aleksi lukee promptiasi…</p>';
+  el('script-feedback').scrollIntoView({behavior:'smooth',block:'start'});
+  var ad=await adFromPrompt(prompt);
+  el('ex4-generated').value=ad;
+  var coach=promptCoach(prompt);
+  el('script-feedback-text').innerHTML=coach.split(/\n{1,}/).filter(Boolean).map(function(p){return '<p style="margin:0 0 10px">'+p.replace(/</g,'&lt;')+'</p>';}).join('');
+  renderScriptCarry();
+  if(btn)btn.disabled=false;
+  scheduleSave();
+}
+async function adFromPrompt(prompt){
+  var system='Olet mainostekstiä tuottava tekoäly. Käyttäjä antaa promptin, jolla hän pyytää sinua kirjoittamaan noin 30 sekunnin (noin 70 sanaa) suomenkielisen videomainoksen käsikirjoituksen Rivon-kaupunkipyöräpalvelulle. Noudata käyttäjän promptia KIRJAIMELLISESTI. Jos prompti on tarkka (kertoo kohderyhmän, koukun, tarinan ja toimintakehotuksen), tee terävä mainos. Jos prompti on epämääräinen, tee vastaavasti geneerinen mainos — älä paranna sitä käyttäjän puolesta, jotta hän oppii promptin tarkkuuden merkityksen. Palauta VAIN valmis mainoksen käsikirjoitus suomeksi (koukku, tarina, toimintakehotus tekstinä, jonka voi lukea ääneen). Ei selityksiä, ei otsikoita, ei markdownia.';
+  try{
+    var t=await claudeCall(system,'PROMPTI:\n'+prompt,450,45000);
+    return (t&&t.trim())||adOffline(prompt);
+  }catch(e){return adOffline(prompt);}
+}
+function adOffline(prompt){
+  return 'Kello 7.15, Kajaanin tori herää. Nuori nainen nappaa Rivon-pyörän telineestä ja liukuu töihin ohi ruuhkan.\n\n"Ei etsimistä, ei pysäköintiä. Pyörä odottaa jo, kun sinä heräät."\n\nLataa Rivon-sovellus ja aja ensimmäinen matkasi ilmaiseksi tällä viikolla.\n\n(Automaattinen varamainos — tekoälyyhteys ei juuri nyt vastannut. Muokkaa promptiasi ja yritä uudelleen saadaksesi oman versiosi.)';
+}
+function promptCoach(prompt){
+  var p=(prompt||'').toLowerCase();
+  var has={
+    audience:/kajaani|20|nuor|kohderyhm|asukk|opiskelij/.test(p),
+    hookmoment:/koukk|aloita|ensimmäine|hetki|kuva|näyt|aamu|kello|tori|katu|joki|talvi/.test(p),
+    cta:/toimintakehotus|lataa|kokeile|varaa|tilaa|aja|liity|katso|napauta/.test(p),
+    length:/70|sana|30 s|sekun|lyhyt/.test(p),
+    tone:/sävy|lämmin|paikallin|rento|tunnelma|ääni/.test(p)
+  };
+  var good=[],miss=[];
+  if(has.audience)good.push('kohderyhmän');else miss.push('kenelle mainos on (esim. Kajaanin 20–35-v.)');
+  if(has.hookmoment)good.push('koukun / konkreettisen hetken');else miss.push('millaisen koukun haluat — yksi konkreettinen hetki, ei iskulausetta');
+  if(has.cta)good.push('toimintakehotuksen');else miss.push('mitä katsojan pitää tehdä lopuksi');
+  if(has.length)good.push('keston');else miss.push('keston (~30 s / ~70 sanaa)');
+  if(has.tone)good.push('sävyn');
+  var out=[];
+  if(good.length)out.push('Hyvä: promptisi kertoi tekoälylle '+good.join(', ')+'. Juuri tämä tekee tuloksesta terävän.');
+  if(miss.length)out.push('Tarkenna vielä: '+miss.join('; ')+'. Mitä enemmän jätät tekoälyn arvattavaksi, sitä geneerisempi mainos.');
+  else out.push('Tämä on tarkka prompti. Katso ylhäältä, tuottiko tekoäly juuri sen mainoksen jonka halusit — jos ei, hio promptia, älä valmista tekstiä.');
+  return out.join('\n');
+}
+function renderScriptCarry(){
+  var view=el('ex4b-script-view');if(!view)return;
+  var s=(el('ex4-generated')&&el('ex4-generated').value||'').trim();
+  view.textContent=s||'Ei vielä käsikirjoitusta. Palaa edelliselle sivulle ja anna tekoälyn kirjoittaa mainos.';
+}
+function copyScript(){
+  var s=(el('ex4-generated')&&el('ex4-generated').value||'').trim();
+  if(!s){alert('Ei vielä käsikirjoitusta kopioitavaksi.');return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(s).then(function(){var b=el('copyScriptBtn');if(b){var t=b.textContent;b.textContent='Kopioitu ✓';setTimeout(function(){b.textContent=t;},1500);}}).catch(function(){});
+  }
+}
+
+/* ---------- automation arc ---------- */
+function scheduleSaveNow(){scheduleSave();}
+function renderAuto(){
+  document.querySelectorAll('.verdicts[data-task] .verdict').forEach(function(n){
+    var task=n.parentElement.getAttribute('data-task');
+    n.classList.toggle('sel',auto.verdicts[task]===n.getAttribute('data-v'));
+  });
+  document.querySelectorAll('.verdict[data-pick]').forEach(function(n){
+    n.classList.toggle('sel',auto.pick===n.getAttribute('data-pick'));
+  });
+  var chosen=el('chosen-task');
+  if(chosen)chosen.textContent=auto.pick?TASK_LABELS[auto.pick]:'— (valitse edellä)';
+  if(auto.fb.decide){el('decide-feedback-text').innerHTML=fmtParas(auto.fb.decide);el('decide-feedback').style.display='block';}
+  if(auto.fb.design){el('design-feedback-text').innerHTML=fmtParas(auto.fb.design);el('design-feedback').style.display='block';}
+  if(auto.fb.bot){el('bot-feedback-text').innerHTML=fmtParas(auto.fb.bot);el('bot-feedback').style.display='block';}
+  if(auto.fb.mail){el('mail-feedback-text').innerHTML=fmtParas(auto.fb.mail);el('mail-feedback').style.display='block';}
+}
+function fmtParas(t){return String(t||'').split(/\n{1,}/).filter(Boolean).map(function(p){return '<p style="margin:0 0 10px">'+p.replace(/</g,'&lt;')+'</p>';}).join('');}
+function pickVerdict(task,v){auto.verdicts[task]=v;renderAuto();scheduleSave();}
+function pickBuild(p){auto.pick=p;renderAuto();scheduleSave();}
+function pickMove(m){auto.move=m;renderMove();scheduleSave();}
+function renderMove(){
+  document.querySelectorAll('.verdict[data-move-opt]').forEach(function(n){
+    n.classList.toggle('sel',auto.move===n.getAttribute('data-move-opt'));
+  });
+  var orb=el('orb-crisis'),st=el('status-crisis');
+  if(orb){
+    var ready=!!auto.move;
+    orb.style.opacity=ready?'1':'.45';orb.style.pointerEvents=ready?'auto':'none';
+    if(st&&!(calls.crisis&&calls.crisis.scored)&&!(calls.crisis&&calls.crisis.turns.length)){
+      st.textContent=ready?'Valmis. Vastaa Annen hätäpuheluun.':'Valitse ensin siirtosi, sitten vastaa Annelle';
+    }
+  }
+}
+
+/* ---------- pedagogy: skill headers ---------- */
+function renderSkillHeaders(){
+  document.querySelectorAll('.skill-header[data-skill]').forEach(function(n){
+    var m=SKILL_META[n.getAttribute('data-skill')];if(!m||n.dataset.filled)return;
+    n.dataset.filled='1';
+    n.innerHTML=''+
+      '<div class="sh-skill">'+esc(m.skill)+'</div>'+
+      '<div class="sh-row">'+
+        '<div class="sh-tag"><span class="k">Opit tämän</span><span class="v">'+esc(m.from)+'</span></div>'+
+        '<div class="sh-tag"><span class="k">Käytä tosielämässä</span><span class="v">'+esc(m.apply)+'</span></div>'+
+      '</div>'+
+      '<div class="sh-crit"><strong>Onnistut kun:</strong> '+esc(m.crit)+'</div>';
+  });
+}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ---------- osaamispassi ---------- */
+function stampEarned(p){
+  if(p.deps){return p.deps.every(function(id){return !!completed[id];});}
+  if(EX[p.id]){return !!(calls[p.id]&&calls[p.id].scored);}
+  return !!completed[p.id];
+}
+function passportCount(){return PASSPORT.filter(stampEarned).length;}
+function renderPassport(){
+  document.querySelectorAll('[data-passport]').forEach(function(host){
+    var n=passportCount();
+    host.innerHTML='<div class="passport-head"><strong>Osaamispassi</strong><span class="cnt">'+n+' / '+PASSPORT.length+' leimaa</span></div>'+
+      '<div class="passport-grid">'+PASSPORT.map(function(p){
+        var on=stampEarned(p);
+        return '<div class="stamp'+(on?' on':'')+'"><span class="badge">'+(on?'✓':'·')+'</span><span class="lbl">'+esc(p.label)+'</span></div>';
+      }).join('')+'</div>';
+  });
+  // Certificate gate on the delivery/capstone screens
+  var cert=el('certificate');
+  if(cert){
+    var n=passportCount(),pass=n>=PASSPORT_THRESHOLD;
+    cert.className='cert'+(pass?'':' locked');
+    cert.innerHTML=pass
+      ? '<div class="eyebrow" style="color:#F3E7CE">Loppukoe läpäisty</div><h3>Rivon-viikon todistus</h3><p style="margin:6px 0 0">Suoritit '+n+' / '+PASSPORT.length+' taidosta. Osaat käydä vaikeat puhelut, tuottaa mediaa, arvioida mitä automatisoida, rakentaa n8n-ketjun ja botin — ja johtaa kriisissä. Tämä on työ, jonka voit näyttää työnantajalle.</p>'
+      : '<div class="eyebrow">Todistus lukittu</div><h3>Vielä '+(PASSPORT_THRESHOLD-n)+' leimaa</h3><p style="margin:6px 0 0">Suorita vähintään '+PASSPORT_THRESHOLD+' / '+PASSPORT.length+' taitoa (nyt '+n+'). Palaa harjoituksiin ja pyydä arvio.</p>';
+  }
+}
+
+/* ---------- case file (muistio) ---------- */
+function caseItems(){
+  var out=[];
+  function callOut(k){return calls[k]&&calls[k].outcome?calls[k].outcome:'';}
+  out.push({k:'Maanantai · Latu-puhelu',v:callOut('ex1'),hint:'Pidätkö sopimuksen?'});
+  out.push({k:'Tiistai · Tori-kauppa',v:callOut('ex2'),hint:'Mihin hintaan kauppa?'});
+  out.push({k:'Keskiviikko · Kajaani-pitch',v:callOut('ex3'),hint:'Montako vastalausetta kestit?'});
+  var msg=(el('script-hook')&&el('script-hook').value||'').trim();
+  out.push({k:'Perjantai · Mainoksen ydinviesti',v:msg,hint:'Videon lupaus asiakkaalle'});
+  out.push({k:'Automaatio · Rakennat n8n:ssä',v:auto.pick?TASK_LABELS[auto.pick]:'',hint:'Mikä työ koneelle?'});
+  var bot=(el('bot-link')&&el('bot-link').value||'').trim();
+  out.push({k:'Asiakasbotti · linkki',v:bot,hint:'Poe-botin osoite'});
+  out.push({k:'Umpikuja · ensisiirto',v:auto.move?MOVE_LABELS[auto.move]:'',hint:'Miten aloitit kriisin hoidon?'});
+  return out;
+}
+function caseFilledCount(){return caseItems().filter(function(i){return i.v;}).length;}
+function renderCaseFile(){
+  var btn=el('casefileBtn');if(btn){var n=caseFilledCount();el('casefileCount').textContent=n;btn.style.display=n>0?'flex':'none';}
+  var body=el('casefileBody');
+  if(body){
+    body.innerHTML=caseItems().map(function(i){
+      return '<div class="cf-item'+(i.v?'':' empty')+'"><div class="cf-k">'+esc(i.k)+'</div><div class="cf-v">'+esc(i.v||i.hint)+'</div></div>';
+    }).join('');
+  }
+  // Inline recall of prior work on connected screens
+  var adRecall=el('recall-pitch');
+  if(adRecall){var p=calls.ex3&&calls.ex3.outcome?calls.ex3.outcome:'';adRecall.innerHTML=p?('<div class="from">Muistiosta · Kajaani-pitch</div><div>'+esc(p)+' — anna mainoksen kertoa juuri tämä tarina.</div>'):'';adRecall.style.display=p?'block':'none';}
+  var crisisRecall=el('recall-tools');
+  if(crisisRecall){
+    var have=[];
+    if(auto.pick)have.push('n8n-automaatio ('+TASK_LABELS[auto.pick]+')');
+    if((el('bot-link')&&el('bot-link').value||'').trim())have.push('asiakasbotti');
+    if(calls.ex3&&calls.ex3.scored)have.push('neuvottelutaidot puhelimessa');
+    crisisRecall.innerHTML='<div class="from">Työkalupakkisi tähän mennessä</div><ul>'+(have.length?have.map(function(h){return '<li>'+esc(h)+'</li>';}).join(''):'<li>Kaikki viikon taidot</li>')+'</ul><div style="margin-top:6px">Valitse näistä — tai jokin muu — mutta muista: kone auttaa, ihminen päättää.</div>';
+  }
+}
+function openCaseFile(){renderCaseFile();var p=el('casefilePanel');if(p){p.hidden=false;requestAnimationFrame(function(){p.classList.add('open');});}}
+function closeCaseFile(){var p=el('casefilePanel');if(p){p.classList.remove('open');setTimeout(function(){p.hidden=true;},300);}}
+
+/* ---------- reflex: AI-judgment interruptions under a countdown ---------- */
+var REFLEX=[
+  {opener:true,type:'input',from:'Työkaveri Sari · pikaviesti',secs:60,q:'"Millä ilmaisella työkalulla rakentaisin nettisivun?"',
+   sit:'Sari nojaa työpisteellesi: "Hei Tomi! Pitäisi saada asiakkaalle demo-nettisivu ennen kokousta. En osaa koodata enkä ole ikinä rakentanut mitään. Mitä ilmaisia työkaluja sinä olet käyttänyt — mitä suosittelisit?"',
+   placeholder:'Kerro Sarille: mitä työkaluja kokeilit kurssilla ja mihin kukin sopii?',
+   hint:'Nimeä 1–3 kurssilla käyttämääsi työkalua ja mihin kukin sopii.',
+   coach:'Juuri tätä varten opettelit ne. Ilmaisia, koodaamattomia työkaluja demo-sivuun: Lovable ja Base44 — kuvailet sanoin mitä haluat, ja tekoäly rakentaa toimivan sivun. Replit sopii, jos haluat mennä pidemmälle. Neuvo Saria aloittamaan yhdellä ja promptaamaan selkeästi — sama taito, jota harjoittelit koko kurssin.',
+   claude:{system:'Olet Tomin tukevan työkaverin roolissa arvioimassa lyhyesti hänen työkaluvinkkiään. Konteksti: kysyit ilmaista, koodaamatonta työkalua demo-nettisivun rakentamiseen, kun et osaa koodata. Kurssilla käytiin mm. Lovable, Base44 ja Replit (tekoälyllä rakentaminen ilman koodausta). Vastaa suomeksi lämpimästi ja lyhyesti (2–3 lausetta): kiitä hyvästä vinkistä ja jos hän ei maininnut Lovablea tai Base44:ää, ehdota niitä ystävällisesti. Älä luennoi.'}},
+  {from:'GPT · luonnos valmis',secs:30,q:'Hyvitysvastaus vihaiselle asiakkaalle',
+   sit:'Tekoäly kirjoitti valmiin vastauksen ja lupaa siinä 250 € hyvityksen. Painike "Lähetä" vilkkuu.',
+   opts:[
+     {t:'Lähetä heti — vastaus näyttää hyvältä',v:'bad',why:'Kone ei päätä rahasta. Lupaus lähti nimissäsi ilman että kukaan hyväksyi summaa.'},
+     {t:'Muokkaa: poista summa ja tarkista se itse',v:'good',why:'Oikein. Kone luonnostelee, ihminen päättää rahasta. Käytit tekoälyä apurina, et pomona.'},
+     {t:'Poista koko vastaus turhana',v:'bad',why:'Hukkasit käyttökelpoisen luonnoksen. Ongelma ei ollut teksti vaan rahasumma.'}
+   ]},
+  {from:'n8n · automaatio hälyttää',secs:30,q:'40 huoltopyyntöä merkitty kiireelliseksi',
+   sit:'Rakentamasi automaatio leimasi yhtäkkiä 40 pyyntöä "kiireelliseksi" kerralla. Ennen niitä oli pari päivässä.',
+   opts:[
+     {t:'Luota koneeseen — lähetä kaikki huollolle heti',v:'bad',why:'Sokea luottamus. Poikkeava piikki on merkki virheestä säännössä, ei aidosta kriisistä.'},
+     {t:'Tarkista muutama käsin ja korjaa sääntö',v:'good',why:'Oikein. Kun kone käyttäytyy oudosti, tarkista otos ennen kuin toimit koko datan varassa.'},
+     {t:'Sammuta automaatio kokonaan',v:'ok',why:'Ymmärrettävää paniikkia, mutta ei tarpeen. Otos ja sääntökorjaus riittää.'}
+   ]},
+  {from:'Asiakasbotti · loki',secs:28,q:'Botti keksi takuuehdon',
+   sit:'Poe-bottisi vastasi asiakkaalle itsevarmasti: "Takuu kattaa myös renkaat 5 vuotta." Sellaista ehtoa ei ole olemassa.',
+   opts:[
+     {t:'Anna olla — kuulosti vakuuttavalta',v:'bad',why:'Tämä on hallusinaatio. Varma sävy ei tarkoita totta. Väärä lupaus voi maksaa Rivonille.'},
+     {t:'Korjaa botin ohje ja ohjaa takuuasiat ihmiselle',v:'good',why:'Oikein. Rajaat botin sen tietämään ja siirrät epävarmat aiheet ihmiselle.'},
+     {t:'Sulje botti kokonaan',v:'ok',why:'Ylireagointia. Yksi väärä vastaus korjataan ohjeella, ei koko palvelua sulkemalla.'}
+   ]},
+  {from:'Tiimi · pikaviesti',secs:25,q:'Asiakasrekisteri julkiseen tekoälyyn?',
+   sit:'Kollega: "Liitän koko asiakasrekisterin (nimet, osoitteet) ilmaiseen tekoälyyn, niin saan yhteenvedon nopeasti. Ok?"',
+   opts:[
+     {t:'Ok, säästää aikaa',v:'bad',why:'Tietosuojaloukkaus. Henkilötietoja ei syötetä julkiseen työkaluun, jonka käsittelyä ette hallitse.'},
+     {t:'Pysäytä: älä syötä henkilötietoja julkiseen tekoälyyn',v:'good',why:'Oikein. Anonymisoi tai käytä hyväksyttyä työkalua. Tämä on tärkein AI-lukutaidon sääntö.'},
+     {t:'En tiedä, päättäkää itse',v:'bad',why:'Vastuun pakoilu. Sinä tiedät tämän — puutu, ennen kuin tiedot lähtevät.'}
+   ]},
+  {from:'Kling · render valmis',secs:30,q:'Mainoksessa väärä väri',
+   sit:'Mainosvideo valmistui, mutta yhdessä klipissä pyörä on punainen (Rivon on vihreä) ja logo vilkkuu oudosti.',
+   opts:[
+     {t:'Julkaise — kukaan tuskin huomaa',v:'bad',why:'Brändivirhe. Väärä väri ja vilkkuva logo näyttävät halvalta ja syövät uskottavuuden.'},
+     {t:'Regeneroi vain se klippi tarkemmalla promptilla',v:'good',why:'Oikein. Korjaat yhden palan täsmällisellä käskyllä etkä hylkää koko työtä.'},
+     {t:'Hylkää koko video ja aloita alusta',v:'ok',why:'Tuhlausta. Vain yksi klippi oli pielessä — muu materiaali on hyvää.'}
+   ]},
+  {from:'Anne · soittaa',secs:25,q:'"Ehtiikö mainos tänään?"',
+   sit:'Anne kysyy suoraan, valmistuuko mainos tänään. Renderöinti on kesken etkä ole varma ehtiikö se.',
+   opts:[
+     {t:'Lupaa että ehtii — Anne rauhoittuu',v:'bad',why:'Arvaus lupauksena. Jos ei ehdi, menetät luottamuksen. Sama virhe kuin puheluissa.'},
+     {t:'"En tiedä vielä varmasti — kerron klo 15"',v:'good',why:'Oikein. Rehellinen arvio ja konkreettinen aika on ammattilaisen vastaus. "En tiedä" on vahvuus.'},
+     {t:'Sano ettei ehdi ollenkaan',v:'bad',why:'Turha luovutus. Et tiedä vielä — älä sulje ovea ennen kuin sinulla on tieto.'}
+   ]},
+  {from:'Some · kommentti',secs:26,q:'"Puhunko minä robotille?"',
+   sit:'Asiakas kysyy julkisesti Rivonin somessa: "Käytättekö te tekoälyä vastaamaan? Puhunko minä nyt robotille?"',
+   opts:[
+     {t:'Kiellä — sano että vastaa aina ihminen',v:'bad',why:'Epärehellistä. Jos jäätte kiinni, luottamus romahtaa. Tekoälyn käytöstä pitää olla avoin.'},
+     {t:'Kerro rehellisesti: botti auttaa, ihminen hoitaa tärkeät',v:'good',why:'Oikein. Läpinäkyvyys tekoälyn käytöstä on sekä eettistä että rakentaa luottamusta.'},
+     {t:'Älä vastaa — kysymys on kiusallinen',v:'bad',why:'Vaikeneminen näyttää siltä kuin salaisit jotain. Rehellinen lyhyt vastaus riittää.'}
+   ]},
+  {from:'Käännös · valmis',secs:28,q:'Turvaohje käännetty englanniksi',
+   sit:'Tekoäly käänsi Rivonin pyörän turvaohjeen englanniksi ulkomaalaiselle asiakkaalle. Et osaa itse tarkistaa käännöstä.',
+   opts:[
+     {t:'Lähetä — tekoäly kääntää hyvin',v:'bad',why:'Turvaohje. Väärä käännös voi johtaa vaaraan. Kriittistä sisältöä ei lähetetä tarkistamatta.'},
+     {t:'Pyydä kielitaitoinen tarkistamaan ennen lähetystä',v:'good',why:'Oikein. Mitä suurempi riski, sitä tärkeämpi ihmisen tarkistus. Turvassa ei oikaista.'},
+     {t:'Lähetä suomeksi ja pahoittele',v:'ok',why:'Turvallista mutta ei palvele asiakasta. Tarkistettu käännös olisi parempi.'}
+   ]}
+];
+/* Interruptions fire RANDOMLY while the learner is heads-down on these work
+   screens — never during a live voice call (would break WebRTC). This mirrors
+   the monikanava IRQ model: unscheduled popups on top of the real task. */
+var INTERRUPTIBLE={'theory-voice':1,'theory-prod':1,'ex4a':1,'ex4b':1,'ex4img':1,'ex4c':1,'auto-brief':1,'auto-decide':1,'auto-design':1,'auto-build':1,'auto-bot':1};
+var SHIFT_TOTAL=6;              // interruptions per shift, drawn at random from the pool
+var shift={active:false,order:[],ptr:0,results:[],timer:null,open:false,locked:false,cd:null,auto:true};
+function shuffleIdx(n){var a=[];for(var i=0;i<n;i++)a.push(i);for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function startShift(){
+  if(shift.active)return;
+  shift.active=true;
+  if(!shift.order.length){
+    var op=-1,rest=[];
+    REFLEX.forEach(function(it,i){if(it.opener&&op<0)op=i;else rest.push(i);});
+    for(var i=rest.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=rest[i];rest[i]=rest[j];rest[j]=t;}
+    shift.order=(op>=0?[op]:[]).concat(rest).slice(0,SHIFT_TOTAL);
+  }
+  scheduleSave();
+}
+function shiftPending(){return shift.ptr<shift.order.length;}
+function shiftGood(){return shift.results.filter(function(r){return r==='good';}).length;}
+function shiftDone(){return shift.active&&!shiftPending();}
+/* Called every render: schedule a random popup if we're on an interruptible screen. */
+function armShift(screenId){
+  if(shift.timer){clearTimeout(shift.timer);shift.timer=null;}
+  if(!shift.active||!shift.auto||shift.open||!INTERRUPTIBLE[screenId]||!shiftPending())return;
+  var delay=7000+Math.random()*13000;                 // 7–20 s, feels unpredictable
+  shift.timer=setTimeout(function(){maybeFire(screenId);},delay);
+}
+function maybeFire(shouldBeScreen){
+  var cur=SCREENS[idx]?SCREENS[idx].id:'';
+  if(!shift.active||shift.open||!INTERRUPTIBLE[cur]||!shiftPending())return;
+  openInterrupt(shift.order[shift.ptr]);
+}
+/* Manual catch-up (from the shift dashboard) — guarantees all fire for scoring. */
+function runRemainingInterrupts(){
+  if(shift.open||!shiftPending())return;
+  openInterrupt(shift.order[shift.ptr]);
+}
+function openInterrupt(poolIdx){
+  var item=REFLEX[poolIdx];if(!item)return;
+  shift.open=true;shift.locked=false;shift._cur=poolIdx;
+  el('reflexFrom').textContent='🔔 '+item.from;
+  el('reflexCount').textContent='Keskeytys '+(shift.ptr+1)+' / '+shift.order.length+' · hoidat samalla kun teet muuta';
+  el('reflexTitle').textContent=item.q;
+  el('reflexSit').textContent=item.sit;
+  el('reflexFb').style.display='none';el('reflexFb').innerHTML='';
+  el('reflexNext').style.display='none';
+  var opts=el('reflexOpts'),inputWrap=el('reflexInput');
+  if(item.type==='input'){
+    opts.style.display='none';opts.innerHTML='';
+    inputWrap.style.display='flex';
+    var box=el('reflexInputBox');box.value='';box.placeholder=item.placeholder||'';box.disabled=false;
+    el('reflexHint').textContent=item.hint||'';
+    el('reflexSubmit').disabled=false;el('reflexSubmit').style.display='';
+  }else{
+    inputWrap.style.display='none';
+    opts.style.display='';opts.innerHTML='';
+    item.opts.forEach(function(o,oi){
+      var b=document.createElement('button');b.className='rp-opt';b.type='button';b.textContent=o.t;
+      b.onclick=function(){interruptPick(poolIdx,oi);};
+      opts.appendChild(b);
+    });
+  }
+  var total=item.secs,left=total,secEl=el('reflexSec'),fill=el('reflexFill');
+  secEl.textContent=left;secEl.classList.remove('danger');
+  fill.className='fill';fill.style.transition='none';fill.style.width='100%';
+  requestAnimationFrame(function(){fill.style.transition='width .95s linear';fill.style.width='0%';});
+  el('reflexOverlay').classList.add('open');
+  if(shift.cd)clearInterval(shift.cd);
+  shift.cd=setInterval(function(){
+    left-=1;
+    if(left<=0){clearInterval(shift.cd);shift.cd=null;secEl.textContent='0';interruptTimeout(poolIdx);return;}
+    secEl.textContent=left;
+    if(left<=Math.ceil(total*0.35))fill.classList.add('warn');
+    if(left<=Math.ceil(total*0.15)){fill.classList.remove('warn');fill.classList.add('danger');secEl.classList.add('danger');}
+  },1000);
+}
+function stopCd(){if(shift.cd){clearInterval(shift.cd);shift.cd=null;}var f=el('reflexFill');if(f){var w=getComputedStyle(f).width;f.style.transition='none';f.style.width=w;}}
+function interruptPick(poolIdx,oi){
+  if(shift.locked)return;shift.locked=true;stopCd();
+  var item=REFLEX[poolIdx],o=item.opts[oi];
+  var cls=o.v==='good'?'good':(o.v==='bad'?'bad':'');
+  var opts=el('reflexOpts').children;
+  for(var k=0;k<opts.length;k++){opts[k].disabled=true;if(k===oi&&cls)opts[k].classList.add(cls);}
+  var word=o.v==='good'?'<span class="verdict-word good-word">Oikea kutsu.</span>':(o.v==='ok'?'<span class="verdict-word">Menettelee.</span>':'<span class="verdict-word bad-word">Virhe.</span>');
+  el('reflexFb').innerHTML=word+' '+esc(o.why);el('reflexFb').style.display='block';
+  el('reflexNext').textContent='Takaisin työhön →';el('reflexNext').style.display='block';
+  shift._pendingResult=o.v;
+}
+function interruptTimeout(poolIdx){
+  if(shift.locked)return;shift.locked=true;
+  var opts=el('reflexOpts').children;for(var k=0;k<opts.length;k++)opts[k].disabled=true;
+  var box=el('reflexInputBox');if(box)box.disabled=true;var sb=el('reflexSubmit');if(sb)sb.disabled=true;
+  el('reflexFb').innerHTML='<span class="verdict-word bad-word">Aika loppui.</span> Et ehtinyt vastata — ja kun kone tai kollega jää ilman ohjaustasi, ratkaisu jää tekemättä tai kone päättää puolestasi. Nopea harkinta on oma taitonsa.';
+  el('reflexFb').style.display='block';
+  el('reflexNext').textContent='Takaisin työhön →';el('reflexNext').style.display='block';
+  shift._pendingResult='timeout';
+}
+async function interruptSubmit(){
+  if(shift.locked)return;
+  var box=el('reflexInputBox'),txt=(box.value||'').trim();
+  if(txt.length<15){alert('Kirjoita muutama sana vastaukseksi ennen lähetystä.');return;}
+  shift.locked=true;stopCd();
+  var item=REFLEX[shift._cur];
+  box.disabled=true;el('reflexSubmit').disabled=true;el('reflexSubmit').style.display='none';
+  el('reflexFb').innerHTML='<p style="margin:0">Sari lukee vastaustasi…</p>';el('reflexFb').style.display='block';
+  var text='';
+  if(item.claude){try{text=await claudeCall(item.claude.system,'Tomin vastaus: '+txt,300,30000);}catch(e){text='';}}
+  if(!text)text=item.coach||'Hyvä vastaus!';
+  el('reflexFb').innerHTML='<div class="verdict-word good-word" style="margin-bottom:6px">Hyvä — autoit Saria.</div>'+fmtParas(text);
+  el('reflexNext').textContent='Takaisin työhön →';el('reflexNext').style.display='block';
+  shift._pendingResult='good';
+}
+/* Bound to the popup's "Takaisin työhön" button. */
+function reflexAdvance(){
+  if(!shift.open)return;
+  shift.results.push(shift._pendingResult||'timeout');shift._pendingResult=null;
+  shift.ptr+=1;shift.open=false;shift.locked=false;
+  el('reflexOverlay').classList.remove('open');
+  renderShift();renderPassport();renderDrawer();scheduleSave();
+  var cur=SCREENS[idx]?SCREENS[idx].id:'';
+  // On the shift dashboard, chain straight into the next catch-up; elsewhere re-arm the random timer.
+  if(cur==='reflex'&&shiftPending()){setTimeout(runRemainingInterrupts,450);}
+  else armShift(cur);
+}
+function renderShift(){
+  var launch=el('reflex-launch');if(!launch)return;
+  var handled=shift.ptr,good=shiftGood(),total=SHIFT_TOTAL;
+  var tally=el('reflex-tally');
+  if(tally)tally.innerHTML='<strong>'+handled+' / '+total+'</strong> keskeytystä hoidettu · <strong>'+good+'</strong> oikein';
+  el('reflex-dots').innerHTML=shift.results.map(function(v){
+    var cls=v==='good'?'good':(v==='ok'?'':'bad');return '<span class="reflex-dot '+cls+'">'+(v==='good'?'✓':(v==='ok'?'~':'✕'))+'</span>';
+  }).join('')+Array.from({length:Math.max(0,total-handled)}).map(function(){return '<span class="reflex-dot">·</span>';}).join('');
+  var pendingBtn=el('reflexRunBtn'),resultBox=el('reflex-result');
+  if(shiftDone()){
+    if(pendingBtn)pendingBtn.style.display='none';
+    el('reflex-score').textContent=good+' / '+total;
+    el('reflex-outcome').textContent=good>=5?'Terävä':(good>=4?'Riittävä':'Harjoittele lisää');
+    el('reflex-summary').innerHTML=good>=4
+      ? 'Hyvä. Pidit ihmisen päätöksissä, tunnistit hallusinaation ja suojasit tiedot — vaikka työ oli kesken ja ilmoitukset tulivat väärään aikaan. Juuri tätä tekoälyn kanssa työskentely vaatii.'
+      : 'Nopeus ei riitä ilman harkintaa. Muista kaksi kysymystä jokaisessa keskeytyksessä: "Kuka tästä vastaa?" ja "Tiedänkö tämän varmasti?"';
+    if(good>=4)completed['reflex']=true;
+    if(resultBox)resultBox.classList.add('show');
+  }else{
+    if(resultBox)resultBox.classList.remove('show');
+    if(pendingBtn)pendingBtn.style.display=(shift.active&&shiftPending())?'':'none';
+  }
+}
+/* test/debug hooks */
+function fireInterruptNow(){if(!shift.active)startShift();if(!shift.open&&shiftPending())openInterrupt(shift.order[shift.ptr]);}
+
+/* ---------- kolme yleisöä: same facts, three tones, soft timer ---------- */
+var voicesTimer=null;
+function startVoices(){
+  var launch=el('voices-launch');if(launch)launch.style.display='none';
+  var total=240,left=total,disp=el('voices-timer');
+  if(voicesTimer)clearInterval(voicesTimer);
+  function paint(){var m=Math.floor(Math.max(0,left)/60),s=Math.max(0,left)%60;if(disp)disp.textContent=m+':'+(s<10?'0':'')+s;}
+  paint();
+  voicesTimer=setInterval(function(){
+    left-=1;paint();
+    if(left<=0){clearInterval(voicesTimer);voicesTimer=null;if(disp){disp.textContent='Aika täynnä';disp.style.color='var(--amber)';}}
+  },1000);
+  var t=el('voices-public');if(t)t.focus();
+}
+async function reviewVoices(){
+  var pub=(el('voices-public').value||'').trim(),city=(el('voices-city').value||'').trim(),team=(el('voices-team').value||'').trim();
+  if(pub.length<25||city.length<25||team.length<25){alert('Kirjoita kaikki kolme versiota (muutama lause kukin) ennen arviota.');return;}
+  if(voicesTimer){clearInterval(voicesTimer);voicesTimer=null;}
+  var btn=el('voicesReviewBtn');if(btn)btn.disabled=true;
+  el('voices-feedback-text').innerHTML='<p style="margin:0">Anne lukee kolme versiotasi…</p>';el('voices-feedback').style.display='block';
+  var system='Olet Anne, Rivonin (kaupunkipyöräpalvelu) toimitusjohtaja ja vaativa mutta reilu mentori. Oppilas (Tomi) kirjoitti saman kriisin ratkaisun kolmelle yleisölle: 1) vihaiset asiakkaat (julkinen some, tarvitsee empatiaa ja selkeän faktan), 2) Kajaanin kaupunki / hankintapäällikkö Marja (virallinen, asiallinen, vastuunkanto), 3) oma tiimi (sisäinen, suora, toimintaan ohjaava). Faktat: yksittäinen löysä jarru korjattu, ei sarjavikaa, tarkastus käynnissä. Arvioi suomeksi: (a) pysyivätkö faktat samoina kaikissa, (b) sopiko sävy kullekin yleisölle, (c) vältettiinkö ylilupaukset ja valehtelu, (d) oliko kukin tiivis. Kehu mikä toimi ja haasta konkreettisesti mikä ei. Älä kirjoita versioita uudelleen hänen puolestaan. 2–4 lyhyttä kappaletta.';
+  var user='YLEISÖ 1 (asiakkaat, some):\n'+pub+'\n\nYLEISÖ 2 (Marja, kaupunki):\n'+city+'\n\nYLEISÖ 3 (oma tiimi):\n'+team;
+  var text;
+  try{text=await claudeCall(system,user,420,45000);}catch(e){text='';}
+  if(!text){
+    text='Hyvä että kirjoitit kaikki kolme — se on jo oikea refleksi.\n\nTarkista itse kolme asiaa: (1) Ovatko faktat (yksi jarru, ei sarjavikaa, tarkastus kesken) täsmälleen samat joka versiossa? Jos jossain lupaat enemmän kuin tiedät, korjaa se. (2) Kuulostaako asiakasviesti empaattiselta ilman juridiikkaa, Marjan viesti asialliselta ilman somekieltä, ja tiimiviesti lyhyeltä ja toimintaan ohjaavalta? (3) Lupaatko jossain liikaa ("ei tapahdu enää koskaan")? Vaihda se siihen, mitä oikeasti teette.\n\nSama taito toistuu työelämässä joka viikko: sama totuus, eri sävy — ilman että totuus muuttuu.';
+  }
+  auto.fb.voices=text;el('voices-feedback-text').innerHTML=fmtParas(text);
+  if(btn)btn.disabled=false;completed['voices']=true;renderDrawer();renderPassport();scheduleSave();
+}
+function renderVoices(){
+  if(auto.fb&&auto.fb.voices){el('voices-feedback-text').innerHTML=fmtParas(auto.fb.voices);el('voices-feedback').style.display='block';var l=el('voices-launch');if(l)l.style.display='none';}
+}
+
+async function reviewDecide(){
+  var missing=['A','B','C'].filter(function(t){return !auto.verdicts[t];});
+  if(missing.length){alert('Anna päätös jokaiselle työlle (A, B ja C) ennen lähetystä.');return;}
+  if(!auto.pick){alert('Valitse vielä, minkä työn rakennat n8n:ssä.');return;}
+  var btn=el('decideBtn');if(btn)btn.disabled=true;
+  el('decide-feedback-text').innerHTML='<p style="margin:0">Anne lukee arviosi…</p>';el('decide-feedback').style.display='block';
+  var vmap={automate:'Automatisoi',partly:'Osittain',dont:'Älä automatisoi'};
+  var system='Olet Anne, Rivonin (kaupunkipyöräpalvelu) toimitusjohtaja ja vaativa mutta reilu mentori. Arvioit oppilaan (Tomi) päätöksiä siitä, mitkä työt kannattaa automatisoida. Käytä kolmea kriteeriä: toistuuko, selkeät säännöt, matala harkinta — ja varoitusta, ettei ison/inhimillisen päätöksen tekemistä anneta koneelle. Oikeat vastaukset: A (huoltopyyntöjen kokoaminen) = Automatisoi (toistuu, säännöt, rutiini). B (vihaisen asiakkaan hyvitys) = Osittain (kone luonnostelee, ihminen päättää rahasta). C (laajenemispäätös) = Älä automatisoi (kertaluontoinen, iso strateginen harkinta). Anna lyhyt, suora suomenkielinen palaute: kehu mikä meni oikein ja haasta mikä meni pieleen. Älä paljasta vastauksia listana, vaan ohjaa ajattelua. 2–4 lyhyttä kappaletta.';
+  var user='Tomin päätökset:\nA: '+vmap[auto.verdicts.A]+' — '+(el('reason-A').value||'(ei perustelua)')+'\nB: '+vmap[auto.verdicts.B]+' — '+(el('reason-B').value||'(ei perustelua)')+'\nC: '+vmap[auto.verdicts.C]+' — '+(el('reason-C').value||'(ei perustelua)')+'\n\nTomi aikoo rakentaa: '+TASK_LABELS[auto.pick];
+  var text;
+  try{text=await claudeCall(system,user,420,45000);}catch(e){text='';}
+  if(!text)text=decideOffline();
+  auto.fb.decide=text;el('decide-feedback-text').innerHTML=fmtParas(text);
+  if(btn)btn.disabled=false;completed['auto-decide']=true;renderDrawer();scheduleSave();
+}
+function decideOffline(){
+  var v=auto.verdicts,parts=[];
+  parts.push(v.A==='automate'?'Työ A: oikein. Huoltopyyntöjen kokoaminen toistuu, siinä on selkeät säännöt ja se on rutiinia — juuri konetyötä.':'Työ A: mieti uudelleen. Se toistuu joka viikko, on sääntöpohjaista ja matalan harkinnan työtä — vahva automaatiokohde.');
+  parts.push(v.B==='partly'?'Työ B: hyvä huomio. Kone voi luonnostella vastauksen, mutta rahasta päättää ihminen.':'Työ B: varo. Hyvitys vihaiselle asiakkaalle koskee rahaa ja mainetta — älä anna lopullista päätöstä koneelle. "Osittain" on turvallisin.');
+  parts.push(v.C==='dont'?'Työ C: oikein. Laajenemispäätös tehdään kerran ja se on iso strateginen valinta — ei automatisoitavaa.':'Työ C: tämä tehdään kerran ja vaikuttaa koko yritykseen. Kertaluontoista strategista päätöstä ei automatisoida.');
+  parts.push('(Automaattinen varapalaute — Claude-yhteys ei juuri nyt vastannut.)');
+  return parts.join('\n');
+}
+
+async function reviewDesign(){
+  var t=el('chain-trigger').value.trim(),s=el('chain-steps').value.trim(),h=el('chain-human').value.trim(),o=el('chain-output').value.trim();
+  if(!t||!s||!h||!o){alert('Täytä kaikki neljä lohkoa (liipaisin, vaiheet, ihmisen tarkistus, tulos) ennen kommenttia.');return;}
+  var btn=el('designBtn');if(btn)btn.disabled=true;
+  el('design-feedback-text').innerHTML='<p style="margin:0">Anne katsoo suunnitelmaa…</p>';el('design-feedback').style.display='block';
+  var system='Olet Anne, Rivonin toimitusjohtaja ja kokenut automaatioiden rakentaja. Luet oppilaan suunnitelman automaatioketjusta (liipaisin → vaiheet → ihmisen tarkistus → tulos) sekä hänen arvionsa siitä, mikä voi mennä rikki. Anna suora suomenkielinen palaute: onko ketju looginen, onko ihmisen tarkistus oikeassa kohdassa, ja onko riskiarvio realistinen. Ehdota yksi konkreettinen parannus. Älä kirjoita ketjua uudelleen puolesta. 2–3 lyhyttä kappaletta.';
+  var user='Rakennettava työ: '+(auto.pick?TASK_LABELS[auto.pick]:'(ei valittu)')+'\n\nLIIPAISIN: '+t+'\nVAIHEET: '+s+'\nIHMISEN TARKISTUS: '+h+'\nTULOS: '+o+'\n\nMIKÄ VOI MENNÄ RIKKI: '+(el('chain-risk').value.trim()||'(ei täytetty)');
+  var text;
+  try{text=await claudeCall(system,user,380,45000);}catch(e){text='';}
+  if(!text)text='Ketjussasi on kaikki neljä osaa — hyvä. Tarkista vielä kaksi asiaa: 1) Onko ihmisen tarkistus ennen mitään ulospäin lähtevää viestiä? Jos ei, siirrä se siihen. 2) Käsitteleekö ketjusi sen vian, jonka itse nimesit? Lisää yksi askel, joka nappaa sen. (Automaattinen varapalaute — Claude-yhteys ei juuri nyt vastannut.)';
+  auto.fb.design=text;el('design-feedback-text').innerHTML=fmtParas(text);
+  if(btn)btn.disabled=false;completed['auto-design']=true;renderDrawer();scheduleSave();
+}
+
+async function reviewBot(){
+  var role=el('bot-role').value.trim(),esc=el('bot-escalation').value.trim();
+  if(role.length<30){alert('Kirjoita ensin botin ohje (muutama lause) ennen palautetta.');return;}
+  var btn=el('botReviewBtn');if(btn)btn.disabled=true;
+  el('bot-feedback-text').innerHTML='<p style="margin:0">Anne lukee botin ohjeen…</p>';el('bot-feedback').style.display='block';
+  var system='Olet Anne, Rivonin toimitusjohtaja. Oppilas kirjoitti asiakaspalvelubotille ohjeen (roolin). Hyvä ohje: 1) kertoo mihin botti vastaa (hinnat, sijainnit, käyttöohjeet), 2) on ystävällinen ja lyhyt, 3) kieltää selvästi lupaamasta hyvityksiä, alennuksia tai poikkeuksia ja ohjaa ne ihmiselle. Anna suora, kannustava suomenkielinen palaute: onko raja ihmisen ja botin välillä selvä, ja mitä kannattaa tarkentaa. Älä kirjoita ohjetta uudelleen puolesta. Enintään 3 lyhyttä kappaletta.';
+  var user='BOTIN OHJE:\n'+role+'\n\nKYSYMYS, JONKA BOTIN PITÄÄ OHJATA IHMISELLE:\n'+(esc||'(ei annettu)');
+  var text;
+  try{text=await claudeCall(system,user,340,45000);}catch(e){text='';}
+  if(!text){
+    var miss=[];
+    if(!/ihmis|tiimi|ohjaa|en voi|en lupaa/i.test(role))miss.push('lisää selvä sääntö: hyvitykset ja hinnat ohjataan ihmiselle');
+    if(!esc)miss.push('nimeä yksi kysymys, jonka botti ohjaa ihmiselle');
+    text=miss.length?('Hyvä alku. Tärkein puuttuu: '+miss.join(' ja ')+'. Ilman tätä botti voi luvata väärin.'):'Ohjeessa on selkeä raja: botti auttaa toistuvissa kysymyksissä mutta ohjaa rahan ja valitukset ihmiselle. Juuri näin. Tarkista vielä, että sävy on ystävällinen ja lyhyt.';
+    text+='\n(Automaattinen varapalaute — Claude-yhteys ei juuri nyt vastannut.)';
+  }
+  auto.fb.bot=text;el('bot-feedback-text').innerHTML=fmtParas(text);
+  if(btn)btn.disabled=false;completed['auto-bot']=true;renderDrawer();scheduleSave();
+}
+
+async function reviewMail(){
+  var subj=el('mail-subject').value.trim(),body=el('mail-body').value.trim();
+  if(body.length<40){alert('Kirjoita ensin viesti (muutama lause) ennen palautetta.');return;}
+  var btn=el('mailReviewBtn');if(btn)btn.disabled=true;
+  el('mail-feedback-text').innerHTML='<p style="margin:0">Luetaan viestiäsi…</p>';el('mail-feedback').style.display='block';
+  var system='Olet suomen kielen ja työelämäviestinnän valmentaja. Oppilas kirjoittaa opettajalleen (Suvi) sähköpostin siitä, millaisen n8n-automaation JA asiakasbotin hän rakensi Rivonille. Hyvässä viestissä on: 1) mitä automaatio ja botti tekevät, 2) miksi juuri ne valittiin, 3) miten ne testattiin ja että ne toimivat. Anna lyhyt, kannustava mutta täsmällinen suomenkielinen palaute: mikä on jo hyvin ja mitä kannattaa lisätä tai kirkastaa. Älä kirjoita viestiä uudelleen oppilaan puolesta. Enintään 3 lyhyttä kappaletta.';
+  var user='AIHE: '+(subj||'(tyhjä)')+'\n\nVIESTI:\n'+body;
+  var text;
+  try{text=await claudeCall(system,user,360,45000);}catch(e){text='';}
+  if(!text){
+    var miss=[];
+    if(!/test|testasin|kokeil|toimi/i.test(body))miss.push('miten testasit ja että se toimi');
+    if(!/koska|siksi|valitsin|syy/i.test(body))miss.push('miksi valitsit juuri sen työn');
+    text=miss.length?('Hyvä alku. Lisää vielä: '+miss.join(' ja ')+'. Opettaja haluaa nähdä, että kone oikeasti toimii.'):'Viestissä on mitä, miksi ja miten testasit — juuri oikeat osat. Tarkista vielä kohtelias aloitus ja allekirjoitus, niin voit lähettää.';
+    text+='\n(Automaattinen varapalaute — Claude-yhteys ei juuri nyt vastannut.)';
+  }
+  auto.fb.mail=text;el('mail-feedback-text').innerHTML=fmtParas(text);
+  if(btn)btn.disabled=false;scheduleSave();
+}
+function openMail(){
+  var subj=el('mail-subject').value.trim()||'Rivon-automaatio valmis';
+  var body=el('mail-body').value.trim()||'Hei Suvi,';
+  var href='mailto:'+encodeURIComponent(TEACHER_EMAIL)+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+  window.location.href=href;
+  completed['auto-send']=true;scheduleSave();
+  return false;
+}
+
+function finish(){
+  completed.capstone=true;scheduleSave();
+  if(work&&work.saveNow)work.saveNow();
+  alert('Tallennettu. Rivon-viikko päätökseen. Hyvää työtä.');
+}
+
+/* ---------- keyboard access for orb ---------- */
+document.addEventListener('keydown',function(e){
+  if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('voice-orb')){
+    e.preventDefault();e.target.click();
+  }
+  if(e.key==='Escape'&&!el('drawer').hidden)closeDrawer();
+});
+window.addEventListener('pagehide',function(){
+  Object.keys(calls).forEach(function(k){var c=calls[k];if(c.engine){try{c.engine.stop();}catch(e){}}});
+});
+
+/* expose handlers used by inline onclick */
+window.next=next;window.prev=prev;window.openDrawer=openDrawer;window.closeDrawer=closeDrawer;
+window.startCall=startCall;window.endCall=endCall;window.toggleText=toggleText;window.sendText=sendText;
+window.retry=retry;window.generateAd=generateAd;window.copyScript=copyScript;window.finish=finish;
+window.pickVerdict=pickVerdict;window.pickBuild=pickBuild;window.reviewDecide=reviewDecide;
+window.reviewDesign=reviewDesign;window.reviewBot=reviewBot;window.reviewMail=reviewMail;window.openMail=openMail;window.scheduleSaveNow=scheduleSaveNow;
+window.pickMove=pickMove;window.openCaseFile=openCaseFile;window.closeCaseFile=closeCaseFile;
+window.reflexAdvance=reflexAdvance;window.runRemainingInterrupts=runRemainingInterrupts;window.fireInterruptNow=fireInterruptNow;window.interruptSubmit=interruptSubmit;
+window.setAutoInterrupt=function(v){shift.auto=!!v;if(!v&&shift.timer){clearTimeout(shift.timer);shift.timer=null;}};
+window.startVoices=startVoices;window.reviewVoices=reviewVoices;
+
+/* ---------- boot ---------- */
+(async function(){
+  try{
+    if(window.moduleWork&&window.moduleWork.initModuleWork){
+      work=await window.moduleWork.initModuleWork(MODULE_ID,{collect:collect,apply:apply,summarize:summarize,debounceMs:850});
+    }else{
+      var local=null;try{local=JSON.parse(localStorage.getItem(LOCAL_KEY)||'null');}catch(e){}
+      if(local)apply(local);
+    }
+  }catch(e){}
+  document.querySelectorAll('[data-persist]').forEach(function(n){
+    n.addEventListener('input',scheduleSave);n.addEventListener('change',scheduleSave);
+  });
+  renderSkillHeaders();
+  render();
+  setText('saveIndicator','Työ tallessa');
+})();
+})();
+</script>
+</body>
+</html>

@@ -194,7 +194,10 @@ function buildFullSnapshot() {
   if (login.status !== 200 || !cookie) fail('login (' + email + ')');
   else pass('login as ' + email);
 
-  const page = await req('GET', '/module/moduuli9-haastattelu', null, cookie);
+  // preview=1 (WITHOUT a session cookie) serves the real module HTML. A
+  // logged-in but ungated cookie is gated even under preview, so fetch the page
+  // anonymously here; the cookie is still used for the autosave API round-trip.
+  const page = await req('GET', '/module/moduuli9-haastattelu?preview=1');
   if (page.status !== 200) fail('/module/moduuli9-haastattelu HTTP ' + page.status);
   else pass('/module/moduuli9-haastattelu serves HTML');
 

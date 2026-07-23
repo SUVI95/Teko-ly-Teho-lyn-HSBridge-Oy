@@ -1,20 +1,29 @@
 /* Per-user module form state — server + scoped localStorage (not shared across logins) */
 (function () {
   var cachedUserId = null;
+  var authResolved = false; // true once auth state is known (logged in OR definitively anonymous)
 
   function workModuleId(moduleId) {
     return moduleId + '__work';
   }
 
+  // Resolves the auth state exactly once. In preview / logged-out mode the server
+  // returns 401; we remember that and stop hitting protected endpoints, so the
+  // console isn't flooded with 401s and autosave falls back to localStorage.
   async function getUserId() {
-    if (cachedUserId) return cachedUserId;
+    if (authResolved) return cachedUserId;
     try {
       var r = await fetch('/api/auth/me', { credentials: 'include' });
       if (r.ok) {
         var d = await r.json();
         if (d.user && d.user.id) cachedUserId = String(d.user.id);
+        authResolved = true;
+      } else if (r.status === 401 || r.status === 403) {
+        authResolved = true; // definitively anonymous — don't retry
       }
-    } catch (e) {}
+    } catch (e) {
+      // Network error: leave unresolved so a later call can retry.
+    }
     return cachedUserId;
   }
 
@@ -90,6 +99,8 @@
     try {
       localStorage.setItem(key, payload);
     } catch (e) {}
+    // Anonymous / preview mode: localStorage only. Skip the server to avoid 401 spam.
+    if (!cachedUserId) return;
     try {
       await fetch('/api/reflections/save', {
         method: 'POST',
@@ -107,25 +118,28 @@
     await getUserId();
     migrateAnonModuleWork(moduleId);
     var best = null;
-    try {
-      var r = await fetch(
-        '/api/reflections/module/' + encodeURIComponent(workModuleId(moduleId)),
-        { credentials: 'include' }
-      );
-      if (r.ok) {
-        var d = await r.json();
-        if (d.reflection && d.reflection.reflection_text) {
-          var parsed = parsePayload(d.reflection.reflection_text);
-          // v:1 is on the outer wrapper (parsed.v), not on the collected data (parsed.data)
-          if (parsed && parsed.v === 1 && parsed.data && typeof parsed.data === 'object') {
-            best = mergeModuleData(best, parsed.data);
-            try {
-              localStorage.setItem(localStorageKey(moduleId), d.reflection.reflection_text);
-            } catch (e) {}
+    // Only read from the server when logged in; anon/preview uses localStorage only.
+    if (cachedUserId) {
+      try {
+        var r = await fetch(
+          '/api/reflections/module/' + encodeURIComponent(workModuleId(moduleId)),
+          { credentials: 'include' }
+        );
+        if (r.ok) {
+          var d = await r.json();
+          if (d.reflection && d.reflection.reflection_text) {
+            var parsed = parsePayload(d.reflection.reflection_text);
+            // v:1 is on the outer wrapper (parsed.v), not on the collected data (parsed.data)
+            if (parsed && parsed.v === 1 && parsed.data && typeof parsed.data === 'object') {
+              best = mergeModuleData(best, parsed.data);
+              try {
+                localStorage.setItem(localStorageKey(moduleId), d.reflection.reflection_text);
+              } catch (e) {}
+            }
           }
         }
-      }
-    } catch (e) {}
+      } catch (e) {}
+    }
     best = mergeModuleData(best, readStoredModuleData(moduleId, cachedUserId || 'anon'));
     if (cachedUserId) {
       best = mergeModuleData(best, readStoredModuleData(moduleId, 'anon'));

@@ -119,7 +119,7 @@ function buildRealtimeSessionConfig(scenarioId, customText) {
     type: 'realtime',
     model: realtimeModel(),
     instructions: buildCsRealtimeInstructions(scenarioId, customText),
-    output_modalities: ['audio', 'text'],
+    output_modalities: ['audio'],
     audio: {
       input: {
         format: { type: 'audio/pcm', rate: 24000 },
@@ -158,8 +158,11 @@ router.get('/realtime/config', (req, res) => {
 
 router.post('/realtime/session', express.text({ type: ['application/sdp', 'text/plain'], limit: '512kb' }), async (req, res) => {
   try {
-    const sdp = String(req.body || '').trim();
-    if (!sdp) return res.status(400).json({ error: 'SDP offer required' });
+    // Preserve the SDP's trailing CRLF — trimming it makes OpenAI reject the
+    // offer with "invalid_offer / EOF".
+    let sdp = String(req.body || '');
+    if (!sdp.trim()) return res.status(400).json({ error: 'SDP offer required' });
+    if (!/\r?\n$/.test(sdp)) sdp += '\r\n';
 
     const openaiApiKey = envTrim('OPENAI_API_KEY');
     if (!openaiApiKey) {
@@ -279,3 +282,6 @@ router.post('/feedback', async (req, res) => {
 });
 
 module.exports = router;
+// Exported for smoke tests so they validate the exact production session config.
+module.exports.buildRealtimeSessionConfig = buildRealtimeSessionConfig;
+module.exports.realtimeModel = realtimeModel;

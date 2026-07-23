@@ -75,7 +75,7 @@ async function ensureTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS student_portfolios (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       slug VARCHAR(120) NOT NULL,
       published BOOLEAN DEFAULT FALSE,
       full_name VARCHAR(255) NOT NULL,
@@ -107,7 +107,7 @@ async function ensureTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS portfolio_events (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       slug VARCHAR(120) NOT NULL,
       event_type VARCHAR(40) NOT NULL,
       visitor_name VARCHAR(255),
@@ -400,7 +400,10 @@ router.get('/mine', authenticateToken, async (req, res) => {
       portfolio.preview_token = makePreviewToken(portfolio.slug, req.user.id);
     }
     res.json({ portfolio });
-  } catch (e) { res.status(500).json({ error: 'Virhe' }); }
+  } catch (e) {
+    console.error('GET /api/portfolio/mine error:', e.message);
+    res.status(500).json({ error: 'Virhe' });
+  }
 });
 
 function resolvePublicPortfolioSlug(raw) {

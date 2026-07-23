@@ -42,7 +42,8 @@ function fail(msg) {
   else pass('GET /api/health');
 
   for (const mod of ['moduuli1-ai-automaatio', 'moduuli1b-ai-automaatio', 'moduuli8-ai-polku', 'moduuli9-haastattelu']) {
-    const page = await fetch(base + '/module/' + mod);
+    // preview=1 (no cookie) serves the real module HTML past the gift/unlock gate.
+    const page = await fetch(base + '/module/' + mod + '?preview=1');
     const html = await page.text();
     if (page.status !== 200) fail('/module/' + mod + ' HTTP ' + page.status);
     else if (!html.includes('module-work.js')) fail(mod + ' missing module-work.js');

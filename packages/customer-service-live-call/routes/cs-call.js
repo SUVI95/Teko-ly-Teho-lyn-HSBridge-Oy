@@ -81,7 +81,7 @@ function buildRealtimeSessionConfig(scenarioId, customText) {
     type: 'realtime',
     model: realtimeModel(),
     instructions: buildCsRealtimeInstructions(scenarioId, customText),
-    output_modalities: ['audio', 'text'],
+    output_modalities: ['audio'],
     audio: {
       input: {
         format: { type: 'audio/pcm', rate: 24000 },

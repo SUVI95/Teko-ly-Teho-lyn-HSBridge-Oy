@@ -178,8 +178,10 @@ async function httpChecks() {
   for (const mod of OMA_POLKU) {
     let page;
     try {
-      page = await fetch(base + '/module/' + mod.id, {
-        headers: cookie ? { Cookie: cookie } : {},
+      // preview=1 WITHOUT a session cookie serves the real module HTML. A
+      // logged-in but ungated cookie is gated even under preview, so fetch
+      // anonymously here (DB/API checks below still use the cookie).
+      page = await fetch(base + '/module/' + mod.id + '?preview=1', {
         redirect: 'manual'
       });
     } catch (e) {
@@ -191,10 +193,15 @@ async function httpChecks() {
       continue;
     }
     const html = await page.text();
+    // A module persists either via the injected global autosave (module-autosave.js)
+    // or its own self-managed module-work.js (initModuleWork). Some modules are
+    // deliberately excluded from global autosave injection in server.js because
+    // they manage their own — accept either as valid persistence wiring.
+    const hasGlobalAutosave = html.includes('module-autosave.js');
+    const hasModuleWork = html.includes('module-work.js') || html.includes('initModuleWork');
     if (page.status !== 200) fail('/module/' + mod.id + ' HTTP ' + page.status);
     else if (!html.includes('__MODULE_ID__')) fail(mod.id + ' served without __MODULE_ID__ boot');
-    else if (!html.includes('module-autosave.js')) fail(mod.id + ' served without module-autosave.js');
-    else if (!html.includes('module-work.js') && !mod.portfolio) fail(mod.id + ' served without module-work.js');
+    else if (!hasGlobalAutosave && !hasModuleWork && !mod.portfolio) fail(mod.id + ' served without autosave wiring (module-autosave.js / module-work.js)');
     else pass('/module/' + mod.id + ' — autosave + persistence OK');
   }
 

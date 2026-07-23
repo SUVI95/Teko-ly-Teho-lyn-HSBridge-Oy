@@ -844,6 +844,19 @@
     window.currentUser = null;
     window.onboardingCompleted = false;
     window.onboardingStatusKnown = false;
+
+    // LOCAL PREVIEW ONLY: on localhost, skips auth and mocks a user so the
+    // dashboard renders without logging in. Gated to localhost so it can never
+    // bypass auth in production. (Do not rely on this in prod.)
+    //   /?preview=1 or /?preview=admin   -> admin view (all cards)
+    //   /?preview=student                -> exact student-facing view
+    const PREVIEW_MODE = (function () {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const p = new URLSearchParams(window.location.search).get('preview');
+      if (!isLocal || !p) return null;
+      return p === 'student' ? 'student' : 'admin';
+    })();
+    const IS_LOCAL_PREVIEW = PREVIEW_MODE !== null;
     
     // Icon SVG definitions (global scope)
     const iconSVGs = {
@@ -865,6 +878,11 @@
     
     // Check authentication (required - redirects to login)
     async function checkAuth() {
+      if (IS_LOCAL_PREVIEW) {
+        return PREVIEW_MODE === 'student'
+          ? { name: 'Preview Opiskelija', email: 'opiskelija@localhost', is_admin: false, is_approved: true }
+          : { name: 'Preview Admin', email: 'preview@localhost', is_admin: true, is_approved: true };
+      }
       try {
         const response = await fetch(`${API_URL}/auth/me`, {
           credentials: 'include'
@@ -928,7 +946,10 @@
         return false;
       }
 
-      if (!isAdmin) {
+      if (IS_LOCAL_PREVIEW) {
+        window.onboardingCompleted = true;
+        window.onboardingStatusKnown = true;
+      } else if (!isAdmin) {
         try {
           const obRes = await fetch(`${API_URL}/onboarding/status`, { credentials: 'include' });
           if (obRes.ok) {
@@ -2053,8 +2074,14 @@
           'moduuli-esitykset-tarjoukset-viestinta-gamma-studio': 5.81
         };
         const bridgeSortKey = (m) => (bridgeOrderOverride[m.id] != null ? bridgeOrderOverride[m.id] : Number(m.order) || 0);
+        // Dedicated "Tekoäly työnhaun työkaluna" section — pulled out of the bridge grid,
+        // rendered before the feedback (palaute) module.
+        const JOB_SEARCH_SECTION_IDS = ['moduuli8-ai-polku', 'moduuli9-haastattelu', 'moduuli-bottityypit-studio-intro', 'moduuli-elava-cv'];
+        const jobSearchModules = visibleForStudent(part2Modules
+          .filter(m => JOB_SEARCH_SECTION_IDS.includes(m.id))
+          .sort((a, b) => bridgeSortKey(a) - bridgeSortKey(b) || String(a.id).localeCompare(String(b.id))));
         const day1_5Modules = visibleForStudent(part2Modules
-          .filter(m => m.day === 'bridge' && !injectedIds.has(m.id))
+          .filter(m => m.day === 'bridge' && !injectedIds.has(m.id) && !JOB_SEARCH_SECTION_IDS.includes(m.id))
           .sort((a, b) => bridgeSortKey(a) - bridgeSortKey(b) || String(a.id).localeCompare(String(b.id))));
         const day2Modules = visibleForStudent(part2Modules.filter(m => m.day === 2).sort((a, b) => a.order - b.order));
         const day3Modules = visibleForStudent(part2Modules.filter(m => m.day === 3).sort((a, b) => a.order - b.order));
@@ -2068,6 +2095,7 @@
         // Quick jump nav — näytetään vain osiot joilla on näkyviä moduuleja tälle käyttäjälle
         const sectionIds = [
           { id: 'section-day1', label: 'AI-taidot työelämään', show: part1RenderList.length > 0 },
+          { id: 'section-tyonhaku', label: 'Tekoäly työnhaun työkaluna', show: jobSearchModules.length > 0 },
           { id: 'section-bridge', label: 'Käytännön AI-taidot', show: day1_5Modules.length > 0 || (!!loppumoduuliModule && !isStudentHidden(loppumoduuliModule)) },
           { id: 'section-oma-polku', label: viewerIsAdmin ? 'Jani / Karpo' : 'Oma polku', show: hasJaniOmaPolku },
           { id: 'section-oma-polku-anne', label: viewerIsAdmin ? 'Anne — Oma polku' : 'Oma polku', show: hasAnneOmaPolku },
@@ -2150,7 +2178,6 @@
             minnaGiftModuleA,
             minnaGiftModuleB,
             ellaGiftModule,
-            star2Module,
             star3Module,
             santtuGiftModule,
             santeriGiftModuleM1,
@@ -2159,6 +2186,7 @@
             automatioModuleA,
             automatioModuleB,
             automatioModuleC,
+            star2Module,
             star4Module,
             star5Module,
             palauteModule
@@ -2173,6 +2201,17 @@
             out += renderModuleCard(m, idxBase + i, modules, summary, completedModules, module4Completed, allPart1Completed);
           });
           return out;
+        }
+
+        // Render "Tekoäly työnhaun työkaluna" — dedicated job-search section, before palaute
+        if (jobSearchModules.length > 0) {
+          html += '<div class="part-section" id="section-tyonhaku"><h2 class="part-title">Tekoäly työnhaun työkaluna</h2>';
+          html += '<p style="max-width:800px;margin:0 auto 1.5rem;color:var(--muted);line-height:1.6;text-align:center;">Henkilökohtainen työnhakupolku: kartoita taidot, rakenna hakemus ja portfolio, harjoittele haastattelua ja testaa omaa työnhakubottia. Ei vaikuta todistukseen.</p>';
+          html += '<div class="modules-grid">';
+          jobSearchModules.forEach((module, index) => {
+            html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
+          });
+          html += '</div></div>';
         }
 
         if (day1_5Modules.length > 0) {
@@ -2465,7 +2504,6 @@
       'rikkinainen-prompti',
       'tuomioistuin',
       'tyokalurakentaja',
-      'moduuli-eu-ai-act-moduuli5',
       'moduuli-excel-copilot-masterclass',
       'moduuli-recap-game',
       'palaute',

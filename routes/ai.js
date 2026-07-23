@@ -147,7 +147,7 @@ function buildRealtimeSessionConfig() {
     type: 'realtime',
     model: realtimeModel(),
     instructions: buildMockRealtimeInstructions(),
-    output_modalities: ['audio', 'text'],
+    output_modalities: ['audio'],
     audio: {
       input: {
         format: { type: 'audio/pcm', rate: 24000 },
@@ -628,10 +628,13 @@ router.post('/speech', async (req, res) => {
 /** WebRTC Realtime session for live mock interview (gpt-realtime-2). */
 router.post('/realtime/session', express.text({ type: ['application/sdp', 'text/plain'], limit: '512kb' }), async (req, res) => {
   try {
-    const sdp = String(req.body || '').trim();
-    if (!sdp) {
+    // Preserve the SDP's trailing CRLF — trimming it makes OpenAI reject the
+    // offer with "invalid_offer / EOF".
+    let sdp = String(req.body || '');
+    if (!sdp.trim()) {
       return res.status(400).json({ error: 'SDP offer required' });
     }
+    if (!/\r?\n$/.test(sdp)) sdp += '\r\n';
 
     const openaiApiKey = envTrim('OPENAI_API_KEY');
     if (!openaiApiKey) {
@@ -1318,3 +1321,7 @@ router.post('/portfolio-bio-suggest', async (req, res) => {
 });
 
 module.exports = router;
+// Exported for smoke tests so they validate the exact production session config.
+module.exports.buildRealtimeSessionConfig = buildRealtimeSessionConfig;
+module.exports.realtimeModel = realtimeModel;
+module.exports.realtimeVoice = realtimeVoice;

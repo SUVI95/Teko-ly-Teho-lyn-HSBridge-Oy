@@ -99,6 +99,7 @@ const artifactsRoutes = require('./routes/artifacts');
 const moduleAiRoutes = require('./routes/module-ai');
 const bonusModuleRoutes = require('./routes/bonus-module');
 const csCallRoutes = require('./routes/cs-call');
+const studioVoiceRoutes = require('./routes/studio-voice');
 const realtimeTokenRoutes = require('./routes/realtime-token');
 const audioRoutes = require('./routes/audio');
 const automaatioEmailRoutes = require('./routes/automaatio-email');
@@ -141,6 +142,7 @@ app.use('/api/artifacts', artifactsRoutes);
 app.use('/api/module-ai', moduleAiRoutes);
 app.use('/api/bonus-module', bonusModuleRoutes);
 app.use('/api/cs-call', csCallRoutes);
+app.use('/api/studio-voice', studioVoiceRoutes);
 app.use('/api/realtime-token', realtimeTokenRoutes);
 app.use('/api/audio', audioRoutes);
 app.use(
@@ -595,7 +597,6 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'moduuli1b-ai-automaatio',
   'moduuli1c-ai-automaatio',
   // Hidden from students (admin only on dashboard)
-  'moduuli-eu-ai-act-moduuli5',
   'moduuli-excel-copilot-masterclass',
   'moduuli-recap-game',
   'moduuli-ideasta-tuotteeksi',
