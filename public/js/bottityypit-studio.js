@@ -354,6 +354,20 @@
     if (trained) setSaveStatus("Botti ladattu — voit jatkaa tai muokata", true);
   }
 
+  // Brand shown when the platform AI is working. If the learner has named their
+  // bot, mentions of the AI use that name instead of the default brand.
+  var AI_BRAND = "duunijobs AI";
+  function aiLabel() {
+    var el = $("botName");
+    var name = el ? String(el.value || "").trim() : "";
+    return name || AI_BRAND;
+  }
+
+  function updateAiLabels() {
+    var meta = document.querySelector(".cv-upload-meta");
+    if (meta) meta.textContent = aiLabel() + " lukee CV:n · max 25 MB";
+  }
+
   function setCvUploadStatus(msg, kind) {
     var el = $("cvUploadStatus");
     if (!el) return;
@@ -506,7 +520,7 @@
       return;
     }
     setCvUploadFileName(file.name);
-    setCvUploadStatus("Claude lukee CV:stä…", "");
+    setCvUploadStatus(aiLabel() + " lukee CV:stä…", "");
     var zone = $("cvUploadZone");
     if (zone) zone.style.pointerEvents = "none";
     try {
@@ -522,7 +536,7 @@
       if (data.fields && Object.keys(data.fields).length) {
         var ok = applyCvPortfolioFields(data.fields);
         if (ok) {
-          setCvUploadStatus("✓ CV luettu Claudella — tarkista teksti ja taidot", "ok");
+          setCvUploadStatus("✓ CV luettu · " + aiLabel() + " — tarkista teksti ja taidot", "ok");
           scheduleSave();
         } else {
           setCvUploadStatus(data.message || "CV:stä ei saatu riittävästi tietoa — täydennä käsin", "err");
@@ -582,6 +596,7 @@
     if (wcEl) wcEl.textContent = wc(p) + " sanaa";
     var ct = $("chatTitle");
     if (ct) ct.textContent = $("botName").value.trim() || parseCvName() || "Uravalmentaja";
+    updateAiLabels();
     var av = $("av");
     if (av) av.textContent = (parseCvName().charAt(0) || "?").toUpperCase();
   }
@@ -965,7 +980,7 @@
       btn.disabled = true;
       btn.textContent = "Analysoidaan…";
     }
-    setJobAnalyzeStatus("Claude analysoi sopivuutta — tämä voi kestää 15–30 s…", "wait");
+    setJobAnalyzeStatus(aiLabel() + " analysoi sopivuutta — tämä voi kestää 15–30 s…", "wait");
     setSaveStatus("Analysoidaan työpaikkaa…", false);
 
     fetchJsonWithTimeout(
