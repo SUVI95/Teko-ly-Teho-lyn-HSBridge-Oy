@@ -2095,7 +2095,6 @@
         // Quick jump nav — näytetään vain osiot joilla on näkyviä moduuleja tälle käyttäjälle
         const sectionIds = [
           { id: 'section-day1', label: 'AI-taidot työelämään', show: part1RenderList.length > 0 },
-          { id: 'section-tyonhaku', label: 'Tekoäly työnhaun työkaluna', show: jobSearchModules.length > 0 },
           { id: 'section-bridge', label: 'Käytännön AI-taidot', show: day1_5Modules.length > 0 || (!!loppumoduuliModule && !isStudentHidden(loppumoduuliModule)) },
           { id: 'section-oma-polku', label: viewerIsAdmin ? 'Jani / Karpo' : 'Oma polku', show: hasJaniOmaPolku },
           { id: 'section-oma-polku-anne', label: viewerIsAdmin ? 'Anne — Oma polku' : 'Oma polku', show: hasAnneOmaPolku },
@@ -2103,7 +2102,8 @@
           { id: 'section-day3', label: 'DAY 3', show: day3Modules.length > 0 },
           { id: 'section-day4', label: 'DAY 4', show: day4Modules.length > 0 },
           { id: 'section-loppu', label: 'Tekoäly ja minä', show: !!loppumoduuliModule && !isStudentHidden(loppumoduuliModule) },
-          { id: 'section-day5', label: 'Sovella omaan alaasi', show: part3RenderList.length > 0 }
+          { id: 'section-day5', label: 'Sovella omaan alaasi', show: part3RenderList.length > 0 },
+          { id: 'section-tyonhaku', label: 'Tekoäly työnhaun työkaluna', show: jobSearchModules.length > 0 }
         ].filter(s => s.show);
         html += '<div class="section-jump-nav" style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:2rem;padding:1rem;background:var(--paper2);border-radius:12px;">';
         sectionIds.forEach(s => {
@@ -2188,8 +2188,9 @@
             automatioModuleC,
             star2Module,
             star4Module,
-            star5Module,
-            palauteModule
+            star5Module
+            // palauteModule intentionally excluded — rendered last in the
+            // "Tekoäly työnhaun työkaluna" section instead.
           ].filter(function (m) {
             if (!m) return false;
             if (isPersonalGiftModule(m)) return shouldShowPersonalGiftModule(m);
@@ -2201,17 +2202,6 @@
             out += renderModuleCard(m, idxBase + i, modules, summary, completedModules, module4Completed, allPart1Completed);
           });
           return out;
-        }
-
-        // Render "Tekoäly työnhaun työkaluna" — dedicated job-search section, before palaute
-        if (jobSearchModules.length > 0) {
-          html += '<div class="part-section" id="section-tyonhaku"><h2 class="part-title">Tekoäly työnhaun työkaluna</h2>';
-          html += '<p style="max-width:800px;margin:0 auto 1.5rem;color:var(--muted);line-height:1.6;text-align:center;">Henkilökohtainen työnhakupolku: kartoita taidot, rakenna hakemus ja portfolio, harjoittele haastattelua ja testaa omaa työnhakubottia. Ei vaikuta todistukseen.</p>';
-          html += '<div class="modules-grid">';
-          jobSearchModules.forEach((module, index) => {
-            html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
-          });
-          html += '</div></div>';
         }
 
         if (day1_5Modules.length > 0) {
@@ -2290,6 +2280,21 @@
           html += '</div></div>';
         }
 
+        // Render "Tekoäly työnhaun työkaluna" LAST — the final day. Palaute (course
+        // feedback) is placed right after the last module, visible to everyone.
+        if (jobSearchModules.length > 0 || (palauteModule && !isStudentHidden(palauteModule))) {
+          html += '<div class="part-section" id="section-tyonhaku"><h2 class="part-title">Tekoäly työnhaun työkaluna</h2>';
+          html += '<p style="max-width:800px;margin:0 auto 1.5rem;color:var(--muted);line-height:1.6;text-align:center;">Henkilökohtainen työnhakupolku: kartoita taidot, rakenna hakemus ja portfolio, harjoittele haastattelua ja testaa omaa työnhakubottia. Lopuksi anna kurssipalaute. Ei vaikuta todistukseen.</p>';
+          html += '<div class="modules-grid">';
+          jobSearchModules.forEach((module, index) => {
+            html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
+          });
+          if (palauteModule && !isStudentHidden(palauteModule)) {
+            html += renderModuleCard(palauteModule, jobSearchModules.length, modules, summary, completedModules, module4Completed, allPart1Completed);
+          }
+          html += '</div></div>';
+        }
+
         container.innerHTML = html;
       } catch (error) {
         console.error('Error loading modules:', error);
@@ -2325,6 +2330,7 @@
       'moduuli9-haastattelu',
       'moduuli-bottityypit-studio-intro',
       'moduuli-elava-cv',
+      'palaute',
       'moduuli-perplexity-notebooklm',
       'moduuli-bottityypit',
       'moduuli-eu-ai-act-moduuli5',
@@ -2506,7 +2512,6 @@
       'tyokalurakentaja',
       'moduuli-excel-copilot-masterclass',
       'moduuli-recap-game',
-      'palaute',
       // Day 2–4
       'moduuli-voice-deep-search',
       'moduuli10-ai-tyonhakutyokalut',
