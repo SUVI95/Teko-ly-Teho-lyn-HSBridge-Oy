@@ -53,6 +53,22 @@
     this.pendingAdvanceCtx = null;
     this.submittingAnswer = false;
     this.submitUnlockTimer = null;
+    this.speechActive = false;
+    this.hasUncommittedAudio = false;
+    this.awaitingTranscript = false;
+    this.pendingUserTranscript = '';
+  }
+
+  function isBenignRealtimeError(err) {
+    var code = String((err && err.code) || '').toLowerCase();
+    var msg = String((err && err.message) || err || '').toLowerCase();
+    if (code === 'input_audio_buffer_commit_empty') return true;
+    if (code === 'conversation_already_has_active_response') return true;
+    if (code === 'response_cancel_not_active') return true;
+    if (/buffer too small|buffer only has 0|commit_empty|no active response|already has an active response/i.test(msg)) {
+      return true;
+    }
+    return false;
   }
 
   MockRealtimeInterview.prototype.phaseAt = function (index) {
@@ -141,14 +157,29 @@
   };
 
   MockRealtimeInterview.prototype.handleUserTranscript = function (transcript) {
-    if (!this.awaitingUserAnswer || this.aiResponding || this.awaitingWrapUp) return;
-    if (Date.now() - this.responseDoneAt < ECHO_GUARD_MS) return;
+    var text = String(transcript || '').trim();
+    this.awaitingTranscript = false;
+    this.hasUncommittedAudio = false;
+    this.speechActive = false;
+
+    // If transcript arrives slightly before our turn flag flips, keep it.
+    if (!this.awaitingUserAnswer || this.aiResponding || this.awaitingWrapUp) {
+      if (text && !this.pausedForReview) this.pendingUserTranscript = text;
+      return;
+    }
+    if (Date.now() - this.responseDoneAt < ECHO_GUARD_MS && !this.submittingAnswer) {
+      if (text) this.pendingUserTranscript = text;
+      return;
+    }
 
     var qIndex = this.answerCount;
     if (qIndex >= this.expectedTurns) return;
     var phase = this.phaseAt(qIndex);
 
-    if (!isMeaningfulAnswer(transcript, phase.id)) {
+    if (!isMeaningfulAnswer(text, phase.id)) {
+      this.submittingAnswer = false;
+      clearTimeout(this.submitUnlockTimer);
+      this.submitUnlockTimer = null;
       if (phase.id === 'intro') {
         this.onStatus('Kerro nimesi ja vähän taustastasi — odota hetki ja vastaa uudelleen.');
       } else {
@@ -158,8 +189,8 @@
     }
 
     var question = this.pendingRecruiterText || this.lastAssistantText || '';
-    this.userAnswers[phase.id] = transcript;
-    if (phase.id === 'intro') this.userAnswers.intro = transcript;
+    this.userAnswers[phase.id] = text;
+    if (phase.id === 'intro') this.userAnswers.intro = text;
 
     this.answerCount++;
     this.onUserTranscript({
@@ -168,11 +199,12 @@
       tag: phase.tag,
       label: phase.label,
       question: question,
-      transcript: transcript
+      transcript: text
     });
 
     this.pendingRecruiterText = '';
-    var ctx = this.buildContext(transcript);
+    this.pendingUserTranscript = '';
+    var ctx = this.buildContext(text);
     this.pausedForReview = true;
     this.awaitingUserAnswer = false;
     this.submittingAnswer = false;
@@ -190,13 +222,21 @@
         phase: phase.id,
         label: phase.label,
         isLast: isLast,
-        transcript: transcript
+        transcript: text
       });
       return;
     }
 
     // Fallback if UI does not handle pause: continue automatically
     this.continueAfterAnswer();
+  };
+
+  MockRealtimeInterview.prototype.flushPendingUserTranscript = function () {
+    if (!this.pendingUserTranscript) return;
+    if (!this.awaitingUserAnswer || this.aiResponding || this.awaitingWrapUp || this.pausedForReview) return;
+    var pending = this.pendingUserTranscript;
+    this.pendingUserTranscript = '';
+    this.handleUserTranscript(pending);
   };
 
   MockRealtimeInterview.prototype.continueAfterAnswer = function () {
@@ -221,23 +261,41 @@
   };
 
   MockRealtimeInterview.prototype.submitAnswer = function () {
-    // Manual "Lähetä vastaus" — force the server to finalize the current input
-    // audio buffer so the answer is transcribed NOW instead of waiting for the
-    // slow semantic VAD. Only valid while it is the candidate's turn to speak.
+    // Manual "Lähetä vastaus" — finalize current speech now.
+    // With semantic VAD the buffer is often already committed; committing again
+    // throws input_audio_buffer_commit_empty (harmless but noisy).
     if (!this.connected) return false;
     if (this.aiResponding || this.awaitingWrapUp || this.pausedForReview) return false;
     if (!this.awaitingUserAnswer) return false;
     if (this.submittingAnswer) return false;
+
+    if (this.pendingUserTranscript) {
+      this.submittingAnswer = true;
+      this.flushPendingUserTranscript();
+      return true;
+    }
+
     this.submittingAnswer = true;
     this.onStatus('Lähetetään vastaustasi — hetki...');
-    // With server VAD this may report an empty buffer if VAD already committed;
-    // that error is harmless and ignored by handleServerEvent.
-    this.sendEvent({ type: 'input_audio_buffer.commit' });
+
+    if (this.hasUncommittedAudio || this.speechActive) {
+      this.awaitingTranscript = true;
+      this.sendEvent({ type: 'input_audio_buffer.commit' });
+    } else if (this.awaitingTranscript) {
+      // VAD already committed — wait for transcription.completed
+      this.onStatus('Käsitellään vastaustasi — hetki...');
+    } else {
+      // No speech detected yet — unlock and ask student to speak
+      this.submittingAnswer = false;
+      this.onStatus('En kuullut vastausta vielä — puhu ensin, sitten paina Lähetä vastaus.');
+      return false;
+    }
+
     var self = this;
-    // If commit was empty / no transcript arrives, unlock so user can retry.
     clearTimeout(this.submitUnlockTimer);
     this.submitUnlockTimer = setTimeout(function () {
       self.submittingAnswer = false;
+      self.awaitingTranscript = false;
       if (self.awaitingUserAnswer && !self.pausedForReview) {
         self.onStatus('En saanut ääntä — vastaa uudelleen ja paina Lähetä vastaus.');
       }
@@ -334,6 +392,9 @@
     }
 
     this.awaitingUserAnswer = true;
+    this.speechActive = false;
+    this.hasUncommittedAudio = false;
+    this.awaitingTranscript = false;
     this.setRemoteAudioMuted(true);
     var waitingPhase = this.phaseAt(this.answerCount);
     var waitMsg = waitingPhase.id === 'intro'
@@ -347,6 +408,7 @@
       recruiterText: this.pendingRecruiterText || this.lastAssistantText || '',
       awaitingAnswer: true
     });
+    this.flushPendingUserTranscript();
   };
 
   MockRealtimeInterview.prototype.handleServerEvent = function (event) {
@@ -416,13 +478,43 @@
       return;
     }
 
+    if (event.type === 'input_audio_buffer.speech_started') {
+      this.speechActive = true;
+      this.hasUncommittedAudio = true;
+      this.awaitingTranscript = false;
+      return;
+    }
+
+    if (event.type === 'input_audio_buffer.speech_stopped') {
+      this.speechActive = false;
+      // Semantic VAD will auto-commit; mark that a transcript should arrive.
+      this.awaitingTranscript = true;
+      return;
+    }
+
+    if (event.type === 'input_audio_buffer.committed') {
+      this.hasUncommittedAudio = false;
+      this.speechActive = false;
+      this.awaitingTranscript = true;
+      return;
+    }
+
     if (event.type === 'conversation.item.input_audio_transcription.completed') {
       this.handleUserTranscript(String(event.transcript || '').trim());
       return;
     }
 
     if (event.type === 'error') {
-      this.onError(event.error || event);
+      var err = event.error || event;
+      if (isBenignRealtimeError(err)) {
+        // Empty commit after VAD already finalized the buffer — ignore.
+        if (this.submittingAnswer && !this.pendingUserTranscript) {
+          this.awaitingTranscript = true;
+          this.onStatus('Käsitellään vastaustasi — hetki...');
+        }
+        return;
+      }
+      this.onError(err);
     }
   };
 
@@ -585,6 +677,10 @@
     this.wrapUpTimer = null;
     this.submitUnlockTimer = null;
     this.submittingAnswer = false;
+    this.speechActive = false;
+    this.hasUncommittedAudio = false;
+    this.awaitingTranscript = false;
+    this.pendingUserTranscript = '';
     this.connected = false;
     this.started = false;
     this.awaitingUserAnswer = false;
