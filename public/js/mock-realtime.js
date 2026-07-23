@@ -51,6 +51,8 @@
     this.userAnswers = {};
     this.pausedForReview = false;
     this.pendingAdvanceCtx = null;
+    this.submittingAnswer = false;
+    this.submitUnlockTimer = null;
   }
 
   MockRealtimeInterview.prototype.phaseAt = function (index) {
@@ -87,26 +89,31 @@
 
     if (phase === 0) {
       return [
-        'Aloita HETI puhumaan. Lyhyt tervehdys (yksi lause) + yksi kysymys: nimi ja lyhyt tausta.',
-        'Max 2 lausetta. Älä pidä taukoa ennen puhetta. Lopeta — odota vastausta.'
+        'Tämä on haastattelun ENSIMMÄINEN puheenvuoro.',
+        'Sano AINOASTAAN: lyhyt tervehdys (1 lause) + pyyntö kertoa nimi ja lyhyt tausta.',
+        'KIELLETTYÄ: käytöskysymykset, STAR, virheet, paine, konfliktit, "kerro tilanteesta".',
+        'Max 2 lausetta. Aloita heti. Lopeta — odota vastausta.'
       ].join(' ');
     }
     if (phase === 1) {
       return [
-        'Hakija esittäytyi: "' + intro + '".',
-        '1 lyhyt reaktio + YKSI STAR-kysymys hänen taustastaan. Max 2–3 lausetta. Lopeta — odota.'
+        'Hakija esittäytyi juuri: "' + intro + '".',
+        '1 lyhyt reaktio hänen esittelyynsä + YKSI STAR-kysymys joka viittaa tuohon taustaan.',
+        'Max 2–3 lausetta. Älä kysy kahta asiaa. Lopeta — odota.'
       ].join(' ');
     }
     if (phase === 2) {
       return [
-        'Tausta: "' + intro + '". Edellinen: "' + last + '".',
-        '1 lyhyt reaktio + YKSI kysymys virheestä/epäonnistumisesta. Max 2–3 lausetta. Lopeta — odota.'
+        'Tausta: "' + intro + '". Edellinen vastaus: "' + last + '".',
+        '1 lyhyt reaktio + YKSI kysymys virheestä/epäonnistumisesta, kytkettynä taustaan.',
+        'Max 2–3 lausetta. Lopeta — odota.'
       ].join(' ');
     }
     if (phase === 3) {
       return [
-        'Tausta: "' + intro + '". Edellinen: "' + last + '".',
-        '1 lyhyt reaktio + YKSI kysymys paineesta / eri mielestä. Max 2–3 lausetta. Lopeta — odota.'
+        'Tausta: "' + intro + '". Edellinen vastaus: "' + last + '".',
+        '1 lyhyt reaktio + YKSI kysymys paineesta / eri mielestä, kytkettynä taustaan.',
+        'Max 2–3 lausetta. Lopeta — odota.'
       ].join(' ');
     }
     return 'Kiitä lyhyesti: "Kiitos — hyvä keskustelu." Älä kysy mitään. Älä anna palautetta.';
@@ -115,6 +122,7 @@
   MockRealtimeInterview.prototype.requestRecruiterResponse = function (phase, ctx) {
     this.aiResponding = true;
     this.awaitingUserAnswer = false;
+    this.submittingAnswer = false;
     this.sendEvent({
       type: 'response.create',
       response: {
@@ -167,6 +175,9 @@
     var ctx = this.buildContext(transcript);
     this.pausedForReview = true;
     this.awaitingUserAnswer = false;
+    this.submittingAnswer = false;
+    clearTimeout(this.submitUnlockTimer);
+    this.submitUnlockTimer = null;
     this.pendingAdvanceCtx = ctx;
 
     var isLast = this.answerCount >= this.expectedTurns;
@@ -216,10 +227,21 @@
     if (!this.connected) return false;
     if (this.aiResponding || this.awaitingWrapUp || this.pausedForReview) return false;
     if (!this.awaitingUserAnswer) return false;
+    if (this.submittingAnswer) return false;
+    this.submittingAnswer = true;
     this.onStatus('Lähetetään vastaustasi — hetki...');
     // With server VAD this may report an empty buffer if VAD already committed;
     // that error is harmless and ignored by handleServerEvent.
     this.sendEvent({ type: 'input_audio_buffer.commit' });
+    var self = this;
+    // If commit was empty / no transcript arrives, unlock so user can retry.
+    clearTimeout(this.submitUnlockTimer);
+    this.submitUnlockTimer = setTimeout(function () {
+      self.submittingAnswer = false;
+      if (self.awaitingUserAnswer && !self.pausedForReview) {
+        self.onStatus('En saanut ääntä — vastaa uudelleen ja paina Lähetä vastaus.');
+      }
+    }, 8000);
     return true;
   };
 
@@ -559,7 +581,10 @@
   MockRealtimeInterview.prototype.stop = function () {
     this.clearResponseAudioFallback();
     clearTimeout(this.wrapUpTimer);
+    clearTimeout(this.submitUnlockTimer);
     this.wrapUpTimer = null;
+    this.submitUnlockTimer = null;
+    this.submittingAnswer = false;
     this.connected = false;
     this.started = false;
     this.awaitingUserAnswer = false;

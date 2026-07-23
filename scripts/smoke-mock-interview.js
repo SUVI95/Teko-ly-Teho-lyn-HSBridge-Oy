@@ -72,10 +72,18 @@ function parseCookie(setCookie) {
   const html = await page.text();
   if (page.status !== 200) fail('/module/moduuli9-haastattelu HTTP ' + page.status);
   else pass('/module/moduuli9-haastattelu serves HTML');
-  for (const needle of ['mockStart()', 'MockRealtimeInterview', 'mock-realtime.js', 'Aloita haastattelu', 'let haSaveTimer']) {
+  for (const needle of [
+    'mockStart()',
+    'function mockStopBtnClick',
+    'function mockEndLive',
+    'MockRealtimeInterview',
+    'mock-realtime.js',
+    'Aloita haastattelu',
+    'let haSaveTimer'
+  ]) {
     if (!html.includes(needle)) fail('module HTML missing: ' + needle);
   }
-  pass('module wiring: mockStart, MockRealtimeInterview, haSaveTimer');
+  pass('module wiring: mockStart, mockStopBtnClick, mockEndLive, MockRealtimeInterview');
 
   const cfg = await req('GET', '/api/ai/realtime/config', null, cookie);
   if (cfg.status !== 200 || !Array.isArray(cfg.json?.phases) || cfg.json.expectedTurns !== 4) {

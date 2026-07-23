@@ -1672,7 +1672,7 @@ window.__MODULE_ID__ = window.__MODULE_ID__ || "moduuli9-haastattelu";
 window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;
 </script>
 <script src="/js/module-work.js"></script>
-<script src="/js/mock-realtime.js?v=20260716m"></script>
+<script src="/js/mock-realtime.js?v=20260723a"></script>
 <script src="/js/ai-helper.js"></script>
 <script>
 const S={pre:[],w_s:'',w_t:'',w_a:'',w_r:'',w2_s:'',w2_t:'',w2_a:'',w2_r:'',w3_s:'',w3_t:'',w3_a:'',w3_r:'',w_weak:'',w_why:'',w_vastav:'',companyName:'',companyUrl:'',companyFact:'',w_company:'',w_palkka:'',abResults:[],hp1:'',hp2:'',hp3:'',hpBuilt:'',hpFinal:'',startKey:'',nextKey:'',scenPicks:{},stfAnswers:[],vastaQuestion:'',mockSession:[],mockCandidateName:'',starVoiceQ:1,starVoiceDone:{1:false,2:false,3:false},starVoiceRecordings:{}};
@@ -3578,8 +3578,14 @@ async function mockStartLive() {
       document.getElementById('mockStatus').textContent = msg;
       const waiting = /sinun vuoro/i.test(msg);
       const reviewing = /yrittää uudelleen|jatkaa seuraavaan|päättää haastattelun/i.test(msg);
+      const sending = /lähetetään vastaustasi/i.test(msg);
       document.getElementById('mockQSpeaking')?.classList.toggle('hide', waiting || reviewing);
-      document.getElementById('mockRipple')?.classList.toggle('active', !waiting && !reviewing);
+      document.getElementById('mockRipple')?.classList.toggle('active', !waiting && !reviewing && !sending);
+      const stopBtn = document.getElementById('mockStopBtn');
+      if (stopBtn && mockLiveActive) {
+        stopBtn.disabled = !(waiting || sending);
+        if (waiting) stopBtn.style.display = 'inline-flex';
+      }
       if (waiting) {
         document.getElementById('mockReplayBtn').style.display = 'inline-flex';
         document.getElementById('mockTopStatus').textContent = 'Sinun vuorosi';
@@ -3591,6 +3597,12 @@ async function mockStartLive() {
       updateMockDots();
       if (info && info.awaitingAnswer) {
         document.getElementById('mockReplayBtn').style.display = 'inline-flex';
+        const stopBtn = document.getElementById('mockStopBtn');
+        if (stopBtn) {
+          stopBtn.style.display = 'inline-flex';
+          stopBtn.disabled = false;
+          stopBtn.textContent = 'Lähetä vastaus';
+        }
         hideMockChoiceRow();
       }
     },
@@ -3618,6 +3630,7 @@ async function mockStartLive() {
     onAnswerReady: (info) => {
       document.getElementById('mockReplayBtn').style.display = 'none';
       document.getElementById('mockStopBtn').style.display = 'none';
+      document.getElementById('mockStopBtn').disabled = false;
       document.getElementById('mockTopStatus').textContent = 'Vastaus tallennettu';
       setMockChoiceRow(true, !!info.isLast);
       try { saveProgress(); } catch (e) {}
@@ -3625,6 +3638,7 @@ async function mockStartLive() {
     onAssistantText: (text) => {
       document.getElementById('mockQSpeaking')?.classList.remove('hide');
       document.getElementById('mockReplayBtn').style.display = 'none';
+      document.getElementById('mockStopBtn').disabled = true;
       hideMockChoiceRow();
       updateMockLiveUI({
         label: document.getElementById('mockQLabel')?.textContent || 'Rekrytoija puhuu',
@@ -4023,25 +4037,57 @@ function startMockRecording(stream) {
   }, 1000);
 }
 
+/** Live: commit current spoken answer. Classic: finish MediaRecorder. */
+function mockStopBtnClick() {
+  if (mockBusy) return;
+  if (mockLiveActive && mockRealtime) {
+    const ok = mockRealtime.submitAnswer();
+    if (ok) {
+      const btn = document.getElementById('mockStopBtn');
+      if (btn) btn.disabled = true;
+      document.getElementById('mockTopStatus').textContent = 'Käsitellään vastausta...';
+    } else {
+      document.getElementById('mockStatus').textContent =
+        'Odota vuoroasi — vastaa ääneen, sitten paina Lähetä vastaus.';
+    }
+    return;
+  }
+  mockStop();
+}
+
+/** End live interview early and go to feedback (or cancel if no answers). */
+function mockEndLive() {
+  if (mockBusy) return;
+  if (!(mockLiveActive && mockRealtime)) {
+    mockStop();
+    return;
+  }
+  const answered = (S.mockSession || []).filter(Boolean).length;
+  try { mockRealtime.stop(); } catch (e) {}
+  mockLiveActive = false;
+  clearInterval(mockLiveTimerInt);
+  document.getElementById('mockRipple').classList.remove('active');
+  document.getElementById('mockStopBtn').style.display = 'none';
+  document.getElementById('mockStopBtn').textContent = '■ Valmis';
+  document.getElementById('mockStopBtn').disabled = false;
+  document.getElementById('mockEndBtn').style.display = 'none';
+  showMockLiveBadge(false);
+  hideMockChoiceRow();
+  document.getElementById('mockReplayBtn').style.display = 'none';
+  mockRealtime = null;
+  if (answered >= 1) {
+    mockFinishLiveSession();
+  } else {
+    document.getElementById('mockRecBtn').style.display = 'inline-flex';
+    document.getElementById('mockTopStatus').textContent = 'Keskeytetty';
+    document.getElementById('mockStatus').textContent = 'Haastattelu keskeytetty.';
+  }
+}
+
 function mockStop() {
   if (mockBusy) return;
   if (mockLiveActive && mockRealtime) {
-    const answered = (S.mockSession || []).filter(Boolean).length;
-    mockRealtime.stop();
-    mockLiveActive = false;
-    clearInterval(mockLiveTimerInt);
-    document.getElementById('mockRipple').classList.remove('active');
-    document.getElementById('mockStopBtn').style.display = 'none';
-    document.getElementById('mockStopBtn').textContent = '■ Valmis';
-    showMockLiveBadge(false);
-    mockRealtime = null;
-    if (answered >= 1) {
-      mockFinishLiveSession();
-    } else {
-      document.getElementById('mockRecBtn').style.display = 'inline-flex';
-      document.getElementById('mockTopStatus').textContent = 'Keskeytetty';
-      document.getElementById('mockStatus').textContent = 'Haastattelu keskeytetty.';
-    }
+    mockEndLive();
     return;
   }
   if (mockRecorder && mockRecorder.mr.state === 'recording') {
