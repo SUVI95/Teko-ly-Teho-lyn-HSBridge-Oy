@@ -589,9 +589,8 @@ const STRICT_ADMIN_ONLY_MODULE_IDS = new Set([
 const STUDENT_LOCKED_MODULE_IDS = new Set([
   // Soft-lock (näkyy lukittuna)
   'moduuli6-hallusinaatiot',
-  'moduuli8-ai-polku',
-  'moduuli9-haastattelu',
-  'moduuli-elava-cv',
+  // moduuli8-ai-polku, moduuli9-haastattelu, moduuli-elava-cv: open to all
+  // students (part of the "Tekoäly työnhaun työkaluna" section on the dashboard).
   'moduuli-hitl-architect',
   'moduuli-asiakaspalvelu-live-puhelu',
   'moduuli1b-ai-automaatio',
@@ -628,7 +627,7 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'rikkinainen-prompti',
   'tuomioistuin',
   'tyokalurakentaja',
-  'palaute',
+  // 'palaute' — course feedback is open to everyone (rendered last on the dashboard).
   'moduuli-ai-tietosuoja',
   'moduuli-tutkimusnaytto',
   'moduuli-tekoaly-kirjoituskumppanina'
