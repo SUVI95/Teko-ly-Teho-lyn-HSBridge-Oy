@@ -99,6 +99,18 @@
     }
   };
 
+  function cleanRecruiterTranscript(text) {
+    var t = String(text || '').trim();
+    // Model sometimes speaks stage directions from instructions ("Lopeta — odota" → "— wait").
+    t = t.replace(/(?:^|\s)[—–-]\s*(?:wait|odota(?:\s+vastausta)?|stop)\s*[.!]?\s*$/i, '');
+    t = t.replace(/\b(?:wait|odota(?:\s+vastausta)?)\s*[.!]?\s*$/i, '');
+    t = t.replace(/\s+/g, ' ').trim();
+    return t;
+  }
+
+  var SPEAK_ONLY =
+    'Puhu vain hakijalle suomeksi. ÄLÄ sano ääneen ohjeita kuten wait, odota, lopeta, stop, "odota vastausta". Kun kysymys on esitetty, lopeta puhuminen hiljaa ilman mitään lisäsanaa.';
+
   MockRealtimeInterview.prototype.buildResponseInstructions = function (phase, ctx) {
     var intro = ctx.intro || '';
     var last = ctx.lastAnswer || '';
@@ -108,31 +120,38 @@
         'Tämä on haastattelun ENSIMMÄINEN puheenvuoro.',
         'Sano AINOASTAAN: lyhyt tervehdys (1 lause) + pyyntö kertoa nimi ja lyhyt tausta.',
         'KIELLETTYÄ: käytöskysymykset, STAR, virheet, paine, konfliktit, "kerro tilanteesta".',
-        'Max 2 lausetta. Aloita heti. Lopeta — odota vastausta.'
+        'Max 2 lausetta. Aloita heti.',
+        SPEAK_ONLY
       ].join(' ');
     }
     if (phase === 1) {
       return [
         'Hakija esittäytyi juuri: "' + intro + '".',
         '1 lyhyt reaktio hänen esittelyynsä + YKSI STAR-kysymys joka viittaa tuohon taustaan.',
-        'Max 2–3 lausetta. Älä kysy kahta asiaa. Lopeta — odota.'
+        'Max 2–3 lausetta. Älä kysy kahta asiaa.',
+        SPEAK_ONLY
       ].join(' ');
     }
     if (phase === 2) {
       return [
         'Tausta: "' + intro + '". Edellinen vastaus: "' + last + '".',
         '1 lyhyt reaktio + YKSI kysymys virheestä/epäonnistumisesta, kytkettynä taustaan.',
-        'Max 2–3 lausetta. Lopeta — odota.'
+        'Max 2–3 lausetta.',
+        SPEAK_ONLY
       ].join(' ');
     }
     if (phase === 3) {
       return [
         'Tausta: "' + intro + '". Edellinen vastaus: "' + last + '".',
         '1 lyhyt reaktio + YKSI kysymys paineesta / eri mielestä, kytkettynä taustaan.',
-        'Max 2–3 lausetta. Lopeta — odota.'
+        'Max 2–3 lausetta. Tämä on viimeinen kysymys.',
+        SPEAK_ONLY
       ].join(' ');
     }
-    return 'Kiitä lyhyesti: "Kiitos — hyvä keskustelu." Älä kysy mitään. Älä anna palautetta.';
+    return [
+      'Haastattelu on ohi. Kiitä lyhyesti suomeksi, esim. "Kiitos — hyvä keskustelu."',
+      'Älä kysy mitään. Älä anna palautetta. Älä sano wait/odota.'
+    ].join(' ');
   };
 
   MockRealtimeInterview.prototype.requestRecruiterResponse = function (phase, ctx) {
@@ -450,7 +469,7 @@
       event.type === 'response.audio_transcript.done' ||
       event.type === 'response.output_text.done'
     ) {
-      var text = String(event.transcript || event.text || '').trim();
+      var text = cleanRecruiterTranscript(event.transcript || event.text || '');
       if (text) {
         this.lastAssistantText = text;
         this.pendingRecruiterText = text;
