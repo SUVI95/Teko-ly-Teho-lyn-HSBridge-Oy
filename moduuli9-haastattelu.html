@@ -3746,18 +3746,43 @@ function escapeHtml(str) {
 }
 
 function parseMockFeedback(txt) {
-  const goodM = txt.match(/✓\s*TOIMI[:\s]+([\s\S]+?)(?=⚠|$)/i);
-  const fixM = txt.match(/⚠\s*PARANNA[:\s]+([\s\S]+?)(?=→|$)/i);
-  const nextM = txt.match(/→\s*MUUTOS[:\s]+([\s\S]+?)$/i);
-  return {
-    good: goodM ? goodM[1].trim() : txt.split('\n')[0] || '—',
-    fix: fixM ? fixM[1].trim() : '—',
-    next: nextM ? nextM[1].trim() : '—'
-  };
+  const text = String(txt || '').trim();
+  if (!text) return { good: '—', fix: '—', next: '—' };
+
+  // Structured JSON from API or model
+  if (text.startsWith('{')) {
+    try {
+      const obj = JSON.parse(text);
+      const good = String(obj.good || obj.toimi || '').trim();
+      const fix = String(obj.fix || obj.paranna || '').trim();
+      const next = String(obj.next || obj.muutos || '').trim();
+      if (good || fix || next) {
+        return { good: good || '—', fix: fix || '—', next: next || '—' };
+      }
+    } catch (e) { /* marker parse below */ }
+  }
+
+  const goodM = text.match(/(?:✓\s*)?(?:TOIMI|Mikä toimi)\s*[:\-–]\s*([\s\S]+?)(?=(?:⚠\s*)?(?:PARANNA|Mitä parantaa)\s*[:\-–]|→\s*(?:MUUTOS|Yksi)|$)/i);
+  const fixM = text.match(/(?:⚠\s*)?(?:PARANNA|Mitä parantaa)\s*[:\-–]\s*([\s\S]+?)(?=→\s*(?:MUUTOS|Yksi)|$)/i);
+  const nextM = text.match(/→?\s*(?:MUUTOS|Yksi konkreettinen(?: muutos)?)\s*[:\-–]\s*([\s\S]+?)$/i);
+  const good = goodM ? goodM[1].trim() : '';
+  const fix = fixM ? fixM[1].trim() : '';
+  const next = nextM ? nextM[1].trim() : '';
+  if (good || fix || next) {
+    return { good: good || '—', fix: fix || '—', next: next || '—' };
+  }
+  // Freeform coach text — show all of it, not just the first title line
+  return { good: text, fix: '—', next: '—' };
 }
 
-function showMockFinalFeedback(txt) {
-  const fb = parseMockFeedback(txt);
+function showMockFinalFeedback(txtOrFb) {
+  const fb = (txtOrFb && typeof txtOrFb === 'object' && !Array.isArray(txtOrFb))
+    ? {
+        good: String(txtOrFb.good || '—').trim() || '—',
+        fix: String(txtOrFb.fix || '—').trim() || '—',
+        next: String(txtOrFb.next || '—').trim() || '—'
+      }
+    : parseMockFeedback(txtOrFb);
   document.getElementById('mockFbGood').textContent = fb.good;
   document.getElementById('mockFbFix').textContent = fb.fix;
   document.getElementById('mockFbNext').textContent = fb.next;
@@ -3963,8 +3988,21 @@ async function fetchMockFinalFeedback(sessions) {
     signal: AbortSignal.timeout(45000)
   });
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) return d.error || 'Palaute epäonnistui — yritä uudelleen.';
-  return d.feedback || '';
+  if (!r.ok) {
+    return {
+      good: d.error || 'Palaute epäonnistui — yritä uudelleen.',
+      fix: '—',
+      next: '—'
+    };
+  }
+  if (d.good || d.fix || d.next) {
+    return {
+      good: d.good || '—',
+      fix: d.fix || '—',
+      next: d.next || '—'
+    };
+  }
+  return parseMockFeedback(d.feedback || '');
 }
 
 async function presentMockQuestion(qIndex) {

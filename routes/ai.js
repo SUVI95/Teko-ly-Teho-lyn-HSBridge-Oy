@@ -729,6 +729,35 @@ router.post('/mock-reaction', async (req, res) => {
   }
 });
 
+/** Parse mock-feedback model output into the three UI panels. */
+function parseMockFeedbackPayload(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return { good: '', fix: '', next: '' };
+
+  // Prefer JSON if the model followed instructions.
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      const obj = JSON.parse(jsonMatch[0]);
+      const good = String(obj.good || obj.toimi || obj.strengths || '').trim();
+      const fix = String(obj.fix || obj.paranna || obj.improve || '').trim();
+      const next = String(obj.next || obj.muutos || obj.change || '').trim();
+      if (good || fix || next) return { good, fix, next };
+    } catch (_) {
+      /* fall through to marker parse */
+    }
+  }
+
+  const goodM = text.match(/(?:✓\s*)?(?:TOIMI|Mikä toimi)\s*[:\-–]\s*([\s\S]+?)(?=(?:⚠\s*)?(?:PARANNA|Mitä parantaa)\s*[:\-–]|→\s*(?:MUUTOS|Yksi)|$)/i);
+  const fixM = text.match(/(?:⚠\s*)?(?:PARANNA|Mitä parantaa)\s*[:\-–]\s*([\s\S]+?)(?=→\s*(?:MUUTOS|Yksi)|$)/i);
+  const nextM = text.match(/→?\s*(?:MUUTOS|Yksi konkreettinen(?: muutos)?)\s*[:\-–]\s*([\s\S]+?)$/i);
+  return {
+    good: goodM ? goodM[1].trim() : '',
+    fix: fixM ? fixM[1].trim() : '',
+    next: nextM ? nextM[1].trim() : ''
+  };
+}
+
 /** Final written feedback after mock interview answers — Claude (student-facing coaching). */
 router.post('/mock-feedback', async (req, res) => {
   try {
@@ -743,27 +772,45 @@ router.post('/mock-feedback', async (req, res) => {
       const tag = String(s.tag || s.phase || '').trim();
       const label = String(s.label || '').trim();
       const header = label || (tag ? tag : 'Vaihe ' + (i + 1));
-      return `--- ${header}${tag && label ? ' (' + tag + ')' : ''} ---\nRekrytoija: ${q || '(ei tallennettu)'}\n\nHakijan vastaus:\n${a}`;
+      return `--- ${header}${tag && label ? ' (' + tag + ')' : ''} ---\nRekrytoija: ${q || '(ei tallennettu)'}\n\nHakijan vastaus:\n${a || '(ei vastausta)'}`;
     }).join('\n\n');
 
     const system = [
       'Olet kokenut suomalainen rekrytoija. Live mock-haastattelu on päättynyt.',
-      'Haastattelu sisälsi tutustumisen (nimi, tausta) ja kolme taustaan sidottua käytöskysymystä.',
-      'Anna kokonaispalaute kaikista vastauksista. Merkitse täsmälleen:',
-      '✓ TOIMI:',
-      '⚠ PARANNA:',
-      '→ MUUTOS:',
-      'Suomi. Konkreettinen. Max 10 lausetta. Mainitse jos STAR-rakenne puuttui käytöskysymyksistä.'
+      'Haastattelu sisälsi tutustumisen (nimi, tausta) ja käytöskysymyksiä.',
+      'Vastaa AINOASTAAN validilla JSON-objektilla, ilman markdownia, ilman otsikoita, ilman muuta tekstiä:',
+      '{"good":"...","fix":"...","next":"..."}',
+      'good = 1–3 lausetta: mikä toimi (siteeraa hakijaa jos mahdollista).',
+      'fix = 1–3 lausetta: mitä parantaa.',
+      'next = 1 konkreettinen muutos seuraavaan harjoitukseen.',
+      'Suomi. Konkreettinen. Mainitse jos STAR-rakenne puuttui käytöskysymyksistä.',
+      'Jos vastauksia on vähän, anna silti rehellinen palaute niistä — älä jätä kenttiä tyhjiksi.'
     ].join(' ');
 
     const result = await callClaudeText({
       system,
       messages: [{ role: 'user', content: block }],
-      max_tokens: 450
+      max_tokens: 500
     });
 
+    const raw = String(result.text || '').trim();
+    let parsed = parseMockFeedbackPayload(raw);
+    if (!parsed.good && !parsed.fix && !parsed.next && raw) {
+      // Last resort: put the whole coach reply in "good" so the UI is never empty.
+      parsed = { good: raw, fix: '—', next: '—' };
+    }
+
+    const feedbackText = [
+      '✓ TOIMI: ' + (parsed.good || '—'),
+      '⚠ PARANNA: ' + (parsed.fix || '—'),
+      '→ MUUTOS: ' + (parsed.next || '—')
+    ].join('\n');
+
     res.json({
-      feedback: result.text || '',
+      feedback: feedbackText,
+      good: parsed.good || '—',
+      fix: parsed.fix || '—',
+      next: parsed.next || '—',
       model: result.model || claudeTextModel()
     });
   } catch (error) {
