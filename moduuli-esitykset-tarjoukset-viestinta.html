@@ -590,12 +590,12 @@ h1.hero-title em{font-style:italic;color:#a8c4e8;}
       <h3 style="color:var(--purple);font-size:1rem;font-weight:600;margin-bottom:1rem;">🧠 Ennen kuin jaat — kriittinen tarkistus</h3>
       <p style="font-size:.88rem;color:var(--text);margin-bottom:1.1rem;">Käy läpi ja rastita. Jokainen rastittamaton kohta = muutos Gammassa ennen jakamista.</p>
       <ul class="check-list" id="gammaChecklist">
-        <li onclick="toggleCheck(this)"><input type="checkbox" readonly> <span>Otsikkodia mainitsee aiheen tai nimen</span></li>
-        <li onclick="toggleCheck(this)"><input type="checkbox" readonly> <span>Ainakin kolmessa diassa on konkreettinen numero tai tulos</span></li>
-        <li onclick="toggleCheck(this)"><input type="checkbox" readonly> <span>Yhdessä diassa kerrotaan mitä yleisö saa tai miksi tämä on kiinnostavaa</span></li>
-        <li onclick="toggleCheck(this)"><input type="checkbox" readonly> <span>Viimeinen dia on selkeä kutsu (kokeile, tule mukaan, ota yhteyttä)</span></li>
-        <li onclick="toggleCheck(this)"><input type="checkbox" readonly> <span>Luin kaikki diat ääneen — ei kuulosta robotilta</span></li>
-        <li onclick="toggleCheck(this)"><input type="checkbox" readonly> <span>Joku muu ymmärtäisi esityksen ilman että selität suullisesti</span></li>
+        <li onclick="toggleCheck(this)" data-check="g0"><input type="checkbox" readonly> <span>Otsikkodia mainitsee aiheen tai nimen</span></li>
+        <li onclick="toggleCheck(this)" data-check="g1"><input type="checkbox" readonly> <span>Ainakin kolmessa diassa on konkreettinen numero tai tulos</span></li>
+        <li onclick="toggleCheck(this)" data-check="g2"><input type="checkbox" readonly> <span>Yhdessä diassa kerrotaan mitä yleisö saa tai miksi tämä on kiinnostavaa</span></li>
+        <li onclick="toggleCheck(this)" data-check="g3"><input type="checkbox" readonly> <span>Viimeinen dia on selkeä kutsu (kokeile, tule mukaan, ota yhteyttä)</span></li>
+        <li onclick="toggleCheck(this)" data-check="g4"><input type="checkbox" readonly> <span>Luin kaikki diat ääneen — ei kuulosta robotilta</span></li>
+        <li onclick="toggleCheck(this)" data-check="g5"><input type="checkbox" readonly> <span>Joku muu ymmärtäisi esityksen ilman että selität suullisesti</span></li>
       </ul>
     </div>
 
@@ -830,7 +830,7 @@ Käytä vain annettuja tietoja. Teksti suomeksi.
 
       <div class="form-group" style="margin-top:1rem;">
         <label class="form-label">Rehellinen arvio omasta kuvastasi — mitä näet?</label>
-        <textarea class="form-textarea" id="canvaReflection" placeholder="Esim: Värit ovat hyvät mutta teksti on liian pieni. Tai: Olen tyytyväinen, se on selkeä ja ammattimainen. Tai: Pitää vaihtaa fontti."></textarea>
+        <textarea class="form-textarea" id="canvaReflection" placeholder="Esim: Värit ovat hyvät mutta teksti on liian pieni. Tai: Olen tyytyväinen, se on selkeä ja ammattimainen. Tai: Pitää vaihtaa fontti." oninput="saveLocal('canvaReflection',this.value)"></textarea>
       </div>
 
       <button class="btn-secondary" onclick="getBannerFeedback()" id="canvaFeedbackBtn">🔍 Pyydä AI:lta palautetta kuvastasi</button>
@@ -870,10 +870,10 @@ Käytä vain annettuja tietoja. Teksti suomeksi.
       <div style="background:linear-gradient(135deg,rgba(42,122,75,.08),rgba(42,122,75,.04));border:1px solid rgba(42,122,75,.2);border-radius:10px;padding:1.25rem;margin-top:1rem;">
         <p style="font-size:.9rem;font-weight:600;color:var(--accent3);margin-bottom:.75rem;">Merkitse valmiiksi:</p>
         <ul class="check-list" id="canvaChecklist">
-          <li onclick="toggleCheck(this)"><input type="checkbox" readonly> <span>Kuva ladattu Canvasta (PNG)</span></li>
-          <li onclick="toggleCheck(this)"><input type="checkbox" readonly> <span>Kuva jaettu Teamsissä</span></li>
-          <li onclick="toggleCheck(this)"><input type="checkbox" readonly> <span>Olen tyytyväinen lopputulokseen</span></li>
-          <li onclick="toggleCheck(this)"><input type="checkbox" readonly> <span>Olen tyytyväinen — tämä edustaa minua ammattimaisesti</span></li>
+          <li onclick="toggleCheck(this)" data-check="c0"><input type="checkbox" readonly> <span>Kuva ladattu Canvasta (PNG)</span></li>
+          <li onclick="toggleCheck(this)" data-check="c1"><input type="checkbox" readonly> <span>Kuva jaettu Teamsissä</span></li>
+          <li onclick="toggleCheck(this)" data-check="c2"><input type="checkbox" readonly> <span>Olen tyytyväinen lopputulokseen</span></li>
+          <li onclick="toggleCheck(this)" data-check="c3"><input type="checkbox" readonly> <span>Olen tyytyväinen — tämä edustaa minua ammattimaisesti</span></li>
         </ul>
       </div>
 
@@ -1022,6 +1022,7 @@ Anna: 1) Mikä toimii 2) Mikä ei toimi 3) Yksi konkreettinen parannusehdotus
   </div>
 </section>
 
+<script src="/js/module-work.js"></script>
 <script>
 /* ── NAV + PROGRESS ── */
 var sections = document.querySelectorAll('.section[data-index]');
@@ -1087,6 +1088,27 @@ function migrateLegacyVisuals(data) {
   return data;
 }
 
+function collectChecklist(listId) {
+  var list = document.getElementById(listId);
+  if (!list) return [];
+  return Array.prototype.map.call(list.querySelectorAll('li'), function (li) {
+    var cb = li.querySelector('input[type="checkbox"]');
+    return !!(cb && cb.checked);
+  });
+}
+
+function applyChecklist(listId, states) {
+  var list = document.getElementById(listId);
+  if (!list || !Array.isArray(states)) return;
+  var items = list.querySelectorAll('li');
+  for (var i = 0; i < items.length; i++) {
+    var on = !!states[i];
+    var cb = items[i].querySelector('input[type="checkbox"]');
+    if (cb) cb.checked = on;
+    items[i].classList.toggle('checked', on);
+  }
+}
+
 function collectVisualsWork() {
   var ids = [
     'canvaName', 'canvaRole', 'canvaTagline', 'canvaFormat', 'gammaLink', 'modulePath',
@@ -1097,7 +1119,9 @@ function collectVisualsWork() {
     ts: Date.now(),
     pitchPromptData: pitchPromptData || '',
     canvaDesignText: (document.getElementById('canvaDesignText') && document.getElementById('canvaDesignText').textContent) || '',
-    canvaFeedbackText: (document.getElementById('canvaFeedbackText') && document.getElementById('canvaFeedbackText').textContent) || ''
+    canvaFeedbackText: (document.getElementById('canvaFeedbackText') && document.getElementById('canvaFeedbackText').textContent) || '',
+    gammaChecks: collectChecklist('gammaChecklist'),
+    canvaChecks: collectChecklist('canvaChecklist')
   };
   ids.forEach(function (id) {
     var el = document.getElementById(id);
@@ -1117,6 +1141,38 @@ function summarizeVisualsWork(d) {
   if (d.canvaName) parts.push('Canva: ' + d.canvaName);
   if (d.reflectionText) parts.push('Reflektio tallessa');
   return parts.join(' · ');
+}
+
+function restoreCanvaSwatchesFromText(design) {
+  var swatches = document.getElementById('canvaColorSwatches');
+  if (!swatches) return;
+  swatches.innerHTML = '';
+  var hexes = String(design || '').match(/#[0-9A-Fa-f]{6}/g);
+  if (!hexes || !hexes.length) return;
+  hexes.slice(0, 3).forEach(function (hex) {
+    var sw = document.createElement('div');
+    sw.className = 'swatch';
+    sw.style.background = hex;
+    sw.title = 'Klikkaa kopioidaksesi: ' + hex;
+    sw.onclick = function () {
+      navigator.clipboard.writeText(hex).then(function () {
+        sw.style.outline = '3px solid var(--accent3)';
+        setTimeout(function () { sw.style.outline = ''; }, 1500);
+      });
+    };
+    var code = document.createElement('code');
+    code.style.cssText = 'font-size:.78rem;font-family:"DM Mono",monospace;align-self:center;cursor:pointer;';
+    code.textContent = hex;
+    code.onclick = sw.onclick;
+    swatches.appendChild(sw);
+    swatches.appendChild(code);
+    var sp = document.createElement('span');
+    sp.style.cssText = 'font-size:.75rem;color:var(--muted);align-self:center;margin-right:.5rem;';
+    sp.textContent = '(klikkaa kopioidaksesi)';
+    swatches.appendChild(sp);
+  });
+  var preview = document.getElementById('bannerPreview');
+  if (preview && hexes[0]) preview.style.background = hexes[0];
 }
 
 function applyVisualsWork(d) {
@@ -1141,6 +1197,7 @@ function applyVisualsWork(d) {
           cdt.textContent = d[key];
           var box = cdt.closest('.ai-result');
           if (box) box.classList.add('show');
+          restoreCanvaSwatchesFromText(d[key]);
         }
         return;
       }
@@ -1153,11 +1210,16 @@ function applyVisualsWork(d) {
         }
         return;
       }
-      if (key === 'ts') return;
+      if (key === 'gammaChecks' || key === 'canvaChecks' || key === 'ts') return;
       var el = document.getElementById(key);
       if (el && d[key] != null) el.value = d[key];
     });
+    applyChecklist('gammaChecklist', d.gammaChecks);
+    applyChecklist('canvaChecklist', d.canvaChecks);
     if (d.modulePath) setModulePath(d.modulePath);
+    updateMockup();
+    updatePdPreview();
+    updateCanvaFormatHint();
   } finally {
     applyingVisualsWork = false;
   }
@@ -1299,6 +1361,7 @@ function toggleCheck(li){
   var cb=li.querySelector('input');
   cb.checked=!cb.checked;
   li.classList.toggle('checked',cb.checked);
+  saveLocal('checklist', cb.checked ? '1' : '0');
 }
 
 /* ── COPY PROMPT CODE ── */
@@ -1771,6 +1834,23 @@ document.addEventListener('DOMContentLoaded',async function(){
     refl.addEventListener('input',function(){ saveLocal('reflectionText', this.value); });
   }
 
+  // Catch-all: any form field / select change schedules a save (covers missed handlers)
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (!t || !t.closest) return;
+    if (!t.closest('input, textarea, select')) return;
+    if (t.readOnly || t.disabled) return;
+    if (t.id === 'gptPrompt1' || t.id === 'gptPrompt2' || t.id === 'pitchPromptText') return;
+    saveLocal((t.id || t.name || 'field'), t.value);
+  }, true);
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (!t || !t.closest) return;
+    if (!t.closest('input, textarea, select')) return;
+    if (t.readOnly || t.disabled) return;
+    saveLocal((t.id || t.name || 'field'), t.type === 'checkbox' ? (t.checked ? '1' : '0') : t.value);
+  }, true);
+
   // Gamma link success indicator
   var gl=document.getElementById('gammaLink');
   if(gl){
@@ -1791,7 +1871,6 @@ document.addEventListener('DOMContentLoaded',async function(){
 });
 </script>
 
-<script src="/js/module-work.js"></script>
 <script src="/js/ai-helper.js"></script>
 <script src="/js/reflections.js"></script>
 <script src="/js/feedback.js"></script>
