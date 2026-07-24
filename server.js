@@ -66,6 +66,7 @@ function injectModulePersistenceScripts(html, moduleId) {
     moduleId !== 'moduuli-ai-musiikkikampanja' &&
     moduleId !== 'moduuli2-tekoaly-uhka-vai-mahdollisuus' &&
     moduleId !== 'moduuli-esitykset-tarjoukset-viestinta' &&
+    moduleId !== 'moduuli5-ai-creation-sprint' &&
     moduleId !== 'moduuli-lovable' &&
     moduleId !== 'moduuli-visibility-growth-automation' &&
     moduleId !== 'moduuli-perplexity-notebooklm' &&
