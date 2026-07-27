@@ -321,7 +321,7 @@ textarea{min-height:100px}
         <li><a href="#" onclick="event.preventDefault();go(2)" style="color:inherit"><strong>Rakenna promptti</strong> — 3 tarinaa → promptti + Clauden palaute</a></li>
         <li><a href="#" onclick="event.preventDefault();go(3)" style="color:inherit"><strong>ATS ja hakemus</strong> — harjoitus + itsetesti + runko</a></li>
         <li><a href="#" onclick="event.preventDefault();go(4)" style="color:inherit"><strong>Yritystutkimus</strong> — harjoitus + itsetesti</a></li>
-        <li><a href="#" onclick="event.preventDefault();go(5)" style="color:inherit"><strong>STAR-tarina</strong> — tarina + totta/tarua</a></li>
+        <li><a href="#" onclick="event.preventDefault();go(5)" style="color:inherit"><strong>STAR-tarina</strong> — rakenne + valmis kysymys</a></li>
         <li><a href="#" onclick="event.preventDefault();go(6)" style="color:inherit"><strong>Live-äänihaastattelu</strong> — puhu AI-rekrytoijalle</a></li>
         <li><a href="#" onclick="event.preventDefault();go(7)" style="color:inherit"><strong>Kuva, PDF ja Gamma</strong> — kokoa paketti</a></li>
         <li><a href="#" onclick="event.preventDefault();go(8)" style="color:inherit"><strong>Kertaus ja suunnitelma</strong> — testi, työkalupakki & viikkosuunnitelma</a></li>
@@ -1073,7 +1073,7 @@ Pyyntö: "Kertoisin mielelläni lisää haastattelussa."</div>
 <div class="wrap">
   <div class="eyebrow">Jakso 05 / 08</div>
   <h2>STAR-tarina — <em>kerro tilanne selkeästi</em></h2>
-  <p class="lead muted">Ensin totta/tarua. Sitten STAR-rakenne — tarina järjestyksessä.</p>
+  <p class="lead muted">Ensin totta/tarua ja STAR-rakenne. Sitten kirjoitat toisen tarinan valmiiseen haastattelukysymykseen — kentät auki, AI antaa rakenteellisen palautteen.</p>
 
   <div class="card">
     <span class="tag">Harjoitus 0 · totta vai tarua</span>
@@ -1180,6 +1180,53 @@ Pyyntö: "Kertoisin mielelläni lisää haastattelussa."</div>
     <label class="field">Vastaa yhteen jatkokysymykseen (oma ääni)</label>
     <p class="field-tip">Valitse yksi AI:n kysymys ja vastaa siihen kirjoittaen tai ääneen muistiin.</p>
     <textarea id="starFollowAns" placeholder="Valitsin kysymyksen… Vastaukseni…"></textarea>
+  </div>
+
+  <div class="card gate" id="gate5StarQ">
+    <span class="tag">Osa 5 · valmis kysymys + oma STAR</span>
+    <h3>Vastaa tähän haastattelukysymykseen STAR-rakenteella</h3>
+    <p class="one-line muted">Kysymys on annettu. Kentät ovat auki — kirjoita oma tarina. AI ei kirjoita puolestasi; se arvioi rakennetta.</p>
+    <div class="sit">
+      <div class="sit-lbl">Haastattelukysymys — valmis</div>
+      <p class="job" id="starReadyQ">Kerro tilanteesta, jossa työkaveri tai asiakas oli tyytymätön. Mitä sinä teit, ja miten tilanne päättyi?</p>
+    </div>
+    <div class="how">
+      <div class="lbl">Näin teet</div>
+      <ol>
+        <li>Lue kysymys.</li>
+        <li>Kirjoita S, T, A ja R omin sanoin (oikea tilanne omasta työstä / arjesta).</li>
+        <li>Pyydä AI-palaute rakenteesta — sitten korjaa tarvittaessa.</li>
+      </ol>
+    </div>
+    <div class="strength-block">
+      <div class="sb-num">S — Tilanne</div>
+      <textarea id="star2S" style="min-height:70px;margin:0" placeholder="Missä olit? Mitä oli meneillään?"></textarea>
+    </div>
+    <div class="strength-block">
+      <div class="sb-num">T — Tehtävä / vastuu</div>
+      <textarea id="star2T" style="min-height:70px;margin:0" placeholder="Mitä sinun piti saada aikaan?"></textarea>
+    </div>
+    <div class="strength-block">
+      <div class="sb-num">A — Mitä SINÄ teit</div>
+      <textarea id="star2A" style="min-height:70px;margin:0" placeholder="Ensin… sitten… (käytä “minä”)"></textarea>
+    </div>
+    <div class="strength-block">
+      <div class="sb-num">R — Tulos / mitä opit</div>
+      <textarea id="star2R" style="min-height:70px;margin:0" placeholder="Miten kävi? Mitä opit?"></textarea>
+    </div>
+    <p class="status" id="star2Status">Täytä kaikki neljä kohtaa.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="btnStar2Ai" onclick="runStarAi(2)" disabled>Pyydä AI-palaute STAR-rakenteesta</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryAiOut('star2AiOut','star2AiStatus')">Kokeile uudestaan</button>
+    </div>
+    <div class="tip">
+      <b>Mitä AI-palaute antaa?</b>
+      Onko S/T/A/R erillään, onko A tarpeeksi “minä tein”, onko R konkreettinen — ja yksi korjaus. Ei uutta valmista tarinaa.
+    </div>
+    <div class="ai-out" id="star2AiOut">AI-palaute ilmestyy tähän...</div>
+    <p class="status" id="star2AiStatus"></p>
+    <label class="field" for="star2Fix">Mitä korjaat tarinassasi? (1–2 lausetta)</label>
+    <textarea id="star2Fix" style="min-height:60px" placeholder="Korjaan… esim. A-kohtaan lisään askeleet…"></textarea>
   </div>
 
   <div class="ext gate" id="gate5e">
@@ -1601,7 +1648,7 @@ const SECTIONS = [
   { id: 2, num: '2', title: 'Rakenna promptti', time: '3 tarinaa → promptti' },
   { id: 3, num: '3', title: 'ATS ja hakemus', time: 'Harjoitus + itsetesti' },
   { id: 4, num: '4', title: 'Yritystutkimus', time: 'Harjoitus + itsetesti' },
-  { id: 5, num: '5', title: 'STAR-tarina', time: 'Totta/tarua + STAR' },
+  { id: 5, num: '5', title: 'STAR-tarina', time: 'Rakenne + valmis kysymys' },
   { id: 6, num: '6', title: 'Live-äänihaastattelu', time: 'Puhu AI-rekrytoijalle' },
   { id: 7, num: '7', title: 'Kuva, PDF ja Gamma', time: 'Kokoa paketti' },
   { id: 8, num: '8', title: 'Kertaus ja suunnitelma', time: 'Testi + työkalupakki' }
@@ -1752,7 +1799,7 @@ const FIELDS = [
   'promptLearn', 'keep3', 'kill3', 'ownLine',
   'adText', 'kw1', 'kw2', 'kw3', 'kw4', 'kw5', 'atsAiOut', 'adText2', 'kw2a', 'kw2b', 'kw2c', 'kw2d', 'kw2e', 'atsAiOut2', 'ats2Takeaway', 'appWho', 'appWhy', 'appProof', 'appAsk', 'appAiOut', 'atsReflection', 'claudeAtsBack',
   'coName', 'coWhat', 'coWho', 'coSkill', 'coWhy', 'ai3out', 'aiQpick', 'aiSuspect', 'co2Name', 'co2Source', 'co2Fact', 'co2Ask', 'co2Risk', 'ai4out2', 'co2Takeaway', 'extFindings',
-  'hotNotes', 'starS', 'starT', 'starA', 'starR', 'starAiOut', 'starFollowAns', 'starExtReflect',
+  'hotNotes', 'starS', 'starT', 'starA', 'starR', 'starAiOut', 'starFollowAns', 'star2S', 'star2T', 'star2A', 'star2R', 'star2AiOut', 'star2Fix', 'starExtReflect',
   'voxFb1', 'voxFb2', 'voxFb3', 'voxObservation',
   'imgSubject', 'imgMood', 'imgAvoid', 'imgReflect', 'pdfBack', 'gammaBack',
   'finalQ1', 'finalQ2', 'finalQ3', 'finalQ4', 'finalQ5', 'finalAiOut',
@@ -2181,13 +2228,19 @@ function refreshGates() {
   // S5 — STAR-tarina
   const ttOk = Object.keys(ttAnswered).length >= TOTTA_TARUA.length;
   if ($('gateDecoder')) $('gateDecoder').classList.toggle('open', ttOk);
-  $('gate5c').classList.toggle('open', decoderDone && ttOk);
-  $('gate5d').classList.toggle('open', decoderDone && ttOk);
+  if ($('gate5c')) $('gate5c').classList.toggle('open', decoderDone && ttOk);
+  if ($('gate5d')) $('gate5d').classList.toggle('open', decoderDone && ttOk);
   const starOk = [val('starS'), val('starT'), val('starA'), val('starR')].every(x => x.length >= 8);
-  $('starStatus').textContent = starOk ? 'STAR kasassa — hyvä.' : 'Täytä kaikki neljä kohtaa.';
+  if ($('starStatus')) $('starStatus').textContent = starOk ? 'STAR kasassa — hyvä.' : 'Täytä kaikki neljä kohtaa.';
   if ($('btnStarAi')) $('btnStarAi').disabled = !starOk;
-  $('gate5e').classList.toggle('open', val('starFollowAns').length >= 15);
-  $('next5').classList.toggle('open', starOk && val('starFollowAns').length >= 15 && val('starExtReflect').length >= 15);
+  if ($('gate5StarQ')) $('gate5StarQ').classList.toggle('open', starOk && val('starFollowAns').length >= 15);
+
+  const star2Ok = [val('star2S'), val('star2T'), val('star2A'), val('star2R')].every(x => x.length >= 8);
+  if ($('star2Status')) $('star2Status').textContent = star2Ok ? 'STAR 2 kasassa — pyydä palaute.' : 'Täytä kaikki neljä kohtaa.';
+  if ($('btnStar2Ai')) $('btnStar2Ai').disabled = !star2Ok;
+  const star2AiDone = val('star2AiOut').length > 40 && !val('star2AiOut').startsWith('AI-palaute');
+  if ($('gate5e')) $('gate5e').classList.toggle('open', star2AiDone && val('star2Fix').length >= 12);
+  if ($('next5')) $('next5').classList.toggle('open', star2AiDone && val('star2Fix').length >= 12 && val('starExtReflect').length >= 15);
 
   // S6 — Live-äänihaastattelu
   const voxTextOk = val('voxFb1').length >= 10 && val('voxFb2').length >= 10 && val('voxFb3').length >= 10;
@@ -2913,19 +2966,45 @@ function nextDecoder() {
   renderDecoder();
 }
 
-function runStarAi() {
-  const fields = [val('starS'), val('starT'), val('starA'), val('starR')];
-  if (fields.some(f => f.length < 8)) return;
+function runStarAi(which) {
+  const round = which === 2 ? 2 : 1;
+  if (round === 1) {
+    const fields = [val('starS'), val('starT'), val('starA'), val('starR')];
+    if (fields.some(function (f) { return f.length < 8; })) return;
+    const user = [
+      'STAR-tarina:',
+      'S: ' + fields[0], 'T: ' + fields[1], 'A: ' + fields[2], 'R: ' + fields[3],
+      '',
+      'Anna 3 tarkkaa jatkokysymystä joilla voisin syventää tätä tarinaa haastattelussa.',
+      'Numeroi 1–3. Älä vastaa puolestani äläkä kirjoita tarinaa uusiksi.'
+    ].join('\n');
+    callAi(
+      'Olet tiukka mutta reilu suomalainen rekrytoija. Suomi. Lyhyt.',
+      user, 'starAiOut', null, $('btnStarAi')
+    );
+    return;
+  }
+  const fields = [val('star2S'), val('star2T'), val('star2A'), val('star2R')];
+  if (fields.some(function (f) { return f.length < 8; })) return;
+  const q = ($('starReadyQ') && $('starReadyQ').textContent) || 'Kerro tilanteesta, jossa työkaveri tai asiakas oli tyytymätön.';
   const user = [
-    'STAR-tarina:',
-    'S: ' + fields[0], 'T: ' + fields[1], 'A: ' + fields[2], 'R: ' + fields[3],
+    'Haastattelukysymys (annettu hakijalle): ' + q.trim(),
     '',
-    'Anna 3 tarkkaa jatkokysymystä joilla voisin syventää tätä tarinaa haastattelussa.',
-    'Numeroi 1–3. Älä vastaa puolestani äläkä kirjoita tarinaa uusiksi.'
+    'Hakijan STAR-vastaus:',
+    'S: ' + fields[0],
+    'T: ' + fields[1],
+    'A: ' + fields[2],
+    'R: ' + fields[3],
+    '',
+    'Anna palaute SUOMEKSI näillä otsikoilla:',
+    'VASTAAKO KYSYMYKSEEN: kyllä / osittain / ei — yksi lause miksi.',
+    'S / T / A / R: yksi lyhyt huomio jokaisesta (onko selvä, konkreettinen, “minä tein”).',
+    'Yksi korjaus: mikä kohta parantaisi vastausta eniten (älä kirjoita uutta tarinaa).',
+    'Älä kirjoita STAR-tarinaa uusiksi. Älä keksi faktoja.'
   ].join('\n');
   callAi(
-    'Olet tiukka mutta reilu suomalainen rekrytoija. Suomi. Lyhyt.',
-    user, 'starAiOut', null, $('btnStarAi')
+    'Olet tiukka mutta reilu suomalainen rekrytoija. Arvioit STAR-rakennetta. Et kirjoita uutta tarinaa. Suomi. Lyhyt.',
+    user, 'star2AiOut', 'star2AiStatus', $('btnStar2Ai')
   );
 }
 
@@ -2934,11 +3013,17 @@ function updateExtPromptStar() {
   if (!el) return;
   el.textContent = [
     'Olet suomalainen rekrytoija. Haastattele minua rooliin: ' + (val('coName') || '[rooli]'),
-    'Minulla on STAR-tarina:',
+    'Minulla on STAR-tarina 1:',
     'S: ' + val('starS'),
     'T: ' + val('starT'),
     'A: ' + val('starA'),
     'R: ' + val('starR'),
+    '',
+    'STAR-tarina 2 (valmiiseen kysymykseen):',
+    'S: ' + val('star2S'),
+    'T: ' + val('star2T'),
+    'A: ' + val('star2A'),
+    'R: ' + val('star2R'),
     '',
     'Säännöt: esitä YKSI vaikea kysymys kerrallaan. Odota vastaustani.',
     'Kun olen vastannut: anna palaute vain rakenteesta (mikä toimi / yksi parannus).',
