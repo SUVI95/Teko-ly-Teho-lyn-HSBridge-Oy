@@ -1,0 +1,2911 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPT and CLAUDE SPRINT | AI Polku</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Lexend:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c1915;--ink2:#3d3830;--paper:#f3efe6;--paper2:#e8e2d6;--cream:#faf7f0;
+  --accent:#c45c26;--accent-deep:#9a4519;--forest:#2f5d4a;--forest-lt:#e4efe9;
+  --warn:#8a3b2e;--muted:#6b6459;--line:rgba(28,25,21,.12);
+  --shadow:0 10px 40px rgba(28,25,21,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:19px}
+body{
+  font-family:'Lexend',sans-serif;
+  background:var(--paper);color:var(--ink);
+  line-height:1.7;letter-spacing:.01em;word-spacing:.04em;
+  overflow-x:hidden;
+}
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--forest));z-index:300;width:0%;transition:width .35s}
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;background:rgba(243,239,230,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav-left{display:flex;align-items:center;gap:.75rem;min-width:0}
+.nav-badge{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(196,92,38,.35);background:rgba(196,92,38,.08);padding:4px 10px;border-radius:999px;white-space:nowrap}
+.nav-title{font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-right{display:flex;align-items:center;gap:.75rem;flex-shrink:0}
+.nav-map{display:flex;gap:4px}
+.nav-pip{width:20px;height:4px;border-radius:2px;background:var(--paper2);cursor:pointer}
+.nav-pip.on{background:var(--accent)}.nav-pip.done{background:var(--forest)}
+.burger{width:44px;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:0}
+.burger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:1px;transition:transform .2s,opacity .2s}
+.burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.menu-backdrop{position:fixed;inset:0;background:rgba(28,25,21,.35);z-index:240;opacity:0;pointer-events:none;transition:opacity .2s}
+.menu-backdrop.show{opacity:1;pointer-events:auto}
+.side-menu{position:fixed;top:0;right:0;bottom:0;width:min(360px,92vw);background:var(--cream);z-index:250;box-shadow:-12px 0 40px rgba(28,25,21,.18);transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;padding:1.25rem 1.1rem 1.5rem}
+.side-menu.open{transform:translateX(0)}
+.side-menu-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--line)}
+.side-menu-head h3{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:500;line-height:1.25}
+.side-menu-head p{font-size:.8rem;color:var(--muted);margin-top:.3rem}
+.menu-close{width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:1.25rem;cursor:pointer;line-height:1;color:var(--ink)}
+.menu-list{display:flex;flex-direction:column;gap:.4rem;overflow:auto;flex:1}
+.menu-item{display:flex;align-items:flex-start;gap:.75rem;text-align:left;width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:.8rem .9rem;cursor:pointer;font:inherit;transition:border-color .15s,background .15s}
+.menu-item:hover{border-color:rgba(196,92,38,.4);background:rgba(196,92,38,.04)}
+.menu-item.current{border-color:var(--accent);background:rgba(196,92,38,.08)}
+.menu-item.done{border-color:rgba(47,93,74,.35)}
+.menu-num{width:28px;height:28px;border-radius:8px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0}
+.menu-item.done .menu-num{background:var(--forest)}
+.menu-item.current .menu-num{background:var(--accent)}
+.menu-item strong{display:block;font-size:.92rem;line-height:1.3}
+.menu-item small{display:block;font-size:.75rem;color:var(--muted);margin-top:.2rem}
+.menu-foot{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);font-size:.78rem;color:var(--muted);letter-spacing:.04em}
+@media(max-width:640px){.nav-title{display:none}.nav-map{display:none}}
+.screen{display:none;min-height:100vh;padding:88px 1.25rem 5rem}
+.screen.on{display:block;animation:rise .45s ease}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.wrap{max-width:680px;margin:0 auto}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+h1,h2{font-family:'Fraunces',serif;font-weight:500;line-height:1.25;letter-spacing:-.01em}
+h1{font-size:clamp(2rem,5vw,3.2rem);margin-bottom:1rem}
+h1 em,h2 em{font-style:italic;color:var(--accent)}
+h2{font-size:clamp(1.55rem,3.4vw,2.15rem);margin-bottom:.65rem}
+h3{font-size:1.12rem;line-height:1.35;margin-bottom:.35rem}
+.lead{font-size:1.02rem;color:var(--ink2);max-width:36em;margin-bottom:1.25rem;line-height:1.65}
+.muted{color:var(--muted)}
+.hero{background:
+  radial-gradient(ellipse 70% 55% at 15% 20%,rgba(196,92,38,.18),transparent 55%),
+  radial-gradient(ellipse 50% 45% at 90% 80%,rgba(47,93,74,.16),transparent 50%),
+  linear-gradient(165deg,#1c1915 0%,#2a241c 55%,#1c1915 100%);
+  color:#f7f2e8;padding:6rem 1.25rem 4rem;min-height:100vh;display:flex;align-items:center}
+.hero .wrap{max-width:800px}
+.hero h1{color:#fff}.hero .lead{color:rgba(247,242,232,.75);max-width:620px}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:2rem 0 1.5rem}
+@media(max-width:640px){.rules{grid-template-columns:1fr}}
+.rule{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1rem 1.1rem}
+.rule b{display:block;font-family:'Fraunces',serif;font-size:1.2rem;margin-bottom:.35rem;color:#f0b48a}
+.rule span{font-size:.86rem;color:rgba(247,242,232,.7);display:block}
+.hero-tip{background:rgba(255,255,255,.05);border:1px dashed rgba(240,180,138,.4);border-radius:14px;padding:1rem 1.2rem;margin-bottom:1.5rem;font-size:.92rem;color:rgba(247,242,232,.85)}
+.hero-tip b{color:#f0b48a;display:block;margin-bottom:.3rem;font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase}
+.daymap{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:1.25rem 1.35rem;margin-bottom:2rem}
+.daymap h3{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:#f0b48a;margin-bottom:.75rem}
+.daymap ol{padding-left:1.15rem;color:rgba(247,242,232,.78);font-size:.92rem}
+.daymap li{margin:.45rem 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border:none;border-radius:10px;padding:.85rem 1.25rem;font:inherit;font-weight:600;font-size:.92rem;cursor:pointer;transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-1px)}.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-deep)}
+.btn-ink{background:var(--ink);color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink2)}
+.btn-forest{background:var(--forest);color:#fff}
+.btn-row{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:1rem}
+.card{background:var(--cream);border:1px solid var(--line);border-radius:18px;padding:1.2rem 1.25rem;box-shadow:var(--shadow);margin:1.5rem 0}
+.card h3{font-family:'Fraunces',serif;font-size:1.18rem;margin-bottom:.45rem}
+.ctx{background:var(--forest-lt);border-left:4px solid var(--forest);border-radius:0 12px 12px 0;padding:.85rem 1rem;margin:1rem 0;font-size:.95rem}
+.ctx strong{color:var(--forest)}
+.ctx ul{padding-left:0;margin-top:.5rem;list-style:none}
+.ctx li{margin:.45rem 0;padding-left:1.4rem;position:relative}
+.ctx li::before{content:'→';position:absolute;left:0;color:var(--forest);font-weight:700}
+.how{background:#fff;border:1px solid rgba(196,92,38,.28);border-radius:14px;padding:1rem;margin:1rem 0}
+.how .lbl{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.65rem}
+.how ol{list-style:none;padding:0;display:grid;gap:.55rem;counter-reset:step}
+.how li{
+  counter-increment:step;margin:0;font-size:.92rem;line-height:1.5;
+  display:grid;grid-template-columns:2rem 1fr;gap:.7rem;align-items:start;
+  background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:.7rem .8rem;
+}
+.how li::before{
+  content:counter(step);width:2rem;height:2rem;border-radius:8px;
+  background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:.85rem;flex-shrink:0;
+}
+.example{font-family:'IBM Plex Mono',monospace;font-size:.78rem;background:var(--paper2);border-radius:10px;padding:.85rem 1rem;margin:.6rem 0 .75rem;white-space:pre-wrap;line-height:1.55}
+label.field{display:block;font-weight:600;font-size:.95rem;margin:1.15rem 0 .35rem}
+textarea,input[type=text],select{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:.9rem 1rem;font:inherit;font-size:1rem;background:#fff;color:var(--ink);resize:vertical;line-height:1.55}
+textarea:focus,input:focus,select:focus{outline:3px solid rgba(196,92,38,.35);border-color:transparent}
+textarea{min-height:100px}
+.choice-grid{display:grid;gap:.6rem;margin:1rem 0}
+.choice{text-align:left;background:#fff;border:2px solid var(--line);border-radius:12px;padding:.95rem 1.1rem;cursor:pointer;font:inherit;font-size:.92rem;transition:border-color .15s,background .15s}
+.choice:hover:not(:disabled){border-color:rgba(196,92,38,.45)}
+.choice:disabled{cursor:default}
+.choice.picked{border-color:var(--accent);background:rgba(196,92,38,.06)}
+.choice.good{border-color:var(--forest);background:var(--forest-lt)}
+.choice.bad{border-color:var(--warn);background:rgba(138,59,46,.08)}
+.reveal{display:none;margin-top:1rem;padding:1rem 1.15rem;border-radius:12px;background:rgba(47,93,74,.08);border-left:4px solid var(--forest);font-size:.92rem}
+.reveal.show{display:block;animation:rise .35s ease}
+.timer-box{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin:1rem 0;padding:1rem;background:var(--ink);color:#fff;border-radius:14px}
+.timer-num{font-family:'Fraunces',serif;font-size:2.2rem;min-width:4.2rem}
+.builder{display:grid;gap:.85rem}
+.builder-row{display:grid;grid-template-columns:130px 1fr;gap:.65rem;align-items:start}
+@media(max-width:560px){.builder-row{grid-template-columns:1fr}}
+.builder-row span{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:.7rem}
+.ai-out{min-height:120px;background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:1rem;white-space:pre-wrap;font-size:.92rem;margin-top:.75rem}
+.gate{opacity:.4;pointer-events:none;filter:grayscale(.2);transition:opacity .3s}
+.gate.open{opacity:1;pointer-events:auto;filter:none}
+.ext{background:linear-gradient(135deg,rgba(196,92,38,.08),rgba(47,93,74,.08));border:1px solid rgba(196,92,38,.25);border-radius:16px;padding:1.2rem 1.3rem;margin:1.25rem 0}
+.ext h4{font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:.4rem}
+.checklist label{display:flex;gap:.65rem;align-items:flex-start;padding:.55rem 0;border-bottom:1px solid var(--line);font-size:.92rem;cursor:pointer}
+.checklist input{margin-top:.35rem;accent-color:var(--forest)}
+.status{font-size:.84rem;color:var(--muted);margin-top:.5rem;min-height:1.3em}
+.tip{background:rgba(196,92,38,.07);border:1px dashed rgba(196,92,38,.4);border-radius:12px;padding:.75rem .95rem;margin:.75rem 0;font-size:.88rem;line-height:1.55;color:var(--ink2)}
+.tip b{display:block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.3rem}
+.field-tip{font-size:.82rem;color:var(--muted);margin:0 0 .4rem;line-height:1.45;max-width:36em}
+
+/* --- visual / easy-read helpers --- */
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:.65rem;margin:1rem 0}
+@media(max-width:560px){.tiles{grid-template-columns:1fr}}
+.tile{background:#fff;border:1px solid var(--line);border-radius:14px;padding:.9rem 1rem;min-height:0}
+.tile .ico{display:block;font-family:'Fraunces',serif;font-size:1.35rem;color:var(--accent);line-height:1;margin-bottom:.35rem}
+.tile strong{display:block;font-size:.95rem;margin-bottom:.25rem;line-height:1.3}
+.tile span{display:block;font-size:.84rem;color:var(--ink2);line-height:1.45}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:.45rem;margin:1rem 0}
+.flow-step{flex:1 1 120px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:.8rem .85rem;text-align:center}
+.flow-step .n{display:block;width:1.75rem;height:1.75rem;margin:0 auto .4rem;border-radius:8px;background:var(--forest);color:#fff;font-weight:700;font-size:.8rem;line-height:1.75rem}
+.flow-step b{display:block;font-size:.88rem;margin-bottom:.2rem}
+.flow-step span{display:block;font-size:.78rem;color:var(--muted);line-height:1.4}
+.flow-arrow{align-self:center;color:var(--accent);font-size:1.2rem;font-weight:700;flex:0 0 auto}
+@media(max-width:560px){.flow-arrow{display:none}}
+.sit{background:var(--ink);color:#f7f2e8;border-radius:16px;padding:1.1rem 1.15rem;margin:1rem 0}
+.sit .sit-lbl{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#f0b48a;margin-bottom:.45rem}
+.sit p{margin:.4rem 0 0;font-size:.92rem;line-height:1.55;color:rgba(247,242,232,.88)}
+.sit .job{font-family:'Fraunces',serif;font-size:1.15rem;color:#fff;margin:.35rem 0 .5rem;line-height:1.35}
+.fold{margin:.75rem 0;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+.fold>summary{
+  cursor:pointer;list-style:none;padding:.75rem 1rem;font-weight:600;font-size:.9rem;
+  display:flex;align-items:center;gap:.5rem;user-select:none;
+}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::before{content:'＋';width:1.4rem;height:1.4rem;border-radius:6px;background:var(--paper2);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--accent);flex-shrink:0}
+.fold[open]>summary::before{content:'－'}
+.fold .fold-body{padding:0 1rem 1rem;font-size:.9rem;line-height:1.55;color:var(--ink2)}
+.fold .fold-body .example{margin-top:.5rem}
+.help{margin:-.05rem 0 .45rem}
+.help>summary{cursor:pointer;font-size:.8rem;color:var(--accent);font-weight:600;list-style:none}
+.help>summary::-webkit-details-marker{display:none}
+.help>summary::before{content:'ⓘ ';font-weight:700}
+.help[open]>summary{margin-bottom:.25rem}
+.help .field-tip{margin:0;padding:.55rem .7rem;background:var(--paper2);border-radius:8px}
+.one-line{font-size:.95rem;line-height:1.55;margin:.35rem 0 .75rem;max-width:36em}
+.btn-retry{font-size:.85rem;padding:.55rem .9rem;margin-top:.65rem}
+.retry-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.65rem;align-items:center}
+.footer-nav{display:flex;justify-content:space-between;gap:1rem;margin-top:2rem;padding-top:1.25rem;border-top:1px solid var(--line);flex-wrap:wrap}
+.tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--forest);background:var(--forest-lt);padding:3px 8px;border-radius:6px;margin-bottom:.5rem}
+.warnbox{background:rgba(138,59,46,.08);border-left:4px solid var(--warn);padding:1rem 1.1rem;border-radius:0 12px 12px 0;margin:1rem 0;font-size:.92rem}
+.mark-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+@media(max-width:560px){.mark-row{grid-template-columns:1fr}}
+.done-banner{display:none;margin-top:1.5rem;padding:1.25rem;border-radius:16px;background:var(--forest-lt);border:1px solid rgba(47,93,74,.25);color:var(--forest);font-weight:600;text-align:center}
+.done-banner.show{display:block}
+/* --- new for expanded sprint --- */
+.star-quad{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:1rem 0}
+@media(max-width:640px){.star-quad{grid-template-columns:1fr}}
+.star-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem}
+.star-box .letter{font-family:'Fraunces',serif;font-size:1.25rem;color:var(--accent);margin-bottom:.3rem;display:block}
+.star-box p{font-size:.9rem;color:var(--ink2)}
+.decoder-progress{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.decoder-q{font-weight:600;font-size:1.05rem;margin:.5rem 0 .75rem}
+.kw-row{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin:.75rem 0}
+@media(max-width:680px){.kw-row{grid-template-columns:1fr 1fr}}
+.kw-row input{padding:.65rem .7rem;font-size:.86rem}
+.fb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1rem 0}
+@media(max-width:760px){.fb-grid{grid-template-columns:1fr}}
+.fb-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem}
+.fb-card h4{font-family:'Fraunces',serif;font-size:1rem;margin-bottom:.4rem;color:var(--forest)}
+.fb-card p{font-size:.9rem;white-space:pre-wrap}
+.vox-card{background:var(--ink);color:#f7f2e8;border-radius:18px;padding:1.4rem 1.4rem;margin:1.1rem 0}
+.vox-top{display:flex;align-items:center;gap:.6rem;font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(247,242,232,.6);margin-bottom:.9rem}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--muted);display:inline-block;flex-shrink:0}
+.live-dot.on{background:#e0564a;animation:pulse 1.1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.vox-q-label{font-size:.82rem;color:rgba(247,242,232,.55);margin-bottom:.3rem}
+.vox-q{font-family:'Fraunces',serif;font-size:1.25rem;line-height:1.45;min-height:2.6em}
+.vox-status{font-size:.88rem;color:rgba(247,242,232,.65);min-height:1.4em;margin-top:.5rem}
+.vox-timeline{display:flex;flex-direction:column;gap:.6rem;margin-top:1.1rem}
+.vox-turn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.75rem .9rem}
+.vox-turn .q{font-size:.76rem;color:rgba(247,242,232,.55);margin-bottom:.25rem}
+.vox-turn .a{font-size:.94rem}
+.vox-empty{font-size:.85rem;color:rgba(247,242,232,.4);margin-top:1rem}
+.vox-fallback{margin-top:1.25rem;padding-top:1.1rem;border-top:1px dashed rgba(255,255,255,.2);display:none}
+.vox-fallback.show{display:block}
+.vox-fallback label{color:rgba(247,242,232,.85)}
+.tool-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin:1.25rem 0}
+@media(max-width:720px){.tool-grid{grid-template-columns:1fr}}
+.tool-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1rem 1.05rem}
+.tool-card .tool-name{font-family:'Fraunces',serif;font-size:1.15rem;color:#f0b48a;margin-bottom:.35rem}
+.tool-card p{font-size:.84rem;color:rgba(247,242,232,.72);margin:0}
+.tool-box{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;padding:1rem 1.15rem;margin:1.1rem 0}
+.tool-box.claude{border-left-color:var(--forest)}
+.tool-box.gamma{border-left-color:#8a6a2f}
+.tool-box .tool-lbl{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.4rem}
+.tool-box.claude .tool-lbl{color:var(--forest)}
+.tool-box.gamma .tool-lbl{color:#8a6a2f}
+.tool-box h4{font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:.35rem}
+.tool-box p{font-size:.95rem;color:var(--ink2);margin:0 0 .45rem}
+.tool-box ul{padding-left:1.15rem;margin:.35rem 0 0;color:var(--ink2);font-size:.92rem}
+.tool-box li{margin:.2rem 0}
+.tt-row{display:grid;gap:.65rem;margin:1rem 0}
+.tt-item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem}
+.tt-item p.q{font-weight:600;margin-bottom:.65rem}
+.tt-btns{display:flex;gap:.5rem;flex-wrap:wrap}
+.tt-btns button{flex:1;min-width:110px;padding:.65rem 1rem;border-radius:10px;border:2px solid var(--line);background:var(--cream);font:inherit;font-weight:600;cursor:pointer}
+.tt-btns button:hover{border-color:rgba(196,92,38,.45)}
+.tt-btns button.good{border-color:var(--forest);background:var(--forest-lt);color:var(--forest)}
+.tt-btns button.bad{border-color:var(--warn);background:rgba(138,59,46,.08);color:var(--warn)}
+.tt-explain{display:none;margin-top:.75rem;padding:.85rem 1rem;border-radius:10px;background:rgba(47,93,74,.08);border-left:4px solid var(--forest);font-size:.92rem}
+.tt-explain.show{display:block}
+.quiz-score{font-family:'Fraunces',serif;font-size:1.6rem;margin:.5rem 0 1rem;color:var(--forest)}
+.skill-grid{display:grid;gap:.55rem;margin:.75rem 0}
+.flag-list label{display:flex;gap:.7rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid var(--line);font-size:.95rem;cursor:pointer;line-height:1.5}
+.flag-list input{margin-top:.35rem;accent-color:var(--forest);flex-shrink:0;width:1.1rem;height:1.1rem}
+.final-q{background:#fff;border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.2rem;margin:0 0 .85rem}
+.final-q h4{font-size:1rem;margin-bottom:.55rem}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div id="mockAudioMount" aria-hidden="true"></div>
+<nav>
+  <div class="nav-left">
+    <span class="nav-badge">GPT and CLAUDE SPRINT</span>
+    <span class="nav-title">ChatGPT · Claude · ajattelu ensin</span>
+  </div>
+  <div class="nav-right">
+    <div class="nav-map" id="navMap" aria-hidden="true"></div>
+    <button type="button" class="burger" id="burgerBtn" aria-label="Avaa valikko" aria-expanded="false" aria-controls="sideMenu" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<aside class="side-menu" id="sideMenu" aria-label="Jaksonavigointi" hidden>
+  <div class="side-menu-head">
+    <div>
+      <h3>Siirry jaksoon</h3>
+      <p>Vapaa navigointi — kaikki harjoitukset ovat aina auki</p>
+    </div>
+    <button type="button" class="menu-close" onclick="closeMenu()" aria-label="Sulje valikko">×</button>
+  </div>
+  <div class="menu-list" id="menuList"></div>
+  <div class="menu-foot">KYSY · TARKISTA · OMA</div>
+</aside>
+
+<!-- ══ HERO ══ -->
+<section class="hero" id="hero">
+  <div class="wrap">
+    <div class="eyebrow" style="color:rgba(247,242,232,.45)">GPT and CLAUDE SPRINT · ChatGPT · Claude · Gamma</div>
+    <h1>GPT and CLAUDE<br><em>SPRINT</em></h1>
+    <p class="lead">Älä anna AI:n ajatella puolestasi. Harjoittelet työnhakua ChatGPT:llä ja Claudella niin, että sinä johdat — AI auttaa. Ensin ajattelu täällä. Sitten ChatGPT, Claude ja Gamma kun sinulla on oma kanta.</p>
+    <div class="rules">
+      <div class="rule"><b>1 · KYSY</b><span>Kerro AI:lle tilanne, tavoite ja mitä et halua.</span></div>
+      <div class="rule"><b>2 · TARKISTA</b><span>Jokainen AI-vastaus on luonnos. Etsi virheet.</span></div>
+      <div class="rule"><b>3 · OMA</b><span>Lopullinen teksti on aina sinun äänelläsi.</span></div>
+    </div>
+    <div class="tool-grid">
+      <div class="tool-card"><div class="tool-name">ChatGPT</div><p>Keskustelu-AI. Hyvä ideointiin, kuvien tekoon ja nopeisiin luonnoksiin. Sinä annat ohjeen — se vastaa tekstillä (tai kuvalla).</p></div>
+      <div class="tool-card"><div class="tool-name">Claude</div><p>Keskustelu-AI. Hyvä pitkiin teksteihin, palautteeseen ja PDF-yhteenvetoihin. Usein rauhallinen ja tarkka sparraaja.</p></div>
+      <div class="tool-card"><div class="tool-name">Gamma</div><p>Esitystyökalu. Teet dioja tekstistä. Hyvä vasta kun sinulla on jo sisältö — muuten diat jäävät tyhjiksi.</p></div>
+    </div>
+    <div class="hero-tip"><b>Vinkki</b><br>Lue rauhassa. Pidä tauko jaksojen välillä. Äänitä ajatuksesi, jos kirjoittaminen tuntuu raskaalta. Lopussa on testi — se mittaa, mitä viet kotiin, ei arvosanaa.</div>
+    <div class="daymap">
+      <h3>Päivän kartta — 8 jaksoa</h3>
+      <ol>
+        <li><a href="#" onclick="event.preventDefault();go(1)" style="color:inherit"><strong>Loukkujahti</strong> — taidot + huono AI-neuvo</a></li>
+        <li><a href="#" onclick="event.preventDefault();go(2)" style="color:inherit"><strong>Promptti työpöydällä</strong> — 3 prompttia + Clauden palaute</a></li>
+        <li><a href="#" onclick="event.preventDefault();go(3)" style="color:inherit"><strong>ATS ja hakemus</strong> — avainsanat, runko, punaiset liput</a></li>
+        <li><a href="#" onclick="event.preventDefault();go(4)" style="color:inherit"><strong>Markkinatutkimus</strong> — ensin oma pää, sitten AI</a></li>
+        <li><a href="#" onclick="event.preventDefault();go(5)" style="color:inherit"><strong>STAR-koulu</strong> — tarina + totta/tarua</a></li>
+        <li><a href="#" onclick="event.preventDefault();go(6)" style="color:inherit"><strong>Live-äänihaastattelu</strong> — puhu AI-rekrytoijalle</a></li>
+        <li><a href="#" onclick="event.preventDefault();go(7)" style="color:inherit"><strong>Kuva, PDF ja Gamma</strong> — kokoa paketti</a></li>
+        <li><a href="#" onclick="event.preventDefault();go(8)" style="color:inherit"><strong>Mitä viet kotiin</strong> — testi, työkalupakki & viikkosuunnitelma</a></li>
+      </ol>
+    </div>
+    <button class="btn btn-primary" onclick="go(1)">Aloita jakso 1 →</button>
+  </div>
+</section>
+
+<!-- ══ 1 LOUKKUJAHTI ══ -->
+<section class="screen" id="s1">
+<div class="wrap">
+  <div class="eyebrow">Jakso 01 / 08</div>
+  <h2>Loukkujahti — <em>mikä mättää?</em></h2>
+  <p class="lead muted">AI kuulostaa usein fiksulta. Työnhaussa se voi silti olla tyhjää tai väärää. Ensin kartoitat omat taitosi — sitten opit näkemään AI:n loukut.</p>
+
+  <p class="one-line muted">Rekrytoija näkee kliseet heti. Ensin omat taitosi — sitten AI:n loukut.</p>
+
+  <div class="card">
+    <span class="tag">Harjoitus A</span>
+    <h3>Listaa 5 taitoa — omin sanoin</h3>
+    <div class="tiles">
+      <div class="tile"><span class="ico">1</span><strong>Mieti</strong><span>Mitä muut pyytävät sinulta apua?</span></div>
+      <div class="tile"><span class="ico">2</span><strong>Kiire</strong><span>Mitä teet hyvin paineessa?</span></div>
+      <div class="tile"><span class="ico">3</span><strong>Arki</strong><span>Mitä jaksat toistaa?</span></div>
+      <div class="tile"><span class="ico">4</span><strong>Ei tutkintoa</strong><span>Taito ei ole paperi. Lyhyt riittää.</span></div>
+    </div>
+    <div class="how">
+      <div class="lbl">Näin teet</div>
+      <ol>
+        <li>Kirjoita 5 asiaa joita osaat (ei tutkintoja).</li>
+        <li>Ajattele arkea: asiakas, kiire, tarkkuus, kielet…</li>
+        <li>Älä kysy AI:lta vielä.</li>
+      </ol>
+    </div>
+    <details class="fold">
+      <summary>Näytä esimerkki (älä kopioi)</summary>
+      <div class="fold-body">
+        <div class="example">Ihmisiin: kuunnella ja rauhoittaa tilanne
+Paine: monta asiaa yhtä aikaa
+Tarkkuus: muistaa yksityiskohdat
+Oppiminen: uusi järjestelmä nopeasti
+Empatia: huomaan kun toinen on pettynyt</div>
+      </div>
+    </details>
+    <div class="skill-grid">
+      <input type="text" id="skill1" placeholder="esim. rauhoittaa asiakastilanne">
+      <input type="text" id="skill2" placeholder="esim. työskennellä kiireessä">
+      <input type="text" id="skill3" placeholder="esim. oppia uusi järjestelmä">
+      <input type="text" id="skill4" placeholder="esim. pitää järjestystä">
+      <input type="text" id="skill5" placeholder="esim. auttaa tiimiä">
+    </div>
+    <p class="status" id="skillStatus">Kirjoita vähintään kolme taitoa jatkaaksesi.</p>
+  </div>
+
+  <div class="card gate" id="gate1a2">
+    <span class="tag">Harjoitus B · valitse</span>
+    <h3>AI antoi tämän "vinkin". Mikä on suurin ongelma?</h3>
+    <div class="example">"Hae kaikkiin avoimiin paikkoihin samalla hakemuksella. Näin säästät aikaa ja näytät aktiiviselta. Lisää aina lause: olen nopea oppimaan ja valmis uusiin haasteisiin."</div>
+    <div class="choice-grid" id="trap1">
+      <button type="button" class="choice" data-ok="0" onclick="pickTrap(1,this,0)">Ei mitään — hyvä neuvo, säästää aikaa</button>
+      <button type="button" class="choice" data-ok="1" onclick="pickTrap(1,this,1)">Sama hakemus joka paikkaan + tyhjä klisee — rekrytoija huomaa kopion</button>
+      <button type="button" class="choice" data-ok="0" onclick="pickTrap(1,this,0)">Vain kieliasu on huono, sisältö on ok</button>
+    </div>
+    <div class="reveal" id="trap1r">Oikein ajateltu: määrä ilman kohdennusta hukkaa aikaa. Klisee "nopea oppimaan" ei kerro mitään sinusta. <strong>Seuraava askel:</strong> aina yksi ilmoitus → yksi hakemus.</div>
+    <div class="retry-row"><button class="btn btn-ghost btn-retry" type="button" onclick="retryTrap(1)">Kokeile uudestaan</button></div>
+  </div>
+
+  <div class="card gate" id="gate1b">
+    <span class="tag">Harjoitus C · kirjoita ensin</span>
+    <h3>Ennen kuin avaat AI:ta — mikä on sinun tavoitteesi?</h3>
+    <div class="how">
+      <div class="lbl">Näin teet</div>
+      <ol>
+        <li>Älä käytä ChatGPT:tä vielä.</li>
+        <li>Kirjoita 2–4 lausetta omilla sanoillasi.</li>
+        <li>Vasta sitten jatkat — nappi aukeaa kun sinulla on vähintään 40 merkkiä.</li>
+      </ol>
+    </div>
+    <span class="tag">esimerkki — älä kopioi</span>
+    <div class="example">"Haen asiakaspalvelun tai toimistotyön roolia omalta alueeltani. Haluan näyttää että osaan rauhallisen asiakastilanteen ja oppia uuden järjestelmän."</div>
+    <div class="tip">
+      <b>Vinkki</b>
+      Vastaa kolmeen asiaan: 1) millaisia töitä haet, 2) millä alueella / millä ehdoilla, 3) mitä haluat näyttää itsestäsi. Ei tarvitse olla täydellinen.
+    </div>
+    <label class="field" for="goalOwn">Oma tavoite työnhaussa juuri nyt</label>
+    <p class="field-tip">2–4 lausetta omilla sanoillasi. Jos et tiedä tarkkaa titteliä, kirjoita tyyppi: asiakaspalvelu, myymälä, varasto, toimisto…</p>
+    <textarea id="goalOwn" placeholder="Haen… alueella… Haluan näyttää että..."></textarea>
+    <p class="status" id="goalStatus">Kirjoita vähintään muutama lause omilla sanoillasi.</p>
+  </div>
+
+  <div class="card gate" id="gate1c">
+    <span class="tag">Harjoitus D · promptin loukku</span>
+    <h3>Kumpi promptti tuottaa hyödyllisemmän vastauksen?</h3>
+    <div class="choice-grid" id="trap2">
+      <button type="button" class="choice" data-ok="0" onclick="pickTrap(2,this,0)">"Kirjoita minulle hyvä työhakemus."</button>
+      <button type="button" class="choice" data-ok="1" onclick="pickTrap(2,this,1)">"Olet rekrytoija Suomessa. Auta minua: haen [rooli] yritykseen [nimi]. Vahvuuteni: [2 asiaa]. Älä kirjoita valmista hakemusta — anna 5 kysymystä joilla kerään aineksia, sitten ehdota rakennetta."</button>
+    </div>
+    <div class="reveal" id="trap2r">Hyvä promptti ei pyydä valmista tekstiä heti — se pakottaa sinut ajattelemaan ja antaa AI:lle rajat. Muista: <strong>KYSY · TARKISTA · OMA</strong>.</div>
+    <div class="retry-row"><button class="btn btn-ghost btn-retry" type="button" onclick="retryTrap(2)">Kokeile uudestaan</button></div>
+  </div>
+
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(0)">← Kartta</button>
+    <button class="btn btn-ink gate" id="next1" onclick="complete(1);go(2)">Jakso 2 →</button>
+  </div>
+</div>
+</section>
+
+<!-- ══ 2 PROMPTTI ══ -->
+<section class="screen" id="s2">
+<div class="wrap">
+  <div class="eyebrow">Jakso 02 / 08</div>
+  <h2>Promptti työpöydällä — <em>rakenna, älä kopioi</em></h2>
+  <p class="lead muted">Rakenna 3 prompttia. Claude arvioi jokaisen heti.</p>
+
+  <div class="card">
+    <span class="tag">Muistutus</span>
+    <h3>Mikä on prompti?</h3>
+    <p class="one-line">Prompti = <strong>ohje AI:lle</strong>. Selkeä ohje → parempi vastaus.</p>
+    <div class="tiles">
+      <div class="tile"><span class="ico">1</span><strong>Rooli</strong><span>Keneksi AI asettuu?</span></div>
+      <div class="tile"><span class="ico">2</span><strong>Tilanne</strong><span>Sinun tausta + mihin haet</span></div>
+      <div class="tile"><span class="ico">3</span><strong>Tehtävä</strong><span>Mitä AI tekee? (ei “tee kaikki”)</span></div>
+      <div class="tile"><span class="ico">4</span><strong>Rajat</strong><span>Mitä AI ei saa tehdä?</span></div>
+    </div>
+    <div class="tiles">
+      <div class="tile"><span class="ico">✗</span><strong>Huono</strong><span>“Kirjoita minulle hyvä työhakemus.”</span></div>
+      <div class="tile"><span class="ico">✓</span><strong>Hyvä</strong><span>Rooli + tilanne + tehtävä + rajat</span></div>
+    </div>
+    <details class="fold">
+      <summary>Näytä hyvä esimerkki</summary>
+      <div class="fold-body">
+        <div class="example">Rooli: suomalainen rekrytoija
+Tilanne: haen myymälätyöntekijäksi Tampereella, tausta asiakaspalvelusta
+Tehtävä: ehdota 3 vahvuutta joita voin näyttää esimerkillä
+Raja: älä keksi työnantajia tai vuosia joita en antanut</div>
+      </div>
+    </details>
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><span class="ico">C</span><strong>ChatGPT</strong><span>Ideointi, luonnos, kuva. Avaa: chatgpt.com</span></div>
+    <div class="tile"><span class="ico">Cl</span><strong>Claude</strong><span>Palaute, pitkät tekstit. Tässä: arvioi prompttejasi.</span></div>
+  </div>
+
+  <div class="how">
+    <div class="lbl">Jakson kulku</div>
+    <ol>
+      <li>Rakenna 3 prompttia (alla).</li>
+      <li>Paina <strong>Claude arvioi promptin</strong>.</li>
+      <li>Korjaa tarvittaessa. Voit myös kysyä AI:lta vastauksen.</li>
+      <li>Kirjoita lyhyt pohdinta lopuksi.</li>
+    </ol>
+  </div>
+
+  <!-- PROMPT 1 -->
+  <div class="card" id="promptDrill1">
+    <span class="tag">Harjoitus 1 / 3</span>
+    <h3>Vahvuudet ilmoitukseen</h3>
+    <div class="sit">
+      <div class="sit-lbl">Tilanne — käytä tätä</div>
+      <p class="job">Haet myymälätyöntekijäksi</p>
+      <p>Et ole varma mitä vahvuuksia korostaa. Pyydä AI:lta apua <strong>ajattelemaan</strong> — ei valmista hakemusta.</p>
+      <p><strong>Tee:</strong> promptti → 3 vahvuutta esimerkillä. Kielto: ei koko hakemusta.</p>
+    </div>
+    <div class="builder">
+      <div class="builder-row"><span>Rooli</span><input type="text" id="p1Role" placeholder="esim. suomalainen rekrytoija"></div>
+      <div class="builder-row"><span>Tilanne</span><textarea id="p1Sit" placeholder="Yllä oleva omin sanoin + yksi oma fakta..." style="min-height:80px"></textarea></div>
+      <div class="builder-row"><span>Tehtävä</span><textarea id="p1Task" placeholder="esim. ehdota 3 vahvuutta esimerkillä" style="min-height:70px"></textarea></div>
+      <div class="builder-row"><span>Rajat</span><input type="text" id="p1Bound" placeholder="suomeksi, älä keksi faktoja, max 8 lausetta"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="buildPromptN(1)">Näytä prompti</button>
+      <button class="btn btn-forest" type="button" id="btnFb1" onclick="runPromptFeedback(1)">Claude arvioi promptin</button>
+      <button class="btn btn-primary" type="button" id="btnAsk1" onclick="runPromptAsk(1)">Kysy AI:lta täällä</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryPrompt(1)">Tyhjennä AI &amp; kokeile uudestaan</button>
+    </div>
+    <label class="field">Valmis prompti 1</label>
+    <textarea id="p1Built" readonly style="min-height:110px;background:var(--paper2)"></textarea>
+    <label class="field">Clauden palaute promptista</label>
+    <div class="ai-out" id="p1Fb" style="border-left:4px solid var(--forest)">Palaute ilmestyy tähän...</div>
+    <p class="status" id="p1FbStatus"></p>
+    <label class="field">AI:n vastaus (valinnainen harjoitus)</label>
+    <div class="ai-out" id="p1Out">AI-vastaus ilmestyy tähän...</div>
+    <p class="status" id="p1AskStatus"></p>
+  </div>
+
+  <!-- PROMPT 2 -->
+  <div class="card gate" id="promptDrill2">
+    <span class="tag">Harjoitus 2 / 3</span>
+    <h3>Harjoituskysymykset</h3>
+    <div class="sit">
+      <div class="sit-lbl">Tilanne — käytä tätä</div>
+      <p class="job">Puhelinhaastattelu ylihuomenna · myymälätyö</p>
+      <p>Ilmoitus korostaa: asiakaspalvelu · kassa · tiimi · kiire. Et tiedä mitä he kysyvät.</p>
+      <p><strong>Tee:</strong> promptti → 4 realistista kysymystä. Kielto: ei mallivastauksia.</p>
+    </div>
+    <div class="how">
+      <div class="lbl">Näin teet</div>
+      <ol>
+        <li>TILANNE = yllä omin sanoin + yksi oma fakta.</li>
+        <li>Täytä rooli, tehtävä, rajat.</li>
+        <li>Claude arvioi → voit kysyä AI:lta kysymykset.</li>
+      </ol>
+    </div>
+    <div class="builder">
+      <div class="builder-row"><span>Rooli</span><input type="text" id="p2Role" placeholder="esim. HR-haastattelija ruokakaupassa"></div>
+      <div class="builder-row"><span>Tilanne</span><textarea id="p2Sit" placeholder="Yllä oleva omin sanoin + yksi oma fakta..." style="min-height:80px"></textarea></div>
+      <div class="builder-row"><span>Tehtävä</span><textarea id="p2Task" placeholder="4 kysymystä (helppo / normaali / vaikea). Ei vastauksia." style="min-height:70px"></textarea></div>
+      <div class="builder-row"><span>Rajat</span><input type="text" id="p2Bound" placeholder="suomeksi, lyhyet kysymykset, ei mallivastauksia"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="buildPromptN(2)">Näytä prompti</button>
+      <button class="btn btn-forest" type="button" id="btnFb2" onclick="runPromptFeedback(2)">Claude arvioi promptin</button>
+      <button class="btn btn-primary" type="button" id="btnAsk2" onclick="runPromptAsk(2)">Kysy AI:lta täällä</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryPrompt(2)">Tyhjennä AI &amp; kokeile uudestaan</button>
+    </div>
+    <label class="field">Valmis prompti 2</label>
+    <textarea id="p2Built" readonly style="min-height:110px;background:var(--paper2)"></textarea>
+    <label class="field">Clauden palaute promptista</label>
+    <div class="ai-out" id="p2Fb" style="border-left:4px solid var(--forest)">Palaute ilmestyy tähän...</div>
+    <p class="status" id="p2FbStatus"></p>
+    <label class="field">AI:n vastaus (valinnainen harjoitus)</label>
+    <div class="ai-out" id="p2Out">AI-vastaus ilmestyy tähän...</div>
+    <p class="status" id="p2AskStatus"></p>
+  </div>
+
+  <!-- PROMPT 3 -->
+  <div class="card gate" id="promptDrill3">
+    <span class="tag">Harjoitus 3 / 3</span>
+    <h3>Kerro itsestäsi</h3>
+    <div class="sit">
+      <div class="sit-lbl">Tilanne — käytä tätä</div>
+      <p class="job">Rekrytoija: »Kerro lyhyesti itsestäsi.«</p>
+      <p>Muutama lause riittää. Sama myymälätyö kuin harjoituksessa 2.</p>
+      <p><strong>Tee:</strong> promptti → 3–4 kohtaa/kysymystä joilla rakennat esittelyn itse. Kielto: ei valmista puhetta.</p>
+    </div>
+    <div class="how">
+      <div class="lbl">Näin teet</div>
+      <ol>
+        <li>TILANNE = yllä omin sanoin + yksi oma fakta.</li>
+        <li>Täytä rooli, tehtävä, rajat (ei valmista tekstiä).</li>
+        <li>Claude arvioi → voit kysyä AI:lta sparria.</li>
+      </ol>
+    </div>
+    <div class="builder">
+      <div class="builder-row"><span>Rooli</span><input type="text" id="p3Role" placeholder="esim. suomalainen uravalmentaja"></div>
+      <div class="builder-row"><span>Tilanne</span><textarea id="p3Sit" placeholder="Yllä oleva omin sanoin + yksi oma fakta..." style="min-height:80px"></textarea></div>
+      <div class="builder-row"><span>Tehtävä</span><textarea id="p3Task" placeholder="4 kohtaa esittelyyn. Älä kirjoita puhetta — anna kysymyksiä." style="min-height:70px"></textarea></div>
+      <div class="builder-row"><span>Rajat</span><input type="text" id="p3Bound" placeholder="älä kirjoita esittelyä valmiiksi, suomeksi, lyhyt"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="buildPromptN(3)">Näytä prompti</button>
+      <button class="btn btn-forest" type="button" id="btnFb3" onclick="runPromptFeedback(3)">Claude arvioi promptin</button>
+      <button class="btn btn-primary" type="button" id="btnAsk3" onclick="runPromptAsk(3)">Kysy AI:lta täällä</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryPrompt(3)">Tyhjennä AI &amp; kokeile uudestaan</button>
+    </div>
+    <label class="field">Valmis prompti 3</label>
+    <textarea id="p3Built" readonly style="min-height:110px;background:var(--paper2)"></textarea>
+    <label class="field">Clauden palaute promptista</label>
+    <div class="ai-out" id="p3Fb" style="border-left:4px solid var(--forest)">Palaute ilmestyy tähän...</div>
+    <p class="status" id="p3FbStatus"></p>
+    <label class="field">AI:n vastaus (valinnainen harjoitus)</label>
+    <div class="ai-out" id="p3Out">AI-vastaus ilmestyy tähän...</div>
+    <p class="status" id="p3AskStatus"></p>
+  </div>
+
+  <div class="card gate" id="gate2b">
+    <span class="tag">Pohdinta</span>
+    <h3>Mitä opit promptin rakentamisesta?</h3>
+    <div class="tip">
+      <b>Vinkki</b>
+      Katso Clauden palautteita yllä. Mikä toistui? (esim. liian epämääräinen tehtävä, puuttuvat rajat). Kirjoita se omin sanoin.
+    </div>
+    <label class="field">Kirjoita 2–3 lausetta omilla sanoillasi</label>
+    <p class="field-tip">Ei tarvitse olla “oikeaa vastausta” — kerro mitä teet toisin seuraavalla kerralla.</p>
+    <textarea id="promptLearn" placeholder="Huomasin että... Seuraavalla kerralla..." style="min-height:100px"></textarea>
+    <div class="mark-row" style="margin-top:.75rem">
+      <div>
+        <label class="field">Yksi asia jonka pidän AI-vastauksesta</label>
+        <p class="field-tip">Valitse yksi konkreettinen idea jostain AI:n vastauksesta.</p>
+        <textarea id="keep3" placeholder="Pidän siitä että..." style="min-height:70px"></textarea>
+      </div>
+      <div>
+        <label class="field">Yksi asia jonka hylkään / korjaan</label>
+        <p class="field-tip">Mikä kuulosti tyhjältä, väärältä tai ei-sinulta?</p>
+        <textarea id="kill3" placeholder="Hylkään / korjaan..." style="min-height:70px"></textarea>
+      </div>
+    </div>
+    <label class="field">Kirjoita YKSI lause uusiksi — kuin sanoisit sen haastattelussa</label>
+    <p class="field-tip">Ota yksi pidetty idea ja sano se omalla äänelläsi ääneen kirjoitettuna.</p>
+    <textarea id="ownLine" placeholder="Minun lauseeni..." style="min-height:80px"></textarea>
+    <p class="status" id="critStatus">Hae Clauden palaute kaikkiin kolmeen prompttiin, sitten täytä pohdinta.</p>
+  </div>
+
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(1)">← Jakso 1</button>
+    <button class="btn btn-ink gate" id="next2" onclick="complete(2);go(3)">Jakso 3 →</button>
+  </div>
+</div>
+</section>
+
+<!-- ══ 3 ATS JA HAKEMUS ══ -->
+<section class="screen" id="s3">
+<div class="wrap">
+  <div class="eyebrow">Jakso 03 / 08</div>
+  <h2>ATS ja hakemus — <em>avainsanat ennen tekstiä</em></h2>
+  <p class="lead muted">Ensin tärkeät sanat ilmoituksesta. Sitten lyhyt hakemusrunko omilla sanoillasi.</p>
+
+  <div class="card">
+    <span class="tag">Lue ensin</span>
+    <h3>Mikä ATS on?</h3>
+    <p class="one-line">ATS = ohjelma, joka lukee hakemuksen <strong>ennen ihmistä</strong> ja etsii ilmoituksen sanoja.</p>
+    <div class="flow" aria-label="ATS-kulku">
+      <div class="flow-step"><span class="n">1</span><b>Ilmoitus</b><span>sanat joita he hakevat</span></div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step"><span class="n">2</span><b>ATS</b><span>etsii samoja sanoja</span></div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step"><span class="n">3</span><b>Hakemus</b><span>sinun tekstisi</span></div>
+    </div>
+    <div class="tiles">
+      <div class="tile"><span class="ico">✓</span><strong>Toimii</strong><span>Ilmoitus: asiakaspalvelu → hakemuksessa: asiakaspalvelu</span></div>
+      <div class="tile"><span class="ico">✗</span><strong>Riski</strong><span>Tärkeä sana puuttuu → hakemus voi tippua listalta</span></div>
+    </div>
+    <p class="one-line muted">Tänään: lue → poimi 5 sanaa → käytä niitä rungossa.</p>
+  </div>
+
+  <div class="card">
+    <span class="tag">Harjoitus A</span>
+    <h3>Poimi 5 avainsanaa</h3>
+    <p class="one-line"><strong>Avainsana</strong> = yksi tärkeä sana ilmoituksesta (taito, tehtävä, tapa). Ei koko lause.</p>
+    <div class="tiles">
+      <div class="tile"><span class="ico">1</span><strong>Työ</strong><span>kassa, hyllytys…</span></div>
+      <div class="tile"><span class="ico">2</span><strong>Taito</strong><span>asiakaspalvelu, tiimi…</span></div>
+      <div class="tile"><span class="ico">3</span><strong>Tilanne</strong><span>kiire, vuorotyö…</span></div>
+      <div class="tile"><span class="ico">4</span><strong>Työkalu</strong><span>kassajärjestelmä…</span></div>
+    </div>
+    <div class="how">
+      <div class="lbl">Näin teet</div>
+      <ol>
+        <li>Liitä ilmoitus — tai paina “Käytä harjoitusilmoitusta”.</li>
+        <li>Poimi 5 sanaa <strong>itse</strong> (ei AI:ta vielä).</li>
+        <li>Pyydä AI:ta vertaamaan listaasi.</li>
+      </ol>
+    </div>
+    <details class="fold">
+      <summary>Näytä esimerkki (älä kopioi)</summary>
+      <div class="fold-body">
+        <div class="example">Ilmoitus: "…asiakaspalveluhenkistä myyjää… kassajärjestelmät… itsenäisesti kiireisinä aikoina."
+→ Avainsanoja: asiakaspalvelu · kassajärjestelmä · itsenäinen työskentely · kiire · myynti</div>
+      </div>
+    </details>
+    <label class="field" for="adText">Työpaikkailmoitus</label>
+    <p class="field-tip">Liitä ilmoitus (tai tärkein osa). Ei omaa? Paina nappia alla.</p>
+    <textarea id="adText" style="min-height:120px" placeholder="Liitä ilmoitus tähän…"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="useSampleAd()">Käytä harjoitusilmoitusta</button>
+    </div>
+    <label class="field">5 avainsanaa (sinä poimit)</label>
+    <p class="field-tip">Yksi lyhyt sana/ilmaus per ruutu — ei pitkää lausetta.</p>
+    <div class="kw-row">
+      <input type="text" id="kw1" placeholder="1">
+      <input type="text" id="kw2" placeholder="2">
+      <input type="text" id="kw3" placeholder="3">
+      <input type="text" id="kw4" placeholder="4">
+      <input type="text" id="kw5" placeholder="5">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="btnAtsCompare" onclick="runAtsCompare()" disabled>Pyydä AI:ta vertaamaan listaani</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryAiOut('atsAiOut','atsAiStatus')">Kokeile uudestaan</button>
+    </div>
+    <div class="ai-out" id="atsAiOut">AI-vertailu ilmestyy tähän...</div>
+    <p class="status" id="atsAiStatus">Liitä ilmoitus ja kirjoita vähintään 3 omaa avainsanaa ensin.</p>
+  </div>
+
+  <div class="card gate" id="gateAppScaffold">
+    <span class="tag">Harjoitus B</span>
+    <h3>4 lyhyttä lausetta — ei koko hakemusta</h3>
+    <div class="flow" aria-label="Hakemusrunko">
+      <div class="flow-step"><span class="n">1</span><b>Kuka</b><span>tausta lyhyesti</span></div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step"><span class="n">2</span><b>Miksi</b><span>juuri tämä rooli</span></div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step"><span class="n">3</span><b>Todiste</b><span>yksi tilanne</span></div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step"><span class="n">4</span><b>Pyyntö</b><span>haastatteluun</span></div>
+    </div>
+    <p class="one-line muted">1–2 lausetta / kohta. Ujuta mukaan 1–2 avainsanaa omalla äänellä.</p>
+    <details class="fold">
+      <summary>Näytä esimerkki (älä kopioi)</summary>
+      <div class="fold-body">
+        <div class="example">Kuka: "…tottunut asiakaskohtaamisiin vapaaehtoistyöstä."
+Miksi: "…asiakaspalvelutaitojani päivittäin."
+Todiste: "Kirpputorilla hoidin kassaa…"
+Pyyntö: "Kertoisin mielelläni lisää haastattelussa."</div>
+      </div>
+    </details>
+
+    <label class="field" for="appWho">1) Kuka olen</label>
+    <p class="field-tip">Tausta lyhyesti. Vältä: “Olen motivoitunut tiimipelaaja.”</p>
+    <textarea id="appWho" style="min-height:70px" placeholder="Olen tehnyt… tottunut…"></textarea>
+
+    <label class="field" for="appWhy">2) Miksi juuri tämä rooli</label>
+    <p class="field-tip">Miksi juuri tämä ilmoitus — ei vain “haluan töitä”.</p>
+    <textarea id="appWhy" style="min-height:70px" placeholder="Tässä roolissa saisin…"></textarea>
+
+    <label class="field" for="appProof">3) Yksi todiste</label>
+    <p class="field-tip">Yksi pieni tilanne: mitä teit → miten kävi.</p>
+    <textarea id="appProof" style="min-height:70px" placeholder="Kun… tein… lopputulos…"></textarea>
+
+    <label class="field" for="appAsk">4) Pyyntö haastatteluun</label>
+    <p class="field-tip">Yksi selkeä lause riittää.</p>
+    <textarea id="appAsk" style="min-height:60px" placeholder="Kertoisin mielelläni lisää…"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="btnAppFeedback" onclick="runAppFeedback()" disabled>Pyydä rakennepalaute (ei uudelleenkirjoitusta)</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryAiOut('appAiOut','appAiStatus')">Kokeile uudestaan</button>
+    </div>
+    <div class="ai-out" id="appAiOut">AI-palaute ilmestyy tähän — se kommentoi rakennetta, ei kirjoita puolestasi.</div>
+    <p class="status" id="appAiStatus"></p>
+    <label class="field" for="atsReflection">Mitä opit tästä? (2–3 lausetta)</label>
+    <p class="field-tip">Esim. huomasitko että jokin avainsana puuttui? Tai että todisteesi oli liian yleinen?</p>
+    <textarea id="atsReflection" style="min-height:70px" placeholder="Kirjoita omin sanoin..."></textarea>
+    <p class="status" id="atsStatus">Kirjoita kaikki neljä lausetta jatkaaksesi.</p>
+  </div>
+
+  <div class="card gate" id="gateFlags">
+    <span class="tag">Harjoitus C · punaiset liput</span>
+    <h3>Tarkista ennen kuin lähettäisit hakemuksen</h3>
+    <p class="muted" style="margin-bottom:.5rem">Nämä kaatavat hakemuksen usein ennen kuin kukaan lukee sisältöä. Käy läpi runkosi yllä — merkitse kun olet tarkistanut.</p>
+    <div class="tip">
+      <b>Vinkki</b>
+      Lue omat neljä lausetta ääneen. Jos jokin kuulostaa siltä että kuka tahansa voisi sanoa sen, korjaa se konkreettisemmaksi ennen kuin merkitset listaa.
+    </div>
+    <div class="flag-list" id="flagList">
+      <label><input type="checkbox" data-f="f1"> Ei kirjoitusvirheitä — lue teksti ääneen</label>
+      <label><input type="checkbox" data-f="f2"> Yrityksen / roolin nimi on oikein (ei kopioi-liitä -virhettä)</label>
+      <label><input type="checkbox" data-f="f3"> Ei ala "Olen kiinnostunut..." tai "Haluaisin hakea..."</label>
+      <label><input type="checkbox" data-f="f4"> Ainakin yksi konkreettinen tilanne tai luku mukana</label>
+      <label><input type="checkbox" data-f="f5"> Ilmoituksen avainsanoja näkyy tekstissä</label>
+    </div>
+    <div class="retry-row"><button class="btn btn-ghost btn-retry" type="button" onclick="retryFlags()">Tyhjennä rastit &amp; tarkista uudestaan</button></div>
+    <p class="status" id="flagStatus">Merkitse kaikki viisi jatkaaksesi.</p>
+  </div>
+
+  <div class="ext gate" id="gateClaudeAts">
+    <div class="tool-box claude" style="margin-top:0">
+      <div class="tool-lbl">Ulkona · Claude (tai ChatGPT)</div>
+      <h4>Testaa sama tekniikka oikeassa työkalussa</h4>
+      <p>Kopioi prompti → liitä Claudeen → tarkista että ilmoitus ja omat lauseesi ovat mukana. Tuo yksi löydös takaisin omin sanoin.</p>
+    </div>
+    <div class="tip">
+      <b>Vinkki</b>
+      Prompti alla päivittyy automaattisesti siitä mitä kirjoitit. Jos jokin kohta on tyhjä, täydennä se ennen kopiointia.
+    </div>
+    <div class="example" id="extPromptAts">Lataa...</div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="copyText('extPromptAts')">Kopioi prompti</button>
+      <a class="btn btn-forest" href="https://claude.ai" target="_blank" rel="noopener">Avaa Claude</a>
+      <a class="btn btn-ink" href="https://chatgpt.com" target="_blank" rel="noopener">Avaa ChatGPT</a>
+    </div>
+    <label class="field">Mitä tekoäly sanoi? (2–4 lausetta omin sanoin)</label>
+    <p class="field-tip">Älä liitä koko vastausta. Kerro: yksi asia jonka korjaisit, ja yksi asia joka oli jo ok.</p>
+    <textarea id="claudeAtsBack" style="min-height:80px" placeholder="Esim. Se huomasi että... Korjaan... Pidän..."></textarea>
+  </div>
+
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(2)">← Jakso 2</button>
+    <button class="btn btn-ink gate" id="next3" onclick="complete(3);go(4)">Jakso 4 →</button>
+  </div>
+</div>
+</section>
+
+<!-- ══ 4 MARKKINATUTKIMUS ══ -->
+<section class="screen" id="s4">
+<div class="wrap">
+  <div class="eyebrow">Jakso 04 / 08</div>
+  <h2>Markkinatutkimus — <em>ensin sinä, sitten AI</em></h2>
+  <p class="lead muted">Ensin sinä sivulta. Sitten AI. Muuten saat kauniita arvauksia.</p>
+
+  <div class="flow" aria-label="Tutkimuksen kulku">
+    <div class="flow-step"><span class="n">1</span><b>Sivu</b><span>ilmoitus / Meistä</span></div>
+    <div class="flow-arrow" aria-hidden="true">→</div>
+    <div class="flow-step"><span class="n">2</span><b>Sinä</b><span>4 vastausta itse</span></div>
+    <div class="flow-arrow" aria-hidden="true">→</div>
+    <div class="flow-step"><span class="n">3</span><b>AI</b><span>vain syventää</span></div>
+  </div>
+  <p class="one-line muted">“Miksi juuri me?” tarvitsee yhden totuuden sivulta — ei geneeristä kehua.</p>
+
+  <div class="tool-box">
+    <div class="tool-lbl">Muista työkalut</div>
+    <h4>ChatGPT vs Claude tässä jaksossa</h4>
+    <p>Molemmat sopivat tutkimuksen syventämiseen. Valitse yksi. Älä anna työkalun keksiä yritysfaktoja — pyydä kulmia, jotka <strong>sinä tarkistat</strong> sivulta.</p>
+  </div>
+
+  <div class="card">
+    <span class="tag">Harjoitus A · oma tutkimus (ei AI:ta vielä)</span>
+    <h3>Valitse yksi oikea työpaikka tai yritys</h3>
+    <div class="how">
+      <div class="lbl">Näin teet</div>
+      <ol>
+        <li>Avaa työpaikkailmoitus tai yrityksen sivu (toisessa välilehdessä).</li>
+        <li>Vastaa alla oleviin kysymyksiin <strong>itse</strong> — ilman ChatGPT:tä.</li>
+        <li>Jos et löydä vastausta, kirjoita “en löytänyt” — sekin on ok.</li>
+      </ol>
+    </div>
+    <span class="tag">esimerkki — älä kopioi</span>
+    <div class="example">Yritys/rooli: Paikallinen ruokakauppa — myymälätyöntekijä
+1) Myy ruokaa ja arjen tuotteita asiakkaille myymälässä.
+2) Palvelee lähialueen asukkaita ja ohikulkijoita.
+3) Ilmoituksessa toistuu asiakaspalvelu ja tiimityö.
+4) Minua kiinnostaa asiakaskohtaaminen — tykkään auttaa ihmisiä.</div>
+    <label class="field">Yritys / rooli</label>
+    <p class="field-tip">Kirjoita yrityksen nimi + titteli ilmoituksesta. Jos harjoittelet ilman oikeaa hakua: “Harjoitus — myymälätyöntekijä”.</p>
+    <input type="text" id="coName" placeholder="esim. Yritys X — myymälätyöntekijä">
+    <label class="field">1) Mitä yritys tekee yhdellä lauseella?</label>
+    <p class="field-tip">Katso etusivua tai “Meistä”. Vastaa kuin selittäisit naapurille.</p>
+    <textarea id="coWhat" style="min-height:70px" placeholder="He tekevät / tarjoavat..."></textarea>
+    <label class="field">2) Kenelle he myyvät / ketä palvelevat?</label>
+    <p class="field-tip">Ketkä ovat asiakkaita? Kuluttajat, yritykset, tietty alue?</p>
+    <textarea id="coWho" style="min-height:70px" placeholder="Heidän asiakkaitaan ovat..."></textarea>
+    <label class="field">3) Mikä ilmoituksessa toistuu (taito / arvo)?</label>
+    <p class="field-tip">Sama sana kahdesti? “Vaatimukset”-lista? Kirjoita 1–2 asiaa.</p>
+    <textarea id="coSkill" style="min-height:70px" placeholder="Ilmoituksessa toistuu..."></textarea>
+    <label class="field">4) Yksi asia joka SINUA kiinnostaa — miksi?</label>
+    <p class="field-tip">Yksi rehellinen syy. Ei “hyvä brändi” jos et tiedä brändistä mitään.</p>
+    <textarea id="coWhy" style="min-height:70px" placeholder="Minua kiinnostaa... koska..."></textarea>
+    <p class="status" id="researchStatus">Täytä vähintään yritys + 3 vastausta jatkaaksesi.</p>
+  </div>
+
+  <div class="card gate" id="gate4b">
+    <span class="tag">Harjoitus B · AI syventää (täällä)</span>
+    <h3>Pyydä AI:lta kysymyksiä — ei valmista “miksi me” -lausetta</h3>
+    <div class="tip">
+      <b>Vinkki</b>
+      AI antaa tutkimuskysymyksiä. Sinä valitset yhden ja vastaat siihen sivun perusteella — et kopioi AI:n yritystarinaa.
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="btnAi3" onclick="runResearchAi()">Kysy AI:lta 5 tutkimuskysymystä</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryAiOut('ai3out',null)">Kokeile uudestaan</button>
+    </div>
+    <div class="ai-out" id="ai3out">...</div>
+    <label class="field">Valitse YKSI AI:n kysymys ja vastaa siihen itse</label>
+    <p class="field-tip">Muoto: “Valitsin kysymyksen: … Oma vastaukseni sivun perusteella: …”</p>
+    <textarea id="aiQpick" placeholder="Kysymys jonka valitsin + oma vastaukseni..."></textarea>
+    <div class="warnbox"><strong>Ajattele jaloillasi:</strong> Jos AI väittää jotain mitä et nähnyt sivulla — merkitse se epäilyttäväksi. Älä kopioi.</div>
+    <label class="field">Mikä AI:n väite / ehdotus oli epäilyttävä tai liian geneerinen?</label>
+    <p class="field-tip">Etsi lauseita kuten “innovatiivinen kulttuuri” ilman todisteita — tai faktoja joita et löytänyt sivulta.</p>
+    <textarea id="aiSuspect" style="min-height:70px" placeholder="Epäilyttävää oli..."></textarea>
+  </div>
+
+  <div class="ext gate" id="gate4c">
+    <h4>Ulkona: ChatGPT tai Claude</h4>
+    <p class="muted" style="margin-bottom:.75rem">Kopioi prompti → liitä ChatGPT:hen <em>tai</em> Claudeen → tuo kolme löydöstä takaisin omin sanoin.</p>
+    <div class="tip">
+      <b>Vinkki</b>
+      “Löydös” = asia jonka voit tarkistaa sivulta tai käyttää haastattelussa. Ei pelkkä kaunis lause.
+    </div>
+    <div class="example" id="extPrompt3">Lataa...</div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="copyText('extPrompt3')">Kopioi prompti</button>
+      <a class="btn btn-ink" href="https://chatgpt.com" target="_blank" rel="noopener">Avaa ChatGPT</a>
+      <a class="btn btn-forest" href="https://claude.ai" target="_blank" rel="noopener">Avaa Claude</a>
+    </div>
+    <label class="field">3 löydöstä jotka toin takaisin (omilla sanoilla)</label>
+    <textarea id="extFindings" placeholder="1) ...&#10;2) ...&#10;3) ..."></textarea>
+  </div>
+
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(3)">← Jakso 3</button>
+    <button class="btn btn-ink gate" id="next4" onclick="complete(4);go(5)">Jakso 5 →</button>
+  </div>
+</div>
+</section>
+
+<!-- ══ 5 STAR-KOULU ══ -->
+<section class="screen" id="s5">
+<div class="wrap">
+  <div class="eyebrow">Jakso 05 / 08</div>
+  <h2>STAR-koulu — <em>opi kertomaan tarina</em></h2>
+  <p class="lead muted">Ensin totta/tarua. Sitten STAR-rakenne — tarina järjestyksessä.</p>
+
+  <div class="card">
+    <span class="tag">Harjoitus 0 · totta vai tarua</span>
+    <h3>Mitä työnantaja oikeasti katsoo?</h3>
+    <p class="muted" style="margin-bottom:.5rem">Vastaa ensituntumalla. Väärät vastaukset opettavat.</p>
+    <div class="tt-row" id="ttRow"></div>
+    <div class="retry-row"><button class="btn btn-ghost btn-retry" type="button" onclick="retryTottaTarua()">Kokeile uudestaan</button></div>
+  </div>
+
+  <div class="card">
+    <span class="tag">Osa 1</span>
+    <h3>STAR = 4 osaa</h3>
+    <p class="one-line muted">Tarina, ei ominaisuuksien lista. Pieni totuus &gt; keksitty sankaritarina.</p>
+    <div class="tiles">
+      <div class="tile"><span class="ico">S</span><strong>Tilanne</strong><span>Mitä oli meneillään?</span></div>
+      <div class="tile"><span class="ico">T</span><strong>Tehtävä</strong><span>Mitä sinun piti saada aikaan?</span></div>
+      <div class="tile"><span class="ico">A</span><strong>Toiminta</strong><span>Mitä SINÄ teit? (askeleet)</span></div>
+      <div class="tile"><span class="ico">R</span><strong>Tulos</strong><span>Miten kävi / mitä opit?</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag">esimerkki — älä kopioi</span>
+    <h3>Yksi tarina, neljä osaa</h3>
+    <p class="muted" style="margin-bottom:.5rem">Lue tämä ja huomaa, miten sama tarina jakautuu neljään osaan.</p>
+    <div class="star-quad">
+      <div class="star-box"><span class="letter">S</span><p>Työskentelin kaupan kassalla, kun tietojärjestelmä kaatui ruuhka-aikana ja jono venyi pitkäksi.</p></div>
+      <div class="star-box"><span class="letter">T</span><p>Minun piti pitää asiakkaat rauhallisina ja saada myynti jatkumaan, vaikka kassa ei toiminut.</p></div>
+      <div class="star-box"><span class="letter">A</span><p>Otin käyttöön käteiskassan varajärjestelmänä, selitin tilanteen asiakkaille rauhallisesti ja pyysin kollegan avuksi pakkaamaan tuotteita nopeammin.</p></div>
+      <div class="star-box"><span class="letter">R</span><p>Jono eteni ilman suurempia valituksia, ja esimies mainitsi tilanteen palautekeskustelussa hyvänä esimerkkinä paineensietokyvystä.</p></div>
+    </div>
+  </div>
+
+  <div class="card gate" id="gateDecoder">
+    <span class="tag">Osa 2 · dekoodaa tarina</span>
+    <h3>Tunnista S, T, A ja R itse</h3>
+    <div class="how">
+      <div class="lbl">Näin teet</div>
+      <ol>
+        <li>Lue neljä lausetta alla.</li>
+        <li>Valitse mikä lause vastaa kysyttyä kirjainta.</li>
+        <li>Näet heti oikean vastauksen ja lyhyen selityksen.</li>
+        <li>Jatka kunnes kaikki neljä kirjainta on käyty läpi.</li>
+      </ol>
+    </div>
+    <div class="decoder-progress" id="decoderProgress">Kirjain 1 / 4</div>
+    <p class="decoder-q" id="decoderQ">Mikä lause kertoo TILANTEEN — mitä oli meneillään?</p>
+    <div class="choice-grid" id="decoderChoices"></div>
+    <div class="reveal" id="decoderReveal"></div>
+    <div class="btn-row">
+      <button class="btn btn-ink" type="button" id="decoderNextBtn" style="display:none" onclick="nextDecoder()">Seuraava kirjain →</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryDecoder()">Aloita dekoodaus uudestaan</button>
+    </div>
+  </div>
+
+  <div class="card gate" id="gate5c">
+    <span class="tag">Osa 3 · avainsanat</span>
+    <h3>Kysymys tipahtaa — kirjoita vain avaimet, ei essee</h3>
+    <div class="tip">
+      <b>Vinkki</b>
+      Älä kirjoita tarinaa valmiiksi. Kirjoita sanoja: paikka, ongelma, mitä teit, lopputulos. Myöhemmin laajennat ne STAR-ruutuihin.
+    </div>
+    <div class="how">
+      <div class="lbl">Näin teet</div>
+      <ol>
+        <li>Paina “Näytä kysymys”.</li>
+        <li>Kirjoita 4–6 avainsanaa / lyhyttä bulletia omasta tarinastasi.</li>
+        <li>Siirry STAR-runkoon — ei tarvitse olla täydellinen.</li>
+      </ol>
+    </div>
+    <p id="hotQ" style="font-size:1.1rem;font-weight:600;margin:1rem 0">Paina nappia — saat kysymyksen.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="hotQBtn" onclick="showHotQuestion()">Näytä kysymys</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryHotNotes()">Tyhjennä &amp; uusi kysymys</button>
+    </div>
+    <textarea id="hotNotes" placeholder="esim. kassa · jono · järjestelmä kaatui · rauhoitin · käteinen..." style="margin-top:.75rem"></textarea>
+  </div>
+
+  <div class="card gate" id="gate5d">
+    <span class="tag">Osa 4 · oma STAR</span>
+    <h3>Laajenna muistiinpanot STAR-rungoksi</h3>
+    <div class="tip">
+      <b>Vinkki</b>
+      Käytä avainsanojasi yllä. Jos ne ovat tyhjiä, mieti yhtä pientä tilannetta jossa ratkaisit ongelman. Katso esimerkkitarinaa yllä — rakenne, ei sisältö.
+    </div>
+    <label class="field">S — Tilanne</label>
+    <p class="field-tip">Missä olit? Mitä oli meneillään? 1–2 lausetta.</p>
+    <textarea id="starS" style="min-height:70px" placeholder="Olin… kun…"></textarea>
+    <label class="field">T — Sinun tehtäväsi / vastuusi</label>
+    <p class="field-tip">Mitä sinun piti saada aikaan juuri silloin?</p>
+    <textarea id="starT" style="min-height:70px" placeholder="Minun piti…"></textarea>
+    <label class="field">A — Mitä SINÄ teit (askeleet)</label>
+    <p class="field-tip">Kirjoita 2–3 tekoa: ensin… sitten… lopuksi… Käytä “minä”, ei “me”.</p>
+    <textarea id="starA" style="min-height:70px" placeholder="Ensin tein… sitten…"></textarea>
+    <label class="field">R — Tulos tai mitä opit</label>
+    <p class="field-tip">Miten kävi? Tai mitä opit? Pieni tulos riittää.</p>
+    <textarea id="starR" style="min-height:70px" placeholder="Lopuksi… / Opin että…"></textarea>
+    <p class="status" id="starStatus">Täytä kaikki neljä kohtaa.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="btnStarAi" onclick="runStarAi()" disabled>Pyydä AI:lta 3 jatkokysymystä</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryAiOut('starAiOut',null)">Kokeile uudestaan</button>
+    </div>
+    <div class="ai-out" id="starAiOut">AI:n jatkokysymykset ilmestyvät tähän — se ei kirjoita tarinaasi uusiksi.</div>
+    <label class="field">Vastaa yhteen jatkokysymykseen (oma ääni)</label>
+    <p class="field-tip">Valitse yksi AI:n kysymys ja vastaa siihen kirjoittaen tai ääneen muistiin.</p>
+    <textarea id="starFollowAns" placeholder="Valitsin kysymyksen… Vastaukseni…"></textarea>
+  </div>
+
+  <div class="ext gate" id="gate5e">
+    <h4>Ulkona: Claude (tai ChatGPT) — vaikea kysymys</h4>
+    <p class="muted" style="margin-bottom:.75rem">Pyydä työkalua esittämään yksi vaikea kysymys kerrallaan. Vastaa ensin itse. Pyydä sitten vain palautetta rakenteesta — ei uutta valmista vastausta.</p>
+    <div class="example" id="extPromptStar"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="copyText('extPromptStar')">Kopioi prompti</button>
+      <a class="btn btn-forest" href="https://claude.ai" target="_blank" rel="noopener">Avaa Claude</a>
+      <a class="btn btn-ink" href="https://chatgpt.com" target="_blank" rel="noopener">Avaa ChatGPT</a>
+    </div>
+    <label class="field">Mitä opin ulkoisesta sparrista? (2–3 lausetta)</label>
+    <p class="field-tip">Esim. “STAR-osani A oli liian yleinen — lisään askeleet.”</p>
+    <textarea id="starExtReflect" style="min-height:80px" placeholder="Opin että..."></textarea>
+  </div>
+
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(4)">← Jakso 4</button>
+    <button class="btn btn-ink gate" id="next5" onclick="complete(5);go(6)">Jakso 6 →</button>
+  </div>
+</div>
+</section>
+
+<!-- ══ 6 LIVE-ÄÄNIHAASTATTELU ══ -->
+<section class="screen" id="s6">
+<div class="wrap">
+  <div class="eyebrow">Jakso 06 / 08</div>
+  <h2>Live-äänihaastattelu — <em>puhu ääneen</em></h2>
+  <p class="lead muted">AI on rekrytoija. 4 vuoroa + palaute. Lue tämä ennen kuin aloitat.</p>
+
+  <div class="card">
+    <span class="tag">Lue ensin</span>
+    <h3>Miten live-haastattelu etenee</h3>
+    <div class="flow" aria-label="4 vuoroa">
+      <div class="flow-step"><span class="n">1</span><b>Esittely</b><span>nimi + lyhyt tausta</span></div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step"><span class="n">2</span><b>STAR</b><span>kysymys taustastasi</span></div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step"><span class="n">3</span><b>Virhe</b><span>mitä opit</span></div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step"><span class="n">4</span><b>Paine</b><span>viimeinen kysymys</span></div>
+    </div>
+    <div class="tiles">
+      <div class="tile"><span class="ico">·</span><strong>Puhuminen</strong><span>Lyhyet vastaukset riittävät</span></div>
+      <div class="tile"><span class="ico">≡</span><strong>Jakson loppu</strong><span>Palaute + lyhyt pohdinta</span></div>
+      <div class="tile"><span class="ico">■</span><strong>Lopeta</strong><span>Voit lopettaa kesken — palaute tulee silti</span></div>
+      <div class="tile"><span class="ico">↻</span><strong>Uudestaan</strong><span>Voit aloittaa haastattelun uudelleen</span></div>
+    </div>
+    <p class="one-line muted">Lopuksi: kiitos → kirjallinen palaute (Mikä toimi / Mitä parantaa / Seuraava harjoitus).</p>
+  </div>
+
+  <div class="card">
+    <span class="tag">Näin saat paremman palautteen</span>
+    <div class="tiles">
+      <div class="tile"><span class="ico">1</span><strong>Kokonaisia lauseita</strong><span>Ei “joo / ok / hmm” — ne ohitetaan</span></div>
+      <div class="tile"><span class="ico">2</span><strong>Esittely</strong><span>Nimi + mitä olet tehnyt + mitä haet</span></div>
+      <div class="tile"><span class="ico">3</span><strong>STAR kevyesti</strong><span>Tilanne → mitä SINÄ teit → lopputulos</span></div>
+      <div class="tile"><span class="ico">4</span><strong>Yksi esimerkki</strong><span>Parempi kuin “olen tiimipelaaja”</span></div>
+    </div>
+    <div class="how">
+      <div class="lbl">Napit</div>
+      <ol>
+        <li>Kuuntele rekrytoija loppuun.</li>
+        <li>Vastaa ääneen → <strong>Lähetä vastaus</strong>.</li>
+        <li><strong>Seuraava</strong> (viimeisessä: <strong>Päätä haastattelu</strong>).</li>
+        <li><strong>Lopeta</strong> = keskeytä milloin tahansa.</li>
+      </ol>
+    </div>
+    <p class="one-line muted">Ääni ei toimi? Käytä tekstivaihtoehtoa (3 kysymystä) — sama palaute.</p>
+  </div>
+
+  <div class="vox-card">
+    <div class="vox-top"><span class="live-dot" id="voxDot"></span><span id="voxTop">Ei yhdistetty</span></div>
+    <div class="vox-q-label" id="voxQLabel">Valmiina aloittamaan</div>
+    <p class="vox-q" id="voxQText">Paina "Aloita live-haastattelu" kun olet valmis puhumaan.</p>
+    <p class="vox-status" id="voxStatus"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="voxStartBtn" onclick="voxStart()">Aloita live-haastattelu</button>
+      <button class="btn btn-forest" type="button" id="voxSendBtn" style="display:none" onclick="voxSend()">Lähetä vastaus</button>
+      <button class="btn btn-ink" type="button" id="voxNextBtn" style="display:none" onclick="voxNext()">Seuraava</button>
+      <button class="btn btn-ghost" type="button" id="voxEndBtn" style="display:none" onclick="voxEnd()">Lopeta</button>
+      <button class="btn btn-ghost btn-retry" type="button" id="voxRetryBtn" style="display:none" onclick="retryVox()">Kokeile uudestaan</button>
+    </div>
+    <div class="vox-timeline" id="voxTimeline"></div>
+    <p class="vox-empty" id="voxEmpty">Vastauksesi ilmestyvät tähän sitä mukaa kun haastattelu etenee.</p>
+
+    <div class="vox-fallback" id="voxFallback">
+      <p style="margin-bottom:.75rem">Ääni ei ole juuri nyt käytettävissä. Kirjoita 3 vastausta alle.</p>
+      <label class="field">1) Kerro lyhyesti itsestäsi ja taustastasi.</label>
+      <textarea id="voxFb1" style="min-height:70px" placeholder="Olen… Olen tehnyt… Haen nyt…"></textarea>
+      <label class="field">2) Kerro tilanteesta, jossa teit virheen. Mitä opit?</label>
+      <textarea id="voxFb2" style="min-height:70px" placeholder="Kerran… Tein… Opin…"></textarea>
+      <label class="field">3) Miksi juuri tämä rooli kiinnostaa sinua?</label>
+      <textarea id="voxFb3" style="min-height:70px" placeholder="Minua kiinnostaa… koska…"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-forest" type="button" onclick="voxFallbackSubmit()">Pyydä kirjallinen palaute</button>
+        <button class="btn btn-ghost btn-retry" type="button" onclick="retryVoxFallback()">Tyhjennä &amp; kokeile uudestaan</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="voxFbPanel" style="display:none">
+    <span class="tag">AI-palaute haastattelusta</span>
+    <div class="fb-grid">
+      <div class="fb-card"><h4>Mikä toimi</h4><p id="voxFbGood">—</p></div>
+      <div class="fb-card"><h4>Mitä parantaa</h4><p id="voxFbFix">—</p></div>
+      <div class="fb-card"><h4>Seuraava harjoitus</h4><p id="voxFbNext">—</p></div>
+    </div>
+    <div class="retry-row">
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryVox()">Kokeile haastattelua uudestaan</button>
+    </div>
+  </div>
+
+  <div class="card gate" id="gate6b">
+    <span class="tag">Havainto</span>
+    <h3>Miltä puhuminen tuntui verrattuna kirjoittamiseen?</h3>
+    <p class="field-tip">2–4 lausetta: oliko helpompaa vai vaikeampaa? Mikä jumitti? Mitä harjoittelet seuraavaksi?</p>
+    <textarea id="voxObservation" placeholder="Puhuminen tuntui… Seuraavalla kerralla…" style="min-height:90px"></textarea>
+  </div>
+
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(5)">← Jakso 5</button>
+    <button class="btn btn-ink gate" id="next6" onclick="complete(6);go(7)">Jakso 7 →</button>
+  </div>
+</div>
+</section>
+
+<!-- ══ 7 KUVA, PDF JA GAMMA ══ -->
+<section class="screen" id="s7">
+<div class="wrap">
+  <div class="eyebrow">Jakso 07 / 08</div>
+  <h2>Kuva, PDF ja Gamma — <em>kokoa todiste</em></h2>
+  <p class="lead muted">Kokoat päivän työn kolmeen muotoon: kuva, yhden sivun yhteenveto ja lyhyt esitys. Kaikki syntyy sinun omista sanoistasi — AI ei keksi mitään uutta.</p>
+
+  <div class="tool-box">
+    <div class="tool-lbl">Työkalu · ChatGPT</div>
+    <h4>Kuvan tekeminen ChatGPT:llä</h4>
+    <p>Kirjoita kuvan ohje chattiin. Pyydä kuvaa selkeästi (esim. "Luo kuva:..."). Tarkista että kuvassa ei ole virheellistä tekstiä tai outoja yksityiskohtia.</p>
+  </div>
+  <div class="tool-box claude">
+    <div class="tool-lbl">Työkalu · Claude</div>
+    <h4>PDF-yhteenveto Claudella</h4>
+    <p>Claude sopii hyvin yhden sivun rakenteeseen. Anna sille vain omat tekstisi. Pyydä otsikoita ja lyhyitä listoja — ei uusia faktoja.</p>
+  </div>
+  <div class="tool-box gamma">
+    <div class="tool-lbl">Työkalu · Gamma</div>
+    <h4>Esitys Gammassa</h4>
+    <p>Gamma tekee dioja tekstistä. Vie sinne vasta kun sinulla on sisältö (tavoite, STAR, yrityshavainto). Muuten diat näyttävät tyhjiltä.</p>
+  </div>
+
+  <div class="card">
+    <span class="tag">Osa 1 · ChatGPT-kuva</span>
+    <h3>Rakenna prompti yksinkertaiselle kuvalle</h3>
+    <div class="ctx"><strong>Konteksti:</strong> Teet yhden selkeän kuvan (esim. tunnelmakuva LinkedIniä / portfoliota varten). Ei tarvitse olla taidetta — yksinkertainen ja ammattimainen riittää.</div>
+    <div class="tip">
+      <b>Vinkki</b>
+      Hyvä kuvaohje = mitä näkyy + tunnelma + kiellot. Jos et keksi aihetta: “siisti työpöytä + kannettava, rauhallinen valo”.
+    </div>
+    <div class="how">
+      <div class="lbl">Näin teet</div>
+      <ol>
+        <li>Kirjoita aihe, tunnelma ja mitä kuvassa EI saa näkyä.</li>
+        <li>Prompti päivittyy alle sitä mukaa kun kirjoitat.</li>
+        <li>Kopioi prompti → ChatGPT → pyydä kuvaa → katso tulos kriittisesti.</li>
+      </ol>
+    </div>
+    <label class="field">Aihe (mitä kuvassa näkyy)</label>
+    <p class="field-tip">Konkreettisia asioita: esineitä, paikka, valo — ei abstrakteja sanoja yksinään.</p>
+    <input type="text" id="imgSubject" placeholder="esim. siisti työpöytä ja kannettava tietokone">
+    <label class="field">Tunnelma</label>
+    <p class="field-tip">2–3 adjektiivia: rauhallinen, lämmin, luotettava…</p>
+    <input type="text" id="imgMood" placeholder="esim. rauhallinen, lämmin, luotettava">
+    <label class="field">Mitä EI saa näkyä</label>
+    <p class="field-tip">Estä tyypilliset virheet: teksti, kasvot, logot, sekava tausta.</p>
+    <input type="text" id="imgAvoid" placeholder="esim. ei tekstiä, ei kasvoja, ei logoja">
+    <label class="field">Valmis prompti</label>
+    <div class="example" id="imgPromptOut">Prompti ilmestyy tähän...</div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="copyText('imgPromptOut')">Kopioi prompti</button>
+      <a class="btn btn-primary" href="https://chatgpt.com" target="_blank" rel="noopener">Avaa ChatGPT</a>
+    </div>
+    <label class="field">Mikä toimi kuvassa, mikä ei?</label>
+    <p class="field-tip">Esim. “Valo oli hyvä, mutta kuvassa oli outoa tekstiä — korjaan kiellon.”</p>
+    <textarea id="imgReflect" style="min-height:70px" placeholder="Toimi… Ei toiminut…"></textarea>
+  </div>
+
+  <div class="ext">
+    <h4>Osa 2 · Claude-PDF</h4>
+    <p class="muted" style="margin-bottom:.75rem">Tämä prompti kokoaa tavoitteesi, STAR-tarinasi ja yrityshavaintosi yhdeksi sivuksi. Se päivittyy automaattisesti aiempien jaksojen tiedoista.</p>
+    <div class="tip">
+      <b>Vinkki</b>
+      Jos promptissa on tyhjiä kohtia, palaa jaksoihin 1 / 4 / 5 ja täydennä. Claude saa käyttää vain sinun tekstiäsi — ei keksiä uusia faktoja.
+    </div>
+    <div class="example" id="pdfPromptOut">Lataa...</div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="copyText('pdfPromptOut')">Kopioi prompti</button>
+      <a class="btn btn-forest" href="https://claude.ai" target="_blank" rel="noopener">Avaa Claude</a>
+    </div>
+    <label class="field">Liitä linkki tai muistiinpano PDF:stä</label>
+    <p class="field-tip">Jos et tee oikeaa PDF:ää, kirjoita 3 bulletia mitä sivulle tulisi.</p>
+    <textarea id="pdfBack" placeholder="Linkki tai: 1) … 2) … 3) …"></textarea>
+  </div>
+
+  <div class="ext">
+    <h4>Osa 3 · Gamma-esitys</h4>
+    <p class="muted" style="margin-bottom:.75rem">5 dian runko koko päivän työstäsi — päivittyy automaattisesti. Gamma tekee dioja tekstistä; sinä annat sisällön.</p>
+    <div class="tip">
+      <b>Vinkki</b>
+      Kopioi prompti → Gamma → luo 5 diaa. Tarkista että diat eivät lisää faktoja joita et antanut.
+    </div>
+    <div class="example" id="gammaPromptOut">Lataa...</div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="copyText('gammaPromptOut')">Kopioi Gamma-prompti</button>
+      <a class="btn btn-primary" href="https://gamma.app" target="_blank" rel="noopener">Avaa Gamma</a>
+    </div>
+    <label class="field">Gamma-linkki tai 3 bulletia mitä esitit</label>
+    <p class="field-tip">Jos et jaa linkkiä: kirjoita diasi otsikot tai 3 asiaa jotka jäivät mieleen.</p>
+    <textarea id="gammaBack" placeholder="Linkki tai muistiinpanot..."></textarea>
+  </div>
+
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(6)">← Jakso 6</button>
+    <button class="btn btn-ink" onclick="complete(7);go(8)">Jakso 8 — testi →</button>
+  </div>
+</div>
+</section>
+
+<!-- ══ 8 MITÄ VIET KOTIIN ══ -->
+<section class="screen" id="s8">
+<div class="wrap">
+  <div class="eyebrow">Jakso 08 / 08</div>
+  <h2>Mitä viet kotiin — <em>testi, työkalupakki & suunnitelma</em></h2>
+  <p class="lead muted">Ei arvosanaa. Peili + paketti jonka voit käyttää seuraavassa haussa.</p>
+
+  <div class="flow" aria-label="Lopun kulku">
+    <div class="flow-step"><span class="n">1</span><b>Testi</b><span>valitse + lue</span></div>
+    <div class="flow-arrow" aria-hidden="true">→</div>
+    <div class="flow-step"><span class="n">2</span><b>Tilanteet</b><span>mikä mättää</span></div>
+    <div class="flow-arrow" aria-hidden="true">→</div>
+    <div class="flow-step"><span class="n">3</span><b>Oma ääni</b><span>selitä kaverille</span></div>
+    <div class="flow-arrow" aria-hidden="true">→</div>
+    <div class="flow-step"><span class="n">4</span><b>Paketti</b><span>viikko + kortti</span></div>
+  </div>
+
+  <div class="card">
+    <span class="tag">Osa 1 · valitse oikea</span>
+    <h3>Perusymmärrys</h3>
+    <p class="one-line muted">Vastaa. Väärä vastaus näyttää selityksen — lue se.</p>
+    <div id="finalQuiz"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="btnScoreQuiz" onclick="scoreFinalQuiz()" style="display:none">Näytä tulos</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryFinalQuiz()">Kokeile uudestaan</button>
+    </div>
+    <div class="quiz-score" id="quizScore" style="display:none"></div>
+  </div>
+
+  <div class="card gate" id="gateFinalScenes">
+    <span class="tag">Osa 2 · tilanteet</span>
+    <h3>Mikä mättää? — valitse suurin ongelma</h3>
+    <p class="one-line muted">Kolme lyhyttä tilannetta. Valitse yksi. Saat heti selityksen.</p>
+    <div id="finalScenes"></div>
+    <div class="retry-row"><button class="btn btn-ghost btn-retry" type="button" onclick="retryFinalScenes()">Kokeile uudestaan</button></div>
+    <p class="status" id="sceneStatus">Vastaa kaikkiin kolmeen tilanteeseen.</p>
+  </div>
+
+  <div class="card gate" id="gateFinalOpen">
+    <span class="tag">Osa 3 · omin sanoin</span>
+    <h3>Kerro kuin opettaisit kaverille</h3>
+    <div class="final-q">
+      <h4>1) ChatGPT vs Claude — milloin kumpaakin?</h4>
+      <p class="field-tip">“ChatGPT:tä käyttäisin… Claudea…”</p>
+      <textarea id="finalQ1" style="min-height:80px" placeholder="ChatGPT:tä… Claudea…"></textarea>
+    </div>
+    <div class="final-q">
+      <h4>2) KYSY · TARKISTA · OMA — käytännön esimerkki</h4>
+      <p class="field-tip">Yksi haku: ilmoitus → hakemus tai haastattelu.</p>
+      <textarea id="finalQ2" style="min-height:80px" placeholder="Ensin kysyn… Sitten tarkistan… Lopuksi…"></textarea>
+    </div>
+    <div class="final-q">
+      <h4>3) ATS-avainsanat + STAR — kerro esimerkillä</h4>
+      <p class="field-tip">“Jos ilmoitus sanoo… Haastattelussa kerron…”</p>
+      <textarea id="finalQ3" style="min-height:80px" placeholder="Avainsanat… STAR…"></textarea>
+    </div>
+    <div class="final-q">
+      <h4>4) Milloin AI:ta EI saa uskoa / kopioida suoraan?</h4>
+      <p class="field-tip">Yksi konkreettinen riski (faktat, klisee, väärä yritys…).</p>
+      <textarea id="finalQ4" style="min-height:80px" placeholder="En kopioi kun…"></textarea>
+    </div>
+    <div class="final-q">
+      <h4>5) Mikä oli tänään tärkein oppisi — yksi lause</h4>
+      <textarea id="finalQ5" style="min-height:70px" placeholder="Tärkein oppi:…"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-forest" type="button" id="btnFinalAi" onclick="runFinalOpenFeedback()">Pyydä Claudelta lyhyt palaute vastauksiin</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryAiOut('finalAiOut','finalAiStatus')">Kokeile uudestaan</button>
+    </div>
+    <div class="ai-out" id="finalAiOut">Palaute ilmestyy tähän…</div>
+    <p class="status" id="finalAiStatus"></p>
+    <p class="status" id="finalOpenStatus">Kirjoita kaikki viisi vastausta jatkaaksesi.</p>
+  </div>
+
+  <div class="card gate" id="gateFinalKit">
+    <span class="tag">Osa 4 · oma työkalupakki</span>
+    <h3>Täydennä — tämä on sinun muistilappusi</h3>
+    <p class="one-line muted">Kentät päivittyvät päivän töistä. Korjaa / täydennä omin sanoin.</p>
+    <div class="tiles">
+      <div class="tile"><span class="ico">P</span><strong>Promptti</strong><span>Rooli · tilanne · tehtävä · rajat</span></div>
+      <div class="tile"><span class="ico">A</span><strong>ATS</strong><span>Ilmoitus → 5 sanaa → oma teksti</span></div>
+      <div class="tile"><span class="ico">S</span><strong>STAR</strong><span>Tilanne · tehtävä · teot · tulos</span></div>
+      <div class="tile"><span class="ico">K</span><strong>Sääntö</strong><span>KYSY · TARKISTA · OMA</span></div>
+    </div>
+    <label class="field">3 vahvuuttani (omilla sanoilla)</label>
+    <textarea id="kitStrengths" style="min-height:70px" placeholder="1) … 2) … 3) …"></textarea>
+    <label class="field">Oma STAR yhdessä lauseessa</label>
+    <textarea id="kitStar" style="min-height:70px" placeholder="Kun… minä… lopuksi…"></textarea>
+    <label class="field">Prompttipohja jonka vien kotiin</label>
+    <p class="field-tip">Voit muokata valmista pohjaa.</p>
+    <textarea id="kitPrompt" style="min-height:110px"></textarea>
+    <label class="field">Punainen lippu jota varon seuraavalla kerralla</label>
+    <textarea id="kitFlag" style="min-height:60px" placeholder="esim. sama hakemus joka paikkaan / klisee / keksiminen…"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="fillKitFromDay()">Täytä päivän tiedoilla</button>
+      <button class="btn btn-ghost" type="button" onclick="copyKitCard()">Kopioi muistilappu</button>
+    </div>
+    <div class="example" id="kitCardOut" style="display:none"></div>
+    <p class="status" id="kitStatus">Täytä vahvuudet, STAR, promptti ja lippu.</p>
+  </div>
+
+  <div class="card gate" id="gateFinalPlan">
+    <span class="tag">Osa 5 · 7 päivän suunnitelma</span>
+    <h3>Pienet askeleet — ei “haen kaikkeen”</h3>
+    <div class="how">
+      <div class="lbl">Ideoita (valitse / muuta)</div>
+      <ol>
+        <li>Poimi 5 avainsanaa yhdestä ilmoituksesta.</li>
+        <li>Kirjoita 4 lauseen hakemusrunko.</li>
+        <li>Harjoittele STAR ääneen muutaman kerran.</li>
+        <li>Avaa Claude / ChatGPT yhdellä hyvällä promptilla.</li>
+      </ol>
+    </div>
+    <label class="field">Huomenna (1 asia)</label>
+    <textarea id="tomorrow" style="min-height:60px" placeholder="Huomenna teen…"></textarea>
+    <label class="field">Tällä viikolla (2–3 asiaa)</label>
+    <textarea id="weekPlan" style="min-height:80px" placeholder="1) …&#10;2) …&#10;3) …"></textarea>
+    <label class="field">Missä tarvitsen vielä apua?</label>
+    <textarea id="needHelp" style="min-height:60px" placeholder="esim. haastattelu ääneen / hakemuksen alku…"></textarea>
+    <p class="status" id="planStatus">Kirjoita huominen + viikkosuunnitelma.</p>
+  </div>
+
+  <div class="card gate" id="gateFinalCheck">
+    <span class="tag">Osa 6 · itseluottamus</span>
+    <h3>Merkitse mikä on nyt totta</h3>
+    <p class="field-tip">Vain totta juuri nyt. Epävarma → jätä pois tai harjoittele vielä.</p>
+    <div class="checklist" id="confidenceList">
+      <label><input type="checkbox" data-k="c1"> Osaan avata ChatGPT:n tai Clauden ja kirjoittaa promptin</label>
+      <label><input type="checkbox" data-k="c2"> Osaan rakentaa promptin (rooli–tilanne–tehtävä–rajat)</label>
+      <label><input type="checkbox" data-k="c3"> Osaan poimia ilmoituksen avainsanat ennen AI:ta</label>
+      <label><input type="checkbox" data-k="c4"> Osaan tarkistaa AI:n ehdotuksen — en kopioi suoraan</label>
+      <label><input type="checkbox" data-k="c5"> Minulla on oma STAR-tarina omilla sanoillani</label>
+      <label><input type="checkbox" data-k="c6"> Tiedän milloin käyttää ChatGPT:tä, Claudea ja Gammaa</label>
+      <label><input type="checkbox" data-k="c7"> Osaan harjoitella haastattelua (ääni tai teksti)</label>
+      <label><input type="checkbox" data-k="c8"> Minulla on konkreettinen suunnitelma tälle viikolle</label>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-forest" type="button" id="btnFinish" onclick="finishDay()" disabled>Merkitse päivä valmiiksi ✓</button>
+    </div>
+    <div class="done-banner" id="allDone">Valmis. Sinä johdat — AI auttaa. KYSY · TARKISTA · OMA. Vie työkalupakki ja viikkosuunnitelma mukaasi.</div>
+  </div>
+
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(7)">← Jakso 7</button>
+    <a class="btn btn-ghost" href="/">Etusivulle</a>
+  </div>
+</div>
+</section>
+
+<script src="/js/mock-realtime.js?v=20260727b"></script>
+<script>
+window.__MODULE_ID__ = 'moduuli-gpt-claude-sprint';
+const KEY = 'gpt_claude_sprint_';
+const TOTAL = 8;
+
+const HOT_QUESTIONS = [
+  'Kerro tilanteesta, jossa asiakas tai työkaveri oli tyytymätön. Mitä sinä teit?',
+  'Kerro virheestä jonka teit. Mitä opit?',
+  'Kerro kerrasta kun jouduit ratkaisemaan ongelman nopeasti.',
+  'Kerro tilanteesta jossa autoit jotakuta vaikeassa tilanteessa.'
+];
+
+const DECODER_STORY = [
+  { id: 'S', text: 'Toimin vapaaehtoisena kirpputorilla, kun kassajono venyi ja yksi asiakas alkoi valittaa äänekkäästi.' },
+  { id: 'T', text: 'Minun piti rauhoittaa tilanne niin, ettei koko jono pysähtynyt.' },
+  { id: 'A', text: 'Tarjosin asiakkaalle oman paikkani jonossa ja selitin viivytyksen syyn rauhallisesti.' },
+  { id: 'R', text: 'Asiakas rauhoittui, jono eteni normaalisti, ja tiiminvetäjä kiitti minua tilanteen hoitamisesta jälkeenpäin.' }
+];
+const DECODER_ORDER = [2, 0, 3, 1];
+const DECODER_LETTERS = [
+  { id: 'S', q: 'Mikä lause kertoo TILANTEEN — mitä oli meneillään?' },
+  { id: 'T', q: 'Mikä lause kertoo TEHTÄVÄN — mitä sinun piti saada aikaan?' },
+  { id: 'A', q: 'Mikä lause kertoo TOIMINNAN — mitä SINÄ konkreettisesti teit?' },
+  { id: 'R', q: 'Mikä lause kertoo TULOKSEN — mitä tapahtui lopuksi?' }
+];
+const DECODER_EXPLAIN = {
+  S: 'Tilanne kertoo taustan: missä oltiin ja mitä oli juuri tapahtumassa.',
+  T: 'Tehtävä on sinun vastuusi juuri sillä hetkellä — mitä piti saada aikaan.',
+  A: 'Toiminta on se, mitä SINÄ teit — ei mitä tiimi tai joku muu teki.',
+  R: 'Tulos kertoo, miten tarina päättyi ja mitä siitä opittiin tai muuttui.'
+};
+
+const FALLBACK_Q = [
+  'Kerro lyhyesti itsestäsi ja taustastasi.',
+  'Kerro tilanteesta, jossa teit virheen. Mitä opit?',
+  'Miksi juuri tämä rooli kiinnostaa sinua?'
+];
+
+const SECTIONS = [
+  { id: 0, num: '★', title: 'Aloitus & kartta', time: 'Päivän säännöt + työkalut' },
+  { id: 1, num: '1', title: 'Loukkujahti', time: 'Taidot + loukut' },
+  { id: 2, num: '2', title: 'Promptti työpöydällä', time: '3 prompttia + palaute' },
+  { id: 3, num: '3', title: 'ATS ja hakemus', time: 'Avainsanat + liput' },
+  { id: 4, num: '4', title: 'Markkinatutkimus', time: 'Ensin sinä, sitten AI' },
+  { id: 5, num: '5', title: 'STAR-koulu', time: 'Totta/tarua + STAR' },
+  { id: 6, num: '6', title: 'Live-äänihaastattelu', time: 'Puhu AI-rekrytoijalle' },
+  { id: 7, num: '7', title: 'Kuva, PDF ja Gamma', time: 'Kokoa paketti' },
+  { id: 8, num: '8', title: 'Mitä viet kotiin', time: 'Testi + työkalupakki' }
+];
+
+const TOTTA_TARUA = [
+  {
+    q: 'Työnantaja valitsee aina hakijan, jolla on paras CV ja eniten kokemusta.',
+    ok: false,
+    explain: 'Tarua. Asenne, sopivuus ja selkeä esimerkki ratkaisevat usein yhtä paljon — joskus enemmän — kuin pitkä CV.'
+  },
+  {
+    q: 'Päätös haastattelussa muodostuu usein jo ensimmäisten minuuttien aikana.',
+    ok: true,
+    explain: 'Totta. Ensivaikutelma syntyy nopeasti: miten tulet paikalle, miten puhut, miten kuuntelet.'
+  },
+  {
+    q: 'Jos et osaa vastata yhteen kysymykseen, haastattelu on käytännössä ohi.',
+    ok: false,
+    explain: 'Tarua. Voit sanoa "annan miettiä hetken" tai kertoa läheisen esimerkin. Yksi vaikea kysymys ei kaada kaikkea.'
+  }
+];
+
+const FINAL_QUIZ = [
+  {
+    q: 'Mikä on hyvä ensimmäinen askel kun käytät ChatGPT:tä tai Claudea työnhakuun?',
+    opts: [
+      'Pyydä heti valmis hakemus ilman omia tietoja',
+      'Kirjoita ensin oma tavoite / tausta, sitten anna AI:lle rooli + tehtävä + rajat',
+      'Kopioi kaverin prompti sellaisenaan ilman muutoksia'
+    ],
+    ok: 1,
+    explain: 'Sinä johdat: ensin omat tiedot, sitten selkeä prompti. Valmis "tee kaikki" tuottaa geneeristä tekstiä.'
+  },
+  {
+    q: 'Mihin Claude sopii erityisen hyvin?',
+    opts: [
+      'Vain kuvien tekemiseen',
+      'Pitkään palautteeseen, PDF-yhteenvetoon ja rauhalliseen sparriin',
+      'Vain esitysdioiden julkaisuun nettiin'
+    ],
+    ok: 1,
+    explain: 'Claude = teksti & palaute. Kuvat → ChatGPT. Diot → Gamma kun sisältö on valmis.'
+  },
+  {
+    q: 'Mitä ATS käytännössä tekee?',
+    opts: [
+      'Se haastattelee sinut videolla',
+      'Se lukee hakemusta/CV:tä ja etsii ilmoituksen sanoja ennen ihmistä',
+      'Se kirjoittaa hakemuksen puolestasi'
+    ],
+    ok: 1,
+    explain: 'ATS skannaa sanoja. Avainsanat pitää näkyä tekstissäsi — omalla äänellä.'
+  },
+  {
+    q: 'STAR-rakenteessa A tarkoittaa…',
+    opts: [
+      'Ammattia jonka haet',
+      'Toimintaa — mitä SINÄ teit askel askeleelta',
+      'Arvosanaa jonka AI antaa'
+    ],
+    ok: 1,
+    explain: 'A = toiminta. Kerro mitä sinä teit, ei vain mitä tiimi teki.'
+  },
+  {
+    q: 'KYSY · TARKISTA · OMA tarkoittaa…',
+    opts: [
+      'Anna AI:n päättää kaikki',
+      'Anna selkeä ohje → tarkista vastaus → kirjoita lopullinen omalla äänellä',
+      'Käytä vain yhtä työkalua'
+    ],
+    ok: 1,
+    explain: 'Ohje → tarkistus → oma teksti. Jokaiseen työkaluun.'
+  },
+  {
+    q: 'Milloin avaat Gamman?',
+    opts: [
+      'Ennen kuin sinulla on mitään sisältöä — Gamma keksii kaiken',
+      'Kun sinulla on jo tavoite, STAR ja yrityshavainto — sitten teet diat',
+      'Vain jos Claude on rikki'
+    ],
+    ok: 1,
+    explain: 'Gamma tarvitsee sisällön. Tyhjästä tulee tyhjiä dioja.'
+  },
+  {
+    q: 'Mikä on huonoin tapa vastata haastattelussa?',
+    opts: [
+      'Kertoa yksi pieni totuus STAR-järjestyksessä',
+      'Sanoa vain “olen motivoitunut tiimipelaaja” ilman esimerkkiä',
+      'Pyytää hetki miettimisaikaa'
+    ],
+    ok: 1,
+    explain: 'Klisee ilman esimerkkiä ei kerro mitään. Pieni totuus + teot vakuuttaa.'
+  },
+  {
+    q: 'Yritystutkimuksessa paras järjestys on…',
+    opts: [
+      'AI ensin, sitten sivu jos jaksat',
+      'Sivu / ilmoitus itse ensin, sitten AI syventää — tarkista faktoja',
+      'Kopioi AI:n “miksi me” -lause suoraan hakemukseen'
+    ],
+    ok: 1,
+    explain: 'Ensin sinä sivulta. AI voi keksiä kauniita arvauksia.'
+  }
+];
+
+const FINAL_SCENES = [
+  {
+    title: 'Tilanne A · hakemus',
+    scene: 'AI kirjoitti hakemuksen. Siinä lukee väärä yrityksen nimi ja lause “olen nopea oppimaan uusiin haasteisiin”.',
+    opts: [
+      'Lähetä heti — AI on yleensä oikeassa',
+      'Korjaa yrityksen nimi, poista klisee, lisää yksi oma todiste',
+      'Lisää vielä kolme kliseetä jotta teksti on pidempi'
+    ],
+    ok: 1,
+    explain: 'Kopioi-liitä -virheet ja tyhjät kliseet kaatavat hakemuksen. Tarkista aina.'
+  },
+  {
+    title: 'Tilanne B · promptti',
+    scene: 'Kirjoitat: “Tee minulle hyvä CV ja hakemus kaikkiin paikkoihin.”',
+    opts: [
+      'Hyvä — säästää aikaa',
+      'Liian epämääräinen: anna rooli, yksi ilmoitus, omat faktat ja rajat',
+      'Lisää vain “suomeksi” niin se riittää'
+    ],
+    ok: 1,
+    explain: 'Yksi ilmoitus + omat faktat + rajat. “Kaikkiin paikkoihin” = geneerinen roska.'
+  },
+  {
+    title: 'Tilanne C · haastattelu',
+    scene: 'Rekrytoija: “Kerro virheestä.” Jäät jumiin.',
+    opts: [
+      'Sano “en ole koskaan tehnyt virheitä”',
+      'Pyydä hetki, kerro pieni totuus: tilanne → mitä teit → mitä opit',
+      'Pyydä AI:ta vastaamaan puolestasi livenä'
+    ],
+    ok: 1,
+    explain: 'Pieni totuus + oppiminen on ok. “En koskaan” kuulostaa epäuskottavalta.'
+  }
+];
+
+const FIELDS = [
+  'skill1', 'skill2', 'skill3', 'skill4', 'skill5', 'goalOwn',
+  'p1Role', 'p1Sit', 'p1Task', 'p1Bound', 'p1Built', 'p1Fb', 'p1Out',
+  'p2Role', 'p2Sit', 'p2Task', 'p2Bound', 'p2Built', 'p2Fb', 'p2Out',
+  'p3Role', 'p3Sit', 'p3Task', 'p3Bound', 'p3Built', 'p3Fb', 'p3Out',
+  'promptLearn', 'keep3', 'kill3', 'ownLine',
+  'adText', 'kw1', 'kw2', 'kw3', 'kw4', 'kw5', 'atsAiOut', 'appWho', 'appWhy', 'appProof', 'appAsk', 'appAiOut', 'atsReflection', 'claudeAtsBack',
+  'coName', 'coWhat', 'coWho', 'coSkill', 'coWhy', 'ai3out', 'aiQpick', 'aiSuspect', 'extFindings',
+  'hotNotes', 'starS', 'starT', 'starA', 'starR', 'starAiOut', 'starFollowAns', 'starExtReflect',
+  'voxFb1', 'voxFb2', 'voxFb3', 'voxObservation',
+  'imgSubject', 'imgMood', 'imgAvoid', 'imgReflect', 'pdfBack', 'gammaBack',
+  'finalQ1', 'finalQ2', 'finalQ3', 'finalQ4', 'finalQ5', 'finalAiOut',
+  'kitStrengths', 'kitStar', 'kitPrompt', 'kitFlag',
+  'tomorrow', 'weekPlan', 'needHelp'
+];
+
+let screen = 0;
+let done = JSON.parse(localStorage.getItem(KEY + 'done') || '[]');
+let trapOk = { 1: false, 2: false };
+let hotStarted = false;
+let menuOpen = false;
+let decoderStep = 0;
+let decoderDone = localStorage.getItem(KEY + 'decoderDone') === '1';
+let voxRealtime = null;
+let voxSession = [];
+let voxFeedbackDone = false;
+let ttAnswered = JSON.parse(localStorage.getItem(KEY + 'ttAnswered') || '{}');
+let finalPicks = JSON.parse(localStorage.getItem(KEY + 'finalPicks') || '{}');
+let scenePicks = JSON.parse(localStorage.getItem(KEY + 'scenePicks') || '{}');
+
+function $(id) { return document.getElementById(id); }
+function isFieldEl(el) {
+  if (!el) return false;
+  const t = el.tagName;
+  return t === 'TEXTAREA' || t === 'INPUT' || t === 'SELECT';
+}
+function val(id) {
+  const el = $(id);
+  if (!el) return '';
+  if (isFieldEl(el)) return (el.value || '').trim();
+  return (el.textContent || '').trim();
+}
+function save(id) {
+  const el = $(id);
+  if (!el) return;
+  localStorage.setItem(KEY + id, isFieldEl(el) ? el.value : (el.textContent || ''));
+}
+function setOut(id, text) {
+  const el = $(id);
+  if (!el) return;
+  if (isFieldEl(el)) el.value = text;
+  else el.textContent = text;
+  save(id);
+}
+
+function foldHelpers() {
+  document.querySelectorAll('p.field-tip').forEach(p => {
+    if (p.closest('.help') || p.closest('.fold')) return;
+    const d = document.createElement('details');
+    d.className = 'help';
+    const s = document.createElement('summary');
+    s.textContent = 'Apua tähän';
+    d.appendChild(s);
+    p.parentNode.insertBefore(d, p);
+    d.appendChild(p);
+  });
+  document.querySelectorAll('.tip').forEach(tip => {
+    if (tip.closest('.fold') || tip.dataset.keepOpen === '1') return;
+    const d = document.createElement('details');
+    d.className = 'fold';
+    const s = document.createElement('summary');
+    const label = tip.querySelector('b');
+    s.textContent = label ? label.textContent.trim() : 'Vinkki';
+    const body = document.createElement('div');
+    body.className = 'fold-body';
+    tip.querySelectorAll('b').forEach(b => b.remove());
+    while (tip.firstChild) body.appendChild(tip.firstChild);
+    d.appendChild(s);
+    d.appendChild(body);
+    tip.replaceWith(d);
+  });
+}
+
+function loadAll() {
+  foldHelpers();
+  FIELDS.forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    const v = localStorage.getItem(KEY + id);
+    if (v != null) {
+      if (isFieldEl(el)) el.value = v;
+      else el.textContent = v;
+    }
+    el.addEventListener('input', () => {
+      save(id);
+      refreshGates();
+      updateAllLivePrompts();
+    });
+  });
+  document.querySelectorAll('#confidenceList input').forEach(cb => {
+    cb.checked = localStorage.getItem(KEY + cb.dataset.k) === '1';
+    cb.addEventListener('change', () => {
+      localStorage.setItem(KEY + cb.dataset.k, cb.checked ? '1' : '0');
+      refreshGates();
+    });
+  });
+  document.querySelectorAll('#flagList input').forEach(cb => {
+    cb.checked = localStorage.getItem(KEY + cb.dataset.f) === '1';
+    cb.addEventListener('change', () => {
+      localStorage.setItem(KEY + cb.dataset.f, cb.checked ? '1' : '0');
+      refreshGates();
+    });
+  });
+  renderTottaTarua();
+  renderFinalQuiz();
+  renderFinalScenes();
+  if ($('kitPrompt') && !val('kitPrompt')) {
+    $('kitPrompt').value = defaultKitPrompt();
+    save('kitPrompt');
+  }
+}
+
+function setProg() {
+  const pct = screen === 0 ? 2 : Math.round((screen / TOTAL) * 100);
+  $('progress-bar').style.width = pct + '%';
+  const map = $('navMap');
+  if (map) {
+    map.innerHTML = '';
+    for (let i = 1; i <= TOTAL; i++) {
+      const p = document.createElement('i');
+      p.className = 'nav-pip' + (done.includes(i) ? ' done' : '') + (screen === i ? ' on' : '');
+      p.title = 'Jakso ' + i;
+      p.onclick = () => go(i);
+      map.appendChild(p);
+    }
+  }
+  renderMenu();
+}
+
+function renderMenu() {
+  const list = $('menuList');
+  if (!list) return;
+  list.innerHTML = '';
+  SECTIONS.forEach(sec => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'menu-item'
+      + (screen === sec.id ? ' current' : '')
+      + (sec.id > 0 && done.includes(sec.id) ? ' done' : '');
+    const mark = (sec.id > 0 && done.includes(sec.id)) ? '✓' : sec.num;
+    btn.innerHTML =
+      '<span class="menu-num">' + mark + '</span>' +
+      '<span><strong>' + sec.title + '</strong><small>' + sec.time + '</small></span>';
+    btn.onclick = () => go(sec.id);
+    list.appendChild(btn);
+  });
+}
+
+function toggleMenu() {
+  if (menuOpen) closeMenu();
+  else openMenu();
+}
+
+function openMenu() {
+  menuOpen = true;
+  const menu = $('sideMenu');
+  const burger = $('burgerBtn');
+  const backdrop = $('menuBackdrop');
+  menu.hidden = false;
+  requestAnimationFrame(() => {
+    menu.classList.add('open');
+    backdrop.classList.add('show');
+    burger.classList.add('open');
+  });
+  burger.setAttribute('aria-expanded', 'true');
+  renderMenu();
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMenu() {
+  menuOpen = false;
+  const menu = $('sideMenu');
+  const burger = $('burgerBtn');
+  const backdrop = $('menuBackdrop');
+  menu.classList.remove('open');
+  backdrop.classList.remove('show');
+  burger.classList.remove('open');
+  burger.setAttribute('aria-expanded', 'false');
+  document.body.style.overflow = '';
+  setTimeout(() => { if (!menuOpen) menu.hidden = true; }, 250);
+}
+
+function go(n) {
+  screen = n;
+  closeMenu();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  if (n === 0) {
+    $('hero').style.display = 'flex';
+    window.scrollTo(0, 0);
+  } else {
+    $('hero').style.display = 'none';
+    const el = $('s' + n);
+    if (el) { el.classList.add('on'); window.scrollTo(0, 0); }
+  }
+  setProg();
+  refreshGates();
+  updateAllLivePrompts();
+}
+
+function complete(n) {
+  if (!done.includes(n)) done.push(n);
+  done.sort((a, b) => a - b);
+  localStorage.setItem(KEY + 'done', JSON.stringify(done));
+  setProg();
+}
+
+function pickTrap(n, btn, ok) {
+  const box = $('trap' + n);
+  box.querySelectorAll('.choice').forEach(c => { c.classList.remove('picked', 'good', 'bad'); c.disabled = true; });
+  btn.classList.add('picked', ok ? 'good' : 'bad');
+  const correct = box.querySelector('.choice[data-ok="1"]');
+  if (correct) correct.classList.add('good');
+  $('trap' + n + 'r').classList.add('show');
+  trapOk[n] = true;
+  localStorage.setItem(KEY + 'trap' + n, '1');
+  refreshGates();
+}
+
+function retryTrap(n) {
+  const box = $('trap' + n);
+  if (!box) return;
+  box.querySelectorAll('.choice').forEach(c => {
+    c.classList.remove('picked', 'good', 'bad');
+    c.disabled = false;
+  });
+  const rev = $('trap' + n + 'r');
+  if (rev) rev.classList.remove('show');
+  trapOk[n] = false;
+  localStorage.removeItem(KEY + 'trap' + n);
+  refreshGates();
+}
+
+function retryAiOut(outId, statusId) {
+  const el = $(outId);
+  if (!el) return;
+  const placeholder = outId.indexOf('Fb') >= 0 || outId.indexOf('final') >= 0
+    ? 'Palaute ilmestyy tähän…'
+    : (outId === 'ai3out' ? '...' : 'AI-vastaus ilmestyy tähän...');
+  setOut(outId, placeholder);
+  if (statusId && $(statusId)) $(statusId).textContent = 'Voit kysyä uudestaan.';
+  refreshGates();
+}
+
+function retryPrompt(n) {
+  setOut('p' + n + 'Fb', 'Palaute ilmestyy tähän...');
+  setOut('p' + n + 'Out', 'AI-vastaus ilmestyy tähän...');
+  if ($('p' + n + 'FbStatus')) $('p' + n + 'FbStatus').textContent = '';
+  if ($('p' + n + 'AskStatus')) $('p' + n + 'AskStatus').textContent = '';
+  refreshGates();
+}
+
+function retryTottaTarua() {
+  ttAnswered = {};
+  localStorage.setItem(KEY + 'ttAnswered', '{}');
+  renderTottaTarua();
+  refreshGates();
+}
+
+function retryDecoder() {
+  decoderStep = 0;
+  decoderDone = false;
+  localStorage.removeItem(KEY + 'decoderDone');
+  renderDecoder();
+  refreshGates();
+}
+
+function retryHotNotes() {
+  if ($('hotNotes')) { $('hotNotes').value = ''; save('hotNotes'); }
+  showHotQuestion();
+}
+
+function retryFinalQuiz() {
+  finalPicks = {};
+  localStorage.setItem(KEY + 'finalPicks', '{}');
+  if ($('quizScore')) { $('quizScore').style.display = 'none'; $('quizScore').textContent = ''; }
+  if ($('btnScoreQuiz')) $('btnScoreQuiz').style.display = 'none';
+  renderFinalQuiz();
+  refreshGates();
+}
+
+function retryFinalScenes() {
+  scenePicks = {};
+  localStorage.setItem(KEY + 'scenePicks', '{}');
+  renderFinalScenes();
+  refreshGates();
+}
+
+function retryVoxFallback() {
+  ['voxFb1', 'voxFb2', 'voxFb3'].forEach(id => {
+    if ($(id)) { $(id).value = ''; save(id); }
+  });
+  $('voxFbPanel').style.display = 'none';
+  voxFeedbackDone = false;
+  localStorage.removeItem(KEY + 'voxFeedbackDone');
+  $('voxStatus').textContent = 'Kirjoita vastaukset uudestaan.';
+  refreshGates();
+}
+
+function retryFlags() {
+  document.querySelectorAll('#flagList input').forEach(cb => {
+    cb.checked = false;
+    localStorage.removeItem(KEY + cb.getAttribute('data-f'));
+  });
+  refreshGates();
+}
+
+function retryVox() {
+  if (voxRealtime) { try { voxRealtime.stop(); } catch (e) {} voxRealtime = null; }
+  voxSession = [];
+  voxFeedbackDone = false;
+  localStorage.removeItem(KEY + 'voxFeedbackDone');
+  $('voxFbPanel').style.display = 'none';
+  $('voxFbGood').textContent = '—';
+  $('voxFbFix').textContent = '—';
+  $('voxFbNext').textContent = '—';
+  voxRenderTimeline();
+  $('voxSendBtn').style.display = 'none';
+  $('voxNextBtn').style.display = 'none';
+  $('voxEndBtn').style.display = 'none';
+  if ($('voxRetryBtn')) $('voxRetryBtn').style.display = 'none';
+  $('voxStartBtn').style.display = 'inline-flex';
+  $('voxStartBtn').disabled = false;
+  $('voxStartBtn').textContent = 'Aloita live-haastattelu';
+  $('voxQLabel').textContent = 'Valmiina aloittamaan';
+  $('voxQText').textContent = 'Paina "Aloita live-haastattelu" kun olet valmis puhumaan.';
+  $('voxStatus').textContent = 'Valmis uuteen yritykseen.';
+  voxSetTop('Ei yhdistetty', false);
+  refreshGates();
+}
+
+function refreshGates() {
+  // S1 — Loukkujahti
+  const skills = ['skill1', 'skill2', 'skill3', 'skill4', 'skill5'].filter(id => val(id).length >= 2).length;
+  if ($('skillStatus')) $('skillStatus').textContent = skills >= 3 ? 'Hyvä — taitokartta alkaa hahmottua.' : 'Kirjoita vähintään kolme taitoa jatkaaksesi.';
+  if ($('gate1a2')) $('gate1a2').classList.toggle('open', skills >= 3);
+  const g1 = val('goalOwn').length >= 40;
+  $('gate1b').classList.toggle('open', (trapOk[1] || localStorage.getItem(KEY + 'trap1') === '1') && skills >= 3);
+  $('goalStatus').textContent = g1 ? 'Hyvä — tämä on sinun äänesi.' : 'Kirjoita vähintään muutama lause omilla sanoillasi.';
+  $('gate1c').classList.toggle('open', g1);
+  $('next1').classList.toggle('open', g1 && (trapOk[2] || localStorage.getItem(KEY + 'trap2') === '1'));
+
+  // S2 — Promptti (3 drills + Claude feedback)
+  const fbOk = (n) => {
+    const t = val('p' + n + 'Fb');
+    return t.length > 40 && !t.startsWith('Palaute');
+  };
+  if ($('promptDrill2')) $('promptDrill2').classList.toggle('open', fbOk(1));
+  if ($('promptDrill3')) $('promptDrill3').classList.toggle('open', fbOk(1) && fbOk(2));
+  const allFb = fbOk(1) && fbOk(2) && fbOk(3);
+  if ($('gate2b')) $('gate2b').classList.toggle('open', allFb);
+  const crit = allFb &&
+    val('promptLearn').length >= 40 &&
+    val('keep3').length >= 8 &&
+    val('kill3').length >= 8 &&
+    val('ownLine').length >= 15;
+  if ($('critStatus')) {
+    if (!allFb) $('critStatus').textContent = 'Hae Clauden palaute kaikkiin kolmeen prompttiin ensin (' + [1, 2, 3].filter(fbOk).length + '/3 valmis).';
+    else if (!crit) $('critStatus').textContent = 'Kirjoita pohdinta, yksi pidettävä, yksi hylättävä ja oma lause.';
+    else $('critStatus').textContent = 'Hyvä — sinä johdat prompttia. Jatka.';
+  }
+  $('next2').classList.toggle('open', crit);
+
+  // S3 — ATS ja hakemus
+  const kwCount = ['kw1', 'kw2', 'kw3', 'kw4', 'kw5'].filter(id => val(id).length > 0).length;
+  const adOk = val('adText').length >= 20;
+  if ($('btnAtsCompare')) $('btnAtsCompare').disabled = !(adOk && kwCount >= 3);
+  $('atsAiStatus').textContent = (adOk && kwCount >= 3) ? 'Valmis vertailtavaksi.' : 'Liitä ilmoitus ja kirjoita vähintään 3 omaa avainsanaa ensin.';
+  $('gateAppScaffold').classList.toggle('open', adOk && kwCount >= 3);
+  const sentences = [val('appWho'), val('appWhy'), val('appProof'), val('appAsk')];
+  const sentOk = sentences.every(s => s.length >= 8);
+  if ($('btnAppFeedback')) $('btnAppFeedback').disabled = !sentOk;
+  $('atsStatus').textContent = sentOk ? 'Runko valmis — kirjoita vielä pohdinta.' : 'Kirjoita kaikki neljä lausetta jatkaaksesi.';
+  const flagsOk = ['f1', 'f2', 'f3', 'f4', 'f5'].every(f => localStorage.getItem(KEY + f) === '1');
+  if ($('gateFlags')) $('gateFlags').classList.toggle('open', sentOk && val('atsReflection').length >= 15);
+  if ($('flagStatus')) $('flagStatus').textContent = flagsOk ? 'Kaikki liput tarkistettu.' : 'Merkitse kaikki viisi jatkaaksesi.';
+  if ($('gateClaudeAts')) $('gateClaudeAts').classList.toggle('open', flagsOk);
+  $('next3').classList.toggle('open', adOk && kwCount >= 3 && sentOk && val('atsReflection').length >= 15 && flagsOk && val('claudeAtsBack').length >= 20);
+
+  // S4 — Markkinatutkimus
+  const research = val('coName') && [val('coWhat'), val('coWho'), val('coSkill'), val('coWhy')].filter(Boolean).length >= 3;
+  $('researchStatus').textContent = research ? 'Tutkimuspohja valmis.' : 'Täytä vähintään yritys + 3 vastausta jatkaaksesi.';
+  $('gate4b').classList.toggle('open', research);
+  const deep = val('aiQpick').length >= 20 && val('aiSuspect').length >= 10;
+  $('gate4c').classList.toggle('open', deep);
+  $('next4').classList.toggle('open', deep && val('extFindings').length >= 20);
+
+  // S5 — STAR-koulu
+  const ttOk = Object.keys(ttAnswered).length >= TOTTA_TARUA.length;
+  if ($('gateDecoder')) $('gateDecoder').classList.toggle('open', ttOk);
+  $('gate5c').classList.toggle('open', decoderDone && ttOk);
+  $('gate5d').classList.toggle('open', decoderDone && ttOk);
+  const starOk = [val('starS'), val('starT'), val('starA'), val('starR')].every(x => x.length >= 8);
+  $('starStatus').textContent = starOk ? 'STAR kasassa — hyvä.' : 'Täytä kaikki neljä kohtaa.';
+  if ($('btnStarAi')) $('btnStarAi').disabled = !starOk;
+  $('gate5e').classList.toggle('open', val('starFollowAns').length >= 15);
+  $('next5').classList.toggle('open', starOk && val('starFollowAns').length >= 15 && val('starExtReflect').length >= 15);
+
+  // S6 — Live-äänihaastattelu
+  const voxTextOk = val('voxFb1').length >= 10 && val('voxFb2').length >= 10 && val('voxFb3').length >= 10;
+  if ($('gate6b')) $('gate6b').classList.toggle('open', voxFeedbackDone || voxTextOk);
+  $('next6').classList.toggle('open', (voxFeedbackDone || voxTextOk) && val('voxObservation').length >= 15);
+
+  // S8 — final (expanded)
+  const quizDone = Object.keys(finalPicks).length >= FINAL_QUIZ.length;
+  if ($('gateFinalScenes')) $('gateFinalScenes').classList.toggle('open', quizDone);
+  const scenesDone = Object.keys(scenePicks).length >= FINAL_SCENES.length;
+  if ($('sceneStatus')) {
+    $('sceneStatus').textContent = scenesDone
+      ? 'Tilanteet käyty — jatka omin sanoin.'
+      : 'Vastaa kaikkiin kolmeen tilanteeseen (' + Object.keys(scenePicks).length + '/3).';
+  }
+  if ($('gateFinalOpen')) $('gateFinalOpen').classList.toggle('open', scenesDone);
+  const openOk = [val('finalQ1'), val('finalQ2'), val('finalQ3'), val('finalQ4'), val('finalQ5')]
+    .every(x => x.length >= 20);
+  if ($('finalOpenStatus')) {
+    $('finalOpenStatus').textContent = openOk
+      ? 'Hyvä — kuulostaa siltä että osaat selittää omin sanoin.'
+      : 'Kirjoita kaikki viisi vastausta (vähintään ~20 merkkiä kukin).';
+  }
+  if ($('gateFinalKit')) $('gateFinalKit').classList.toggle('open', openOk);
+  const kitOk = val('kitStrengths').length >= 15 && val('kitStar').length >= 20
+    && val('kitPrompt').length >= 40 && val('kitFlag').length >= 8;
+  if ($('kitStatus')) {
+    $('kitStatus').textContent = kitOk
+      ? 'Työkalupakki kasassa — voit kopioida muistilapun.'
+      : 'Täytä vahvuudet, STAR, promptti ja lippu.';
+  }
+  if ($('gateFinalPlan')) $('gateFinalPlan').classList.toggle('open', kitOk);
+  const planOk = val('tomorrow').length >= 10 && val('weekPlan').length >= 20;
+  if ($('planStatus')) {
+    $('planStatus').textContent = planOk
+      ? 'Suunnitelma valmis.'
+      : 'Kirjoita huominen + viikkosuunnitelma.';
+  }
+  if ($('gateFinalCheck')) $('gateFinalCheck').classList.toggle('open', planOk);
+  const confOk = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8']
+    .filter(k => localStorage.getItem(KEY + k) === '1').length >= 5;
+  if ($('btnFinish')) $('btnFinish').disabled = !(planOk && confOk);
+}
+
+function updateAllLivePrompts() {
+  updateExtPrompt3();
+  updateExtPromptStar();
+  updateExtPromptAts();
+  updateImgPrompt();
+  updatePdfPrompt();
+  updateGammaPrompt();
+}
+
+function renderTottaTarua() {
+  const row = $('ttRow');
+  if (!row) return;
+  row.innerHTML = '';
+  TOTTA_TARUA.forEach((item, i) => {
+    const box = document.createElement('div');
+    box.className = 'tt-item';
+    box.innerHTML = '<p class="q">' + item.q + '</p><div class="tt-btns"></div><div class="tt-explain" id="ttExp' + i + '"></div>';
+    const btns = box.querySelector('.tt-btns');
+    [['Totta', true], ['Tarua', false]].forEach(([label, ans]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      if (ttAnswered[i] != null) {
+        b.disabled = true;
+        if (ans === item.ok) b.classList.add('good');
+        else if (ans === ttAnswered[i] && ans !== item.ok) b.classList.add('bad');
+      }
+      b.onclick = () => {
+        ttAnswered[i] = ans;
+        localStorage.setItem(KEY + 'ttAnswered', JSON.stringify(ttAnswered));
+        const exp = $('ttExp' + i);
+        exp.textContent = item.explain;
+        exp.classList.add('show');
+        renderTottaTarua();
+        refreshGates();
+      };
+      btns.appendChild(b);
+    });
+    if (ttAnswered[i] != null) {
+      const exp = box.querySelector('.tt-explain');
+      exp.textContent = item.explain;
+      exp.classList.add('show');
+    }
+    row.appendChild(box);
+  });
+}
+
+function renderFinalQuiz() {
+  const box = $('finalQuiz');
+  if (!box) return;
+  box.innerHTML = '';
+  FINAL_QUIZ.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'final-q';
+    card.innerHTML = '<h4>' + (i + 1) + ') ' + item.q + '</h4><div class="choice-grid" id="fq' + i + '"></div><div class="reveal" id="fqReveal' + i + '"></div>';
+    const grid = card.querySelector('.choice-grid');
+    item.opts.forEach((opt, oi) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'choice';
+      b.textContent = opt;
+      if (finalPicks[i] != null) {
+        b.disabled = true;
+        if (oi === item.ok) b.classList.add('good');
+        else if (oi === finalPicks[i]) b.classList.add('bad');
+      }
+      b.onclick = () => {
+        finalPicks[i] = oi;
+        localStorage.setItem(KEY + 'finalPicks', JSON.stringify(finalPicks));
+        const rev = $('fqReveal' + i);
+        rev.textContent = item.explain;
+        rev.classList.add('show');
+        renderFinalQuiz();
+        refreshGates();
+        if (Object.keys(finalPicks).length >= FINAL_QUIZ.length && $('btnScoreQuiz')) {
+          $('btnScoreQuiz').style.display = 'inline-flex';
+        }
+      };
+      grid.appendChild(b);
+    });
+    if (finalPicks[i] != null) {
+      const rev = card.querySelector('.reveal');
+      rev.textContent = item.explain;
+      rev.classList.add('show');
+    }
+    box.appendChild(card);
+  });
+  if (Object.keys(finalPicks).length >= FINAL_QUIZ.length && $('btnScoreQuiz')) {
+    $('btnScoreQuiz').style.display = 'inline-flex';
+  }
+}
+
+function scoreFinalQuiz() {
+  let right = 0;
+  FINAL_QUIZ.forEach((item, i) => { if (finalPicks[i] === item.ok) right++; });
+  const el = $('quizScore');
+  el.style.display = 'block';
+  el.textContent = 'Tulos: ' + right + ' / ' + FINAL_QUIZ.length + ' — tärkeintä on selitykset + omin sanoin osissa 2–3.';
+  refreshGates();
+}
+
+function renderFinalScenes() {
+  const box = $('finalScenes');
+  if (!box) return;
+  box.innerHTML = '';
+  FINAL_SCENES.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'final-q';
+    card.style.marginTop = '1rem';
+    card.innerHTML = '<span class="tag">' + item.title + '</span><p class="one-line" style="margin:.4rem 0 .75rem">' + item.scene + '</p><div class="choice-grid" id="fs' + i + '"></div><div class="reveal" id="fsReveal' + i + '"></div>';
+    const grid = card.querySelector('.choice-grid');
+    item.opts.forEach((opt, oi) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'choice';
+      b.textContent = opt;
+      if (scenePicks[i] != null) {
+        b.disabled = true;
+        if (oi === item.ok) b.classList.add('good');
+        else if (oi === scenePicks[i]) b.classList.add('bad');
+      }
+      b.onclick = () => {
+        scenePicks[i] = oi;
+        localStorage.setItem(KEY + 'scenePicks', JSON.stringify(scenePicks));
+        renderFinalScenes();
+        refreshGates();
+      };
+      grid.appendChild(b);
+    });
+    if (scenePicks[i] != null) {
+      const rev = card.querySelector('.reveal');
+      rev.textContent = item.explain;
+      rev.classList.add('show');
+    }
+    box.appendChild(card);
+  });
+}
+
+function defaultKitPrompt() {
+  return [
+    'Rooli: suomalainen rekrytoija',
+    'Tilanne: [mitä haen + yksi oma fakta]',
+    'Tehtävä: [mitä AI tekee — esim. 3 kysymystä / palaute rakenteesta]',
+    'Rajat: suomeksi, älä keksi faktoja, älä kirjoita valmista hakemusta',
+    '',
+    'Auta minua ajattelemaan. Älä tee kaikkea puolestani.'
+  ].join('\n');
+}
+
+function fillKitFromDay() {
+  const skills = ['skill1', 'skill2', 'skill3', 'skill4', 'skill5'].map(val).filter(Boolean);
+  if (!val('kitStrengths') && skills.length) {
+    $('kitStrengths').value = skills.slice(0, 3).map((s, i) => (i + 1) + ') ' + s).join('\n');
+    save('kitStrengths');
+  }
+  if (!val('kitStar')) {
+    const parts = [val('starS'), val('starA'), val('starR')].filter(Boolean);
+    if (parts.length) {
+      $('kitStar').value = parts.join(' → ');
+      save('kitStar');
+    }
+  }
+  if (!val('kitPrompt')) {
+    $('kitPrompt').value = val('p1Built') || val('p2Built') || defaultKitPrompt();
+    save('kitPrompt');
+  }
+  if (!val('kitFlag')) {
+    $('kitFlag').value = 'En lähetä samaa hakemusta joka paikkaan enkä kopioi AI:n kliseitä.';
+    save('kitFlag');
+  }
+  refreshGates();
+  if ($('kitStatus')) $('kitStatus').textContent = 'Täytetty päivän tiedoilla — tarkista ja korjaa omaksi.';
+}
+
+function buildKitCard() {
+  return [
+    '=== TYÖNHAKU AI — MUISTILAPPU ===',
+    'Sääntö: KYSY · TARKISTA · OMA',
+    '',
+    '3 vahvuutta:',
+    val('kitStrengths') || '(täydennä)',
+    '',
+    'STAR lyhyesti:',
+    val('kitStar') || '(täydennä)',
+    '',
+    'Prompttipohja:',
+    val('kitPrompt') || defaultKitPrompt(),
+    '',
+    'Punainen lippu:',
+    val('kitFlag') || '(täydennä)',
+    '',
+    'Huomenna: ' + (val('tomorrow') || '(täydennä)'),
+    'Tällä viikolla:',
+    val('weekPlan') || '(täydennä)',
+    '=== loppu ==='
+  ].join('\n');
+}
+
+function copyKitCard() {
+  const text = buildKitCard();
+  const out = $('kitCardOut');
+  if (out) { out.style.display = 'block'; out.textContent = text; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      if ($('kitStatus')) $('kitStatus').textContent = 'Muistilappu kopioitu leikepöydälle.';
+    }).catch(() => {
+      if ($('kitStatus')) $('kitStatus').textContent = 'Kopioi teksti alla olevasta laatikosta.';
+    });
+  } else if ($('kitStatus')) {
+    $('kitStatus').textContent = 'Kopioi teksti alla olevasta laatikosta.';
+  }
+}
+
+function runFinalOpenFeedback() {
+  if (![val('finalQ1'), val('finalQ2'), val('finalQ3'), val('finalQ4'), val('finalQ5')].every(x => x.length >= 15)) {
+    $('finalAiStatus').textContent = 'Kirjoita vastaukset ensin (lyhyesti riittää).';
+    return;
+  }
+  const user = [
+    'Opiskelija vastasi työnhaku-AI-päivän lopputestissä omin sanoin:',
+    '1) ChatGPT vs Claude: ' + val('finalQ1'),
+    '2) KYSY TARKISTA OMA: ' + val('finalQ2'),
+    '3) ATS + STAR: ' + val('finalQ3'),
+    '4) Milloin ei kopioida AI:ta: ' + val('finalQ4'),
+    '5) Tärkein oppi: ' + val('finalQ5'),
+    '',
+    'Anna lyhyt palaute SUOMEKSI:',
+    'MIKÄ TOIMI: (2 bulletia)',
+    'MITÄ TARKENTAA: (2 bulletia — älä kirjoita vastauksia uusiksi)',
+    'Yksi kannustuslause.'
+  ].join('\n');
+  callAi(
+    'Olet kannustava suomalainen työnhakuvalmentaja. Lyhyt, selkeä, ei uudelleenkirjoita opiskelijan tekstiä.',
+    user, 'finalAiOut', 'finalAiStatus', $('btnFinalAi')
+  );
+}
+
+function updateExtPromptAts() {
+  const el = $('extPromptAts');
+  if (!el) return;
+  const kws = ['kw1', 'kw2', 'kw3', 'kw4', 'kw5'].map(val).filter(Boolean).join(', ');
+  el.textContent = [
+    'Olet kokenut suomalainen rekrytoija. Soveltuu kaikille aloille.',
+    'Arvioi hakijaa tätä ilmoitusta vasten ja kerro rehellisesti:',
+    '1) Mitkä avainsanat ilmoituksessa ovat tärkeitä mutta puuttuvat hakijan taustasta?',
+    '2) Mitkä hakijan taidot sopivat hyvin — mitä kannattaa korostaa?',
+    '3) Kolme konkreettista muutosta hakemustekstiin ennen lähettämistä.',
+    '4) Yksi asia jonka useimmat hakijat jättävät huomaamatta tässä ilmoituksessa.',
+    '',
+    'ILMOITUS:',
+    val('adText') || '[LIITÄ ILMOITUSTEKSTI]',
+    '',
+    'OMA TAUSTA / TAIDOT:',
+    ['skill1', 'skill2', 'skill3', 'skill4', 'skill5'].map(val).filter(Boolean).join(', ') || '[kirjoita taustasi]',
+    'Tavoite: ' + (val('goalOwn') || '[tavoite]'),
+    'Omat avainsanat joita löysin: ' + (kws || '[avainsanat]'),
+    'Hakemusrunkoni:',
+    'Kuka: ' + val('appWho'),
+    'Miksi: ' + val('appWhy'),
+    'Todiste: ' + val('appProof'),
+    'Pyyntö: ' + val('appAsk'),
+    '',
+    'Älä kirjoita uutta valmista hakemusta puolestani. Anna vain analyysi ja korjausehdotukset.'
+  ].join('\n');
+}
+
+function buildPromptN(n) {
+  const parts = [
+    'Rooli: ' + (val('p' + n + 'Role') || '(täydennä rooli)'),
+    'Tilanne: ' + (val('p' + n + 'Sit') || '(täydennä tilanne)'),
+    'Tehtävä: ' + (val('p' + n + 'Task') || '(täydennä tehtävä)'),
+    'Rajat: ' + (val('p' + n + 'Bound') || 'Suomeksi. Älä keksi faktoja. Pidä vastaus lyhyenä.'),
+    '',
+    'Älä tee kaikkea puolestani. Auta minua ajattelemaan.'
+  ];
+  const builtId = 'p' + n + 'Built';
+  $(builtId).value = parts.join('\n');
+  save(builtId);
+  return $(builtId).value;
+}
+
+function promptPartsFilled(n) {
+  return val('p' + n + 'Role').length >= 3 &&
+    val('p' + n + 'Sit').length >= 40 &&
+    val('p' + n + 'Task').length >= 8 &&
+    val('p' + n + 'Bound').length >= 4;
+}
+
+async function runPromptFeedback(n) {
+  if (!promptPartsFilled(n)) {
+    $('p' + n + 'FbStatus').textContent = 'Täytä kaikki neljä osaa ensin. TILANNE-kenttään: käytä annettu tilanne omin sanoin + yksi oma fakta.';
+    return;
+  }
+  const prompt = buildPromptN(n);
+  const goals = {
+    1: 'Tavoite: vahvuuksien sparraus — ei valmista hakemusta.',
+    2: 'Tavoite: 4 realistista haastattelukysymystä myymälätyön puhelinhaastatteluun — ei mallivastauksia.',
+    3: 'Tavoite: apua lyhyen «kerro itsestäsi» -esittelyn rakentamiseen — ei valmista puhetta kirjoitettuna hakijan puolesta.'
+  };
+  const user = [
+    'Arvioi tämä työnhaun prompti (ohje AI:lle).',
+    goals[n] || '',
+    '',
+    '--- PROMPTI ---',
+    prompt,
+    '---',
+    '',
+    'Vastaa SUOMEKSI, lyhyesti ja selkeästi (helppo lukea):',
+    '1) Arvosana 1–5 (yksi rivi: Arvosana: X/5)',
+    '2) Mikä toimii jo (max 2 bulletia)',
+    '3) Mitä korjata nyt (max 2 konkreettista vinkkiä — kirjoita ehdotus uudelleen lyhyesti jos tarpeen)',
+    '4) Yksi kysymys hakijalle, joka parantaisi prompttia',
+    'Älä kirjoita hakemusta tai vastausta promptin tehtävään — arvioi VAIN promptin laatua.'
+  ].join('\n');
+  await callAi(
+    'Olet suomalainen AI-työpajan ohjaaja. Annat ystävällistä, suoraa palautetta promptin rakenteesta (rooli, tilanne, tehtävä, rajat). Lyhyet lauseet. Suomi.',
+    user,
+    'p' + n + 'Fb',
+    'p' + n + 'FbStatus',
+    $('btnFb' + n)
+  );
+}
+
+async function runPromptAsk(n) {
+  if (!promptPartsFilled(n)) {
+    $('p' + n + 'AskStatus').textContent = 'Täytä osat ja näytä prompti ensin.';
+    return;
+  }
+  const prompt = buildPromptN(n);
+  await callAi(
+    'Olet suomalainen uravalmentaja. Autat työnhakijaa ajattelemaan — et kirjoita valmista hakemusta tai mallivastauksia kokonaan. Suomi. Konkreettinen. Jos tieto puuttuu, kysy.',
+    prompt,
+    'p' + n + 'Out',
+    'p' + n + 'AskStatus',
+    $('btnAsk' + n)
+  );
+}
+
+async function callAi(system, user, outId, statusId, btn) {
+  if (btn) { btn.disabled = true; btn.dataset.old = btn.textContent; btn.textContent = 'Odota...'; }
+  if (statusId && $(statusId)) $(statusId).textContent = 'Haetaan vastausta...';
+
+  async function tryEndpoint(url) {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: user }],
+        system,
+        max_tokens: 900
+      })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || ('Palvelinvirhe ' + r.status));
+    return d.text || d.reply || '';
+  }
+
+  try {
+    let text = '';
+    // Claude first (feedback), OpenAI chat only as fallback. Voice stays on OpenAI Realtime.
+    try {
+      text = await tryEndpoint('/api/ai/claude');
+    } catch (e1) {
+      text = await tryEndpoint('/api/ai/chat');
+    }
+    if (!text) text = 'AI ei antanut vastausta — jatka omilla muistiinpanoilla.';
+    setOut(outId, text);
+    if (statusId && $(statusId)) $(statusId).textContent = 'Valmis — lue ja kyseenalaista.';
+  } catch (e) {
+    setOut(outId, 'Yhteysvirhe: ' + e.message + '\n\nKirjoita oma luonnos kenttiin ja jatka.');
+    if (statusId && $(statusId)) $(statusId).textContent = 'AI ei juuri nyt vastaa — jatka omilla muistiinpanoilla.';
+  }
+  if (btn) { btn.disabled = false; btn.textContent = btn.dataset.old || 'Kysy AI:lta'; }
+  refreshGates();
+}
+
+const SAMPLE_AD = `Myymälätyöntekijä — ruokakauppa, Tampere
+
+Etsimme asiakaspalveluhenkistä myymälätyöntekijää monipuoliseen tiimiimme.
+
+Tehtäviisi kuuluu:
+- asiakaspalvelu myymälässä
+- kassatyöskentely ja kassajärjestelmän käyttö
+- hyllytys ja tuotteiden esillepano
+- työskentely kiireisinä iltapäivinä ja viikonloppuina
+
+Odottamme:
+- myönteistä asennetta asiakaskohtaamisiin
+- kykyä työskennellä sekä itsenäisesti että tiimissä
+- joustavuutta vuorotyöhön
+- valmiutta oppia uusia järjestelmiä
+
+Tarjoamme: perehdytyksen, mukavan tiimin ja mahdollisuuden kehittyä myymälätyössä.`;
+
+function useSampleAd() {
+  if (val('adText').length > 40 && !confirm('Korvataanko nykyinen ilmoitusteksti harjoitusilmoituksella?')) return;
+  $('adText').value = SAMPLE_AD;
+  save('adText');
+  refreshGates();
+  if ($('atsAiStatus')) $('atsAiStatus').textContent = 'Harjoitusilmoitus ladattu — poimi nyt 5 avainsanaa itse.';
+}
+
+function runAtsCompare() {
+  const keywords = ['kw1', 'kw2', 'kw3', 'kw4', 'kw5'].map(val).filter(Boolean);
+  if (val('adText').length < 20 || keywords.length < 3) {
+    $('atsAiStatus').textContent = 'Liitä ilmoitus ja kirjoita vähintään 3 omaa avainsanaa ensin.';
+    return;
+  }
+  const user = [
+    'Työpaikkailmoitus:',
+    val('adText'),
+    '',
+    'Hakijan itse löytämät avainsanat: ' + keywords.join(', '),
+    '',
+    'Tehtävä:',
+    '1) Listaa 8 tärkeintä avainsanaa tai taitoa ilmoituksesta.',
+    '2) Kerro, mitkä hakijan avainsanoista löytyvät ilmoituksesta tai ovat lähellä sitä.',
+    '3) Ehdota 2 avainsanaa jotka hakijalta puuttuu.',
+    'Älä kirjoita hakemusta.'
+  ].join('\n');
+  callAi(
+    'Olet suomalainen rekrytointiassistentti. Autat hakijaa vertaamaan omia avainsanojaan ilmoitukseen. Et kirjoita hakemusta.',
+    user, 'atsAiOut', 'atsAiStatus', $('btnAtsCompare')
+  );
+}
+
+function runAppFeedback() {
+  const sentences = [val('appWho'), val('appWhy'), val('appProof'), val('appAsk')];
+  if (sentences.some(s => s.length < 8)) {
+    $('appAiStatus').textContent = 'Täytä kaikki neljä lausetta ensin.';
+    return;
+  }
+  const user = [
+    'Hakija kirjoitti hakemusluonnoksen neljä lausetta:',
+    '1) Kuka olen: ' + sentences[0],
+    '2) Miksi tämä rooli: ' + sentences[1],
+    '3) Todiste osaamisesta: ' + sentences[2],
+    '4) Pyyntö haastatteluun: ' + sentences[3],
+    '',
+    'Anna VAIN rakenteellista palautetta — älä kirjoita mitään lausetta uusiksi äläkä koko hakemusta.',
+    'Kerro jokaisesta lauseesta yhdellä lyhyellä huomiolla, onko se selvä ja konkreettinen.',
+    'Lopuksi yksi kysymys, joka auttaisi hakijaa tarkentamaan itse.'
+  ].join('\n');
+  callAi(
+    'Olet suomalainen rekrytoija, joka antaa rakennepalautetta hakemusluonnoksesta. Et kirjoita tekstiä uusiksi.',
+    user, 'appAiOut', 'appAiStatus', $('btnAppFeedback')
+  );
+}
+
+function runResearchAi() {
+  const user = [
+    'Yritys/rooli: ' + val('coName'),
+    'Oma tutkimus:',
+    'Tekee: ' + val('coWhat'),
+    'Asiakkaat: ' + val('coWho'),
+    'Ilmoituksen painotus: ' + val('coSkill'),
+    'Mikä kiinnostaa: ' + val('coWhy'),
+    '',
+    'Anna 5 tarkkaa tutkimuskysymystä joilla syvennän ymmärrystä ENNEN hakemusta.',
+    'Älä kirjoita valmista "miksi tämä yritys" -kappaletta. Älä keksi faktoja yrityksestä.'
+  ].join('\n');
+  callAi(
+    'Olet kriittinen rekrytointivalmentaja Suomessa. Autat hakijaa tutkimaan yritystä. Suomi.',
+    user, 'ai3out', null, $('btnAi3')
+  );
+}
+
+function updateExtPrompt3() {
+  const el = $('extPrompt3');
+  if (!el) return;
+  const known = [
+    val('coWhat') && ('Tekee: ' + val('coWhat')),
+    val('coWho') && ('Asiakkaat / kenelle: ' + val('coWho')),
+    val('coSkill') && ('Ilmoituksen painotus: ' + val('coSkill')),
+    val('coWhy') && ('Mikä minua kiinnostaa: ' + val('coWhy')),
+    val('aiQpick') && ('Oma syventävä vastaus: ' + val('aiQpick')),
+    val('aiSuspect') && ('Epäilyttävää AI:ssa: ' + val('aiSuspect'))
+  ].filter(Boolean);
+
+  el.textContent = [
+    'Olet tutkimusassistentti työnhakuun Suomessa.',
+    'Yritys/rooli: ' + (val('coName') || '[yritys]'),
+    '',
+    'Tiedän jo (kirjoitin itse — älä ohita näitä):',
+    known.length ? known.map(line => '- ' + line).join('\n') : '- (ei vielä täytetty yläpuolella)',
+    '',
+    'Tehtävä: ehdota 5 lähdettä / kulmaa (yrityksen sivu, uutinen, palvelu, kilpailija, ilmoituksen avainsanat).',
+    'Jokaisesta: mitä etsin + miksi se auttaa hakemuksessa.',
+    'Älä keksi lainauksia. Jos et ole varma, sano että pitää tarkistaa sivulta.',
+    'Lopuksi: 3 kysymystä joita en ole vielä kysynyt itseltäni.'
+  ].join('\n');
+}
+
+function showHotQuestion() {
+  const q = HOT_QUESTIONS[Math.floor(Math.random() * HOT_QUESTIONS.length)];
+  $('hotQ').textContent = q;
+  localStorage.setItem(KEY + 'hotQ', q);
+  hotStarted = true;
+  if ($('hotQBtn')) $('hotQBtn').textContent = 'Uusi kysymys';
+  if ($('hotNotes')) $('hotNotes').focus();
+  refreshGates();
+}
+
+function renderDecoder() {
+  if (decoderStep >= DECODER_LETTERS.length) {
+    decoderDone = true;
+    localStorage.setItem(KEY + 'decoderDone', '1');
+    $('decoderProgress').textContent = 'Valmis';
+    $('decoderQ').textContent = 'Hienoa — löysit kaikki neljä osaa. Nyt tiedät miten S-T-A-R erottuu tarinasta.';
+    $('decoderChoices').innerHTML = '';
+    $('decoderReveal').classList.remove('show');
+    $('decoderNextBtn').style.display = 'none';
+    refreshGates();
+    return;
+  }
+  const letter = DECODER_LETTERS[decoderStep];
+  $('decoderProgress').textContent = 'Kirjain ' + (decoderStep + 1) + ' / 4';
+  $('decoderQ').textContent = letter.q;
+  $('decoderReveal').classList.remove('show');
+  $('decoderNextBtn').style.display = 'none';
+  const box = $('decoderChoices');
+  box.innerHTML = '';
+  DECODER_ORDER.forEach(idx => {
+    const s = DECODER_STORY[idx];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'choice';
+    btn.textContent = s.text;
+    btn.onclick = () => pickDecoder(letter, s, btn);
+    box.appendChild(btn);
+  });
+}
+
+function pickDecoder(letter, sentence, btn) {
+  $('decoderChoices').querySelectorAll('.choice').forEach(c => c.disabled = true);
+  const correct = sentence.id === letter.id;
+  btn.classList.add('picked', correct ? 'good' : 'bad');
+  if (!correct) {
+    const correctText = DECODER_STORY.find(s => s.id === letter.id).text;
+    Array.from($('decoderChoices').children).forEach(c => {
+      if (c.textContent === correctText) c.classList.add('good');
+    });
+  }
+  const correctText = DECODER_STORY.find(s => s.id === letter.id).text;
+  $('decoderReveal').innerHTML = (correct ? '<strong>Oikein.</strong> ' : '<strong>Tämä oli eri kohta.</strong> Oikea lause: "' + correctText + '". ') + DECODER_EXPLAIN[letter.id];
+  $('decoderReveal').classList.add('show');
+  $('decoderNextBtn').style.display = 'inline-flex';
+}
+
+function nextDecoder() {
+  decoderStep++;
+  renderDecoder();
+}
+
+function runStarAi() {
+  const fields = [val('starS'), val('starT'), val('starA'), val('starR')];
+  if (fields.some(f => f.length < 8)) return;
+  const user = [
+    'STAR-tarina:',
+    'S: ' + fields[0], 'T: ' + fields[1], 'A: ' + fields[2], 'R: ' + fields[3],
+    '',
+    'Anna 3 tarkkaa jatkokysymystä joilla voisin syventää tätä tarinaa haastattelussa.',
+    'Numeroi 1–3. Älä vastaa puolestani äläkä kirjoita tarinaa uusiksi.'
+  ].join('\n');
+  callAi(
+    'Olet tiukka mutta reilu suomalainen rekrytoija. Suomi. Lyhyt.',
+    user, 'starAiOut', null, $('btnStarAi')
+  );
+}
+
+function updateExtPromptStar() {
+  const el = $('extPromptStar');
+  if (!el) return;
+  el.textContent = [
+    'Olet suomalainen rekrytoija. Haastattele minua rooliin: ' + (val('coName') || '[rooli]'),
+    'Minulla on STAR-tarina:',
+    'S: ' + val('starS'),
+    'T: ' + val('starT'),
+    'A: ' + val('starA'),
+    'R: ' + val('starR'),
+    '',
+    'Säännöt: esitä YKSI vaikea kysymys kerrallaan. Odota vastaustani.',
+    'Kun olen vastannut: anna palaute vain rakenteesta (mikä toimi / yksi parannus).',
+    'Älä kirjoita uutta valmista vastausta puolestani.'
+  ].join('\n');
+}
+
+/* ---- Jakso 6: live-äänihaastattelu ---- */
+
+function voxSetTop(text, live) {
+  $('voxTop').textContent = text;
+  $('voxDot').classList.toggle('on', !!live);
+}
+
+function voxRenderTimeline() {
+  const box = $('voxTimeline');
+  const empty = $('voxEmpty');
+  if (!voxSession.length) {
+    box.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  box.innerHTML = voxSession.map(s => (
+    '<div class="vox-turn"><div class="q">' + (s.question || s.label || 'Kysymys') + '</div><div class="a">' + s.transcript + '</div></div>'
+  )).join('');
+}
+
+function voxShowFallback(msg) {
+  $('voxStatus').textContent = msg || '';
+  $('voxFallback').classList.add('show');
+  $('voxStartBtn').style.display = 'inline-flex';
+  $('voxStartBtn').disabled = false;
+  $('voxStartBtn').textContent = 'Aloita live-haastattelu';
+  $('voxSendBtn').style.display = 'none';
+  $('voxNextBtn').style.display = 'none';
+  $('voxEndBtn').style.display = 'none';
+  voxSetTop('Ei yhdistetty', false);
+}
+
+function voxStart() {
+  if (typeof MockRealtimeInterview === 'undefined' || typeof RTCPeerConnection === 'undefined') {
+    voxShowFallback('Selaimesi ei tue live-ääntä. Käytä tekstivaihtoehtoa alla.');
+    return;
+  }
+  voxSession = [];
+  voxFeedbackDone = false;
+  $('voxFbPanel').style.display = 'none';
+  voxRenderTimeline();
+  $('voxFallback').classList.remove('show');
+  $('voxStartBtn').disabled = true;
+  $('voxStartBtn').textContent = 'Yhdistetään...';
+  $('voxEndBtn').style.display = 'inline-flex';
+  voxSetTop('Yhdistetään...', true);
+
+  voxRealtime = new MockRealtimeInterview({
+    onStatus: msg => { $('voxStatus').textContent = msg; },
+    onPhaseChange: info => {
+      $('voxQLabel').textContent = info.label || 'Live-haastattelu';
+      $('voxQText').textContent = info.recruiterText || 'Kuuntele rekrytoijaa...';
+      if (info.awaitingAnswer) {
+        $('voxSendBtn').style.display = 'inline-flex';
+        $('voxSendBtn').disabled = false;
+        $('voxNextBtn').style.display = 'none';
+      }
+    },
+    onAssistantText: text => {
+      $('voxQText').textContent = text;
+      $('voxSendBtn').style.display = 'none';
+      $('voxNextBtn').style.display = 'none';
+    },
+    onUserTranscript: data => {
+      voxSession.push({ label: data.label, question: data.question, transcript: data.transcript });
+      voxRenderTimeline();
+    },
+    onAnswerReady: info => {
+      $('voxSendBtn').style.display = 'none';
+      $('voxNextBtn').style.display = 'inline-flex';
+      $('voxNextBtn').textContent = info.isLast ? 'Päätä haastattelu' : 'Seuraava';
+    },
+    onComplete: () => { voxFinish(); },
+    onError: err => {
+      const msg = (err && err.message) ? err.message : 'live-yhteys katkesi';
+      $('voxStatus').textContent = 'Virhe: ' + msg;
+    }
+  });
+
+  voxRealtime.start().then(() => {
+    $('voxStartBtn').style.display = 'none';
+    voxSetTop('Live — kuuntele', true);
+  }).catch(e => {
+    voxRealtime = null;
+    voxShowFallback('Live-yhteys ei onnistunut (' + (e.message || 'tuntematon virhe') + '). Kokeile tekstivaihtoehtoa alla.');
+  });
+}
+
+function voxSend() {
+  if (voxRealtime) voxRealtime.submitAnswer();
+}
+
+function voxNext() {
+  if (!voxRealtime) return;
+  $('voxNextBtn').style.display = 'none';
+  const ok = voxRealtime.continueAfterAnswer();
+  if (!ok) voxFinish();
+}
+
+function voxEnd() {
+  const hadSession = voxSession.length >= 1;
+  if (voxRealtime) { try { voxRealtime.stop(); } catch (e) {} voxRealtime = null; }
+  $('voxEndBtn').style.display = 'none';
+  $('voxSendBtn').style.display = 'none';
+  $('voxNextBtn').style.display = 'none';
+  $('voxStartBtn').style.display = 'inline-flex';
+  $('voxStartBtn').disabled = false;
+  $('voxStartBtn').textContent = 'Aloita uudestaan';
+  voxSetTop('Ei yhdistetty', false);
+  if (hadSession) {
+    voxFinish();
+  } else {
+    $('voxStatus').textContent = 'Keskeytetty.';
+  }
+}
+
+async function voxFinish() {
+  $('voxEndBtn').style.display = 'none';
+  $('voxSendBtn').style.display = 'none';
+  $('voxNextBtn').style.display = 'none';
+  $('voxStartBtn').style.display = 'inline-flex';
+  $('voxStartBtn').disabled = false;
+  $('voxStartBtn').textContent = 'Aloita uudestaan';
+  if ($('voxRetryBtn')) $('voxRetryBtn').style.display = 'inline-flex';
+  voxSetTop('Kootaan palautetta...', false);
+  $('voxStatus').textContent = 'Kootaan palautetta...';
+  const pairs = voxSession.map(s => ({ q: s.question || s.label, a: s.transcript }));
+  await voxRequestFeedback(pairs);
+}
+
+function voxFallbackSubmit() {
+  const pairs = [
+    { q: FALLBACK_Q[0], a: val('voxFb1') },
+    { q: FALLBACK_Q[1], a: val('voxFb2') },
+    { q: FALLBACK_Q[2], a: val('voxFb3') }
+  ];
+  if (pairs.some(p => p.a.length < 10)) {
+    $('voxStatus').textContent = 'Kirjoita kaikki kolme vastausta ensin.';
+    return;
+  }
+  voxRequestFeedback(pairs);
+}
+
+function parseVoxFeedback(text) {
+  const t = String(text || '').trim();
+  if (!t) return { good: '—', fix: '—', next: '—' };
+  const goodM = t.match(/MIKÄ TOIMI\s*[:\-–]\s*([\s\S]+?)(?=MITÄ PARANTAA\s*[:\-–]|SEURAAVA HARJOITUS\s*[:\-–]|$)/i);
+  const fixM = t.match(/MITÄ PARANTAA\s*[:\-–]\s*([\s\S]+?)(?=SEURAAVA HARJOITUS\s*[:\-–]|$)/i);
+  const nextM = t.match(/SEURAAVA HARJOITUS\s*[:\-–]\s*([\s\S]+?)$/i);
+  const good = goodM ? goodM[1].trim() : '';
+  const fix = fixM ? fixM[1].trim() : '';
+  const next = nextM ? nextM[1].trim() : '';
+  if (good || fix || next) return { good: good || '—', fix: fix || '—', next: next || '—' };
+  return { good: t, fix: '—', next: '—' };
+}
+
+async function voxRequestFeedback(pairs) {
+  const user = [
+    'Haastattelun vastaukset:',
+    pairs.map((p, i) => (i + 1) + ') ' + p.q + '\nVastaus: ' + p.a).join('\n\n'),
+    '',
+    'Anna palaute täsmälleen tässä muodossa (suomeksi, lyhyesti, ei muuta tekstiä ympärille):',
+    'MIKÄ TOIMI: ...',
+    'MITÄ PARANTAA: ...',
+    'SEURAAVA HARJOITUS: ...'
+  ].join('\n');
+
+  try {
+    const r = await fetch('/api/ai/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: user }],
+        system: 'Olet myönteinen mutta rehellinen suomalainen rekrytointivalmentaja. Suomi. Lyhyt ja konkreettinen.',
+        max_tokens: 700
+      })
+    });
+    let d = await r.json().catch(() => ({}));
+    let text = d.text || '';
+    if (!r.ok || !text) {
+      const r2 = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: user }],
+          system: 'Olet myönteinen mutta rehellinen suomalainen rekrytointivalmentaja. Suomi. Lyhyt ja konkreettinen.',
+          max_tokens: 700
+        })
+      });
+      d = await r2.json().catch(() => ({}));
+      text = d.text || '';
+    }
+    const fb = parseVoxFeedback(text);
+    $('voxFbGood').textContent = fb.good;
+    $('voxFbFix').textContent = fb.fix;
+    $('voxFbNext').textContent = fb.next;
+    $('voxFbPanel').style.display = 'block';
+    voxFeedbackDone = true;
+    $('voxStatus').textContent = 'Palaute valmis — lue ja vertaa omaan tuntemukseesi.';
+  } catch (e) {
+    $('voxFbGood').textContent = 'Palaute ei onnistunut juuri nyt.';
+    $('voxFbFix').textContent = '—';
+    $('voxFbNext').textContent = 'Kokeile uudelleen hetken päästä.';
+    $('voxFbPanel').style.display = 'block';
+    voxFeedbackDone = true;
+    $('voxStatus').textContent = 'AI ei vastannut — voit silti jatkaa.';
+  }
+  refreshGates();
+}
+
+/* ---- Jakso 7: kuva, PDF, Gamma ---- */
+
+function updateImgPrompt() {
+  const el = $('imgPromptOut');
+  if (!el) return;
+  el.textContent = [
+    'Tee yksinkertainen, ammattimainen kuva työnhakuuni.',
+    'Aihe: ' + (val('imgSubject') || '[kerro mitä kuvassa näkyy]'),
+    'Tunnelma: ' + (val('imgMood') || '[esim. rauhallinen, lämmin, luotettava]'),
+    'Ei saa näkyä: ' + (val('imgAvoid') || '[esim. ei tekstiä, ei kasvoja, ei logoja]'),
+    '',
+    'Tyyli: siisti, selkeä, ei liian koristeellinen. Sopii ammatilliseen yhteyteen.'
+  ].join('\n');
+}
+
+function updatePdfPrompt() {
+  const el = $('pdfPromptOut');
+  if (!el) return;
+  el.textContent = [
+    'Tee minulle YKSI sivun mittainen suomenkielinen PDF-yhteenveto työnhausta.',
+    'Käytä VAIN alla olevaa tekstiäni. Älä keksi mitään uutta sisältöä.',
+    '',
+    'Tavoite: ' + (val('goalOwn') || '(ei vielä kirjoitettu jaksossa 1)'),
+    '',
+    'Yritys / rooli: ' + (val('coName') || '(ei vielä valittu)'),
+    'Yrityshavainnot: ' + ([val('coWhat'), val('coWho'), val('coSkill'), val('coWhy')].filter(Boolean).join(' | ') || '(ei vielä täytetty)'),
+    '',
+    'STAR-tarina:',
+    'S: ' + (val('starS') || '-'),
+    'T: ' + (val('starT') || '-'),
+    'A: ' + (val('starA') || '-'),
+    'R: ' + (val('starR') || '-'),
+    '',
+    'Tee rakenne: otsikot ja ranskalaiset viivat tekstistäni. Ei täyslauseita, ei uutta sisältöä.'
+  ].join('\n');
+}
+
+function updateGammaPrompt() {
+  const el = $('gammaPromptOut');
+  if (!el) return;
+  const kw = ['kw1', 'kw2', 'kw3', 'kw4', 'kw5'].map(val).filter(Boolean).join(', ');
+  const slide1 = val('goalOwn') || '(täytä jakso 1: tavoite)';
+  const slide2 = val('appProof') ? (val('appProof') + (kw ? ' — avainsanat: ' + kw : '')) : '(täytä jakso 3: hakemusluonnos)';
+  const slide3 = (val('coName') ? val('coName') + ': ' : '') + (val('coWhy') || '(täytä jakso 4: yrityshavainto)');
+  const slide4 = [val('starS'), val('starA'), val('starR')].filter(Boolean).join(' → ') || '(täytä jakso 5: STAR-tarina)';
+  const slide5 = val('tomorrow') || '(kirjoita alla huomisen askel)';
+  el.textContent = [
+    'Tee 5 dian esitys suomeksi työnhaun harjoituksesta.',
+    'Käytä VAIN tätä sisältöä, älä keksi lisää:',
+    '',
+    'Dia 1 — Kuka olen / mitä haen:\n' + slide1,
+    'Dia 2 — Vahvuus + todiste:\n' + slide2,
+    'Dia 3 — Yrityshavainto:\n' + slide3,
+    'Dia 4 — Haastattelutarina:\n' + slide4,
+    'Dia 5 — Seuraava askel:\n' + slide5,
+    '',
+    'Yksi ajatus per dia. Lyhyet bulletit. Suomeksi.'
+  ].join('\n');
+}
+
+function copyText(id) {
+  const t = $(id).textContent || $(id).value || '';
+  navigator.clipboard.writeText(t).then(() => {
+    alert('Kopioitu.');
+  }).catch(() => {
+    prompt('Kopioi tämä:', t);
+  });
+}
+
+function finishDay() {
+  complete(8);
+  $('allDone').classList.add('show');
+  save('tomorrow');
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+// restore state
+if (localStorage.getItem(KEY + 'trap1') === '1') trapOk[1] = true;
+if (localStorage.getItem(KEY + 'trap2') === '1') trapOk[2] = true;
+if (localStorage.getItem(KEY + 'hotQ')) {
+  $('hotQ').textContent = localStorage.getItem(KEY + 'hotQ');
+  hotStarted = true;
+  if ($('hotQBtn')) $('hotQBtn').textContent = 'Uusi kysymys';
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && menuOpen) closeMenu();
+});
+
+loadAll();
+renderDecoder();
+setProg();
+$('hero').style.display = 'flex';
+refreshGates();
+updateAllLivePrompts();
+voxRenderTimeline();
+</script>
+<script src="/js/module-autosave.js"></script>
+</body>
+</html>
