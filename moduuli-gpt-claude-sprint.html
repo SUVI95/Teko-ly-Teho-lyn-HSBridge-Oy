@@ -469,15 +469,10 @@ Tilanne: Uusi kassajärjestelmä otettiin käyttöön — opin peruskäytön kah
       <div class="tile"><span class="ico">✗</span><strong>Huono</strong><span>“Kirjoita minulle hyvä työhakemus.”</span></div>
       <div class="tile"><span class="ico">✓</span><strong>Hyvä</strong><span>Tarinan faktat + selkeä tehtävä + rajat</span></div>
     </div>
-    <details class="fold">
-      <summary>Näytä hyvä esimerkki (Ainon tarinasta)</summary>
-      <div class="fold-body">
-        <div class="example">Rooli: suomalainen rekrytoija
-Tilanne: Aino Korhonen, kahvilatyöntekijä Jyväskylässä 5 vuotta. Kahvila sulki. Hakee myymälätyötä. Osaa aamukirettä, kassaa ja asiakkaiden muistamista. Firmannimeä ei ole vielä.
-Tehtävä: ehdota 3 vahvuutta pienellä esimerkillä jokaisesta
-Raja: suomeksi, älä keksi työnantajia tai vuosia, ei koko hakemusta</div>
-      </div>
-    </details>
+    <div class="tip">
+      <b>Malli on harjoituksessa 1</b>
+      Ensimmäisessä tarinassa (Aino) näet promptin rungon. Se näyttää rakenteen — sinä täytät aukot tarinasta. Älä kopioi valmista vastausta.
+    </div>
   </div>
 
   <div class="tiles">
@@ -522,15 +517,39 @@ Raja: suomeksi, älä keksi työnantajia tai vuosia, ei koko hakemusta</div>
         <li>Claude arvioi → sitten voit kysyä AI:lta vastauksen.</li>
       </ol>
     </div>
+    <div class="tip">
+      <b>Promptin malli — rakenne, ei valmis vastaus</b>
+      Alla on runko. Katso miten osat liittyvät tarinaan. Täytä itse kohdat joissa lukee <em>[poimi tarinasta]</em> tai <em>[kirjoita omin sanoin]</em>. Älä kopioi runkoa sellaisenaan Claudelle — täydennä ensin.
+    </div>
+    <details class="fold" open>
+      <summary>Näytä Ainon promptin malli (täydennä itse)</summary>
+      <div class="fold-body">
+        <div class="example" id="p1PromptModel">Tiedetään / puuttuu (esimerkki rakenteesta):
+Tiedetään: nimi, ammatti, paikkakunta, [poimi tarinasta 2–3 asiaa joita Aino on tehnyt työssä]
+Puuttuu: [poimi tarinasta mikä tärkeä tieto Ainolta puuttuu] · [toinen aukko?]
+
+——— Promptin osat ———
+Rooli: suomalainen rekrytoija
+Tilanne: Aino Korhonen hakee [poimi: mihin työhön]. Tausta: [poimi: työ + kauanko]. Osaa mm. [poimi 1–2 konkreettista asiaa]. Huom: [poimi: mikä tieto puuttuu — kerro AI:lle ettei se keksi sitä].
+Tehtävä: [kirjoita omin sanoin Ainon toive — mitä AI tekee, kuinka monta, millä esimerkeillä]
+Rajat: suomeksi · käytä vain annettuja faktoja · älä keksi firmaa / vuosia · [kirjoita: mitä AI EI saa tehdä Ainon toiveen mukaan]
+Älä tee kaikkea puolestani. Auta minua ajattelemaan.</div>
+        <p class="field-tip" style="margin-top:.65rem">Vinkki: kun olet täyttänyt aukot omin sanoin alle, paina “Näytä prompti” ja anna Clauden arvioida.</p>
+        <div class="btn-row">
+          <button class="btn btn-ghost" type="button" onclick="fillPromptScaffold(1)">Täytä runko tyhjiin kenttiin</button>
+        </div>
+      </div>
+    </details>
+
     <label class="field" for="p1Gaps">Mitä tarinasta tiedetään? Mitä puuttuu?</label>
-    <p class="field-tip">Esim. tiedetään: 5 vuotta kahvilassa, kassa, aamukire. Puuttuu: firman nimi, ilmoituksen tarkat sanat…</p>
+    <p class="field-tip">Kirjoita itse — älä kopioi mallia suoraan. Esim. muoto: Tiedetään: … / Puuttuu: …</p>
     <textarea id="p1Gaps" placeholder="Tiedetään: …
 Puuttuu: …" style="min-height:90px"></textarea>
     <div class="builder">
       <div class="builder-row"><span>Rooli</span><input type="text" id="p1Role" placeholder="Keneksi AI asettuu? esim. suomalainen rekrytoija"></div>
-      <div class="builder-row"><span>Tilanne</span><textarea id="p1Sit" placeholder="Kirjoita Ainon tarina omin sanoin prompttiin — faktat + aukot..." style="min-height:90px"></textarea></div>
-      <div class="builder-row"><span>Tehtävä</span><textarea id="p1Task" placeholder="Mitä AI tekee Ainolle? esim. ehdota 3 vahvuutta esimerkillä" style="min-height:70px"></textarea></div>
-      <div class="builder-row"><span>Rajat</span><input type="text" id="p1Bound" placeholder="esim. suomeksi, älä keksi faktoja, ei koko hakemusta"></div>
+      <div class="builder-row"><span>Tilanne</span><textarea id="p1Sit" placeholder="Kirjoita Ainon tarina omin sanoin — faktat + aukot..." style="min-height:90px"></textarea></div>
+      <div class="builder-row"><span>Tehtävä</span><textarea id="p1Task" placeholder="Mitä AI tekee Ainolle? (katso toive — kirjoita omin sanoin)" style="min-height:70px"></textarea></div>
+      <div class="builder-row"><span>Rajat</span><input type="text" id="p1Bound" placeholder="suomeksi, älä keksi faktoja, ei koko hakemusta…"></div>
     </div>
     <div class="btn-row">
       <button class="btn btn-ghost" type="button" onclick="buildPromptN(1)">Näytä prompti</button>
@@ -2392,17 +2411,52 @@ function buildPromptN(n) {
   return $(builtId).value;
 }
 
+function fillPromptScaffold(n) {
+  if (n !== 1) return;
+  // Runko auttaa aloittamaan — ei valmis vastaus. Opiskelija korvaa [poimi…]-kohdat.
+  if (!val('p1Gaps')) {
+    $('p1Gaps').value = 'Tiedetään: Aino, kahvilatyöntekijä, Jyväskylä, [poimi tarinasta 2–3 asiaa joita hän on tehnyt]\nPuuttuu: [poimi tarinasta mikä tärkeä tieto puuttuu]';
+    save('p1Gaps');
+  }
+  if (!val('p1Role')) { $('p1Role').value = 'suomalainen rekrytoija'; save('p1Role'); }
+  if (!val('p1Sit')) {
+    $('p1Sit').value = 'Aino Korhonen hakee [poimi: mihin työhön]. Tausta: [poimi: työ + kauanko]. Osaa mm. [poimi 1–2 konkreettista asiaa]. Huom AI:lle: [poimi: mitä ei saa keksiä].';
+    save('p1Sit');
+  }
+  if (!val('p1Task')) {
+    $('p1Task').value = '[kirjoita omin sanoin Ainon toive — mitä AI tekee / mitä ei tee]';
+    save('p1Task');
+  }
+  if (!val('p1Bound')) {
+    $('p1Bound').value = 'suomeksi, käytä vain annettuja faktoja, [kirjoita: mitä AI EI saa tehdä]';
+    save('p1Bound');
+  }
+  buildPromptN(1);
+  if ($('p1FbStatus')) $('p1FbStatus').textContent = 'Runko kentissä — korvaa kaikki [poimi…] / [kirjoita…] omin sanoin ennen Clauden arviota.';
+  refreshGates();
+}
+
+function promptHasTodoMarkers(n) {
+  const blob = [val('p' + n + 'Gaps'), val('p' + n + 'Sit'), val('p' + n + 'Task'), val('p' + n + 'Bound')].join(' ');
+  return /\[poimi|\[kirjoita/i.test(blob);
+}
+
 function promptPartsFilled(n) {
-  return val('p' + n + 'Gaps').length >= 20 &&
+  const basic = val('p' + n + 'Gaps').length >= 20 &&
     val('p' + n + 'Role').length >= 3 &&
     val('p' + n + 'Sit').length >= 40 &&
     val('p' + n + 'Task').length >= 8 &&
     val('p' + n + 'Bound').length >= 4;
+  if (!basic) return false;
+  if (n === 1 && promptHasTodoMarkers(1)) return false;
+  return true;
 }
 
 async function runPromptFeedback(n) {
   if (!promptPartsFilled(n)) {
-    $('p' + n + 'FbStatus').textContent = 'Täytä aukot-kenttä ja kaikki neljä promptin osaa. TILANNE = tarina omin sanoin (faktat + mitä puuttuu).';
+    $('p' + n + 'FbStatus').textContent = n === 1 && promptHasTodoMarkers(1)
+      ? 'Korvaa vielä kaikki [poimi…] ja [kirjoita…] -kohdat omin sanoin tarinasta. Runko ei riitä.'
+      : 'Täytä aukot-kenttä ja kaikki neljä promptin osaa. TILANNE = tarina omin sanoin (faktat + mitä puuttuu).';
     return;
   }
   const prompt = buildPromptN(n);
@@ -2439,7 +2493,9 @@ async function runPromptFeedback(n) {
 
 async function runPromptAsk(n) {
   if (!promptPartsFilled(n)) {
-    $('p' + n + 'AskStatus').textContent = 'Täytä osat ja näytä prompti ensin.';
+    $('p' + n + 'AskStatus').textContent = n === 1 && promptHasTodoMarkers(1)
+      ? 'Korvaa [poimi…] / [kirjoita…] ensin — sitten voit kysyä AI:lta.'
+      : 'Täytä osat ja näytä prompti ensin.';
     return;
   }
   const prompt = buildPromptN(n);
