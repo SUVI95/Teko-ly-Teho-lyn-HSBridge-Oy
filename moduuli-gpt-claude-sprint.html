@@ -319,7 +319,7 @@ textarea{min-height:100px}
       <ol>
         <li><a href="#" onclick="event.preventDefault();go(1)" style="color:inherit"><strong>Omat faktat ennen AI:ta</strong> — vahvuudet + huono AI-neuvo</a></li>
         <li><a href="#" onclick="event.preventDefault();go(2)" style="color:inherit"><strong>Rakenna promptti</strong> — 3 tarinaa → promptti + Clauden palaute</a></li>
-        <li><a href="#" onclick="event.preventDefault();go(3)" style="color:inherit"><strong>ATS ja hakemus</strong> — avainsanat, runko, tyypilliset virheet</a></li>
+        <li><a href="#" onclick="event.preventDefault();go(3)" style="color:inherit"><strong>ATS ja hakemus</strong> — harjoitus + itsetesti + runko</a></li>
         <li><a href="#" onclick="event.preventDefault();go(4)" style="color:inherit"><strong>Yritystutkimus</strong> — ensin itse, sitten AI</a></li>
         <li><a href="#" onclick="event.preventDefault();go(5)" style="color:inherit"><strong>STAR-tarina</strong> — tarina + totta/tarua</a></li>
         <li><a href="#" onclick="event.preventDefault();go(6)" style="color:inherit"><strong>Live-äänihaastattelu</strong> — puhu AI-rekrytoijalle</a></li>
@@ -713,7 +713,7 @@ Puuttuu: …" style="min-height:90px"></textarea>
 <div class="wrap">
   <div class="eyebrow">Jakso 03 / 08</div>
   <h2>ATS ja hakemus — <em>avainsanat ennen tekstiä</em></h2>
-  <p class="lead muted">Ensin tärkeät sanat ilmoituksesta. Sitten lyhyt hakemusrunko omilla sanoillasi.</p>
+  <p class="lead muted">Ensin harjoittelet avainsanoja yhdellä ilmoituksella. Sitten testaat itseäsi toisella — vähemmän vinkkejä. AI kertoo mitä osuit, mitä missasit ja mitä korjata. Lopuksi rakennat lyhyen hakemusrungon.</p>
 
   <div class="card">
     <span class="tag">Lue ensin</span>
@@ -730,12 +730,18 @@ Puuttuu: …" style="min-height:90px"></textarea>
       <div class="tile"><span class="ico">✓</span><strong>Toimii</strong><span>Ilmoitus: asiakaspalvelu → hakemuksessa: asiakaspalvelu</span></div>
       <div class="tile"><span class="ico">✗</span><strong>Riski</strong><span>Tärkeä sana puuttuu → hakemus voi tippua listalta</span></div>
     </div>
-    <p class="one-line muted">Tänään: lue → poimi 5 sanaa → käytä niitä rungossa.</p>
+    <div class="flow" aria-label="Jakson kulku">
+      <div class="flow-step"><span class="n">A</span><b>Harjoitus</b><span>ilmoitus 1 + vinkit</span></div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step"><span class="n">B</span><b>Itsetesti</b><span>ilmoitus 2, vähemmän vinkkejä</span></div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step"><span class="n">C</span><b>Hakemus</b><span>runko + tarkistus</span></div>
+    </div>
   </div>
 
   <div class="card">
-    <span class="tag">Harjoitus A</span>
-    <h3>Poimi 5 avainsanaa</h3>
+    <span class="tag">Harjoitus A · ohjattu</span>
+    <h3>Poimi 5 avainsanaa — ilmoitus 1</h3>
     <p class="one-line"><strong>Avainsana</strong> = yksi tärkeä sana ilmoituksesta (taito, tehtävä, tapa). Ei koko lause.</p>
     <div class="tiles">
       <div class="tile"><span class="ico">1</span><strong>Työ</strong><span>kassa, hyllytys…</span></div>
@@ -774,16 +780,61 @@ Puuttuu: …" style="min-height:90px"></textarea>
       <input type="text" id="kw5" placeholder="5">
     </div>
     <div class="btn-row">
-      <button class="btn btn-primary" type="button" id="btnAtsCompare" onclick="runAtsCompare()" disabled>Pyydä AI:ta vertaamaan listaani</button>
+      <button class="btn btn-primary" type="button" id="btnAtsCompare" onclick="runAtsCompare(1)" disabled>Pyydä AI-vertailu (ilmoitus 1)</button>
       <button class="btn btn-ghost btn-retry" type="button" onclick="retryAiOut('atsAiOut','atsAiStatus')">Kokeile uudestaan</button>
+    </div>
+    <div class="tip">
+      <b>Mitä AI-vertailu antaa sinulle?</b>
+      Ei valmista hakemusta. Saat: (1) mitkä sanasi osuivat ilmoitukseen, (2) 2 tärkeää sanaa jotka missasit, (3) yhden heikon / turhan sanan listaltasi. Käytä tätä ennen kuin kirjoitat hakemusta.
     </div>
     <div class="ai-out" id="atsAiOut">AI-vertailu ilmestyy tähän...</div>
     <p class="status" id="atsAiStatus">Liitä ilmoitus ja kirjoita vähintään 3 omaa avainsanaa ensin.</p>
   </div>
 
+  <div class="card gate" id="gateAtsChallenge">
+    <span class="tag">Harjoitus B · itsetesti</span>
+    <h3>Poimi 5 avainsanaa — ilmoitus 2 (vähemmän vinkkejä)</h3>
+    <p class="one-line muted">Nyt testaat itseäsi. Ei kategoriaruutuja. Lue ilmoitus, poimi 5 sanaa, pyydä sitten AI:lta rehellinen vertailu.</p>
+    <div class="how">
+      <div class="lbl">Näin teet</div>
+      <ol>
+        <li>Paina “Lataa ilmoitus 2” (tai liitä oma).</li>
+        <li>Poimi 5 avainsanaa <strong>itse</strong> — ei AI:ta vielä.</li>
+        <li>Pyydä AI-palaute: osumat · missaukset · seuraava askel.</li>
+      </ol>
+    </div>
+    <label class="field" for="adText2">Työpaikkailmoitus 2</label>
+    <textarea id="adText2" style="min-height:140px" placeholder="Lataa ilmoitus 2 napilla — tai liitä oma…"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="useSampleAd2()">Lataa ilmoitus 2</button>
+    </div>
+    <label class="field">5 avainsanaa (sinä poimit — ei vinkkejä)</label>
+    <div class="kw-row">
+      <input type="text" id="kw2a" placeholder="1">
+      <input type="text" id="kw2b" placeholder="2">
+      <input type="text" id="kw2c" placeholder="3">
+      <input type="text" id="kw2d" placeholder="4">
+      <input type="text" id="kw2e" placeholder="5">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="btnAtsCompare2" onclick="runAtsCompare(2)" disabled>Pyydä AI-palaute (itsetesti)</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryAiOut('atsAiOut2','atsAiStatus2')">Kokeile uudestaan</button>
+    </div>
+    <div class="tip">
+      <b>Mitä saat tästä palautteesta?</b>
+      Konkreettisen listan: mitkä sanasi kelpaavat ATS:ään, mitkä tärkeät sanat jäivät pois, ja yksi lause jonka voit kirjoittaa itse käyttäen kahta missattua sanaa. Se on siirrettävä taito seuraavaan oikeaan hakuun.
+    </div>
+    <div class="ai-out" id="atsAiOut2">AI-palaute ilmoituksesta 2 ilmestyy tähän...</div>
+    <p class="status" id="atsAiStatus2">Lataa ilmoitus 2 ja kirjoita vähintään 3 avainsanaa.</p>
+    <label class="field" for="ats2Takeaway">Mitä korjaat seuraavassa haussa? (2–3 lausetta)</label>
+    <p class="field-tip">Esim. “Missasin sanan X — kirjoitan sen hakemukseen näin: …”</p>
+    <textarea id="ats2Takeaway" style="min-height:70px" placeholder="Missasin… Seuraavalla kerralla…"></textarea>
+  </div>
+
   <div class="card gate" id="gateAppScaffold">
-    <span class="tag">Harjoitus B</span>
+    <span class="tag">Harjoitus C · hakemusrunko</span>
     <h3>4 lyhyttä lausetta — ei koko hakemusta</h3>
+    <p class="one-line muted">Käytä avainsanoja ilmoituksesta 2 (tai 1). Tavoite: ATS näkee sanat, ihminen näkee sinut.</p>
     <div class="flow" aria-label="Hakemusrunko">
       <div class="flow-step"><span class="n">1</span><b>Kuka</b><span>tausta lyhyesti</span></div>
       <div class="flow-arrow" aria-hidden="true">→</div>
@@ -832,7 +883,7 @@ Pyyntö: "Kertoisin mielelläni lisää haastattelussa."</div>
   </div>
 
   <div class="card gate" id="gateFlags">
-    <span class="tag">Harjoitus C · tyypilliset virheet</span>
+    <span class="tag">Harjoitus D · tyypilliset virheet</span>
     <h3>Tarkista ennen kuin lähettäisit hakemuksen</h3>
     <p class="muted" style="margin-bottom:.5rem">Nämä kaatavat hakemuksen usein ennen kuin kukaan lukee sisältöä. Käy läpi runkosi yllä — merkitse kun olet tarkistanut.</p>
     <div class="tip">
@@ -853,12 +904,12 @@ Pyyntö: "Kertoisin mielelläni lisää haastattelussa."</div>
   <div class="ext gate" id="gateClaudeAts">
     <div class="tool-box claude" style="margin-top:0">
       <div class="tool-lbl">Ulkona · Claude (tai ChatGPT)</div>
-      <h4>Testaa sama tekniikka oikeassa työkalussa</h4>
-      <p>Kopioi prompti → liitä Claudeen → tarkista että ilmoitus ja omat lauseesi ovat mukana. Kerro omin sanoin yksi asia, jonka opit.</p>
+      <h4>Vie sama työ oikeaan työkaluun</h4>
+      <p>Prompti käyttää ilmoitusta 2 (jos täytetty) + avainsanojasi + hakemusrunkoa. Claude/ChatGPT ei kirjoita uutta hakemusta — se kertoo puuttuvat sanat ja 3 korjausta.</p>
     </div>
     <div class="tip">
-      <b>Vinkki</b>
-      Prompti alla päivittyy automaattisesti siitä mitä kirjoitit. Jos jokin kohta on tyhjä, täydennä se ennen kopiointia.
+      <b>Mitä saat ulkona?</b>
+      Toisen mielipiteen samasta tekstistä: puuttuvat ATS-sanat, mitä korostaa, ja 3 konkreettista muutosta. Kirjoita alle vain se mitä oikeasti muutat.
     </div>
     <div class="example" id="extPromptAts">Lataa...</div>
     <div class="btn-row">
@@ -1511,7 +1562,7 @@ const SECTIONS = [
   { id: 0, num: '★', title: 'Aloitus', time: 'Säännöt + työkalut' },
   { id: 1, num: '1', title: 'Omat faktat ennen AI:ta', time: 'Vahvuudet + huonot neuvot' },
   { id: 2, num: '2', title: 'Rakenna promptti', time: '3 tarinaa → promptti' },
-  { id: 3, num: '3', title: 'ATS ja hakemus', time: 'Avainsanat + virheet' },
+  { id: 3, num: '3', title: 'ATS ja hakemus', time: 'Harjoitus + itsetesti' },
   { id: 4, num: '4', title: 'Yritystutkimus', time: 'Ensin itse, sitten AI' },
   { id: 5, num: '5', title: 'STAR-tarina', time: 'Totta/tarua + STAR' },
   { id: 6, num: '6', title: 'Live-äänihaastattelu', time: 'Puhu AI-rekrytoijalle' },
@@ -1662,7 +1713,7 @@ const FIELDS = [
   'p2Gaps', 'p2Role', 'p2Sit', 'p2Task', 'p2Bound', 'p2Built', 'p2Fb', 'p2Out',
   'p3Gaps', 'p3Role', 'p3Sit', 'p3Task', 'p3Bound', 'p3Built', 'p3Fb', 'p3Out',
   'promptLearn', 'keep3', 'kill3', 'ownLine',
-  'adText', 'kw1', 'kw2', 'kw3', 'kw4', 'kw5', 'atsAiOut', 'appWho', 'appWhy', 'appProof', 'appAsk', 'appAiOut', 'atsReflection', 'claudeAtsBack',
+  'adText', 'kw1', 'kw2', 'kw3', 'kw4', 'kw5', 'atsAiOut', 'adText2', 'kw2a', 'kw2b', 'kw2c', 'kw2d', 'kw2e', 'atsAiOut2', 'ats2Takeaway', 'appWho', 'appWhy', 'appProof', 'appAsk', 'appAiOut', 'atsReflection', 'claudeAtsBack',
   'coName', 'coWhat', 'coWho', 'coSkill', 'coWhy', 'ai3out', 'aiQpick', 'aiSuspect', 'extFindings',
   'hotNotes', 'starS', 'starT', 'starA', 'starR', 'starAiOut', 'starFollowAns', 'starExtReflect',
   'voxFb1', 'voxFb2', 'voxFb3', 'voxObservation',
@@ -2040,18 +2091,32 @@ function refreshGates() {
   // S3 — ATS ja hakemus
   const kwCount = ['kw1', 'kw2', 'kw3', 'kw4', 'kw5'].filter(id => val(id).length > 0).length;
   const adOk = val('adText').length >= 20;
+  const ats1Done = val('atsAiOut').length > 40 && !val('atsAiOut').startsWith('AI-vertailu');
   if ($('btnAtsCompare')) $('btnAtsCompare').disabled = !(adOk && kwCount >= 3);
-  $('atsAiStatus').textContent = (adOk && kwCount >= 3) ? 'Valmis vertailtavaksi.' : 'Liitä ilmoitus ja kirjoita vähintään 3 omaa avainsanaa ensin.';
-  $('gateAppScaffold').classList.toggle('open', adOk && kwCount >= 3);
+  if ($('atsAiStatus') && !ats1Done) {
+    $('atsAiStatus').textContent = (adOk && kwCount >= 3) ? 'Valmis vertailtavaksi.' : 'Liitä ilmoitus ja kirjoita vähintään 3 omaa avainsanaa ensin.';
+  }
+  if ($('gateAtsChallenge')) $('gateAtsChallenge').classList.toggle('open', ats1Done);
+
+  const kw2Count = ['kw2a', 'kw2b', 'kw2c', 'kw2d', 'kw2e'].filter(id => val(id).length > 0).length;
+  const ad2Ok = val('adText2').length >= 20;
+  const ats2Done = val('atsAiOut2').length > 40 && !val('atsAiOut2').startsWith('AI-palaute');
+  if ($('btnAtsCompare2')) $('btnAtsCompare2').disabled = !(ad2Ok && kw2Count >= 3);
+  if ($('atsAiStatus2') && !ats2Done) {
+    $('atsAiStatus2').textContent = (ad2Ok && kw2Count >= 3) ? 'Valmis AI-palautteeseen.' : 'Lataa ilmoitus 2 ja kirjoita vähintään 3 avainsanaa.';
+  }
+  const challengeReady = ats2Done && val('ats2Takeaway').length >= 25;
+  if ($('gateAppScaffold')) $('gateAppScaffold').classList.toggle('open', challengeReady);
+
   const sentences = [val('appWho'), val('appWhy'), val('appProof'), val('appAsk')];
   const sentOk = sentences.every(s => s.length >= 8);
   if ($('btnAppFeedback')) $('btnAppFeedback').disabled = !sentOk;
-  $('atsStatus').textContent = sentOk ? 'Runko valmis — kirjoita vielä pohdinta.' : 'Kirjoita kaikki neljä lausetta jatkaaksesi.';
+  if ($('atsStatus')) $('atsStatus').textContent = sentOk ? 'Runko valmis — kirjoita vielä pohdinta.' : 'Kirjoita kaikki neljä lausetta jatkaaksesi.';
   const flagsOk = ['f1', 'f2', 'f3', 'f4', 'f5'].every(f => localStorage.getItem(KEY + f) === '1');
   if ($('gateFlags')) $('gateFlags').classList.toggle('open', sentOk && val('atsReflection').length >= 15);
   if ($('flagStatus')) $('flagStatus').textContent = flagsOk ? 'Kaikki liput tarkistettu.' : 'Merkitse kaikki viisi jatkaaksesi.';
   if ($('gateClaudeAts')) $('gateClaudeAts').classList.toggle('open', flagsOk);
-  $('next3').classList.toggle('open', adOk && kwCount >= 3 && sentOk && val('atsReflection').length >= 15 && flagsOk && val('claudeAtsBack').length >= 20);
+  $('next3').classList.toggle('open', challengeReady && sentOk && val('atsReflection').length >= 15 && flagsOk && val('claudeAtsBack').length >= 20);
 
   // S4 — Yritystutkimus
   const research = val('coName') && [val('coWhat'), val('coWho'), val('coSkill'), val('coWhy')].filter(Boolean).length >= 3;
@@ -2370,22 +2435,27 @@ function runFinalOpenFeedback() {
 function updateExtPromptAts() {
   const el = $('extPromptAts');
   if (!el) return;
-  const kws = ['kw1', 'kw2', 'kw3', 'kw4', 'kw5'].map(val).filter(Boolean).join(', ');
+  const kws1 = ['kw1', 'kw2', 'kw3', 'kw4', 'kw5'].map(val).filter(Boolean);
+  const kws2 = ['kw2a', 'kw2b', 'kw2c', 'kw2d', 'kw2e'].map(val).filter(Boolean);
+  const useAd2 = val('adText2').length >= 20;
+  const ad = useAd2 ? val('adText2') : (val('adText') || '[LIITÄ ILMOITUSTEKSTI]');
+  const kws = (useAd2 && kws2.length ? kws2 : kws1).join(', ');
   el.textContent = [
     'Olet kokenut suomalainen rekrytoija. Soveltuu kaikille aloille.',
     'Arvioi hakijaa tätä ilmoitusta vasten ja kerro rehellisesti:',
-    '1) Mitkä avainsanat ilmoituksessa ovat tärkeitä mutta puuttuvat hakijan taustasta?',
+    '1) Mitkä avainsanat ilmoituksessa ovat tärkeitä mutta puuttuvat hakemusrungosta / taustasta?',
     '2) Mitkä hakijan taidot sopivat hyvin — mitä kannattaa korostaa?',
-    '3) Kolme konkreettista muutosta hakemustekstiin ennen lähettämistä.',
+    '3) Kolme konkreettista muutosta hakemustekstiin ennen lähettämistä (ei uudelleenkirjoitusta kokonaan).',
     '4) Yksi asia jonka useimmat hakijat jättävät huomaamatta tässä ilmoituksessa.',
     '',
-    'ILMOITUS:',
-    val('adText') || '[LIITÄ ILMOITUSTEKSTI]',
+    'ILMOITUS' + (useAd2 ? ' 2 (itsetesti)' : ' 1') + ':',
+    ad,
     '',
     'OMA TAUSTA / TAIDOT:',
     collectOwnFacts().join(' | ') || '[kirjoita taustasi / vahvuutesi]',
     'Tavoite: ' + (val('goalOwn') || '[tavoite]'),
     'Omat avainsanat joita löysin: ' + (kws || '[avainsanat]'),
+    'Itsetestin oppi: ' + (val('ats2Takeaway') || '(ei vielä)'),
     'Hakemusrunkoni:',
     'Kuka: ' + val('appWho'),
     'Miksi: ' + val('appWhy'),
@@ -2565,35 +2635,70 @@ Odottamme:
 
 Tarjoamme: perehdytyksen, mukavan tiimin ja mahdollisuuden kehittyä myymälätyössä.`;
 
+const SAMPLE_AD_2 = `Varastotyöntekijä / keräilijä — logistiikkakeskus, Vantaa
+
+Haemme vastuullista varastotyöntekijää keräilyyn ja lähetyksiin. Työ on fyysistä ja rytmistä — tilaukset pitää saada ulos ajallaan.
+
+Tehtävät:
+- tilausten keräily WMS-järjestelmällä (varastonhallinta)
+- pakkaaminen ja lähetyksen valmistelu
+- trukkityöskentely (eduksi)
+- inventaarion ylläpito ja virheiden kirjaaminen
+- yhteistyö vuoropäällikön ja tiimin kanssa ruuhka-aikoina
+
+Odottamme:
+- tarkkuutta ja vastuuta numeroiden / viivakoodien kanssa
+- kykyä työskennellä seisomatyössä ja nostaa toistuvasti
+- joustavuutta 2-vuoroon
+- suomen kielen taitoa työohjeisiin
+- aiempaa varasto- tai logistiikkakokemusta eduksi (ei pakollinen)
+
+Meillä: selkeä perehdytys, työvuorolista 2 viikkoa etukäteen, mahdollisuus vakinaistamiseen.`;
+
 function useSampleAd() {
   if (val('adText').length > 40 && !confirm('Korvataanko nykyinen ilmoitusteksti harjoitusilmoituksella?')) return;
   $('adText').value = SAMPLE_AD;
   save('adText');
   refreshGates();
-  if ($('atsAiStatus')) $('atsAiStatus').textContent = 'Harjoitusilmoitus ladattu — poimi nyt 5 avainsanaa itse.';
+  if ($('atsAiStatus')) $('atsAiStatus').textContent = 'Ilmoitus 1 ladattu — poimi nyt 5 avainsanaa itse.';
 }
 
-function runAtsCompare() {
-  const keywords = ['kw1', 'kw2', 'kw3', 'kw4', 'kw5'].map(val).filter(Boolean);
-  if (val('adText').length < 20 || keywords.length < 3) {
-    $('atsAiStatus').textContent = 'Liitä ilmoitus ja kirjoita vähintään 3 omaa avainsanaa ensin.';
+function useSampleAd2() {
+  if (val('adText2').length > 40 && !confirm('Korvataanko ilmoitus 2 harjoitusilmoituksella?')) return;
+  $('adText2').value = SAMPLE_AD_2;
+  save('adText2');
+  refreshGates();
+  if ($('atsAiStatus2')) $('atsAiStatus2').textContent = 'Ilmoitus 2 ladattu — poimi 5 avainsanaa ilman vinkkejä.';
+}
+
+function runAtsCompare(which) {
+  const round = which === 2 ? 2 : 1;
+  const adId = round === 2 ? 'adText2' : 'adText';
+  const kwIds = round === 2 ? ['kw2a', 'kw2b', 'kw2c', 'kw2d', 'kw2e'] : ['kw1', 'kw2', 'kw3', 'kw4', 'kw5'];
+  const outId = round === 2 ? 'atsAiOut2' : 'atsAiOut';
+  const statusId = round === 2 ? 'atsAiStatus2' : 'atsAiStatus';
+  const btn = round === 2 ? $('btnAtsCompare2') : $('btnAtsCompare');
+  const keywords = kwIds.map(val).filter(Boolean);
+  if (val(adId).length < 20 || keywords.length < 3) {
+    if ($(statusId)) $(statusId).textContent = 'Liitä ilmoitus ja kirjoita vähintään 3 omaa avainsanaa ensin.';
     return;
   }
   const user = [
     'Työpaikkailmoitus:',
-    val('adText'),
+    val(adId),
     '',
-    'Hakijan itse löytämät avainsanat: ' + keywords.join(', '),
+    'Hakijan itse poimimat avainsanat: ' + keywords.join(', '),
     '',
-    'Tehtävä:',
-    '1) Listaa 8 tärkeintä avainsanaa tai taitoa ilmoituksesta.',
-    '2) Kerro, mitkä hakijan avainsanoista löytyvät ilmoituksesta tai ovat lähellä sitä.',
-    '3) Ehdota 2 avainsanaa jotka hakijalta puuttuu.',
-    'Älä kirjoita hakemusta.'
+    'Anna palaute SUOMEKSI, lyhyesti, näillä otsikoilla:',
+    'OSUMAT: mitkä hakijan sanoista ovat oikeasti tärkeitä tässä ilmoituksessa (max 5).',
+    'MISSASI: 2–3 tärkeää sanaa/ilmausta ilmoituksesta joita hakija EI poiminut (älä anna koko listaa 10 sanaa).',
+    'HEIKOT: jos jokin hakijan sanoista on turha ATS:n kannalta, kerro yksi ja miksi.',
+    'SEURAAVA ASKEL: ehdota YKSI lyhyt lause jonka hakija voisi itse kirjoittaa hakemukseen käyttäen kahta missattua sanaa + omaa kokemusta. Älä kirjoita koko hakemusta.',
+    'Älä keksi faktoja hakijasta. Älä kirjoita valmista hakemusta.'
   ].join('\n');
   callAi(
-    'Olet suomalainen rekrytointiassistentti. Autat hakijaa vertaamaan omia avainsanojaan ilmoitukseen. Et kirjoita hakemusta.',
-    user, 'atsAiOut', 'atsAiStatus', $('btnAtsCompare')
+    'Olet suomalainen rekrytoija. Annat rehellistä, lyhyttä ATS-avainsanapalautetta. Et kirjoita hakemusta. Suomi.',
+    user, outId, statusId, btn
   );
 }
 
