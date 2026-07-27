@@ -1181,11 +1181,11 @@ Huom: tämä on harjoitusfirma oppitunnille — ei oikea työnantaja.</textarea>
     <h3>Claude antaa kysymyksiä — ei valmista “miksi me” -lausetta</h3>
     <div class="tip">
       <b>Mitä Claude tekee?</b>
-      Sama tyyli kuin prompttiarviossa: arvosana tutkimuksellesi + 5 tutkimuskysymystä. Sinä valitset yhden, vastaat paketista, ja merkitset jos Claude kuulostaa liian yleiseltä.
+      Arvosana vain niihin 4 vastaukseen joita kysyttiin (ei kilpailijoita, talouslukuja tms.). Lisäksi 5 tutkimuskysymystä — ne eivät vaikuta arvosanaan. Valitse yksi, vastaa paketista, merkitse jos Claude on liian yleinen.
     </div>
     <div class="btn-row">
       <button class="btn btn-forest" type="button" id="btnAi3" onclick="runResearchAi(1)">Claude arvioi + 5 kysymystä</button>
-      <button class="btn btn-ghost btn-retry" type="button" onclick="retryAiOut('ai3out',null)">Kokeile uudestaan</button>
+      <button class="btn btn-ghost btn-retry" type="button" onclick="retryAiOut('ai3out',null)">Tyhjennä palaute</button>
     </div>
     <div class="ai-out" id="ai3out">Clauden palaute…</div>
     <label class="field">Valitse YKSI Clauden kysymys ja vastaa siihen paketista</label>
@@ -3038,6 +3038,40 @@ async function runPromptAsk(n) {
   );
 }
 
+/** Bump unfair low scores when student already answered what was asked. */
+function fairUpgradeResearchOut(outId, fieldIds, minFilled) {
+  const el = $(outId);
+  if (!el) return false;
+  const text = (isFieldEl(el) ? el.value : el.textContent || '').trim();
+  if (text.length < 30) return false;
+  const m = text.match(/Arvosana[:\s]*([1-5])\s*\/\s*5/i);
+  if (!m) return false;
+  const score = Number(m[1]);
+  if (score >= 4) return false;
+  const filled = fieldIds.filter(function (id) { return val(id).length >= 18; }).length;
+  if (filled < minFilled) return false;
+  const blob = fieldIds.map(val).join(' ').toLowerCase();
+  const hasConcrete = /(ruoka|kauppa|asiakas|kassa|hyllyt|tampere|palvelu|tiimi|joustav|opiskelij|myymäl|varasto|keräil|toimisto|kalenteri|sähköposti|logihub|actadesk|kotimarket)/i.test(blob)
+    || blob.length >= 80;
+  if (!hasConcrete) return false;
+  const newScore = (filled >= fieldIds.length && hasConcrete) ? 5 : 4;
+  let next = text.replace(/Arvosana[:\s]*[1-5]\s*\/\s*5/i, 'Arvosana: ' + newScore + '/5');
+  if (!/oikeudenmukaisesti/i.test(next)) {
+    next += '\n\n(Arvosana päivitetty oikeudenmukaisesti: vain kysytyt vastaukset vaikuttavat.)';
+  }
+  if (isFieldEl(el)) el.value = next;
+  else el.textContent = next;
+  localStorage.setItem(KEY + outId, next);
+  if (!workRestoring) scheduleWorkSave();
+  return true;
+}
+
+function fairUpgradeStoredResearchScores() {
+  fairUpgradeResearchOut('ai3out', ['coWhat', 'coWho', 'coSkill', 'coWhy'], 3);
+  fairUpgradeResearchOut('ai4out2', ['co2Fact', 'co2Ask', 'co2Risk'], 2);
+  fairUpgradeResearchOut('ai4out3', ['co3Fact', 'co3WhyFact', 'co3Ask', 'co3Risk'], 3);
+}
+
 async function callAi(system, user, outId, statusId, btn) {
   if (btn) { btn.disabled = true; btn.dataset.old = btn.textContent; btn.textContent = 'Odota...'; }
   if (statusId && $(statusId)) $(statusId).textContent = 'Haetaan vastausta...';
@@ -3068,6 +3102,9 @@ async function callAi(system, user, outId, statusId, btn) {
     }
     if (!text) text = 'AI ei antanut vastausta — jatka omilla muistiinpanoilla.';
     setOut(outId, text);
+    if (outId === 'ai3out' || outId === 'ai4out2' || outId === 'ai4out3') {
+      fairUpgradeStoredResearchScores();
+    }
     if (statusId && $(statusId)) $(statusId).textContent = 'Valmis — lue ja kyseenalaista.';
   } catch (e) {
     setOut(outId, 'Yhteysvirhe: ' + e.message + '\n\nKirjoita oma luonnos kenttiin ja jatka.');
@@ -3324,80 +3361,100 @@ function runAppFeedback() {
 
 function runResearchAi(which) {
   const round = which === 3 ? 3 : (which === 2 ? 2 : 1);
+  const fairRules = [
+    'OIKEUDENMUKAINEN ARVOSANA — PAKOLLINEN:',
+    '- Anna arvosana VAIN kysymyksiin joihin opiskelija vastasi. Älä vaadi asioita joita EI kysytty.',
+    '- Älä vähennä pisteitä: kilpailijoista, liikevaihdosta, LinkedInistä, synkästä analyysista, "miksi me" -lauseesta tai muusta jota ei pyydetty.',
+    '- Jos vastaukset ovat konkreettisia ja sopivat harjoituspakettiin → anna 4/5 tai 5/5.',
+    '- 5/5 = vastaukset konkreettisia ja paketista / ilmoituksesta.',
+    '- 4/5 = hyvä, pieni tarkennus riittää.',
+    '- 3/5 = osittain yleisiä mutta jotain konkretiaa on.',
+    '- 2/5 tai 1/5 VAIN jos vastaukset ovat tyhjiä, väärää tietoa, tai täysin yleisiä ilman yhtään paketin faktaa.',
+    '- Ole kannustava. Tämä on harjoitus, ei tentti.',
+    '- Tutkimuskysymykset / seuraavat askeleet EIVÄT vaikuta arvosanaan — kirjoita ne vasta arvosanan jälkeen.'
+  ].join('\n');
   if (round === 1) {
     const user = [
-      'Arvioi opiskelijan yritystutkimus (harjoitusfirma, paketti annettu moduulissa).',
+      'Arvioi opiskelijan vastaukset harjoitusfirmaan. Opiskelijalle kysyttiin VAIN nämä 4 asiaa:',
+      '1) Mitä yritys tekee yhdellä lauseella?',
+      '2) Kenelle he myyvät / ketä palvelevat?',
+      '3) Mikä ilmoituksessa toistuu (taito / arvo)?',
+      '4) Yksi asia joka SINUA kiinnostaa — miksi?',
+      '',
       'Yritys/rooli: ' + val('coName'),
-      'Paketti (ote): ' + val('coPack1').slice(0, 500),
+      'Harjoituspaketti (ote): ' + val('coPack1').slice(0, 700),
       '',
-      'Oma tutkimus:',
-      'Tekee: ' + val('coWhat'),
-      'Asiakkaat: ' + val('coWho'),
-      'Ilmoituksen painotus: ' + val('coSkill'),
-      'Mikä kiinnostaa: ' + val('coWhy'),
+      'OPISKELIJAN VASTAUKSET:',
+      '1) Tekee: ' + val('coWhat'),
+      '2) Asiakkaat: ' + val('coWho'),
+      '3) Ilmoituksen painotus: ' + val('coSkill'),
+      '4) Mikä kiinnostaa: ' + val('coWhy'),
       '',
-      'Vastaa SUOMEKSI kuten prompttiarvio:',
-      '1) Arvosana 1–5 (tutkimuksen konkretia)',
-      '2) Mikä toimii (max 2)',
-      '3) Mitä korjata (max 2) — liian yleistä / puuttuu paketista',
-      '4) Anna 5 tarkkaa tutkimuskysymystä joilla syventää ENNEN hakemusta',
-      '5) Yksi kysymys hakijalle',
-      'Älä kirjoita valmista "miksi tämä yritys" -kappaletta. Älä keksi faktoja joita ei ole paketissa tai opiskelijan vastauksissa.'
+      fairRules,
+      '',
+      'Vastaa SUOMEKSI, lyhyesti:',
+      '1) Arvosana: X/5  (vain yllä olevien 4 vastauksen perusteella)',
+      '2) Mikä toimii (max 2 lyhyttä kohtaa — viittaa opiskelijan sanoihin)',
+      '3) Mitä tarkentaa (max 2) — vain jos tarpeen; älä keksi uusia vaatimuksia',
+      '4) Viisi tutkimuskysymystä syventämiseen (ERILLINEN OSA — ei vaikuta arvosanaan)',
+      'Älä kirjoita valmista "miksi tämä yritys" -kappaletta. Älä keksi faktoja.'
     ].join('\n');
     callAi(
-      'Olet suomalainen AI-työpajan ohjaaja. Annat ystävällistä, suoraa palautetta yritystutkimuksesta. Suomi. Lyhyt.',
+      'Olet kannustava suomalainen AI-työpajan ohjaaja. Arvioit VAIN kysyttyjä vastauksia. Et rankaise puuttuvasta jota ei kysytty. Suomi. Lyhyt.',
       user, 'ai3out', null, $('btnAi3')
     );
     return;
   }
   if (round === 2) {
     const user = [
-      'Hakija teki yritystutkimuksen harjoituspaketista 2. Arvioi laatua — älä keksi uusia faktoja.',
-      'Ole tiukempi: erota konkretia ja pehmeä kehu.',
+      'Arvioi opiskelijan yritystutkimus firma 2. Kysytyt kentät VAIN: yritys/rooli, lähde, fakta, haastattelukysymys, mikä epäselvää.',
       '',
       'Yritys/rooli: ' + val('co2Name'),
       'Lähde: ' + val('co2Source'),
       'Fakta: ' + val('co2Fact'),
       'Haastattelukysymys: ' + val('co2Ask'),
       'Epäselvää: ' + val('co2Risk'),
-      'Paketti (ote): ' + val('coPack2').slice(0, 400),
+      'Paketti (ote): ' + val('coPack2').slice(0, 500),
+      '',
+      fairRules,
       '',
       'Vastaa SUOMEKSI:',
-      '1) Arvosana 1–5',
+      '1) Arvosana: X/5 (vain kysyttyjen kenttien perusteella)',
       '2) VAHVAA (max 2)',
-      '3) LIIAN YLEISTÄ (max 2)',
-      '4) TARKISTA VIELÄ: yksi asia paketista / jota ei löytynyt',
-      '5) HAASTATTELUUN: 3 kulmaa joista hakija rakentaa ITSE yhden lauseen — älä kirjoita lausetta valmiiksi',
+      '3) LIIAN YLEISTÄ (max 2) — vain jos totta',
+      '4) TARKISTA VIELÄ: yksi asia',
+      '5) HAASTATTELUUN: 3 kulmaa (ei valmista lausetta)',
       'Älä keksi firman palveluita joita hakija ei antanut.'
     ].join('\n');
     callAi(
-      'Olet kriittinen suomalainen rekrytoija ja AI-työpajan ohjaaja. Et keksi faktoja. Suomi. Lyhyt.',
+      'Olet kannustava suomalainen rekrytoija. Arvioit VAIN kysyttyjä kenttiä. Et rankaise puuttuvasta jota ei kysytty. Suomi. Lyhyt.',
       user, 'ai4out2', 'research2AiStatus', $('btnResearch2')
     );
     return;
   }
   const user = [
-    'Hakija teki vaikeamman yritystutkimuksen (firma 3). Arvioi — älä keksi faktoja.',
-    'Ole tiukka pehmeisiin kehuihin (“hyvä yritys”, “mukava tiimi”) ilman konkretiaa.',
+    'Arvioi opiskelijan yritystutkimus firma 3. Kysytyt kentät VAIN: yritys, lähde, fakta, miksi tämä fakta, haastattelukysymys, epäselvää.',
     '',
     'Yritys/rooli: ' + val('co3Name'),
     'Lähde: ' + val('co3Source'),
     'Fakta: ' + val('co3Fact'),
-    'Miksi tämä fakta (hakijan perustelu): ' + val('co3WhyFact'),
+    'Miksi tämä fakta: ' + val('co3WhyFact'),
     'Haastattelukysymys: ' + val('co3Ask'),
     'Epäselvää: ' + val('co3Risk'),
-    'Paketti (ote): ' + val('coPack3').slice(0, 400),
+    'Paketti (ote): ' + val('coPack3').slice(0, 500),
     '',
-    'Vastaa SUOMEKSI kuten prompttiarvio:',
-    '1) Arvosana 1–5',
+    fairRules,
+    '',
+    'Vastaa SUOMEKSI:',
+    '1) Arvosana: X/5 (vain kysyttyjen kenttien perusteella)',
     '2) Mikä toimii (max 2)',
-    '3) Mitä korjata (max 2)',
-    '4) Onko perustelu “miksi tämä fakta” riittävän vahva? (1–2 lausetta)',
+    '3) Mitä korjata (max 2) — vain jos totta',
+    '4) Onko “miksi tämä fakta” riittävän vahva? (1–2 lausetta)',
     '5) HAASTATTELUUN: 3 kulmaa — älä kirjoita valmista "miksi te" -lausetta',
     'Älä keksi faktoja joita ei ole annettu.'
   ].join('\n');
   callAi(
-    'Olet kriittinen suomalainen rekrytoija ja AI-työpajan ohjaaja. Et keksi faktoja. Suomi. Lyhyt.',
+    'Olet kannustava suomalainen rekrytoija. Arvioit VAIN kysyttyjä kenttiä. Et rankaise puuttuvasta jota ei kysytty. Suomi. Lyhyt.',
     user, 'ai4out3', 'research3AiStatus', $('btnResearch3')
   );
 }
@@ -4005,6 +4062,7 @@ function applySprintData(d) {
     if (d.shown && d.shown.finished && $('allDone')) $('allDone').classList.add('show');
     const target = (d.screen != null) ? Number(d.screen) : Number(d.curScreen) || 0;
     go(Number.isFinite(target) ? target : 0);
+    fairUpgradeStoredResearchScores();
     refreshGates();
     updateAllLivePrompts();
     return true;
@@ -4106,13 +4164,17 @@ document.addEventListener('visibilitychange', function () {
 });
 
 loadAll();
+fairUpgradeStoredResearchScores();
 renderDecoder();
 setProg();
 $('hero').style.display = 'flex';
 refreshGates();
 updateAllLivePrompts();
 voxRenderTimeline();
-initWorkPersistence();
+initWorkPersistence().then(function () {
+  fairUpgradeStoredResearchScores();
+  if (!workRestoring) scheduleWorkSave();
+});
 </script>
 </body>
 </html>
