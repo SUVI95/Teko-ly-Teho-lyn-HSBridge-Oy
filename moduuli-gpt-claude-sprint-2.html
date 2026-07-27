@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPT and CLAUDE SPRINT 2 | AI Polku</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Lexend:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c1915;--ink2:#3d3830;--paper:#f3efe6;--paper2:#e8e2d6;--cream:#faf7f0;
+  --accent:#c45c26;--accent-deep:#9a4519;--forest:#2f5d4a;--forest-lt:#e4efe9;
+  --warn:#8a3b2e;--muted:#6b6459;--line:rgba(28,25,21,.12);
+  --shadow:0 10px 40px rgba(28,25,21,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:19px}
+body{
+  font-family:'Lexend',sans-serif;
+  background:var(--paper);color:var(--ink);
+  line-height:1.7;letter-spacing:.01em;word-spacing:.04em;
+  overflow-x:hidden;
+}
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--forest));z-index:300;width:0%;transition:width .35s}
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;background:rgba(243,239,230,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav-left{display:flex;align-items:center;gap:.75rem;min-width:0}
+.nav-dash{display:inline-flex;align-items:center;gap:.35rem;text-decoration:none;color:var(--ink2);font-size:.82rem;font-weight:600;padding:.4rem .7rem;border:1px solid var(--line);border-radius:10px;background:#fff;white-space:nowrap;flex-shrink:0;transition:border-color .15s,color .15s,background .15s}
+.nav-dash:hover{border-color:rgba(196,92,38,.45);color:var(--accent);background:rgba(196,92,38,.06)}
+.nav-badge{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(196,92,38,.35);background:rgba(196,92,38,.08);padding:4px 10px;border-radius:999px;white-space:nowrap}
+.nav-title{font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-right{display:flex;align-items:center;gap:.75rem;flex-shrink:0}
+.nav-map{display:flex;gap:4px}
+.nav-pip{width:20px;height:4px;border-radius:2px;background:var(--paper2);cursor:pointer}
+.nav-pip.on{background:var(--accent)}.nav-pip.done{background:var(--forest)}
+.burger{width:44px;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:0}
+.burger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:1px;transition:transform .2s,opacity .2s}
+.burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.menu-backdrop{position:fixed;inset:0;background:rgba(28,25,21,.35);z-index:240;opacity:0;pointer-events:none;transition:opacity .2s}
+.menu-backdrop.show{opacity:1;pointer-events:auto}
+.side-menu{position:fixed;top:0;right:0;bottom:0;width:min(360px,92vw);background:var(--cream);z-index:250;box-shadow:-12px 0 40px rgba(28,25,21,.18);transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;padding:1.25rem 1.1rem 1.5rem}
+.side-menu.open{transform:translateX(0)}
+.side-menu-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--line)}
+.side-menu-head h3{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:500;line-height:1.25}
+.side-menu-head p{font-size:.8rem;color:var(--muted);margin-top:.3rem}
+.menu-close{width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:1.25rem;cursor:pointer;line-height:1;color:var(--ink)}
+.menu-list{display:flex;flex-direction:column;gap:.4rem;overflow:auto;flex:1}
+.menu-item{display:flex;align-items:flex-start;gap:.75rem;text-align:left;width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:.8rem .9rem;cursor:pointer;font:inherit;transition:border-color .15s,background .15s}
+.menu-item:hover{border-color:rgba(196,92,38,.4);background:rgba(196,92,38,.04)}
+.menu-item.current{border-color:var(--accent);background:rgba(196,92,38,.08)}
+.menu-item.done{border-color:rgba(47,93,74,.35)}
+.menu-num{width:28px;height:28px;border-radius:8px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0}
+.menu-item.done .menu-num{background:var(--forest)}
+.menu-item.current .menu-num{background:var(--accent)}
+.menu-item strong{display:block;font-size:.92rem;line-height:1.3}
+.menu-item small{display:block;font-size:.75rem;color:var(--muted);margin-top:.2rem}
+.menu-foot{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);font-size:.78rem;color:var(--muted);letter-spacing:.04em}
+@media(max-width:640px){.nav-title{display:none}.nav-map{display:none}.nav-badge{display:none}.nav-dash{font-size:.78rem;padding:.35rem .55rem}}
+.screen{display:none;min-height:100vh;padding:88px 1.25rem 5rem}
+.screen.on{display:block;animation:rise .45s ease}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.wrap{max-width:680px;margin:0 auto}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+h1,h2{font-family:'Fraunces',serif;font-weight:500;line-height:1.25;letter-spacing:-.01em}
+h1{font-size:clamp(2rem,5vw,3.2rem);margin-bottom:1rem}
+h1 em,h2 em{font-style:italic;color:var(--accent)}
+h2{font-size:clamp(1.55rem,3.4vw,2.15rem);margin-bottom:.65rem}
+h3{font-size:1.12rem;line-height:1.35;margin-bottom:.35rem}
+.lead{font-size:1.02rem;color:var(--ink2);max-width:36em;margin-bottom:1.25rem;line-height:1.65}
+.muted{color:var(--muted)}
+.hero{background:
+  radial-gradient(ellipse 70% 55% at 15% 20%,rgba(196,92,38,.18),transparent 55%),
+  radial-gradient(ellipse 50% 45% at 90% 80%,rgba(47,93,74,.16),transparent 50%),
+  linear-gradient(165deg,#1c1915 0%,#2a241c 55%,#1c1915 100%);
+  color:#f7f2e8;padding:6rem 1.25rem 4rem;min-height:100vh;display:flex;align-items:center}
+.hero .wrap{max-width:800px}
+.hero h1{color:#fff}.hero .lead{color:rgba(247,242,232,.75);max-width:620px}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:2rem 0 1.5rem}
+@media(max-width:640px){.rules{grid-template-columns:1fr}}
+.rule{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1rem 1.1rem}
+.rule b{display:block;font-family:'Fraunces',serif;font-size:1.2rem;margin-bottom:.35rem;color:#f0b48a}
+.rule span{font-size:.86rem;color:rgba(247,242,232,.7);display:block}
+.hero-tip{background:rgba(255,255,255,.05);border:1px dashed rgba(240,180,138,.4);border-radius:14px;padding:1rem 1.2rem;margin-bottom:1.5rem;font-size:.92rem;color:rgba(247,242,232,.85)}
+.hero-tip b{color:#f0b48a;display:block;margin-bottom:.3rem;font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase}
+.daymap{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:1.25rem 1.35rem;margin-bottom:2rem}
+.daymap h3{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:#f0b48a;margin-bottom:.75rem}
+.daymap ol{padding-left:1.15rem;color:rgba(247,242,232,.78);font-size:.92rem}
+.daymap li{margin:.45rem 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border:none;border-radius:10px;padding:.85rem 1.25rem;font:inherit;font-weight:600;font-size:.92rem;cursor:pointer;transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-1px)}.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-deep)}
+.btn-ink{background:var(--ink);color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink2)}
+.btn-forest{background:var(--forest);color:#fff}
+.btn-row{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:1rem}
+.card{background:var(--cream);border:1px solid var(--line);border-radius:18px;padding:1.2rem 1.25rem;box-shadow:var(--shadow);margin:1.5rem 0}
+.card h3{font-family:'Fraunces',serif;font-size:1.18rem;margin-bottom:.45rem}
+.ctx{background:var(--forest-lt);border-left:4px solid var(--forest);border-radius:0 12px 12px 0;padding:.85rem 1rem;margin:1rem 0;font-size:.95rem}
+.ctx strong{color:var(--forest)}
+.ctx ul{padding-left:0;margin-top:.5rem;list-style:none}
+.ctx li{margin:.45rem 0;padding-left:1.4rem;position:relative}
+.ctx li::before{content:'→';position:absolute;left:0;color:var(--forest);font-weight:700}
+.how{background:#fff;border:1px solid rgba(196,92,38,.28);border-radius:14px;padding:1rem;margin:1rem 0}
+.how .lbl{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.65rem}
+.how ol{list-style:none;padding:0;display:grid;gap:.55rem;counter-reset:step}
+.how li{
+  counter-increment:step;margin:0;font-size:.92rem;line-height:1.5;
+  display:grid;grid-template-columns:2rem 1fr;gap:.7rem;align-items:start;
+  background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:.7rem .8rem;
+}
+.how li::before{
+  content:counter(step);width:2rem;height:2rem;border-radius:8px;
+  background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:.85rem;flex-shrink:0;
+}
+.example{font-family:'IBM Plex Mono',monospace;font-size:.78rem;background:var(--paper2);border-radius:10px;padding:.85rem 1rem;margin:.6rem 0 .75rem;white-space:pre-wrap;line-height:1.55}
+label.field{display:block;font-weight:600;font-size:.95rem;margin:1.15rem 0 .35rem}
+textarea,input[type=text],select{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:.9rem 1rem;font:inherit;font-size:1rem;background:#fff;color:var(--ink);resize:vertical;line-height:1.55}
+textarea:focus,input:focus,select:focus{outline:3px solid rgba(196,92,38,.35);border-color:transparent}
+textarea{min-height:100px}
+.choice-grid{display:grid;gap:.6rem;margin:1rem 0}
+.choice{text-align:left;background:#fff;border:2px solid var(--line);border-radius:12px;padding:.95rem 1.1rem;cursor:pointer;font:inherit;font-size:.92rem;transition:border-color .15s,background .15s}
+.choice:hover:not(:disabled){border-color:rgba(196,92,38,.45)}
+.choice:disabled{cursor:default}
+.choice.picked{border-color:var(--accent);background:rgba(196,92,38,.06)}
+.choice.good{border-color:var(--forest);background:var(--forest-lt)}
+.choice.bad{border-color:var(--warn);background:rgba(138,59,46,.08)}
+.reveal{display:none;margin-top:1rem;padding:1rem 1.15rem;border-radius:12px;background:rgba(47,93,74,.08);border-left:4px solid var(--forest);font-size:.92rem}
+.reveal.show{display:block;animation:rise .35s ease}
+.timer-box{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin:1rem 0;padding:1rem;background:var(--ink);color:#fff;border-radius:14px}
+.timer-num{font-family:'Fraunces',serif;font-size:2.2rem;min-width:4.2rem}
+.builder{display:grid;gap:.85rem}
+.builder-row{display:grid;grid-template-columns:130px 1fr;gap:.65rem;align-items:start}
+@media(max-width:560px){.builder-row{grid-template-columns:1fr}}
+.builder-row span{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:.7rem}
+.ai-out{min-height:120px;background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:1rem;white-space:pre-wrap;font-size:.92rem;margin-top:.75rem}
+.gate{opacity:.4;pointer-events:none;filter:grayscale(.2);transition:opacity .3s}
+.gate.open{opacity:1;pointer-events:auto;filter:none}
+.ext{background:linear-gradient(135deg,rgba(196,92,38,.08),rgba(47,93,74,.08));border:1px solid rgba(196,92,38,.25);border-radius:16px;padding:1.2rem 1.3rem;margin:1.25rem 0}
+.ext h4{font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:.4rem}
+.checklist label{display:flex;gap:.65rem;align-items:flex-start;padding:.55rem 0;border-bottom:1px solid var(--line);font-size:.92rem;cursor:pointer}
+.checklist input{margin-top:.35rem;accent-color:var(--forest)}
+.status{font-size:.84rem;color:var(--muted);margin-top:.5rem;min-height:1.3em}
+.tip{background:rgba(196,92,38,.07);border:1px dashed rgba(196,92,38,.4);border-radius:12px;padding:.75rem .95rem;margin:.75rem 0;font-size:.88rem;line-height:1.55;color:var(--ink2)}
+.tip b{display:block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.3rem}
+.field-tip{font-size:.82rem;color:var(--muted);margin:0 0 .4rem;line-height:1.45;max-width:36em}
+
+/* --- visual / easy-read helpers --- */
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:.65rem;margin:1rem 0}
+@media(max-width:560px){.tiles{grid-template-columns:1fr}}
+.tile{background:#fff;border:1px solid var(--line);border-radius:14px;padding:.9rem 1rem;min-height:0}
+.tile .ico{display:block;font-family:'Fraunces',serif;font-size:1.35rem;color:var(--accent);line-height:1;margin-bottom:.35rem}
+.tile strong{display:block;font-size:.95rem;margin-bottom:.25rem;line-height:1.3}
+.tile span{display:block;font-size:.84rem;color:var(--ink2);line-height:1.45}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:.45rem;margin:1rem 0}
+.flow-step{flex:1 1 120px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:.8rem .85rem;text-align:center}
+.flow-step .n{display:block;width:1.75rem;height:1.75rem;margin:0 auto .4rem;border-radius:8px;background:var(--forest);color:#fff;font-weight:700;font-size:.8rem;line-height:1.75rem}
+.flow-step b{display:block;font-size:.88rem;margin-bottom:.2rem}
+.flow-step span{display:block;font-size:.78rem;color:var(--muted);line-height:1.4}
+.flow-arrow{align-self:center;color:var(--accent);font-size:1.2rem;font-weight:700;flex:0 0 auto}
+@media(max-width:560px){.flow-arrow{display:none}}
+.sit{background:var(--ink);color:#f7f2e8;border-radius:16px;padding:1.1rem 1.15rem;margin:1rem 0}
+.sit .sit-lbl{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#f0b48a;margin-bottom:.45rem}
+.sit p{margin:.4rem 0 0;font-size:.92rem;line-height:1.55;color:rgba(247,242,232,.88)}
+.sit .job{font-family:'Fraunces',serif;font-size:1.15rem;color:#fff;margin:.35rem 0 .5rem;line-height:1.35}
+.sit .story-meta{display:flex;flex-wrap:wrap;gap:.45rem .75rem;margin:.55rem 0 .85rem}
+.sit .story-meta span{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:rgba(247,242,232,.7);border:1px solid rgba(247,242,232,.18);border-radius:999px;padding:.28rem .65rem}
+.sit .wish{margin-top:.9rem;padding:.85rem 1rem;border-radius:12px;background:rgba(240,180,138,.12);border:1px solid rgba(240,180,138,.35)}
+.sit .wish b{display:block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:#f0b48a;margin-bottom:.35rem}
+.sit .wish p{margin:0;color:#fff;font-size:.95rem}
+.fold{margin:.75rem 0;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+.fold>summary{
+  cursor:pointer;list-style:none;padding:.75rem 1rem;font-weight:600;font-size:.9rem;
+  display:flex;align-items:center;gap:.5rem;user-select:none;
+}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::before{content:'＋';width:1.4rem;height:1.4rem;border-radius:6px;background:var(--paper2);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--accent);flex-shrink:0}
+.fold[open]>summary::before{content:'－'}
+.fold .fold-body{padding:0 1rem 1rem;font-size:.9rem;line-height:1.55;color:var(--ink2)}
+.fold .fold-body .example{margin-top:.5rem}
+.help{margin:-.05rem 0 .45rem}
+.help>summary{cursor:pointer;font-size:.8rem;color:var(--accent);font-weight:600;list-style:none}
+.help>summary::-webkit-details-marker{display:none}
+.help>summary::before{content:'ⓘ ';font-weight:700}
+.help[open]>summary{margin-bottom:.25rem}
+.help .field-tip{margin:0;padding:.55rem .7rem;background:var(--paper2);border-radius:8px}
+.one-line{font-size:.95rem;line-height:1.55;margin:.35rem 0 .75rem;max-width:36em}
+.btn-retry{font-size:.85rem;padding:.55rem .9rem;margin-top:.65rem}
+.retry-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.65rem;align-items:center}
+.footer-nav{display:flex;justify-content:space-between;gap:1rem;margin-top:2rem;padding-top:1.25rem;border-top:1px solid var(--line);flex-wrap:wrap}
+.tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--forest);background:var(--forest-lt);padding:3px 8px;border-radius:6px;margin-bottom:.5rem}
+.warnbox{background:rgba(138,59,46,.08);border-left:4px solid var(--warn);padding:1rem 1.1rem;border-radius:0 12px 12px 0;margin:1rem 0;font-size:.92rem}
+.mark-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+@media(max-width:560px){.mark-row{grid-template-columns:1fr}}
+.done-banner{display:none;margin-top:1.5rem;padding:1.25rem;border-radius:16px;background:var(--forest-lt);border:1px solid rgba(47,93,74,.25);color:var(--forest);font-weight:600;text-align:center}
+.done-banner.show{display:block}
+/* --- new for expanded sprint --- */
+.star-quad{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:1rem 0}
+@media(max-width:640px){.star-quad{grid-template-columns:1fr}}
+.star-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem}
+.star-box .letter{font-family:'Fraunces',serif;font-size:1.25rem;color:var(--accent);margin-bottom:.3rem;display:block}
+.star-box p{font-size:.9rem;color:var(--ink2)}
+.decoder-progress{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.decoder-q{font-weight:600;font-size:1.05rem;margin:.5rem 0 .75rem}
+.kw-row{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin:.75rem 0}
+@media(max-width:680px){.kw-row{grid-template-columns:1fr 1fr}}
+.kw-row input{padding:.65rem .7rem;font-size:.86rem}
+.fb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1rem 0}
+@media(max-width:760px){.fb-grid{grid-template-columns:1fr}}
+.fb-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem}
+.fb-card h4{font-family:'Fraunces',serif;font-size:1rem;margin-bottom:.4rem;color:var(--forest)}
+.fb-card p{font-size:.9rem;white-space:pre-wrap}
+.vox-card{background:var(--ink);color:#f7f2e8;border-radius:18px;padding:1.4rem 1.4rem;margin:1.1rem 0}
+.vox-top{display:flex;align-items:center;gap:.6rem;font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(247,242,232,.6);margin-bottom:.9rem}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--muted);display:inline-block;flex-shrink:0}
+.live-dot.on{background:#e0564a;animation:pulse 1.1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.vox-q-label{font-size:.82rem;color:rgba(247,242,232,.55);margin-bottom:.3rem}
+.vox-q{font-family:'Fraunces',serif;font-size:1.25rem;line-height:1.45;min-height:2.6em}
+.vox-status{font-size:.88rem;color:rgba(247,242,232,.65);min-height:1.4em;margin-top:.5rem}
+.vox-timeline{display:flex;flex-direction:column;gap:.6rem;margin-top:1.1rem}
+.vox-turn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.75rem .9rem}
+.vox-turn .q{font-size:.76rem;color:rgba(247,242,232,.55);margin-bottom:.25rem}
+.vox-turn .a{font-size:.94rem}
+.vox-empty{font-size:.85rem;color:rgba(247,242,232,.4);margin-top:1rem}
+.vox-fallback{margin-top:1.25rem;padding-top:1.1rem;border-top:1px dashed rgba(255,255,255,.2);display:none}
+.vox-fallback.show{display:block}
+.vox-fallback label{color:rgba(247,242,232,.85)}
+.tool-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin:1.25rem 0}
+@media(max-width:720px){.tool-grid{grid-template-columns:1fr}}
+.tool-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:1rem 1.05rem}
+.tool-card .tool-name{font-family:'Fraunces',serif;font-size:1.15rem;color:#f0b48a;margin-bottom:.35rem}
+.tool-card p{font-size:.84rem;color:rgba(247,242,232,.72);margin:0}
+.tool-box{background:#fff;border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;padding:1rem 1.15rem;margin:1.1rem 0}
+.tool-box.claude{border-left-color:var(--forest)}
+.tool-box.gamma{border-left-color:#8a6a2f}
+.tool-box .tool-lbl{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.4rem}
+.tool-box.claude .tool-lbl{color:var(--forest)}
+.tool-box.gamma .tool-lbl{color:#8a6a2f}
+.tool-box h4{font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:.35rem}
+.tool-box p{font-size:.95rem;color:var(--ink2);margin:0 0 .45rem}
+.tool-box ul{padding-left:1.15rem;margin:.35rem 0 0;color:var(--ink2);font-size:.92rem}
+.tool-box li{margin:.2rem 0}
+.tt-row{display:grid;gap:.65rem;margin:1rem 0}
+.tt-item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem}
+.tt-item p.q{font-weight:600;margin-bottom:.65rem}
+.tt-btns{display:flex;gap:.5rem;flex-wrap:wrap}
+.tt-btns button{flex:1;min-width:110px;padding:.65rem 1rem;border-radius:10px;border:2px solid var(--line);background:var(--cream);font:inherit;font-weight:600;cursor:pointer}
+.tt-btns button:hover{border-color:rgba(196,92,38,.45)}
+.tt-btns button.good{border-color:var(--forest);background:var(--forest-lt);color:var(--forest)}
+.tt-btns button.bad{border-color:var(--warn);background:rgba(138,59,46,.08);color:var(--warn)}
+.tt-explain{display:none;margin-top:.75rem;padding:.85rem 1rem;border-radius:10px;background:rgba(47,93,74,.08);border-left:4px solid var(--forest);font-size:.92rem}
+.tt-explain.show{display:block}
+.quiz-score{font-family:'Fraunces',serif;font-size:1.6rem;margin:.5rem 0 1rem;color:var(--forest)}
+.skill-grid{display:grid;gap:.55rem;margin:.75rem 0}
+.strength-block{background:#fff;border:1px solid var(--line);border-radius:14px;padding:1rem 1.1rem;margin:.75rem 0}
+.strength-block .sb-num{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.55rem}
+.or-split{display:flex;align-items:center;gap:.85rem;margin:1.25rem 0 .85rem;color:var(--muted);font-size:.8rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase}
+.or-split::before,.or-split::after{content:'';flex:1;height:1px;background:var(--line)}
+.flag-list label{display:flex;gap:.7rem;align-items:flex-start;padding:.7rem 0;border-bottom:1px solid var(--line);font-size:.95rem;cursor:pointer;line-height:1.5}
+.flag-list input{margin-top:.35rem;accent-color:var(--forest);flex-shrink:0;width:1.1rem;height:1.1rem}
+.final-q{background:#fff;border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.2rem;margin:0 0 .85rem}
+.final-q h4{font-size:1rem;margin-bottom:.55rem}
+</style>
+<style>
+.topic-pick{display:grid;gap:.65rem;margin:1rem 0}
+.topic-pick label{display:flex;gap:.75rem;align-items:flex-start;padding:.9rem 1rem;border:2px solid var(--line);border-radius:14px;background:#fff;cursor:pointer;font-size:.95rem}
+.topic-pick input{margin-top:.35rem;accent-color:var(--accent)}
+.topic-pick label:has(input:checked){border-color:var(--accent);background:rgba(196,92,38,.06)}
+.sticky-topic{position:sticky;top:68px;z-index:50;background:var(--ink);color:#f7f2e8;border-radius:12px;padding:.65rem 1rem;margin:0 0 1.25rem;font-size:.88rem}
+.sticky-topic b{color:#f0b48a}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div id="mockAudioMount" aria-hidden="true"></div>
+<nav>
+  <div class="nav-left">
+    <a href="/" class="nav-dash" title="Takaisin työpöydälle">← Työpöytä</a>
+    <span class="nav-badge">GPT and CLAUDE SPRINT 2</span>
+    <span class="nav-title">Oma aihe · vähemmän ohjeita · enemmän työtä</span>
+  </div>
+  <div class="nav-right">
+    <div class="nav-map" id="navMap" aria-hidden="true"></div>
+    <button type="button" class="burger" id="burgerBtn" aria-label="Avaa valikko" aria-expanded="false" aria-controls="sideMenu" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<aside class="side-menu" id="sideMenu" aria-label="Jaksonavigointi" hidden>
+  <div class="side-menu-head">
+    <div>
+      <h3>Siirry jaksoon</h3>
+      <p>SPRINT 2 — sinä rakennat</p>
+    </div>
+    <button type="button" class="menu-close" onclick="closeMenu()" aria-label="Sulje valikko">×</button>
+  </div>
+  <div class="menu-list" id="menuList"></div>
+  <div class="menu-foot">
+    <a href="/" class="nav-dash" style="width:100%;justify-content:center;margin-bottom:.75rem">← Takaisin työpöydälle</a>
+    KYSY · TARKISTA · OMIN SANOIN
+  </div>
+</aside>
+
+<section class="hero" id="hero">
+  <div class="wrap">
+    <div class="eyebrow" style="color:rgba(247,242,232,.45)">GPT and CLAUDE SPRINT 2 · syventävä päivä</div>
+    <h1>GPT and CLAUDE<br><em>SPRINT 2</em></h1>
+    <p class="lead">SPRINT 1 opetti työkalut. Nyt sinä valitset aiheen — roolin tai alan johon oikeasti haet — ja rakennat sen ympärille promptit, hakemuksen, tutkimuksen ja STAR-tarinat. Vähemmän vinkkejä. Enemmän ajattelua ja työtä.</p>
+    <div class="rules">
+      <div class="rule"><b>1 · AIHE</b><span>Valitse oma rooli / ala. Kaikki harjoitukset liittyvät siihen.</span></div>
+      <div class="rule"><b>2 · RAKENNA</b><span>Kirjoita itse. AI arvioi — ei tee puolestasi.</span></div>
+      <div class="rule"><b>3 · KORJAA</b><span>Jokaisen palautteen jälkeen muutat jotain omin sanoin.</span></div>
+    </div>
+    <div class="hero-tip"><b>Edellytys</b><br>Tee ensin <a href="/module/moduuli-gpt-claude-sprint" style="color:#f0b48a">GPT and CLAUDE SPRINT</a>. Tässä ei opetella kuvaa tai PDF:ää uudestaan — käytät taitoja joita jo harjoittelit.</div>
+    <div class="daymap">
+      <h3>Päivä · noin 4 tuntia · 8 jaksoa</h3>
+      <ol>
+        <li><strong>Valitse aihe</strong> — rooli / ala johon rakennat</li>
+        <li><strong>Faktat aiheeseen</strong> — vahvuudet + tavoite</li>
+        <li><strong>Promptti + vertailu</strong> — ChatGPT vs Claude, sama ohje</li>
+        <li><strong>Koko hakemus</strong> — kirjoitat, AI kritisoii, korjaat</li>
+        <li><strong>Yritys aiheeseen</strong> — tutkit, AI arvioi tutkimuksen</li>
+        <li><strong>STAR × 2</strong> — valmiit kysymykset, sinä kirjoitat</li>
+        <li><strong>Live-ääni</strong> — haastattelu AI-rekrytoijalle</li>
+        <li><strong>Viikko + päätös</strong> — päivittäinen suunnitelma</li>
+      </ol>
+    </div>
+    <button class="btn btn-primary" onclick="go(1)">Valitse aihe →</button>
+  </div>
+</section>
+
+<!-- 1 TOPIC -->
+<section class="screen" id="s1">
+<div class="wrap">
+  <div class="eyebrow">Jakso 01 / 08</div>
+  <h2>Valitse aihe — <em>mihin rakennat tänään?</em></h2>
+  <p class="lead muted">Valitse yksi. Voit kirjoittaa oman. Loppu päivä seuraa tätä aihetta — ei yleistä harjoitusta.</p>
+  <div class="card">
+    <h3>Aihe / rooli</h3>
+    <div class="topic-pick" id="topicPick">
+      <label><input type="radio" name="topicPick" value="myymala"> Myymälä / asiakaspalvelu</label>
+      <label><input type="radio" name="topicPick" value="varasto"> Varasto / logistiikka</label>
+      <label><input type="radio" name="topicPick" value="toimisto"> Toimisto / assistentti</label>
+      <label><input type="radio" name="topicPick" value="hoiva"> Hoiva / avustava työ</label>
+      <label><input type="radio" name="topicPick" value="oma"> Oma aihe (kirjoita alle)</label>
+    </div>
+    <label class="field" for="topicTitle">Kirjoita aiheeksi rooli + ala (omia sanoja)</label>
+    <input type="text" id="topicTitle" placeholder="esim. myymälätyöntekijä ruokakaupassa / keräilijä Vantaalla / …">
+    <label class="field" for="topicWhy">Miksi juuri tämä — 3–5 lausetta</label>
+    <textarea id="topicWhy" style="min-height:110px" placeholder="Valitsin tämän koska…"></textarea>
+    <label class="field" for="topicHave">Mitä sinulla jo on tähän (kokemus, taidot, SPRINT 1)?</label>
+    <textarea id="topicHave" style="min-height:90px" placeholder="Olen tehnyt… Osaan…"></textarea>
+    <p class="status" id="topicStatus">Valitse / kirjoita aihe + miksi + mitä sinulla on.</p>
+  </div>
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(0)">← Alkuun</button>
+    <button class="btn btn-ink gate" id="next1" onclick="complete(1);go(2)">Jakso 2 →</button>
+  </div>
+</div>
+</section>
+
+<!-- 2 FACTS -->
+<section class="screen" id="s2">
+<div class="wrap">
+  <div id="topicBar2" class="sticky-topic" style="display:none"></div>
+  <div class="eyebrow">Jakso 02 / 08</div>
+  <h2>Faktat aiheeseen — <em>ennen AI:ta</em></h2>
+  <p class="lead muted">Kirjoita 3 vahvuutta + tilanne kuhunkin. Liittyvät valitsemaasi aiheeseen. Ei AI:ta vielä.</p>
+  <div class="card">
+    <div class="strength-block">
+      <div class="sb-num">Vahvuus 1</div>
+      <input type="text" id="str1" placeholder="Vahvuus">
+      <textarea id="strSit1" style="min-height:70px;margin-top:.5rem" placeholder="Yksi oikea tilanne…"></textarea>
+    </div>
+    <div class="strength-block">
+      <div class="sb-num">Vahvuus 2</div>
+      <input type="text" id="str2" placeholder="Vahvuus">
+      <textarea id="strSit2" style="min-height:70px;margin-top:.5rem" placeholder="Yksi oikea tilanne…"></textarea>
+    </div>
+    <div class="strength-block">
+      <div class="sb-num">Vahvuus 3</div>
+      <input type="text" id="str3" placeholder="Vahvuus">
+      <textarea id="strSit3" style="min-height:70px;margin-top:.5rem" placeholder="Yksi oikea tilanne…"></textarea>
+    </div>
+    <label class="field" for="goalOwn">Tavoite tässä haussa (aiheeseesi)</label>
+    <textarea id="goalOwn" style="min-height:90px" placeholder="Haen… Haluan näyttää…"></textarea>
+    <p class="status" id="factStatus">Täytä 3 vahvuutta + tilanteet + tavoite.</p>
+  </div>
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(1)">← Jakso 1</button>
+    <button class="btn btn-ink gate" id="next2" onclick="complete(2);go(3)">Jakso 3 →</button>
+  </div>
+</div>
+</section>
+
+<!-- 3 PROMPT + COMPARE -->
+<section class="screen" id="s3">
+<div class="wrap">
+  <div id="topicBar3" class="sticky-topic" style="display:none"></div>
+  <div class="eyebrow">Jakso 03 / 08</div>
+  <h2>Promptti aiheeseesi — <em>sitten vertaa työkaluja</em></h2>
+  <p class="lead muted">Rakenna yksi hyvä promptti omasta aiheestasi. Claude arvioi. Sitten sama promptti ChatGPT:hen ja Claudeen — kirjoitat erot itse.</p>
+  <div class="card">
+    <h3>Rakenna promptti</h3>
+    <p class="one-line muted">Tehtävä: apua vahvuuksien tai haastattelukysymysten miettimiseen aiheeseesi — ei valmista hakemusta.</p>
+    <div class="builder">
+      <div class="builder-row"><span>Rooli</span><input type="text" id="pRole" placeholder="Keneksi AI asettuu?"></div>
+      <div class="builder-row"><span>Tilanne</span><textarea id="pSit" style="min-height:90px" placeholder="Oma aihe + faktat + mitä puuttuu…"></textarea></div>
+      <div class="builder-row"><span>Tehtävä</span><textarea id="pTask" style="min-height:70px" placeholder="Mitä AI tekee?"></textarea></div>
+      <div class="builder-row"><span>Rajat</span><input type="text" id="pBound" placeholder="suomeksi, älä keksi faktoja…"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="buildPrompt()">Näytä prompti</button>
+      <button class="btn btn-forest" type="button" id="btnFb" onclick="runPromptFeedback()">Claude arvioi promptin</button>
+      <button class="btn btn-primary" type="button" id="btnAsk" onclick="runPromptAsk()">Kysy AI:lta täällä</button>
+    </div>
+    <textarea id="pBuilt" readonly style="min-height:110px;background:var(--paper2);margin-top:1rem"></textarea>
+    <div class="ai-out" id="pFb">Clauden palaute…</div>
+    <div class="ai-out" id="pOut">AI-vastaus…</div>
+  </div>
+  <div class="card gate" id="gateCompare">
+    <h3>ChatGPT vs Claude — sama promptti</h3>
+    <p class="one-line muted">Kopioi prompttisi molempiin. Älä liitä tänne linkkejä. Kirjoita mitä eroa huomasit.</p>
+    <label class="field" for="cmpGpt">ChatGPT — mitä se teki? (omin sanoin)</label>
+    <textarea id="cmpGpt" style="min-height:100px"></textarea>
+    <label class="field" for="cmpClaude">Claude — mitä se teki? (omin sanoin)</label>
+    <textarea id="cmpClaude" style="min-height:100px"></textarea>
+    <label class="field" for="cmpPick">Kumpaa käytät tähän aiheeseen seuraavaksi — miksi?</label>
+    <textarea id="cmpPick" style="min-height:80px"></textarea>
+    <p class="status" id="cmpStatus">Kirjoita kaikki kolme kenttää.</p>
+  </div>
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(2)">← Jakso 2</button>
+    <button class="btn btn-ink gate" id="next3" onclick="complete(3);go(4)">Jakso 4 →</button>
+  </div>
+</div>
+</section>
+
+<!-- 4 FULL APPLICATION -->
+<section class="screen" id="s4">
+<div class="wrap">
+  <div id="topicBar4" class="sticky-topic" style="display:none"></div>
+  <div class="eyebrow">Jakso 04 / 08</div>
+  <h2>Koko hakemus — <em>aiheeseesi</em></h2>
+  <p class="lead muted">Liitä ilmoitus joka sopii aiheeseesi — tai käytä harjoitusilmoitusta. Poimi avainsanat. Kirjoita kokonainen lyhyt hakemus. AI kritisoii. Sinä korjaat.</p>
+  <div class="card">
+    <label class="field" for="adText">Työpaikkailmoitus</label>
+    <textarea id="adText" style="min-height:140px" placeholder="Liitä ilmoitus joka sopii aiheeseesi…"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-ghost" type="button" onclick="useSampleAd()">Käytä harjoitusilmoitusta</button>
+    </div>
+    <label class="field">5 avainsanaa (itse)</label>
+    <div class="kw-row">
+      <input type="text" id="kw1"><input type="text" id="kw2"><input type="text" id="kw3"><input type="text" id="kw4"><input type="text" id="kw5">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="btnKw" onclick="runKwFeedback()" disabled>AI: osumat / missaukset</button>
+    </div>
+    <div class="ai-out" id="kwOut">…</div>
+  </div>
+  <div class="card gate" id="gateApp">
+    <h3>Kirjoita hakemus (8–12 lausetta)</h3>
+    <textarea id="appFull" style="min-height:220px" placeholder="Hyvä vastaanottaja…"></textarea>
+    <p class="status" id="appStatus">Kirjoita kunnolla — noin 400+ merkkiä.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="btnApp" onclick="runAppFeedback()" disabled>AI-palaute hakemuksesta</button>
+    </div>
+    <div class="ai-out" id="appOut">…</div>
+    <label class="field" for="appFix">Mitä korjaat? (kirjoita muutokset)</label>
+    <textarea id="appFix" style="min-height:90px"></textarea>
+  </div>
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(3)">← Jakso 3</button>
+    <button class="btn btn-ink gate" id="next4" onclick="complete(4);go(5)">Jakso 5 →</button>
+  </div>
+</div>
+</section>
+
+<!-- 5 COMPANY -->
+<section class="screen" id="s5">
+<div class="wrap">
+  <div id="topicBar5" class="sticky-topic" style="display:none"></div>
+  <div class="eyebrow">Jakso 05 / 08</div>
+  <h2>Yritys aiheeseesi — <em>tutki itse</em></h2>
+  <p class="lead muted">Valitse yksi yritys liittyen aiheeseesi. Avaa sivu. Vastaa. AI arvioi tutkimuksen — ei kirjoita “miksi te” -tekstiä.</p>
+  <div class="card">
+    <label class="field" for="coName">Yritys + rooli</label>
+    <input type="text" id="coName">
+    <label class="field" for="coSource">Mistä luit? (sivun tyyppi, ei pakko linkkiä)</label>
+    <input type="text" id="coSource" placeholder="Meistä-sivu / ilmoitus / …">
+    <label class="field" for="coFact">Yksi konkreettinen fakta sivulta</label>
+    <textarea id="coFact" style="min-height:80px"></textarea>
+    <label class="field" for="coAsk">Yksi kysymys jonka kysyisit haastattelussa</label>
+    <textarea id="coAsk" style="min-height:70px"></textarea>
+    <label class="field" for="coRisk">Mikä jäi epäselväksi?</label>
+    <textarea id="coRisk" style="min-height:70px"></textarea>
+    <p class="status" id="coStatus">Täytä kaikki kentät.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="btnCo" onclick="runCoFeedback()" disabled>AI arvioi tutkimukseni</button>
+    </div>
+    <div class="ai-out" id="coOut">…</div>
+    <label class="field" for="coTake">Mitä viet haastatteluun? (2–3 lausetta)</label>
+    <textarea id="coTake" style="min-height:80px"></textarea>
+  </div>
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(4)">← Jakso 4</button>
+    <button class="btn btn-ink gate" id="next5" onclick="complete(5);go(6)">Jakso 6 →</button>
+  </div>
+</div>
+</section>
+
+<!-- 6 STAR x2 -->
+<section class="screen" id="s6">
+<div class="wrap">
+  <div id="topicBar6" class="sticky-topic" style="display:none"></div>
+  <div class="eyebrow">Jakso 06 / 08</div>
+  <h2>STAR × 2 — <em>valmiit kysymykset, sinä kirjoitat</em></h2>
+  <p class="lead muted">Kaksi kysymystä. Vastaa aiheeseesi sopivilla tarinoilla. Eri tarinat. AI arvioi rakenteen.</p>
+  <div class="card">
+    <div class="sit">
+      <div class="sit-lbl">Kysymys 1</div>
+      <p class="job">Kerro tilanteesta, jossa asiakas tai työkaveri oli tyytymätön. Mitä sinä teit?</p>
+    </div>
+    <label class="field">S</label><textarea id="s1S" style="min-height:60px"></textarea>
+    <label class="field">T</label><textarea id="s1T" style="min-height:60px"></textarea>
+    <label class="field">A</label><textarea id="s1A" style="min-height:60px"></textarea>
+    <label class="field">R</label><textarea id="s1R" style="min-height:60px"></textarea>
+    <div class="btn-row"><button class="btn btn-primary" type="button" id="btnS1" onclick="runStar(1)" disabled>AI-palaute 1</button></div>
+    <div class="ai-out" id="s1Out">…</div>
+    <label class="field" for="s1Fix">Korjaus 1</label><textarea id="s1Fix" style="min-height:60px"></textarea>
+  </div>
+  <div class="card gate" id="gateStar2">
+    <div class="sit">
+      <div class="sit-lbl">Kysymys 2</div>
+      <p class="job">Kerro tilanteesta, jossa jouduit oppimaan uuden asian nopeasti. Mitä teit käytännössä?</p>
+    </div>
+    <label class="field">S</label><textarea id="s2S" style="min-height:60px"></textarea>
+    <label class="field">T</label><textarea id="s2T" style="min-height:60px"></textarea>
+    <label class="field">A</label><textarea id="s2A" style="min-height:60px"></textarea>
+    <label class="field">R</label><textarea id="s2R" style="min-height:60px"></textarea>
+    <div class="btn-row"><button class="btn btn-primary" type="button" id="btnS2" onclick="runStar(2)" disabled>AI-palaute 2</button></div>
+    <div class="ai-out" id="s2Out">…</div>
+    <label class="field" for="s2Fix">Korjaus 2</label><textarea id="s2Fix" style="min-height:60px"></textarea>
+  </div>
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(5)">← Jakso 5</button>
+    <button class="btn btn-ink gate" id="next6" onclick="complete(6);go(7)">Jakso 7 →</button>
+  </div>
+</div>
+</section>
+
+<!-- 7 VOICE -->
+<section class="screen" id="s7">
+<div class="wrap">
+  <div id="topicBar7" class="sticky-topic" style="display:none"></div>
+  <div class="eyebrow">Jakso 07 / 08</div>
+  <h2>Live-äänihaastattelu — <em>aiheeseesi</em></h2>
+  <p class="lead muted">4 vuoroa. Vastaa aiheesi mukaan. Lopuksi palaute + oma huomio.</p>
+  <div class="card">
+    <ol class="how" style="padding-left:1.2rem">
+      <li>Kuuntele loppuun → vastaa ääneen → Lähetä vastaus.</li>
+      <li>Seuraava / Päätä haastattelu. Lopeta milloin tahansa.</li>
+    </ol>
+  </div>
+  <div class="vox-card">
+    <div class="vox-top"><span class="live-dot" id="voxDot"></span><span id="voxTop">Ei yhdistetty</span></div>
+    <div class="vox-q-label" id="voxQLabel">Valmiina</div>
+    <p class="vox-q" id="voxQText">Paina Aloita kun olet valmis.</p>
+    <p class="vox-status" id="voxStatus"></p>
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" id="voxStartBtn" onclick="voxStart()">Aloita live-haastattelu</button>
+      <button class="btn btn-forest" type="button" id="voxSendBtn" style="display:none" onclick="voxSend()">Lähetä vastaus</button>
+      <button class="btn btn-ink" type="button" id="voxNextBtn" style="display:none" onclick="voxNext()">Seuraava</button>
+      <button class="btn btn-ghost" type="button" id="voxEndBtn" style="display:none" onclick="voxEnd()">Lopeta</button>
+    </div>
+    <div class="vox-timeline" id="voxTimeline"></div>
+    <div class="vox-fallback" id="voxFallback">
+      <p style="margin-bottom:.75rem">Ääni ei toimi? Kirjoita 3 vastausta.</p>
+      <textarea id="voxFb1" style="min-height:70px" placeholder="1) Itsestäsi…"></textarea>
+      <textarea id="voxFb2" style="min-height:70px" placeholder="2) Virhe / oppi…"></textarea>
+      <textarea id="voxFb3" style="min-height:70px" placeholder="3) Miksi tämä rooli…"></textarea>
+      <button class="btn btn-forest" type="button" onclick="voxFallbackSubmit()">Pyydä palaute</button>
+    </div>
+  </div>
+  <div class="card" id="voxFbPanel" style="display:none">
+    <div class="fb-grid">
+      <div class="fb-card"><h4>Mikä toimi</h4><p id="voxFbGood">—</p></div>
+      <div class="fb-card"><h4>Mitä parantaa</h4><p id="voxFbFix">—</p></div>
+      <div class="fb-card"><h4>Seuraava</h4><p id="voxFbNext">—</p></div>
+    </div>
+  </div>
+  <div class="card gate" id="gateVox">
+    <label class="field" for="voxObs">Miltä puhuminen tuntui? Mitä harjoittelet seuraavaksi?</label>
+    <textarea id="voxObs" style="min-height:90px"></textarea>
+  </div>
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(6)">← Jakso 6</button>
+    <button class="btn btn-ink gate" id="next7" onclick="complete(7);go(8)">Jakso 8 →</button>
+  </div>
+</div>
+</section>
+
+<!-- 8 PLAN -->
+<section class="screen" id="s8">
+<div class="wrap">
+  <div id="topicBar8" class="sticky-topic" style="display:none"></div>
+  <div class="eyebrow">Jakso 08 / 08</div>
+  <h2>Viikko aiheeseesi — <em>yksi askel per päivä</em></h2>
+  <p class="lead muted">Ei kuvaa, ei PDF:ää tässä. Suunnitelma + päätös. Mitä teet aiheen eteen ensi viikolla?</p>
+  <div class="card">
+    <label class="field">Ma</label><textarea id="d1" style="min-height:50px"></textarea>
+    <label class="field">Ti</label><textarea id="d2" style="min-height:50px"></textarea>
+    <label class="field">Ke</label><textarea id="d3" style="min-height:50px"></textarea>
+    <label class="field">To</label><textarea id="d4" style="min-height:50px"></textarea>
+    <label class="field">Pe</label><textarea id="d5" style="min-height:50px"></textarea>
+    <label class="field">La</label><textarea id="d6" style="min-height:50px"></textarea>
+    <label class="field">Su</label><textarea id="d7" style="min-height:50px"></textarea>
+    <label class="field">2–3 päätavoitetta viikolle</label>
+    <textarea id="weekGoals" style="min-height:80px"></textarea>
+    <label class="field">Yksi lause: tärkein oppi SPRINT 2:sta</label>
+    <textarea id="bigLearn" style="min-height:70px"></textarea>
+    <p class="status" id="planStatus">Täytä päivät + tavoitteet + oppi.</p>
+  </div>
+  <div class="card gate" id="gateDone">
+    <div class="checklist" id="confList">
+      <label><input type="checkbox" data-k="c1"> Minulla on selkeä aihe / rooli</label>
+      <label><input type="checkbox" data-k="c2"> Osaan vertailla ChatGPT:tä ja Claudea tähän tehtävään</label>
+      <label><input type="checkbox" data-k="c3"> Minulla on hakemusluonnos jota voin korjata</label>
+      <label><input type="checkbox" data-k="c4"> Minulla on 2 STAR-tarinaa aiheeseeni</label>
+      <label><input type="checkbox" data-k="c5"> Tiedän yhden asian firmasta jonka voin sanoa haastattelussa</label>
+      <label><input type="checkbox" data-k="c6"> Minulla on viikkosuunnitelma</label>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-forest" type="button" id="btnFinish" onclick="finishDay()" disabled>Merkitse SPRINT 2 valmiiksi ✓</button>
+      <a class="btn btn-ink" href="/">← Työpöytä</a>
+    </div>
+    <div class="done-banner" id="allDone">Valmis. Aiheesi, hakemuksesi ja suunnitelmasi ovat sinun — AI oli apuri.</div>
+  </div>
+  <div class="footer-nav">
+    <button class="btn btn-ghost" onclick="go(7)">← Jakso 7</button>
+    <a class="btn btn-ghost" href="/module/moduuli-gpt-claude-sprint">← SPRINT 1</a>
+  </div>
+</div>
+</section>
+
+<script>window.__MODULE_ID__ = 'moduuli-gpt-claude-sprint-2'; window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;</script>
+<script src="/js/mock-realtime.js?v=20260727c"></script>
+<script src="/js/module-work.js"></script>
+<script>
+window.__MODULE_ID__ = 'moduuli-gpt-claude-sprint-2';
+window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;
+const MODULE_ID = 'moduuli-gpt-claude-sprint-2';
+const KEY = 'gpt_claude_sprint2_';
+const TOTAL = 8;
+const SECTIONS = [
+  { id: 0, num: '★', title: 'Aloitus', time: '~10 min' },
+  { id: 1, num: '1', title: 'Valitse aihe', time: '~25 min' },
+  { id: 2, num: '2', title: 'Faktat aiheeseen', time: '~25 min' },
+  { id: 3, num: '3', title: 'Promptti + vertailu', time: '~40 min' },
+  { id: 4, num: '4', title: 'Koko hakemus', time: '~45 min' },
+  { id: 5, num: '5', title: 'Yritys aiheeseen', time: '~30 min' },
+  { id: 6, num: '6', title: 'STAR × 2', time: '~40 min' },
+  { id: 7, num: '7', title: 'Live-ääni', time: '~35 min' },
+  { id: 8, num: '8', title: 'Viikko + päätös', time: '~30 min' }
+];
+const SAMPLE_AD = `Myymälätyöntekijä — ruokakauppa, Tampere
+Etsimme asiakaspalveluhenkistä myymälätyöntekijää.
+Tehtävät: asiakaspalvelu, kassa, hyllytys, kiireiset iltapäivät.
+Odottamme: tiimityötä, joustavuutta vuoroihin, valmiutta oppia järjestelmiä.`;
+
+const SAVE_KEYS = [
+  'topicTitle','topicWhy','topicHave','topicPick',
+  'str1','strSit1','str2','strSit2','str3','strSit3','goalOwn',
+  'pRole','pSit','pTask','pBound','pBuilt','pFb','pOut','cmpGpt','cmpClaude','cmpPick',
+  'adText','kw1','kw2','kw3','kw4','kw5','kwOut','appFull','appOut','appFix',
+  'coName','coSource','coFact','coAsk','coRisk','coOut','coTake',
+  's1S','s1T','s1A','s1R','s1Out','s1Fix','s2S','s2T','s2A','s2R','s2Out','s2Fix',
+  'voxFb1','voxFb2','voxFb3','voxObs',
+  'd1','d2','d3','d4','d5','d6','d7','weekGoals','bigLearn'
+];
+
+let current = 0;
+let done = {};
+let voxRealtime = null;
+let voxFeedbackDone = false;
+let workApi = null;
+let workRestoring = false;
+try { done = JSON.parse(localStorage.getItem(KEY + 'done') || '{}'); } catch (e) { done = {}; }
+
+function $(id) { return document.getElementById(id); }
+function val(id) { const el = $(id); return el ? String(el.value || '').trim() : ''; }
+function save(id) {
+  const el = $(id);
+  if (!el) return;
+  localStorage.setItem(KEY + id, el.value);
+  refreshGates();
+  updateTopicBars();
+  scheduleWorkSave();
+}
+function loadAll() {
+  SAVE_KEYS.forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    const v = localStorage.getItem(KEY + id);
+    if (v != null) el.value = v;
+  });
+  const pick = localStorage.getItem(KEY + 'topicPick');
+  if (pick) {
+    document.querySelectorAll('input[name="topicPick"]').forEach(r => { r.checked = r.value === pick; });
+  }
+  document.querySelectorAll('#confList input[data-k]').forEach(cb => {
+    cb.checked = localStorage.getItem(KEY + cb.getAttribute('data-k')) === '1';
+    cb.addEventListener('change', () => {
+      localStorage.setItem(KEY + cb.getAttribute('data-k'), cb.checked ? '1' : '0');
+      refreshGates();
+    });
+  });
+}
+function topicLabel() { return val('topicTitle') || 'aihe ei vielä valittu'; }
+function updateTopicBars() {
+  const t = topicLabel();
+  for (let i = 2; i <= 8; i++) {
+    const el = $('topicBar' + i);
+    if (!el) continue;
+    if (val('topicTitle')) {
+      el.style.display = 'block';
+      el.innerHTML = '<b>Aiheesi:</b> ' + t;
+    } else el.style.display = 'none';
+  }
+}
+function complete(n) {
+  done[n] = 1;
+  localStorage.setItem(KEY + 'done', JSON.stringify(done));
+  refreshGates();
+  scheduleWorkSave();
+}
+function go(n) {
+  current = n;
+  localStorage.setItem(KEY + 'section', String(n));
+  document.querySelectorAll('.screen,.hero').forEach(el => el.classList.remove('on'));
+  if (n === 0) {
+    const h = $('hero');
+    if (h) { h.style.display = 'flex'; h.classList.add('on'); }
+  } else {
+    const h = $('hero');
+    if (h) h.style.display = 'none';
+    const s = $('s' + n);
+    if (s) { s.classList.add('on'); s.style.display = 'block'; }
+  }
+  document.querySelectorAll('.screen').forEach(el => {
+    if (!el.classList.contains('on')) el.style.display = 'none';
+  });
+  renderMenu();
+  renderNavMap();
+  updateProgress();
+  updateTopicBars();
+  closeMenu();
+  window.scrollTo(0, 0);
+  if (!workRestoring) scheduleWorkSave();
+}
+function updateProgress() {
+  const bar = $('progress-bar');
+  if (!bar) return;
+  bar.style.width = (current / TOTAL * 100) + '%';
+}
+function renderNavMap() {
+  const map = $('navMap');
+  if (!map) return;
+  map.innerHTML = '';
+  for (let i = 0; i <= TOTAL; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'nav-pip' + (i === current ? ' on' : '') + (done[i] ? ' done' : '');
+    pip.onclick = () => go(i);
+    map.appendChild(pip);
+  }
+}
+function renderMenu() {
+  const list = $('menuList');
+  if (!list) return;
+  list.innerHTML = '';
+  SECTIONS.forEach(sec => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'menu-item' + (sec.id === current ? ' current' : '') + (done[sec.id] ? ' done' : '');
+    b.innerHTML = '<span class="menu-num">' + (done[sec.id] && sec.id !== current ? '✓' : sec.num) + '</span><span><strong>' + sec.title + '</strong><small>' + sec.time + '</small></span>';
+    b.onclick = () => go(sec.id);
+    list.appendChild(b);
+  });
+}
+function toggleMenu() {
+  const m = $('sideMenu'), b = $('burgerBtn'), bd = $('menuBackdrop');
+  const open = !m.classList.contains('open');
+  m.classList.toggle('open', open);
+  m.hidden = !open;
+  b.classList.toggle('open', open);
+  b.setAttribute('aria-expanded', open ? 'true' : 'false');
+  bd.classList.toggle('show', open);
+}
+function closeMenu() {
+  const m = $('sideMenu'), b = $('burgerBtn'), bd = $('menuBackdrop');
+  if (!m) return;
+  m.classList.remove('open'); m.hidden = true;
+  if (b) { b.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); }
+  if (bd) bd.classList.remove('show');
+}
+
+function refreshGates() {
+  const topicOk = val('topicTitle').length >= 4 && val('topicWhy').length >= 40 && val('topicHave').length >= 20;
+  if ($('topicStatus')) $('topicStatus').textContent = topicOk ? 'Aihe valittu — voit jatkaa.' : 'Valitse / kirjoita aihe + miksi + mitä sinulla on.';
+  if ($('next1')) $('next1').classList.toggle('open', topicOk);
+
+  const facts = [1,2,3].every(n => val('str'+n).length >= 3 && val('strSit'+n).length >= 20) && val('goalOwn').length >= 40;
+  if ($('factStatus')) $('factStatus').textContent = facts ? 'Faktat kasassa.' : 'Täytä 3 vahvuutta + tilanteet + tavoite.';
+  if ($('next2')) $('next2').classList.toggle('open', facts);
+
+  const fbOk = val('pFb').length > 40 && !val('pFb').startsWith('Clauden');
+  if ($('gateCompare')) $('gateCompare').classList.toggle('open', fbOk);
+  const cmpOk = val('cmpGpt').length >= 40 && val('cmpClaude').length >= 40 && val('cmpPick').length >= 20;
+  if ($('cmpStatus')) $('cmpStatus').textContent = cmpOk ? 'Vertailu valmis.' : 'Kirjoita kaikki kolme kenttää.';
+  if ($('next3')) $('next3').classList.toggle('open', cmpOk);
+
+  const kwN = ['kw1','kw2','kw3','kw4','kw5'].filter(id => val(id)).length;
+  if ($('btnKw')) $('btnKw').disabled = !(val('adText').length >= 20 && kwN >= 3);
+  const kwDone = val('kwOut').length > 40 && !val('kwOut').startsWith('…');
+  if ($('gateApp')) $('gateApp').classList.toggle('open', kwDone);
+  if ($('btnApp')) $('btnApp').disabled = val('appFull').length < 400;
+  if ($('appStatus')) $('appStatus').textContent = val('appFull').length >= 400 ? 'Valmis AI-palautteeseen.' : 'Kirjoita kunnolla — noin 400+ merkkiä.';
+  const appDone = val('appOut').length > 40 && val('appFix').length >= 25;
+  if ($('next4')) $('next4').classList.toggle('open', appDone);
+
+  const coOk = val('coName').length >= 3 && val('coSource').length >= 3 && val('coFact').length >= 15 && val('coAsk').length >= 10 && val('coRisk').length >= 10;
+  if ($('coStatus')) $('coStatus').textContent = coOk ? 'Valmis AI-arvioon.' : 'Täytä kaikki kentät.';
+  if ($('btnCo')) $('btnCo').disabled = !coOk;
+  if ($('next5')) $('next5').classList.toggle('open', val('coOut').length > 40 && val('coTake').length >= 25);
+
+  const s1 = ['s1S','s1T','s1A','s1R'].every(id => val(id).length >= 8);
+  if ($('btnS1')) $('btnS1').disabled = !s1;
+  const s1Done = val('s1Out').length > 40 && val('s1Fix').length >= 10;
+  if ($('gateStar2')) $('gateStar2').classList.toggle('open', s1Done);
+  const s2 = ['s2S','s2T','s2A','s2R'].every(id => val(id).length >= 8);
+  if ($('btnS2')) $('btnS2').disabled = !s2;
+  if ($('next6')) $('next6').classList.toggle('open', val('s2Out').length > 40 && val('s2Fix').length >= 10);
+
+  const voxText = val('voxFb1').length >= 10 && val('voxFb2').length >= 10 && val('voxFb3').length >= 10;
+  if ($('gateVox')) $('gateVox').classList.toggle('open', voxFeedbackDone || voxText);
+  if ($('next7')) $('next7').classList.toggle('open', (voxFeedbackDone || voxText) && val('voxObs').length >= 20);
+
+  const days = ['d1','d2','d3','d4','d5','d6','d7'].every(id => val(id).length >= 5);
+  const planOk = days && val('weekGoals').length >= 20 && val('bigLearn').length >= 15;
+  if ($('planStatus')) $('planStatus').textContent = planOk ? 'Suunnitelma valmis.' : 'Täytä päivät + tavoitteet + oppi.';
+  if ($('gateDone')) $('gateDone').classList.toggle('open', planOk);
+  const conf = ['c1','c2','c3','c4','c5','c6'].filter(k => localStorage.getItem(KEY + k) === '1').length >= 4;
+  if ($('btnFinish')) $('btnFinish').disabled = !(planOk && conf);
+}
+
+async function callAi(system, user, outId, statusId, btn) {
+  if (btn) { btn.disabled = true; btn.dataset.old = btn.textContent; btn.textContent = 'Odota…'; }
+  if (statusId && $(statusId)) $(statusId).textContent = 'Haetaan…';
+  async function tryEndpoint(url) {
+    const r = await fetch(url, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ messages: [{ role: 'user', content: user }], system, max_tokens: 900 })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || d.message || ('HTTP ' + r.status));
+    return d.text || d.content || d.message || JSON.stringify(d);
+  }
+  try {
+    let text;
+    try { text = await tryEndpoint('/api/ai/claude'); }
+    catch (e1) { text = await tryEndpoint('/api/ai/chat'); }
+    if ($(outId)) { $(outId).textContent = text; localStorage.setItem(KEY + outId, text); }
+    if (statusId && $(statusId)) $(statusId).textContent = 'Valmis.';
+  } catch (e) {
+    if ($(outId)) $(outId).textContent = 'Virhe: ' + (e.message || e);
+    if (statusId && $(statusId)) $(statusId).textContent = 'Epäonnistui.';
+  }
+  if (btn) { btn.disabled = false; btn.textContent = btn.dataset.old || 'Kysy'; }
+  refreshGates();
+  scheduleWorkSave();
+}
+
+function buildPrompt() {
+  const t = [
+    'Rooli: ' + (val('pRole') || '(täydennä)'),
+    'Tilanne: ' + (val('pSit') || '(täydennä)'),
+    'Tehtävä: ' + (val('pTask') || '(täydennä)'),
+    'Rajat: ' + (val('pBound') || 'Suomeksi. Älä keksi faktoja.'),
+    '',
+    'Aiheeni: ' + topicLabel(),
+    'Älä tee kaikkea puolestani.'
+  ].join('\n');
+  $('pBuilt').value = t; save('pBuilt'); return t;
+}
+function runPromptFeedback() {
+  if (val('pRole').length < 3 || val('pSit').length < 40 || val('pTask').length < 8) {
+    $('pFb').textContent = 'Täytä rooli, tilanne ja tehtävä ensin.'; return;
+  }
+  const prompt = buildPrompt();
+  callAi(
+    'Olet suomalainen AI-työpajan ohjaaja. Arvioi promptin rakennetta. Lyhyt. Suomi.',
+    'Arvioi promptti aiheeseen "' + topicLabel() + '".\n---\n' + prompt + '\n---\nArvosana 1–5, 2 toimivaa, 2 korjausta. Älä tee tehtävää.',
+    'pFb', null, $('btnFb')
+  );
+}
+function runPromptAsk() {
+  callAi('Olet suomalainen työnhaun auttaja. Autat ajattelemaan — et kirjoita valmista hakemusta. Suomi.', buildPrompt(), 'pOut', null, $('btnAsk'));
+}
+
+function useSampleAd() {
+  if (val('adText').length > 40 && !confirm('Korvataanko ilmoitus?')) return;
+  $('adText').value = SAMPLE_AD; save('adText');
+}
+function runKwFeedback() {
+  const kws = ['kw1','kw2','kw3','kw4','kw5'].map(val).filter(Boolean);
+  callAi(
+    'Olet suomalainen rekrytoija. ATS-avainsanapalaute. Et kirjoita hakemusta.',
+    'Ilmoitus:\n' + val('adText') + '\n\nHakijan sanat: ' + kws.join(', ') +
+    '\n\nOSUMAT / MISSASI (2–3) / HEIKOT / SEURAAVA ASKEL (yksi lause jonka hakija voi kirjoittaa). Aihe: ' + topicLabel(),
+    'kwOut', null, $('btnKw')
+  );
+}
+function runAppFeedback() {
+  if (val('appFull').length < 400) return;
+  callAi(
+    'Olet suomalainen rekrytoija. Palaute rakenteesta. Älä kirjoita uutta hakemusta.',
+    'Aihe/rooli: ' + topicLabel() + '\nIlmoitus:\n' + val('adText') +
+    '\n\nHakemus:\n' + val('appFull') +
+    '\n\nKerro: puuttuvat avainsanat, tyhjät lauseet, yksi vahvuus, 3 korjausta. Älä kirjoita hakemusta uusiksi.',
+    'appOut', null, $('btnApp')
+  );
+}
+function runCoFeedback() {
+  callAi(
+    'Olet kriittinen rekrytoija. Arvioit tutkimusta. Et keksi firman faktoja.',
+    'Aihe: ' + topicLabel() + '\nYritys: ' + val('coName') + '\nLähde: ' + val('coSource') +
+    '\nFakta: ' + val('coFact') + '\nKysymys: ' + val('coAsk') + '\nEpäselvää: ' + val('coRisk') +
+    '\n\nVAHVAA / LIIAN YLEISTÄ / TARKISTA VIELÄ / 3 kulmaa haastattelulauseeseen (älä kirjoita lausetta valmiiksi).',
+    'coOut', null, $('btnCo')
+  );
+}
+function runStar(n) {
+  const ids = n === 1 ? ['s1S','s1T','s1A','s1R'] : ['s2S','s2T','s2A','s2R'];
+  const out = n === 1 ? 's1Out' : 's2Out';
+  const btn = n === 1 ? $('btnS1') : $('btnS2');
+  const q = n === 1
+    ? 'Kerro tilanteesta, jossa asiakas tai työkaveri oli tyytymätön.'
+    : 'Kerro tilanteesta, jossa jouduit oppimaan uuden asian nopeasti.';
+  callAi(
+    'Olet tiukka rekrytoija. STAR-rakennepalaute. Et kirjoita tarinaa uusiksi.',
+    'Aihe: ' + topicLabel() + '\nKysymys: ' + q +
+    '\nS: ' + val(ids[0]) + '\nT: ' + val(ids[1]) + '\nA: ' + val(ids[2]) + '\nR: ' + val(ids[3]) +
+    '\n\nVASTAAKO KYSYMYKSEEN / huomio S T A R / yksi korjaus. Älä kirjoita uutta tarinaa.',
+    out, null, btn
+  );
+}
+
+/* voice */
+function voxSetTop(text, live) {
+  if ($('voxTop')) $('voxTop').textContent = text;
+  if ($('voxDot')) $('voxDot').classList.toggle('on', !!live);
+}
+async function voxStart() {
+  if (typeof MockRealtimeInterview === 'undefined') {
+    $('voxFallback').style.display = 'block';
+    $('voxStatus').textContent = 'Ääni ei saatavilla — käytä tekstiä.';
+    return;
+  }
+  try {
+    voxRealtime = new MockRealtimeInterview({
+      roleHint: topicLabel(),
+      onStatus: (t) => { if ($('voxStatus')) $('voxStatus').textContent = t || ''; },
+      onPhase: (info) => {
+        if ($('voxQLabel')) $('voxQLabel').textContent = (info && info.label) || '';
+        if ($('voxQText')) $('voxQText').textContent = (info && info.recruiterText) || 'Kuuntele…';
+      },
+      onTimeline: (html) => { if ($('voxTimeline')) $('voxTimeline').innerHTML = html || ''; },
+      onControls: (c) => {
+        if ($('voxStartBtn')) $('voxStartBtn').style.display = c.started ? 'none' : 'inline-flex';
+        if ($('voxSendBtn')) $('voxSendBtn').style.display = c.canSend ? 'inline-flex' : 'none';
+        if ($('voxNextBtn')) $('voxNextBtn').style.display = c.canNext ? 'inline-flex' : 'none';
+        if ($('voxEndBtn')) $('voxEndBtn').style.display = c.started ? 'inline-flex' : 'none';
+      },
+      onEnded: (pairs) => { voxRequestFeedback(pairs || []); }
+    });
+    voxSetTop('Yhdistetään…', true);
+    await voxRealtime.start();
+    voxSetTop('Live', true);
+  } catch (e) {
+    $('voxFallback').style.display = 'block';
+    $('voxStatus').textContent = 'Ääni epäonnistui — käytä tekstiä.';
+  }
+}
+function voxSend() { if (voxRealtime && voxRealtime.submitAnswer) voxRealtime.submitAnswer(); }
+function voxNext() { if (voxRealtime && voxRealtime.advance) voxRealtime.advance(); }
+function voxEnd() { if (voxRealtime && voxRealtime.end) voxRealtime.end(); else voxRequestFeedback([]); }
+async function voxRequestFeedback(pairs) {
+  const lines = (pairs || []).map(p => 'Q: ' + (p.q || p.question || '') + '\nA: ' + (p.a || p.answer || p.transcript || '')).join('\n\n');
+  const user = 'Aihe/rooli: ' + topicLabel() + '\n\nHaastattelu:\n' + (lines || '(teksti)') +
+    '\n\nJSON: {"good":"...","fix":"...","next":"..."} Suomi. Lyhyt.';
+  try {
+    const r = await fetch('/api/ai/claude', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ messages: [{ role: 'user', content: user }], system: 'Palauta vain JSON good/fix/next. Suomi.', max_tokens: 700 })
+    });
+    let d = await r.json().catch(() => ({}));
+    let text = d.text || d.content || '';
+    if (!r.ok) {
+      const r2 = await fetch('/api/ai/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ messages: [{ role: 'user', content: user }], system: 'JSON good/fix/next.', max_tokens: 700 })
+      });
+      d = await r2.json().catch(() => ({}));
+      text = d.text || d.content || '';
+    }
+    let parsed = null;
+    try { parsed = JSON.parse(text); } catch (e) {
+      const m = text.match(/\{[\s\S]*\}/);
+      if (m) try { parsed = JSON.parse(m[0]); } catch (e2) {}
+    }
+    if ($('voxFbPanel')) $('voxFbPanel').style.display = 'block';
+    $('voxFbGood').textContent = (parsed && parsed.good) || text || '—';
+    $('voxFbFix').textContent = (parsed && parsed.fix) || '—';
+    $('voxFbNext').textContent = (parsed && parsed.next) || '—';
+    voxFeedbackDone = true;
+    refreshGates();
+    scheduleWorkSave();
+  } catch (e) {
+    if ($('voxFbPanel')) $('voxFbPanel').style.display = 'block';
+    $('voxFbGood').textContent = 'Palaute epäonnistui — kirjoita oma huomio alle.';
+    voxFeedbackDone = true;
+    refreshGates();
+    scheduleWorkSave();
+  }
+}
+function voxFallbackSubmit() {
+  const pairs = [
+    { q: 'Kerro itsestäsi', a: val('voxFb1') },
+    { q: 'Virhe / oppi', a: val('voxFb2') },
+    { q: 'Miksi tämä rooli', a: val('voxFb3') }
+  ];
+  voxRequestFeedback(pairs);
+}
+
+function collectConf() {
+  const o = {};
+  document.querySelectorAll('#confList input[data-k]').forEach(cb => {
+    o[cb.getAttribute('data-k')] = !!cb.checked;
+  });
+  return o;
+}
+function applyConf(o) {
+  if (!o || typeof o !== 'object') return;
+  document.querySelectorAll('#confList input[data-k]').forEach(cb => {
+    const k = cb.getAttribute('data-k');
+    if (o[k] != null) {
+      cb.checked = !!o[k];
+      localStorage.setItem(KEY + k, cb.checked ? '1' : '0');
+    }
+  });
+}
+
+function sprint2Snapshot() {
+  const fields = {};
+  SAVE_KEYS.forEach(id => {
+    const el = $(id);
+    if (el) fields[id] = el.value || '';
+  });
+  let topicPick = localStorage.getItem(KEY + 'topicPick') || '';
+  document.querySelectorAll('input[name="topicPick"]').forEach(r => {
+    if (r.checked) topicPick = r.value;
+  });
+  fields.topicPick = topicPick;
+  return {
+    v: 1,
+    ts: Date.now(),
+    curScreen: Math.max(1, Number(current) || 1),
+    screen: Number(current) || 0,
+    done: Object.assign({}, done),
+    fields,
+    topicPick,
+    voxFeedbackDone: !!voxFeedbackDone,
+    confidence: collectConf(),
+    shown: { finished: localStorage.getItem(KEY + 'finished') === '1' || !!($('allDone') && $('allDone').classList.contains('show')) }
+  };
+}
+
+function summarizeSprint2(data) {
+  if (!data || typeof data !== 'object') return 'GPT CLAUDE SPRINT 2 — tallennettu';
+  const topic = (data.fields && data.fields.topicTitle) || data.topicPick || '';
+  const sc = data.screen != null ? data.screen : data.curScreen;
+  return ('Jakso ' + (sc || '?') + (topic ? ' · ' + String(topic).slice(0, 50) : '')).trim();
+}
+
+function applySprint2Data(d) {
+  if (!d || d.v !== 1) return false;
+  workRestoring = true;
+  try {
+    if (d.fields && typeof d.fields === 'object') {
+      SAVE_KEYS.forEach(id => {
+        const el = $(id);
+        if (!el || d.fields[id] == null) return;
+        el.value = d.fields[id];
+        localStorage.setItem(KEY + id, el.value);
+      });
+    }
+    const pick = d.topicPick || (d.fields && d.fields.topicPick) || '';
+    if (pick) {
+      localStorage.setItem(KEY + 'topicPick', pick);
+      document.querySelectorAll('input[name="topicPick"]').forEach(r => { r.checked = r.value === pick; });
+    }
+    if (d.done && typeof d.done === 'object') {
+      done = d.done;
+      localStorage.setItem(KEY + 'done', JSON.stringify(done));
+    }
+    voxFeedbackDone = !!d.voxFeedbackDone;
+    applyConf(d.confidence);
+    if (d.shown && d.shown.finished) {
+      localStorage.setItem(KEY + 'finished', '1');
+      if ($('allDone')) $('allDone').classList.add('show');
+    }
+    const target = (d.screen != null) ? Number(d.screen) : Number(d.curScreen) || 0;
+    go(Number.isFinite(target) ? target : 0);
+    refreshGates();
+    updateTopicBars();
+    return true;
+  } finally {
+    workRestoring = false;
+  }
+}
+
+function migrateLegacyLocal2() {
+  const fields = {};
+  let any = false;
+  SAVE_KEYS.forEach(id => {
+    const v = localStorage.getItem(KEY + id);
+    if (v != null && v !== '') { fields[id] = v; any = true; }
+  });
+  const section = parseInt(localStorage.getItem(KEY + 'section') || '0', 10);
+  let doneObj = {};
+  try { doneObj = JSON.parse(localStorage.getItem(KEY + 'done') || '{}'); } catch (e) { doneObj = {}; }
+  if (!any && !section && !Object.keys(doneObj).length) return null;
+  return {
+    v: 1,
+    ts: Date.now(),
+    curScreen: Math.max(1, section || 1),
+    screen: isNaN(section) ? 0 : section,
+    done: doneObj,
+    fields,
+    topicPick: localStorage.getItem(KEY + 'topicPick') || '',
+    voxFeedbackDone: false,
+    confidence: collectConf(),
+    shown: { finished: localStorage.getItem(KEY + 'finished') === '1' }
+  };
+}
+
+function scheduleWorkSave() {
+  if (workRestoring) return;
+  if (workApi && typeof workApi.scheduleSave === 'function') workApi.scheduleSave();
+}
+function flushWorkSave() {
+  if (workRestoring) return;
+  if (workApi && typeof workApi.saveNow === 'function') workApi.saveNow();
+}
+
+async function initWorkPersistence() {
+  if (!window.moduleWork || typeof window.moduleWork.initModuleWork !== 'function') {
+    console.warn('[sprint2] module-work.js missing');
+    return;
+  }
+  try {
+    let applied = false;
+    workApi = await window.moduleWork.initModuleWork(MODULE_ID, {
+      collect: sprint2Snapshot,
+      summarize: summarizeSprint2,
+      debounceMs: 700,
+      fieldIds: SAVE_KEYS.filter(id => id !== 'topicPick'),
+      apply: function (remoteData) {
+        const legacy = migrateLegacyLocal2();
+        const remoteTs = remoteData && Number(remoteData.ts || 0);
+        const legacyTs = legacy && Number(legacy.ts || 0);
+        let newest = remoteData && remoteData.v === 1 ? remoteData : null;
+        if (legacy && (!newest || legacyTs > remoteTs)) newest = legacy;
+        if (newest) {
+          applySprint2Data(newest);
+          applied = true;
+        }
+      }
+    });
+    if (!applied) {
+      const legacy = migrateLegacyLocal2();
+      if (legacy) applySprint2Data(legacy);
+    }
+    if (workApi && typeof workApi.saveNow === 'function') workApi.saveNow();
+  } catch (e) {
+    console.warn('[sprint2] module-work init failed:', e);
+  }
+}
+
+function finishDay() {
+  complete(8);
+  localStorage.setItem(KEY + 'finished', '1');
+  if ($('allDone')) $('allDone').classList.add('show');
+  flushWorkSave();
+  alert('SPRINT 2 merkitty valmiiksi. Hyvää jatkoa aiheeseesi: ' + topicLabel());
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadAll();
+  SAVE_KEYS.forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    el.addEventListener('input', () => save(id));
+    el.addEventListener('change', () => save(id));
+  });
+  document.querySelectorAll('input[name="topicPick"]').forEach(r => {
+    r.addEventListener('change', () => {
+      localStorage.setItem(KEY + 'topicPick', r.value);
+      if (r.value !== 'oma' && !val('topicTitle')) {
+        const map = { myymala: 'Myymälä / asiakaspalvelu', varasto: 'Varasto / logistiikka', toimisto: 'Toimisto / assistentti', hoiva: 'Hoiva / avustava työ' };
+        if (map[r.value]) { $('topicTitle').value = map[r.value]; save('topicTitle'); }
+      }
+      refreshGates();
+      scheduleWorkSave();
+    });
+  });
+  document.querySelectorAll('#confList input[data-k]').forEach(cb => {
+    cb.addEventListener('change', () => scheduleWorkSave());
+  });
+  window.addEventListener('pagehide', flushWorkSave);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') flushWorkSave();
+  });
+  const saved = parseInt(localStorage.getItem(KEY + 'section') || '0', 10);
+  go(isNaN(saved) ? 0 : saved);
+  refreshGates();
+  updateTopicBars();
+  initWorkPersistence();
+});
+</script>
+</body>
+</html>

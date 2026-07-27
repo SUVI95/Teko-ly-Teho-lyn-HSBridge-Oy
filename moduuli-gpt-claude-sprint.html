@@ -1608,9 +1608,13 @@ Pyyntö: "Kertoisin mielelläni lisää haastattelussa."</div>
 </div>
 </section>
 
+<script>window.__MODULE_ID__ = 'moduuli-gpt-claude-sprint'; window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;</script>
 <script src="/js/mock-realtime.js?v=20260727b"></script>
+<script src="/js/module-work.js"></script>
 <script>
 window.__MODULE_ID__ = 'moduuli-gpt-claude-sprint';
+window.__DISABLE_GLOBAL_MODULE_AUTOSAVE__ = true;
+const MODULE_ID = 'moduuli-gpt-claude-sprint';
 const KEY = 'gpt_claude_sprint_';
 const TOTAL = 8;
 
@@ -1825,6 +1829,9 @@ let voxFeedbackDone = false;
 let ttAnswered = JSON.parse(localStorage.getItem(KEY + 'ttAnswered') || '{}');
 let finalPicks = JSON.parse(localStorage.getItem(KEY + 'finalPicks') || '{}');
 let scenePicks = JSON.parse(localStorage.getItem(KEY + 'scenePicks') || '{}');
+let workApi = null;
+let workRestoring = false;
+let workSaveTimer = null;
 
 function $(id) { return document.getElementById(id); }
 function isFieldEl(el) {
@@ -1842,6 +1849,7 @@ function save(id) {
   const el = $(id);
   if (!el) return;
   localStorage.setItem(KEY + id, isFieldEl(el) ? el.value : (el.textContent || ''));
+  scheduleWorkSave();
 }
 function setOut(id, text) {
   const el = $(id);
@@ -1900,6 +1908,7 @@ function loadAll() {
     cb.addEventListener('change', () => {
       localStorage.setItem(KEY + cb.dataset.k, cb.checked ? '1' : '0');
       refreshGates();
+      scheduleWorkSave();
     });
   });
   document.querySelectorAll('#flagList input').forEach(cb => {
@@ -1907,6 +1916,7 @@ function loadAll() {
     cb.addEventListener('change', () => {
       localStorage.setItem(KEY + cb.dataset.f, cb.checked ? '1' : '0');
       refreshGates();
+      scheduleWorkSave();
     });
   });
   renderTottaTarua();
@@ -2003,6 +2013,7 @@ function go(n) {
   setProg();
   refreshGates();
   updateAllLivePrompts();
+  if (!workRestoring) scheduleWorkSave();
 }
 
 function complete(n) {
@@ -2010,6 +2021,7 @@ function complete(n) {
   done.sort((a, b) => a - b);
   localStorage.setItem(KEY + 'done', JSON.stringify(done));
   setProg();
+  scheduleWorkSave();
 }
 
 function pickTrap(n, btn, ok) {
@@ -2021,6 +2033,7 @@ function pickTrap(n, btn, ok) {
   $('trap' + n + 'r').classList.add('show');
   trapOk[n] = true;
   localStorage.setItem(KEY + 'trap' + n, '1');
+  scheduleWorkSave();
   refreshGates();
 }
 
@@ -2320,6 +2333,7 @@ function renderTottaTarua() {
       b.onclick = () => {
         ttAnswered[i] = ans;
         localStorage.setItem(KEY + 'ttAnswered', JSON.stringify(ttAnswered));
+  scheduleWorkSave();
         const exp = $('ttExp' + i);
         exp.textContent = item.explain;
         exp.classList.add('show');
@@ -2359,6 +2373,7 @@ function renderFinalQuiz() {
       b.onclick = () => {
         finalPicks[i] = oi;
         localStorage.setItem(KEY + 'finalPicks', JSON.stringify(finalPicks));
+  scheduleWorkSave();
         const rev = $('fqReveal' + i);
         rev.textContent = item.explain;
         rev.classList.add('show');
@@ -2414,6 +2429,7 @@ function renderFinalScenes() {
       b.onclick = () => {
         scenePicks[i] = oi;
         localStorage.setItem(KEY + 'scenePicks', JSON.stringify(scenePicks));
+  scheduleWorkSave();
         renderFinalScenes();
         refreshGates();
       };
@@ -2924,6 +2940,7 @@ function renderDecoder() {
   if (decoderStep >= DECODER_LETTERS.length) {
     decoderDone = true;
     localStorage.setItem(KEY + 'decoderDone', '1');
+  scheduleWorkSave();
     $('decoderProgress').textContent = 'Valmis';
     $('decoderQ').textContent = 'Hienoa — löysit kaikki neljä osaa. Nyt tiedät miten S-T-A-R erottuu tarinasta.';
     $('decoderChoices').innerHTML = '';
@@ -3247,6 +3264,7 @@ async function voxRequestFeedback(pairs) {
     $('voxStatus').textContent = 'AI ei vastannut — voit silti jatkaa.';
   }
   refreshGates();
+  scheduleWorkSave();
 }
 
 /* ---- Jakso 7: kuva, PDF, Gamma ---- */
@@ -3323,7 +3341,224 @@ function finishDay() {
   complete(8);
   $('allDone').classList.add('show');
   save('tomorrow');
+  flushWorkSave();
   window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+function collectConfidence() {
+  const o = {};
+  document.querySelectorAll('#confidenceList input[data-k]').forEach(cb => {
+    o[cb.dataset.k] = !!cb.checked;
+  });
+  return o;
+}
+function collectFlags() {
+  const o = {};
+  document.querySelectorAll('#flagList input[data-f]').forEach(cb => {
+    o[cb.dataset.f] = !!cb.checked;
+  });
+  return o;
+}
+function applyConfidence(o) {
+  if (!o || typeof o !== 'object') return;
+  document.querySelectorAll('#confidenceList input[data-k]').forEach(cb => {
+    if (o[cb.dataset.k] != null) {
+      cb.checked = !!o[cb.dataset.k];
+      localStorage.setItem(KEY + cb.dataset.k, cb.checked ? '1' : '0');
+    }
+  });
+}
+function applyFlags(o) {
+  if (!o || typeof o !== 'object') return;
+  document.querySelectorAll('#flagList input[data-f]').forEach(cb => {
+    if (o[cb.dataset.f] != null) {
+      cb.checked = !!o[cb.dataset.f];
+      localStorage.setItem(KEY + cb.dataset.f, cb.checked ? '1' : '0');
+    }
+  });
+}
+
+function sprintSnapshot() {
+  const fields = {};
+  FIELDS.forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    fields[id] = isFieldEl(el) ? (el.value || '') : (el.textContent || '');
+  });
+  const hotEl = $('hotQ');
+  return {
+    v: 1,
+    ts: Date.now(),
+    curScreen: Math.max(1, Number(screen) || 1),
+    screen: Number(screen) || 0,
+    done: Array.isArray(done) ? done.slice() : [],
+    fields,
+    trapOk: { 1: !!trapOk[1], 2: !!trapOk[2] },
+    decoderDone: !!decoderDone,
+    decoderStep: Number(decoderStep) || 0,
+    hotQ: hotEl ? (hotEl.textContent || '') : '',
+    hotStarted: !!hotStarted,
+    voxFeedbackDone: !!voxFeedbackDone,
+    ttAnswered: Object.assign({}, ttAnswered),
+    finalPicks: Object.assign({}, finalPicks),
+    scenePicks: Object.assign({}, scenePicks),
+    confidence: collectConfidence(),
+    flags: collectFlags(),
+    shown: { finished: !!($('allDone') && $('allDone').classList.contains('show')) }
+  };
+}
+
+function summarizeSprintData(data) {
+  if (!data || typeof data !== 'object') return 'GPT CLAUDE SPRINT — tallennettu';
+  const labels = { 1: 'Faktat', 2: 'Promptti', 3: 'ATS', 4: 'Yritys', 5: 'STAR', 6: 'Ääni', 7: 'Paketti', 8: 'Kertaus' };
+  const sc = data.screen != null ? data.screen : data.curScreen;
+  const parts = ['Jakso ' + (labels[sc] || sc || '?')];
+  if (data.fields && data.fields.goalOwn) parts.push(String(data.fields.goalOwn).slice(0, 60));
+  if (Array.isArray(data.done) && data.done.length) parts.push(data.done.length + ' jaksoa valmis');
+  return parts.join(' · ');
+}
+
+function applySprintData(d) {
+  if (!d || d.v !== 1) return false;
+  workRestoring = true;
+  try {
+    if (d.fields && typeof d.fields === 'object') {
+      Object.keys(d.fields).forEach(id => {
+        const el = $(id);
+        if (!el) return;
+        const v = d.fields[id];
+        if (v == null) return;
+        if (isFieldEl(el)) el.value = v;
+        else el.textContent = v;
+        localStorage.setItem(KEY + id, isFieldEl(el) ? el.value : (el.textContent || ''));
+      });
+    }
+    if (Array.isArray(d.done)) {
+      done = d.done.slice();
+      localStorage.setItem(KEY + 'done', JSON.stringify(done));
+    }
+    if (d.trapOk) {
+      trapOk[1] = !!d.trapOk[1];
+      trapOk[2] = !!d.trapOk[2];
+      if (trapOk[1]) localStorage.setItem(KEY + 'trap1', '1');
+      if (trapOk[2]) localStorage.setItem(KEY + 'trap2', '1');
+    }
+    decoderDone = !!d.decoderDone;
+    localStorage.setItem(KEY + 'decoderDone', decoderDone ? '1' : '0');
+    decoderStep = Number(d.decoderStep) || 0;
+    if (d.hotQ && $('hotQ')) {
+      $('hotQ').textContent = d.hotQ;
+      localStorage.setItem(KEY + 'hotQ', d.hotQ);
+      hotStarted = true;
+      if ($('hotQBtn')) $('hotQBtn').textContent = 'Uusi kysymys';
+    }
+    hotStarted = hotStarted || !!d.hotStarted;
+    voxFeedbackDone = !!d.voxFeedbackDone;
+    if (d.ttAnswered && typeof d.ttAnswered === 'object') {
+      ttAnswered = d.ttAnswered;
+      localStorage.setItem(KEY + 'ttAnswered', JSON.stringify(ttAnswered));
+  scheduleWorkSave();
+    }
+    if (d.finalPicks && typeof d.finalPicks === 'object') {
+      finalPicks = d.finalPicks;
+      localStorage.setItem(KEY + 'finalPicks', JSON.stringify(finalPicks));
+  scheduleWorkSave();
+    }
+    if (d.scenePicks && typeof d.scenePicks === 'object') {
+      scenePicks = d.scenePicks;
+      localStorage.setItem(KEY + 'scenePicks', JSON.stringify(scenePicks));
+  scheduleWorkSave();
+    }
+    applyConfidence(d.confidence);
+    applyFlags(d.flags);
+    renderTottaTarua();
+    renderFinalQuiz();
+    renderFinalScenes();
+    renderDecoder();
+    if (d.shown && d.shown.finished && $('allDone')) $('allDone').classList.add('show');
+    const target = (d.screen != null) ? Number(d.screen) : Number(d.curScreen) || 0;
+    go(Number.isFinite(target) ? target : 0);
+    refreshGates();
+    updateAllLivePrompts();
+    return true;
+  } finally {
+    workRestoring = false;
+  }
+}
+
+function migrateLegacyLocal() {
+  const fields = {};
+  let any = false;
+  FIELDS.forEach(id => {
+    const v = localStorage.getItem(KEY + id);
+    if (v != null && v !== '') { fields[id] = v; any = true; }
+  });
+  const doneRaw = localStorage.getItem(KEY + 'done');
+  let doneArr = [];
+  try { doneArr = JSON.parse(doneRaw || '[]'); } catch (e) { doneArr = []; }
+  if (!any && !doneArr.length) return null;
+  return {
+    v: 1,
+    ts: Date.now(),
+    curScreen: Math.max(1, doneArr.length ? Math.max.apply(null, doneArr) : 1),
+    screen: doneArr.length ? Math.max.apply(null, doneArr) : 0,
+    done: doneArr,
+    fields,
+    trapOk: { 1: localStorage.getItem(KEY + 'trap1') === '1', 2: localStorage.getItem(KEY + 'trap2') === '1' },
+    decoderDone: localStorage.getItem(KEY + 'decoderDone') === '1',
+    hotQ: localStorage.getItem(KEY + 'hotQ') || '',
+    hotStarted: !!localStorage.getItem(KEY + 'hotQ'),
+    voxFeedbackDone: localStorage.getItem(KEY + 'voxFeedbackDone') === '1',
+    ttAnswered: JSON.parse(localStorage.getItem(KEY + 'ttAnswered') || '{}'),
+    finalPicks: JSON.parse(localStorage.getItem(KEY + 'finalPicks') || '{}'),
+    scenePicks: JSON.parse(localStorage.getItem(KEY + 'scenePicks') || '{}'),
+    confidence: collectConfidence(),
+    flags: collectFlags(),
+    shown: { finished: false }
+  };
+}
+
+function scheduleWorkSave() {
+  if (workRestoring) return;
+  if (workApi && typeof workApi.scheduleSave === 'function') workApi.scheduleSave();
+}
+function flushWorkSave() {
+  if (workRestoring) return;
+  if (workApi && typeof workApi.saveNow === 'function') workApi.saveNow();
+}
+
+async function initWorkPersistence() {
+  if (!window.moduleWork || typeof window.moduleWork.initModuleWork !== 'function') {
+    console.warn('[sprint1] module-work.js missing');
+    return;
+  }
+  try {
+    let applied = false;
+    workApi = await window.moduleWork.initModuleWork(MODULE_ID, {
+      collect: sprintSnapshot,
+      summarize: summarizeSprintData,
+      debounceMs: 700,
+      fieldIds: FIELDS.slice(),
+      apply: function (remoteData) {
+        const legacy = migrateLegacyLocal();
+        const remoteTs = remoteData && Number(remoteData.ts || 0);
+        const legacyTs = legacy && Number(legacy.ts || 0);
+        let newest = remoteData && remoteData.v === 1 ? remoteData : null;
+        if (legacy && (!newest || legacyTs > remoteTs)) newest = legacy;
+        if (newest) {
+          applySprintData(newest);
+          applied = true;
+        }
+      }
+    });
+    if (!applied) {
+      const legacy = migrateLegacyLocal();
+      if (legacy) applySprintData(legacy);
+    }
+    if (workApi && typeof workApi.saveNow === 'function') workApi.saveNow();
+  } catch (e) {
+    console.warn('[sprint1] module-work init failed:', e);
+  }
 }
 
 // restore state
@@ -3338,6 +3573,10 @@ if (localStorage.getItem(KEY + 'hotQ')) {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && menuOpen) closeMenu();
 });
+window.addEventListener('pagehide', flushWorkSave);
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') flushWorkSave();
+});
 
 loadAll();
 renderDecoder();
@@ -3346,7 +3585,7 @@ $('hero').style.display = 'flex';
 refreshGates();
 updateAllLivePrompts();
 voxRenderTimeline();
+initWorkPersistence();
 </script>
-<script src="/js/module-autosave.js"></script>
 </body>
 </html>

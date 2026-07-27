@@ -9,7 +9,9 @@ const MODULE_WORK_IDS = [
   'moduuli9-haastattelu__work',
   'moduuli-ai-musiikkituottaja__work',
   'moduuli-ai-musiikkikampanja__work',
-  'moduuli2-tekoaly-uhka-vai-mahdollisuus__work'
+  'moduuli2-tekoaly-uhka-vai-mahdollisuus__work',
+  'moduuli-gpt-claude-sprint__work',
+  'moduuli-gpt-claude-sprint-2__work'
 ];
 
 async function resolveUserId(req) {

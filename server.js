@@ -70,6 +70,8 @@ function injectModulePersistenceScripts(html, moduleId) {
     moduleId !== 'moduuli-lovable' &&
     moduleId !== 'moduuli-visibility-growth-automation' &&
     moduleId !== 'moduuli-perplexity-notebooklm' &&
+    moduleId !== 'moduuli-gpt-claude-sprint' &&
+    moduleId !== 'moduuli-gpt-claude-sprint-2' &&
     !html.includes('/js/module-autosave.js');
   const tags = [bootScript];
   if (needsModuleWork) tags.push('<script src="/js/module-work.js"></script>');
