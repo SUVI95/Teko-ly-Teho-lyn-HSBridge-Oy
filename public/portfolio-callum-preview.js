@@ -33,6 +33,8 @@ var CALLUM_IMAGE_SLOTS=[
 ];
 function calImg(p,id,fb){
   if(typeof PortfolioImageSlots!=='undefined') return PortfolioImageSlots.imgSrc(p,id,fb);
+  var im=(p.images&&p.images[id])||{};
+  if(im.enabled!==false&&(im.dataUrl||im.src)) return im.dataUrl||im.src;
   return fb||null;
 }
 

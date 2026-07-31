@@ -4,12 +4,44 @@
 
   var STOCK = {
     hero: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800',
+    hero_m: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800',
     about_1: 'https://images.unsplash.com/photo-1556767542-5948888a9908?w=500',
     about_2: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=500',
+    about_1_m: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=500',
+    about_2_m: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=500',
     exp_0: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600',
     exp_1: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600',
     exp_2: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600',
     exp_3: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=600'
+  };
+
+  /** Hub / ?demo=1 personas — 2+2 so style picker is not all “Maria”. */
+  var PERSONA = {
+    maria: {
+      full_name: 'Maria Korhonen',
+      email_public: 'maria.korhonen@email.fi',
+      linkedin_url: 'https://linkedin.com/in/mariakorhonen',
+      hero: STOCK.hero,
+      about_1: STOCK.about_1,
+      about_2: STOCK.about_2
+    },
+    mikko: {
+      full_name: 'Mikko Virtanen',
+      email_public: 'mikko.virtanen@email.fi',
+      linkedin_url: 'https://linkedin.com/in/mikkovirtanen',
+      hero: STOCK.hero_m,
+      about_1: STOCK.about_1_m,
+      about_2: STOCK.about_2_m
+    }
+  };
+  var PERSONA_BY_TEMPLATE = {
+    veyssette: 'maria',   // warm cream/gold — softer option
+    nord: 'mikko',        // same layout, navy/steel — masculine
+    callum: 'mikko',      // bold dark/yellow — masculine
+    reeni: 'maria',
+    femia: 'maria',
+    shane: 'mikko',
+    editorial: 'maria'
   };
 
   function imgSlot(src) {
@@ -74,6 +106,28 @@
         hero: imgSlot(STOCK.hero),
         about_1: imgSlot(STOCK.about_1),
         about_2: imgSlot(STOCK.about_2),
+        exp_0: imgSlot(STOCK.exp_0),
+        exp_1: imgSlot(STOCK.exp_1),
+        exp_2: imgSlot(STOCK.exp_2),
+        exp_3: imgSlot(STOCK.exp_3)
+      }
+    },
+    nord: {
+      brand_color: '#0B1F33',
+      brand_accent: '#1B4F8A',
+      brand_bg: '#F4F7FB',
+      visual_style: {
+        cream: '#F4F7FB',
+        cream2: '#E8EEF5',
+        ink: '#0B1F33',
+        gold: '#1B4F8A',
+        gold_light: '#3D6FA3',
+        sections: { about: true, skills: true, experience: true, education: true, achievements: true }
+      },
+      images: {
+        hero: imgSlot(STOCK.hero_m),
+        about_1: imgSlot(STOCK.about_1_m),
+        about_2: imgSlot(STOCK.about_2_m),
         exp_0: imgSlot(STOCK.exp_0),
         exp_1: imgSlot(STOCK.exp_1),
         exp_2: imgSlot(STOCK.exp_2),
@@ -153,6 +207,21 @@
     }
   };
 
+  function applyPersona(p, template) {
+    var key = PERSONA_BY_TEMPLATE[template] || 'maria';
+    var per = PERSONA[key] || PERSONA.maria;
+    p.full_name = per.full_name;
+    p.email_public = per.email_public;
+    p.linkedin_url = per.linkedin_url;
+    p.images = p.images || {};
+    p.images.hero = imgSlot(per.hero);
+    p.images.about_1 = imgSlot(per.about_1);
+    p.images.about_2 = imgSlot(per.about_2);
+    p.images.about = imgSlot(per.about_1);
+    p.images.faq = imgSlot(per.hero);
+    return p;
+  }
+
   function clonePortfolioDemo(template) {
     var p = JSON.parse(JSON.stringify(BASE));
     var tv = TEMPLATE_VISUAL[template] || TEMPLATE_VISUAL.veyssette;
@@ -163,6 +232,7 @@
     p.brand_bg = tv.brand_bg;
     p.visual_style = JSON.parse(JSON.stringify(tv.visual_style));
     if (tv.images) p.images = JSON.parse(JSON.stringify(tv.images));
+    applyPersona(p, template);
     if (template === 'editorial') {
       p.skills = p.skills.map(function (s) { return s.name; });
     }

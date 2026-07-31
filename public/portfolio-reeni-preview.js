@@ -35,6 +35,8 @@ var REENI_IMAGE_SLOTS=[
 function reeImg(p,id,fb){
   if(typeof PortfolioImageSlots!=='undefined') return PortfolioImageSlots.imgSrc(p,id,fb);
   if(id==='hero'&&p.has_photo&&p.slug) return '/api/portfolio/photo/'+encodeURIComponent(p.slug);
+  var im=(p.images&&p.images[id])||{};
+  if(im.enabled!==false&&(im.dataUrl||im.src)) return im.dataUrl||im.src;
   return fb||null;
 }
 

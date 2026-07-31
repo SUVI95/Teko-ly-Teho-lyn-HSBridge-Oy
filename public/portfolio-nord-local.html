@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elävä CV — rekrytoijan näkymä</title>
+<script src="/portfolio-veyssette-preview.js"></script>
+<script src="/portfolio-nord-preview.js"></script>
+<script>
+(function(){
+  var KEY='ecv_nord_publish';
+  function errPage(title,msg){
+    document.write('<!DOCTYPE html><html lang="fi"><head><meta charset="UTF-8"><title>'+title+'</title></head><body style="font-family:system-ui,sans-serif;background:#F4F7FB;color:#0B1F33;padding:2rem;max-width:520px;margin:auto;line-height:1.6"><h1>'+title+'</h1><p>'+msg+'</p><p><a href="/module/moduuli-elava-cv-nord" style="color:#1B4F8A">← Elävä CV — Nord -editori</a></p></body></html>');
+  }
+  var raw=localStorage.getItem(KEY)||sessionStorage.getItem(KEY);
+  if(!raw){
+    errPage('Portfolioa ei löytynyt','Avaa editori ja paina <strong>Koko sivu ↗</strong> tai <strong>Julkaise</strong>.');
+    return;
+  }
+  try{
+    var d=JSON.parse(raw);
+    if(typeof renderNordPreview!=='function') throw new Error('Esikatseluskripti puuttuu');
+    document.write(renderNordPreview(d.P||{}));
+  }catch(e){
+    errPage('Virhe',String(e.message||e));
+  }
+})();
+</script>
+</head>
+</html>

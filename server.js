@@ -483,6 +483,8 @@ async function sendPortfolioTemplate(req, res, slugOverride) {
     templateFile = 'portfolio-tpl-editorial.html';
   } else if (req.query.tpl === 'veyssette') {
     templateFile = 'portfolio-tpl-veyssette.html';
+  } else if (req.query.tpl === 'nord') {
+    templateFile = 'portfolio-tpl-nord.html';
   } else if (req.query.tpl === 'femia') {
     templateFile = 'portfolio-tpl-femia.html';
   } else if (req.query.tpl === 'shane') {
@@ -499,6 +501,7 @@ async function sendPortfolioTemplate(req, res, slugOverride) {
       );
       if (r.rows[0]?.template === 'editorial') templateFile = 'portfolio-tpl-editorial.html';
       else if (r.rows[0]?.template === 'veyssette') templateFile = 'portfolio-tpl-veyssette.html';
+      else if (r.rows[0]?.template === 'nord') templateFile = 'portfolio-tpl-nord.html';
       else if (r.rows[0]?.template === 'femia') templateFile = 'portfolio-tpl-femia.html';
       else if (r.rows[0]?.template === 'shane') templateFile = 'portfolio-tpl-shane.html';
       else if (r.rows[0]?.template === 'callum') templateFile = 'portfolio-tpl-callum.html';
