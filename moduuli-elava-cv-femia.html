@@ -387,23 +387,23 @@ function fillForm(){
   document.getElementById('c_rose').value=vs.rose||'#C17B8B';
 }
 function initPalettes(){
-  var g=document.getElementById('paletteGrid');
-  if(!g || g.childElementCount) return;
-  PALETTES.forEach(function(p,i){
-    var d=document.createElement('div');
-    d.className='style-chip'+(i===0?' selected':'');
-    d.innerHTML='<div class="swatch" style="background:linear-gradient(135deg,'+p.blush+' 50%,'+p.rose+' 50%)"></div>'+p.label;
-    d.onclick=function(){
-      g.querySelectorAll('.style-chip').forEach(function(c){c.classList.remove('selected');});
-      d.classList.add('selected');
+  if(typeof mountStylePaletteGrid!=='function') return;
+  mountStylePaletteGrid({
+    palettes:PALETTES,
+    getP:function(){return P;},
+    matchKeys:['blush','ink','rose'],
+    swatchHtml:function(p){
+      return '<div class="swatch" style="background:linear-gradient(135deg,'+p.blush+' 50%,'+p.rose+' 50%)"></div>'+p.label;
+    },
+    applyPalette:function(p){
+      if(!P.visual_style)P.visual_style={};
       P.visual_style.blush=p.blush;P.visual_style.ink=p.ink;P.visual_style.rose=p.rose;
       P.brand_bg=p.blush;P.brand_color=p.ink;P.brand_accent=p.rose;
       document.getElementById('c_blush').value=p.blush;
       document.getElementById('c_ink').value=p.ink;
       document.getElementById('c_rose').value=p.rose;
       saveDraftQuiet();
-    };
-    g.appendChild(d);
+    }
   });
 }
 function initSections(){

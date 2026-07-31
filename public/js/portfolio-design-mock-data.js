@@ -222,6 +222,22 @@
     return p;
   }
 
+  /** Apply this style's default colors (editable later in Visuaali). Keeps sections if present. */
+  function applyTemplateDefaultColors(p, template) {
+    if (!p) return p;
+    var tv = TEMPLATE_VISUAL[template] || TEMPLATE_VISUAL.veyssette;
+    var prevSections = p.visual_style && p.visual_style.sections
+      ? JSON.parse(JSON.stringify(p.visual_style.sections))
+      : null;
+    p.template = template;
+    p.brand_color = tv.brand_color;
+    p.brand_accent = tv.brand_accent;
+    p.brand_bg = tv.brand_bg;
+    p.visual_style = JSON.parse(JSON.stringify(tv.visual_style));
+    if (prevSections) p.visual_style.sections = prevSections;
+    return p;
+  }
+
   function clonePortfolioDemo(template) {
     var p = JSON.parse(JSON.stringify(BASE));
     var tv = TEMPLATE_VISUAL[template] || TEMPLATE_VISUAL.veyssette;
@@ -240,5 +256,7 @@
   }
 
   global.clonePortfolioDemo = clonePortfolioDemo;
+  global.applyTemplateDefaultColors = applyTemplateDefaultColors;
+  global.TEMPLATE_VISUAL = TEMPLATE_VISUAL;
   global.VEYSSETTE_MOCK_P = clonePortfolioDemo('veyssette');
 })(typeof window !== 'undefined' ? window : global);

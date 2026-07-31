@@ -386,15 +386,16 @@ function fillForm(){
   document.getElementById('c_bg').value=vs.bg||'#ffffff';
 }
 function initPalettes(){
-  var g=document.getElementById('paletteGrid');
-  if(!g || g.childElementCount) return;
-  PALETTES.forEach(function(p,i){
-    var d=document.createElement('div');
-    d.className='style-chip'+(i===0?' selected':'');
-    d.innerHTML='<div class="swatch" style="background:linear-gradient(135deg,'+p.bg+' 50%,'+p.accent+' 50%)"></div>'+p.label;
-    d.onclick=function(){
-      g.querySelectorAll('.style-chip').forEach(function(c){c.classList.remove('selected');});
-      d.classList.add('selected');
+  if(typeof mountStylePaletteGrid!=='function') return;
+  mountStylePaletteGrid({
+    palettes:PALETTES,
+    getP:function(){return P;},
+    matchKeys:['bg','ink','accent'],
+    swatchHtml:function(p){
+      return '<div class="swatch" style="background:linear-gradient(135deg,'+p.bg+' 50%,'+p.accent+' 50%)"></div>'+p.label;
+    },
+    applyPalette:function(p){
+      if(!P.visual_style)P.visual_style={};
       P.visual_style.bg=p.bg;P.visual_style.ink=p.ink;P.visual_style.accent=p.accent;
       if(p.accent_text)P.visual_style.accent_text=p.accent_text;else P.visual_style.accent_text='#212529';
       P.brand_bg=p.bg;P.brand_color=p.ink;P.brand_accent=p.accent;
@@ -402,8 +403,7 @@ function initPalettes(){
       document.getElementById('c_ink').value=p.ink;
       document.getElementById('c_bg').value=p.bg;
       saveDraftQuiet();
-    };
-    g.appendChild(d);
+    }
   });
 }
 function initSections(){

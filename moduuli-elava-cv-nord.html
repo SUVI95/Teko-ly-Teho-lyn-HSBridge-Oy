@@ -451,34 +451,32 @@ function fillForm(){
   document.getElementById('f_edu').value=(P.education||[]).map(function(e){return [e.degree,e.school,e.year].filter(Boolean).join(' | ');}).join('\n');
   if(typeof PortfolioExperienceEditor!=='undefined') PortfolioExperienceEditor.render();
   var vs=P.visual_style||{};
-  document.getElementById('c_cream').value=vs.cream||'#F8F4EE';
-  document.getElementById('c_ink').value=vs.ink||'#2C2419';
-  document.getElementById('c_gold').value=vs.gold||'#A67C52';
+  document.getElementById('c_cream').value=vs.cream||'#F4F7FB';
+  document.getElementById('c_ink').value=vs.ink||'#0B1F33';
+  document.getElementById('c_gold').value=vs.gold||'#1B4F8A';
 }
 function initPalettes(){
-  var g=document.getElementById('paletteGrid');
-  if(!g || g.childElementCount) return;
-  PALETTES.forEach(function(p,i){
-    var d=document.createElement('div');
-    d.className='style-chip'+(i===0?' selected':'');
-    d.innerHTML='<div class="swatch" style="background:linear-gradient(135deg,'+p.cream+' 50%,'+p.gold+' 50%)"></div>'+p.label;
-    d.onclick=function(){
-      g.querySelectorAll('.style-chip').forEach(function(c){c.classList.remove('selected');});
-      d.classList.add('selected');
+  if(typeof mountStylePaletteGrid!=='function') return;
+  mountStylePaletteGrid({
+    palettes:PALETTES,
+    getP:function(){return P;},
+    matchKeys:['cream','ink','gold'],
+    swatchHtml:function(p){
+      return '<div class="swatch" style="background:linear-gradient(135deg,'+p.cream+' 50%,'+p.gold+' 50%)"></div>'+p.label;
+    },
+    applyPalette:function(p){
       if(!P.visual_style)P.visual_style={};
       P.visual_style.cream=p.cream;P.visual_style.cream2=p.cream2||p.cream;
       P.visual_style.ink=p.ink;P.visual_style.gold=p.gold;
       P.visual_style.gold_light=p.gold_light||p.gold;
       P.visual_style.ink_soft='#5A6B7D';
       P.brand_bg=p.cream;P.brand_color=p.ink;P.brand_accent=p.gold;
-      P.brand_bg=p.cream;P.brand_color=p.ink;P.brand_accent=p.gold;
       document.getElementById('c_cream').value=p.cream;
       document.getElementById('c_ink').value=p.ink;
       document.getElementById('c_gold').value=p.gold;
       saveDraftQuiet();
       if(document.getElementById('s-preview')&&document.getElementById('s-preview').classList.contains('on')) renderPreview();
-    };
-    g.appendChild(d);
+    }
   });
 }
 function initSections(){

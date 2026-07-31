@@ -268,23 +268,41 @@ window.PortfolioEditor = (function () {
       cvFilenameOnServer = pf.cv_filename || '';
       if (pf.preview_token) previewToken = pf.preview_token;
       var P = getP();
-      if (pf.template) P.template = pf.template;
+      var forceStyleColors = false;
+      try {
+        forceStyleColors = sessionStorage.getItem('ecv_force_style_colors') === (cfg.template || '');
+        if (forceStyleColors) sessionStorage.removeItem('ecv_force_style_colors');
+      } catch (eForce) { /* ignore */ }
+      // Keep the style the student just picked on the hub (not an older saved template).
+      if (pf.template && !forceStyleColors) P.template = pf.template;
+      else if (cfg.template) P.template = cfg.template;
       P.slug = portfolioSlug;
       P.has_cv = !!pf.has_cv;
       P.has_photo = !!pf.has_photo;
       if (pf.workspace_draft) {
-        if (pf.workspace_draft.visual_style) P.visual_style = Object.assign({}, P.visual_style || {}, pf.workspace_draft.visual_style);
+        // Fresh style pick: keep hub default palette; otherwise restore saved colors.
+        if (pf.workspace_draft.visual_style && !forceStyleColors) {
+          P.visual_style = Object.assign({}, P.visual_style || {}, pf.workspace_draft.visual_style);
+        }
         if (pf.workspace_draft.images) P.images = pf.workspace_draft.images;
         if (typeof pf.workspace_draft.slugManuallyEdited === 'boolean') slugManuallyEdited = pf.workspace_draft.slugManuallyEdited;
       }
-      ['full_name', 'city', 'target_role', 'bio', 'career_summary', 'hidden_strengths', 'email_public', 'linkedin_url', 'brand_color', 'brand_accent', 'brand_bg'].forEach(function (k) {
+      ['full_name', 'city', 'target_role', 'bio', 'career_summary', 'hidden_strengths', 'email_public', 'linkedin_url'].forEach(function (k) {
         if (pf[k] != null && pf[k] !== '') P[k] = pf[k];
       });
+      if (!forceStyleColors) {
+        ['brand_color', 'brand_accent', 'brand_bg'].forEach(function (k) {
+          if (pf[k] != null && pf[k] !== '') P[k] = pf[k];
+        });
+      }
       if (pf.skills && pf.skills.length) P.skills = pf.skills;
       if (pf.languages && pf.languages.length) P.languages = pf.languages;
       if (pf.achievements && pf.achievements.length) P.achievements = pf.achievements;
       if (pf.experience && pf.experience.length) P.experience = pf.experience;
       if (pf.education && pf.education.length) P.education = pf.education;
+      if (forceStyleColors && typeof applyTemplateDefaultColors === 'function') {
+        applyTemplateDefaultColors(P, cfg.template);
+      }
       if (cfg.fillForm) cfg.fillForm();
       if (cfg.onLoaded) cfg.onLoaded();
       updateSlugUi();
