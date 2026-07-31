@@ -14,12 +14,21 @@ function themeF(p){
 
 var HERO_IMG='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800';
 var ABOUT_IMG='https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=600';
+var FEMIA_IMAGE_SLOTS=[
+  {id:'hero',label:'Hero — muotokuva',hint:'Iso kuva etusivulla'},
+  {id:'about',label:'Tietoa minusta — kuva',hint:'Kuva about-osiossa'}
+];
+function femImg(p,id,fb){
+  if(typeof PortfolioImageSlots!=='undefined') return PortfolioImageSlots.imgSrc(p,id,fb);
+  if(id==='hero'&&p.has_photo&&p.slug) return '/api/portfolio/photo/'+encodeURIComponent(p.slug);
+  return fb||null;
+}
 
 function buildFemiaBody(p){
   var nm=escF(p.full_name||''),rl=escF(p.target_role||''),ct=escF(p.city||''),em=escF(p.email_public||''),li=p.linkedin_url?hrefF(p.linkedin_url):'';
   var sk=p.skills||[],ex=(p.experience||[]).filter(function(e){return e&&e.show!==false}),ed=p.education||[],achiev=p.achievements||[];
   var bio=escF(p.bio||''),cs=escF(p.career_summary||p.bio||'');
-  var photo=p.has_photo&&p.slug?'/api/portfolio/photo/'+encodeURIComponent(p.slug):HERO_IMG;
+  var photo=femImg(p,'hero',HERO_IMG);
   var first=escF((p.full_name||'').split(' ')[0]||'');
   var h='';
 
@@ -41,7 +50,10 @@ function buildFemiaBody(p){
   h+='<div><div class="stat-n">'+(ex.length||0)+'+</div><div class="stat-l">Työkokemusta</div></div>';
   h+='<div><div class="stat-n">'+(sk.length||0)+'+</div><div class="stat-l">Ydintaitoa</div></div>';
   h+='<div><div class="stat-n">'+(achiev.length||0)+'</div><div class="stat-l">Saavutusta</div></div></div></div>';
-  h+='<div class="hero-photo-wrap"><div class="hero-photo"><img src="'+photo+'" alt="'+nm+'"></div>';
+  h+='<div class="hero-photo-wrap"><div class="hero-photo">';
+  if(photo) h+='<img src="'+photo+'" alt="'+nm+'">';
+  else h+='<div style="min-height:420px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:.8rem;">Lisää kuva · Kuvat-vaihe</div>';
+  h+='</div>';
   h+='<div class="photo-badge tl"><strong>'+first+'</strong>'+rl+'</div>';
   if(sk.length) h+='<div class="photo-badge br"><strong>'+escF(normSkillF(sk[0]).name||'Osaaja')+'</strong>Ydinosaaminen</div>';
   h+='</div></div></section>';
@@ -53,7 +65,9 @@ function buildFemiaBody(p){
     h+='<p class="section-lead" style="margin-bottom:1rem">'+bio+'</p>';
     if(p.hidden_strengths){String(p.hidden_strengths).split('\n').filter(Boolean).slice(0,2).forEach(function(l){h+='<p style="color:var(--ink-soft);margin-bottom:.75rem;line-height:1.7">'+escF(l.replace(/^[-•]\s*/,''))+'</p>';});}
     h+='<a href="#contact" class="btn btn-primary">Lue lisää →</a></div>';
-    h+='<div class="about-img"><img src="'+ABOUT_IMG+'" alt=""></div></div></section>';
+    var aboutSrc=femImg(p,'about',ABOUT_IMG);
+    if(aboutSrc) h+='<div class="about-img"><img src="'+aboutSrc+'" alt=""></div>';
+    h+='</div></section>';
 
     if(sk.length>=3){
       h+='<section class="section section-soft"><div class="wrap"><div class="icon-rows">';
@@ -156,6 +170,7 @@ function renderFemiaPreview(p){
   var title=escF(p.full_name||'Portfolio')+' — Elävä CV';
   var head='<title>'+title+'</title><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>'+FEM_CSS+'</style>';
   var body=buildFemiaBody(p);
-  if(typeof PortfolioPublicFeatures!=='undefined') return PortfolioPublicFeatures.finishHtml(body,p,head);
-  return '<!DOCTYPE html><html lang="fi" style="'+themeF(p)+'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+head+'</head><body>'+body+'</body></html>';
+  var theme=themeF(p);
+  if(typeof PortfolioPublicFeatures!=='undefined') return PortfolioPublicFeatures.finishHtml(body,p,head,theme);
+  return '<!DOCTYPE html><html lang="fi" style="'+theme+'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+head+'</head><body>'+body+'</body></html>';
 }

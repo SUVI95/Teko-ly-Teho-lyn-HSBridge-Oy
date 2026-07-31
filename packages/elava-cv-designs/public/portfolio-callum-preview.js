@@ -22,6 +22,19 @@ var PORT_IMGS=[
   'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600',
   'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600'
 ];
+var FAQ_IMG='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500';
+var CALLUM_IMAGE_SLOTS=[
+  {id:'hero_bg',label:'Hero-tausta',hint:'Tumman hero-osion taustakuva'},
+  {id:'faq',label:'FAQ / sivukuva',hint:'Kuva FAQ-osion vieressä'},
+  {id:'port_0',label:'Portfolio-kortti 1',hint:'Saavutus-kortin kuva'},
+  {id:'port_1',label:'Portfolio-kortti 2',hint:'Saavutus-kortin kuva'},
+  {id:'port_2',label:'Portfolio-kortti 3',hint:'Saavutus-kortin kuva'},
+  {id:'port_3',label:'Portfolio-kortti 4',hint:'Saavutus-kortin kuva'}
+];
+function calImg(p,id,fb){
+  if(typeof PortfolioImageSlots!=='undefined') return PortfolioImageSlots.imgSrc(p,id,fb);
+  return fb||null;
+}
 
 function buildCallumBody(p){
   var nm=escC(p.full_name||''),parts=(p.full_name||'').trim().split(/\s+/);
@@ -45,7 +58,8 @@ function buildCallumBody(p){
   if(em) h+='<li><a href="mailto:'+em+'" title="Email">@</a></li>';
   h+='</ul></div></header>';
 
-  h+='<section id="home"><div class="hero-wrap"><div class="hero-bg"></div><div class="hero-mask"></div><div class="hero-content container">';
+  var heroBg=calImg(p,'hero_bg','https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600');
+  h+='<section id="home"><div class="hero-wrap"><div class="hero-bg"'+(heroBg?' style="background:url(\''+heroBg+'\') center/cover"':'')+'></div><div class="hero-mask"></div><div class="hero-content container">';
   h+='<h1>Hei, olen</h1><div class="hero-role">'+rl+'</div>';
   h+='<p class="hero-loc">'+nm+' · '+ct+'</p>';
   if(cs) h+='<p style="max-width:560px;margin:0 auto 1.5rem;opacity:.88;line-height:1.75;font-size:.95rem">'+cs+'</p>';
@@ -123,7 +137,9 @@ function buildCallumBody(p){
     h+='<h2 class="section-title">Tuloksia työssäni</h2><div class="portfolio-grid">';
     achiev.slice(0,6).forEach(function(a,i){
       var t=typeof a==='string'?a:(a.text||'');var title=t.length>48?t.substring(0,45)+'…':t;
-      h+='<div class="port-box"><img src="'+PORT_IMGS[i%PORT_IMGS.length]+'" alt="">';
+      var portSrc=calImg(p,'port_'+(i%4),PORT_IMGS[i%PORT_IMGS.length]);
+      h+='<div class="port-box">';
+      if(portSrc) h+='<img src="'+portSrc+'" alt="">';
       h+='<div class="port-overlay"><i>★</i><h5>'+escC(title)+'</h5><span>Saavutus</span></div></div>';
     });
     h+='</div></div></section>';
@@ -143,7 +159,10 @@ function buildCallumBody(p){
       h+='<div class="acc-item'+(i===0?' open':'')+'"><button type="button" class="acc-head" onclick="this.parentElement.classList.toggle(\'open\')">'+escC(s.split(/[.!?]/)[0]||s)+'</button>';
       h+='<div class="acc-body">'+escC(s)+'</div></div>';
     });
-    h+='</div></div><div class="faq-img"><img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500" alt=""></div></div></div></section>';
+    var faqSrc=calImg(p,'faq',FAQ_IMG);
+    h+='</div></div>';
+    if(faqSrc) h+='<div class="faq-img"><img src="'+faqSrc+'" alt=""></div>';
+    h+='</div></div></section>';
   }
 
   if(secC(p,'achievements')&&achiev.length){
@@ -184,6 +203,7 @@ function renderCallumPreview(p){
   var title=escC(p.full_name||'Portfolio')+' — Elävä CV';
   var head='<title>'+title+'</title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"><style>'+CAL_CSS+'</style>';
   var body=buildCallumBody(p);
-  if(typeof PortfolioPublicFeatures!=='undefined') return PortfolioPublicFeatures.finishHtml(body,p,head);
-  return '<!DOCTYPE html><html lang="fi" style="'+themeC(p)+'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+head+'</head><body>'+body+'</body></html>';
+  var theme=themeC(p);
+  if(typeof PortfolioPublicFeatures!=='undefined') return PortfolioPublicFeatures.finishHtml(body,p,head,theme);
+  return '<!DOCTYPE html><html lang="fi" style="'+theme+'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+head+'</head><body>'+body+'</body></html>';
 }

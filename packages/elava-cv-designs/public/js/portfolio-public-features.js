@@ -101,13 +101,19 @@
     return body;
   }
 
-  function finishHtml(bodyInner, p, headExtra) {
+  function finishHtml(bodyInner, p, headExtra, htmlStyle) {
     p = p || {};
     bodyInner = enhanceBody(bodyInner, p);
-    var accent = (p.visual_style && p.visual_style.gold) || p.brand_accent || '#2563a8';
+    var vs = p.visual_style || {};
+    var accent = vs.gold || vs.accent || p.brand_accent || '#2563a8';
     var styleExtra = '<style>:root{--pf-accent:' + accent + ';}' + PUBLIC_CSS + '</style>';
-    return '<!DOCTYPE html><html lang="fi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    // htmlStyle (e.g. "--cream:#…;--ink:#…") must win over hardcoded :root in template CSS
+    var themeBlock = htmlStyle
+      ? '<style id="pf-theme">html,:root{' + htmlStyle + '}</style>'
+      : '';
+    return '<!DOCTYPE html><html lang="fi"' + (htmlStyle ? ' style="' + htmlStyle + '"' : '') + '><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
       + (headExtra || '')
+      + themeBlock
       + styleExtra
       + '</head><body>'
       + bodyInner

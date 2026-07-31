@@ -24,7 +24,11 @@ window.PortfolioEditor = (function () {
   function apiBase() { return window.location.origin || ''; }
   function isLocalDev() {
     var h = window.location.hostname || '';
-    return h === 'localhost' || h === '127.0.0.1';
+    if (h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0') return true;
+    // Phone preview on same LAN (python local-preview / local Node)
+    if (/^192\.168\.\d+\.\d+$/.test(h) || /^10\.\d+\.\d+\.\d+$/.test(h)) return true;
+    if (/^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(h)) return true;
+    return false;
   }
   function portfolioPublicUrl(slug) {
     if (!slug) return '';
@@ -218,18 +222,26 @@ window.PortfolioEditor = (function () {
   }
 
   async function openFullPagePreview() {
+    // Local/LAN preview server has no real /portfolio/:slug — use localStorage fallback first.
+    if (cfg.fallbackPreview && isLocalDev()) {
+      try { if (cfg.onSaved) cfg.onSaved(); } catch (e) { /* ignore */ }
+      cfg.fallbackPreview();
+      return;
+    }
     try {
-      await savePortfolioData();
-      if (portfolioSlug) {
+      var d = await savePortfolioData();
+      var serverOk = d && d.slug && (d.preview_token || d.public_url || d.id || d.updated_at);
+      if (serverOk && portfolioSlug) {
         var qs = 'preview=1&t=' + Date.now();
         if (previewToken) qs += '&pt=' + encodeURIComponent(previewToken);
         window.open(portfolioPreviewUrl(portfolioSlug, qs), '_blank');
         return;
       }
     } catch (e) {
-      if (!isLocalDev()) { alert(e.message); return; }
+      if (!isLocalDev() && !cfg.fallbackPreview) { alert(e.message); return; }
     }
     if (cfg.fallbackPreview) cfg.fallbackPreview();
+    else alert('Kirjaudu sisään tai julkaise portfolio nähdäksesi koko sivun.');
   }
 
   async function publishLocalPreview() {

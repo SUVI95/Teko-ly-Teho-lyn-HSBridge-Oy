@@ -562,12 +562,9 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli5-ai-creation-sprint-legacy',
   'moduuli1-tietosuoja-legacy', // superseded by Turvatarkistus CRM — kept for admin rollback
   'moduuli-esitykset-tarjoukset-viestinta-gamma-studio',
-  'moduuli-elava-cv-editorial',
-  'moduuli-elava-cv-veyssette',
-  'moduuli-elava-cv-femia',
-  'moduuli-elava-cv-shane',
-  'moduuli-elava-cv-callum',
-  'moduuli-elava-cv-reeni',
+  'moduuli-elava-cv-classic', // legacy classic funnel — students use style picker → premium designs
+  'moduuli-elava-cv-editorial', // hidden from picker — kept for admin
+  'moduuli-elava-cv-shane', // hidden from picker — kept for admin
   'moduuli-jani-tutkimus-kirjoitus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
   'moduuli-karpo-tutkimus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
   'moduuli-anne-tyonhaku-2026', // removed from dashboard — kept on disk for admin reference only

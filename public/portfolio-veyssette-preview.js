@@ -47,9 +47,8 @@ function veyImgSrc(p,id){
 
 function veyImgHtml(imgClass,p,id,alt,phText){
   var src=veyImgSrc(p,id);
-  var cls=imgClass?(' '+imgClass):'';
-  if(!src) return '<div class="img-ph'+cls+'"><span>'+escV(phText||'Kuva pois')+'</span></div>';
-  return '<img class="'+escV(imgClass||'')+'" src="'+escV(src)+'" alt="'+alt+'">';
+  if(!src) return ''; // no empty placeholder box when kuva is off / missing
+  return '<img class="'+escV(imgClass||'')+'" src="'+escV(src)+'" alt="'+escV(alt||'')+'">';
 }
 
 function buildVeyssetteBody(p){
@@ -78,7 +77,9 @@ function buildVeyssetteBody(p){
   h+='</div><div class="hero-trust"><span class="trust-label">Avoin rooleille</span><div class="trust-avatars">';
   for(var ai=0;ai<Math.min(4,sk.length||3);ai++){var sn=normSkill(sk[ai]);h+='<span>'+(sn.name?sn.name.charAt(0):'?')+'</span>';}
   h+='</div><div class="trust-stat"><div class="trust-stat-n">'+(ex.length||'8')+'+</div><div class="trust-stat-l">vuotta kokemusta</div></div></div></div>';
-  h+='<div class="hero-photo">'+veyImgHtml('',p,'hero',nm,'Lisää kuva · Kuvat-välilehti')+'</div></div></section>';
+  var heroImg=veyImgHtml('',p,'hero',nm);
+  if(heroImg) h+='<div class="hero-photo">'+heroImg+'</div>';
+  h+='</div></section>';
 
   if(secV(p,'skills')&&sk.length){
     h+='<section class="features-curve"><div class="wrap"><div class="features-grid">';
@@ -100,7 +101,9 @@ function buildVeyssetteBody(p){
     h+='<div class="counter"><div class="counter-n">'+(sk.length||0)+'+</div><div class="counter-l">Ydintaitoa</div></div>';
     h+='<div class="counter"><div class="counter-n">'+(achiev.length||0)+'</div><div class="counter-l">Saavutusta</div></div></div>';
     h+='<a href="#contact" class="btn btn-primary">Lue lisää & ota yhteyttä</a></div>';
-    h+='<div class="about-imgs">'+veyImgHtml('tall',p,'about_1',nm,'Iso kuva')+veyImgHtml('',p,'about_2',nm,'Pieni kuva')+'</div></div></section>';
+    var about1=veyImgHtml('tall',p,'about_1',nm), about2=veyImgHtml('',p,'about_2',nm);
+    if(about1||about2) h+='<div class="about-imgs">'+about1+about2+'</div>';
+    h+='</div></section>';
   }
 
   if(secV(p,'experience')&&ex.length){
@@ -187,6 +190,7 @@ function renderVeyssettePreview(p){
   var title=escV(p.full_name||'Portfolio')+' — Elävä CV';
   var head='<title>'+title+'</title><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"><style>'+VEY_CSS+'</style>';
   var body=buildVeyssetteBody(p);
-  if(typeof PortfolioPublicFeatures!=='undefined') return PortfolioPublicFeatures.finishHtml(body,p,head);
-  return '<!DOCTYPE html><html lang="fi" style="'+themeV(p)+'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+head+'</head><body>'+body+'</body></html>';
+  var theme=themeV(p);
+  if(typeof PortfolioPublicFeatures!=='undefined') return PortfolioPublicFeatures.finishHtml(body,p,head,theme);
+  return '<!DOCTYPE html><html lang="fi" style="'+theme+'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+head+'</head><body>'+body+'</body></html>';
 }

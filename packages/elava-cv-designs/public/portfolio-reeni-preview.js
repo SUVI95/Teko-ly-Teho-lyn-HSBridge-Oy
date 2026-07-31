@@ -24,6 +24,19 @@ var PORT_IMGS=[
 ];
 var HERO_IMG='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=700';
 var EXP_IMG='https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=700';
+var REENI_IMAGE_SLOTS=[
+  {id:'hero',label:'Hero — muotokuva',hint:'Iso kuva etusivun oikealla'},
+  {id:'experience',label:'Kokemus — sivukuva',hint:'Kuva urapolku-osion vieressä'},
+  {id:'port_0',label:'Portfolio-kortti 1',hint:'Saavutus / projektikortti'},
+  {id:'port_1',label:'Portfolio-kortti 2',hint:'Saavutus / projektikortti'},
+  {id:'port_2',label:'Portfolio-kortti 3',hint:'Saavutus / projektikortti'},
+  {id:'port_3',label:'Portfolio-kortti 4',hint:'Saavutus / projektikortti'}
+];
+function reeImg(p,id,fb){
+  if(typeof PortfolioImageSlots!=='undefined') return PortfolioImageSlots.imgSrc(p,id,fb);
+  if(id==='hero'&&p.has_photo&&p.slug) return '/api/portfolio/photo/'+encodeURIComponent(p.slug);
+  return fb||null;
+}
 
 function buildReeniBody(p){
   var nm=escR(p.full_name||''),parts=(p.full_name||'').trim().split(/\s+/);
@@ -31,7 +44,7 @@ function buildReeniBody(p){
   var rl=escR(p.target_role||''),ct=escR(p.city||''),em=escR(p.email_public||''),li=p.linkedin_url?hrefR(p.linkedin_url):'';
   var sk=p.skills||[],ex=(p.experience||[]).filter(function(e){return e&&e.show!==false}),ed=p.education||[],achiev=p.achievements||[];
   var bio=escR(p.bio||''),cs=escR(p.career_summary||p.bio||'');
-  var yrs=yrsR(ex),photo=p.has_photo&&p.slug?'/api/portfolio/photo/'+encodeURIComponent(p.slug):HERO_IMG;
+  var yrs=yrsR(ex),photo=reeImg(p,'hero',HERO_IMG);
   var roleShort=rl.split('·')[0].trim()||rl;
   var h='';
 
@@ -57,7 +70,9 @@ function buildReeniBody(p){
   h+='<div class="hero-right"><div class="hero-photo-wrap">';
   h+='<span class="hero-watermark w1">'+escR(roleShort.toUpperCase())+'</span>';
   h+='<span class="hero-watermark w2">'+escR(roleShort.toUpperCase())+'</span>';
-  h+='<img src="'+photo+'" alt="'+nm+'"></div></div></div></section>';
+  if(photo) h+='<img src="'+photo+'" alt="'+nm+'">';
+  else h+='<div style="min-height:280px;display:flex;align-items:center;justify-content:center;background:var(--bg2);color:var(--muted);font-size:.8rem;">Lisää kuva · Kuvat-vaihe</div>';
+  h+='</div></div></div></section>';
 
   if(secR(p,'skills')&&sk.length){
     h+='<section class="section" id="skills" style="padding-top:3rem"><div class="container">';
@@ -131,7 +146,10 @@ function buildReeniBody(p){
         h+='<h4>'+escR(e.role||e.title||'')+'</h4>';
         h+='<p>'+escR(e.desc||e.description||'')+'</p></div>';
       });
-      h+='</div><div class="exp-photo"><img src="'+EXP_IMG+'" alt=""></div></div>';
+      var expPhoto=reeImg(p,'experience',EXP_IMG);
+      h+='</div>';
+      if(expPhoto) h+='<div class="exp-photo"><img src="'+expPhoto+'" alt=""></div>';
+      h+='</div>';
     }
     h+='</div></section>';
   }
@@ -143,7 +161,9 @@ function buildReeniBody(p){
     achiev.slice(0,4).forEach(function(a,i){
       var t=typeof a==='string'?a:(a.text||'');
       var title=t.length>55?t.substring(0,52)+'…':t;
-      h+='<article class="port-card"><div class="port-img"><img src="'+PORT_IMGS[i%PORT_IMGS.length]+'" alt=""></div>';
+      var portSrc=reeImg(p,'port_'+i,PORT_IMGS[i%PORT_IMGS.length]);
+      h+='<article class="port-card">';
+      if(portSrc) h+='<div class="port-img"><img src="'+portSrc+'" alt=""></div>';
       h+='<div class="port-meta"><div><h3>'+escR(title)+'</h3><div class="cat">Saavutus · '+rl.split('·')[0].trim()+'</div></div>';
       h+='<span class="port-arrow">↗</span></div></article>';
     });
@@ -199,6 +219,7 @@ function renderReeniPreview(p){
   var title=escR(p.full_name||'Portfolio')+' — Elävä CV';
   var head='<title>'+title+'</title><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style>'+REE_CSS+'</style>';
   var body=buildReeniBody(p);
-  if(typeof PortfolioPublicFeatures!=='undefined') return PortfolioPublicFeatures.finishHtml(body,p,head);
-  return '<!DOCTYPE html><html lang="fi" style="'+themeR(p)+'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+head+'</head><body>'+body+'</body></html>';
+  var theme=themeR(p);
+  if(typeof PortfolioPublicFeatures!=='undefined') return PortfolioPublicFeatures.finishHtml(body,p,head,theme);
+  return '<!DOCTYPE html><html lang="fi" style="'+theme+'"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+head+'</head><body>'+body+'</body></html>';
 }
