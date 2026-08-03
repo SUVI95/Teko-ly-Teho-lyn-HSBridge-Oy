@@ -143,9 +143,18 @@ h1.hero-title em { font-style: italic; color: #a8c4e8; }
   flex: 1; min-width: 110px; padding: 0.55rem 0.75rem; border-radius: 8px;
   border: 1px solid var(--border); background: var(--paper); font-size: 0.78rem;
   font-weight: 600; color: var(--muted); text-align: center;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
 }
 .research-step-pip.on { border-color: var(--accent); color: var(--accent); background: rgba(37,99,168,0.06); }
 .research-step-pip.done { border-color: var(--accent3); color: var(--accent3); background: rgba(42,122,75,0.06); }
+.research-profession-picker {
+  display: block !important;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 2px dashed var(--accent);
+  border-radius: 12px;
+  background: rgba(37,99,168,0.04);
+}
 .research-brief {
   background: var(--ink); color: #fff; border-radius: 12px; padding: 1.5rem 1.6rem; margin: 1rem 0 1.25rem;
 }
@@ -1589,34 +1598,39 @@ body.easy-read .howto .howto-eg { font-size: 1.02rem; }
         </div>
       </div>
 
-      <div class="research-steps-bar" aria-label="Tutkimuksen vaiheet">
-        <div class="research-step-pip on" id="researchPip1">1. Ammatti</div>
-        <div class="research-step-pip" id="researchPip2">2. Tutki</div>
-        <div class="research-step-pip" id="researchPip3">3. Vastaa</div>
-      </div>
-
-      <!-- STEP 1: field — napit heti näkyviin (ei ohjetekstin alle) -->
-      <div class="research-step active" id="researchStep1">
-        <p class="research-pick-label">1. Paina ammattiasi (tai kirjoita alle)</p>
+      <!-- Profession picker ALWAYS visible (not inside display:none step) -->
+      <div class="research-profession-picker" id="researchProfessionPicker">
+        <p class="research-pick-label">Paina ammattiasi — nämä ovat napit:</p>
         <div class="chips" id="researchChips" style="margin-bottom:0.85rem;">
-          <button type="button" class="chip" onclick="setResearchField('asiakaspalvelu', this)">Asiakaspalvelu</button>
-          <button type="button" class="chip" onclick="setResearchField('hoitoala / sosiaali- ja terveys', this)">Hoitoala</button>
-          <button type="button" class="chip" onclick="setResearchField('myynti', this)">Myynti</button>
-          <button type="button" class="chip" onclick="setResearchField('toimistotyö / hallinto', this)">Toimistotyö</button>
-          <button type="button" class="chip" onclick="setResearchField('logistiikka / varasto', this)">Logistiikka</button>
-          <button type="button" class="chip" onclick="setResearchField('opetus / koulutus', this)">Opetus</button>
-          <button type="button" class="chip" onclick="setResearchField('rakennus / tekniikka', this)">Rakennus / tekniikka</button>
-          <button type="button" class="chip" onclick="setResearchField('ravintola / hotelli', this)">Ravintola / hotelli</button>
-          <button type="button" class="chip" onclick="setResearchField('IT / digitaaliset palvelut', this)">IT</button>
+          <button type="button" class="chip" data-field="asiakaspalvelu">Asiakaspalvelu</button>
+          <button type="button" class="chip" data-field="hoitoala / sosiaali- ja terveys">Hoitoala</button>
+          <button type="button" class="chip" data-field="myynti">Myynti</button>
+          <button type="button" class="chip" data-field="toimistotyö / hallinto">Toimistotyö</button>
+          <button type="button" class="chip" data-field="logistiikka / varasto">Logistiikka</button>
+          <button type="button" class="chip" data-field="opetus / koulutus">Opetus</button>
+          <button type="button" class="chip" data-field="rakennus / tekniikka">Rakennus / tekniikka</button>
+          <button type="button" class="chip" data-field="ravintola / hotelli">Ravintola / hotelli</button>
+          <button type="button" class="chip" data-field="IT / digitaaliset palvelut">IT</button>
         </div>
         <label class="research-label" for="researchField">Tai kirjoita ammattisi tähän</label>
         <input class="field-input" id="researchField" type="text" placeholder="Esimerkki: lähihoitaja, myyntineuvottelija, varastotyöntekijä..." style="width:100%; margin-bottom:1rem;" />
-        <button class="field-btn" type="button" onclick="startFieldResearch()" style="width:100%; max-width:420px;">2. Näytä tutkimusohjeeni →</button>
-        <div class="howto" style="margin-top:1.25rem;">
-          <div class="howto-title">Sitten (kun olet painanut nappia yllä)</div>
+        <button class="field-btn" type="button" id="researchStartBtn" style="width:100%; max-width:420px;">Näytä tutkimusohjeeni →</button>
+      </div>
+
+      <div class="research-steps-bar" aria-label="Tutkimuksen vaiheet">
+        <button type="button" class="research-step-pip on" id="researchPip1" data-step="1">1. Ammatti</button>
+        <button type="button" class="research-step-pip" id="researchPip2" data-step="2">2. Tutki</button>
+        <button type="button" class="research-step-pip" id="researchPip3" data-step="3">3. Vastaa</button>
+      </div>
+
+      <!-- STEP 1: short howto (picker is above, always visible) -->
+      <div class="research-step active" id="researchStep1">
+        <div class="howto" style="margin-top:0;">
+          <div class="howto-title">Näin jatkat</div>
           <ol>
-            <li><strong>Lue</strong> 2 lähdettä (Google / Duunitori / artikkelit) — n. 10–20 min.</li>
-            <li><strong>Palaa</strong> tähän sivuun ja vastaa 3 lyhyeen kysymykseen.</li>
+            <li><strong>Valitse</strong> ammattisi napeista yllä (tai kirjoita).</li>
+            <li>Paina <strong>Näytä tutkimusohjeeni</strong>.</li>
+            <li><strong>Lue</strong> 2 lähdettä — palaa ja vastaa kysymyksiin.</li>
           </ol>
           <div class="howto-eg">Vastaukset tallentuvat selaimeen — voit jatkaa myöhemmin.</div>
         </div>
@@ -2549,33 +2563,59 @@ function setResearchField(val, btn) {
   if (el) el.value = val;
   const wrap = document.getElementById('researchChips');
   if (wrap) {
-    wrap.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-  }
-  if (btn) btn.classList.add('on');
-  else if (wrap) {
     wrap.querySelectorAll('.chip').forEach(c => {
-      if ((c.textContent || '').trim() && val && c.getAttribute('onclick') && c.getAttribute('onclick').indexOf(val) !== -1) {
-        c.classList.add('on');
-      }
+      c.classList.toggle('on', btn ? c === btn : (c.getAttribute('data-field') === val));
     });
   }
+  saveFieldResearchDraft();
 }
 
 function showResearchStep(n) {
+  // Coerce — server/localStorage may restore step as string "2";
+  // strict === then hides ALL steps (nothing clickable under the pips).
+  const stepNum = Math.min(3, Math.max(1, parseInt(n, 10) || 1));
   [1, 2, 3].forEach(i => {
     const step = document.getElementById('researchStep' + i);
     const pip = document.getElementById('researchPip' + i);
-    if (step) step.classList.toggle('active', i === n);
+    if (step) step.classList.toggle('active', i === stepNum);
     if (pip) {
       pip.classList.remove('on', 'done');
-      if (i === n) pip.classList.add('on');
-      else if (i < n) pip.classList.add('done');
+      if (i === stepNum) pip.classList.add('on');
+      else if (i < stepNum) pip.classList.add('done');
     }
   });
   saveFieldResearchDraft();
-  const box = document.getElementById('fieldResearch');
-  if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+(function bindResearchProfessionUI() {
+  const chips = document.getElementById('researchChips');
+  if (chips) {
+    chips.addEventListener('click', (e) => {
+      const btn = e.target && e.target.closest ? e.target.closest('.chip[data-field]') : null;
+      if (!btn) return;
+      setResearchField(btn.getAttribute('data-field'), btn);
+    });
+  }
+  const startBtn = document.getElementById('researchStartBtn');
+  if (startBtn) startBtn.addEventListener('click', () => startFieldResearch());
+  document.querySelectorAll('.research-step-pip[data-step]').forEach((pip) => {
+    pip.addEventListener('click', () => {
+      const n = parseInt(pip.getAttribute('data-step'), 10) || 1;
+      if (n > 1) {
+        const field = (document.getElementById('researchField') || {}).value || '';
+        if (field.trim().length < 2) {
+          alert('Valitse tai kirjoita ammattisi ensin.');
+          showResearchStep(1);
+          return;
+        }
+        if (n === 2) startFieldResearch();
+        else showResearchStep(3);
+        return;
+      }
+      showResearchStep(1);
+    });
+  });
+})();
 
 function buildResearchQueries(field) {
   const f = field.trim();
@@ -2676,7 +2716,10 @@ function restoreFieldResearch() {
     if (s.foundNew) document.getElementById('researchNew').value = s.foundNew;
     if (s.change) document.getElementById('researchChange').value = s.change;
     if (s.sources) document.getElementById('researchSources').value = s.sources;
-    if (s.step && s.step > 1 && s.field) showResearchStep(s.step);
+    const stepNum = parseInt(s.step, 10) || 1;
+    if (stepNum > 1 && s.field) showResearchStep(stepNum);
+    else showResearchStep(1);
+    if (s.field) setResearchField(s.field);
   } catch (e) {}
 }
 
