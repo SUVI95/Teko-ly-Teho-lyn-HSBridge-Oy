@@ -572,6 +572,9 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-karpo-tutkimus-2026', // superseded by moduuli-ai-tietosuoja — kept on disk for admin reference only
   'moduuli-anne-tyonhaku-2026', // removed from dashboard — kept on disk for admin reference only
   'moduuli-ella-myyntisprintti', // temporarily admin-only — no student/gift access
+  // Tomi personal path — dashboard + /module/ gated (admin + musiikki gift only)
+  'moduuli-ai-musiikkituottaja',
+  'moduuli-ai-musiikkikampanja',
   // Bridge — hidden from students, admin preview only
   'moduuli-ideasta-tuotteeksi',
   'moduuli-alanavaihtajan-kartta',

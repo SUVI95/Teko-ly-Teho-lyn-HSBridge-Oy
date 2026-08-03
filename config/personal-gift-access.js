@@ -160,15 +160,15 @@ const GIFTS = {
     emails: parseEmailList(process.env.SANTTU_GIFT_EMAIL, ['korho.san97@proton.me', TEST_STUDENT_EMAIL])
   },
   musiikki: {
+    // Tomi 1/2 only — Rivon-viikko is public and must NOT be gift-gated.
     moduleIds: [
       'moduuli-ai-musiikkituottaja',
-      'moduuli-ai-musiikkikampanja',
-      'moduuli-ai-laatulaboratorio'
+      'moduuli-ai-musiikkikampanja'
     ],
     firstName: 'tomi',
     emails: parseEmailList(process.env.MUSIIKKI_GIFT_EMAIL, [
       'tomi.hiltunen31@gmail.com',
-      TEST_STUDENT_EMAIL
+      TEST_STUDENT_EMAIL // QA only — regular students never get these cards
     ])
   }
 };
