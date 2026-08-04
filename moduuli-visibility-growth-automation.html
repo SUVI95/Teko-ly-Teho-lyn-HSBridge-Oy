@@ -813,13 +813,15 @@ function normalizeClaudeMessages(messages) {
 }
 
 /**
- * Claude first (smart → standard Sonnet), OpenAI only as last resort.
- * /api/ai/duunijobs is the same Claude handler — do not double-call it after /claude.
+ * Claude Sonnet first (reliable under class load). Smart/Fable only if opts.smart===true.
+ * OpenAI last resort. Never double-call /duunijobs after /claude.
  */
 async function duunijobsAIApi(system, messages, maxTokens, opts) {
   opts = opts || {};
-  var timeoutMs = opts.timeoutMs || 80000;
-  var preferSmart = opts.smart !== false;
+  var timeoutMs = opts.timeoutMs || 70000;
+  // Default OFF — Fable/smart cascade was aborting live classroom requests
+  // ("Yhteys tekoälypalveluun katkesi") before Sonnet could answer.
+  var preferSmart = opts.smart === true;
   var normalized = normalizeClaudeMessages(messages);
   var payload = {
     system: system,
@@ -829,39 +831,39 @@ async function duunijobsAIApi(system, messages, maxTokens, opts) {
   var data;
   var text;
 
-  // 1) Smartest Claude (server cascades Fable → Sonnet)
-  if (preferSmart) {
-    try {
-      data = await postAIJson(getClaudeApiUrl(), Object.assign({}, payload, { smart: true }), timeoutMs);
-      text = data.text || data.reply || '';
-      if (text) {
-        if (data.provider) console.log('AI provider:', data.provider, data.model || '');
-        return text;
-      }
-    } catch (claudeErr) {
-      console.warn('Smart Claude failed, retrying standard Claude:', claudeErr && claudeErr.message);
-    }
-  }
-
-  // 2) Standard Claude (Sonnet) — still Anthropic, faster path
+  // 1) Standard Claude (Sonnet) — primary path for Sovellusstudio
   try {
-    data = await postAIJson(getClaudeApiUrl(), payload, Math.min(timeoutMs, 60000));
+    data = await postAIJson(getClaudeApiUrl(), payload, timeoutMs);
     text = data.text || data.reply || '';
     if (text) {
       if (data.provider) console.log('AI provider:', data.provider, data.model || '');
       return text;
     }
   } catch (sonnetErr) {
-    console.warn('Standard Claude failed, trying OpenAI fallback:', sonnetErr && sonnetErr.message);
+    console.warn('Standard Claude failed, trying fallback:', sonnetErr && sonnetErr.message);
   }
 
-  // 3) OpenAI last resort only
+  // 2) Optional smart cascade (only if explicitly requested)
+  if (preferSmart) {
+    try {
+      data = await postAIJson(getClaudeApiUrl(), Object.assign({}, payload, { smart: true }), Math.min(timeoutMs, 60000));
+      text = data.text || data.reply || '';
+      if (text) {
+        if (data.provider) console.log('AI provider:', data.provider, data.model || '');
+        return text;
+      }
+    } catch (claudeErr) {
+      console.warn('Smart Claude failed, trying OpenAI:', claudeErr && claudeErr.message);
+    }
+  }
+
+  // 3) OpenAI last resort
   data = await postAIJson(getOpenAIChatUrl(), {
     model: 'gpt-4o-mini',
     system: system,
     messages: normalized,
     max_tokens: maxTokens || 1000
-  }, 35000);
+  }, 40000);
   return data.text || data.reply || '';
 }
 
@@ -1121,7 +1123,7 @@ function completeInterview() {
 async function askDuunijobsAI(){
   showTyping();
   try{
-    const t=await duunijobsAIApi(buildSystem(),S.chatHistory,1000,{timeoutMs:70000,smart:true});
+    const t=await duunijobsAIApi(buildSystem(),S.chatHistory,900,{timeoutMs:55000,smart:false});
     hideTyping();
     const forceDone = S.questionCount >= 5;
     const aiSaidDone = t.includes('INTERVIEW_COMPLETE');
@@ -1405,8 +1407,8 @@ ${convo}
 Now write the complete, exhaustive app build prompt. This person built this with no coding experience. The app must look like theirs and nobody else's. Make them blow their own mind when they see what gets generated.`;
 
   try{
-    // Base44 prompt is long — give Claude up to ~85s (under Vercel 90s limit)
-    const t=await duunijobsAIApi(sys,[{role:'user',content:usr}],4000,{timeoutMs:85000,smart:true});
+    // Sonnet-first (no Fable) — more reliable with many students online
+    const t=await duunijobsAIApi(sys,[{role:'user',content:usr}],3200,{timeoutMs:75000,smart:false});
     clearInterval(iv);
     S.generatedPrompt=t;
     S.finalPrompt=t;
