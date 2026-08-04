@@ -578,7 +578,7 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   // Bridge — hidden from students, admin preview only
   'moduuli-ideasta-tuotteeksi',
   'moduuli-alanavaihtajan-kartta',
-  'moduuli-ai-maisema',
+  // moduuli-ai-maisema — open to all students (after Perplexity & NotebookLM)
   'moduuli-ai-liidien-hankinta',
   'moduuli-ai-simulation-lab',
 ]);
@@ -608,7 +608,7 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'moduuli-recap-game',
   'moduuli-ideasta-tuotteeksi',
   'moduuli-alanavaihtajan-kartta',
-  'moduuli-ai-maisema',
+  // moduuli-ai-maisema — open to all (dashboard + /module/)
   'moduuli-ai-liidien-hankinta',
   'moduuli-ai-simulation-lab',
   'moduuli-voice-deep-search',
