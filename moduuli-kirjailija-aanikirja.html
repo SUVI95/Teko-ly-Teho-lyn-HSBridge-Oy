@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kirjailijan AI-laboratorio — tarina &amp; äänikirja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ink: #1c1917; --muted: #78716c; --paper: #faf7f2; --card: #fff;
+  --border: rgba(28,25,23,0.12); --accent: #0f766e; --ember: #c2410c;
+  --ink2: #292524; --line: #e7e5e4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); line-height: 1.65; font-size: 17px; }
+#progress-bar { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: linear-gradient(90deg, var(--accent), var(--ember)); z-index: 1000; }
+.top-nav {
+  position: fixed; top: 3px; left: 0; right: 0; height: 60px; z-index: 999;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 0 20px; background: rgba(250,247,242,0.92); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-home {
+  text-decoration: none; color: var(--ink); font-weight: 700; font-size: 13px;
+  border: 1.5px solid var(--border); background: #fff; border-radius: 8px; padding: 7px 12px;
+}
+.nav-home:hover { border-color: var(--accent); color: var(--accent); }
+.nav-title { font-size: 13px; color: var(--muted); font-weight: 500; }
+.nav-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+.hero {
+  padding: 110px 24px 56px; max-width: 820px; margin: 0 auto;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 0%, rgba(15,118,110,0.12), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 20%, rgba(194,65,12,0.1), transparent 50%);
+}
+.hero .eyebrow {
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;
+}
+.hero h1 {
+  font-family: 'DM Serif Display', serif; font-size: clamp(2.1rem, 5vw, 3.2rem);
+  font-weight: 400; line-height: 1.15; margin-bottom: 1rem;
+}
+.hero h1 em { font-style: italic; color: var(--ember); }
+.hero .lead { color: var(--muted); font-size: 1.05rem; max-width: 38em; margin-bottom: 1.5rem; }
+.rule-box {
+  background: var(--ink); color: #fff; border-radius: 14px; padding: 1.25rem 1.4rem; margin: 1.5rem 0;
+}
+.rule-box strong { color: #5eead4; display: block; margin-bottom: 0.4rem; font-size: 0.95rem; }
+.rule-box p { color: rgba(255,255,255,0.82); font-size: 0.95rem; margin: 0; line-height: 1.6; }
+.section { padding: 3rem 24px; }
+.section-alt { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.section-inner { max-width: 880px; margin: 0 auto; }
+.section-label {
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem;
+}
+.section h2 {
+  font-family: 'DM Serif Display', serif; font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 400; margin-bottom: 0.75rem; line-height: 1.2;
+}
+.section h2 em { font-style: italic; color: var(--ember); }
+.section .intro { color: var(--muted); margin-bottom: 1.5rem; max-width: 40em; }
+.tool-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin: 1.25rem 0 1.75rem;
+}
+.tool-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.1rem;
+  display: flex; flex-direction: column; gap: 0.35rem; min-height: 148px;
+}
+.tool-card .num {
+  font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent); letter-spacing: 0.08em;
+}
+.tool-card h3 { font-size: 1rem; font-weight: 700; }
+.tool-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.45; flex: 1; }
+.tool-card a {
+  font-size: 0.82rem; font-weight: 700; color: var(--accent); text-decoration: none; margin-top: 0.25rem;
+}
+.tool-card a:hover { text-decoration: underline; }
+.tool-card .tag {
+  display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--ember); background: rgba(194,65,12,0.08);
+  border-radius: 4px; padding: 2px 6px; width: fit-content;
+}
+.exercise {
+  background: #fff; border: 2px solid var(--accent); border-radius: 14px; padding: 1.35rem 1.4rem; margin: 1.25rem 0;
+}
+.exercise h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+.exercise ol { padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.55rem; }
+.exercise li { color: var(--ink2); }
+.exercise .hint { font-size: 0.9rem; color: var(--muted); margin-top: 0.85rem; }
+.prompt-block {
+  position: relative; background: #f5f5f4; border: 1px solid var(--border);
+  border-radius: 10px; padding: 0.9rem 1rem; margin: 0.75rem 0; font-size: 0.9rem;
+}
+.prompt-block .lbl {
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem;
+}
+.copy-btn {
+  position: absolute; top: 8px; right: 8px; border: 1px solid var(--border); background: #fff;
+  border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 700; cursor: pointer;
+}
+textarea, input[type="text"] {
+  width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem;
+  font: inherit; background: #fff; margin: 0.4rem 0 0.75rem;
+}
+textarea { min-height: 110px; resize: vertical; }
+label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 0.5rem; }
+.hours {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 1.25rem 0;
+}
+.hour-pip {
+  background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem;
+  font-size: 0.82rem; text-align: center;
+}
+.hour-pip strong { display: block; font-size: 0.95rem; margin-bottom: 0.2rem; color: var(--accent); }
+.back-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
+.btn-home {
+  display: inline-flex; align-items: center; background: var(--ink); color: #fff; text-decoration: none;
+  font-weight: 700; font-size: 15px; padding: 12px 18px; border-radius: 8px;
+}
+.btn-home:hover { background: var(--ink2); color: #fff; }
+.btn-ghost {
+  display: inline-flex; align-items: center; border: 1px solid var(--border); background: #fff;
+  color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14px; padding: 11px 16px; border-radius: 8px;
+}
+.final {
+  background: var(--ink); color: #fff; padding: 4rem 24px; text-align: center;
+}
+.final h2 { font-family: 'DM Serif Display', serif; font-size: 2rem; margin-bottom: 0.75rem; }
+.final p { color: rgba(255,255,255,0.7); max-width: 32em; margin: 0 auto 1.5rem; }
+@media (max-width: 640px) {
+  .nav-title { display: none; }
+  .hero { padding-top: 90px; }
+}
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<nav class="top-nav">
+  <a class="nav-home" href="/">← Etusivu</a>
+  <span class="nav-title">Kirjailijan AI-laboratorio</span>
+  <span class="nav-time">~5 h</span>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Henkilökohtainen päivä · Kirjailija · Äänikirja</div>
+  <h1>Sinä kirjoitat.<br><em>AI on apulainen.</em></h1>
+  <p class="lead">Tämä päivä on kirjailijalle joka haluaa kehittää synopsista, tarinaa ja äänikirjaa — ilman että tekoäly kaappaa äänen tai juonen. Alla <strong>22 työkalua</strong>, joita et ole vielä käyttänyt tällä kurssilla (ei ChatGPT / Claude / Gemini / Perplexity / NotebookLM / Grok / Manus / Base44 / Gamma / Canva).</p>
+  <div class="rule-box">
+    <strong>Kultainen sääntö koko päivän</strong>
+    <p>1) Kirjoita ensin itse (käsin / omilla sanoilla). 2) Anna AI:lle vain kysymys, kritiikki tai ääni — ei “kirjoita luku puolestani”. 3) Sinä päätät mikä jää käsikirjoitukseen. Jos AI kuulostaa geneeriseltä → heitä pois.</p>
+  </div>
+  <div class="hours">
+    <div class="hour-pip"><strong>0–1</strong>Sääntö + synopsiksen runko</div>
+    <div class="hour-pip"><strong>1–2</strong>Tarinan kartta (8 työkalua)</div>
+    <div class="hour-pip"><strong>2–3</strong>Kritiikki &amp; kieli (5)</div>
+    <div class="hour-pip"><strong>3–4,5</strong>Äänikirja-vertailu (7)</div>
+    <div class="hour-pip"><strong>4,5–5</strong>Oma työkalupino</div>
+  </div>
+  <label class="field" for="bookTitle">Kirjan / projektin työnimi (täytä nyt)</label>
+  <input type="text" id="bookTitle" placeholder="Esim. työsi nimi tai ‘Romaani X’" maxlength="160"/>
+  <label class="field" for="ownSynopsis">Oma synopsis — kirjoita 5–8 lausetta ITSE ennen työkaluja</label>
+  <textarea id="ownSynopsis" placeholder="Kuka, missä, mitä haluaa, mikä estää, miten muuttuu… omin sanoin."></textarea>
+</header>
+
+<section class="section section-alt" id="map">
+  <div class="section-inner">
+    <div class="section-label">Blokki A · ~75 min</div>
+    <h2>Tarinan kartta — <em>ei generointia</em></h2>
+    <p class="intro">Käytä näitä rakentamaan maailmaa, aikajanaa ja synopsiksen rakennetta. Prompt: “kysy minulta 5 kysymystä” — älä “kirjoita juoni”.</p>
+    <div class="tool-grid">
+      <article class="tool-card"><span class="num">01</span><span class="tag">Tarina</span><h3>Sudowrite</h3><p>Fiction-työkalu: Story Bible, beatit, “describe” — käytä vain sparraukseen.</p><a href="https://www.sudowrite.com" target="_blank" rel="noopener">sudowrite.com →</a></article>
+      <article class="tool-card"><span class="num">02</span><span class="tag">Tarina</span><h3>NovelCrafter</h3><p>Codex + Codex Codex: hahmot ja juoni pysyvät tallessa ilman että AI kirjoittaa kirjaa.</p><a href="https://www.novelcrafter.com" target="_blank" rel="noopener">novelcrafter.com →</a></article>
+      <article class="tool-card"><span class="num">03</span><span class="tag">Tarina</span><h3>Campfire Write</h3><p>Visuaalinen maailma, hahmot, aikajana — vahva “sinä rakennat”.</p><a href="https://www.campfirewriting.com" target="_blank" rel="noopener">campfirewriting.com →</a></article>
+      <article class="tool-card"><span class="num">04</span><span class="tag">Maailma</span><h3>World Anvil</h3><p>Worldbuilding-wiki: paikat, säännöt, historia — AI ei ole pakollinen.</p><a href="https://www.worldanvil.com" target="_blank" rel="noopener">worldanvil.com →</a></article>
+      <article class="tool-card"><span class="num">05</span><span class="tag">Aika</span><h3>Aeon Timeline</h3><p>Juonen ja aikajanan hallinta — kriittinen synopsiksen logiikalle.</p><a href="https://www.aeontimeline.com" target="_blank" rel="noopener">aeontimeline.com →</a></article>
+      <article class="tool-card"><span class="num">06</span><span class="tag">Visuaali</span><h3>Milanote</h3><p>Moodboard + juonikortit seinällä — eri asia kuin Canva.</p><a href="https://milanote.com" target="_blank" rel="noopener">milanote.com →</a></article>
+      <article class="tool-card"><span class="num">07</span><span class="tag">Kaavio</span><h3>Napkin.ai</h3><p>Muuta synopsiksesi rakenteeksi / kaavioksi — sinä syötät tekstin.</p><a href="https://www.napkin.ai" target="_blank" rel="noopener">napkin.ai →</a></article>
+      <article class="tool-card"><span class="num">08</span><span class="tag">Muisti</span><h3>Obsidian</h3><p>Ilmainen paikallinen “tarinan aivot” — linkitä hahmot ja luvut itse.</p><a href="https://obsidian.md" target="_blank" rel="noopener">obsidian.md →</a></article>
+    </div>
+    <div class="exercise">
+      <h3>Harjoitus A — Synopsiksen stressitesti (valitse 2 työkalua)</h3>
+      <ol>
+        <li>Kopioi <strong>oma synopsis</strong> yllä (älä anna AI:n kirjoittaa uutta).</li>
+        <li>Avaa <strong>Napkin.ai</strong> TAI <strong>Milanote</strong> — tee rakennekuva / kortit.</li>
+        <li>Avaa <strong>NovelCrafter</strong> TAI <strong>Campfire</strong> — luo 3 hahmokorttia omin sanoin.</li>
+        <li>Kopioi alla oleva prompt työkaluun joka hyväksyy chatin (Sudowrite / NovelCrafter):</li>
+      </ol>
+      <div class="prompt-block">
+        <div class="lbl">HITL-promptti — kopioi</div>
+        <button type="button" class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
+        <p id="promptA">Älä kirjoita juonta tai dialogia puolestani. Synopsikseni on alla. Esitä minulle 7 terävää kysymystä jotka paljastavat reiät: motivaatio, panokset, aikajana, teema. Odota vastauksiani yksi kerrallaan. Synopsikseni:
+
+[LIITÄ OMA TEKSTISI]</p>
+      </div>
+      <p class="hint">Tallenna vastauksesi alle — ne ovat sinun, ei AI:n.</p>
+      <label class="field" for="notesA">Muistiinpanot Blokki A</label>
+      <textarea id="notesA" placeholder="Reiät joita löysin… hahmot… päätökset…"></textarea>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="critique">
+  <div class="section-inner">
+    <div class="section-label">Blokki B · ~60 min</div>
+    <h2>Kritiikki &amp; kieli — <em>sinun tekstisi päälle</em></h2>
+    <p class="intro">Liitä 300–600 sanaa jonka OLET jo kirjoittanut (luku / synopsiksen laajennus). Työkalu saa kommentoida — ei uudelleenkirjoittaa koko tekstiä ilman lupaasi.</p>
+    <div class="tool-grid">
+      <article class="tool-card"><span class="num">09</span><span class="tag">Edit</span><h3>ProWritingAid</h3><p>Syvä stilistiikka + pacing — hyvät raportit, sinä hyväksyt muutokset.</p><a href="https://prowritingaid.com" target="_blank" rel="noopener">prowritingaid.com →</a></article>
+      <article class="tool-card"><span class="num">10</span><span class="tag">Edit</span><h3>Hemingway Editor</h3><p>Selkeys ja raskas lause — nopea “onko tämä luettavaa ääneen?”.</p><a href="https://hemingwayapp.com" target="_blank" rel="noopener">hemingwayapp.com →</a></article>
+      <article class="tool-card"><span class="num">11</span><span class="tag">Kieli</span><h3>LanguageTool</h3><p>Kielioppi (myös FI) — korjaa mekaaniset virheet, ei tarinaa.</p><a href="https://languagetool.org" target="_blank" rel="noopener">languagetool.org →</a></article>
+      <article class="tool-card"><span class="num">12</span><span class="tag">Edit</span><h3>AutoCrit</h3><p>Fiktiospesifi: cliché, pacing, dialogin tagit.</p><a href="https://www.autocrit.com" target="_blank" rel="noopener">autocrit.com →</a></article>
+      <article class="tool-card"><span class="num">13</span><span class="tag">Studio</span><h3>Reedsy Studio</h3><p>Ilmainen käsikirjoituseditori + rakenne — hyvä “koti” tekstille.</p><a href="https://reedsy.com/write-a-book" target="_blank" rel="noopener">reedsy.com/write-a-book →</a></article>
+    </div>
+    <div class="exercise">
+      <h3>Harjoitus B — Kolme työkalua, yksi kappale</h3>
+      <ol>
+        <li>Liitä sama kappale Hemingwayyn → listaa 3 lausetta joita lyhennät ITSE.</li>
+        <li>Aja LanguageTool → hyväksy vain oikeat korjaukset.</li>
+        <li>ProWritingAid TAI AutoCrit → valitse <strong>yksi</strong> neuvo jonka noudatat, hylkää loput.</li>
+      </ol>
+      <label class="field" for="notesB">Mitä pidin / heitin pois</label>
+      <textarea id="notesB" placeholder="Pidin: … Hylkäsin koska se ei ole minun ääntäni: …"></textarea>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="audio">
+  <div class="section-inner">
+    <div class="section-label">Blokki C · ~90 min</div>
+    <h2>Äänikirja — <em>vertailulaboratorio</em></h2>
+    <p class="intro">Sama 150–250 sanan kappale (sinun kirjoittamasi) → 3–4 eri TTS-työkalua. Valitse ääni joka kunnioittaa tekstiä. Älä anna AI:n muuttaa sanoja.</p>
+    <div class="tool-grid">
+      <article class="tool-card"><span class="num">14</span><span class="tag">Ääni</span><h3>ElevenLabs</h3><p>Laadukkain yleinen TTS + klonaus (varovasti). Hyvä vertailun “kulta”.</p><a href="https://elevenlabs.io" target="_blank" rel="noopener">elevenlabs.io →</a></article>
+      <article class="tool-card"><span class="num">15</span><span class="tag">Ääni</span><h3>Murf.ai</h3><p>Studio-tyylinen TTS, helppo kokeilla eri ääniä.</p><a href="https://murf.ai" target="_blank" rel="noopener">murf.ai →</a></article>
+      <article class="tool-card"><span class="num">16</span><span class="tag">Ääni</span><h3>PlayHT</h3><p>Vahva moniääni / dialogi-kokeiluihin.</p><a href="https://play.ht" target="_blank" rel="noopener">play.ht →</a></article>
+      <article class="tool-card"><span class="num">17</span><span class="tag">Ääni</span><h3>Speechify</h3><p>Nopea kuuntelu omasta tekstistä — hyvä “kuulostaako tämä kirjallisuudelta?”.</p><a href="https://speechify.com" target="_blank" rel="noopener">speechify.com →</a></article>
+      <article class="tool-card"><span class="num">18</span><span class="tag">Ääni</span><h3>NaturalReader</h3><p>Ilmainen / edullinen TTS-vertailu.</p><a href="https://www.naturalreaders.com" target="_blank" rel="noopener">naturalreaders.com →</a></article>
+      <article class="tool-card"><span class="num">19</span><span class="tag">Ääni</span><h3>WellSaid Labs</h3><p>Pro-ääniä, rauhallinen kerronta.</p><a href="https://www.wellsaidlabs.com" target="_blank" rel="noopener">wellsaidlabs.com →</a></article>
+      <article class="tool-card"><span class="num">20</span><span class="tag">Edit</span><h3>Descript</h3><p>Leikkaa ääntä tekstinä — korjaa tauot ilman DAW-osaamista.</p><a href="https://www.descript.com" target="_blank" rel="noopener">descript.com →</a></article>
+    </div>
+    <p class="intro" style="margin-top:0.5rem;">Bonus (ei pakko): <a href="https://www.lovo.ai" target="_blank" rel="noopener"><strong>21 · LOVO</strong></a>, <a href="https://suno.com" target="_blank" rel="noopener"><strong>22 · Suno</strong></a> (vain intro-/teemamusiikki, ei korvaa lukijaa).</p>
+    <div class="exercise">
+      <h3>Harjoitus C — Sama kappale, kolme ääntä</h3>
+      <ol>
+        <li>Kirjoita / liitä alle 150–250 sanaa (oma teksti).</li>
+        <li>Lue se ääneen itse kerran (puhelinmuistio ok).</li>
+        <li>Generoi samalla tekstillä: <strong>ElevenLabs + Murf + Speechify/NaturalReader</strong>.</li>
+        <li>Arvioi: totuus ääneen, tempo, tunne, suomi/englanti-sopivuus.</li>
+        <li>Vie paras otto Descriptiin → leikkaa 2 turhaa taukoa.</li>
+      </ol>
+      <label class="field" for="audioSample">Ääninäytteen teksti (oma)</label>
+      <textarea id="audioSample" placeholder="Liitä tähän kappale jonka luet AI:lla…"></textarea>
+      <label class="field" for="notesC">Voittaja + miksi</label>
+      <textarea id="notesC" placeholder="Voittaja: … Miksi muut putosivat: … Mitä muuttaisin lukijan ohjeessa: …"></textarea>
+      <div class="prompt-block">
+        <div class="lbl">Ääniohje TTS:lle (ei uudelleenkirjoitusta)</div>
+        <button type="button" class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
+        <p>Read the following text exactly as written. Do not add words, summarize, or change names. Calm literary narrator, medium pace, clear Finnish/English as in the text. Pause briefly at paragraph breaks.
+
+[LIITÄ TEKSTI]</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="stack">
+  <div class="section-inner">
+    <div class="section-label">Blokki D · ~45 min</div>
+    <h2>Oma pino — <em>pysyvallan</em></h2>
+    <p class="intro">Valitse max <strong>5 työkalua</strong> viikottaiseen käyttöön. Liikaa työkaluja = AI kirjoittaa puolestasi vahingossa.</p>
+    <div class="exercise">
+      <h3>Harjoitus D — Kirjailijan AI-sopimus</h3>
+      <label class="field" for="stackPick">Minun 5 työkalua</label>
+      <textarea id="stackPick" placeholder="1. … (synopsis/kartta)&#10;2. … (edit)&#10;3. … (ääni)&#10;4. … (leikkaus)&#10;5. … (arkisto)"></textarea>
+      <label class="field" for="contract">Sääntö itselle (3 lausetta)</label>
+      <textarea id="contract" placeholder="Esim: AI ei kirjoita dialogia. AI saa ehdottaa kysymyksiä. Äänikirjassa teksti on lukittu ennen TTS:ää."></textarea>
+      <div class="prompt-block">
+        <div class="lbl">Viikkoprosessi (kopioi muistiinpanoihin)</div>
+        <button type="button" class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
+        <p>MA: kirjoitan 500 sanaa ilman AI:ta.
+TI: synopsiksen / hahmon stressitesti (kysymykset vain).
+KE: yksi edit-työkalu omaan kappaleeseen.
+TO: ääninäyte 1 kappaleesta, vertaa kahta TTS:ää.
+PE: Descript-leikkaus + päätös: mikä jää kirjaan.</p>
+      </div>
+    </div>
+    <div class="back-bar">
+      <a class="btn-home" href="/">← Takaisin etusivulle</a>
+      <a class="btn-ghost" href="#map">↑ Tarinan kartta</a>
+      <a class="btn-ghost" href="#audio">↑ Äänikirja</a>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <h2>Valta säilyy sinulla.</h2>
+  <p>22 työkalua. Yksi sääntö: AI ehdottaa, sinä päätät. Kun synopsis, kappale ja ääninäyte ovat sinun — olet käyttänyt tekoälyä kuin ammattilainen, et kuin automaatti.</p>
+  <a class="btn-home" href="/" style="background:#5eead4;color:#134e4a;">← Etusivu</a>
+</section>
+
+<script>
+window.addEventListener('scroll', function () {
+  var h = document.documentElement.scrollHeight - window.innerHeight;
+  document.getElementById('progress-bar').style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+});
+
+function copyPrompt(btn) {
+  var p = btn.closest('.prompt-block').querySelector('p');
+  var text = p.innerText;
+  navigator.clipboard.writeText(text).then(function () {
+    btn.textContent = 'kopioitu ✓';
+    setTimeout(function () { btn.textContent = 'kopioi'; }, 1800);
+  });
+}
+
+(function persist() {
+  var ids = ['bookTitle', 'ownSynopsis', 'notesA', 'notesB', 'audioSample', 'notesC', 'stackPick', 'contract'];
+  var KEY = 'kirjailija_aanikirja_v1';
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+    ids.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el && saved[id]) el.value = saved[id];
+    });
+  } catch (e) {}
+  function save() {
+    var data = {};
+    ids.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) data[id] = el.value;
+    });
+    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+  }
+  ids.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', save);
+  });
+})();
+</script>
+</body>
+</html>
