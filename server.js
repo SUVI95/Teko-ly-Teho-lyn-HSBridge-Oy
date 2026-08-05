@@ -103,6 +103,7 @@ const moduleAiRoutes = require('./routes/module-ai');
 const bonusModuleRoutes = require('./routes/bonus-module');
 const csCallRoutes = require('./routes/cs-call');
 const studioVoiceRoutes = require('./routes/studio-voice');
+const voiceDeepSearchRoutes = require('./routes/voice-deep-search');
 const realtimeTokenRoutes = require('./routes/realtime-token');
 const audioRoutes = require('./routes/audio');
 const automaatioEmailRoutes = require('./routes/automaatio-email');
@@ -146,6 +147,7 @@ app.use('/api/module-ai', moduleAiRoutes);
 app.use('/api/bonus-module', bonusModuleRoutes);
 app.use('/api/cs-call', csCallRoutes);
 app.use('/api/studio-voice', studioVoiceRoutes);
+app.use('/api/voice-deep-search', voiceDeepSearchRoutes);
 app.use('/api/realtime-token', realtimeTokenRoutes);
 app.use('/api/audio', audioRoutes);
 app.use(
@@ -611,7 +613,7 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   // moduuli-ai-maisema — open to all (dashboard + /module/)
   'moduuli-ai-liidien-hankinta',
   'moduuli-ai-simulation-lab',
-  'moduuli-voice-deep-search',
+  // moduuli-voice-deep-search — open (live Realtime + Deep Search path)
   'moduuli10-ai-tyonhakutyokalut',
   'moduuli11-ai-etikka',
   'moduuli10c-freelance',

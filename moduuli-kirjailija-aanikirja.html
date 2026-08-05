@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Kirjailijan AI-laboratorio — tarina &amp; äänikirja</title>
+<script>window.__MODULE_ID__ = 'moduuli-kirjailija-aanikirja';</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -92,6 +93,14 @@ body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(
 .exercise ol { padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.55rem; }
 .exercise li { color: var(--ink2); }
 .exercise .hint { font-size: 0.9rem; color: var(--muted); margin-top: 0.85rem; }
+.shot-wrap{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;margin:1rem 0 .5rem;box-shadow:0 8px 28px rgba(15,23,42,.06);}
+.shot-wrap img{display:block;width:100%;height:auto;}
+.shot-cap{font-size:.88rem;color:var(--muted);margin:0 0 1.25rem;line-height:1.55;}
+.step-guide{list-style:none;padding:0;margin:1rem 0 0;display:grid;gap:10px;}
+.step-guide li{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start;padding:12px 14px;background:#fff;border:1px solid var(--border);border-radius:12px;font-size:1rem;line-height:1.55;}
+.step-guide .n{width:36px;height:36px;border-radius:10px;background:rgba(13,148,136,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-weight:700;font-size:.85rem;}
+.easy-read{font-size:1.05rem;line-height:1.8;}
+.easy-read p{margin-bottom:.85rem;}
 .prompt-block {
   position: relative; background: #f5f5f4; border: 1px solid var(--border);
   border-radius: 10px; padding: 0.9rem 1rem; margin: 0.75rem 0; font-size: 0.9rem;
@@ -280,17 +289,17 @@ label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 
 <header class="hero">
   <div class="eyebrow">Henkilökohtainen päivä · Kirjailija · Äänikirja</div>
   <h1>Kirjoitat itse.<br><em>Tekoäly tukee prosessia.</em></h1>
-  <p class="lead">Tässä päivässä harjoittelet ammattimaista tekoälyn käyttöä kirjallisessa työssä: tuotat oman tekstin, vertaat <strong>Claudea</strong> ja <strong>GPT:tä</strong> samalla promptilla, muokkaat tekoälyn juoniehdotuksen omaksi käsikirjoitukseksi ja rakennat <strong>Gemini</strong>llä visuaalisen näytteen. Tavoite on pitää kirjoittajan päätösvalta itselläsi.</p>
+  <p class="lead">Tässä päivässä harjoittelet ammattimaista tekoälyn käyttöä kirjallisessa työssä: tuotat oman tekstin, vertaat <strong>Claudea</strong> ja <strong>GPT:tä</strong> samalla promptilla, muokkaat tekoälyn tarinaehdotuksen omaksi käsikirjoitukseksi, teet siitä ääninäytteen <strong>ElevenLabsilla</strong> ja rakennat <strong>Gemini</strong>llä visuaalisen näytteen. Tavoite on pitää kirjoittajan päätösvalta itselläsi.</p>
   <div class="rule-box">
     <strong>Työskentelyperiaate</strong>
     <p>1) Kirjoita ensin itse (vähintään 1000 merkkiä). 2) Muotoile prompti itse. 3) Käytä samaa promptia molemmissa malleissa. 4) Arvioi tulokset ja perustele valintasi.</p>
   </div>
   <div class="hours">
     <div class="hour-pip"><strong>0–1</strong>Oma teksti · mallivertailu</div>
-    <div class="hour-pip"><strong>1–2</strong>Juoniehdotus → oma teksti</div>
-    <div class="hour-pip"><strong>2–3</strong>Gemini: kuva ja video</div>
-    <div class="hour-pip"><strong>3–4</strong>Kartta · editointi · äänikirja</div>
-    <div class="hour-pip"><strong>4–5</strong>Oma työkalupino</div>
+    <div class="hour-pip"><strong>1–2</strong>Tarinaehdotus → oma teksti</div>
+    <div class="hour-pip"><strong>2–3</strong>ElevenLabs: teksti → ääni</div>
+    <div class="hour-pip"><strong>3–4</strong>Gemini: kuva ja video</div>
+    <div class="hour-pip"><strong>4–</strong>Työkalulistat tutustuttavaksi</div>
   </div>
   <label class="field" for="bookTitle">Kirjan tai projektin työnimi</label>
   <input type="text" id="bookTitle" placeholder="Esim. työsi nimi tai romaanin työnimi" maxlength="160"/>
@@ -394,19 +403,19 @@ label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 
 <!-- EXERCISE 2: AI plot → human rewrite (no Claude/GPT) -->
 <section class="section section-alt" id="humanize">
   <div class="section-inner">
-    <div class="section-label">Harjoitus 2 · Juoniehdotus → oma käsikirjoitus</div>
+    <div class="section-label">Harjoitus 2 · Tarinaehdotus → oma käsikirjoitus</div>
     <h2>Tekoälyn ehdotus<br><em>omaksi tekstiksi.</em></h2>
-    <p class="intro">Alla on tekoälyn tuottama juoniehdotus. Se on rakenteeltaan käyttökelpoinen, mutta tyyliltään geneerinen. Tehtäväsi on kirjoittaa siitä <strong>oma versiosi</strong>: eri sanasto, rytmi, miljöö ja näkökulma. Tässä harjoituksessa et käytä Claudea tai GPT:tä — vain omaa tekstiäsi.</p>
+    <p class="intro">Alla on tekoälyn tuottama <strong>tarinaehdotus</strong>. Se on rakenteeltaan käyttökelpoinen, mutta tyyliltään geneerinen. Tehtäväsi on kirjoittaa siitä <strong>oma versiosi</strong>: eri sanasto, rytmi, miljöö ja näkökulma. Tässä harjoituksessa et käytä Claudea tai GPT:tä — vain omaa tekstiäsi.</p>
 
     <div class="philosophy">
       <h3>Ideointi voi olla nopeaa. Kirjoittaminen on päätöksentekoa.</h3>
-      <p>Tekoäly voi tarjota juoniehdotuksia tehokkaasti. Alkuperäisyys syntyy siitä, miten valitset, tiivistät ja muotoilet materiaalin — aistihavainnoista, äänestä ja ratkaisuista, jotka teet itse.</p>
+      <p>Tekoäly voi tarjota tarinaideoita tehokkaasti. Alkuperäisyys syntyy siitä, miten valitset, tiivistät ja muotoilet materiaalin — aistihavainnoista, äänestä ja ratkaisuista, jotka teet itse.</p>
       <p>Ammattimainen käyttötapa: ota ehdotuksesta rakenne tai ydinidea, ja kirjoita lopputulos omalla rekisterilläsi. Tekoäly nopeuttaa ideointia; kirjoittaja vastaa tekstistä.</p>
     </div>
 
-    <div class="arena-step">1 · Lähdemateriaali (tekoälyn juoniehdotus)</div>
+    <div class="arena-step">1 · Lähdemateriaali (tekoälyn tarinaehdotus)</div>
     <div class="ai-plot" id="aiPlotBlock">
-      <div class="ai-label">Tekoälyn tuottama juoniehdotus · lähdemateriaali uudelleenkirjoitukseen</div>
+      <div class="ai-label">Tekoälyn tuottama tarinaehdotus · lähdemateriaali uudelleenkirjoitukseen</div>
       <div class="beat">
         <p>Elias palaa lapsuudenkylään myymään vanhempiensa tyhjää taloa. Ensimmäisenä iltana hän löytää ullakolta lukitun laatikon, jossa on kirjeitä joita hän ei ole koskaan nähnyt — äidin kirjoittamia, osoitettuna “tyttärelle jota ei syntynyt”. Elias ei ymmärrä. Hän päättää selvittää asian ennen kuin talo myydään.</p>
       </div>
@@ -419,9 +428,9 @@ label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 
     </div>
 
     <div class="arena-step" style="margin-top:1.25rem;">2 · Kirjoita oma versio</div>
-    <p class="intro" style="margin-bottom:0.65rem;">Säilytä juonen kaari, mutta muuta nimet, paikka, aistit ja rekisteri. Älä kopioi lähdetekstin lauseita. Vähintään <strong>800 merkkiä</strong>.</p>
+    <p class="intro" style="margin-bottom:0.65rem;">Säilytä tarinan kaari, mutta muuta nimet, paikka, aistit ja rekisteri. Älä kopioi lähdetekstin lauseita. Vähintään <strong>800 merkkiä</strong>. Tätä tekstiä käytät seuraavaksi ElevenLabsissa.</p>
     <label class="field" for="humanRewrite">Oma uudelleenkirjoitus</label>
-    <textarea id="humanRewrite" style="min-height:240px" placeholder="Kirjoita juoni uudelleen omalla äänelläsi. Lukijan tulisi tunnistaa, että teksti on sinun — ei mallin tuottamaa synopsista."></textarea>
+    <textarea id="humanRewrite" style="min-height:240px" placeholder="Kirjoita tarina uudelleen omalla äänelläsi. Lukijan tulisi tunnistaa, että teksti on sinun — ei mallin tuottamaa synopsista."></textarea>
     <div class="char-row">
       <span id="humanCharCount" class="char-count bad">0 / 800 merkkiä</span>
       <span style="font-size:0.85rem;color:var(--muted);">Ehdotus on raaka-ainetta — lopputulos on käsikirjoitusta</span>
@@ -432,7 +441,7 @@ label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 
     <textarea id="humanKeep" placeholder="Esim. ullakon kirjeet, valinta myydä vs. kohdata menneisyys…"></textarea>
     <label class="field" for="humanChange">Mitä muutit, jotta teksti kuulostaa sinulta?</label>
     <textarea id="humanChange" placeholder="Esim. vaihdoin miljöön, lisäsin aistihavaintoja, tein lopusta avoimemman…"></textarea>
-    <label class="field" for="humanFear">Miten suhtaudut tekoälyn juoniehdotuksiin tämän jälkeen? (vähintään 60 merkkiä)</label>
+    <label class="field" for="humanFear">Miten suhtaudut tekoälyn tarinaehdotuksiin tämän jälkeen? (vähintään 60 merkkiä)</label>
     <textarea id="humanFear" placeholder="Esim. Ehdotus toimi luurankona. Kun kirjoitin sen uudelleen, huomasin että rekisteri, tempo ja valinnat ovat kirjoittajan vastuulla…"></textarea>
     <div class="char-row">
       <span id="fearCharCount" class="char-count">0 / 60 merkkiä</span>
@@ -442,10 +451,69 @@ label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 
   </div>
 </section>
 
-<!-- EXERCISE 3: Gemini image → video -->
-<section class="section" id="gemini">
+<!-- EXERCISE 3: ElevenLabs — own text → voice -->
+<section class="section" id="elevenlabs">
   <div class="section-inner">
-    <div class="section-label">Harjoitus 3 · Gemini · kuva ja video</div>
+    <div class="section-label">Harjoitus 3 · ElevenLabs · teksti → ääni</div>
+    <h2>Kuuntele oma tekstisi<br><em>äänikirjana.</em></h2>
+    <p class="intro easy-read">ElevenLabs muuttaa kirjoitetun tekstin puheeksi (TTS = text-to-speech). Valitset äänen, liität tekstin, generoit audion ja lataat tiedoston. Tässä harjoituksessa käytät <strong>omaa uudelleenkirjoitustasi</strong> harjoituksesta 2 — et tekoälyn alkuperäistä ehdotusta.</p>
+
+    <div class="philosophy">
+      <h3>Mitä ElevenLabs tekee?</h3>
+      <p class="easy-read">Se lukee tekstisi valitsemallasi äänellä. Se <strong>ei kirjoita tarinaa puolestasi</strong>. Sinä päätät sanamuodon; työkalu vain äänittää sen.</p>
+      <p class="easy-read">Hyvä käyttötapa: kuulet, kuulostaako tekstisi kirjallisuudelta ääneen luettuna. Huomaat pitkät lauseet ja kömpelön rytmin.</p>
+      <p style="margin:0;"><a class="btn-secondary" href="https://elevenlabs.io/text-to-speech" target="_blank" rel="noopener">Avaa ElevenLabs (Text to Speech) →</a></p>
+    </div>
+
+    <div class="shot-wrap">
+      <img src="/images/elevenlabs-tts-page.png" alt="ElevenLabs Text to Speech -etusivu: Convert Text to Speech" width="1400" height="900">
+    </div>
+    <p class="shot-cap"><strong>Oikea ElevenLabs-sivu.</strong> Aloita kohdasta <em>Convert Text to Speech</em> tai kirjaudu sisään. Ilmainen tili riittää harjoitukseen.</p>
+
+    <div class="shot-wrap">
+      <img src="/images/elevenlabs-app.png" alt="ElevenLabs-kirjautumissivu: Sign in with Google" width="1400" height="900">
+    </div>
+    <p class="shot-cap">Jos et ole käyttänyt palvelua aiemmin: kirjaudu (esim. Google) tai luo tili. Hyväksy mikrofoni / evästeet vain jos sivu pyytää.</p>
+
+    <div class="exercise">
+      <h3>Tehtävä — oma teksti äänitiedostoksi</h3>
+      <p class="easy-read" style="margin-bottom:1rem;">Käytä tekstiä kohdasta <strong>2 · Kirjoita oma versio</strong>. Jos se on vielä lyhyt, kirjoita se ensin valmiiksi (vähintään 800 merkkiä).</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:1rem;">
+        <button type="button" class="btn-secondary" id="copyRewriteForVoice">Kopioi oma tekstisi</button>
+        <a class="btn-secondary" href="https://elevenlabs.io/app/speech-synthesis/text-to-speech" target="_blank" rel="noopener">Avaa Text to Speech -työkalu →</a>
+      </div>
+      <p id="voiceCopyMsg" class="arena-msg"></p>
+
+      <ol class="step-guide">
+        <li><span class="n">1</span><span><strong>Kirjaudu</strong> ElevenLabsiin (kuva yllä).</span></li>
+        <li><span class="n">2</span><span>Avaa <strong>Text to Speech</strong> / Speech Synthesis (vasemmasta valikosta tai etusivun painikkeesta).</span></li>
+        <li><span class="n">3</span><span><strong>Liitä</strong> kopioimasi oma teksti tekstikenttään. Älä liitä tekoälyn alkuperäistä ehdotusta.</span></li>
+        <li><span class="n">4</span><span><strong>Valitse ääni</strong> (Voice). Kokeile 1–2 rauhallista kertojaääntä. Suomenkielinen ääni jos saatavilla; muuten selkeä englanti / neutraali narratori.</span></li>
+        <li><span class="n">5</span><span>Paina <strong>Generate</strong> / Generoi. Kuuntele.</span></li>
+        <li><span class="n">6</span><span><strong>Lataa</strong> äänitiedosto (Download). Tallenna koneellesi.</span></li>
+      </ol>
+
+      <div class="shot-wrap" style="margin-top:1.25rem;">
+        <img src="/images/elevenlabs-audiobooks.webp" alt="ElevenLabs Reader: teksti ja toisto" width="1280" height="720">
+      </div>
+      <p class="shot-cap">Näin äänikirjamainen kuuntelu voi näyttää ElevenLabsissa — sana korostuu kun ääni etenee. Sinun harjoituksesi tavoite on silti: generoi + lataa tiedosto omasta tekstistäsi.</p>
+
+      <label class="field" for="elevenVoicePick" style="margin-top:1rem;">Minkä äänen valitsit ja miksi?</label>
+      <textarea id="elevenVoicePick" placeholder="Esim. Valitsin rauhallisen kertojaäänen, koska tarinani on hiljainen ja hidas…"></textarea>
+      <label class="field" for="elevenListenNotes">Mitä huomasit kuunnellessa omaa tekstiäsi? (vähintään 40 merkkiä)</label>
+      <textarea id="elevenListenNotes" placeholder="Esim. Yksi lause oli liian pitkä ääneen. Vaihdan sen kirjoittaessa lyhyemmäksi…"></textarea>
+      <div class="char-row">
+        <span id="elevenNotesCount" class="char-count">0 / 40 merkkiä</span>
+      </div>
+      <p class="hint">Älä kloonaa toisen ihmisen ääntä ilman lupaa. Käytä kirjaston valmista ääntä.</p>
+    </div>
+  </div>
+</section>
+
+<!-- EXERCISE 4: Gemini image → video -->
+<section class="section section-alt" id="gemini">
+  <div class="section-inner">
+    <div class="section-label">Harjoitus 4 · Gemini · kuva ja video</div>
     <h2>Visuaalinen näyte<br><em>omasta tekstistä.</em></h2>
     <p class="intro">Valitse yksi hetki uudelleenkirjoituksestasi (harjoitus 2). Tuota siitä Geminin avulla ensin still-kuva ja sen jälkeen lyhyt video, jossa kuva animoidaan (image-to-video). Ohjaat prosessia promptilla; malli toteuttaa.</p>
 
@@ -455,7 +523,7 @@ label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 
     </div>
 
     <div class="arena-step">1 · Valitse kuvattava hetki</div>
-    <p class="intro" style="margin-bottom:0.65rem;">Poimi yksi konkreettinen tilanne tekstistäsi — ei koko juonta. Määrittele sommittelu, valo ja tunnelma.</p>
+    <p class="intro" style="margin-bottom:0.65rem;">Poimi yksi konkreettinen tilanne tekstistäsi — ei koko tarinaa. Määrittele sommittelu, valo ja tunnelma.</p>
     <label class="field" for="geminiMoment">Hetken kuvaus (vähintään 80 merkkiä)</label>
     <textarea id="geminiMoment" placeholder="Esim. Keittiö iltavaloikkunassa, avoin kirje pöydällä, pöly ilmassa, rauhallinen mutta raskas tunnelma, ei lähikuvaa kasvoista…"></textarea>
     <div class="char-row">
@@ -485,7 +553,7 @@ label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 
     <textarea id="geminiImageNotes" placeholder="Esim. Valo vastasi tavoitetta; sommittelussa oli liikaa dramatiikkaa — tarkensin promptia: no readable text, soft dusk light…"></textarea>
 
     <div class="arena-step" style="margin-top:1.5rem;">3 · Animoi kuva lyhyeksi videoksi</div>
-    <p class="intro" style="margin-bottom:0.65rem;">Vie sama kuva videoon Geminin kautta (Video / Veo / image-to-video; nimi vaihtelee tilillä). Tavoite: <strong>4–8 sekunnin</strong> klippi, jossa liike on hillittyä. Älä pyydä uutta juonta.</p>
+    <p class="intro" style="margin-bottom:0.65rem;">Vie sama kuva videoon Geminin kautta (Video / Veo / image-to-video; nimi vaihtelee tilillä). Tavoite: <strong>4–8 sekunnin</strong> klippi, jossa liike on hillittyä. Älä pyydä uutta tarinaa.</p>
     <label class="field" for="geminiVideoPrompt">Video-ohje (liike ja kamera)</label>
     <textarea id="geminiVideoPrompt" style="min-height:110px" placeholder="Esim. Slow cinematic push-in, dust motes in dusk light, subtle curtain movement, no new characters, no on-screen text…"></textarea>
     <button type="button" class="btn-secondary" id="fillVideoPrompt" style="margin:0.35rem 0 0.75rem;font-size:12px;padding:7px 12px;">Käytä esimerkkiä pohjana</button>
@@ -512,7 +580,7 @@ label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 
     </div>
 
     <label class="field" for="geminiLearn">Milloin kuva tai video tukee kirjoittajan työtä — milloin se häiritsee? (vähintään 60 merkkiä)</label>
-    <textarea id="geminiLearn" placeholder="Esim. Käyttäisin tätä moodboardiin tai äänikirjan teaseriin. En käyttäisi sitä juonen kirjoittamiseen, koska proosa vaatii erilaisen päätöksenteon…"></textarea>
+    <textarea id="geminiLearn" placeholder="Esim. Käyttäisin tätä moodboardiin tai äänikirjan teaseriin. En käyttäisi sitä tarinan kirjoittamiseen, koska proosa vaatii erilaisen päätöksenteon…"></textarea>
     <div class="char-row">
       <span id="learnCharCount" class="char-count">0 / 60 merkkiä</span>
     </div>
@@ -523,139 +591,66 @@ label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 
 
 <section class="section section-alt" id="map">
   <div class="section-inner">
-    <div class="section-label">Blokki A · ~75 min</div>
+    <div class="section-label">Työkalulista A</div>
     <h2>Tarinan kartta — <em>rakenne ennen generointia</em></h2>
-    <p class="intro">Käytä näitä työkaluja maailman, aikajanan ja synopsiksen rakentamiseen. Suosi kysymyksiä ja rakennetta: “esitä viisi kriittistä kysymystä” sen sijaan, että pyydät mallia kirjoittamaan juonen.</p>
+    <p class="intro">Tutustu näihin itse. Lyhyt kuvaus + linkki — ei pakollisia harjoituksia.</p>
     <div class="tool-grid">
       <article class="tool-card"><span class="num">01</span><span class="tag">Tarina</span><h3>Sudowrite</h3><p>Fiction-työkalu: Story Bible, beatit, “describe” — käytä vain sparraukseen.</p><a href="https://www.sudowrite.com" target="_blank" rel="noopener">sudowrite.com →</a></article>
-      <article class="tool-card"><span class="num">02</span><span class="tag">Tarina</span><h3>NovelCrafter</h3><p>Codex + Codex Codex: hahmot ja juoni pysyvät tallessa ilman että AI kirjoittaa kirjaa.</p><a href="https://www.novelcrafter.com" target="_blank" rel="noopener">novelcrafter.com →</a></article>
+      <article class="tool-card"><span class="num">02</span><span class="tag">Tarina</span><h3>NovelCrafter</h3><p>Codex: hahmot ja tarina pysyvät tallessa ilman että AI kirjoittaa kirjaa.</p><a href="https://www.novelcrafter.com" target="_blank" rel="noopener">novelcrafter.com →</a></article>
       <article class="tool-card"><span class="num">03</span><span class="tag">Tarina</span><h3>Campfire Write</h3><p>Visuaalinen maailma, hahmot ja aikajana — kirjoittaja rakentaa rakenteen.</p><a href="https://www.campfirewriting.com" target="_blank" rel="noopener">campfirewriting.com →</a></article>
       <article class="tool-card"><span class="num">04</span><span class="tag">Maailma</span><h3>World Anvil</h3><p>Worldbuilding-wiki: paikat, säännöt, historia — AI ei ole pakollinen.</p><a href="https://www.worldanvil.com" target="_blank" rel="noopener">worldanvil.com →</a></article>
-      <article class="tool-card"><span class="num">05</span><span class="tag">Aika</span><h3>Aeon Timeline</h3><p>Juonen ja aikajanan hallinta — kriittinen synopsiksen logiikalle.</p><a href="https://www.aeontimeline.com" target="_blank" rel="noopener">aeontimeline.com →</a></article>
-      <article class="tool-card"><span class="num">06</span><span class="tag">Visuaali</span><h3>Milanote</h3><p>Moodboard + juonikortit seinällä — eri asia kuin Canva.</p><a href="https://milanote.com" target="_blank" rel="noopener">milanote.com →</a></article>
+      <article class="tool-card"><span class="num">05</span><span class="tag">Aika</span><h3>Aeon Timeline</h3><p>Tarinan ja aikajanan hallinta — synopsiksen logiikkaan.</p><a href="https://www.aeontimeline.com" target="_blank" rel="noopener">aeontimeline.com →</a></article>
+      <article class="tool-card"><span class="num">06</span><span class="tag">Visuaali</span><h3>Milanote</h3><p>Moodboard + tarinakortit seinällä — eri asia kuin Canva.</p><a href="https://milanote.com" target="_blank" rel="noopener">milanote.com →</a></article>
       <article class="tool-card"><span class="num">07</span><span class="tag">Kaavio</span><h3>Napkin.ai</h3><p>Muuta synopsiksesi rakenteeksi / kaavioksi — sinä syötät tekstin.</p><a href="https://www.napkin.ai" target="_blank" rel="noopener">napkin.ai →</a></article>
       <article class="tool-card"><span class="num">08</span><span class="tag">Muisti</span><h3>Obsidian</h3><p>Ilmainen paikallinen tietopohja — linkitä hahmot ja luvut itse.</p><a href="https://obsidian.md" target="_blank" rel="noopener">obsidian.md →</a></article>
-    </div>
-    <div class="exercise">
-      <h3>Harjoitus A — Synopsiksen stressitesti (valitse 2 työkalua)</h3>
-      <ol>
-        <li>Kopioi <strong>oma synopsis</strong> yllä (älä anna AI:n kirjoittaa uutta).</li>
-        <li>Avaa <strong>Napkin.ai</strong> TAI <strong>Milanote</strong> — tee rakennekuva / kortit.</li>
-        <li>Avaa <strong>NovelCrafter</strong> TAI <strong>Campfire</strong> — luo 3 hahmokorttia omin sanoin.</li>
-        <li>Kopioi alla oleva prompt työkaluun joka hyväksyy chatin (Sudowrite / NovelCrafter):</li>
-      </ol>
-      <div class="prompt-block">
-        <div class="lbl">HITL-prompti — kopioi</div>
-        <button type="button" class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
-        <p id="promptA">Älä kirjoita juonta tai dialogia puolestani. Synopsikseni on alla. Esitä minulle 7 terävää kysymystä jotka paljastavat reiät: motivaatio, panokset, aikajana, teema. Odota vastauksiani yksi kerrallaan. Synopsikseni:
-
-[LIITÄ OMA TEKSTISI]</p>
-      </div>
-      <p class="hint">Kirjaa vastauksesi alle — ne muodostavat oman analyysisi.</p>
-      <label class="field" for="notesA">Muistiinpanot Blokki A</label>
-      <textarea id="notesA" placeholder="Reiät joita löysin… hahmot… päätökset…"></textarea>
     </div>
   </div>
 </section>
 
 <section class="section" id="critique">
   <div class="section-inner">
-    <div class="section-label">Blokki B · ~60 min</div>
+    <div class="section-label">Työkalulista B</div>
     <h2>Kritiikki ja kieli — <em>oman tekstin päälle</em></h2>
-    <p class="intro">Liitä 300–600 sanaa omaa tekstiäsi (luku tai synopsiksen laajennus). Työkalu saa kommentoida; älä anna sen uudelleenkirjoittaa koko tekstiä ilman erillistä päätöstäsi.</p>
+    <p class="intro">Editointi- ja kielityökaluja tutustuttavaksi. Kuvaus + linkki.</p>
     <div class="tool-grid">
       <article class="tool-card"><span class="num">09</span><span class="tag">Edit</span><h3>ProWritingAid</h3><p>Syvä stilistiikka + pacing — hyvät raportit, sinä hyväksyt muutokset.</p><a href="https://prowritingaid.com" target="_blank" rel="noopener">prowritingaid.com →</a></article>
       <article class="tool-card"><span class="num">10</span><span class="tag">Edit</span><h3>Hemingway Editor</h3><p>Selkeys ja raskas lause — nopea “onko tämä luettavaa ääneen?”.</p><a href="https://hemingwayapp.com" target="_blank" rel="noopener">hemingwayapp.com →</a></article>
       <article class="tool-card"><span class="num">11</span><span class="tag">Kieli</span><h3>LanguageTool</h3><p>Kielioppi (myös FI) — korjaa mekaaniset virheet, ei tarinaa.</p><a href="https://languagetool.org" target="_blank" rel="noopener">languagetool.org →</a></article>
       <article class="tool-card"><span class="num">12</span><span class="tag">Edit</span><h3>AutoCrit</h3><p>Fiktioon erikoistunut analyysi: kliseet, pacing, dialogin tagit.</p><a href="https://www.autocrit.com" target="_blank" rel="noopener">autocrit.com →</a></article>
-      <article class="tool-card"><span class="num">13</span><span class="tag">Studio</span><h3>Reedsy Studio</h3><p>Ilmainen käsikirjoituseditori ja rakennetuki — käyttökelpoinen työpöytä tekstille.</p><a href="https://reedsy.com/write-a-book" target="_blank" rel="noopener">reedsy.com/write-a-book →</a></article>
-    </div>
-    <div class="exercise">
-      <h3>Harjoitus B — Kolme työkalua, yksi kappale</h3>
-      <ol>
-        <li>Liitä sama kappale Hemingwayyn → listaa kolme lausetta, joita lyhennät itse.</li>
-        <li>Aja LanguageTool → hyväksy vain perustellut korjaukset.</li>
-        <li>ProWritingAid tai AutoCrit → valitse <strong>yksi</strong> neuvo, jota noudatat; hylkää loput.</li>
-      </ol>
-      <label class="field" for="notesB">Mitä hyväksyt / hylkäät ja miksi</label>
-      <textarea id="notesB" placeholder="Hyväksyin: … Hylkäsin, koska se ei vastaa rekisteriäni: …"></textarea>
+      <article class="tool-card"><span class="num">13</span><span class="tag">Studio</span><h3>Reedsy Studio</h3><p>Ilmainen käsikirjoituseditori ja rakennetuki — työpöytä tekstille.</p><a href="https://reedsy.com/write-a-book" target="_blank" rel="noopener">reedsy.com/write-a-book →</a></article>
     </div>
   </div>
 </section>
 
 <section class="section section-alt" id="audio">
   <div class="section-inner">
-    <div class="section-label">Blokki C · ~90 min</div>
-    <h2>Äänikirja — <em>äänivertailu</em></h2>
-    <p class="intro">Käytä samaa 150–250 sanan kappaletta 3–4 TTS-työkalussa. Valitse ääni, joka kunnioittaa tekstiä. Pidä sanamuoto lukittuna — malli ei saa muuttaa sisältöä.</p>
+    <div class="section-label">Työkalulista C</div>
+    <h2>Äänikirja — <em>äänityökalut</em></h2>
+    <p class="intro">TTS- ja äänieditointityökaluja tutustuttavaksi. Kuvaus + linkki.</p>
     <div class="tool-grid">
-      <article class="tool-card"><span class="num">14</span><span class="tag">Ääni</span><h3>ElevenLabs</h3><p>Vahva yleinen TTS; ääniklonaus edellyttää suostumusta ja harkintaa. Hyvä vertailun referenssi.</p><a href="https://elevenlabs.io" target="_blank" rel="noopener">elevenlabs.io →</a></article>
+      <article class="tool-card"><span class="num">14</span><span class="tag">Ääni</span><h3>ElevenLabs</h3><p>Vahva yleinen TTS; ääniklonaus edellyttää suostumusta ja harkintaa.</p><a href="https://elevenlabs.io" target="_blank" rel="noopener">elevenlabs.io →</a></article>
       <article class="tool-card"><span class="num">15</span><span class="tag">Ääni</span><h3>Murf.ai</h3><p>Studio-tyylinen TTS, helppo kokeilla eri ääniä.</p><a href="https://murf.ai" target="_blank" rel="noopener">murf.ai →</a></article>
       <article class="tool-card"><span class="num">16</span><span class="tag">Ääni</span><h3>PlayHT</h3><p>Vahva moniääni / dialogi-kokeiluihin.</p><a href="https://play.ht" target="_blank" rel="noopener">play.ht →</a></article>
-      <article class="tool-card"><span class="num">17</span><span class="tag">Ääni</span><h3>Speechify</h3><p>Nopea kuuntelu omasta tekstistä — hyvä “kuulostaako tämä kirjallisuudelta?”.</p><a href="https://speechify.com" target="_blank" rel="noopener">speechify.com →</a></article>
+      <article class="tool-card"><span class="num">17</span><span class="tag">Ääni</span><h3>Speechify</h3><p>Nopea kuuntelu omasta tekstistä — “kuulostaako tämä kirjallisuudelta?”.</p><a href="https://speechify.com" target="_blank" rel="noopener">speechify.com →</a></article>
       <article class="tool-card"><span class="num">18</span><span class="tag">Ääni</span><h3>NaturalReader</h3><p>Ilmainen / edullinen TTS-vertailu.</p><a href="https://www.naturalreaders.com" target="_blank" rel="noopener">naturalreaders.com →</a></article>
       <article class="tool-card"><span class="num">19</span><span class="tag">Ääni</span><h3>WellSaid Labs</h3><p>Pro-ääniä, rauhallinen kerronta.</p><a href="https://www.wellsaidlabs.com" target="_blank" rel="noopener">wellsaidlabs.com →</a></article>
       <article class="tool-card"><span class="num">20</span><span class="tag">Edit</span><h3>Descript</h3><p>Leikkaa ääntä tekstinä — korjaa tauot ilman erillistä DAW-työskentelyä.</p><a href="https://www.descript.com" target="_blank" rel="noopener">descript.com →</a></article>
+      <article class="tool-card"><span class="num">21</span><span class="tag">Ääni</span><h3>LOVO</h3><p>Vaihtoehtoinen TTS — vertailuun.</p><a href="https://www.lovo.ai" target="_blank" rel="noopener">lovo.ai →</a></article>
+      <article class="tool-card"><span class="num">22</span><span class="tag">Musiikki</span><h3>Suno</h3><p>Intro- tai teemamusiikki; ei korvaa lukijaa.</p><a href="https://suno.com" target="_blank" rel="noopener">suno.com →</a></article>
     </div>
-    <p class="intro" style="margin-top:0.5rem;">Valinnainen: <a href="https://www.lovo.ai" target="_blank" rel="noopener"><strong>21 · LOVO</strong></a>, <a href="https://suno.com" target="_blank" rel="noopener"><strong>22 · Suno</strong></a> (intro- tai teemamusiikki; ei korvaa lukijaa).</p>
-    <div class="exercise">
-      <h3>Harjoitus C — Sama kappale, kolme ääntä</h3>
-      <ol>
-        <li>Kirjoita / liitä alle 150–250 sanaa (oma teksti).</li>
-        <li>Lue teksti ääneen kerran (puhelinmuistio käy).</li>
-        <li>Generoi samalla tekstillä: <strong>ElevenLabs + Murf + Speechify/NaturalReader</strong>.</li>
-        <li>Arvioi: totuus ääneen, tempo, tunne, suomen tai englannin sopivuus.</li>
-        <li>Vie paras otto Descriptiin ja leikkaa kaksi turhaa taukoa.</li>
-      </ol>
-      <label class="field" for="audioSample">Ääninäytteen teksti</label>
-      <textarea id="audioSample" placeholder="Liitä tähän kappale, jonka luet TTS-työkaluilla…"></textarea>
-      <label class="field" for="notesC">Valinta ja perustelu</label>
-      <textarea id="notesC" placeholder="Paras ääni: … Perustelu: … Mitä muuttaisin lukijan ohjeessa: …"></textarea>
-      <div class="prompt-block">
-        <div class="lbl">Ääniohje TTS:lle (ei uudelleenkirjoitusta)</div>
-        <button type="button" class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
-        <p>Read the following text exactly as written. Do not add words, summarize, or change names. Calm literary narrator, medium pace, clear Finnish/English as in the text. Pause briefly at paragraph breaks.
-
-[LIITÄ TEKSTI]</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section" id="stack">
-  <div class="section-inner">
-    <div class="section-label">Blokki D · ~45 min</div>
-    <h2>Oma työkalupino — <em>käytännön rajaus</em></h2>
-    <p class="intro">Valitse enintään <strong>viisi työkalua</strong> viikoittaiseen käyttöön. Selkeä rajaus vähentää tilannetta, jossa malli alkaa kirjoittaa puolestasi ilman tietoista päätöstä.</p>
-    <div class="exercise">
-      <h3>Harjoitus D — Työskentelysopimus</h3>
-      <label class="field" for="stackPick">Viisi työkalua</label>
-      <textarea id="stackPick" placeholder="1. … (synopsis / kartta)&#10;2. … (editointi)&#10;3. … (ääni)&#10;4. … (leikkaus)&#10;5. … (arkisto)"></textarea>
-      <label class="field" for="contract">Omat työskentelysäännöt (3 lausetta)</label>
-      <textarea id="contract" placeholder="Esim. Tekoäly ei kirjoita dialogia. Tekoäly saa esittää kysymyksiä. Äänikirjassa teksti lukitaan ennen TTS:ää."></textarea>
-      <div class="prompt-block">
-        <div class="lbl">Viikkoprosessi (kopioi muistiinpanoihin)</div>
-        <button type="button" class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
-        <p>MA: kirjoitan 500 sanaa ilman tekoälyä.
-TI: synopsiksen tai hahmon stressitesti (vain kysymyksiä).
-KE: yksi editointityökalu omaan kappaleeseen.
-TO: ääninäyte yhdestä kappaleesta, vertaa kahta TTS:ää.
-PE: Descript-leikkaus ja päätös: mikä jää käsikirjoitukseen.</p>
-      </div>
-    </div>
-    <div class="back-bar">
+    <div class="back-bar" style="margin-top:2rem;">
       <a class="btn-home" href="/">← Takaisin etusivulle</a>
       <a class="btn-ghost" href="#arena">↑ Mallivertailu</a>
       <a class="btn-ghost" href="#humanize">↑ Uudelleenkirjoitus</a>
+      <a class="btn-ghost" href="#elevenlabs">↑ ElevenLabs</a>
       <a class="btn-ghost" href="#gemini">↑ Gemini</a>
-      <a class="btn-ghost" href="#audio">↑ Äänikirja</a>
     </div>
   </div>
 </section>
 
 <section class="final">
   <h2>Kirjoittaja tekee päätökset.</h2>
-  <p>Tuotit oman tekstin, vertasit malleja, muokkasit juoniehdotuksen omaksi käsikirjoitukseksi ja rakensit visuaalisen näytteen Geminin avulla. Tekoäly nopeutti prosessia — vastuullinen rekisteri ja valinnat jäivät sinulle.</p>
+  <p>Tuotit oman tekstin, vertasit malleja, muokkasit tarinaehdotuksen omaksi käsikirjoitukseksi, teit ääninäytteen ja rakensit visuaalisen näytteen. Tekoäly nopeutti prosessia — vastuullinen rekisteri ja valinnat jäivät sinulle.</p>
   <a class="btn-home" href="/" style="background:#5eead4;color:#134e4a;">← Etusivu</a>
 </section>
 
@@ -1088,17 +1083,74 @@ function copyPrompt(btn) {
       return;
     }
     if ((fear.value || '').trim().length < MIN_FEAR) {
-      showMsg('Kirjoita lyhyt analyysi suhtautumisestasi tekoälyn juoniehdotuksiin (vähintään 60 merkkiä).', 'err');
+      showMsg('Kirjoita lyhyt analyysi suhtautumisestasi tekoälyn tarinaehdotuksiin (vähintään 60 merkkiä).', 'err');
       return;
     }
     state.saved = true;
     saveLocal();
-    showMsg('Uudelleenkirjoitus tallennettu. Voit jatkaa Gemini-harjoitukseen.', 'ok');
+    showMsg('Uudelleenkirjoitus tallennettu. Seuraavaksi: ElevenLabs — tee tekstistäsi ääni.', 'ok');
   });
 })();
 
+(function elevenLabsGuide() {
+  var copyBtn = document.getElementById('copyRewriteForVoice');
+  var msg = document.getElementById('voiceCopyMsg');
+  var notes = document.getElementById('elevenListenNotes');
+  var pick = document.getElementById('elevenVoicePick');
+  var countEl = document.getElementById('elevenNotesCount');
+  var KEY = 'kirjailija_elevenlabs_v1';
+
+  function showMsg(text, kind) {
+    if (!msg) return;
+    msg.textContent = text || '';
+    msg.className = 'arena-msg' + (text ? ' show ' + (kind || '') : '');
+  }
+
+  function updateCount() {
+    if (!notes || !countEl) return;
+    var n = (notes.value || '').trim().length;
+    countEl.textContent = n + ' / 40 merkkiä' + (n >= 40 ? ' ✓' : '');
+    countEl.className = 'char-count ' + (n >= 40 ? 'ok' : '');
+  }
+
+  function saveLocal() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({
+        elevenVoicePick: pick ? pick.value : '',
+        elevenListenNotes: notes ? notes.value : ''
+      }));
+    } catch (e) {}
+  }
+
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+    if (pick && saved.elevenVoicePick) pick.value = saved.elevenVoicePick;
+    if (notes && saved.elevenListenNotes) notes.value = saved.elevenListenNotes;
+  } catch (e) {}
+  updateCount();
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var rewrite = document.getElementById('humanRewrite');
+      var text = rewrite ? (rewrite.value || '').trim() : '';
+      if (text.length < 80) {
+        showMsg('Kirjoita ensin oma versiosi harjoituksessa 2 (vähintään 800 merkkiä).', 'err');
+        document.getElementById('humanize').scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+      navigator.clipboard.writeText(text).then(function () {
+        showMsg('Teksti kopioitu — liitä se ElevenLabsin Text to Speech -kenttään.', 'ok');
+      }).catch(function () {
+        prompt('Kopioi teksti:', text);
+      });
+    });
+  }
+  if (notes) notes.addEventListener('input', function () { updateCount(); saveLocal(); });
+  if (pick) pick.addEventListener('input', saveLocal);
+})();
+
 (function persist() {
-  var ids = ['bookTitle', 'ownSynopsis', 'notesA', 'notesB', 'audioSample', 'notesC', 'stackPick', 'contract'];
+  var ids = ['bookTitle', 'ownSynopsis'];
   var KEY = 'kirjailija_aanikirja_v1';
   try {
     var saved = JSON.parse(localStorage.getItem(KEY) || '{}');

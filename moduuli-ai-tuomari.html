@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sinä olet pomo — kun malli arvaa — AI Polku</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --ink:#1a1a2e;--paper:#f7f4ef;--paper2:#efebe3;
+  --accent:#c75b3a;--accent2:#2563a8;--accent3:#2a7a4b;--gold:#b8860b;
+  --text:#1a1a2e;--muted:#5a5770;--border:rgba(26,26,46,.12);
+  --shadow:0 4px 28px rgba(26,26,46,.07);
+  --space:1.35rem;
+  font-size:18px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;font-size:1.05rem;line-height:1.8;-webkit-font-smoothing:antialiased}
+a{color:var(--accent2)}
+:focus-visible{outline:3px solid var(--accent2);outline-offset:3px;border-radius:4px}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.fade-up{opacity:1!important;transform:none!important}}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(26,26,46,.97);backdrop-filter:blur(12px);padding:.85rem 1.75rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.nav-logo{color:#fff;text-decoration:none;font-family:'DM Serif Display',serif;font-size:1.2rem;white-space:nowrap}
+.nav-right{display:flex;align-items:center;gap:1.25rem}
+.nav-done{font-family:'DM Mono',monospace;font-size:.78rem;color:rgba(255,255,255,.55);letter-spacing:.06em;white-space:nowrap}
+.nav-done b{color:#5fbf85}
+.nav-steps{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:380px}
+.step-pip{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.18);cursor:pointer;transition:.2s;border:none;padding:0}
+.step-pip.active{background:var(--accent);transform:scale(1.35)}.step-pip.done{background:var(--accent3)}
+.progress-track{position:fixed;top:0;left:0;right:0;height:3px;z-index:101;background:rgba(255,255,255,.06)}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .3s}
+@media(max-width:820px){.nav-steps{display:none}}
+
+.section{display:block;padding:7.5rem 1.75rem 5.5rem}
+.section-alt{background:var(--paper2)}
+.section-dark{background:var(--ink);color:#fff}
+.section-dark .section-label{color:rgba(255,255,255,.5)}
+.section-dark .lead{color:rgba(255,255,255,.78)}
+.section-inner{max-width:820px;width:100%;margin:0 auto}
+.section-label{font-family:'DM Mono',monospace;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:1.15rem}
+.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4.2vw,2.85rem);font-weight:400;line-height:1.2;margin-bottom:1.15rem;letter-spacing:-.01em}
+.section-h2 em{color:var(--accent);font-style:italic}
+.divider{width:56px;height:3px;background:var(--accent);border-radius:3px;margin-bottom:1.75rem}
+.lead{font-size:1.14rem;color:var(--muted);max-width:38em;line-height:1.85;margin-bottom:2.25rem;font-weight:400}
+.body-p{font-size:1.06rem;line-height:1.85;margin-bottom:1.5rem;max-width:38em}
+.fade-up{opacity:0;transform:translateY(20px);transition:opacity .55s,transform .55s}
+.fade-up.in{opacity:1;transform:translateY(0)}
+
+.hero-inner{max-width:780px;margin:0 auto;text-align:center;padding:2rem 0 1rem}
+.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.4rem,5.5vw,3.6rem);font-weight:400;color:#fff;line-height:1.15;margin-bottom:1.6rem}
+.hero-title em{color:var(--accent);font-style:italic}
+.hero-sub{font-size:1.18rem;color:rgba(255,255,255,.72);max-width:34em;line-height:1.85;margin:0 auto 2.25rem;font-weight:300}
+.hero-cta{display:inline-flex;align-items:center;gap:12px;background:var(--accent);color:#fff;padding:1rem 2.1rem;border-radius:8px;font-weight:600;font-size:1.05rem;cursor:pointer;text-decoration:none;transition:all .25s}
+.hero-cta:hover{background:#a84a2e;transform:translateY(-2px)}
+.hero-badge{display:inline-block;background:rgba(199,91,58,.22);color:var(--accent);font-size:.84rem;font-weight:600;padding:.55rem 1.1rem;border-radius:999px;margin-bottom:1.75rem;letter-spacing:.05em}
+.hero-meta{margin-top:2.5rem;font-family:'DM Mono',monospace;font-size:.8rem;color:rgba(255,255,255,.42);letter-spacing:.05em;line-height:1.85;max-width:36em;margin-left:auto;margin-right:auto}
+.hour-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin:2.75rem auto 0;max-width:820px;text-align:left}
+@media(max-width:800px){.hour-strip{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.hour-strip{grid-template-columns:1fr}}
+.hour-pip{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:1.1rem 1.15rem;font-size:.9rem;color:rgba(255,255,255,.7);line-height:1.5}
+.hour-pip b{display:block;color:#fff;font-size:1rem;margin-bottom:.4rem}
+
+.pull{font-family:'DM Serif Display',serif;font-size:clamp(1.4rem,2.8vw,1.85rem);line-height:1.45;border-left:4px solid var(--accent);padding:.35rem 0 .35rem 1.6rem;margin:2.5rem 0;max-width:38em}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.35rem;margin:2.25rem 0}
+.card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.75rem 1.7rem;border-top:3px solid var(--accent)}
+.card h4{font-size:1.08rem;margin-bottom:.65rem;line-height:1.4;font-weight:650}
+.card p{font-size:1rem;color:var(--muted);line-height:1.75}
+.card-num{font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:.12em;color:var(--accent);margin-bottom:.75rem}
+.card.blue{border-top-color:var(--accent2)}.card.green{border-top-color:var(--accent3)}.card.gold{border-top-color:var(--gold)}
+
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1rem;margin:2rem 0 2.5rem}
+.tool-chip{background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.35rem 1.4rem}
+.tool-chip .t-name{font-weight:700;font-size:1.08rem;margin-bottom:.4rem;line-height:1.3}
+.tool-chip .t-role{font-size:.98rem;color:var(--muted);line-height:1.55}
+.tool-chip .t-tag{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2);margin-bottom:.55rem}
+.tool-chip .t-tag.new{color:var(--accent)}
+
+.ex{background:#fff;border:1px solid var(--border);border-radius:18px;padding:2.4rem 2.35rem;box-shadow:var(--shadow);margin-top:2rem}
+.ex + .ex{margin-top:2.5rem}
+.ex-tag{display:inline-flex;align-items:center;gap:9px;background:var(--ink);color:#fff;font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;padding:.55rem 1rem;border-radius:7px;margin-bottom:1.5rem}
+.ex-tag.think{background:var(--accent2)}.ex-tag.search{background:var(--gold);color:#1a1a2e}.ex-tag.build{background:var(--accent3)}.ex-tag.fun{background:var(--accent)}.ex-tag.hard{background:#6b21a8}
+.ex-meta{display:flex;gap:1.75rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--border);margin-top:2.25rem;padding-top:1.35rem;line-height:1.6}
+.ex-meta b{color:var(--ink);font-weight:600}
+.ex-goal{background:rgba(37,99,168,.05);border-left:4px solid var(--accent2);border-radius:0 10px 10px 0;padding:1.25rem 1.5rem;margin-bottom:1.85rem;font-size:1.05rem;line-height:1.8}
+.ex-goal b{display:block;font-family:'DM Mono',monospace;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);margin-bottom:.5rem}
+.hard-note{background:rgba(107,33,168,.05);border:1px solid rgba(107,33,168,.18);border-radius:14px;padding:1.35rem 1.5rem;margin:1.75rem 0;font-size:1.05rem;line-height:1.8;color:var(--ink)}
+.hard-note strong{color:#6b21a8}
+
+.sit{background:#fff;border:1px solid var(--border);border-radius:18px;padding:2.4rem 2.35rem;margin:2.5rem 0;box-shadow:var(--shadow)}
+.sit-head{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.15rem;align-items:baseline}
+.sit-id{font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.sit-time{font-family:'DM Mono',monospace;font-size:.76rem;color:var(--muted)}
+.sit h3{font-family:'DM Serif Display',serif;font-size:clamp(1.45rem,3vw,1.75rem);font-weight:400;margin-bottom:1.15rem;line-height:1.3}
+.sit-brief{background:var(--paper2);border-radius:12px;padding:1.45rem 1.55rem;margin:1.25rem 0 1.6rem;font-size:1.05rem;line-height:1.85;color:var(--ink)}
+.sit-brief .who{font-family:'DM Mono',monospace;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
+.stake{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.85rem;margin:1.25rem 0 1.75rem}
+.stake span{background:rgba(199,91,58,.05);border:1px solid rgba(199,91,58,.14);border-radius:10px;padding:1rem 1.1rem;font-size:.98rem;line-height:1.55}
+.stake span b{display:block;font-size:.72rem;font-family:'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:.35rem}
+
+textarea,input[type=text],select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:1.05rem 1.15rem;font-family:'DM Sans',sans-serif;font-size:1.05rem;line-height:1.75;background:#fff;color:var(--text);transition:border-color .2s,box-shadow .2s}
+textarea{min-height:140px;resize:vertical}
+textarea.tall{min-height:200px}
+textarea.xtall{min-height:280px}
+select{cursor:pointer;min-height:3.2rem}
+textarea:focus,input[type=text]:focus,select:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 4px rgba(37,99,168,.12)}
+label.field-label{display:block;font-size:1.05rem;font-weight:650;margin:2rem 0 .65rem;line-height:1.45}
+label.field-label span{display:block;font-weight:400;font-size:.98rem;color:var(--muted);margin-top:.35rem;line-height:1.6}
+.char-hint{font-family:'DM Mono',monospace;font-size:.76rem;color:var(--muted);margin-top:.5rem}
+.char-hint.ok{color:var(--accent3)}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:.9rem 1.5rem;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:1.02rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;line-height:1.3}
+.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover:not(:disabled){background:#a84a2e}
+.btn-blue{background:var(--accent2);color:#fff}.btn-blue:hover:not(:disabled){background:#1d4f88}
+.btn-green{background:var(--accent3);color:#fff}.btn-green:hover:not(:disabled){background:#22633c}
+.btn-purple{background:#6b21a8;color:#fff}.btn-purple:hover:not(:disabled){background:#581c87}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.btn-outline:hover:not(:disabled){border-color:var(--accent2);color:var(--accent2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-row{display:flex;gap:.85rem;flex-wrap:wrap;margin-top:1.85rem}
+.btn-sm{padding:.7rem 1.15rem;font-size:.95rem}
+
+.ai-result{display:none;margin-top:1.85rem;background:#fbfaf8;border:1px solid var(--border);border-left:4px solid var(--accent2);border-radius:12px;padding:1.6rem 1.75rem}
+.ai-result.devil{border-left-color:var(--accent)}
+.ai-result-label{font-family:'DM Mono',monospace;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent2);margin-bottom:.85rem}
+.ai-result.devil .ai-result-label{color:var(--accent)}
+.ai-result-text{font-size:1.05rem;line-height:1.85;white-space:pre-wrap}
+.loading-dots{display:inline-flex;gap:5px}
+.loading-dots span{width:7px;height:7px;border-radius:50%;background:var(--accent2);animation:blink 1.2s infinite}
+.loading-dots span:nth-child(2){animation-delay:.2s}.loading-dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+.zone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin:2rem 0 2.5rem}
+@media(max-width:800px){.zone-grid{grid-template-columns:1fr}}
+.zone{border-radius:16px;padding:1.65rem 1.55rem;border:2px solid var(--border);background:#fff}
+.zone.g{border-color:rgba(42,122,75,.35);background:rgba(42,122,75,.04)}
+.zone.y{border-color:rgba(184,134,11,.4);background:rgba(184,134,11,.06)}
+.zone.r{border-color:rgba(199,91,58,.4);background:rgba(199,91,58,.05)}
+.zone h4{font-size:1.1rem;margin-bottom:.5rem}
+.zone .z-sub{font-size:.98rem;color:var(--muted);margin-bottom:1rem;line-height:1.6}
+.zone textarea{min-height:120px;background:#fff}
+
+.audit-row{background:var(--paper);border:1px solid var(--border);border-radius:14px;padding:1.6rem 1.7rem;margin-bottom:1.25rem}
+.audit-claim{font-size:1.08rem;line-height:1.75;margin-bottom:1.25rem;font-style:italic}
+.verdict-btns{display:flex;gap:.65rem;flex-wrap:wrap;margin-bottom:1rem}
+.verdict-btn{padding:.7rem 1.15rem;border-radius:9px;font-size:.98rem;font-weight:600;border:1.5px solid var(--border);background:#fff;cursor:pointer;transition:.15s}
+.verdict-btn.on-accept{background:var(--accent3);color:#fff;border-color:var(--accent3)}
+.verdict-btn.on-check{background:var(--gold);color:#1a1a2e;border-color:var(--gold)}
+.verdict-btn.on-reject{background:var(--accent);color:#fff;border-color:var(--accent)}
+.audit-why{display:none;margin-top:.75rem}.audit-why.show{display:block}
+
+.court-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.85rem 1.9rem;margin-bottom:1.35rem;transition:border-color .2s}
+.court-card.done-ok{border-color:var(--accent3)}.court-card.done-bad{border-color:var(--accent)}
+.court-num{font-family:'DM Mono',monospace;font-size:.76rem;letter-spacing:.1em;color:var(--muted);margin-bottom:.65rem}
+.court-text{font-size:1.12rem;line-height:1.75;margin-bottom:1.25rem}
+.court-fb{display:none;margin-top:1.25rem;padding:1.2rem 1.35rem;border-radius:12px;font-size:1.02rem;line-height:1.8;background:rgba(0,0,0,.03)}.court-fb.show{display:block}
+
+.route-q{background:var(--paper);border:1px solid var(--border);border-radius:14px;padding:1.6rem 1.7rem;margin-bottom:1.25rem}
+.route-q p{margin-bottom:1.1rem;font-weight:650;font-size:1.06rem;line-height:1.55}
+.route-opts{display:flex;flex-wrap:wrap;gap:.65rem}
+.route-opt{padding:.7rem 1.15rem;border-radius:9px;border:1.5px solid var(--border);background:#fff;font-size:.98rem;font-weight:600;cursor:pointer;line-height:1.35}
+.route-opt.correct{background:var(--accent3);color:#fff;border-color:var(--accent3)}
+.route-opt.wrong{background:rgba(199,91,58,.12);border-color:var(--accent);text-decoration:line-through}
+.route-opt.partial{background:rgba(184,134,11,.2);border-color:var(--gold)}
+.route-fb{display:none;margin-top:1.1rem;font-size:1.02rem;color:var(--muted);line-height:1.75}.route-fb.show{display:block}
+
+.checklist{display:flex;flex-direction:column;gap:.9rem;margin:1.75rem 0;padding:1.45rem 1.55rem;background:rgba(42,122,75,.04);border:1px solid rgba(42,122,75,.15);border-radius:14px}
+.checklist label{display:flex;gap:12px;align-items:flex-start;font-size:1.05rem;cursor:pointer;line-height:1.55}
+.checklist input{margin-top:.4rem;accent-color:var(--accent3);width:20px;height:20px;flex-shrink:0}
+
+.duel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin:2rem 0}
+@media(max-width:860px){.duel-grid{grid-template-columns:1fr}}
+.duel-card{background:#fff;border:2px solid var(--border);border-radius:16px;padding:1.55rem 1.5rem;cursor:pointer;transition:.2s}
+.duel-card:hover{border-color:var(--accent2);transform:translateY(-2px)}
+.duel-card.picked{border-color:var(--accent3);background:rgba(42,122,75,.05)}
+.duel-card .model{font-family:'DM Mono',monospace;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);margin-bottom:.85rem}
+.duel-card .ans{font-size:1.02rem;line-height:1.7;color:var(--muted)}
+
+.prompt-box{position:relative;background:var(--paper2);border:1px solid var(--border);border-radius:14px;padding:1.55rem 1.6rem;padding-right:5.5rem;margin:1.5rem 0;font-size:1.02rem;line-height:1.8;white-space:pre-wrap}
+.prompt-box .plbl{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.7rem}
+.copy-btn{position:absolute;top:14px;right:14px;padding:.45rem .85rem;border-radius:7px;border:1px solid var(--border);background:#fff;font-size:.8rem;font-weight:700;cursor:pointer}
+.score-pill{display:inline-block;font-family:'DM Mono',monospace;font-size:.9rem;padding:.65rem 1rem;border-radius:9px;background:rgba(42,122,75,.1);color:var(--accent3);font-weight:600;margin-top:1.25rem}
+.locked-hint{opacity:.55;pointer-events:none;filter:grayscale(.2)}
+.dossier-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+@media(max-width:720px){.dossier-grid{grid-template-columns:1fr}}
+.step-list{padding-left:1.45rem;display:flex;flex-direction:column;gap:1rem;margin:1.35rem 0 2rem}
+.step-list li{line-height:1.75;font-size:1.05rem}
+.outro-links{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:2.5rem}
+.outro-links a{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:1rem 1.75rem;border-radius:9px;font-weight:600;text-decoration:none;font-size:1.05rem}
+.outro-links a.ghost{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff}
+.reveal{display:none}.reveal.show{display:block;animation:slideIn .35s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.compare-table{width:100%;border-collapse:collapse;margin:1.25rem 0;font-size:1.02rem}
+.compare-table th,.compare-table td{border:1px solid var(--border);padding:1rem 1.1rem;text-align:left;vertical-align:top;line-height:1.65}
+.compare-table th{background:var(--paper2);font-family:'DM Mono',monospace;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* Nested white-on-white: open up, don't stack boxes */
+.ex .route-q,.ex .audit-row,.sit .route-q{background:var(--paper)}
+.ex .card,.sit .card{box-shadow:none}
+
+@media(max-width:640px){
+  .section{padding:6.25rem 1.15rem 4rem}
+  .ex,.sit{padding:1.6rem 1.35rem;border-radius:14px}
+  .section-inner{max-width:100%}
+  label.field-label{margin-top:1.6rem}
+  .prompt-box{padding-right:1.4rem;padding-top:3rem}
+  .copy-btn{top:12px;right:12px}
+}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="nav-logo">AI Polku</a>
+  <div class="nav-right">
+    <div class="nav-done">Syvät tehtävät: <b id="doneCount">0</b>/12</div>
+    <div class="nav-steps" id="navSteps"></div>
+  </div>
+</nav>
+<div class="progress-track"><div class="progress-bar" id="progress-bar"></div></div>
+
+<!-- 0 HERO -->
+<section class="section section-dark" id="hero" data-index="0">
+<div class="hero-inner fade-up">
+  <div class="hero-badge">Syväpäivä · 4,5–5,5 h · vaativa</div>
+  <h1 class="hero-title">Sinä olet pomo.<br><em>Malli vain arvaa.</em></h1>
+  <p class="hero-sub">Tämä ei ole klikkailua. Kirjoitat mielipiteesi ennen kuin AI kommentoi. Tutkit oikeita lähteitä. Rakennat kolme tuotosta: dossierin, kriitikon ja oman käyttöjärjestelmän. Kirja pysyy kiinni.</p>
+  <a href="#mapa" class="hero-cta">Avaa päiväkartta →</a>
+  <div class="hour-strip">
+    <div class="hour-pip"><b>H1</b>Teoria + kanta + riskikartta</div>
+    <div class="hour-pip"><b>H2</b>Audit + tuomioistuin</div>
+    <div class="hour-pip"><b>H3</b>Tutkimusdossier + NotebookLM</div>
+    <div class="hour-pip"><b>H4</b>Tilanteet + duel + ansa</div>
+    <div class="hour-pip"><b>H5</b>Kriitikko + sääntö + capstone</div>
+  </div>
+  <div class="hero-meta">ChatGPT · Gemini · Perplexity · NotebookLM · Word · vero.fi / Finlex · Custom GPT / Gem · Grok/DeepSeek</div>
+</div>
+</section>
+
+<!-- 1 DAY MAP -->
+<section class="section" id="mapa" data-index="1">
+<div class="section-inner fade-up">
+  <div class="section-label">Päiväkartta · lue ensin</div>
+  <h2 class="section-h2">Mitä “valmis” tarkoittaa<br><em>tässä moduulissa</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Jokainen lohko vaatii sinun tekstisi. AI ei anna pisteitä tyhjästä. Jos vastaus on alle minimipituuden, palaute ei aukea.</p>
+  <div class="card-grid">
+    <div class="card"><div class="card-num">Ajattelu</div><h4>Mielipide ensin</h4><p>Kirjoitat kantasi ennen mallin kommenttia. AI saa haastaa sinut — ei kirjoittaa puolestasi.</p></div>
+    <div class="card blue"><div class="card-num">Tutkimus</div><h4>Oikeat lähteet</div><p>Perplexity → URL → luet sivun → lainaat. Pelkkä “kuulosti hyvältä” ei kelpaa.</p></div>
+    <div class="card green"><div class="card-num">Rakennus</div><h4>Kolme tuotosta</div><p>1) Lähdedossier 2) Custom-kriitikko 3) Oma AI-käyttöjärjestelmä Wordiin.</p></div>
+    <div class="card gold"><div class="card-num">Capstone</div><h4>Yksi iso tilanne</div><p>Lopuksi avaat kokonaisen casen, teet päätöksen, perustelet, ja AI hyökkää perusteluusi.</p></div>
+  </div>
+  <div class="hard-note"><strong>Sääntö päivälle:</strong> Älä avaa luovaa käsikirjoitustasi. Harjoittelemme lihasta kriitikon ja tarkistajan ympärillä — et ghostwriteria.</div>
+  <label class="field-label">Miksi olet täällä tänään?<span>Kirjoita 4–6 lausetta. Mitä osaat jo? Missä AI on pettänyt tai voisi pettää sinua? Mitä haluat osata illalla?</span></label>
+  <textarea id="whyHere" class="tall" data-save="whyHere" data-min="180" placeholder="Osaan jo… AI on auttanut… riski on… tänään haluan…"></textarea>
+  <div class="char-hint" data-for="whyHere">min. 180 merkkiä</div>
+  <div class="btn-row">
+    <button class="btn btn-purple" onclick="devilAdvocate('whyHere','whyRes','whyTxt','Haasta opiskelijan lähtömotivaatio: onko hän liian varovainen vai liian luottavainen? Kysy 3 terävää kysymystä. Suomeksi, aikuinen sävy, max 160 sanaa.')">AI haastaa lähtösi →</button>
+    <button class="btn btn-accent" onclick="if(requireMin('whyHere')){markDone('mapa');document.getElementById('teoria').scrollIntoView({behavior:'smooth'})}">Jatka teoriaan →</button>
+  </div>
+  <div class="ai-result devil" id="whyRes"><div class="ai-result-label">Haaste</div><div class="ai-result-text" id="whyTxt"></div></div>
+</div>
+</section>
+
+<!-- 2 TEORIA DEEP -->
+<section class="section section-alt" id="teoria" data-index="2">
+<div class="section-inner fade-up">
+  <div class="section-label">Teoria · 25–35 min</div>
+  <h2 class="section-h2">Mekanismi, jota et voi<br><em>ohittaa mielipiteellä</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Ensin luet. Sitten otat kantaa. Vasta sitten AI kommentoi. Jos hyppäät suoraan työkaluun, ohitat päivän ytimen.</p>
+
+  <div class="card-grid">
+    <div class="card"><div class="card-num">01</div><h4>Seuraavan sanan kone</h4><p>Malli ennustaa todennäköistä tekstiä. Se ei “tiedä” Verohallinnon kantaa samalla tavalla kuin vero.fi. Sujuvuus on tuote — ei todiste.</p></div>
+    <div class="card blue"><div class="card-num">02</div><h4>Vaaralliset tietotyypit</h4><p>Numerot, päivämäärät, nimet, pykälät, “tutkimukset”, alaviitteet. Näissä hallusinaatio maksaa eniten — ja näyttää uskottavimmalta.</p></div>
+    <div class="card green"><div class="card-num">03</div><h4>Controller-logiikka</h4><p>Kirjanpidossa et allekirjoita lukua tarkistamatta. Sama AI:n kanssa: <strong>hyväksy / tarkista / hylkää</strong>. Vastuu ei siirry mallille.</p></div>
+  </div>
+
+  <div class="pull">“Jos vastaus kuulostaa varmalta ja sisältää tarkan luvun ilman lähdettä, se on keltainen lippu — ei vihreä valo.”</div>
+
+  <div class="ex">
+    <div class="ex-tag think">Lue → kanta → puolustus</div>
+    <div class="ex-goal"><b>Pakollinen järjestys</b>Kirjoita ensin oma kantasi. Vasta sitten saat AI:n vastaväitteen. Älä pyydä AI:ta kirjoittamaan kantaasi.</div>
+
+    <p class="body-p"><strong>Väite A:</strong> “Koska käytän AI:ta vain apuna, hallusinaatiot eivät koske minua.”</p>
+    <label class="field-label">Oletko samaa mieltä? Miksi / miksi et?<span>Vähintään 120 merkkiä. Käytä omaa kokemustasi.</span></label>
+    <textarea id="theoryA" class="tall" data-save="theoryA" data-min="120" placeholder="Olen / en ole samaa mieltä, koska…"></textarea>
+    <div class="char-hint" data-for="theoryA">min. 120</div>
+
+    <p class="body-p" style="margin-top:1.5rem"><strong>Väite B:</strong> “Jos kaksi mallia (ChatGPT + Gemini) sanoo saman numeron, numero on todennäköisesti oikein.”</p>
+    <label class="field-label">Puolusta tai kaada väite</label>
+    <textarea id="theoryB" class="tall" data-save="theoryB" data-min="120" placeholder="Kaksoissopimus voi olla… tai kaksoishallusinaatio koska…"></textarea>
+    <div class="char-hint" data-for="theoryB">min. 120</div>
+
+    <p class="body-p" style="margin-top:1.5rem"><strong>Väite C:</strong> “Luovassa työssä faktatarkistus on vähemmän tärkeää kuin sujuvuus.”</p>
+    <label class="field-label">Missä tämä on totta? Missä vaarallista?</label>
+    <textarea id="theoryC" class="tall" data-save="theoryC" data-min="120" placeholder="Totta kun… Vaarallista kun…"></textarea>
+    <div class="char-hint" data-for="theoryC">min. 120</div>
+
+    <div class="btn-row">
+      <button class="btn btn-purple" onclick="evalTheoryBlock()">AI haastaa kaikki kolme →</button>
+      <button class="btn btn-accent" onclick="if(requireMin('theoryA')&&requireMin('theoryB')&&requireMin('theoryC')){markDone('teoria');document.getElementById('tyokalut').scrollIntoView({behavior:'smooth'})}">Teoria tehty →</button>
+    </div>
+    <div class="ai-result devil" id="theoryRes"><div class="ai-result-label">Vastaväite</div><div class="ai-result-text" id="theoryTxt"></div></div>
+  </div>
+</div>
+</section>
+
+<!-- 3 TOOLS + GREY ROUTING -->
+<section class="section" id="tyokalut" data-index="3">
+<div class="section-inner fade-up">
+  <div class="section-label">Työkalut · 20–25 min</div>
+  <h2 class="section-h2">Tunnet työkalut.<br><em>Nyt valitset harmaalla alueella.</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Helppo kysymys on “mikä on paras AI”. Vaikea kysymys on “mikä työkalu tähän tilanteeseen — ja miksi toinen olisi väärä”.</p>
+
+  <div class="tool-grid">
+    <div class="tool-chip"><div class="t-tag">Tuttu</div><div class="t-name">ChatGPT</div><div class="t-role">Muotoilu, ansa, Custom GPT</div></div>
+    <div class="tool-chip"><div class="t-tag">Tuttu</div><div class="t-name">Gemini</div><div class="t-role">Vertailu + Gem</div></div>
+    <div class="tool-chip"><div class="t-tag">Tuttu</div><div class="t-name">Perplexity</div><div class="t-role">URL-tutkimus</div></div>
+    <div class="tool-chip"><div class="t-tag">Tuttu</div><div class="t-name">NotebookLM</div><div class="t-role">Lähdesidottu Q&A</div></div>
+    <div class="tool-chip"><div class="t-tag">Selain</div><div class="t-name">vero.fi · Finlex · TK</div><div class="t-role">Alkuperäinen totuus</div></div>
+    <div class="tool-chip"><div class="t-tag new">Uutta</div><div class="t-name">Custom GPT / Gem</div><div class="t-role">Kriitikko, ei kirjoittaja</div></div>
+    <div class="tool-chip"><div class="t-tag">Tuttu</div><div class="t-name">Grok / DeepSeek</div><div class="t-role">Kolmas mielipide</div></div>
+    <div class="tool-chip"><div class="t-tag">Tuttu</div><div class="t-name">Word</div><div class="t-role">Päätös ja jälki</div></div>
+  </div>
+
+  <div class="ex">
+    <div class="ex-tag hard">Harmaa reititys · ei yhtä oikeaa</div>
+    <div class="ex-goal"><b>Tehtävä</b>Valitse työkalu, kirjoita miksi — ja mikä olisi väärä valinta. AI pisteyttää perustelun, ei vain klikkausta.</div>
+    <div id="routeBox"></div>
+  </div>
+</div>
+</section>
+
+<!-- 4 ZONES + SCENARIO SORT -->
+<section class="section section-alt" id="vyohykkeet" data-index="4">
+<div class="section-inner fade-up">
+  <div class="section-label">Tehtävä 1 · Riskikartta · 35–40 min</div>
+  <h2 class="section-h2">Oma kartta +<br><em>tilanteiden lajittelu</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Ensin omat esimerkit. Sitten kuusi tilannetta — sinä lajittelet ja puolustat. Useissa ei ole yhtä oikeaa; on vain huono perustelu.</p>
+
+  <div class="zone-grid">
+    <div class="zone g"><h4>🟢 Vihreä</h4><div class="z-sub">Vapaammin — ei ulkoisia faktalukkoja.</div><textarea id="zoneG" data-save="zoneG" data-min="40" placeholder="Oma esimerkki…"></textarea></div>
+    <div class="zone y"><h4>🟡 Keltainen</h4><div class="z-sub">Saa ehdottaa — pakko tarkistaa.</div><textarea id="zoneY" data-save="zoneY" data-min="40" placeholder="Oma esimerkki…"></textarea></div>
+    <div class="zone r"><h4>🔴 Punainen</h4><div class="z-sub">Ei — tai vain kriitikko.</div><textarea id="zoneR" data-save="zoneR" data-min="40" placeholder="Oma esimerkki…"></textarea></div>
+  </div>
+
+  <div class="ex">
+    <div class="ex-tag think">Lajittele 6 tilannetta</div>
+    <div id="zoneSortBox"></div>
+    <div class="btn-row">
+      <button class="btn btn-purple" id="zoneAiBtn" onclick="evalZoneSort()">AI arvioi kartan + lajittelun →</button>
+      <button class="btn btn-accent" onclick="markDone('vyohykkeet');document.getElementById('audit').scrollIntoView({behavior:'smooth'})">Jatka auditiin →</button>
+    </div>
+    <div class="ai-result" id="zoneRes"><div class="ai-result-label">Palaute</div><div class="ai-result-text" id="zoneTxt"></div></div>
+  </div>
+</div>
+</section>
+
+<!-- 5 AUDIT DEEP -->
+<section class="section" id="audit" data-index="5">
+<div class="section-inner fade-up">
+  <div class="section-label">Tehtävä 2 · Controller’s audit · 45–55 min</div>
+  <h2 class="section-h2">Kuusi väitettä.<br><em>Kolme tuomiota. Kaksi tutkimusta.</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Generoi väitteet. Tuomitse kaikki. Valitse kaksi epäilyttävintä ja tee niille mini-tutkimus (URL + lainaus). Ilman tutkimusta audit ei valmistu.</p>
+
+  <div class="ex">
+    <div class="ex-tag fun">Live-generointi</div>
+    <label class="field-label">Aihealue<span>Mistä AI saa tuottaa “faktoja”?</span></label>
+    <input type="text" id="auditTopic" data-save="auditTopic" value="Suomen taloushallinto, ALV, kirjanpito ja yrittäjän velvollisuudet 2024–2026">
+    <div class="btn-row"><button class="btn btn-accent" id="genAuditBtn" onclick="generateAudit()">Generoi 6 väitettä →</button></div>
+    <div id="auditList"></div>
+
+    <div id="auditResearch" style="display:none;margin-top:2rem">
+      <div class="hard-note"><strong>Pakollinen tutkimusosa:</strong> Valitse 2 väitettä. Etsi Perplexityllä virallinen lähde. Avaa sivu. Lainaa.</div>
+      <div class="dossier-grid">
+        <div>
+          <label class="field-label">Tutkimus 1 — väitteen nro</label>
+          <input type="text" id="ar1n" data-save="ar1n" placeholder="esim. 2">
+          <label class="field-label">URL</label>
+          <input type="text" id="ar1u" data-save="ar1u" placeholder="https://…">
+          <label class="field-label">Lainaus sivulta (oma tiivistys OK)</label>
+          <textarea id="ar1q" data-save="ar1q" data-min="40"></textarea>
+          <label class="field-label">Tuomio tutkimuksen jälkeen</label>
+          <select id="ar1v" data-save="ar1v"><option value="">—</option><option>Totta</option><option>Osittain / vanhentunut</option><option>Vale</option></select>
+        </div>
+        <div>
+          <label class="field-label">Tutkimus 2 — väitteen nro</label>
+          <input type="text" id="ar2n" data-save="ar2n" placeholder="esim. 5">
+          <label class="field-label">URL</label>
+          <input type="text" id="ar2u" data-save="ar2u" placeholder="https://…">
+          <label class="field-label">Lainaus sivulta</label>
+          <textarea id="ar2q" data-save="ar2q" data-min="40"></textarea>
+          <label class="field-label">Tuomio tutkimuksen jälkeen</label>
+          <select id="ar2v" data-save="ar2v"><option value="">—</option><option>Totta</option><option>Osittain / vanhentunut</option><option>Vale</option></select>
+        </div>
+      </div>
+      <div class="prompt-box"><div class="plbl">Perplexity-promptti</div><button class="copy-btn" type="button" onclick="copyFromBox(this)">Kopioi</button>Löydä virallinen suomalainen lähde (vero.fi, Finlex, Tilastokeskus, PRH tai vastaava) tälle väitteelle. Anna suora URL. Lainaa 1–2 lausetta sivulta. Jos väite on vanhentunut, sano se suoraan.
+
+Väite: [liitä]</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-green" id="scoreAuditBtn" style="display:none" onclick="scoreAudit()">Laske audit + tutkimus →</button>
+    </div>
+    <div class="ai-result" id="auditRes"><div class="ai-result-label">Controller-palaute</div><div class="ai-result-text" id="auditTxt"></div></div>
+    <div class="ex-meta"><span>Minimi: <b>6 tuomiota + 2 URL:ia</b></span><span>Työkalut: <b>tämä sivu + Perplexity + selain</b></span></div>
+  </div>
+</div>
+</section>
+
+<!-- 6 DOSSIER BUILD -->
+<section class="section section-alt" id="dossier" data-index="6">
+<div class="section-inner fade-up">
+  <div class="section-label">Tehtävä 3 · Rakenna dossier · 50–60 min</div>
+  <h2 class="section-h2">Lähdepaketti,<br><em>joka pitää AI:n kurissa</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Et vain “googlaa”. Rakennat NotebookLM-lähdepaketin ja vertaat sitä vapaaseen chattiin. Tämä on päivän tutkimusmoottori.</p>
+
+  <div class="ex">
+    <div class="ex-tag search">Perplexity → lähteet → NotebookLM</div>
+    <div class="ex-goal"><b>Tuotos</b>Dossier: tutkimuskysymys, 3 lähdettä URL+miksi, NotebookLM-vertailu, johtopäätös Word-tyyliin.</div>
+
+    <ol class="step-list">
+      <li>Valitse <strong>yksi</strong> tutkimuskysymys (talous / digitaidot / AI-sääntely / oma aihe ilman kirjaa).</li>
+      <li>Perplexityllä etsi <strong>3 virallista tai ensisijaista lähdettä</strong>.</li>
+      <li>Avaa jokainen. Kirjaa miksi se kelpaa.</li>
+      <li>Lataa/liitä lähteet <strong>NotebookLM</strong>:ään.</li>
+      <li>Kysy sama kysymys ChatGPT:lle <em>ilman</em> lähteitä ja NotebookLM:lle <em>lähteillä</em>.</li>
+      <li>Kirjoita vertailu ja päätös: kumpaa käyttäisit allekirjoitettavaan vastaukseen?</li>
+    </ol>
+
+    <label class="field-label">Tutkimuskysymyksesi</label>
+    <textarea id="dosQ" data-save="dosQ" data-min="30" placeholder="Esim. Mitkä ovat Suomen yleiset ALV-kannat vuonna 2026 ja missä ne virallisesti ilmoitetaan?"></textarea>
+
+    <label class="field-label">Lähde 1 — URL + miksi kelpaa (sinun arviosi)</label>
+    <textarea id="dos1" data-save="dos1" data-min="40" placeholder="URL: …&#10;Kelpaa koska…"></textarea>
+    <label class="field-label">Lähde 2 — URL + miksi</label>
+    <textarea id="dos2" data-save="dos2" data-min="40"></textarea>
+    <label class="field-label">Lähde 3 — URL + miksi</label>
+    <textarea id="dos3" data-save="dos3" data-min="40"></textarea>
+
+    <label class="field-label">ChatGPT ilman lähteitä — mitä vastasi? (tiivistä)</label>
+    <textarea id="dosChat" class="tall" data-save="dosChat" data-min="80"></textarea>
+    <label class="field-label">NotebookLM lähteillä — mitä vastasi?</label>
+    <textarea id="dosNb" class="tall" data-save="dosNb" data-min="80"></textarea>
+
+    <label class="field-label">Sinun päätös<span>Kumpaa käyttäisit jos vastaus menisi asiakkaalle / julkaisuun / itsellesi tärkeään päätökseen? Miksi? Missä NotebookLM voi silti pettää?</span></label>
+    <textarea id="dosDec" class="xtall" data-save="dosDec" data-min="200"></textarea>
+    <div class="char-hint" data-for="dosDec">min. 200 merkkiä — tämä on dossierin ydin</div>
+
+    <div class="checklist">
+      <label><input type="checkbox" id="dosC1"> Lisäsin vähintään 2 lähdettä NotebookLM:ään</label>
+      <label><input type="checkbox" id="dosC2"> Kysyin NotebookLM:ltä saman kysymyksen</label>
+      <label><input type="checkbox" id="dosC3"> Avasin vähintään 2 URL:ia itse (en vain lukenut Perplexityn tiivistelmää)</label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-blue" onclick="evalDossier()">AI arvioi dossierin tiukasti →</button>
+      <button class="btn btn-accent" onclick="markDone('dossier');document.getElementById('tilanteet').scrollIntoView({behavior:'smooth'})}">Dossier valmis →</button>
+    </div>
+    <div class="ai-result" id="dosRes"><div class="ai-result-label">Dossier-arvio</div><div class="ai-result-text" id="dosTxt"></div></div>
+  </div>
+</div>
+</section>
+
+<!-- 7 SITUATIONS — OPINION UNFOLD -->
+<section class="section" id="tilanteet" data-index="7">
+<div class="section-inner fade-up">
+  <div class="section-label">Tehtävä 4 · Tilanteet · 50–60 min</div>
+  <h2 class="section-h2">Kolme tilannetta.<br><em>Sinä avaat ne.</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Ei oikeaa/väärää nappia. On päätös, riski, perustelu ja se mitä teet seuraavaksi. Kirjoita auki. Sitten AI hyökkää — sinä vastaat.</p>
+
+  <!-- SIT 1 -->
+  <div class="sit" id="sit1">
+    <div class="sit-head"><span class="sit-id">Tilanne 1 · talous</span><span class="sit-time">~15–20 min</span></div>
+    <h3>Ystävä pyytää “pientä” ALV-neuvoa ChatGPT:stä</h3>
+    <div class="sit-brief">
+      <div class="who">Tilanne</div>
+      Kaverisi avaa toiminimen. Hän liittää ChatGPT:n vastauksen WhatsAppiin: “Yleinen ALV on 24 %, ja alle 15 000 € liikevaihdolla ei tarvitse ilmoittautua ALV-velvolliseksi — voit jättää ALV:n huomiotta ensimmäisen vuoden.” Hän kysyy: <em>“Tämä kai ok? Sä ymmärrät näitä.”</em>
+    </div>
+    <div class="stake">
+      <span><b>Riski</b>Väärä neuvo → raha + luottamus</span>
+      <span><b>Paine</b>Haluat olla avulias</span>
+      <span><b>AI-rooli</b>Jo antoi “varmat” luvut</span>
+    </div>
+    <label class="field-label">1) Mitä vastaat hänelle? (kirjoita viesti)</label>
+    <textarea id="s1a" class="tall" data-save="s1a" data-min="100"></textarea>
+    <label class="field-label">2) Mitkä kohdat ChatGPT:n viestissä ovat keltaisia/punaisia — ja miksi?</label>
+    <textarea id="s1b" class="tall" data-save="s1b" data-min="100"></textarea>
+    <label class="field-label">3) Minkä työkalun avaat seuraavaksi ja mitä tarkalleen tarkistat?</label>
+    <textarea id="s1c" data-save="s1c" data-min="60"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-purple btn-sm" onclick="challengeSit(1)">AI hyökkää päätökseesi →</button>
+    </div>
+    <div class="ai-result devil" id="s1Res"><div class="ai-result-label">Vastahyökkäys — vastaa alle</div><div class="ai-result-text" id="s1Txt"></div></div>
+    <div class="reveal" id="s1ReplyWrap">
+      <label class="field-label">4) Vastauksesi haasteeseen<span>Älä peräänny automaattisesti — puolusta tai korjaa.</span></label>
+      <textarea id="s1d" class="tall" data-save="s1d" data-min="80"></textarea>
+      <button class="btn btn-blue btn-sm" style="margin-top:.75rem" onclick="rebutSit(1)">AI arvioi puolustuksesi →</button>
+      <div class="ai-result" id="s1Res2"><div class="ai-result-label">Tuomio</div><div class="ai-result-text" id="s1Txt2"></div></div>
+    </div>
+  </div>
+
+  <!-- SIT 2 -->
+  <div class="sit" id="sit2">
+    <div class="sit-head"><span class="sit-id">Tilanne 2 · kirjoittaminen</span><span class="sit-time">~15–20 min</span></div>
+    <h3>Gemini tarjoaa “valmiin luvun” — sinä et pyytänyt</h3>
+    <div class="sit-brief">
+      <div class="who">Tilanne</div>
+      Pyysit sparrausta rakenteeseen. Gemini vastaa 900 sanan valmiilla luvulla, kauniilla dialogilla ja “historiallisilla yksityiskohdilla” (vuosilukuja, paikkoja). Teksti on hyvä. Osa faktoista voi olla keksittyjä. Aikaa on vähän.
+    </div>
+    <div class="stake">
+      <span><b>Houkutus</b>Teksti on jo “valmis”</span>
+      <span><b>Raja</b>Luova omistajuus</span>
+      <span><b>Riski</b>Keksityt detaljit jäävät</span>
+    </div>
+    <label class="field-label">1) Mitä teet seuraavaksi — askel askeleelta?</label>
+    <textarea id="s2a" class="tall" data-save="s2a" data-min="120"></textarea>
+    <label class="field-label">2) Mitä säilytät AI:lta, mitä heität pois, mitä tarkistat?</label>
+    <textarea id="s2b" class="tall" data-save="s2b" data-min="100"></textarea>
+    <label class="field-label">3) Kirjoita uudelleenpyyntö Geminiin / Custom-kriitikolle (ei “kirjoita luku”)</label>
+    <textarea id="s2c" class="tall" data-save="s2c" data-min="80"></textarea>
+    <div class="btn-row"><button class="btn btn-purple btn-sm" onclick="challengeSit(2)">AI hyökkää →</button></div>
+    <div class="ai-result devil" id="s2Res"><div class="ai-result-label">Vastahyökkäys</div><div class="ai-result-text" id="s2Txt"></div></div>
+    <div class="reveal" id="s2ReplyWrap">
+      <label class="field-label">4) Puolustuksesi / korjauksesi</label>
+      <textarea id="s2d" class="tall" data-save="s2d" data-min="80"></textarea>
+      <button class="btn btn-blue btn-sm" style="margin-top:.75rem" onclick="rebutSit(2)">AI arvioi →</button>
+      <div class="ai-result" id="s2Res2"><div class="ai-result-label">Tuomio</div><div class="ai-result-text" id="s2Txt2"></div></div>
+    </div>
+  </div>
+
+  <!-- SIT 3 -->
+  <div class="sit" id="sit3">
+    <div class="sit-head"><span class="sit-id">Tilanne 3 · tutkimus</span><span class="sit-time">~15–20 min</span></div>
+    <h3>Perplexity antoi 4 linkkiä — yksi niistä on blogi vuodelta 2019</h3>
+    <div class="sit-brief">
+      <div class="who">Tilanne</div>
+      Tutkit AI:n käyttöä taloushallinnossa. Perplexity listaa 4 lähdettä. Kaksi on konsulttifirman blogeja, yksi on Tilastokeskus, yksi on vanha EU-tiedote. Vastaus näyttää siistiltä. Aihetta pitäisi käyttää huomenna keskustelussa.
+    </div>
+    <div class="stake">
+      <span><b>Aika</b>Huomenna puhut</span>
+      <span><b>Lähteet</b>Laatu vaihtelee</span>
+      <span><b>Ego</b>Haluaat kuulostaa asiantuntevalta</span>
+    </div>
+    <label class="field-label">1) Miten priorisoit lähteet? Mitä hylkäät?</label>
+    <textarea id="s3a" class="tall" data-save="s3a" data-min="100"></textarea>
+    <label class="field-label">2) Mitä saat sanoa huomenna ilman lisätutkimusta — ja mitä et?</label>
+    <textarea id="s3b" class="tall" data-save="s3b" data-min="100"></textarea>
+    <label class="field-label">3) 20 minuutin tutkimussuunnitelma (konkreettiset askeleet)</label>
+    <textarea id="s3c" class="tall" data-save="s3c" data-min="100"></textarea>
+    <div class="btn-row"><button class="btn btn-purple btn-sm" onclick="challengeSit(3)">AI hyökkää →</button></div>
+    <div class="ai-result devil" id="s3Res"><div class="ai-result-label">Vastahyökkäys</div><div class="ai-result-text" id="s3Txt"></div></div>
+    <div class="reveal" id="s3ReplyWrap">
+      <label class="field-label">4) Puolustuksesi</label>
+      <textarea id="s3d" class="tall" data-save="s3d" data-min="80"></textarea>
+      <button class="btn btn-blue btn-sm" style="margin-top:.75rem" onclick="rebutSit(3)">AI arvioi →</button>
+      <div class="ai-result" id="s3Res2"><div class="ai-result-label">Tuomio</div><div class="ai-result-text" id="s3Txt2"></div></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-accent" onclick="finishSituations()">Tilanteet tehty — duel →</button>
+  </div>
+</div>
+</section>
+
+<!-- 8 COURT HARDER -->
+<section class="section section-alt" id="tuomio" data-index="8">
+<div class="section-inner fade-up">
+  <div class="section-label">Tehtävä 5 · Tuomioistuin · 20–25 min</div>
+  <h2 class="section-h2">Kuusi väitettä.<br><em>Perustelu pakollinen.</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Ei napin painallusta ilman miksi-kenttää. Osassa “tarkista” on paras vastaus — ei siksi että et tiedä, vaan koska vastuullinen aikuinen tarkistaa.</p>
+  <div id="courtBox"></div>
+  <div id="courtScore" class="score-pill" style="display:none"></div>
+</div>
+</section>
+
+<!-- 9 DUEL + VERIFY -->
+<section class="section" id="duel" data-index="9">
+<div class="section-inner fade-up">
+  <div class="section-label">Tehtävä 6 · Duel + todentaminen · 25–35 min</div>
+  <h2 class="section-h2">Kolme mallia.<br><em>Sitten todistat.</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Valinta ei riitä. Avaa lähde ja kirjoita todistusketju. Ilman URL:ia duel jää kesken.</p>
+
+  <div class="ex">
+    <div class="ex-tag fun">Duel</div>
+    <p style="font-weight:600;margin-bottom:1rem;font-size:1.05rem">Kysymys: <em>“Mikä on Suomen yleinen ALV-kanta juuri nyt, ja mistä sen virallisesti tarkistaa?”</em></p>
+    <div class="duel-grid" id="duelGrid">
+      <div class="duel-card" data-duel="A" onclick="pickDuel('A')"><div class="model">Malli A</div><div class="ans">“Yleinen ALV-kanta Suomessa on 24 %. Se on ollut samalla tasolla vuosia. Voit luottaa tähän.”</div></div>
+      <div class="duel-card" data-duel="B" onclick="pickDuel('B')"><div class="model">Malli B</div><div class="ans">“Yleinen kanta on 25,5 % (muutos 2024→). Tarkista Verohallinnolta (vero.fi) — en anna tätä allekirjoitettavaksi ilman lähdettä.”</div></div>
+      <div class="duel-card" data-duel="C" onclick="pickDuel('C')"><div class="model">Malli C</div><div class="ans">“ALV on 25 %. Lähde: Suomen verolaki 2023 § 12. Tilikauden pituus liittyy samaan uudistukseen.”</div></div>
+    </div>
+    <div class="ai-result" id="duelRes"><div class="ai-result-label">Ensimmäinen tuomio</div><div class="ai-result-text" id="duelTxt"></div></div>
+
+    <div id="duelVerify" style="display:none">
+      <label class="field-label">Todennus — URL jonka avasit</label>
+      <input type="text" id="duelUrl" data-save="duelUrl" placeholder="https://www.vero.fi/…">
+      <label class="field-label">Mitä sivu sanoo (omin sanoin) + kumpi malli oli lähinnä totta</label>
+      <textarea id="duelProof" class="tall" data-save="duelProof" data-min="100"></textarea>
+      <label class="field-label">Jos käyttäisit Grokia tai DeepSeekiä kolmantena — mitä kysyisit erikseen?</label>
+      <textarea id="duelThird" data-save="duelThird" data-min="40"></textarea>
+      <div class="btn-row"><button class="btn btn-green" onclick="finishDuel()">Lukitse duel →</button></div>
+      <div class="ai-result" id="duelRes2"><div class="ai-result-label">Todennus-palaute</div><div class="ai-result-text" id="duelTxt2"></div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 10 TRAP + MEMO BUILD -->
+<section class="section section-alt" id="ansa" data-index="10">
+<div class="section-inner fade-up">
+  <div class="section-label">Tehtävä 7 · Rakenna · 35–40 min</div>
+  <h2 class="section-h2">Ansa + muistio<br><em>kollegalle</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Kaksi tuotosta: (1) hallusinaatioansa jonka rakenteen ymmärrät, (2) lyhyt muistio “miten tarkistan AI-väitteet” — aikuiselle lukijalle.</p>
+
+  <div class="ex">
+    <div class="ex-tag build">Ansa</div>
+    <div class="prompt-box"><div class="plbl">Apu ChatGPT/Geminiin — sinä päätät sisällön</div><button class="copy-btn" type="button" onclick="copyFromBox(this)">Kopioi</button>Kirjoita 110–140 sanan asiantunteva kappale Suomen taloushallinnosta tai digitaidoista.
+Tee siitä ~80 % totta. Upota YKSI harhaanjohtava yksityiskohta (väärä luku, vuosi, pykälä tai “lähde”).
+Älä paljasta mikä on väärin. Sävy: vakuuttava, aikuinen, ei hymiöitä.</div>
+    <label class="field-label">Ansa-teksti</label>
+    <textarea id="trapText" class="xtall" data-save="trapText" data-min="200"></textarea>
+    <label class="field-label">Mikä on ansa + miksi se toimii</label>
+    <textarea id="trapSecret" class="tall" data-save="trapSecret" data-min="80"></textarea>
+    <div class="btn-row"><button class="btn btn-blue" onclick="evalTrap()">Analysoi rakenne →</button></div>
+    <div class="ai-result" id="trapRes"><div class="ai-result-label">Rakenneanalyysi</div><div class="ai-result-text" id="trapTxt"></div></div>
+  </div>
+
+  <div class="ex">
+    <div class="ex-tag build">Muistio · build</div>
+    <div class="ex-goal"><b>Tuotos</b>Kirjoita 180–280 sanan muistio otsikolla “Kun AI antaa luvun”. Vastaanottaja: fiksu aikuinen, ei IT-ihminen.</div>
+    <label class="field-label">Muistio</label>
+    <textarea id="memo" class="xtall" data-save="memo" data-min="280" placeholder="Kun AI antaa luvun…&#10;&#10;1) …&#10;2) …&#10;3) …"></textarea>
+    <div class="char-hint" data-for="memo">min. 280 merkkiä</div>
+    <div class="btn-row">
+      <button class="btn btn-purple" onclick="evalMemo()">AI toimituspäällikkö arvioi →</button>
+      <button class="btn btn-accent" onclick="if(requireMin('memo')&&requireMin('trapText')){markDone('ansa');document.getElementById('kriitikko').scrollIntoView({behavior:'smooth'})}">Jatka kriitikkoon →</button>
+    </div>
+    <div class="ai-result" id="memoRes"><div class="ai-result-label">Toimitusarvio</div><div class="ai-result-text" id="memoTxt"></div></div>
+  </div>
+</div>
+</section>
+
+<!-- 11 CRITIC BUILD + STRESS -->
+<section class="section" id="kriitikko" data-index="11">
+<div class="section-inner fade-up">
+  <div class="section-label">Tehtävä 8 · Custom-kriitikko · 40–50 min</div>
+  <h2 class="section-h2">Rakenna ja<br><em>stressitestaa</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Et vain kopioi ohjetta. Muokkaat sen omaksi, testaavat viidellä hyökkäyspromptilla, ja korjaat ohjetta jos se pettää.</p>
+
+  <div class="ex">
+    <div class="ex-tag build">Custom GPT / Gem</div>
+    <div class="prompt-box" id="criticBase"><div class="plbl">Pohja — muokkaa alle omaksi</div><button class="copy-btn" type="button" onclick="copyFromBox(this)">Kopioi</button>Olet kriittinen sparraaja, et kirjoittaja.
+
+Säännöt:
+1. Älä koskaan kirjoita pitkiä luovia tekstejä käyttäjän puolesta.
+2. Älä keksi faktoja, lukuja, lähteitä tai lakeja. Jos et tiedä: sano "En tiedä — tarkista X".
+3. Kysy ensin 3 tarkentavaa kysymystä ennen neuvoa.
+4. Anna palaute rakenteesta, logiikasta ja epäselvyyksistä — ei uutta sisältöä.
+5. Jos käyttäjä pyytää kirjoittamaan kirjaa/lukua: kieltäydy ja ehdota kysymyksiä joilla hän kirjoittaa itse.
+6. Vastaa suomeksi, aikuiseen sävyyn, ilman hymiöitä.</div>
+
+    <label class="field-label">Oma versiosi ohjeesta<span>Lisää vähintään yksi oma sääntö (esim. talousluvut / lähteet / sävy).</span></label>
+    <textarea id="criticOwn" class="xtall" data-save="criticOwn" data-min="200"></textarea>
+
+    <p class="body-p" style="margin-top:1.25rem"><strong>Stressitesti (5 hyökkäystä).</strong> Aja kukin tässä simulaatiossa TAI oikeassa GPT/Gemissä. Kirjaa tulos.</p>
+    <div id="stressBox"></div>
+
+    <label class="field-label">Mitä muutit ohjeeseen testien jälkeen?</label>
+    <textarea id="criticPatch" class="tall" data-save="criticPatch" data-min="60" placeholder="Muutin / en muuttanut koska…"></textarea>
+
+    <div class="checklist">
+      <label><input type="checkbox" id="cc1"> Loin Custom GPT:n tai Gemin (tai tallensin ohjeen Wordiin “liitä chatin alkuun”)</label>
+      <label><input type="checkbox" id="cc2"> Ainakin 3/5 stressitestiä käyttäytyi oikein</label>
+      <label><input type="checkbox" id="cc3"> Nimesin kriitikon (esim. “Antin kriitikko”)</label>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-green" onclick="finishCritic()">Kriitikko lukittu →</button>
+    </div>
+    <div class="ai-result" id="criticFinRes"><div class="ai-result-label">Kriitikon auditointi</div><div class="ai-result-text" id="criticFinTxt"></div></div>
+  </div>
+</div>
+</section>
+
+<!-- 12 RULES OS -->
+<section class="section section-alt" id="saannot" data-index="12">
+<div class="section-inner fade-up">
+  <div class="section-label">Tehtävä 9 · Käyttöjärjestelmä · 25–30 min</div>
+  <h2 class="section-h2">Oma AI-käyttöjärjestelmä<br><em>— ei iskulauseita</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Sääntö joka ei ohjaa huomista toimintaa on koriste. Kirjoita käyttökelpoinen. AI red team -hyökkää siihen.</p>
+
+  <div class="ex">
+    <div class="ex-tag think">OS-dokumentti</div>
+    <label class="field-label">1. Vihreä — käytän vapaasti kun…</label>
+    <textarea id="rule1" data-save="rule1" data-min="40"></textarea>
+    <label class="field-label">2. Keltainen — tarkistan aina kun…</label>
+    <textarea id="rule2" data-save="rule2" data-min="40"></textarea>
+    <label class="field-label">3. Punainen — en koskaan anna AI:n…</label>
+    <textarea id="rule3" data-save="rule3" data-min="40"></textarea>
+    <label class="field-label">4. Työkalureitti (tilanne → työkalu)</label>
+    <textarea id="rule4" class="tall" data-save="rule4" data-min="80" placeholder="Muotoilu → …&#10;Tutkimus → …&#10;Omat dokumentit → …&#10;Päätös → …"></textarea>
+    <label class="field-label">5. Eskalaatio — milloin kysyn ihmiseltä / viranomaiselta / en luota itseeni?</label>
+    <textarea id="rule5" class="tall" data-save="rule5" data-min="60"></textarea>
+    <label class="field-label">6. 4 viikon harjoitus — mitä teet viikoittain (konkreettisesti)</label>
+    <textarea id="rule6" class="tall" data-save="rule6" data-min="80"></textarea>
+
+    <div class="btn-row">
+      <button class="btn btn-purple" id="ruleBtn" onclick="evalRules()">Red team sääntöä →</button>
+      <button class="btn btn-outline" onclick="exportRules()">Kopioi Wordiin →</button>
+    </div>
+    <div class="ai-result devil" id="ruleRes"><div class="ai-result-label">Red team</div><div class="ai-result-text" id="ruleTxt"></div></div>
+    <div class="reveal" id="rulePatchWrap">
+      <label class="field-label">Korjaa sääntöä red teamin jälkeen</label>
+      <textarea id="rulePatch" class="tall" data-save="rulePatch" data-min="60"></textarea>
+      <button class="btn btn-accent" style="margin-top:.75rem" onclick="markDone('saannot');document.getElementById('capstone').scrollIntoView({behavior:'smooth'})">OS valmis — capstone →</button>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 13 CAPSTONE -->
+<section class="section" id="capstone" data-index="13">
+<div class="section-inner fade-up">
+  <div class="section-label">Tehtävä 10 · Capstone · 40–50 min</div>
+  <h2 class="section-h2">Yksi iso case.<br><em>Alusta loppuun.</em></h2>
+  <div class="divider"></div>
+  <p class="lead">Tämä on päivän koe. Et saa “oikeaa vastausta” valmiina. Saat tilanteen. Sinä avaat sen: riskit, työkalut, tutkimus, päätös, viesti, jälkitarkistus.</p>
+
+  <div class="sit">
+    <div class="sit-head"><span class="sit-id">Capstone</span><span class="sit-time">vaativa</span></div>
+    <h3>Valitse yksi case — tai kirjoita oma</h3>
+    <div class="card-grid">
+      <div class="card" style="cursor:pointer" onclick="pickCase('A')"><div class="card-num">Case A</div><h4>Veroneuvonta-ansa</h4><p>Naapuri näyttää AI:n “verosuunnitelman” jossa on 3 lukua ja 1 “Finlex-viittaus”. Hän aikoo toimia sen mukaan ensi viikolla.</p></div>
+      <div class="card blue" style="cursor:pointer" onclick="pickCase('B')"><div class="card-num">Case B</div><h4>Julkaisupaine</h4><p>Olet kirjoittamassa lyhyttä asiantuntijatekstiä (ei kirjasi). AI antoi sujuvan version jossa on 2 tilastoa ilman lähdettä. Julkaisu huomenna.</p></div>
+      <div class="card green" style="cursor:pointer" onclick="pickCase('C')"><div class="card-num">Case C</div><h4>Oma tilanne</h4><p>Kirjoita todellinen tai todennäköinen tilanne elämästäsi jossa AI:n väärä tieto satuttaisi — ilman että avaat käsikirjoitusta.</p></div>
+    </div>
+    <p id="casePicked" style="display:none;margin:1rem 0;font-weight:600;color:var(--accent2)"></p>
+
+    <label class="field-label">A) Tilannekuvaus omin sanoin (jos C: kerro koko case)</label>
+    <textarea id="capA" class="tall" data-save="capA" data-min="80"></textarea>
+    <label class="field-label">B) Riskit — raha, maine, aika, ihmissuhteet, luova omistajuus</label>
+    <textarea id="capB" class="tall" data-save="capB" data-min="100"></textarea>
+    <label class="field-label">C) Työkaluketju — mitä avaat missä järjestyksessä ja miksi</label>
+    <textarea id="capC" class="tall" data-save="capC" data-min="100"></textarea>
+    <label class="field-label">D) Tutkimus — vähintään 1 URL + mitä löysit (tee oikeasti)</label>
+    <textarea id="capD" class="tall" data-save="capD" data-min="80"></textarea>
+    <label class="field-label">E) Päätös + viesti toiselle ihmiselle (tai itsellesi)</label>
+    <textarea id="capE" class="xtall" data-save="capE" data-min="150"></textarea>
+    <label class="field-label">F) Mitä teet jos olet väärässä?</label>
+    <textarea id="capF" data-save="capF" data-min="40"></textarea>
+
+    <div class="btn-row">
+      <button class="btn btn-purple" onclick="evalCapstone()">Capstone-tuomari (kova) →</button>
+    </div>
+    <div class="ai-result devil" id="capRes"><div class="ai-result-label">Capstone-tuomio</div><div class="ai-result-text" id="capTxt"></div></div>
+    <div class="reveal" id="capFixWrap">
+      <label class="field-label">Korjaa heikoin kohtasi tuomion jälkeen</label>
+      <textarea id="capFix" class="tall" data-save="capFix" data-min="80"></textarea>
+      <button class="btn btn-accent" style="margin-top:.75rem" onclick="markDone('capstone');document.getElementById('outro').scrollIntoView({behavior:'smooth'})">Capstone valmis →</button>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 14 OUTRO -->
+<section class="section section-dark" id="outro" data-index="14">
+<div class="section-inner fade-up" style="text-align:center">
+  <div class="section-label" style="text-align:center">Yhteenveto</div>
+  <h2 class="section-h2" style="color:#fff;text-align:center">Mitä viet kotiin<br><em>tänään</em></h2>
+  <div class="divider" style="margin:1.5rem auto"></div>
+  <div class="card-grid" style="text-align:left">
+    <div class="card" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:#fff"><h4 style="color:#fff">Dossier</h4><p style="color:rgba(255,255,255,.7)">3 lähdettä + NotebookLM-vertailu + päätös.</p></div>
+    <div class="card" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:#fff"><h4 style="color:#fff">Kriitikko</h4><p style="color:rgba(255,255,255,.7)">Custom GPT / Gem + stressitestit.</p></div>
+    <div class="card" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:#fff"><h4 style="color:#fff">Käyttöjärjestelmä</h4><p style="color:rgba(255,255,255,.7)">Word-sääntö + 4 viikon harjoitus.</p></div>
+  </div>
+  <label class="field-label" style="color:rgba(255,255,255,.85);text-align:left;max-width:700px;margin:2rem auto 0">Opetat opettajalle — yksi asia + yksi asia jossa olet edelleen epävarma</label>
+  <textarea id="teachBack" class="tall" data-save="teachBack" data-min="100" style="max-width:700px;margin:.5rem auto 0;display:block" placeholder="Opin… Olen edelleen epävarma…"></textarea>
+  <div class="btn-row" style="justify-content:center">
+    <button class="btn btn-accent" onclick="if(requireMin('teachBack')){markDone('outro');alert('Päivä kirjattu. Vie Wordiin: dossier, kriitikko-ohje, OS-sääntö.')}">Lukitse päivä →</button>
+  </div>
+  <div class="outro-links">
+    <a href="/">← Takaisin kurssille</a>
+    <a class="ghost" href="#capstone">Takaisin capstoneen</a>
+  </div>
+</div>
+</section>
+
+<script src="/js/reflections.js"></script>
+<script src="/js/feedback.js"></script>
+<script>
+const DONE_KEY='ai_tuomari_done_v2';
+const SAVE_KEY='ai_tuomari_fields_v2';
+let doneSet=new Set();
+try{JSON.parse(localStorage.getItem(DONE_KEY)||'[]').forEach(x=>doneSet.add(x))}catch(e){}
+
+const sections=document.querySelectorAll('[data-index]');
+const navSteps=document.getElementById('navSteps');
+const bar=document.getElementById('progress-bar');
+sections.forEach((s,i)=>{const p=document.createElement('button');p.type='button';p.className='step-pip'+(i===0?' active':'');p.title=s.id;p.onclick=()=>s.scrollIntoView({behavior:'smooth'});navSteps.appendChild(p)});
+
+function upProg(){
+  const st=window.scrollY,dh=document.documentElement.scrollHeight-window.innerHeight;
+  bar.style.width=(dh>0?(st/dh)*100:0)+'%';
+  const ps=navSteps.querySelectorAll('.step-pip');let ai=0;
+  sections.forEach((s,i)=>{if(s.getBoundingClientRect().top<=window.innerHeight*.45)ai=i});
+  ps.forEach((p,i)=>{p.classList.remove('active','done');if(i===ai)p.classList.add('active');else if(i<ai)p.classList.add('done')});
+}
+window.addEventListener('scroll',upProg,{passive:true});upProg();
+const fo=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');fo.unobserve(x.target)}})},{threshold:.08});
+document.querySelectorAll('.fade-up').forEach(el=>fo.observe(el));
+
+function markDone(id){
+  doneSet.add(id);
+  localStorage.setItem(DONE_KEY,JSON.stringify([...doneSet]));
+  document.getElementById('doneCount').textContent=Math.min(doneSet.size,12);
+}
+document.getElementById('doneCount').textContent=Math.min(doneSet.size,12);
+
+function bindSave(root){
+  let data={};try{data=JSON.parse(localStorage.getItem(SAVE_KEY)||'{}')}catch(e){}
+  (root||document).querySelectorAll('[data-save]').forEach(el=>{
+    if(el.dataset.boundSave)return;el.dataset.boundSave='1';
+    if(data[el.dataset.save]!=null)el.value=data[el.dataset.save];
+    const bump=()=>{
+      let d={};try{d=JSON.parse(localStorage.getItem(SAVE_KEY)||'{}')}catch(e){}
+      d[el.dataset.save]=el.value;localStorage.setItem(SAVE_KEY,JSON.stringify(d));
+      const hint=document.querySelector('.char-hint[data-for="'+el.id+'"]');
+      if(hint&&el.dataset.min){
+        const n=el.value.trim().length,m=+el.dataset.min;
+        hint.textContent=n+' / min. '+m;hint.classList.toggle('ok',n>=m);
+      }
+    };
+    el.addEventListener('input',bump);bump();
+  });
+}
+bindSave(document);
+
+function requireMin(id){
+  const el=document.getElementById(id);if(!el)return true;
+  const m=+(el.dataset.min||0);const n=el.value.trim().length;
+  if(n<m){alert('Kirjoita lisää: '+id+' tarvitsee vähintään '+m+' merkkiä (nyt '+n+').');el.focus();return false}
+  return true;
+}
+
+async function aiCall(sys,user,tok=900){
+  try{
+    const r=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({model:'gpt-4o-mini',max_tokens:tok,system:sys,messages:[{role:'user',content:user}]})});
+    const d=await r.json();return d.text||'Virhe vastauksessa.';
+  }catch(e){return'Yhteysvirhe — yritä uudelleen.';}
+}
+function ld(el){el.innerHTML='<span class="loading-dots"><span></span><span></span><span></span></span>'}
+function copyFromBox(btn){
+  const box=btn.closest('.prompt-box');
+  const text=box.innerText.replace(/^.*\n/,'').replace(/^Kopioi\n?/,'').trim();
+  navigator.clipboard.writeText(text).then(()=>{btn.textContent='Kopioitu';setTimeout(()=>btn.textContent='Kopioi',1500)});
+}
+
+async function devilAdvocate(fieldId,resId,txtId,sys){
+  const el=document.getElementById(fieldId);
+  if(!requireMin(fieldId))return;
+  const res=document.getElementById(resId),txt=document.getElementById(txtId);
+  res.style.display='block';ld(txt);
+  txt.textContent=await aiCall(sys,el.value,500);
+}
+
+async function evalTheoryBlock(){
+  if(!requireMin('theoryA')||!requireMin('theoryB')||!requireMin('theoryC'))return;
+  const res=theoryRes,txt=theoryTxt;res.style.display='block';ld(txt);
+  txt.textContent=await aiCall(
+    'Olet tiukka aikuisten AI-lukutaitokouluttaja. Haasta opiskelijan kolme kantaa. Älä kehu tyhjästä. Osoita heikot kohdat ja anna 1 parempi argumentti per väite. Suomeksi, max 260 sanaa.',
+    `A:\n${theoryA.value}\n\nB:\n${theoryB.value}\n\nC:\n${theoryC.value}`,700
+  );
+}
+
+/* GREY ROUTING */
+const routes=[
+  {q:'Kaveri kysyy ALV-kantaa WhatsAppissa. Haluat vastata vastuullisesti 10 minuutissa.',opts:['Vain ChatGPT','Perplexity → vero.fi → lyhyt vastaus','NotebookLM ilman lähteitä'],ans:1,also:null,fb:'Perplexity + virallinen sivu. ChatGPT yksin on liian riskialtis numerolle.'},
+  {q:'Haluat sparrata oman kappaleen rakennetta — et uusia faktoja.',opts:['Custom-kriitikko / Gemini','Perplexity','Canva'],ans:0,fb:'Kriitikko tai Gemini kysymyksillä. Perplexity on väärä työkalu rakenteeseen.'},
+  {q:'Sinulla on 2 PDF-ohjetta; vastauksen pitää pysyä niissä.',opts:['ChatGPT muistista','NotebookLM lähteillä','Grok “mitä netissä nyt”'],ans:1,fb:'NotebookLM. Jos ei löydy lähteestä, sen pitää sanoa niin.'},
+  {q:'Tarvitset kolmannen mielipiteen samaan faktakysymykseen ennen päätöstä.',opts:['Vain sama ChatGPT uudestaan','DeepSeek tai Grok + sitten virallinen lähde','Gamma'],ans:1,fb:'Kolmas malli voi paljastaa eron — mutta päätös syntyy lähteestä, ei äänestyksestä.'},
+  {q:'AI antoi kauniin alaviitteen. Mitä teet ensin?',opts:['Hyväksyn jos kuulostaa oikealta','Avaan / etsin viitatun lähteen','Pyydän AI:ta kirjoittamaan lisää viitteitä'],ans:1,fb:'Viite ilman avattua lähdettä on koriste. Lisää viitteitä pahentaa hallusinaatiota.'}
+];
+let routeDone=0;
+(function buildRoutes(){
+  const box=document.getElementById('routeBox');
+  routes.forEach((r,i)=>{
+    const div=document.createElement('div');div.className='route-q';div.id='route'+i;
+    div.innerHTML=`<p>${i+1}. ${r.q}</p><div class="route-opts"></div>
+      <div class="reveal" id="rwhy${i}"><label class="field-label">Miksi tämä — ja mikä olisi väärä valinta?</label>
+      <textarea id="rtext${i}" data-save="rtext${i}" data-min="60"></textarea>
+      <button type="button" class="btn btn-blue btn-sm" style="margin-top:.6rem">Lukitse perustelu →</button></div>
+      <div class="route-fb" id="rfb${i}"></div>`;
+    const opts=div.querySelector('.route-opts');
+    r.opts.forEach((o,j)=>{
+      const b=document.createElement('button');b.type='button';b.className='route-opt';b.textContent=o;
+      b.onclick=()=>{
+        if(div.dataset.picked)return;
+        div.dataset.picked=String(j);
+        [...opts.children].forEach((c,k)=>{
+          if(k===r.ans)c.classList.add('correct');
+          else if(k===j)c.classList.add(j===r.ans?'correct':'wrong');
+        });
+        document.getElementById('rwhy'+i).classList.add('show');
+      };
+      opts.appendChild(b);
+    });
+    div.querySelector('button.btn').onclick=async()=>{
+      const t=document.getElementById('rtext'+i);
+      if((t.value||'').trim().length<60){alert('Perustele vähintään 60 merkillä.');return}
+      if(div.dataset.locked)return;div.dataset.locked='1';routeDone++;
+      const fb=document.getElementById('rfb'+i);
+      fb.classList.add('show');fb.textContent='…';
+      const j=+div.dataset.picked;
+      const note=j===r.ans?'Valinta OK. ':'Valinta ei ollut paras — lue miksi. ';
+      fb.textContent=note+r.fb+'\n\n'+await aiCall(
+        'Arvioi lyhyesti (max 70 sanaa, suomeksi) onko opiskelijan perustelu työkaluvalinnalle aikuisen tasoinen.',
+        `Kysymys: ${r.q}\nValinta: ${r.opts[j]}\nPerustelu: ${t.value}`,200
+      );
+      // rebind save
+      let d={};try{d=JSON.parse(localStorage.getItem(SAVE_KEY)||'{}')}catch(e){}
+      d['rtext'+i]=t.value;localStorage.setItem(SAVE_KEY,JSON.stringify(d));
+      if(routeDone===routes.length)markDone('tyokalut');
+    };
+    box.appendChild(div);
+  });
+  bindSave(box);
+})();
+
+/* ZONE SORT */
+const zoneItems=[
+  {id:'z1',t:'Pyydät ChatGPT:tä tiivistämään oman sähköpostiluonnoksesi.'},
+  {id:'z2',t:'Kysyt Geminiiltä Suomen ALV-kantoja “nopeasti” ennen puhelua.'},
+  {id:'z3',t:'Pyydät AI:ta kirjoittamaan valmiin luvun fiktiosta puolestasi.'},
+  {id:'z4',t:'Käytät Perplexityä etsimään Tilastokeskuksen julkaisua.'},
+  {id:'z5',t:'Liität asiakkaan nimen ja Y-tunnuksen julkiseen chattiin “helpommaksi”.'},
+  {id:'z6',t:'Pyydät kriitikkoa kysymään 5 kysymystä omasta kappaleestasi — ei uudelleenkirjoittamaan.'}
+];
+(function buildZoneSort(){
+  const box=document.getElementById('zoneSortBox');
+  zoneItems.forEach((z,i)=>{
+    const div=document.createElement('div');div.className='route-q';
+    div.innerHTML=`<p>${i+1}. ${z.t}</p>
+      <select id="zs${i}" data-save="zs${i}"><option value="">— Vyöhyke —</option><option value="g">Vihreä</option><option value="y">Keltainen</option><option value="r">Punainen</option></select>
+      <label class="field-label">Miksi juuri tämä vyöhyke?</label>
+      <textarea id="zsw${i}" data-save="zsw${i}" data-min="40" placeholder="Koska…"></textarea>`;
+    box.appendChild(div);
+  });
+  bindSave(box);
+})();
+
+async function evalZoneSort(){
+  if(!requireMin('zoneG')||!requireMin('zoneY')||!requireMin('zoneR'))return;
+  for(let i=0;i<zoneItems.length;i++){
+    if(!document.getElementById('zs'+i).value){alert('Lajittele kaikki 6 tilannetta.');return}
+    if((document.getElementById('zsw'+i).value||'').trim().length<40){alert('Perustele tilanne '+(i+1));return}
+  }
+  const btn=zoneAiBtn,res=zoneRes,txt=zoneTxt;btn.disabled=true;res.style.display='block';ld(txt);
+  let payload=`OMAT VYÖHYKKEET\nV:\n${zoneG.value}\nK:\n${zoneY.value}\nP:\n${zoneR.value}\n\nLAJITTELU:\n`;
+  zoneItems.forEach((z,i)=>{payload+=`${i+1}. [${document.getElementById('zs'+i).value}] ${z.t}\nMiksi: ${document.getElementById('zsw'+i).value}\n`});
+  txt.textContent=await aiCall(
+    'Arvioi riskikartta ja 6 lajittelua. Suomi, max 280 sanaa. Kiistä heikot perustelut. Hyväksy perustellut harmaat alueet. Ehdota 2 parannusta.',
+    payload,700
+  );
+  btn.disabled=false;markDone('vyohykkeet');
+}
+
+/* AUDIT 6 */
+let auditClaims=[];
+async function generateAudit(){
+  const topic=(auditTopic.value||'').trim()||'Suomen taloushallinto';
+  const btn=genAuditBtn,list=auditList;btn.disabled=true;list.innerHTML='<div class="ai-result" style="display:block"><div class="ai-result-text"><span class="loading-dots"><span></span><span></span><span></span></span></div></div>';
+  const raw=await aiCall(
+    `Tuota TÄSMÄLLEEN 6 suomenkielistä "faktaa" aiheesta. Sekoita: vanhentuneita, liian tarkkoja ilman lähdettä, uskottavia mutta tarkistettavia, 1 harmiton työkaluväite, 1 keksitty pykälä/lähde.
+Yksi väite per rivi, numerointi 1-6. Ei selityksiä. Kuulosta varmalta.`,
+    `Aihe: ${topic}`,500
+  );
+  auditClaims=raw.split('\n').map(s=>s.replace(/^\d+[\).\s]+/,'').trim()).filter(Boolean).slice(0,6);
+  if(auditClaims.length<6){
+    auditClaims=[
+      'Suomen yleinen ALV-kanta on edelleen 24 %, eikä siihen ole tullut muutoksia 2020-luvulla.',
+      'Pienyrityksen tilikausi on aina kalenterivuosi — poikkeuksia ei sallita kirjanpitolaissa.',
+      'ChatGPT voi tiivistää oman tekstisi, jos liität sen keskusteluun.',
+      'Verohallinnon mukaan ennakkovero ilmoitetaan aina kuukauden 5. päivä automaattisesti ilman yrittäjän toimia.',
+      'Kirjanpitolain 3:2 § määrää, että tositteet saa säilyttää vain digitaalisina vuodesta 2022 alkaen.',
+      'Perplexityn näyttämä linkki tarkoittaa, että väite on tarkistettu viranomaisen toimesta.'
+    ];
+  }
+  list.innerHTML='';
+  auditClaims.forEach((c,i)=>{
+    const row=document.createElement('div');row.className='audit-row';row.dataset.i=i;
+    row.innerHTML=`<div class="audit-claim">${i+1}. ${c}</div>
+      <div class="verdict-btns">
+        <button type="button" class="verdict-btn" data-v="accept">Hyväksy</button>
+        <button type="button" class="verdict-btn" data-v="check">Tarkista</button>
+        <button type="button" class="verdict-btn" data-v="reject">Hylkää</button>
+      </div>
+      <div class="audit-why"><label class="field-label" style="margin-top:.5rem">Miksi? (min. 40 merkkiä)</label>
+      <textarea class="why-box" data-save="auditWhy${i}"></textarea></div>`;
+    row.querySelectorAll('.verdict-btn').forEach(b=>{
+      b.onclick=()=>{
+        row.querySelectorAll('.verdict-btn').forEach(x=>x.className='verdict-btn');
+        b.classList.add('on-'+b.dataset.v);row.dataset.verdict=b.dataset.v;
+        row.querySelector('.audit-why').classList.add('show');
+      };
+    });
+    list.appendChild(row);
+  });
+  auditResearch.style.display='block';
+  scoreAuditBtn.style.display='inline-flex';
+  btn.disabled=false;
+}
+
+async function scoreAudit(){
+  const rows=[...document.querySelectorAll('.audit-row')];
+  if(rows.some(r=>!r.dataset.verdict)){alert('Anna tuomio kaikille kuudelle.');return}
+  const verdicts=rows.map(r=>r.dataset.verdict);
+  const whys=rows.map(r=>(r.querySelector('.why-box').value||'').trim());
+  if(whys.some(w=>w.length<40)){alert('Jokainen perustelu vähintään 40 merkkiä.');return}
+  if(new Set(verdicts).size<3){alert('Käytä kaikkia kolmea tuomiota vähintään kerran.');return}
+  if(!ar1u.value.trim()||!ar2u.value.trim()||!ar1q.value.trim()||!ar2q.value.trim()||!ar1v.value||!ar2v.value){
+    alert('Tee kaksi tutkimusta: URL + lainaus + tuomio.');return;
+  }
+  if(!/^https?:\/\//i.test(ar1u.value)||!/^https?:\/\//i.test(ar2u.value)){alert('URL:ien pitää alkaa https://');return}
+  const btn=scoreAuditBtn,res=auditRes,txt=auditTxt;btn.disabled=true;res.style.display='block';ld(txt);
+  const payload=auditClaims.map((c,i)=>`${i+1}. ${c}\nTuomio: ${verdicts[i]}\nMiksi: ${whys[i]}`).join('\n\n')
+    +`\n\nTUTKIMUS1 #${ar1n.value} ${ar1u.value}\n${ar1q.value}\n=> ${ar1v.value}`
+    +`\n\nTUTKIMUS2 #${ar2n.value} ${ar2u.value}\n${ar2q.value}\n=> ${ar2v.value}`;
+  txt.textContent=await aiCall(
+    'Olet tiukka controller-kouluttaja. Arvioi audit + 2 tutkimusta. Suomi, max 320 sanaa. Onko hän liian sinisilmäinen? Ovatko URL:t uskottavia? Anna yksi lisähaaste.',
+    payload,800
+  );
+  btn.disabled=false;markDone('audit');
+}
+
+async function evalDossier(){
+  if(!dosC1.checked||!dosC2.checked||!dosC3.checked){alert('Rastita dossier-checklist.');return}
+  if(!requireMin('dosQ')||!requireMin('dos1')||!requireMin('dos2')||!requireMin('dos3')||!requireMin('dosChat')||!requireMin('dosNb')||!requireMin('dosDec'))return;
+  if(!/https?:\/\//i.test(dos1.value+dos2.value+dos3.value)){alert('Lähteissä pitää olla URL:ja (https://).');return}
+  const res=dosRes,txt=dosTxt;res.style.display='block';ld(txt);
+  txt.textContent=await aiCall(
+    'Arvioi tutkimusdossier tiukasti. Suomi, max 280 sanaa. Onko päätös allekirjoitettava? Missä hän luotti liikaa AI-tiivistelmään? Anna 2 parannusta.',
+    `Kysymys:${dosQ.value}\nL1:${dos1.value}\nL2:${dos2.value}\nL3:${dos3.value}\nChat:${dosChat.value}\nNB:${dosNb.value}\nPäätös:${dosDec.value}`,750
+  );
+  markDone('dossier');
+}
+
+async function challengeSit(n){
+  const map={
+    1:['s1a','s1b','s1c','Tilanne: kaveri + ALV-ChatGPT. Hyökkää päätökseen: onko hän liian pehmeä, liian jyrkkä, tai välttääkö vastuuta? Max 140 sanaa.'],
+    2:['s2a','s2b','s2c','Tilanne: Gemini kirjoitti valmiin luvun. Hyökkää: antaako hän AI:n viedä omistajuuden tai heittääkö hän hyödyllisen rakenteen hukkaan? Max 140 sanaa.'],
+    3:['s3a','s3b','s3c','Tilanne: Perplexity-lähteet epätasaisia. Hyökkää tutkimussuunnitelmaan: onko se liian hidas, liian löysä, vai ego edellä? Max 140 sanaa.']
+  };
+  const [a,b,c,sys]=map[n];
+  if(!requireMin(a)||!requireMin(b)||!requireMin(c))return;
+  const res=document.getElementById('s'+n+'Res'),txt=document.getElementById('s'+n+'Txt');
+  res.style.display='block';ld(txt);
+  txt.textContent=await aiCall('Olet vastustaja-keskustelija. '+sys, `${document.getElementById(a).value}\n\n${document.getElementById(b).value}\n\n${document.getElementById(c).value}`,400);
+  document.getElementById('s'+n+'ReplyWrap').classList.add('show');
+}
+async function rebutSit(n){
+  const d=document.getElementById('s'+n+'d');
+  if(!requireMin('s'+n+'d'))return;
+  const res=document.getElementById('s'+n+'Res2'),txt=document.getElementById('s'+n+'Txt2');
+  res.style.display='block';ld(txt);
+  txt.textContent=await aiCall(
+    'Arvioi puolustus vastahyökkäykseen. Suomi, max 120 sanaa. Sano suoraan: kestääkö vai sulaako.',
+    `Haaste:\n${document.getElementById('s'+n+'Txt').textContent}\n\nPuolustus:\n${d.value}`,350
+  );
+}
+
+function finishSituations(){
+  for(let n=1;n<=3;n++){
+    if(!requireMin('s'+n+'a')||!requireMin('s'+n+'b')||!requireMin('s'+n+'c'))return;
+    if(!(document.getElementById('s'+n+'d').value||'').trim()){alert('Vastaa tilanteen '+n+' haasteeseen (kohta 4).');return}
+  }
+  markDone('tilanteet');
+  document.getElementById('tuomio').scrollIntoView({behavior:'smooth'});
+}
+
+/* COURT 6 with why */
+const court=[
+  {t:'“Suomen yleinen ALV-kanta on 24 %.”',ans:'reject',fb:'Hylkää/tarkista. Vanhentunut — tarkista vero.fi (25,5 %).'},
+  {t:'“ChatGPT osaa tiivistää oman tekstini, jos liitän sen.”',ans:'accept',fb:'Hyväksy (vihreä työkalukäyttö).'},
+  {t:'“Jos Perplexity näyttää linkin, väite on aina totta.”',ans:'reject',fb:'Hylkää. Linkki ≠ sisältö tarkistettu.'},
+  {t:'“NotebookLM vastaa ensisijaisesti latamiisi lähteisiin.”',ans:'accept',fb:'Hyväksy periaatteena — silti silmäile.'},
+  {t:'“Kaksi mallia sanoi saman luvun, joten voin allekirjoittaa sen asiakkaalle.”',ans:'reject',fb:'Hylkää/tarkista. Kaksoishallusinaatio on mahdollinen.'},
+  {t:'“Voin käyttää AI:ta kysymään kriittisiä kysymyksiä omasta tekstistäni kirjoittamatta sitä uudelleen.”',ans:'accept',fb:'Hyväksy — tämä on kriitikko-käyttö.'}
+];
+let courtN=0,courtOk=0;
+(function buildCourt(){
+  const box=document.getElementById('courtBox');
+  court.forEach((c,i)=>{
+    const card=document.createElement('div');card.className='court-card';
+    card.innerHTML=`<div class="court-num">VÄITE ${i+1}</div><div class="court-text">${c.t}</div>
+      <div class="verdict-btns">
+        <button type="button" class="verdict-btn" data-v="accept">Hyväksy</button>
+        <button type="button" class="verdict-btn" data-v="check">Tarkista</button>
+        <button type="button" class="verdict-btn" data-v="reject">Hylkää</button>
+      </div>
+      <label class="field-label">Miksi?</label>
+      <textarea id="cwhy${i}" data-save="cwhy${i}"></textarea>
+      <button type="button" class="btn btn-sm btn-blue" style="margin-top:.6rem">Lukitse tuomio →</button>
+      <div class="court-fb" id="cfb${i}"></div>`;
+    const lockBtn=card.querySelector('.btn');
+    lockBtn.onclick=()=>{
+      if(card.dataset.done)return;
+      const v=[...card.querySelectorAll('.verdict-btn')].find(b=>b.className.includes('on-'));
+      if(!v){alert('Valitse tuomio.');return}
+      const why=(document.getElementById('cwhy'+i).value||'').trim();
+      if(why.length<30){alert('Perustele (min 30).');return}
+      card.dataset.done='1';courtN++;
+      const choice=v.dataset.v;
+      const ok=(c.ans==='accept'&&(choice==='accept'||choice==='check'))||(c.ans==='reject'&&(choice==='reject'||choice==='check'));
+      if(c.ans==='accept'&&choice==='accept')courtOk++;
+      else if(c.ans==='reject'&&choice==='reject')courtOk++;
+      else if(choice==='check')courtOk+=0.5;
+      card.classList.add(ok?'done-ok':'done-bad');
+      const fb=document.getElementById('cfb'+i);fb.textContent=c.fb;fb.classList.add('show');
+      if(courtN===court.length){
+        markDone('tuomio');
+        const sc=document.getElementById('courtScore');sc.style.display='inline-block';
+        sc.textContent=`Tuomioistuin: ${Math.round(courtOk*10)/10}/${court.length}`;
+      }
+    };
+    card.querySelectorAll('.verdict-btn').forEach(b=>{
+      b.onclick=()=>{
+        if(card.dataset.done)return;
+        card.querySelectorAll('.verdict-btn').forEach(x=>x.className='verdict-btn');
+        b.classList.add('on-'+b.dataset.v);
+      };
+    });
+    box.appendChild(card);
+  });
+  bindSave(box);
+})();
+
+let duelDone=false;
+function pickDuel(choice){
+  if(duelDone)return;duelDone=true;
+  document.querySelectorAll('.duel-card').forEach(c=>{
+    c.style.pointerEvents='none';
+    if(c.dataset.duel===choice)c.classList.add('picked');
+  });
+  const res=duelRes,txt=duelTxt;res.style.display='block';
+  if(choice==='B')txt.textContent='Hyvä suunta: B rajaa ja ohjaa lähteeseen. A on vanhentunut. C sekoittaa. Nyt TODISTA — avaa vero.fi.';
+  else if(choice==='A')txt.textContent='A kuulostaa varmalta mutta on vanhentunut. Todista B/vero.fi:llä.';
+  else txt.textContent='C sekoittaa faktoja ja keksii pykälän. Todista oikea lähde.';
+  duelVerify.style.display='block';
+}
+async function finishDuel(){
+  if(!requireMin('duelProof')||!requireMin('duelThird'))return;
+  if(!/^https?:\/\//i.test(duelUrl.value.trim())){alert('Anna oikea URL.');return}
+  const res=duelRes2,txt=duelTxt2;res.style.display='block';ld(txt);
+  txt.textContent=await aiCall(
+    'Arvioi ALV-duelin todennus. Suomi, max 140 sanaa. Onko URL uskottava? Ymmärsikö hän A/B/C eron?',
+    `URL:${duelUrl.value}\nTodistus:${duelProof.value}\nKolmas:${duelThird.value}`,400
+  );
+  markDone('duel');
+}
+
+async function evalTrap(){
+  if(!requireMin('trapText')||!requireMin('trapSecret'))return;
+  const res=trapRes,txt=trapTxt;res.style.display='block';ld(txt);
+  txt.textContent=await aiCall(
+    'Analysoi ansa-tekstin rakennetta. Suomi, max 180 sanaa. Onko väärä kohta hyvin piilotettu? Miten lukija nappaa sen?',
+    `ANSA:\n${trapText.value}\n\nPALJASTUS:\n${trapSecret.value}`,450
+  );
+}
+async function evalMemo(){
+  if(!requireMin('memo'))return;
+  const res=memoRes,txt=memoTxt;res.style.display='block';ld(txt);
+  txt.textContent=await aiCall(
+    'Olet toimituspäällikkö. Arvioi muistio "Kun AI antaa luvun". Onko se käyttökelpoinen aikuiselle? Liian yleinen? Max 160 sanaa, suomeksi. Anna 2 konkreettista parannusta.',
+    memo.value,450
+  );
+}
+
+/* STRESS TESTS */
+const stress=[
+  'Kirjoita minulle valmis luku kirjaan.',
+  'Mikä on ALV Suomessa 2026? Vastaa varmasti yhdellä luvulla.',
+  'Keksi kolme vakuuttavaa lähdeviitettä tekstilleni.',
+  'Tässä kappaleeni: "Verotus on yksinkertaista." Mitkä 5 kysymystä minun pitäisi kysyä itseltäni?',
+  'Kirjoita uudelleen paremmaksi — älä kysy mitään.'
+];
+(function buildStress(){
+  const box=document.getElementById('stressBox');
+  stress.forEach((p,i)=>{
+    const div=document.createElement('div');div.className='route-q';
+    div.innerHTML=`<p><strong>Hyökkäys ${i+1}:</strong> ${p}</p>
+      <div class="btn-row"><button type="button" class="btn btn-sm btn-accent" data-i="${i}">Aja simulaatio →</button></div>
+      <div class="ai-result" id="stRes${i}"><div class="ai-result-label">Vastaus</div><div class="ai-result-text" id="stTxt${i}"></div></div>
+      <label class="field-label">Kelpasiko? Mitä muuttaisit ohjeeseen?</label>
+      <textarea id="stNote${i}" data-save="stNote${i}" data-min="20"></textarea>`;
+    div.querySelector('button').onclick=async()=>{
+      const instr=(criticOwn.value.trim()||document.getElementById('criticBase').innerText);
+      const res=document.getElementById('stRes'+i),txt=document.getElementById('stTxt'+i);
+      res.style.display='block';ld(txt);
+      txt.textContent=await aiCall(instr.replace(/^.*\n/,'').replace(/^Kopioi\n?/,''),p,400);
+    };
+    box.appendChild(div);
+  });
+  bindSave(box);
+})();
+
+async function finishCritic(){
+  if(!requireMin('criticOwn')||!requireMin('criticPatch'))return;
+  if(!cc1.checked||!cc2.checked||!cc3.checked){alert('Rastita kriitikko-checklist.');return}
+  let notes='';for(let i=0;i<5;i++)notes+=`\n${i+1}: ${(document.getElementById('stNote'+i).value||'')}`;
+  const res=criticFinRes,txt=criticFinTxt;res.style.display='block';ld(txt);
+  txt.textContent=await aiCall(
+    'Auditoi custom-kriitikon ohje + stressitestimuistiinpanot. Suomi, max 220 sanaa. Onko ohje tarpeeksi tiukka? Missä se vielä pettää?',
+    `OHJE:\n${criticOwn.value}\n\nPATCH:\n${criticPatch.value}\n\nMUISTIINPANOT:${notes}`,600
+  );
+  markDone('kriitikko');
+  document.getElementById('saannot').scrollIntoView({behavior:'smooth'});
+}
+
+async function evalRules(){
+  if(!requireMin('rule1')||!requireMin('rule2')||!requireMin('rule3')||!requireMin('rule4')||!requireMin('rule5')||!requireMin('rule6'))return;
+  const res=ruleRes,txt=ruleTxt;res.style.display='block';ld(txt);
+  txt.textContent=await aiCall(
+    'Red team -hyökkää opiskelijan AI-käyttöjärjestelmään. Etsi porsaanreiät. Suomi, max 220 sanaa. Lopuksi 3 pakollista korjausta.',
+    `1:${rule1.value}\n2:${rule2.value}\n3:${rule3.value}\n4:${rule4.value}\n5:${rule5.value}\n6:${rule6.value}`,600
+  );
+  rulePatchWrap.classList.add('show');
+}
+function exportRules(){
+  const text=`AI-KÄYTTÖJÄRJESTELMÄ\n\n1 VIHREÄ:\n${rule1.value}\n\n2 KELTAINEN:\n${rule2.value}\n\n3 PUNAINEN:\n${rule3.value}\n\n4 REITTI:\n${rule4.value}\n\n5 ESKALAATIO:\n${rule5.value}\n\n6 4 VK:\n${rule6.value}\n\nKORJAUS:\n${rulePatch.value||''}\n\n${new Date().toLocaleDateString('fi-FI')}`;
+  navigator.clipboard.writeText(text).then(()=>alert('Kopioitu Wordiin liitettäväksi.')).catch(()=>alert('Kopiointi epäonnistui.'));
+}
+
+let pickedCase=null;
+function pickCase(c){
+  pickedCase=c;
+  const el=document.getElementById('casePicked');
+  el.style.display='block';
+  el.textContent=c==='A'?'Valittu: Case A — Veroneuvonta-ansa':c==='B'?'Valittu: Case B — Julkaisupaine':'Valittu: Case C — Oma tilanne';
+}
+async function evalCapstone(){
+  if(!pickedCase){alert('Valitse case A, B tai C.');return}
+  if(!requireMin('capA')||!requireMin('capB')||!requireMin('capC')||!requireMin('capD')||!requireMin('capE')||!requireMin('capF'))return;
+  if(!/https?:\/\//i.test(capD.value)){alert('Capstone-tutkimukseen tarvitaan URL.');return}
+  const res=capRes,txt=capTxt;res.style.display='block';ld(txt);
+  txt.textContent=await aiCall(
+    'Olet kova capstone-tuomari AI-lukutaidossa. Arvioi case A–F. Suomi, max 320 sanaa. Anna arvosana 1–5, heikoin kohta, ja yksi asia joka osoittaa aikuista harkintaa. Älä ole kiltti turhaan.',
+    `CASE ${pickedCase}\nA:${capA.value}\nB:${capB.value}\nC:${capC.value}\nD:${capD.value}\nE:${capE.value}\nF:${capF.value}`,850
+  );
+  capFixWrap.classList.add('show');
+}
+</script>
+<script>fetch('/ai-chat-widget.html').then(r=>r.text()).then(h=>{document.body.insertAdjacentHTML('beforeend',h)}).catch(()=>{})</script>
+</body>
+</html>

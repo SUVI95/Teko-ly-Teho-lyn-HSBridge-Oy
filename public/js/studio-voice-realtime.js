@@ -10,7 +10,7 @@
   var DEFAULT_TURNS = 3;
   var ECHO_GUARD_MS = 1500;
   var MIN_ANSWER_LEN = 2;
-  var API_BASE = '/api/studio-voice';
+  var DEFAULT_API_BASE = '/api/studio-voice';
 
   function isMeaningfulAnswer(text) {
     var t = String(text || '').trim();
@@ -25,6 +25,7 @@
     // the persona lives server-side and is keyed by this exact string.
     this.scenario = options.scenario ? String(options.scenario) : 'latu';
     this.brief = options.brief || '';
+    this.apiBase = options.apiBase ? String(options.apiBase).replace(/\/$/, '') : DEFAULT_API_BASE;
     this.instructions = ''; // persona + rules, fetched from /config; kept alive on every response
     this.phases = options.phases || [];
     this.expectedTurns = options.expectedTurns || DEFAULT_TURNS;
@@ -308,7 +309,7 @@
       if (e.streams && e.streams[0]) self.setupRemoteAudio(e.streams[0]);
     };
 
-    var cfgPromise = fetch(API_BASE + '/realtime/config?' + apiQ, { credentials: 'include' })
+    var cfgPromise = fetch(this.apiBase + '/realtime/config?' + apiQ, { credentials: 'include' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .catch(function () { return null; });
 
@@ -336,7 +337,7 @@
     var offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    var sdpResponse = await fetch(API_BASE + '/realtime/session?' + apiQ, {
+    var sdpResponse = await fetch(this.apiBase + '/realtime/session?' + apiQ, {
       method: 'POST',
       body: offer.sdp,
       headers: { 'Content-Type': 'application/sdp' },

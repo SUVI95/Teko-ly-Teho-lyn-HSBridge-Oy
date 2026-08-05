@@ -3,672 +3,487 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ääni ja Deep Search — ChatGPT työnhaussa</title>
+<title>Ääni &amp; Deep Search — live-harjoittelu | AI Polku</title>
+<script>window.__MODULE_ID__ = 'moduuli-voice-deep-search';</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --ink:#1a1a2e; --ink2:#2d2d44;
-  --paper:#f5f3ef; --paper2:#eeeae3; --warm:#e8e0d4;
-  --accent:#10a37f; --accent2:#c75b3a; --accent3:#2a7a4b; --blue:#2563a8;
-  --text:#1a1a2e; --muted:#6b6880; --border:rgba(26,26,46,0.12);
-  --shadow:0 2px 20px rgba(26,26,46,0.08); --shadow-md:0 8px 40px rgba(26,26,46,0.12);
+  --ink:#14201c; --ink2:#24352f;
+  --paper:#f3f1eb; --paper2:#e9e5dc; --warm:#ddd6c8;
+  --accent:#0f7a5f; --accent2:#c45c2a; --accent3:#2a7a4b; --blue:#2563a8;
+  --text:#1a2420; --muted:#5c6560; --border:rgba(20,32,28,0.12);
+  --shadow:0 2px 20px rgba(20,32,28,0.08); --shadow-md:0 10px 40px rgba(20,32,28,0.12);
+  --live:#c0392b;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{background:var(--paper);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:400;overflow-x:hidden;line-height:1.7;}
 #progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:200;transition:width 0.4s ease;width:0%;}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;background:rgba(245,243,239,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2.5rem;justify-content:space-between;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;background:rgba(243,241,235,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 2.5rem;justify-content:space-between;}
 .nav-left{display:flex;align-items:center;gap:1rem;}
-.nav-module{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;background:rgba(16,163,127,0.08);border:1px solid rgba(16,163,127,0.2);padding:4px 12px;border-radius:4px;}
+.nav-module{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;background:rgba(15,122,95,0.08);border:1px solid rgba(15,122,95,0.2);padding:4px 12px;border-radius:4px;}
 .nav-title{font-size:0.85rem;font-weight:500;color:var(--muted);}
 .nav-steps{display:flex;gap:5px;align-items:center;}
 .step-pip{width:28px;height:4px;border-radius:2px;background:var(--warm);transition:background 0.4s;cursor:pointer;}
 .step-pip.active{background:var(--accent);}
 .step-pip.done{background:var(--accent3);}
 .section{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:96px 2rem 5rem;position:relative;}
-.section-inner{max-width:820px;width:100%;}
+.section-inner{max-width:860px;width:100%;}
 .section-alt{background:var(--paper2);}
 .section-label{font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:500;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:10px;}
 .section-label::after{content:'';flex:0 0 32px;height:1px;background:currentColor;opacity:0.4;}
-h2.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4.5vw,3.5rem);font-weight:400;line-height:1.1;color:var(--ink);margin-bottom:1.5rem;letter-spacing:-0.01em;}
+h2.section-h2{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4.5vw,3.4rem);font-weight:400;line-height:1.12;color:var(--ink);margin-bottom:1.25rem;letter-spacing:-0.01em;}
 h2.section-h2 em{font-style:italic;color:var(--accent);}
 .prose{font-size:1.05rem;line-height:1.85;color:var(--text);}
-.prose p{margin-bottom:1.25rem;}
-.prose p:last-child{margin-bottom:0;}
-.prose strong{font-weight:600;}
+.prose p{margin-bottom:1.15rem;}
 .divider{width:48px;height:2px;background:var(--accent);margin-bottom:2rem;border-radius:1px;}
-.highlight-box{background:#fff;border-radius:12px;padding:2.5rem;box-shadow:var(--shadow-md);border:1px solid var(--border);position:relative;}
-.highlight-box::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent);border-radius:12px 0 0 12px;}
-.exercise-header{display:flex;align-items:center;gap:14px;margin-bottom:2rem;}
-.exercise-num{width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;font-family:'DM Serif Display',serif;font-size:1.2rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.exercise-header-text h3{font-family:'DM Serif Display',serif;font-size:1.3rem;font-weight:400;color:var(--ink);margin-bottom:0.2rem;}
-.exercise-header-text p{font-size:0.85rem;color:var(--muted);}
-.practice-wrap{background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-md);border:1px solid var(--border);margin-top:2.5rem;}
-.practice-header{background:var(--ink);padding:1.75rem 2rem;display:flex;align-items:center;gap:14px;}
-.practice-header-icon{width:40px;height:40px;border-radius:10px;background:rgba(16,163,127,0.2);border:1px solid rgba(16,163,127,0.3);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
-.practice-header-text h3{font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;color:#fff;margin-bottom:0.2rem;}
-.practice-header-text p{font-size:0.82rem;color:rgba(255,255,255,0.45);font-weight:300;}
-.practice-body{padding:2rem;}
-.practice-label{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.65rem;}
-.reflection-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--paper2);border:1px solid var(--border);border-radius:8px;font-size:0.9rem;cursor:pointer;transition:all 0.2s;}
-.reflection-chip:hover{border-color:var(--accent);background:rgba(16,163,127,0.06);}
-.reflection-chip input{display:none;}
-.reflection-chip:has(input:checked){border-color:var(--accent);background:rgba(16,163,127,0.12);color:var(--accent);font-weight:600;}
-.link-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:12px 24px;border-radius:6px;font-weight:600;font-size:0.9rem;text-decoration:none;transition:all 0.25s;margin-top:0.5rem;}
-.link-btn:hover{background:#0d8a6a;transform:translateY(-2px);box-shadow:0 4px 16px rgba(16,163,127,0.3);}
+.highlight-box{background:#fff;border-radius:14px;padding:2rem;box-shadow:var(--shadow-md);border:1px solid var(--border);position:relative;}
+.highlight-box::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent);border-radius:14px 0 0 14px;}
+.link-btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;font-size:0.9rem;text-decoration:none;border:none;cursor:pointer;transition:all 0.25s;font-family:inherit;}
+.link-btn:hover{background:#0c6550;transform:translateY(-2px);box-shadow:0 4px 16px rgba(15,122,95,0.3);}
 .link-btn.outline{background:transparent;border:2px solid var(--accent);color:var(--accent);}
-.link-btn.outline:hover{background:rgba(16,163,127,0.08);}
-.btn-next{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:#fff;padding:15px 32px;border-radius:6px;font-weight:600;font-size:0.95rem;text-decoration:none;transition:all 0.25s;}
-.btn-next:hover{background:var(--ink2);transform:translateY(-2px);box-shadow:var(--shadow-md);}
-.btn-back{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--muted);padding:15px 24px;border-radius:6px;font-weight:500;font-size:0.95rem;border:1px solid var(--border);text-decoration:none;transition:all 0.25s;}
-.btn-back:hover{color:var(--ink);border-color:rgba(26,26,46,0.3);}
+.link-btn.outline:hover{background:rgba(15,122,95,0.08);}
+.link-btn:disabled{opacity:.45;cursor:default;transform:none;}
+.btn-next{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:#fff;padding:15px 32px;border-radius:8px;font-weight:600;font-size:0.95rem;text-decoration:none;transition:all 0.25s;}
+.btn-back{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--muted);padding:15px 24px;border-radius:8px;font-weight:500;font-size:0.95rem;border:1px solid var(--border);text-decoration:none;}
 #hero{background:var(--ink);min-height:100vh;position:relative;overflow:hidden;}
-#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 60%,rgba(16,163,127,0.15) 0%,transparent 60%),radial-gradient(ellipse 60% 70% at 80% 20%,rgba(199,91,58,0.08) 0%,transparent 60%);pointer-events:none;}
+#hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 18% 65%,rgba(15,122,95,0.22) 0%,transparent 55%),radial-gradient(ellipse 55% 55% at 85% 18%,rgba(196,92,42,0.12) 0%,transparent 55%);pointer-events:none;}
 #hero .section-inner{position:relative;z-index:1;}
+.visual-card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow-md);margin:1.25rem 0 0.5rem;overflow:hidden;}
+.visual-cap{font-size:0.82rem;color:var(--muted);margin-bottom:1.5rem;}
+.star-board{padding:1.75rem 1.5rem 1.5rem;}
+.star-board-title{font-family:'DM Serif Display',serif;font-size:1.85rem;color:var(--ink);margin-bottom:.35rem;}
+.star-board-sub{font-size:.92rem;color:var(--muted);margin-bottom:1.35rem;max-width:520px;}
+.star-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;position:relative;}
+.star-cell{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1rem;position:relative;}
+.star-letter{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--accent);line-height:1;margin-bottom:.4rem;}
+.star-cell h4{font-size:1rem;margin-bottom:.35rem;color:var(--ink);font-weight:600;}
+.star-cell p{font-size:0.84rem;color:var(--muted);line-height:1.45;margin:0;}
+.star-foot{margin-top:1.25rem;padding:.85rem 1rem;background:rgba(15,122,95,.08);border-radius:10px;font-size:.9rem;color:var(--ink2);}
+.ds-mock{background:#f7f7f5;}
+.ds-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:#fff;}
+.ds-dot{width:10px;height:10px;border-radius:50%;background:var(--warm);}
+.ds-chip{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:100px;border:1px solid var(--border);color:var(--muted);}
+.ds-chip.on{background:rgba(15,122,95,.1);border-color:rgba(15,122,95,.3);color:var(--accent);font-weight:600;}
+.ds-body{padding:1.5rem 1.35rem 1.6rem;}
+.ds-h{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--ink);margin-bottom:.35rem;}
+.ds-sub{font-size:.9rem;color:var(--muted);margin-bottom:1rem;}
+.ds-prompt{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;font-family:'DM Mono',monospace;font-size:.8rem;line-height:1.65;color:var(--ink2);margin-bottom:1rem;}
+.ds-steps{display:grid;gap:8px;margin-bottom:1.1rem;}
+.ds-step{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:.7rem .9rem;font-size:.88rem;}
+.ds-n{width:24px;height:24px;border-radius:50%;background:rgba(15,122,95,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.72rem;font-weight:600;flex-shrink:0;}
+.ds-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.ds-time{font-size:.82rem;color:var(--muted);}
+.mission-box{background:var(--ink);color:#fff;border-radius:14px;padding:1.75rem;margin:1.5rem 0;}
+.mission-box .tag{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:.14em;text-transform:uppercase;color:#8ecfb8;margin-bottom:.75rem;}
+.mission-box .prompt{font-family:'DM Mono',monospace;font-size:0.88rem;line-height:1.7;color:rgba(255,255,255,.92);}
+.brief-form{display:grid;gap:1rem;margin-top:1.25rem;}
+.brief-form label{display:block;font-size:0.78rem;font-weight:600;color:var(--muted);margin-bottom:.35rem;letter-spacing:.02em;}
+.brief-form input,.brief-form textarea,.brief-form select{width:100%;border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;font-family:inherit;font-size:.95rem;background:#fff;color:var(--ink);}
+.brief-form textarea{min-height:88px;resize:vertical;}
+.brief-form input:focus,.brief-form textarea:focus,.brief-form select:focus{outline:none;border-color:rgba(15,122,95,.45);box-shadow:0 0 0 3px rgba(15,122,95,.1);}
+.brief-status{font-size:.88rem;color:var(--accent3);font-weight:500;min-height:1.2em;margin-top:.5rem;}
+.checklist{list-style:none;padding:0;margin:1rem 0 0;}
+.checklist li{display:flex;gap:10px;align-items:flex-start;margin-bottom:.7rem;font-size:.95rem;}
+.checklist li span{color:var(--accent3);flex-shrink:0;}
+.call-screen{background:var(--ink);border-radius:18px;overflow:hidden;color:#fff;box-shadow:var(--shadow-md);margin-top:1.5rem;}
+.call-top{padding:14px 22px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.call-top-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8ecfb8;}
+.live-badge{display:none;background:var(--live);font-size:10px;padding:4px 10px;border-radius:100px;margin-left:8px;animation:pulse 1.4s ease infinite;}
+.live-badge.show{display:inline-block;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.65;}}
+.call-q-area{padding:22px 22px 14px;min-height:110px;}
+.call-dots{display:flex;gap:8px;margin-bottom:14px;}
+.call-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.22);}
+.call-dot.active{background:var(--accent2);}
+.call-dot.done{background:#7ec8a4;}
+.call-label{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#f5c4a8;margin-bottom:8px;display:block;}
+.call-tag{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;background:rgba(196,92,42,.22);color:#f5c4a8;padding:4px 10px;border-radius:100px;margin-bottom:10px;}
+.call-text{font-family:'DM Serif Display',serif;font-size:clamp(1.25rem,3.2vw,1.55rem);font-style:italic;line-height:1.45;}
+.call-body{padding:0 22px 16px;}
+.timeline-empty{font-size:.88rem;color:rgba(255,255,255,.65);font-style:italic;padding:14px;border:1px dashed rgba(255,255,255,.18);border-radius:10px;text-align:center;}
+.timeline-cards{display:flex;flex-direction:column;gap:12px;margin-top:12px;max-height:320px;overflow-y:auto;}
+.t-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:14px 16px;font-size:.9rem;line-height:1.65;}
+.t-card-who{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#7ec8a4;margin-bottom:4px;display:block;}
+.t-card-who.other{color:#f5c4a8;}
+.call-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 22px;border-top:1px solid rgba(255,255,255,.1);}
+.btn{border:none;border-radius:100px;padding:12px 22px;font-weight:600;font-size:.92rem;cursor:pointer;font-family:inherit;}
+.btn-start{background:var(--accent2);color:#fff;}
+.btn-stop{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);display:none;}
+.btn:disabled{opacity:.4;cursor:default;}
+.timer{font-family:'DM Mono',monospace;font-size:1.1rem;color:rgba(255,255,255,.8);}
+.status{padding:0 22px 18px;font-size:.92rem;color:rgba(255,255,255,.85);min-height:24px;}
+.fb-panel{display:none;margin-top:18px;padding:1.4rem 1.5rem;background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow);}
+.fb-panel.show{display:block;}
+.fb-panel h3{font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;margin-bottom:10px;color:var(--ink);}
+.fb-panel pre{white-space:pre-wrap;font-family:inherit;font-size:.92rem;line-height:1.75;color:var(--text);}
+.lock-hint{font-size:.88rem;color:var(--accent2);margin-top:.75rem;display:none;}
+.lock-hint.show{display:block;}
+.journey{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:1.75rem 0;}
+.journey-step{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem;box-shadow:var(--shadow);}
+.journey-n{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--accent);letter-spacing:.12em;margin-bottom:.4rem;}
+.journey-step h4{font-size:.95rem;margin-bottom:.3rem;color:var(--ink);}
+.journey-step p{font-size:.8rem;color:var(--muted);margin:0;line-height:1.45;}
+.tip-row{display:flex;gap:12px;align-items:flex-start;padding:1rem;background:var(--paper);border-radius:10px;margin:.75rem 0;font-size:0.92rem;}
 .reflection-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:var(--paper2);border:1px solid var(--border);font-size:0.88rem;cursor:pointer;transition:all 0.2s;}
-.reflection-chip:hover{border-color:var(--accent);background:rgba(16,163,127,0.06);}
 .reflection-chip input{display:none;}
-.reflection-chip:has(input:checked){background:rgba(16,163,127,0.12);border-color:var(--accent);color:var(--accent);font-weight:500;}
-.reflection-field:focus{outline:none;border-color:rgba(16,163,127,0.5);}
-.prompt-box{position:relative;background:var(--paper);padding:1.25rem 1.5rem 2.75rem;border-radius:8px;border-left:4px solid var(--accent);font-family:'DM Mono',monospace;font-size:0.88rem;line-height:1.65;margin-bottom:1rem;}
-.prompt-copy{position:absolute;top:10px;right:10px;padding:6px 12px;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;background:rgba(16,163,127,0.1);border:1px solid rgba(16,163,127,0.25);color:var(--accent);font-family:'DM Sans',sans-serif;transition:all 0.15s;}
-.prompt-copy:hover,.prompt-copy.ok{background:var(--accent);color:#fff;border-color:var(--accent);}
-.level-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;margin-bottom:0.5rem;}
-.level-helppo{background:rgba(42,122,75,0.12);color:var(--accent3);}
-.level-keski{background:rgba(37,99,168,0.12);color:var(--blue);}
-.level-vaikea{background:rgba(199,91,58,0.12);color:var(--accent2);}
-.idea-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:1.5rem 0;}
-.idea-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.25rem;box-shadow:var(--shadow);}
-.idea-card h4{font-family:'DM Serif Display',serif;font-size:1.05rem;font-weight:400;margin-bottom:0.5rem;color:var(--ink);}
-.idea-card p{font-size:0.88rem;color:var(--muted);line-height:1.6;margin:0;}
-.challenge-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1rem;box-shadow:var(--shadow);}
-.challenge-card h4{font-family:'DM Serif Display',serif;font-size:1.15rem;margin-bottom:0.35rem;}
-.challenge-meta{font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem;}
-.track-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.5rem;}
-.track-tab{padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:var(--paper2);font-size:0.85rem;cursor:pointer;transition:all 0.2s;}
-.track-tab.active{background:rgba(16,163,127,0.12);border-color:var(--accent);color:var(--accent);font-weight:600;}
-.track-panel{display:none;}
-.track-panel.active{display:block;}
-.tip-row{display:flex;gap:12px;align-items:flex-start;padding:1rem;background:var(--paper);border-radius:8px;margin-bottom:0.75rem;font-size:0.92rem;}
-.tip-row span:first-child{flex-shrink:0;font-size:1.1rem;}
-@media(max-width:768px){nav{padding:0 1.25rem;}.nav-title{display:none;}.section{padding:80px 1.25rem 4rem;}}
+.reflection-chip:has(input:checked){background:rgba(15,122,95,0.12);border-color:var(--accent);color:var(--accent);font-weight:500;}
+/* Dyslexia-friendly case card: short chunks, clear type, high contrast */
+.easy-read{font-size:1.12rem;line-height:1.9;letter-spacing:0.01em;max-width:40rem;}
+.easy-read p{margin-bottom:1rem;}
+.case-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem 1.4rem;box-shadow:var(--shadow-md);margin:1.25rem 0;}
+.case-card h3{font-family:'DM Serif Display',serif;font-size:1.45rem;font-weight:400;color:var(--ink);margin-bottom:.75rem;}
+.case-label{font-family:'DM Mono',monospace;font-size:0.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem;display:block;}
+.rule-list{list-style:none;padding:0;margin:0;display:grid;gap:10px;}
+.rule-list li{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start;padding:12px 14px;background:var(--paper);border-radius:12px;border:1px solid var(--border);font-size:1.05rem;line-height:1.65;}
+.rule-n{width:36px;height:36px;border-radius:10px;background:rgba(15,122,95,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-weight:600;font-size:.9rem;}
+.proposal-box{background:rgba(196,92,42,.08);border:1px solid rgba(196,92,42,.28);border-radius:14px;padding:1.25rem 1.3rem;margin:1.25rem 0;}
+.proposal-box .case-label{color:var(--accent2);}
+.proposal-box ol{padding-left:1.35rem;margin:.5rem 0 0;font-size:1.05rem;line-height:1.85;}
+.task-box{background:rgba(15,122,95,.08);border:1px solid rgba(15,122,95,.25);border-radius:14px;padding:1.15rem 1.25rem;margin:1.25rem 0 0;font-size:1.05rem;line-height:1.75;}
+.hint-soft{font-size:1rem;color:var(--muted);line-height:1.75;margin-top:1rem;}
+.cgpt-mock{background:#fff;}
+.cgpt-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);}
+.cgpt-brand{font-weight:600;font-size:.95rem;color:var(--ink);}
+.cgpt-stage{padding:1.75rem 1.25rem 1.5rem;text-align:center;background:linear-gradient(180deg,#fafaf8 0%,#fff 100%);}
+.cgpt-orb{width:88px;height:88px;border-radius:50%;margin:0 auto 1rem;background:radial-gradient(circle at 35% 30%,#7dd3b0,#0f7a5f 70%);box-shadow:0 8px 28px rgba(15,122,95,.28);display:flex;align-items:center;justify-content:center;color:#fff;}
+.cgpt-orb svg{width:36px;height:36px;fill:currentColor;}
+.cgpt-status{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem;}
+.cgpt-hint{font-size:1.05rem;color:var(--ink2);line-height:1.65;max-width:28rem;margin:0 auto 1.25rem;}
+.cgpt-steps{display:grid;gap:8px;text-align:left;max-width:420px;margin:0 auto 1.25rem;}
+.cgpt-step{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:.75rem .9rem;background:var(--paper);border-radius:10px;border:1px solid var(--border);font-size:.95rem;line-height:1.55;}
+.cgpt-step .n{width:28px;height:28px;border-radius:50%;background:rgba(15,122,95,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:600;}
+.cgpt-callout{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:100px;background:rgba(196,92,42,.1);border:1px solid rgba(196,92,42,.35);color:var(--accent2);font-size:.88rem;font-weight:600;}
+.say-box{background:var(--ink);color:#fff;border-radius:14px;padding:1.35rem 1.4rem;margin:1.25rem 0;font-size:1.05rem;line-height:1.8;}
+.say-box .tag{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:.14em;text-transform:uppercase;color:#8ecfb8;margin-bottom:.65rem;}
+@media(max-width:1100px){.journey{grid-template-columns:repeat(3,1fr)!important;}}
+@media(max-width:900px){.star-flow,.journey{grid-template-columns:1fr 1fr!important;}}
+@media(max-width:768px){
+  nav{padding:0 1.25rem;}.nav-title{display:none;}.section{padding:80px 1.25rem 4rem;}
+  .star-flow,.journey{grid-template-columns:1fr!important;}
+  .easy-read,.rule-list li,.proposal-box ol,.task-box{font-size:1.08rem;}
+}
 </style>
 </head>
 <body>
 <div id="progress-bar"></div>
 <nav>
   <div class="nav-left">
-    <a href="/" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:var(--muted);margin-right:1.5rem;transition:color 0.2s;" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--muted)'">
+    <a href="/" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;color:var(--muted);margin-right:1rem;">
       <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
       <span style="font-size:0.85rem;font-weight:500;">Etusivu</span>
     </a>
-    <a href="/module/moduuli-visibility-growth-automation" style="display:flex;align-items:center;gap:0.5rem;text-decoration:none;color:var(--muted);margin-right:1rem;transition:color 0.2s;font-size:0.85rem;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-      <span>Edellinen</span>
-    </a>
     <span class="nav-module">Ääni &amp; Deep Search</span>
-    <span class="nav-title">ChatGPT työnhaussa</span>
+    <span class="nav-title">Live-harjoittelu</span>
   </div>
   <div class="nav-steps" id="navSteps"></div>
 </nav>
 
 <!-- HERO -->
-<section class="section" id="hero" data-index="0" style="background:var(--ink);">
+<section class="section" id="hero" data-index="0">
   <div class="section-inner">
-    <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:2.5rem;">
-      <span style="font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;">Työnhaku</span>
-      <span style="width:40px;height:1px;background:rgba(16,163,127,0.5);"></span>
+    <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:2rem;">
+      <span style="font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:500;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;">Live · Realtime · Claude-palaute</span>
+      <span style="width:40px;height:1px;background:rgba(15,122,95,0.5);"></span>
     </div>
-    <h1 class="section-h2" style="color:#fff;">Ääni ja Deep Search<br><em style="color:#7dd3b0;">ChatGPT työnhaussa</em></h1>
-    <p style="font-size:1.15rem;color:rgba(255,255,255,0.65);max-width:600px;line-height:1.8;margin-bottom:1.5rem;font-weight:300;">Nykyinen työnhaku sisältää enemmän kuin hakemusten lähettelyä. Tekoälytyökalut auttavat valmistautumaan — tutkimalla yrityksiä, harjoittelemalla haastatteluvastauksia ja löytämällä uusia mahdollisuuksia.</p>
-    <p style="font-size:1.05rem;color:rgba(255,255,255,0.5);max-width:600px;line-height:1.75;margin-bottom:1.5rem;font-weight:300;">ChatGPT voi toimia <strong style="color:rgba(255,255,255,0.8);">tutkimusavustajana</strong> (löydä yrityksiä ja taitoja), <strong style="color:rgba(255,255,255,0.8);">haastatteluharjoittelukumppanina</strong> (vastaa kysymyksiin äänellä) ja <strong style="color:rgba(255,255,255,0.8);">ura-ideoiden lähteenä</strong>. Tässä moduulissa keskitytään kahteen voimakkaaseen ominaisuuteen: <strong style="color:#7dd3b0;">ääni</strong> ja <strong style="color:#7dd3b0;">Deep Search</strong>. Ne mahdollistavat nopean yritystutkimuksen ja luonnollisen haastatteluharjoittelun puhumalla.</p>
-    <p style="font-size:0.95rem;color:rgba(255,255,255,0.45);max-width:560px;line-height:1.7;margin-bottom:2rem;font-weight:300;">Moduuli on käytännön harjoittelua — paras tapa oppia on kokeilla itse. Älä pelkää virheitä; kokeile rauhassa.</p>
-    <a href="#opit" class="link-btn">
-      Aloita harjoitukset
+    <h1 class="section-h2" style="color:#fff;">Tutki. Puolusta.<br><em style="color:#8ecfb8;">Haastattele äänellä.</em></h1>
+    <p style="font-size:1.12rem;color:rgba(255,255,255,0.68);max-width:620px;line-height:1.8;margin-bottom:1.25rem;font-weight:300;">Aloitat selkeällä tilanneharjoituksella. Sitten teet Deep Search -tutkimuksen omasta ammatistasi — ja harjoittelet live-ääntä AI:n kanssa.</p>
+    <p style="font-size:0.95rem;color:rgba(255,255,255,0.45);max-width:560px;line-height:1.7;margin-bottom:2rem;">OpenAI Realtime = keskustelu äänellä · Claude = palaute litteän kehun sijaan.</p>
+    <a href="#kulku" class="link-btn">Aloita polku
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
     </a>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:2rem;font-size:0.82rem;color:rgba(255,255,255,0.35);">⏱ Noin 90–120 min — valitse omat harjoitukset tai tee koko polku</div>
-    <p style="font-size:0.88rem;color:rgba(255,255,255,0.4);max-width:560px;margin-top:1rem;line-height:1.65;">Täydentää <strong style="color:rgba(255,255,255,0.65);">AI Polku</strong>- ja <strong style="color:rgba(255,255,255,0.65);">Haastattelu</strong>-moduuleja — keskitytään syvempään ääniharjoitteluun ja tutkimukseen, ei perustyökaluihin.</p>
+    <div style="margin-top:2rem;font-size:0.82rem;color:rgba(255,255,255,0.35);">⏱ Noin 60–90 min · kuulokemikrofoni suositeltu</div>
   </div>
 </section>
 
-<!-- MITÄ OPIT + MODUULIN KULKU -->
-<section class="section section-alt" id="opit" data-index="1">
+<!-- KULKU -->
+<section class="section section-alt" id="kulku" data-index="1">
   <div class="section-inner">
-    <div class="section-label">Ennen harjoituksia</div>
-    <h2 class="section-h2">Mitä opit<br><em>tässä moduulissa</em></h2>
+    <div class="section-label">Miten tämä toimii</div>
+    <h2 class="section-h2">Kuusi askelta<br><em>selkeässä järjestyksessä</em></h2>
     <div class="divider"></div>
-    <ul style="list-style:none;padding:0;margin-bottom:2.5rem;">
-      <li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:1rem;">
-        <span style="color:var(--accent3);font-size:1.1rem;flex-shrink:0;">✓</span>
-        <span>Käyttämään ChatGPT:n ääntä haastatteluharjoitteluun</span>
-      </li>
-      <li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:1rem;">
-        <span style="color:var(--accent3);font-size:1.1rem;flex-shrink:0;">✓</span>
-        <span>Tutkimaan yrityksiä ja työmarkkinoita hakutoiminnolla</span>
-      </li>
-      <li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:1rem;">
-        <span style="color:var(--accent3);font-size:1.1rem;flex-shrink:0;">✓</span>
-        <span>Valmistautumaan haastatteluun AI:n avulla</span>
-      </li>
-      <li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:1rem;">
-        <span style="color:var(--accent3);font-size:1.1rem;flex-shrink:0;">✓</span>
-        <span>Yhdistämään tutkimuksen ja harjoittelun tehokkaaseen valmisteluun</span>
-      </li>
-      <li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:1rem;">
-        <span style="color:var(--accent3);font-size:1.1rem;flex-shrink:0;">✓</span>
-        <span>STAR-tarinat, hissipuhe ja vaikeat kysymykset — äänellä, ei vain paperilla</span>
-      </li>
-      <li style="display:flex;gap:12px;align-items:flex-start;">
-        <span style="color:var(--accent3);font-size:1.1rem;flex-shrink:0;">✓</span>
-        <span>Alakohtaisia tutkimus- ja harjoitusprompteja (myynti, kauppa, ravintola, asiakaspalvelu)</span>
-      </li>
-    </ul>
+    <div class="journey" style="grid-template-columns:repeat(3,1fr);">
+      <div class="journey-step"><div class="journey-n">01</div><h4>STAR</h4><p>Teoria + malli + live-harjoitus.</p></div>
+      <div class="journey-step"><div class="journey-n">02</div><h4>Deep Search</h4><p>Tutkit ammattisi + tekoälyn vaikutuksen.</p></div>
+      <div class="journey-step"><div class="journey-n">03</div><h4>Puolusta</h4><p>Live-ääni: puolusta tutkimustasi.</p></div>
+      <div class="journey-step"><div class="journey-n">04</div><h4>Haastattelu</h4><p>Rekrytoija äänellä täällä.</p></div>
+      <div class="journey-step"><div class="journey-n">05</div><h4>ChatGPT Voice</h4><p>Ääni ChatGPT:ssä — taito jota käytät itse.</p></div>
+      <div class="journey-step"><div class="journey-n">06</div><h4>Oikein/väärin</h4><p>Valmis tilanne + säännöt.</p></div>
+    </div>
+    <div class="tip-row"><span>🎧</span><span>Rauhallinen tila, kuulokkeet, puhu selkeästi. Voit keskeyttää puhelun milloin tahansa — palaute tulee silti litteroiduista vuoroista.</span></div>
+  </div>
+</section>
+
+<!-- STAR -->
+<section class="section" id="star" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">Ennen ääntä</div>
+    <h2 class="section-h2">Mikä on<br><em>STAR?</em></h2>
+    <div class="divider"></div>
+    <div class="prose">
+      <p>Haastatteluissa kysytään usein: <em>„Kerro tilanteesta jossa…“</em>. Hyvä vastaus ei ole tarina ilman rakennetta. <strong>STAR</strong> on aikuisten työhaastattelun perusmalli — sen avulla kuulija seuraa, mitä tapahtui ja mitä <em>sinä</em> teit.</p>
+    </div>
+
+    <div class="visual-card" aria-label="STAR-mallin opaste">
+      <div class="star-board">
+        <div class="star-board-title">STAR-malli</div>
+        <p class="star-board-sub">Näin jäsennät kokemuksen haastattelussa — yksi osa kerrallaan.</p>
+        <div class="star-flow">
+          <div class="star-cell"><div class="star-letter">S</div><h4>Tilanne</h4><p>Missä olit? Mikä oli haaste?</p></div>
+          <div class="star-cell"><div class="star-letter">T</div><h4>Tehtävä</h4><p>Mikä oli sinun vastuusi?</p></div>
+          <div class="star-cell"><div class="star-letter">A</div><h4>Toiminta</h4><p>Mitä sinä teit askel askeleelta?</p></div>
+          <div class="star-cell"><div class="star-letter">R</div><h4>Tulos</h4><p>Mikä muuttui? Mitattava lopputulos?</p></div>
+        </div>
+        <div class="star-foot">Käytä tätä rakennetta heti alla olevassa STAR-drillissä.</div>
+      </div>
+    </div>
+    <p class="visual-cap">Pidä STAR mielessä ennen äänipuheluita.</p>
 
     <div class="highlight-box">
-      <p style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1rem;">Miten moduuli toimii</p>
-      <p style="font-size:0.95rem;color:var(--text);margin-bottom:1.25rem;">Moduuli etenee viidessä osiossa — voit tehdä kaikki tai valita omat harjoituksesi:</p>
-      <ol style="padding-left:1.25rem;line-height:2;">
-        <li><strong>Ääni</strong> — 6 harjoitusta: perus, STAR, hissipuhe, heikkous, palkka, simulaatio</li>
-        <li><strong>Promptkirjasto</strong> — valmiit lauseet kopioitavaksi ChatGPT:hen</li>
-        <li><strong>Deep Search</strong> — yritys, ala, palkka, piilotettu työmarkkina, haastattelukysymykset</li>
-        <li><strong>Alakohtaiset ideat</strong> — räätälöity tutkimus ja ääniharjoittelu alallesi</li>
-        <li><strong>Haasteet</strong> — 15 min sprintistä 7 päivän putkeen</li>
-      </ol>
-      <p style="font-size:0.9rem;color:var(--muted);margin-top:1.25rem;font-style:italic;">Tärkeintä on kokeilla. Älä vain lue — tee harjoitukset itse.</p>
-      <p style="font-size:0.85rem;color:var(--muted);margin-top:1rem;">🔒 Voit harjoitella ilman henkilökohtaisten tietojen jakamista — käytä kuvitteellisia esimerkkejä tai lyhyttä yhteenvetoa taustastasi.</p>
-    </div>
-  </div>
-</section>
-
-<!-- VOICE -->
-<section class="section" id="voice" data-index="2">
-  <div class="section-inner">
-    <p style="font-size:0.95rem;color:var(--muted);margin-bottom:1.5rem;font-style:italic;">Aloitetaan äänisyötteestä — se on nopein tapa päästä harjoitteluun.</p>
-    <div class="section-label">Osa 1: Äänisyöte</div>
-    <h2 class="section-h2">ChatGPT Voice<br><em>Puhu AI:lle — haastatteluharjoittelu äänellä</em></h2>
-    <div class="divider"></div>
-    <div class="prose" style="margin-bottom:2rem;">
-      <p>Monet osaavat kirjoittaa hyviä vastauksia paperille — mutta haastattelutilanteessa vastaaminen äänellä tuntuu vaikealta. <strong>Harjoittelu äänellä on eri asia kuin harjoittelu mielessä.</strong> Kun puhut ääneen, huomaat mitä toimii ja mitä ei.</p>
-      <p>ChatGPT:n äänisyöte mahdollistaa luonnollisen keskustelun: puhut AI:lle kuin haastattelijalle, saat välittömän palautteen ja voit harjoitella uudelleen. Näin simuloit oikeaa haastattelua turvallisesti ennen todellista tapaamista.</p>
+      <p style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.75rem;">Esimerkki (lyhyt)</p>
+      <p style="font-size:0.95rem;line-height:1.75;margin:0;"><strong>S:</strong> Ruuhkapäivänä asiakaspalvelussa jono kasvoi. <strong>T:</strong> Minun piti rauhoittaa tilanne ilman esihenkilöä. <strong>A:</strong> Priorisoin kiireelliset, käytin AI-apua usein kysyttyihin vastauksiin ja soitin kahdelle asiakkaalle henkilökohtaisesti. <strong>R:</strong> Jono puolittui tunnissa, yksi valitus vältettiin.</p>
     </div>
 
-    <div class="highlight-box" style="margin-bottom:2rem;">
-      <p style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1rem;">Miten ääni toimii?</p>
-      <ul style="list-style:none;padding:0;">
-        <li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:1rem;">
-          <span style="color:var(--accent3);font-size:1.1rem;flex-shrink:0;">1.</span>
-          <div><strong>Paina mikrofoni-kuvaketta</strong> ChatGPT:ssä (puhelimen tai tietokoneen sovelluksessa)</div>
-        </li>
-        <li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:1rem;">
-          <span style="color:var(--accent3);font-size:1.1rem;flex-shrink:0;">2.</span>
-          <div><strong>Puhu</strong> — AI tunnistaa puheesi ja vastaa äänellä</div>
-        </li>
-        <li style="display:flex;gap:12px;align-items:flex-start;">
-          <span style="color:var(--accent3);font-size:1.1rem;flex-shrink:0;">3.</span>
-          <div><strong>Keskustele</strong> luonnollisesti — kuin haastattelija kysyisi sinulta</div>
-        </li>
-      </ul>
-      <a href="https://chatgpt.com" target="_blank" rel="noopener" class="link-btn">Avaa ChatGPT →</a>
-      <a href="https://help.openai.com/en/articles/8983374-can-i-change-the-voice-that-chatgpt-responds-in" target="_blank" rel="noopener" class="link-btn outline" style="margin-left:0.5rem;">Äänivaihtoehdot (ohje)</a>
-    </div>
-
-    <div class="exercise-header">
-      <div class="exercise-num">1</div>
-      <div class="exercise-header-text">
-        <h3>Harjoitus: Haastatteluharjoittelu äänellä</h3>
-        <p>Avaa ChatGPT, paina mikrofoni ja kokeile</p>
-      </div>
-    </div>
-    <div class="practice-wrap">
-      <div class="practice-header">
-        <div class="practice-header-icon">🎤</div>
-        <div class="practice-header-text">
-          <h3>Tehtävä — Tee nyt</h3>
-          <p>1. Avaa <a href="https://chatgpt.com" target="_blank" rel="noopener" style="color:rgba(255,255,255,0.8);text-decoration:underline;">chatgpt.com</a> puhelimellasi tai tietokoneellasi. 2. Paina mikrofoni-kuvaketta. 3. Sano alla oleva lause äänellä.</p>
-        </div>
-      </div>
-      <div class="practice-body">
-        <div style="background:var(--paper);padding:1.5rem;border-radius:8px;border-left:4px solid var(--accent);font-family:'DM Mono',monospace;font-size:0.95rem;line-height:1.7;margin-bottom:1.5rem;">
-          "Auta minua valmistautumaan työhaastatteluun. Kysy minulta yksi kysymys kerrallaan ja anna palautetta vastauksistani."
-        </div>
-        <p style="font-size:0.9rem;color:var(--muted);margin-bottom:1rem;">Vastaa äänellä. AI esittää kysymyksiä ja antaa palautetta — kuin oikea haastattelija.</p>
-        <p style="font-size:0.85rem;color:var(--muted);"><strong>Kokeile myös:</strong> "Selitä miten minun kannattaa vastata tähän haastattelukysymykseen: Miksi haluat tämän työn?"</p>
-      </div>
-    </div>
-
-    <div class="exercise-header" style="margin-top:3rem;">
-      <div class="exercise-num">2</div>
-      <div class="exercise-header-text">
-        <h3>Harjoitus: Työpaikkatutkimus äänellä</h3>
-        <p>Käytä ääntä nopeuttaaksesi työnhakua</p>
-      </div>
-    </div>
-    <div class="practice-wrap">
-      <div class="practice-header">
-        <div class="practice-header-icon">🔊</div>
-        <div class="practice-header-text">
-          <h3>Tehtävä — Sano äänellä</h3>
-          <p>Puhu AI:lle näistä — nopeampaa kuin kirjoittaminen</p>
-        </div>
-      </div>
-      <div class="practice-body">
-        <ul style="list-style:none;padding:0;">
-          <li style="margin-bottom:1rem;padding:1rem;background:var(--paper);border-radius:8px;border-left:3px solid var(--accent);">
-            <strong>Työpaikkatutkimus:</strong> "Listaa 5 suomalaista yritystä jotka palkkaavat asiakaspalvelijoita. Kerro mitä ne tekevät."
-          </li>
-          <li style="margin-bottom:1rem;padding:1rem;background:var(--paper);border-radius:8px;border-left:3px solid var(--accent);">
-            <strong>Ura-ideat:</strong> "Minulla on 5 vuotta myyntikokemusta. Mitä rooleja voisin harkita joita en ole ajatellut?"
-          </li>
-          <li style="padding:1rem;background:var(--paper);border-radius:8px;border-left:3px solid var(--accent);">
-            <strong>Haastatteluvastaus:</strong> "Harjoittele kanssani: Kysy minulta 'Kerro itsestäsi' ja anna palautetta vastauksestani."
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="exercise-header" style="margin-top:3rem;">
-      <div class="exercise-num">3</div>
-      <div class="exercise-header-text">
-        <h3>Harjoitus: STAR-tarina äänellä</h3>
-        <p>Sano tarina ääneen — AI arvioi rakennetta</p>
-      </div>
-    </div>
-    <div class="practice-wrap">
-      <div class="practice-header">
-        <div class="practice-header-icon">⭐</div>
-        <div class="practice-header-text">
-          <h3>Tehtävä — Tilanne + tehtävä + toiminta + tulos</h3>
-          <p>Valitse yksi kokemus CV:stäsi tai kuvittele realistinen esimerkki</p>
-        </div>
-      </div>
-      <div class="practice-body">
-        <span class="level-badge level-keski">Keskitaso</span>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Olet haastattelija. Kysy minulta: 'Kerro tilanteesta jossa ratkaisit ongelman tiimissä.' Kun vastaan, arvioi vastaukseni STAR-rakenteen mukaan (Tilanne, Tehtävä, Toiminta, Tulos) ja kerro mitä puuttuu. Anna sitten uusi yritys."</div>
-        <p style="font-size:0.88rem;color:var(--muted);"><strong>Haaste:</strong> Vastaa alle 90 sekunnissa. Jos AI sanoo että Tulos puuttuu — harjoittele uudelleen vain loppuosa.</p>
-      </div>
-    </div>
-
-    <div class="exercise-header" style="margin-top:3rem;">
-      <div class="exercise-num">4</div>
-      <div class="exercise-header-text">
-        <h3>Harjoitus: 60 sekunnin hissipuhe</h3>
-        <p>Ajoitus pakottaa selkeyteen</p>
-      </div>
-    </div>
-    <div class="practice-wrap">
-      <div class="practice-body" style="padding-top:2rem;">
-        <span class="level-badge level-helppo">Helppo</span>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Aloitan hissipuheharjoituksen. Aseta ajastin 60 sekuntiin. Kun sanon aloita, kysy: 'Kerro itsestäsi.' Keskeytä minut jos ylitän ajan. Anna palautetta: selkeys, rakenne, energia."</div>
-        <div class="tip-row"><span>💡</span><span>Puhu kovempaa kuin luulet tarvitsevasi — moni kuulostaa haastattelussa liian hiljaiselta äänellä harjoitellessaan.</span></div>
-      </div>
-    </div>
-
-    <div class="exercise-header" style="margin-top:3rem;">
-      <div class="exercise-num">5</div>
-      <div class="exercise-header-text">
-        <h3>Harjoitus: Vaikea kysymys — heikkous tai tyhjä jakso</h3>
-        <p>Harjoittele rehellistä mutta vahvaa vastausta</p>
-      </div>
-    </div>
-    <div class="practice-wrap">
-      <div class="practice-body" style="padding-top:2rem;">
-        <span class="level-badge level-vaikea">Vaikea</span>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Kysy minulta: 'Mikä on suurin heikkoutesi?' tai 'Miksi sinulla on tyhjä jakso CV:ssä?' Anna palautetta: kuulostiko vastaus puolustelevalta vai kasvulta? Ehdota parempi versio."</div>
-        <p style="font-size:0.88rem;color:var(--muted);margin-top:0.75rem;">Toista 3 kertaa — jokaisella kerralla tiivistä vastaus 10 sekunnilla.</p>
-      </div>
-    </div>
-
-    <div class="exercise-header" style="margin-top:3rem;">
-      <div class="exercise-num">6</div>
-      <div class="exercise-header-text">
-        <h3>Harjoitus: Täysi haastattelusimulaatio</h3>
-        <p>AI haastattelijana — 5 kysymystä putkeen</p>
-      </div>
-    </div>
-    <div class="practice-wrap">
-      <div class="practice-header">
-        <div class="practice-header-icon">🎯</div>
-        <div class="practice-header-text">
-          <h3>Tehtävä — Simuloi oikea haastattelu</h3>
-          <p>Käytä yrityksen nimeä johon haet tai haet hakemaan</p>
-        </div>
-      </div>
-      <div class="practice-body">
-        <span class="level-badge level-vaikea">Vaikea · 15–20 min</span>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Olet rekrytoija yrityksessä [YRITYS] rooliin [ROOLI]. Tee 5 kysymyksen haastattelu: kerro itsestäsi, miksi tämä yritys, STAR-tarina, heikkous, lopuksi onko minulla kysymyksiä. Anna palautetta jokaisen vastauksen jälkeen. Pysy tiukkana kuten oikea haastattelija."</div>
-        <p style="font-size:0.88rem;color:var(--muted);">Yhdistä myöhemmin Deep Search -raportti tähän — mainitse 2 faktaa yrityksestä vastauksessa "miksi haluat tänne".</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- PROMPTKIRJASTO -->
-<section class="section section-alt" id="promptkirjasto" data-index="3">
-  <div class="section-inner">
-    <div class="section-label">Nopea apu</div>
-    <h2 class="section-h2">Äänipromptien<br><em>kirjasto</em></h2>
-    <div class="divider"></div>
-    <p class="prose" style="margin-bottom:1.5rem;">Kopioi prompt ChatGPT:hen, paina mikrofoni ja puhu. Voit myös liittää tekstin ensin ja sitten vaihtaa ääneen.</p>
-
-    <div class="idea-grid">
-      <div class="idea-card">
-        <h4>Palautteen tarkentaminen</h4>
-        <div class="prompt-box" style="margin:0.75rem 0 0;font-size:0.82rem;"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Anna palautetta vastauksestani: 1) selkeys 2) konkreettisuus 3) energia. Yksi parannus per kohta."</div>
-      </div>
-      <div class="idea-card">
-        <h4>Englanninkielinen haastattelu</h4>
-        <div class="prompt-box" style="margin:0.75rem 0 0;font-size:0.82rem;"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Interview me in English for a [role] position. Correct my grammar only after each answer. Keep questions realistic."</div>
-      </div>
-      <div class="idea-card">
-        <h4>Stressitestaus</h4>
-        <div class="prompt-box" style="margin:0.75rem 0 0;font-size:0.82rem;"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Kysy vaikea follow-up jokaisen vastaukseni jälkeen. Älä kehu — ole neutraali haastattelija."</div>
-      </div>
-      <div class="idea-card">
-        <h4>Palkkakeskustelu</h4>
-        <div class="prompt-box" style="margin:0.75rem 0 0;font-size:0.82rem;"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Simuloi palkkaneuvottelu roolille [ROOLI] Suomessa. Kysy odotuksiani, haastele kohteliaasti, ehdota realistista vaihteluväliä."</div>
-      </div>
-      <div class="idea-card">
-        <h4>Työvuoroharjoittelu</h4>
-        <div class="prompt-box" style="margin:0.75rem 0 0;font-size:0.82rem;"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Harjoittele tilanne: kiireinen lauantai myymälässä, asiakas on tyytymätön. Anna palautetta äänensävystäni ja sanavalinnoistani."</div>
-      </div>
-      <div class="idea-card">
-        <h4>Harjoittelun jälkeinen yhteenveto</h4>
-        <div class="prompt-box" style="margin:0.75rem 0 0;font-size:0.82rem;"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Tiivistä 3 vahvuutta ja 3 parannettavaa asiaa tästä harjoittelusta. Anna yksi lause jonka muistan haastattelussa."</div>
-      </div>
+    <div style="margin-top:2.5rem;">
+      <div class="section-label">Heti harjoitukseen</div>
+      <h3 style="font-family:'DM Serif Display',serif;font-size:1.6rem;font-weight:400;color:var(--ink);margin-bottom:.75rem;">STAR-drill — <em style="color:var(--accent);font-style:italic;">äänellä</em></h3>
+      <p class="prose" style="margin-bottom:1rem;">Nyt käytät samaa mallia. Jos unohdat Tuloksen tai oman Toimintasi, haastattelija kysyy uudelleen. Voit katsoa STAR-mallia yllä.</p>
+      <div id="call-star_drill"></div>
     </div>
   </div>
 </section>
 
 <!-- DEEP SEARCH -->
-<section class="section" id="deepsearch" data-index="4">
+<section class="section section-alt" id="deepsearch" data-index="3">
   <div class="section-inner">
-    <p style="font-size:0.95rem;color:var(--muted);margin-bottom:1.5rem;font-style:italic;">Seuraavaksi tutustutaan hakutoimintoon — se auttaa löytämään tietoa nopeasti.</p>
-    <div class="section-label">Osa 2: Deep Search</div>
-    <h2 class="section-h2">ChatGPT Deep Search<br><em>Syvä tutkimus työnhakuun</em></h2>
+    <div class="section-label">Tutkimustehtävä</div>
+    <h2 class="section-h2">Deep Search:<br><em>ammattisi + tekoäly</em></h2>
     <div class="divider"></div>
-    <div class="prose" style="margin-bottom:2rem;">
-      <p>Yritysten tutkiminen vie normaalisti aikaa — tietoa on hajallaan verkkosivuilla, uutisissa ja sosiaalisessa mediassa. <strong>Deep Search kerää ja tiivistää tätä tietoa nopeasti.</strong> Sen sijaan että etsit itse useilta sivustoilta, saat yhtenäisen raportin viiteineen.</p>
-      <p>Työnhakijalle tämä tarkoittaa: voit <strong>ymmärtää yrityksen</strong> ennen hakemusta, <strong>tunnistaa kysytyt taidot</strong> alallasi ja <strong>valmistautua haastatteluun</strong> perustein — tiedät mitä yritys tekee ja miksi se kiinnostaa sinua.</p>
+    <div class="prose">
+      <p>Et saa vapaata aihetta. Saat <strong>yhden tutkimustehtävän</strong>, joka valmistautuu suoraan live-puolustukseen ja haastatteluun.</p>
     </div>
 
-    <div class="highlight-box" style="margin-bottom:2rem;">
-      <p style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1rem;">Miten Deep Search toimii?</p>
-      <ol style="padding-left:1.25rem;line-height:2;">
-        <li>Kuvaile tutkimuskysymyksesi</li>
-        <li>Valitse lähteet (verkko, tiedostot, tiettyjä sivustoja)</li>
-        <li>ChatGPT luo tutkimussuunnitelman — voit tarkentaa sitä</li>
-        <li>Saadaksesi raportin viiteineen (5–30 min)</li>
-      </ol>
-      <a href="https://chatgpt.com/features/deep-research" target="_blank" rel="noopener" class="link-btn">Deep Search -ominaisuus →</a>
-      <a href="https://help.openai.com/en/articles/10500283-deep-research" target="_blank" rel="noopener" class="link-btn outline" style="margin-left:0.5rem;">Ohjeet</a>
-    </div>
-
-    <div class="exercise-header">
-      <div class="exercise-num">7</div>
-      <div class="exercise-header-text">
-        <h3>Harjoitus: Deep Search yritystutkimukseen</h3>
-        <p>Käytä Deep Searchia löytääksesi työnantajia</p>
+    <div class="mission-box">
+      <div class="tag">Pakollinen Deep Search -aihe</div>
+      <div class="prompt" id="deepPrompt">
+Tutki ammattiani [AMMATTISI] Suomessa vuosina 2025–2026 ja tekoälyn vaikutusta siihen.
+1) Mitkä AI-työkalut ovat käytössä tällä alalla?
+2) Miten ammattilaiset hyödyntävät tekoälyä arjessa (konkreettisia esimerkkejä)?
+3) Mitkä ovat tekoälyn negatiiviset puolet, riskit ja haitat juuri tällä alalla?
+4) Mitä taitoja työnantajat arvostavat kun AI tulee osaksi työtä?
+Anna lähteisiin perustuva tiivis raportti.
+      </div>
+      <div style="margin-top:1.1rem;display:flex;gap:10px;flex-wrap:wrap;">
+        <button type="button" class="link-btn" onclick="copyDeepPrompt()">Kopioi aihe</button>
+        <a class="link-btn outline" href="https://chatgpt.com" target="_blank" rel="noopener">Avaa ChatGPT →</a>
       </div>
     </div>
-    <div class="practice-wrap">
-      <div class="practice-header">
-        <div class="practice-header-icon">🔍</div>
-        <div class="practice-header-text">
-          <h3>Tehtävä — Kokeile nyt</h3>
-          <p>Avaa ChatGPT → Valitse Deep Search (tai Search) → Käytä alla olevaa kysymystä</p>
+
+    <div class="visual-card ds-mock" aria-label="Deep Search -ohje">
+      <div class="ds-bar">
+        <span class="ds-dot"></span><span class="ds-dot"></span><span class="ds-dot"></span>
+        <span class="ds-chip">Keskustelu</span>
+        <span class="ds-chip on">Deep research</span>
+      </div>
+      <div class="ds-body">
+        <div class="ds-h">Deep research</div>
+        <p class="ds-sub">Liitä aihe alle, aloita tutkimus ja odota raporttia.</p>
+        <div class="ds-prompt">Tutki ammattiani […] Suomessa 2025–2026 ja tekoälyn vaikutusta siihen.<br>1) Mitkä AI-työkalut ovat käytössä?<br>2) Miten ammattilaiset hyödyntävät tekoälyä?<br>3) Mitkä ovat riskit ja haitat?</div>
+        <div class="ds-steps">
+          <div class="ds-step"><span class="ds-n">1</span><span>Suunnittele tutkimuskysymykset</span></div>
+          <div class="ds-step"><span class="ds-n">2</span><span>Etsi lähteitä</span></div>
+          <div class="ds-step"><span class="ds-n">3</span><span>Analysoi hyödyt ja haitat</span></div>
+          <div class="ds-step"><span class="ds-n">4</span><span>Raportoi tiiviisti viitteineen</span></div>
+        </div>
+        <div class="ds-meta">
+          <span class="link-btn" style="pointer-events:none;">Aloita tutkimus</span>
+          <span class="ds-time">Raportti valmis noin 10–20 minuutissa</span>
         </div>
       </div>
-      <div class="practice-body">
-        <div style="background:var(--ink);color:#fff;padding:1.5rem;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.9rem;line-height:1.7;margin-bottom:1.5rem;">
-          Mitkä suomalaiset yritykset palkkaavat tällä hetkellä eniten asiakaspalvelijoita? Listaa 10 yritystä, kerro mitä ne tekevät ja missä ne sijaitsevat.
-        </div>
-        <p style="font-size:0.9rem;color:var(--muted);margin-bottom:1rem;">Vaihda "asiakaspalvelijoita" omaan alaasi (esim. myynti, logistiikka, hoitoala).</p>
-        <p style="font-size:0.9rem;color:var(--muted);margin-bottom:0.5rem;"><strong>Mihin kiinnittää huomiota tuloksissa:</strong> Mitkä yritykset kuulostavat mielenkiintoisilta? Missä ne sijaitsevat? Mitä ne tekevät?</p>
-        <p style="font-size:0.85rem;color:var(--muted);"><strong>Seuraava kysymys:</strong> "Mitkä taidot ovat eniten kysyttyjä näillä aloilla Suomessa?"</p>
-      </div>
     </div>
+    <p class="visual-cap">Näin Deep Research -polku etenee ChatGPT:ssä — ei kuvakaappaus, vaan selkeä ohje.</p>
 
-    <div class="exercise-header" style="margin-top:3rem;">
-      <div class="exercise-num">8</div>
-      <div class="exercise-header-text">
-        <h3>Harjoitus: Haastattelun valmistelu Deep Searchilla</h3>
-        <p>Tutki yritys ennen haastattelua</p>
-      </div>
-    </div>
-    <div class="practice-wrap">
-      <div class="practice-header">
-        <div class="practice-header-icon">📋</div>
-        <div class="practice-header-text">
-          <h3>Tehtävä — Valitse yritys</h3>
-          <p>Käytä Deep Searchia löytääksesi tietoa yrityksestä johon haet</p>
-        </div>
-      </div>
-      <div class="practice-body">
-        <div style="background:var(--paper);padding:1.5rem;border-radius:8px;border-left:4px solid var(--accent);margin-bottom:1.5rem;">
-          <strong>Kysymys Deep Searchille:</strong>
-          <p style="margin-top:0.5rem;font-family:'DM Mono',monospace;font-size:0.9rem;line-height:1.7;">"Kerro [yrityksen nimi] -yrityksestä: mitä se tekee, mitkä ovat sen arvot, uutiset viime vuodelta ja miksi se voisi olla hyvä työnantaja."</p>
-        </div>
-        <p style="font-size:0.9rem;color:var(--muted);">Käytä tätä tietoa haastattelussa — näytät että olet tutustunut yritykseen.</p>
-        <p style="font-size:0.85rem;color:var(--muted);margin-top:1rem;"><strong>Kirjaa muistiin:</strong> 1 arvo · 1 uutinen · 1 konkreettinen syy miksi haluat sinne · 1 kysymys haastattelijalle.</p>
-      </div>
-    </div>
-
-    <div class="exercise-header" style="margin-top:3rem;">
-      <div class="exercise-num">9</div>
-      <div class="exercise-header-text">
-        <h3>Harjoitus: Ala, palkka ja taidot</h3>
-        <p>Ymmärrä markkina ennen hakemista</p>
-      </div>
-    </div>
-    <div class="practice-wrap">
-      <div class="practice-body" style="padding-top:2rem;">
-        <span class="level-badge level-keski">Keskitaso</span>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>Mitkä ovat tyypilliset palkkavälit [ROOLI] -tehtävissä Suomessa vuonna 2026? Mitkä 5 taitoa mainitaan useimmin työpaikkailmoituksissa? Mitkä sertifikaatit tai kielitaidot nostavat palkkatasoa?</div>
-        <p style="font-size:0.88rem;color:var(--muted);margin-top:0.75rem;">Vertaa tuloksia 2–3 avoimeen ilmoitukseen — löydätkö aukkoja osaamisessasi?</p>
-      </div>
-    </div>
-
-    <div class="exercise-header" style="margin-top:3rem;">
-      <div class="exercise-num">10</div>
-      <div class="exercise-header-text">
-        <h3>Harjoitus: Piilotettu työmarkkina</h3>
-        <p>Yritykset jotka palkkaavat vaikka eivät mainosta</p>
-      </div>
-    </div>
-    <div class="practice-wrap">
-      <div class="practice-body" style="padding-top:2rem;">
-        <span class="level-badge level-keski">Keskitaso</span>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>Listaa 15 suomalaista yritystä alalla [ALA] jotka ovat kasvaneet viimeisen 2 vuoden aikana tai avanneet uusia toimipisteitä. Jokaiselle: pääkaupunki/kaupunki, arvioitu palkkaus tarve, paras tapa ottaa yhteyttä (LinkedIn, suora hakemus, harjoittelu).</div>
-      </div>
-    </div>
-
-    <div class="exercise-header" style="margin-top:3rem;">
-      <div class="exercise-num">11</div>
-      <div class="exercise-header-text">
-        <h3>Harjoitus: Haastattelukysymysten tutkimus</h3>
-        <p>Valmistaudu siihen mitä kysytään</p>
-      </div>
-    </div>
-    <div class="practice-wrap">
-      <div class="practice-body" style="padding-top:2rem;">
-        <span class="level-badge level-vaikea">Vaikea</span>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>Mitä haastattelukysymyksiä [YRITYS] tai sen kilpailijat tyypillisesti kysyvät [ROOLI] -rooliin? Erota: käyttäytymiskysymykset, roolikohtaiset, arvot. Anna 3 esimerkkivastauksen runkoa suomeksi.</div>
-        <p style="font-size:0.88rem;color:var(--muted);margin-top:0.75rem;">Ota yksi kysymys → harjoittele vastaus äänellä (harjoitus 6).</p>
-      </div>
-    </div>
-
-    <div class="exercise-header" style="margin-top:3rem;">
-      <div class="exercise-num">12</div>
-      <div class="exercise-header-text">
-        <h3>Harjoitus: Kilpailija-analyysi työnantajista</h3>
-        <p>Valitse paras työnantaja sinulle</p>
-      </div>
-    </div>
-    <div class="practice-wrap">
-      <div class="practice-body" style="padding-top:2rem;">
-        <span class="level-badge level-vaikea">Vaikea · vertailu</span>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>Vertaa kolmea suomalaista työnantajaa alalla [ALA]: työculture, palkkaus, urapolku, työntekijäarvostelut, vastuullisuus. Tee taulukko ja suositus kenen luokse hakisin ensin — perusteluineen.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ALAKOHTAISET -->
-<section class="section section-alt" id="alakohtaiset" data-index="5">
-  <div class="section-inner">
-    <div class="section-label">Räätälöi itsellesi</div>
-    <h2 class="section-h2">Alakohtaiset<br><em>ideat ja promptit</em></h2>
-    <div class="divider"></div>
-    <p class="prose" style="margin-bottom:1.5rem;">Valitse oma alasi. Jokaisessa: yksi Deep Search -kysymys ja yksi ääniharjoitus — tee molemmat samana päivänä.</p>
-
-    <div class="track-tabs" role="tablist">
-      <button type="button" class="track-tab active" data-track="kauppa" onclick="switchTrack('kauppa')">Kauppa &amp; myynti</button>
-      <button type="button" class="track-tab" data-track="ravintola" onclick="switchTrack('ravintola')">Ravintola &amp; matkailu</button>
-      <button type="button" class="track-tab" data-track="asiakaspalvelu" onclick="switchTrack('asiakaspalvelu')">Asiakaspalvelu</button>
-      <button type="button" class="track-tab" data-track="logistiikka" onclick="switchTrack('logistiikka')">Logistiikka &amp; varasto</button>
-    </div>
-
-    <div class="track-panel active" id="track-kauppa">
-      <div class="highlight-box">
-        <p style="font-weight:600;margin-bottom:0.75rem;">🔍 Deep Search</p>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>Mitkä suomalaiset vähittäiskauppaketjut ja erikoisliikkeet palkkaavat eniten myyjä/ myymälätyöntekijöitä 2026? Vertaa työehtoja, vuorojen joustavuutta ja koulutusta.</div>
-        <p style="font-weight:600;margin:1.25rem 0 0.75rem;">🎤 Ääni</p>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Harjoittele: asiakas haluaa palauttaa tuotteen ilman kuittia. Ole myyjänä — vastaa ammattimaisesti. Anna palautetta äänensävystä."</div>
-      </div>
-    </div>
-    <div class="track-panel" id="track-ravintola">
-      <div class="highlight-box">
-        <p style="font-weight:600;margin-bottom:0.75rem;">🔍 Deep Search</p>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>Suomen matkailu- ja ravintola-ala 2026: mitkä työnantajatyypit (hotellit, ketjut, tapahtumat) rekrytoivat eniten? Mitä kieli- ja hygieniapätevyyksiä vaaditaan useimmin?</div>
-        <p style="font-weight:600;margin:1.25rem 0 0.75rem;">🎤 Ääni</p>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Simuloi ruuhka-aamun tarjoilijan haastattelu: miksi ravintola-ala, miten hoidat kiireen, kerro tilanteesta jossa asiakas oli vihainen."</div>
-      </div>
-    </div>
-    <div class="track-panel" id="track-asiakaspalvelu">
-      <div class="highlight-box">
-        <p style="font-weight:600;margin-bottom:0.75rem;">🔍 Deep Search</p>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>Asiakaspalvelu Suomessa: etä vs. paikan päällä, palkkatasot, työvuorot. Top 10 työnantajaa ja mitä ne arvostavat hakemuksissa.</div>
-        <p style="font-weight:600;margin:1.25rem 0 0.75rem;">🎤 Ääni</p>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Kysy minulta 5 asiakaspalveluhaastattelun kysymystä. Arvioi empatiata, selkeyttä ja ratkaisukeskeisyyttä."</div>
-      </div>
-    </div>
-    <div class="track-panel" id="track-logistiikka">
-      <div class="highlight-box">
-        <p style="font-weight:600;margin-bottom:0.75rem;">🔍 Deep Search</p>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>Logistiikka ja varasto Suomessa: suurimmat työnantajat, trukkikortin vaikutus, vuorotyön palkkatasot, automaation vaikutus työpaikkoihin.</div>
-        <p style="font-weight:600;margin:1.25rem 0 0.75rem;">🎤 Ääni</p>
-        <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>"Harjoittele turvallisuus- ja tarkkuuskeskustelu: kerro STAR-tarina virheestä varastossa ja miten estit toistumisen."</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- YHDISTÄ -->
-<section class="section" id="yhdista" data-index="6">
-  <div class="section-inner">
-    <p style="font-size:0.95rem;color:var(--muted);margin-bottom:1.5rem;font-style:italic;">Viimeisenä yhdistetään molemmat — tutki ensin, harjoittele sitten.</p>
-    <div class="section-label">Osa 4: Yhdistä</div>
-    <h2 class="section-h2">Ääni + Deep Search<br><em>Kokonaisvaltainen harjoittelu</em></h2>
-    <div class="divider"></div>
-    <div class="prose" style="margin-bottom:2rem;">
-      <p>Tehokkain tapa valmistautua haastatteluun: <strong>tutki ensin, harjoittele sitten.</strong> Sama järjestys toimii oikeassakin valmistelussa — ensin keräät tietoa yrityksestä, sitten harjoittelet miten vastaat kysymyksiin.</p>
-      <p>Käytä ensin <strong>Deep Searchia</strong> löytääksesi 2–3 kiinnostavaa faktaa yrityksestä. Sitten <strong>ääntä</strong> harjoitellaksesi vastaamaan esim. "Miksi haluat työskennellä meillä?" — ja mainitse löydöksesi. Näin harjoittelu vastaa todellista haastattelutilannetta.</p>
-    </div>
-
-    <div class="practice-wrap" style="margin-bottom:2rem;">
-      <div class="practice-header">
-        <div class="practice-header-icon">🎯</div>
-        <div class="practice-header-text">
-          <h3>Harjoitus 13: Täysi sykli — yksi yritys</h3>
-          <p>Deep Search → muistiinpanot → ääni → palautteet</p>
-        </div>
-      </div>
-      <div class="practice-body">
-        <ol style="padding-left:1.5rem;line-height:2.2;">
-          <li><strong>Deep Search (harjoitus 8):</strong> Tutki yritys johon haet.</li>
-          <li><strong>Kirjaa 4 asiaa:</strong> arvo · uutinen · tuote/palvelu · kysymys haastattelijalle.</li>
-          <li><strong>Ääni (harjoitus 6):</strong> Simuloi haastattelu — mainitse vähintään 2 tutkimusfaktaa.</li>
-          <li><strong>Lopuksi:</strong> Pyydä AI:ta tiivistämään paras 20 sekunnin "miksi teidät" -vastaus.</li>
-        </ol>
-      </div>
-    </div>
-
-    <div class="practice-wrap">
-      <div class="practice-header">
-        <div class="practice-header-icon">⚡</div>
-        <div class="practice-header-text">
-          <h3>Harjoitus 14: Kaksi yritystä, yksi päivä</h3>
-          <p>Vertaa työnantajia ja harjoittele molempiin</p>
-        </div>
-      </div>
-      <div class="practice-body">
-        <ol style="padding-left:1.5rem;line-height:2.2;">
-          <li><strong>Deep Search (harjoitus 12):</strong> Vertaa kaksi yritystä samalta alalta.</li>
-          <li><strong>Valitse suosikki</strong> — kirjoita 3 syytä.</li>
-          <li><strong>Ääni:</strong> Harjoittele "Miksi valitsit meidät kilpailijan sijaan?" molemmille yrityksille erikseen.</li>
-        </ol>
-        <p style="font-size:0.88rem;color:var(--muted);margin-top:1rem;">Tämä valmistautuu tilanteeseen jossa kysytään miksi et valinnut toista paikkaa.</p>
-      </div>
-    </div>
-
-    <div class="highlight-box" style="margin-top:2rem;">
-      <p style="font-weight:600;margin-bottom:0.75rem;">🔗 Jatka muissa moduuleissa</p>
-      <p style="font-size:0.92rem;color:var(--muted);line-height:1.7;margin:0;">STAR ja tilanneharjoitukset syventävät <a href="/module/moduuli9-haastattelu" style="color:var(--accent);">Haastattelu-moduulissa</a>. Hakemusteksti ja ATS tulevat <a href="/module/moduuli8-ai-polku" style="color:var(--accent);">AI Polusta</a>. Portfolio ja haastattelulinkki <a href="/module/moduuli-elava-cv" style="color:var(--accent);">Elävä CV</a>:stä.</p>
-    </div>
-  </div>
-</section>
-
-<!-- HAASTEET -->
-<section class="section section-alt" id="haasteet" data-index="7">
-  <div class="section-inner">
-    <div class="section-label">Ota seuraava askel</div>
-    <h2 class="section-h2">Haasteet —<br><em>tee oikeaa työtä</em></h2>
-    <div class="divider"></div>
-    <p class="prose" style="margin-bottom:2rem;">Valitse yksi haaste tänään. Tavoite on konkreettinen lopputulos, ei vain "kokeilin".</p>
-
-    <div class="challenge-card">
-      <span class="level-badge level-helppo">15 min sprint</span>
-      <h4>Haaste A: Yritys + yksi äänivastaus</h4>
-      <p class="challenge-meta">Deep Search 7 min · ääni 8 min</p>
-      <p style="font-size:0.92rem;">Etsi yksi yritys alaltasi. Deep Search: arvot + viimeisin uutinen. Ääni: vastaa "Miksi haluat työskennellä meillä?" alle 45 sekuntia. Tallenna muistiin paras lause.</p>
-    </div>
-
-    <div class="challenge-card">
-      <span class="level-badge level-keski">45 min putki</span>
-      <h4>Haaste B: Haastatteluvalmius yhdelle ilmoitukselle</h4>
-      <p class="challenge-meta">Tutkimus · 3 ääniharjoitusta · yhteenveto</p>
-      <ol style="padding-left:1.25rem;line-height:1.9;font-size:0.92rem;margin-top:0.5rem;">
-        <li>Avaa yksi oikea työpaikkailmoitus (Työmarkkinatori, Duunitori tms.).</li>
-        <li>Deep Search yrityksestä + roolin taidoista (harjoitukset 8–9).</li>
-        <li>Ääni: hissipuhe, STAR, heikkous (harjoitukset 4–5).</li>
-        <li>Pyydä AI:ltä 5 bulletia mitä sanoisit haastattelussa.</li>
+    <div class="highlight-box">
+      <p style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1rem;">Tee näin</p>
+      <ol class="checklist">
+        <li><span>1.</span><span>Vaihda <code>[AMMATTISI]</code> omaan alaasi (esim. myynti, hoitoala, logistiikka, asiakaspalvelu).</span></li>
+        <li><span>2.</span><span>ChatGPT → valitse <strong>Deep research / Deep Search</strong> → liitä aihe → aloita.</span></li>
+        <li><span>3.</span><span>Kun raportti valmistuu, täytä alla oleva brief — se menee AI:lle live-puheluihin.</span></li>
       </ol>
     </div>
 
-    <div class="challenge-card">
-      <span class="level-badge level-vaikea">7 päivän haaste</span>
-      <h4>Haaste C: Viikon valmistautuminen</h4>
-      <p class="challenge-meta">Yksi tehtävä päivässä · ~20 min/pv</p>
-      <ul style="list-style:none;padding:0;font-size:0.92rem;line-height:1.85;margin-top:0.5rem;">
-        <li><strong>Pv 1:</strong> Deep Search — 10 työnantajaa alaltasi (harjoitus 7)</li>
-        <li><strong>Pv 2:</strong> Vertaa 3 työnantajaa (harjoitus 12)</li>
-        <li><strong>Pv 3:</strong> Hissipuhe äänellä 5 kertaa (harjoitus 4)</li>
-        <li><strong>Pv 4:</strong> STAR-tarina 3 eri tilanteeseen (harjoitus 3)</li>
-        <li><strong>Pv 5:</strong> Haastattelukysymysten tutkimus + vastaus äänellä (11 + 6)</li>
-        <li><strong>Pv 6:</strong> Täysi simulaatio (harjoitus 6)</li>
-        <li><strong>Pv 7:</strong> Täysi sykli oikeaan yritykseen (harjoitus 13) + kirjoita 3 kysymystä haastattelijalle</li>
+    <div class="highlight-box" style="margin-top:1.5rem;">
+      <p style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1rem;">Tutkimusbrief live-AI:lle</p>
+      <p style="font-size:0.92rem;color:var(--muted);margin-bottom:1rem;">Täytä vähintään ammattiala + kaksi muuta kenttää ennen live-puheluita.</p>
+      <div class="brief-form">
+        <div>
+          <label for="briefProfession">Ammattiala / rooli *</label>
+          <input id="briefProfession" placeholder="Esim. asiakaspalvelija, myyjä, varastotyöntekijä, hoitaja…" autocomplete="organization-title">
+        </div>
+        <div>
+          <label for="briefTools">AI-työkalut joita alalla käytetään *</label>
+          <textarea id="briefTools" placeholder="Esim. ChatGPT, Copilot, automaattiset vastauspohjat, käännöstyökalut…"></textarea>
+        </div>
+        <div>
+          <label for="briefLeverage">Miten tekoälyä hyödynnetään arjessa *</label>
+          <textarea id="briefLeverage" placeholder="Esim. nopeammat vastaukset, raporttien tiivistys, vuorosuunnittelu…"></textarea>
+        </div>
+        <div>
+          <label for="briefNegatives">Negatiiviset puolet / riskit alalla *</label>
+          <textarea id="briefNegatives" placeholder="Esim. virheet asiakasviesteissä, tietosuoja, työpaikkojen katoaminen, yliriippuvuus…"></textarea>
+        </div>
+        <div>
+          <label for="briefNotes">Vapaat muistiinpanot tutkimuksesta (valinnainen)</label>
+          <textarea id="briefNotes" placeholder="1–2 faktaa jotka haluat mainita haastattelussa…"></textarea>
+        </div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button type="button" class="link-btn" onclick="saveBrief()">Tallenna brief</button>
+        <span class="brief-status" id="briefStatus"></span>
+      </div>
+      <p class="lock-hint" id="briefLockHint">Täytä brief (ammatti + työkalut + hyöty + haitat) ennen live-puheluita.</p>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE 1: DEFENSE -->
+<section class="section" id="live-defense" data-index="4">
+  <div class="section-inner">
+    <div class="section-label">Live-ääni · tutkimus</div>
+    <h2 class="section-h2">Puolusta<br><em>tutkimuksesi</em></h2>
+    <div class="divider"></div>
+    <p class="prose" style="margin-bottom:1rem;">Tämä osio tulee Deep Searchin jälkeen. AI esittää skeptistä esihenkilöä. Sinä selität: työkalut, hyödyt, haitat.</p>
+    <div class="tip-row"><span>🎯</span><span>Tavoite: kuulostaa aikuiselta asiantuntijalta, ei mainospuheelta. Mainitse myös riskit — se on osa uskottavuutta.</span></div>
+    <div id="call-ai_defense"></div>
+  </div>
+</section>
+
+<!-- LIVE 2: INTERVIEW -->
+<section class="section section-alt" id="live-interview" data-index="5">
+  <div class="section-inner">
+    <div class="section-label">Live-ääni · haastattelu</div>
+    <h2 class="section-h2">Työhaastattelu<br><em>äänellä</em></h2>
+    <div class="divider"></div>
+    <p class="prose" style="margin-bottom:1rem;">Nyt AI on rekrytoija. Esittäydy, kerro miksi ala kiinnostaa, miten käyttäisit tekoälyä — ja vastaa STAR-kysymykseen. Briefisi menee mukaan istuntoon.</p>
+    <div id="call-job_interview"></div>
+  </div>
+</section>
+
+<!-- CHATGPT VOICE — external voice-to-voice practice -->
+<section class="section" id="chatgpt-voice" data-index="6">
+  <div class="section-inner">
+    <div class="section-label">Harjoitus · ChatGPT Voice</div>
+    <h2 class="section-h2">Puhu ChatGPT:lle<br><em>äänellä</em></h2>
+    <div class="divider"></div>
+
+    <div class="easy-read">
+      <p>Tämä on <strong>eri harjoitus</strong> kuin tämän sivun live-puhelut.</p>
+      <p>Avaat ChatGPT:n. Käytät sen omaa äänitilaa. Näin opit taidon, jota voit käyttää myöhemmin itse — ilman tätä kurssia.</p>
+    </div>
+
+    <div class="visual-card" style="padding:0;overflow:hidden;">
+      <img src="/images/chatgpt-voice-vs-dictate.png" alt="ChatGPT-ruutu: Dictate-mikrofoni ja Voice Mode -aaltokuvake kirjoituskentän oikealla" width="1280" height="633" style="display:block;width:100%;height:auto;">
+    </div>
+    <p class="visual-cap" style="margin-top:.75rem;"><strong>Oikea ChatGPT-ruutu.</strong> Älä paina punaista <em>Dictate</em> (vain kirjoittaa tekstiä). Paina vihreää <em>Voice Mode</em> (aaltokuvake) — se aloittaa ääni↔ääni -keskustelun.</p>
+
+    <div class="case-card" style="margin-top:1.25rem;">
+      <span class="case-label">Miten se toimii</span>
+      <div class="cgpt-steps" style="margin-top:.75rem;max-width:none;">
+        <div class="cgpt-step"><span class="n">1</span><span>Avaa <strong>chatgpt.com</strong> tai ChatGPT-sovellus ja kirjaudu sisään.</span></div>
+        <div class="cgpt-step"><span class="n">2</span><span>Katso kirjoituskentän oikeaa reunaa (kuvan mukaan).</span></div>
+        <div class="cgpt-step"><span class="n">3</span><span>Paina <strong>Voice Mode</strong> (aaltokuvake) — ei Dictate-mikrofonia.</span></div>
+        <div class="cgpt-step"><span class="n">4</span><span>Salli mikrofoni, jos selain tai puhelin kysyy.</span></div>
+        <div class="cgpt-step"><span class="n">5</span><span>Sano alla oleva tehtävä ääneen. ChatGPT vastaa äänellä.</span></div>
+      </div>
+    </div>
+
+    <div class="task-box easy-read">
+      <strong>Tehtäväsi (noin 3 minuuttia)</strong><br>
+      Harjoittele ChatGPT Voicea lyhyellä keskustelulla.<br>
+      ChatGPT kysyy sinulta kaksi asiaa. Sinä vastaat ääneen.<br>
+      Älä liitä asiakkaiden tai työpaikan salaisia tietoja.
+    </div>
+
+    <div class="say-box" id="voicePromptBox">
+      <div class="tag">Sano tämä ääneen ChatGPT:lle</div>
+      <div id="voicePromptText">
+Harjoitellaan äänellä. Kysy minulta yksi kysymys kerrallaan.
+Ensin: mitä teen työkseni?
+Sitten: miten voisin käyttää tekoälyä työssäni turvallisesti?
+Anna yksi lyhyt palaute jokaisen vastauksen jälkeen.
+Älä anna pitkää listaa.
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem;">
+      <button type="button" class="link-btn" onclick="copyVoicePrompt()">Kopioi teksti</button>
+      <a class="link-btn outline" href="https://chatgpt.com" target="_blank" rel="noopener">Avaa ChatGPT →</a>
+    </div>
+
+    <div class="case-card easy-read">
+      <span class="case-label">Valmis kun</span>
+      <ul class="rule-list" style="margin-top:.75rem;">
+        <li><span class="rule-n">1</span><span>Sait ChatGPT:n äänitilan auki.</span></li>
+        <li><span class="rule-n">2</span><span>Vastasit kahteen kysymykseen ääneen.</span></li>
+        <li><span class="rule-n">3</span><span>Kuulit yhden lyhyen palautteen.</span></li>
+      </ul>
+    </div>
+    <p class="hint-soft">Jos äänitila ei aukea selaimessa, kokeile ChatGPT-sovellusta puhelimella. Voit myös liittää tekstin ensin ja vaihtaa sitten ääneen.</p>
+  </div>
+</section>
+
+<!-- CASE JUDGMENT — own exercise, after ChatGPT Voice -->
+<section class="section section-alt" id="case-judgment" data-index="7">
+  <div class="section-inner">
+    <div class="section-label">Oma harjoitus · ei Deep Searchia</div>
+    <h2 class="section-h2">Oikein vai väärin?<br><em>Valmis tilanne</em></h2>
+    <div class="divider"></div>
+
+    <div class="easy-read">
+      <p>Tässä harjoituksessa <strong>et tarvitse tutkimusta</strong>.</p>
+      <p>Lue tilanne ja säännöt. Sitten puhut AI:lle, joka esittää kollegaa.</p>
+      <p>Sinun tehtäväsi: sanoa, mikä Matin ideassa on ok — ja mikä ei.</p>
+    </div>
+
+    <div class="case-card easy-read">
+      <span class="case-label">Tilanne</span>
+      <h3>Asiakas on vihainen</h3>
+      <p>Työskentelet asiakaspalvelussa.</p>
+      <p>Asiakas lähettää sähköpostin: tilaus on myöhässä.</p>
+      <p>Kollega <strong>Matti</strong> haluaa käyttää ChatGPT:tä nopeasti.</p>
+    </div>
+
+    <div class="case-card">
+      <span class="case-label">Työpaikan säännöt</span>
+      <p class="easy-read" style="margin-bottom:1rem;">Nämä säännöt ovat totta tässä harjoituksessa. Voit katsoa niitä puhelun aikana.</p>
+      <ul class="rule-list">
+        <li><span class="rule-n">A</span><span>Älä liitä asiakkaan henkilötietoja avoimeen AI-työkaluun (kuten ChatGPT).</span></li>
+        <li><span class="rule-n">B</span><span>Ihminen lukee AI-luonnoksen ennen kuin viesti lähtee asiakkaalle.</span></li>
+        <li><span class="rule-n">C</span><span>Hintalupaukset ja hyvitykset tarvitsevat esihenkilön luvan.</span></li>
+        <li><span class="rule-n">D</span><span>AI saa auttaa kieliasussa ja rakenteessa.</span></li>
       </ul>
     </div>
 
-    <div class="challenge-card">
-      <span class="level-badge level-vaikea">Automatisointi-idea</span>
-      <h4>Haaste D: Toistuva rutiini</h4>
-      <p class="challenge-meta">Ei vaadi koodausta — sama prompt joka kerta</p>
-      <p style="font-size:0.92rem;margin-bottom:0.75rem;">Luo oma viikkorutiini: joka maanantai Deep Search "uudet työpaikat [ala] Suomi", keskiviikko ääniharjoitus, perjantai yhteenveto. Kopioi sama promptkirjastosta ja vaihda vain yrityksen nimi.</p>
-      <div class="prompt-box"><button type="button" class="prompt-copy" onclick="copyPrompt(this)">Kopioi</button>Viikkorutiini-prompt: "Tämä on viikko [NUMERO]. Listaa 5 uutta työpaikkaa/yritystä alalla [ALA]. Valitse yksi — tee minulle 3 haastattelukysymystä ja arvioi vastaukseni äänellä."</div>
+    <div class="proposal-box easy-read">
+      <span class="case-label">Matin ehdotus</span>
+      <p style="margin:0 0 .5rem;"><strong>Matti sanoo:</strong></p>
+      <ol>
+        <li>Liitän koko asiakassähköpostin ChatGPT:hen.</li>
+        <li>Lähetän AI-vastauksen sellaisenaan asiakkaalle.</li>
+        <li>Annan AI:n luvata 50 euron hyvityksen, jotta asiakas rauhoittuu.</li>
+      </ol>
     </div>
+
+    <div class="task-box easy-read">
+      <strong>Sinun tehtäväsi</strong><br>
+      Mieti hetki: mikä Matin ideassa sopii sääntöihin — ja mikä ei?<br>
+      Älä etsi “oikeaa mallivastausta”. Käytä sääntöjä A–D.<br>
+      Sitten aloita puhelu. Matti puolustaa ideaansa. Sinä vastaat.
+    </div>
+    <p class="hint-soft">Vinkki: voit pitää tämän sivun auki puhelun aikana. Kysymykset koskevat vain tätä tilannetta.</p>
+
+    <div id="call-case_judgment"></div>
   </div>
 </section>
 
@@ -678,180 +493,515 @@ h2.section-h2 em{font-style:italic;color:var(--accent);}
     <div class="section-label">Valinnainen</div>
     <h2 class="section-h2">Hetki ajatuksille</h2>
     <div class="divider"></div>
-    <p style="font-size:1rem;color:var(--muted);margin-bottom:1.5rem;">Mieti lyhyesti — ei pakollista, mutta auttaa oppimaan. Valitse vaihtoehto tai kirjoita omat ajatuksesi.</p>
-
-    <div style="margin-bottom:2rem;padding:1.25rem;background:var(--paper);border-radius:8px;border-left:3px solid var(--accent);">
-      <p style="font-weight:600;margin-bottom:0.75rem;color:var(--ink);">Kumpi tuntui hyödyllisemmältä: ääni vai haku?</p>
-      <div class="reflection-options" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem;">
-        <label class="reflection-chip"><input type="radio" name="ref1" value="ääni"> Ääni</label>
-        <label class="reflection-chip"><input type="radio" name="ref1" value="haku"> Haku</label>
-        <label class="reflection-chip"><input type="radio" name="ref1" value="molemmat"> Molemmat yhtä hyödyllisiä</label>
-        <label class="reflection-chip"><input type="radio" name="ref1" value="eitiedä"> En vielä tiedä</label>
+    <div style="margin-bottom:1.5rem;padding:1.25rem;background:#fff;border-radius:12px;border:1px solid var(--border);">
+      <p style="font-weight:600;margin-bottom:0.75rem;">Mikä live-tilanne oli vaikein?</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem;">
+        <label class="reflection-chip"><input type="radio" name="ref1" value="chatgpt"> ChatGPT Voice</label>
+        <label class="reflection-chip"><input type="radio" name="ref1" value="tilanne"> Oikein vai väärin -tilanne</label>
+        <label class="reflection-chip"><input type="radio" name="ref1" value="puolustus"> AI-puolustus</label>
+        <label class="reflection-chip"><input type="radio" name="ref1" value="haastattelu"> Työhaastattelu</label>
+        <label class="reflection-chip"><input type="radio" name="ref1" value="star"> STAR-drill</label>
+        <label class="reflection-chip"><input type="radio" name="ref1" value="tutkimus"> Deep Search -tutkimus</label>
       </div>
-      <textarea class="reflection-field" id="ref1_text" placeholder="Tai kirjoita omat ajatuksesi..." style="width:100%;min-height:60px;padding:0.9rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.92rem;resize:vertical;background:var(--paper2);"></textarea>
+      <textarea id="ref1_text" placeholder="Miksi? Mitä tekisit toisin?" style="width:100%;min-height:70px;padding:0.9rem;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.92rem;resize:vertical;background:var(--paper);"></textarea>
     </div>
-
-    <div style="margin-bottom:2rem;padding:1.25rem;background:var(--paper);border-radius:8px;border-left:3px solid var(--accent);">
-      <p style="font-weight:600;margin-bottom:0.75rem;color:var(--ink);">Miten nämä työkalut voisivat auttaa sinua valmistautumaan seuraavaan haastatteluun?</p>
-      <div class="reflection-options" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem;">
-        <label class="reflection-chip"><input type="radio" name="ref2" value="yritystutkimus"> Yritystutkimus</label>
-        <label class="reflection-chip"><input type="radio" name="ref2" value="haastatteluharjoittelu"> Haastatteluharjoittelu äänellä</label>
-        <label class="reflection-chip"><input type="radio" name="ref2" value="työkalutiedot"> Työkalutietojen hakeminen</label>
-        <label class="reflection-chip"><input type="radio" name="ref2" value="vastauksienharjoittelu"> Vastauksien harjoittelu</label>
-        <label class="reflection-chip"><input type="radio" name="ref2" value="eitiedä"> En vielä tiedä</label>
-      </div>
-      <textarea class="reflection-field" id="ref2_text" placeholder="Tai kirjoita omat ajatuksesi..." style="width:100%;min-height:60px;padding:0.9rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.92rem;resize:vertical;background:var(--paper2);"></textarea>
+    <div style="margin-bottom:1.5rem;padding:1.25rem;background:#fff;border-radius:12px;border:1px solid var(--border);">
+      <p style="font-weight:600;margin-bottom:0.75rem;">Yksi lause jonka muistat seuraavaan oikeaan haastatteluun</p>
+      <textarea id="ref2_text" placeholder="Kirjoita se tähän…" style="width:100%;min-height:70px;padding:0.9rem;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.92rem;resize:vertical;background:var(--paper);"></textarea>
     </div>
-
-    <div style="margin-bottom:1.5rem;padding:1.25rem;background:var(--paper);border-radius:8px;border-left:3px solid var(--accent);">
-      <p style="font-weight:600;margin-bottom:0.75rem;color:var(--ink);">Mitä haluaisit kokeilla uudelleen myöhemmin?</p>
-      <div class="reflection-options" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem;">
-        <label class="reflection-chip"><input type="radio" name="ref3" value="ääniharjoittelu"> Ääniharjoittelu</label>
-        <label class="reflection-chip"><input type="radio" name="ref3" value="deepsearch"> Deep Search -tutkimus</label>
-        <label class="reflection-chip"><input type="radio" name="ref3" value="yhdistätyö"> Yhdistätyö (tutki + harjoittele)</label>
-        <label class="reflection-chip"><input type="radio" name="ref3" value="haaste"> 7 päivän haaste</label>
-        <label class="reflection-chip"><input type="radio" name="ref3" value="eitiedä"> En vielä tiedä</label>
-      </div>
-      <textarea class="reflection-field" id="ref3_text" placeholder="Tai kirjoita omat ajatuksesi..." style="width:100%;min-height:60px;padding:0.9rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.92rem;resize:vertical;background:var(--paper2);"></textarea>
-    </div>
-
-    <div style="margin-bottom:1.5rem;padding:1.25rem;background:var(--paper);border-radius:8px;border-left:3px solid var(--accent3);">
-      <p style="font-weight:600;margin-bottom:0.75rem;color:var(--ink);">Minkä haasteen (A–D) teet ensin?</p>
-      <div class="reflection-options" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem;">
-        <label class="reflection-chip"><input type="radio" name="ref4" value="A"> A — 15 min sprint</label>
-        <label class="reflection-chip"><input type="radio" name="ref4" value="B"> B — 45 min putki</label>
-        <label class="reflection-chip"><input type="radio" name="ref4" value="C"> C — 7 päivää</label>
-        <label class="reflection-chip"><input type="radio" name="ref4" value="D"> D — viikkorutiini</label>
-      </div>
-      <textarea class="reflection-field" id="ref4_text" placeholder="Miksi juuri tämä? Mikä yritys tai rooli?" style="width:100%;min-height:60px;padding:0.9rem;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.92rem;resize:vertical;background:var(--paper2);"></textarea>
-    </div>
-
-    <p style="font-size:0.9rem;color:var(--muted);font-style:italic;margin-bottom:1.25rem;">Voit valita vain vaihtoehdon, kirjoittaa oman vastauksen tai miettiä mielessäsi — kaikki toimii.</p>
     <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-      <button type="button" id="saveReflectionBtn" onclick="saveVoiceReflection()" style="padding:12px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:0.95rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.25s;">
-        Tallenna vastaukseni
-      </button>
+      <button type="button" class="link-btn" onclick="saveVoiceReflection()">Tallenna vastaukseni</button>
       <span id="reflectionConfirm" style="font-size:0.9rem;color:var(--accent3);font-weight:500;display:none;">✓ Tallennettu</span>
     </div>
   </div>
 </section>
 
 <!-- OUTRO -->
-<section class="section section-alt" id="outro">
+<section class="section" id="outro">
   <div class="section-inner">
     <div style="width:100%;height:1px;background:var(--border);margin-bottom:3rem;"></div>
-    <div style="font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:400;line-height:1.2;color:var(--ink);margin-bottom:1rem;">Olet kokeillut ääntä ja Deep Searchia.<br><em style="font-style:italic;color:var(--accent);">Jatka haasteella A, B, C tai D.</em></div>
-    <p style="font-size:1rem;color:var(--muted);max-width:560px;line-height:1.75;margin-bottom:2.5rem;font-weight:300;">Seuraavaksi syvennä haastattelutaitoja Haastattelu-moduulissa tai viimeistele portfolio Elävä CV:ssä. AI Polku kattaa hakemustekstin ja ATS-analyysin.</p>
+    <div style="font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:400;line-height:1.2;color:var(--ink);margin-bottom:1rem;">Tutkimus + ääni + palaute.<br><em style="font-style:italic;color:var(--accent);">Seuraava kerta on oikea haastattelu.</em></div>
+    <p style="font-size:1rem;color:var(--muted);max-width:560px;line-height:1.75;margin-bottom:2.5rem;">Syvennä haastattelua Haastattelu-moduulissa tai rakenna portfolio Elävä CV:ssä.</p>
     <div style="display:flex;gap:1rem;flex-wrap:wrap;">
-      <a href="/module/moduuli9-haastattelu" class="btn-next">Seuraava — Haastattelu <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></a>
-      <a href="/module/moduuli8-ai-polku" class="btn-back">AI Polku</a>
+      <a href="/module/moduuli9-haastattelu" class="btn-next">Seuraava — Haastattelu →</a>
       <a href="/" class="btn-back">Etusivu</a>
     </div>
   </div>
 </section>
 
-<script>
-const sections = document.querySelectorAll('.section[data-index]');
-const navSteps = document.getElementById('navSteps');
-const progressBar = document.getElementById('progress-bar');
-sections.forEach((s,i) => {
-  const pip = document.createElement('div');
-  pip.className = 'step-pip' + (i === 0 ? ' active' : '');
-  pip.addEventListener('click', () => s.scrollIntoView({ behavior: 'smooth' }));
-  navSteps.appendChild(pip);
-});
-function updateProgress() {
-  const st = window.scrollY, dh = document.documentElement.scrollHeight - window.innerHeight;
-  progressBar.style.width = (dh > 0 ? (st / dh) * 100 : 0) + '%';
-  let ai = 0;
-  sections.forEach((s, i) => { if (s.getBoundingClientRect().top <= window.innerHeight * 0.5) ai = i; });
-  navSteps.querySelectorAll('.step-pip').forEach((p, i) => {
-    p.classList.remove('active', 'done');
-    if (i === ai) p.classList.add('active');
-    else if (i < ai) p.classList.add('done');
-  });
-}
-window.addEventListener('scroll', updateProgress, { passive: true });
-
-function copyPrompt(btn) {
-  const box = btn.closest('.prompt-box');
-  if (!box) return;
-  const clone = box.cloneNode(true);
-  const copyBtn = clone.querySelector('.prompt-copy');
-  if (copyBtn) copyBtn.remove();
-  const text = clone.textContent.trim();
-  navigator.clipboard.writeText(text).then(function() {
-    btn.textContent = 'Kopioitu!';
-    btn.classList.add('ok');
-    setTimeout(function() { btn.textContent = 'Kopioi'; btn.classList.remove('ok'); }, 2000);
-  }).catch(function() {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    btn.textContent = 'Kopioitu!';
-    btn.classList.add('ok');
-    setTimeout(function() { btn.textContent = 'Kopioi'; btn.classList.remove('ok'); }, 2000);
-  });
-}
-
-function switchTrack(id) {
-  document.querySelectorAll('.track-tab').forEach(function(t) {
-    t.classList.toggle('active', t.getAttribute('data-track') === id);
-  });
-  document.querySelectorAll('.track-panel').forEach(function(p) {
-    p.classList.toggle('active', p.id === 'track-' + id);
-  });
-}
-
-// Save Voice & Deep Search reflection
-window.saveVoiceReflection = async function() {
-  const ref1 = document.querySelector('input[name="ref1"]:checked');
-  const ref2 = document.querySelector('input[name="ref2"]:checked');
-  const ref3 = document.querySelector('input[name="ref3"]:checked');
-  const ref4 = document.querySelector('input[name="ref4"]:checked');
-  const ref1Text = (document.getElementById('ref1_text') || {}).value || '';
-  const ref2Text = (document.getElementById('ref2_text') || {}).value || '';
-  const ref3Text = (document.getElementById('ref3_text') || {}).value || '';
-  const ref4Text = (document.getElementById('ref4_text') || {}).value || '';
-  const data = {
-    q1_choice: ref1 ? ref1.value : null,
-    q1_text: ref1Text.trim() || null,
-    q2_choice: ref2 ? ref2.value : null,
-    q2_text: ref2Text.trim() || null,
-    q3_choice: ref3 ? ref3.value : null,
-    q3_text: ref3Text.trim() || null,
-    q4_choice: ref4 ? ref4.value : null,
-    q4_text: ref4Text.trim() || null
-  };
-  const hasAny = data.q1_choice || data.q1_text || data.q2_choice || data.q2_text || data.q3_choice || data.q3_text || data.q4_choice || data.q4_text;
-  if (!hasAny) {
-    alert('Vastaa ainakin yhteen kysymykseen ennen tallennusta.');
-    return;
-  }
-  const feedbackText = JSON.stringify(data);
-  if (typeof window.saveFeedback === 'function') {
-    const result = await window.saveFeedback('moduuli-voice-deep-search', 'voice_deep_search_reflection', feedbackText);
-    if (result && result.success) {
-      const el = document.getElementById('reflectionConfirm');
-      if (el) { el.style.display = 'inline'; setTimeout(() => { el.style.display = 'none'; }, 3000); }
-    }
-  } else {
-    try {
-      const r = await fetch(window.location.origin + '/api/feedback/save', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ moduleId: 'moduuli-voice-deep-search', questionType: 'voice_deep_search_reflection', feedbackText })
-      });
-      if (r.ok) {
-        const el = document.getElementById('reflectionConfirm');
-        if (el) { el.style.display = 'inline'; setTimeout(() => { el.style.display = 'none'; }, 3000); }
-      } else if (r.status === 401) { alert('Kirjaudu sisään tallentaaksesi.'); window.location.href = '/login'; }
-    } catch (e) { console.error(e); alert('Tallennus epäonnistui.'); }
-  }
-};
-</script>
+<script src="/js/studio-voice-realtime.js?v=20260805vds"></script>
 <script src="/js/feedback.js"></script>
+<script>
+(function () {
+  const API = '/api/voice-deep-search';
+  const STORAGE_KEY = 'vds_brief_v1';
+
+  const CALL_META = {
+    case_judgment: {
+      title: 'Tilanne · Matti',
+      idle: 'Lue tilanne ja säännöt. Paina Aloita — Matti puolustaa ideaansa.',
+      otherLabel: 'Matti',
+      needsBrief: false
+    },
+    ai_defense: {
+      title: 'Puolustuspuhelu',
+      idle: 'Tallenna brief ja paina Aloita puhelu — skeptinen esihenkilö aloittaa.',
+      otherLabel: 'Esihenkilö',
+      needsBrief: true
+    },
+    job_interview: {
+      title: 'Työhaastattelu',
+      idle: 'Brief valmis? Paina Aloita — rekrytoija aloittaa.',
+      otherLabel: 'Rekrytoija',
+      needsBrief: true
+    },
+    star_drill: {
+      title: 'STAR-drill',
+      idle: 'Paina Aloita — haastattelija pyytää STAR-tarinaa. Malli on yllä.',
+      otherLabel: 'Haastattelija',
+      needsBrief: false
+    }
+  };
+
+  const state = {
+    brief: loadBrief(),
+    engines: {},
+    sessions: { case_judgment: [], ai_defense: [], job_interview: [], star_drill: [] },
+    active: null
+  };
+
+  function loadBrief() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function briefReady(b) {
+    b = b || state.brief;
+    return !!(
+      String(b.profession || '').trim().length >= 2 &&
+      String(b.tools || '').trim().length >= 8 &&
+      String(b.leverage || '').trim().length >= 8 &&
+      String(b.negatives || '').trim().length >= 8
+    );
+  }
+
+  function buildBriefString() {
+    const b = state.brief;
+    return [
+      'Ammattiala: ' + (b.profession || ''),
+      'AI-työkalut: ' + (b.tools || ''),
+      'Hyödyntäminen: ' + (b.leverage || ''),
+      'Negatiiviset puolet / riskit: ' + (b.negatives || ''),
+      b.notes ? 'Muistiinpanot: ' + b.notes : ''
+    ].filter(Boolean).join('\n');
+  }
+
+  window.copyDeepPrompt = function () {
+    const el = document.getElementById('deepPrompt');
+    const text = el ? el.textContent.trim() : '';
+    navigator.clipboard.writeText(text).then(function () {
+      alert('Aihe kopioitu — liitä ChatGPT Deep Searchiin.');
+    }).catch(function () {
+      prompt('Kopioi aihe:', text);
+    });
+  };
+
+  window.copyVoicePrompt = function () {
+    const el = document.getElementById('voicePromptText');
+    const text = el ? el.textContent.trim() : '';
+    navigator.clipboard.writeText(text).then(function () {
+      alert('Teksti kopioitu — voit myös sanoa sen suoraan ääneen ChatGPT:lle.');
+    }).catch(function () {
+      prompt('Kopioi teksti:', text);
+    });
+  };
+
+  window.saveBrief = function () {
+    state.brief = {
+      profession: (document.getElementById('briefProfession').value || '').trim(),
+      tools: (document.getElementById('briefTools').value || '').trim(),
+      leverage: (document.getElementById('briefLeverage').value || '').trim(),
+      negatives: (document.getElementById('briefNegatives').value || '').trim(),
+      notes: (document.getElementById('briefNotes').value || '').trim(),
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.brief));
+    const st = document.getElementById('briefStatus');
+    if (briefReady()) {
+      st.textContent = '✓ Brief tallennettu — live-puhelut auki';
+      st.style.color = 'var(--accent3)';
+    } else {
+      st.textContent = 'Täytä vielä puuttuvat kentät (ammatti, työkalut, hyöty, haitat).';
+      st.style.color = 'var(--accent2)';
+    }
+    updateLocks();
+    if (typeof window.saveFeedback === 'function') {
+      window.saveFeedback('moduuli-voice-deep-search', 'vds_research_brief', JSON.stringify(state.brief));
+    }
+  };
+
+  function fillBriefFields() {
+    const b = state.brief;
+    if (document.getElementById('briefProfession')) document.getElementById('briefProfession').value = b.profession || '';
+    if (document.getElementById('briefTools')) document.getElementById('briefTools').value = b.tools || '';
+    if (document.getElementById('briefLeverage')) document.getElementById('briefLeverage').value = b.leverage || '';
+    if (document.getElementById('briefNegatives')) document.getElementById('briefNegatives').value = b.negatives || '';
+    if (document.getElementById('briefNotes')) document.getElementById('briefNotes').value = b.notes || '';
+  }
+
+  function updateLocks() {
+    const ready = briefReady();
+    document.querySelectorAll('[data-needs-brief]').forEach(function (btn) {
+      btn.disabled = !ready || btn.dataset.busy === '1';
+    });
+    document.querySelectorAll('[data-open-call]').forEach(function (btn) {
+      btn.disabled = btn.dataset.busy === '1';
+    });
+    const hint = document.getElementById('briefLockHint');
+    if (hint) hint.classList.toggle('show', !ready);
+  }
+
+  function esc(t) {
+    return String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function fmtTime(s) {
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  function mountCallUI(scenarioId) {
+    const meta = CALL_META[scenarioId];
+    const root = document.getElementById('call-' + scenarioId);
+    if (!root) return;
+    root.innerHTML =
+      '<div class="call-screen" id="screen-' + scenarioId + '">' +
+        '<div class="call-top">' +
+          '<span class="call-top-title">📞 ' + esc(meta.title) + ' <span class="live-badge" id="live-' + scenarioId + '">● Live</span></span>' +
+          '<span id="top-' + scenarioId + '" style="font-size:.88rem">Valmis</span>' +
+        '</div>' +
+        '<div class="call-q-area">' +
+          '<div class="call-dots" id="dots-' + scenarioId + '"></div>' +
+          '<span class="call-label" id="phase-' + scenarioId + '">Valmis</span>' +
+          '<span class="call-tag" id="tag-' + scenarioId + '" style="display:none"></span>' +
+          '<div class="call-text" id="line-' + scenarioId + '">' + esc(meta.idle) + '</div>' +
+        '</div>' +
+        '<div class="call-body">' +
+          '<div class="timeline-empty" id="empty-' + scenarioId + '">Vastauksesi tallentuvat tähän kun puhut…</div>' +
+          '<div class="timeline-cards" id="cards-' + scenarioId + '"></div>' +
+        '</div>' +
+        '<div class="call-controls">' +
+          '<button class="btn btn-start" ' + (meta.needsBrief ? 'data-needs-brief' : 'data-open-call') + ' id="start-' + scenarioId + '" type="button">● Aloita puhelu</button>' +
+          '<button class="btn btn-stop" id="stop-' + scenarioId + '" type="button" disabled>■ Lopeta</button>' +
+          '<span class="timer" id="timer-' + scenarioId + '">0:00</span>' +
+        '</div>' +
+        '<div class="status" id="status-' + scenarioId + '">' + (meta.needsBrief ? 'Tallenna tutkimusbrief ensin' : 'Valmis aloittamaan — säännöt näkyvät yllä') + '</div>' +
+        '<div id="audio-' + scenarioId + '" aria-hidden="true"></div>' +
+      '</div>' +
+      '<div class="fb-panel" id="fb-' + scenarioId + '"><h3>Claude-valmentajan palaute</h3><pre id="fbtext-' + scenarioId + '"></pre></div>';
+
+    document.getElementById('start-' + scenarioId).addEventListener('click', function () {
+      startCall(scenarioId);
+    });
+    document.getElementById('stop-' + scenarioId).addEventListener('click', function () {
+      stopCall(scenarioId, true);
+    });
+  }
+
+  function setDots(scenarioId, count, activeIndex, doneCount) {
+    const wrap = document.getElementById('dots-' + scenarioId);
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+      const d = document.createElement('div');
+      d.className = 'call-dot';
+      if (i < doneCount) d.classList.add('done');
+      else if (i === activeIndex) d.classList.add('active');
+      wrap.appendChild(d);
+    }
+  }
+
+  function renderTimeline(scenarioId) {
+    const sessions = state.sessions[scenarioId] || [];
+    const cards = document.getElementById('cards-' + scenarioId);
+    const empty = document.getElementById('empty-' + scenarioId);
+    const meta = CALL_META[scenarioId];
+    const filled = sessions.filter(Boolean);
+    if (!filled.length) {
+      cards.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    cards.innerHTML = filled.map(function (s) {
+      return '<div class="t-card">' +
+        '<span class="t-card-who other">' + esc(meta.otherLabel) + '</span>' + esc(s.clientText || s.question || '') +
+        '<span class="t-card-who" style="margin-top:10px">Sinä</span>' + esc(s.transcript || '') +
+        '</div>';
+    }).join('');
+  }
+
+  async function startCall(scenarioId) {
+    const meta = CALL_META[scenarioId] || {};
+    if (meta.needsBrief !== false && !briefReady()) {
+      const hint = document.getElementById('briefLockHint');
+      if (hint) hint.classList.add('show');
+      document.getElementById('deepsearch').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    if (!window.StudioVoiceCall || !window.RTCPeerConnection) {
+      alert('Selaimesi ei tue live-ääntä (WebRTC).');
+      return;
+    }
+    if (state.active && state.active !== scenarioId) {
+      await stopCall(state.active, false);
+    }
+
+    const startBtn = document.getElementById('start-' + scenarioId);
+    const stopBtn = document.getElementById('stop-' + scenarioId);
+    startBtn.dataset.busy = '1';
+    startBtn.disabled = true;
+    stopBtn.style.display = 'inline-flex';
+    stopBtn.disabled = false;
+    document.getElementById('live-' + scenarioId).classList.add('show');
+    document.getElementById('fb-' + scenarioId).classList.remove('show');
+    state.sessions[scenarioId] = [];
+    renderTimeline(scenarioId);
+
+    let elapsed = 0;
+    const timerEl = document.getElementById('timer-' + scenarioId);
+    const timerInt = setInterval(function () {
+      elapsed += 1;
+      timerEl.textContent = fmtTime(elapsed);
+    }, 1000);
+
+    const ctx = {
+      scenarioId: scenarioId,
+      timerInt: timerInt,
+      doneCount: 0,
+      expectedTurns: 5,
+      lastClientText: ''
+    };
+    state.active = scenarioId;
+    state.engines[scenarioId] = ctx;
+
+    const engine = new StudioVoiceCall({
+      apiBase: API,
+      scenario: scenarioId,
+      brief: meta.needsBrief === false ? '' : buildBriefString(),
+      audioMount: document.getElementById('audio-' + scenarioId),
+      onStatus: function (msg) {
+        document.getElementById('status-' + scenarioId).textContent = msg;
+        document.getElementById('top-' + scenarioId).textContent = msg;
+      },
+      onPhaseChange: function (info) {
+        document.getElementById('phase-' + scenarioId).textContent = info.label || 'Live';
+        const tag = document.getElementById('tag-' + scenarioId);
+        if (info.tag) {
+          tag.textContent = info.tag;
+          tag.style.display = 'inline-block';
+        } else {
+          tag.style.display = 'none';
+        }
+        if (info.clientText) {
+          document.getElementById('line-' + scenarioId).textContent = info.clientText;
+          ctx.lastClientText = info.clientText;
+        }
+        setDots(scenarioId, ctx.expectedTurns, ctx.doneCount, ctx.doneCount);
+      },
+      onAssistantText: function (text) {
+        if (text) {
+          document.getElementById('line-' + scenarioId).textContent = text;
+          ctx.lastClientText = text;
+        }
+      },
+      onUserTranscript: function (payload) {
+        const idx = payload.index;
+        state.sessions[scenarioId][idx] = {
+          index: idx,
+          label: payload.label,
+          phase: payload.phase,
+          clientText: ctx.lastClientText || '',
+          question: ctx.lastClientText || '',
+          transcript: payload.transcript
+        };
+        ctx.doneCount = idx + 1;
+        setDots(scenarioId, ctx.expectedTurns, ctx.doneCount, ctx.doneCount);
+        renderTimeline(scenarioId);
+      },
+      onComplete: function () {
+        finishCall(scenarioId, true);
+      },
+      onError: function (err) {
+        console.warn('[vds]', err);
+        document.getElementById('status-' + scenarioId).textContent =
+          (err && err.message) || 'Yhteysvirhe — yritä uudelleen.';
+      }
+    });
+    ctx.engine = engine;
+
+    try {
+      await engine.start();
+      ctx.expectedTurns = engine.expectedTurns || 5;
+      setDots(scenarioId, ctx.expectedTurns, 0, 0);
+    } catch (err) {
+      clearInterval(timerInt);
+      startBtn.dataset.busy = '0';
+      startBtn.disabled = false;
+      stopBtn.style.display = 'none';
+      stopBtn.disabled = true;
+      document.getElementById('live-' + scenarioId).classList.remove('show');
+      document.getElementById('status-' + scenarioId).textContent = err.message || 'Live-yhteys epäonnistui';
+      state.active = null;
+      updateLocks();
+    }
+  }
+
+  async function stopCall(scenarioId, wantFeedback) {
+    const ctx = state.engines[scenarioId];
+    if (!ctx) return;
+    try {
+      if (ctx.engine) ctx.engine.stop();
+    } catch (e) {}
+    clearInterval(ctx.timerInt);
+    await finishCall(scenarioId, wantFeedback);
+  }
+
+  async function finishCall(scenarioId, wantFeedback) {
+    const ctx = state.engines[scenarioId];
+    if (!ctx) return;
+    clearInterval(ctx.timerInt);
+    document.getElementById('live-' + scenarioId).classList.remove('show');
+    const startBtn = document.getElementById('start-' + scenarioId);
+    const stopBtn = document.getElementById('stop-' + scenarioId);
+    startBtn.dataset.busy = '0';
+    stopBtn.style.display = 'none';
+    stopBtn.disabled = true;
+    state.active = null;
+    state.engines[scenarioId] = null;
+    updateLocks();
+
+    const sessions = (state.sessions[scenarioId] || []).filter(Boolean);
+    if (!wantFeedback || !sessions.length) {
+      document.getElementById('status-' + scenarioId).textContent = sessions.length
+        ? 'Puhelu päättyi.'
+        : 'Puhelu päättyi ilman vastauksia.';
+      return;
+    }
+
+    document.getElementById('status-' + scenarioId).textContent = 'Claude kirjoittaa palautetta…';
+    try {
+      const r = await fetch(API + '/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          scenarioId: scenarioId,
+          brief: buildBriefString(),
+          sessions: sessions
+        }),
+        signal: AbortSignal.timeout(50000)
+      });
+      const d = await r.json().catch(function () { return {}; });
+      const text = d.feedback || d.error || 'Palaute ei saatavilla.';
+      document.getElementById('fbtext-' + scenarioId).textContent = text;
+      document.getElementById('fb-' + scenarioId).classList.add('show');
+      document.getElementById('status-' + scenarioId).textContent = '✓ Palaute valmis — voit yrittää uudelleen';
+      if (typeof window.saveFeedback === 'function') {
+        window.saveFeedback(
+          'moduuli-voice-deep-search',
+          'vds_call_' + scenarioId,
+          JSON.stringify({ sessions: sessions, feedback: text, brief: state.brief })
+        );
+      }
+    } catch (err) {
+      document.getElementById('status-' + scenarioId).textContent = 'Palaute epäonnistui — litterointi silti tallessa.';
+      document.getElementById('fbtext-' + scenarioId).textContent =
+        'Palaute epäonnistui. Litterointi:\n\n' +
+        sessions.map(function (s, i) {
+          return (i + 1) + ') ' + (s.clientText || '') + '\n→ ' + (s.transcript || '');
+        }).join('\n\n');
+      document.getElementById('fb-' + scenarioId).classList.add('show');
+    }
+  }
+
+  window.saveVoiceReflection = async function () {
+    const ref1 = document.querySelector('input[name="ref1"]:checked');
+    const data = {
+      hardest: ref1 ? ref1.value : null,
+      hardest_text: (document.getElementById('ref1_text').value || '').trim(),
+      keep_line: (document.getElementById('ref2_text').value || '').trim()
+    };
+    if (!data.hardest && !data.hardest_text && !data.keep_line) {
+      alert('Vastaa ainakin yhteen kohtaan.');
+      return;
+    }
+    const feedbackText = JSON.stringify(data);
+    let ok = false;
+    if (typeof window.saveFeedback === 'function') {
+      const result = await window.saveFeedback('moduuli-voice-deep-search', 'voice_deep_search_reflection', feedbackText);
+      ok = !!(result && result.success);
+    } else {
+      try {
+        const r = await fetch('/api/feedback/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            moduleId: 'moduuli-voice-deep-search',
+            questionType: 'voice_deep_search_reflection',
+            feedbackText: feedbackText
+          })
+        });
+        ok = r.ok;
+      } catch (e) {}
+    }
+    const el = document.getElementById('reflectionConfirm');
+    if (ok && el) {
+      el.style.display = 'inline';
+      setTimeout(function () { el.style.display = 'none'; }, 3000);
+    } else if (!ok) {
+      alert('Tallennus epäonnistui — oletko kirjautunut?');
+    }
+  };
+
+  // Boot
+  ['case_judgment', 'ai_defense', 'job_interview', 'star_drill'].forEach(mountCallUI);
+  fillBriefFields();
+  updateLocks();
+  ['briefProfession', 'briefTools', 'briefLeverage', 'briefNegatives', 'briefNotes'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', window.saveBrief);
+  });
+
+  const sections = document.querySelectorAll('.section[data-index]');
+  const navSteps = document.getElementById('navSteps');
+  const progressBar = document.getElementById('progress-bar');
+  sections.forEach(function (s, i) {
+    const pip = document.createElement('div');
+    pip.className = 'step-pip' + (i === 0 ? ' active' : '');
+    pip.addEventListener('click', function () { s.scrollIntoView({ behavior: 'smooth' }); });
+    navSteps.appendChild(pip);
+  });
+  function updateProgress() {
+    const st = window.scrollY;
+    const dh = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.width = (dh > 0 ? (st / dh) * 100 : 0) + '%';
+    let ai = 0;
+    sections.forEach(function (s, i) {
+      if (s.getBoundingClientRect().top <= window.innerHeight * 0.5) ai = i;
+    });
+    navSteps.querySelectorAll('.step-pip').forEach(function (p, i) {
+      p.classList.remove('active', 'done');
+      if (i === ai) p.classList.add('active');
+      else if (i < ai) p.classList.add('done');
+    });
+  }
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+})();
+</script>
 </body>
 </html>
