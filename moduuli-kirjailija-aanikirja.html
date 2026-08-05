@@ -498,14 +498,25 @@ label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 
       </div>
       <p class="shot-cap">Näin äänikirjamainen kuuntelu voi näyttää ElevenLabsissa — sana korostuu kun ääni etenee. Sinun harjoituksesi tavoite on silti: generoi + lataa tiedosto omasta tekstistäsi.</p>
 
-      <label class="field" for="elevenVoicePick" style="margin-top:1rem;">Minkä äänen valitsit ja miksi?</label>
-      <textarea id="elevenVoicePick" placeholder="Esim. Valitsin rauhallisen kertojaäänen, koska tarinani on hiljainen ja hidas…"></textarea>
-      <label class="field" for="elevenListenNotes">Mitä huomasit kuunnellessa omaa tekstiäsi? (vähintään 40 merkkiä)</label>
-      <textarea id="elevenListenNotes" placeholder="Esim. Yksi lause oli liian pitkä ääneen. Vaihdan sen kirjoittaessa lyhyemmäksi…"></textarea>
+      <div class="arena-step" style="margin-top:1.25rem;">Reflektio — kuuntele kuin kustannustoimittaja</div>
+      <p class="intro" style="margin-bottom:0.75rem;">Ääni ei ole vain “kaunis / ei kaunis”. Se paljastaa tekstin rytmin, hengityksen ja sen, toimivatko lauseet luettuina.</p>
+
+      <label class="field" for="elevenVoicePick">Miten valitsit äänen suhteessa tekstin rekisteriin?</label>
+      <textarea id="elevenVoicePick" placeholder="Esim. Valitsin matalan, hitaan kertojan, koska tekstissä on paljon taukoja ja painotettuja yksityiskohtia. Nopea / nuorekas ääni olisi tehnyt tunnelmasta kevyemmän kuin kirjoitin…"></textarea>
+
+      <label class="field" for="elevenListenNotes">Mitkä lauseet tai kohdat kuulostivat ääneen erilaisilta kuin paperilla? (vähintään 80 merkkiä)</label>
+      <textarea id="elevenListenNotes" placeholder="Esim. Kolmas kappale oli kirjoitettuna ok, mutta ääneen se oli yksi pitkä hengitys ilman taukoa. Listaaminen kuulosti raportilta. Vaihdan rytmiä / pilkon lauseen…"></textarea>
       <div class="char-row">
-        <span id="elevenNotesCount" class="char-count">0 / 40 merkkiä</span>
+        <span id="elevenNotesCount" class="char-count">0 / 80 merkkiä</span>
       </div>
-      <p class="hint">Älä kloonaa toisen ihmisen ääntä ilman lupaa. Käytä kirjaston valmista ääntä.</p>
+
+      <label class="field" for="elevenEditPlan">Mitä muutat tekstissä sen perusteella, mitä kuulit? (konkreettinen korjaus)</label>
+      <textarea id="elevenEditPlan" placeholder="Esim. Lyhennän yhden 40 sanan lauseen kahdeksi. Siirrän aistihavainnon dialogin eteen. Poistan toiston sanasta “sitten”…"></textarea>
+
+      <label class="field" for="elevenAudiobookFit">Sopisiko tämä ääni äänikirjan näytteeksi — miksi tai miksi ei?</label>
+      <textarea id="elevenAudiobookFit" placeholder="Esim. Tunnelma vastaa, mutta suomen painotus oli epätasainen / tempo oli liian nopea salaisuuden paljastukseen. Kokeilisin toista ääntä tai hidastaisin Stability/Clarity-asetuksia…"></textarea>
+
+      <p class="hint">Ääniklonaus vain luvan kanssa. Käytä kirjaston valmista ääntä.</p>
     </div>
   </div>
 </section>
@@ -1097,8 +1108,11 @@ function copyPrompt(btn) {
   var msg = document.getElementById('voiceCopyMsg');
   var notes = document.getElementById('elevenListenNotes');
   var pick = document.getElementById('elevenVoicePick');
+  var editPlan = document.getElementById('elevenEditPlan');
+  var audiobookFit = document.getElementById('elevenAudiobookFit');
   var countEl = document.getElementById('elevenNotesCount');
-  var KEY = 'kirjailija_elevenlabs_v1';
+  var KEY = 'kirjailija_elevenlabs_v2';
+  var MIN_NOTES = 80;
 
   function showMsg(text, kind) {
     if (!msg) return;
@@ -1109,15 +1123,17 @@ function copyPrompt(btn) {
   function updateCount() {
     if (!notes || !countEl) return;
     var n = (notes.value || '').trim().length;
-    countEl.textContent = n + ' / 40 merkkiä' + (n >= 40 ? ' ✓' : '');
-    countEl.className = 'char-count ' + (n >= 40 ? 'ok' : '');
+    countEl.textContent = n + ' / ' + MIN_NOTES + ' merkkiä' + (n >= MIN_NOTES ? ' ✓' : '');
+    countEl.className = 'char-count ' + (n >= MIN_NOTES ? 'ok' : '');
   }
 
   function saveLocal() {
     try {
       localStorage.setItem(KEY, JSON.stringify({
         elevenVoicePick: pick ? pick.value : '',
-        elevenListenNotes: notes ? notes.value : ''
+        elevenListenNotes: notes ? notes.value : '',
+        elevenEditPlan: editPlan ? editPlan.value : '',
+        elevenAudiobookFit: audiobookFit ? audiobookFit.value : ''
       }));
     } catch (e) {}
   }
@@ -1126,6 +1142,8 @@ function copyPrompt(btn) {
     var saved = JSON.parse(localStorage.getItem(KEY) || '{}');
     if (pick && saved.elevenVoicePick) pick.value = saved.elevenVoicePick;
     if (notes && saved.elevenListenNotes) notes.value = saved.elevenListenNotes;
+    if (editPlan && saved.elevenEditPlan) editPlan.value = saved.elevenEditPlan;
+    if (audiobookFit && saved.elevenAudiobookFit) audiobookFit.value = saved.elevenAudiobookFit;
   } catch (e) {}
   updateCount();
 
@@ -1147,6 +1165,8 @@ function copyPrompt(btn) {
   }
   if (notes) notes.addEventListener('input', function () { updateCount(); saveLocal(); });
   if (pick) pick.addEventListener('input', saveLocal);
+  if (editPlan) editPlan.addEventListener('input', saveLocal);
+  if (audiobookFit) audiobookFit.addEventListener('input', saveLocal);
 })();
 
 (function persist() {
