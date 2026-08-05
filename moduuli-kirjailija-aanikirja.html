@@ -133,6 +133,136 @@ label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 
 }
 .final h2 { font-family: 'DM Serif Display', serif; font-size: 2rem; margin-bottom: 0.75rem; }
 .final p { color: rgba(255,255,255,0.7); max-width: 32em; margin: 0 auto 1.5rem; }
+
+/* Claude vs GPT arena */
+.arena {
+  background: #fff; border: 2px solid var(--accent); border-radius: 16px;
+  padding: 1.5rem 1.4rem; margin: 1.25rem 0;
+}
+.arena-step {
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 0.35rem;
+}
+.char-row {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; margin: 0.25rem 0 0.85rem; font-size: 0.88rem;
+}
+.char-count { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+.char-count.ok { color: var(--accent); font-weight: 700; }
+.char-count.bad { color: var(--ember); font-weight: 700; }
+.btn-run {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; background: var(--ink); color: #fff; font: inherit; font-weight: 700;
+  font-size: 15px; padding: 13px 22px; border-radius: 10px; cursor: pointer;
+  width: 100%; max-width: 420px;
+}
+.btn-run:hover { background: var(--ink2); }
+.btn-run:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-secondary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 2px solid var(--border); background: #fff; color: var(--ink); font: inherit;
+  font-weight: 700; font-size: 14px; padding: 11px 16px; border-radius: 10px; cursor: pointer;
+  text-decoration: none;
+}
+.btn-secondary:hover { border-color: var(--ink); }
+.btn-secondary.claude-link { border-color: rgba(194,65,12,0.4); color: var(--ember); }
+.btn-secondary.gpt-link { border-color: rgba(15,118,110,0.4); color: var(--accent); }
+.btn-secondary.gemini-link { border-color: rgba(66,133,244,0.55); color: #1a73e8; }
+.open-row {
+  display: flex; flex-wrap: wrap; gap: 10px; margin: 0.85rem 0 1.1rem;
+}
+.compare-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 1.25rem 0;
+}
+@media (max-width: 720px) { .compare-grid { grid-template-columns: 1fr; } }
+.model-card {
+  border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem 1.15rem;
+  background: var(--paper); display: flex; flex-direction: column;
+}
+.model-card.claude { border-color: rgba(194,65,12,0.35); background: rgba(194,65,12,0.04); }
+.model-card.gpt { border-color: rgba(15,118,110,0.35); background: rgba(15,118,110,0.05); }
+.model-card h3 {
+  font-size: 1rem; font-weight: 700; margin-bottom: 0.65rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.model-card .badge {
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 3px 7px; border-radius: 4px; font-weight: 700;
+}
+.model-card.claude .badge { background: rgba(194,65,12,0.12); color: var(--ember); }
+.model-card.gpt .badge { background: rgba(15,118,110,0.12); color: var(--accent); }
+.model-card textarea {
+  min-height: 180px; background: #fff; margin: 0.35rem 0 0;
+  font-size: 0.9rem; line-height: 1.6;
+}
+.hint-list {
+  margin: 0.5rem 0 1rem; padding-left: 1.2rem; color: var(--ink2); font-size: 0.95rem;
+}
+.hint-list li { margin: 0.35rem 0; }
+.prompt-preview {
+  position: relative; background: #1c1917; color: rgba(255,255,255,0.88);
+  border-radius: 12px; padding: 1rem 1.1rem; margin: 0.75rem 0;
+  font-size: 0.88rem; line-height: 1.65; white-space: pre-wrap;
+  max-height: 280px; overflow: auto; font-family: 'DM Mono', monospace;
+}
+.prompt-preview .lbl {
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(255,255,255,0.45); margin-bottom: 0.5rem; font-family: 'DM Mono', monospace;
+}
+.prompt-preview .copy-btn {
+  position: absolute; top: 8px; right: 8px; border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08); color: #fff; border-radius: 6px;
+  padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.prompt-preview .copy-btn:hover { background: rgba(255,255,255,0.18); }
+.steps-locked { opacity: 0.4; pointer-events: none; filter: grayscale(0.3); }
+.steps-locked.unlocked { opacity: 1; pointer-events: auto; filter: none; }
+.vote-row {
+  display: flex; flex-wrap: wrap; gap: 10px; margin: 1rem 0 0.75rem;
+}
+.vote-btn {
+  flex: 1; min-width: 120px; border: 2px solid var(--border); background: #fff;
+  border-radius: 10px; padding: 12px 14px; font: inherit; font-weight: 700;
+  cursor: pointer; text-align: center;
+}
+.vote-btn:hover { border-color: var(--ink); }
+.vote-btn.selected { border-color: var(--accent); background: rgba(15,118,110,0.08); color: var(--accent); }
+.vote-btn.selected.ember { border-color: var(--ember); background: rgba(194,65,12,0.08); color: var(--ember); }
+.arena-msg {
+  font-size: 0.9rem; margin: 0.75rem 0; padding: 0.75rem 1rem; border-radius: 10px;
+  display: none;
+}
+.arena-msg.show { display: block; }
+.arena-msg.err { background: rgba(194,65,12,0.1); color: var(--ember); border: 1px solid rgba(194,65,12,0.25); }
+.arena-msg.ok { background: rgba(15,118,110,0.1); color: var(--accent); border: 1px solid rgba(15,118,110,0.25); }
+.judge-locked { opacity: 0.45; pointer-events: none; }
+.ai-plot {
+  background: #f5f5f4; border: 1px dashed rgba(28,25,23,0.25);
+  border-radius: 14px; padding: 1.25rem 1.35rem; margin: 1rem 0;
+}
+.ai-plot .ai-label {
+  font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 0.85rem;
+}
+.ai-plot .beat {
+  margin: 0 0 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line);
+}
+.ai-plot .beat:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.ai-plot .beat strong {
+  display: block; font-size: 0.82rem; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--ember); margin-bottom: 0.35rem;
+}
+.ai-plot .beat p { color: var(--ink2); font-size: 0.95rem; line-height: 1.7; margin: 0; }
+.philosophy {
+  background: linear-gradient(135deg, rgba(15,118,110,0.08), rgba(194,65,12,0.06));
+  border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem 1.35rem; margin: 1rem 0 1.5rem;
+}
+.philosophy h3 {
+  font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 1.35rem;
+  margin-bottom: 0.5rem; line-height: 1.3;
+}
+.philosophy p { color: var(--ink2); font-size: 0.98rem; line-height: 1.7; margin: 0 0 0.65rem; }
+.philosophy p:last-child { margin-bottom: 0; }
 @media (max-width: 640px) {
   .nav-title { display: none; }
   .hero { padding-top: 90px; }
@@ -150,23 +280,266 @@ label.field { display: block; font-weight: 700; font-size: 0.95rem; margin-top: 
 <header class="hero">
   <div class="eyebrow">Henkilökohtainen päivä · Kirjailija · Äänikirja</div>
   <h1>Sinä kirjoitat.<br><em>AI on apulainen.</em></h1>
-  <p class="lead">Tämä päivä on kirjailijalle joka haluaa kehittää synopsista, tarinaa ja äänikirjaa — ilman että tekoäly kaappaa äänen tai juonen. Alla <strong>22 työkalua</strong>, joita et ole vielä käyttänyt tällä kurssilla (ei ChatGPT / Claude / Gemini / Perplexity / NotebookLM / Grok / Manus / Base44 / Gamma / Canva).</p>
+  <p class="lead">Kirjoitat itse aiheesta jota <strong>rakastat</strong>, rakennat promptin, vertaat <strong>Claudea</strong> ja <strong>GPT:tä</strong>, muutat AI-juonen omiksi sanoiksesi, ja herätät hetken <strong>Gemini</strong>-kuvalla sekä lyhyellä videolla. AI nopeuttaa — ääni jää sinulle.</p>
   <div class="rule-box">
     <strong>Kultainen sääntö koko päivän</strong>
-    <p>1) Kirjoita ensin itse (käsin / omilla sanoilla). 2) Anna AI:lle vain kysymys, kritiikki tai ääni — ei “kirjoita luku puolestani”. 3) Sinä päätät mikä jää käsikirjoitukseen. Jos AI kuulostaa geneeriseltä → heitä pois.</p>
+    <p>1) Kirjoita ensin itse — vähintään 1000 merkkiä. 2) Sinä kirjoitat promptin. 3) Sama prompt molempiin työkaluihin. 4) Sinä tuomitset kumpi on parempi — ja miksi.</p>
   </div>
   <div class="hours">
-    <div class="hour-pip"><strong>0–1</strong>Sääntö + synopsiksen runko</div>
-    <div class="hour-pip"><strong>1–2</strong>Tarinan kartta (8 työkalua)</div>
-    <div class="hour-pip"><strong>2–3</strong>Kritiikki &amp; kieli (5)</div>
-    <div class="hour-pip"><strong>3–4,5</strong>Äänikirja-vertailu (7)</div>
-    <div class="hour-pip"><strong>4,5–5</strong>Oma työkalupino</div>
+    <div class="hour-pip"><strong>0–1</strong>Oma teksti · Claude vs GPT</div>
+    <div class="hour-pip"><strong>1–2</strong>AI-juoni → omat sanat</div>
+    <div class="hour-pip"><strong>2–3</strong>Gemini: kuva → video</div>
+    <div class="hour-pip"><strong>3–4</strong>Kartta · edit · äänikirja</div>
+    <div class="hour-pip"><strong>4–5</strong>Oma työkalupino</div>
   </div>
   <label class="field" for="bookTitle">Kirjan / projektin työnimi (täytä nyt)</label>
   <input type="text" id="bookTitle" placeholder="Esim. työsi nimi tai ‘Romaani X’" maxlength="160"/>
-  <label class="field" for="ownSynopsis">Oma synopsis — kirjoita 5–8 lausetta ITSE ennen työkaluja</label>
-  <textarea id="ownSynopsis" placeholder="Kuka, missä, mitä haluaa, mikä estää, miten muuttuu… omin sanoin."></textarea>
 </header>
+
+<!-- ARENA: write about what you love → Claude vs GPT -->
+<section class="section" id="arena">
+  <div class="section-inner">
+    <div class="section-label">Blokki 0 · Pakollinen harjoitus</div>
+    <h2>Kirjoita jostain jota <em>rakastat</em></h2>
+    <p class="intro">Valitse aihe jota oikeasti välität. Kirjoita omin sanoin vähintään <strong>1000 merkkiä</strong>. Sitten rakennat <strong>oman promptin</strong>, avaat Clauden ja ChatGPT:n, liität saman promptin molempiin — ja päätät kumpi kirjoitti paremmin.</p>
+
+    <div class="arena">
+      <div class="arena-step">Vaihe 1 · Oma teksti (ei AI:ta)</div>
+      <label class="field" for="loveTopic">Aihe jota rakastat</label>
+      <input type="text" id="loveTopic" placeholder="Esim. yökalastus, isoäidin keittiö, jazz, korjausrakentaminen…" maxlength="120"/>
+
+      <label class="field" for="loveText">Kirjoita tähän (min. 1000 merkkiä)</label>
+      <textarea id="loveText" style="min-height:220px" placeholder="Kerro mitä rakastat, miksi, millaisia aistimuksia, ristiriitoja, muistoja… Kirjoita kuin lukijalle joka ei ole koskaan kokenut tätä. Älä käytä AI:ta tässä vaiheessa."></textarea>
+      <div class="char-row">
+        <span id="loveCharCount" class="char-count bad">0 / 1000 merkkiä</span>
+        <span style="font-size:0.85rem;color:var(--muted);">Prompt-vaihe aukeaa kun raja täyttyy</span>
+      </div>
+
+      <div id="promptSteps" class="steps-locked">
+        <div class="arena-step" style="margin-top:1.25rem;">Vaihe 2 · Rakenna promptti jonka annat molemmille</div>
+        <p class="intro" style="margin-bottom:0.5rem;">Kirjoita ohje jonka liität <strong>sellaisenaan</strong> Claudelle ja GPT:lle. Hyvä promptti pyytää jotain konkreettista (jatko / ideat / synopsis) ja kieltää geneerisen tekstin.</p>
+        <ul class="hint-list">
+          <li>Pyydä esim. jatkoa (~150 sanaa), 5 ideaa ja 5–8 lauseen synopsis</li>
+          <li>Kielto: “älä kirjoita koko kirjaa / älä muuta ääntäni geneeriseksi”</li>
+          <li>Oma tekstisi liitetään automaattisesti promptin loppuun — älä poista sitä</li>
+        </ul>
+
+        <label class="field" for="promptInstr">Sinun ohje AI:lle (min. 120 merkkiä)</label>
+        <textarea id="promptInstr" style="min-height:140px" placeholder="Esim. Olet kirjoituskumppani. Älä kirjoita kirjaa puolestani. Tekstini pohjalta: 1) JATKO ~150 sanaa minun äänelläni 2) IDEOITA — 5 konkreettista 3) SYNOPSIS — 5–8 lausetta. Älä kehu tyhjästi. Pidä konkreettiset aistihavainnot."></textarea>
+        <div class="char-row">
+          <span id="promptCharCount" class="char-count">0 / 120 merkkiä ohjeeseen</span>
+          <button type="button" class="btn-secondary" id="fillPromptHint" style="padding:7px 12px;font-size:12px;">Täytä esimerkki-ohje</button>
+        </div>
+
+        <div class="prompt-preview" id="fullPromptBox">
+          <div class="lbl">Valmis promptti · kopioi tämä molempiin</div>
+          <button type="button" class="copy-btn" id="copyFullPrompt">kopioi</button>
+          <div id="fullPromptText">Kirjoita ensin aihe + 1000 merkkiä + ohje — valmis promptti muodostuu tähän.</div>
+        </div>
+        <button type="button" class="btn-run" id="copyAndUnlock" disabled style="max-width:360px;">Kopioi promptti → avaa työkalut</button>
+        <div id="arenaMsg" class="arena-msg"></div>
+
+        <div id="toolSteps" class="steps-locked">
+          <div class="arena-step" style="margin-top:1.25rem;">Vaihe 3 · Avaa työkalut ja liitä sama promptti</div>
+          <ol class="hint-list">
+            <li>Kopioi yllä oleva promptti (jos et jo kopioinut)</li>
+            <li>Avaa <strong>Claude</strong> → liitä → lähetä</li>
+            <li>Avaa <strong>ChatGPT</strong> → liitä <em>sama</em> promptti → lähetä</li>
+            <li>Liitä molempien vastaukset alle (tai tiivistä mitä sait)</li>
+          </ol>
+          <div class="open-row">
+            <a class="btn-secondary claude-link" href="https://claude.ai/new" target="_blank" rel="noopener">Avaa Claude →</a>
+            <a class="btn-secondary gpt-link" href="https://chatgpt.com/" target="_blank" rel="noopener">Avaa ChatGPT →</a>
+            <button type="button" class="btn-secondary" id="copyFullPrompt2">Kopioi promptti uudelleen</button>
+          </div>
+
+          <div class="compare-grid">
+            <div class="model-card claude">
+              <h3><span class="badge">Claude</span> Mitä sait?</h3>
+              <label class="field" for="claudePaste" style="font-size:0.85rem;font-weight:600;">Liitä Clauden vastaus (tai tiivistelmä)</label>
+              <textarea id="claudePaste" placeholder="Liitä tähän Clauden tuottama jatko / ideat / synopsis…"></textarea>
+            </div>
+            <div class="model-card gpt">
+              <h3><span class="badge">GPT</span> Mitä sait?</h3>
+              <label class="field" for="gptPaste" style="font-size:0.85rem;font-weight:600;">Liitä GPT:n vastaus (tai tiivistelmä)</label>
+              <textarea id="gptPaste" placeholder="Liitä tähän ChatGPT:n tuottama jatko / ideat / synopsis…"></textarea>
+            </div>
+          </div>
+
+          <div id="judgeBox" class="judge-locked">
+            <div class="arena-step">Vaihe 4 · Tuomio — kumpi oli parempi?</div>
+            <p class="intro" style="margin-bottom:0.5rem;">Sama promptti, kaksi työkalua. Kumpi palveli <em>sinun</em> ääntäsi paremmin? Perustele konkreettisesti.</p>
+            <div class="vote-row" role="group" aria-label="Voittaja">
+              <button type="button" class="vote-btn ember" data-vote="claude">Claude oli parempi</button>
+              <button type="button" class="vote-btn" data-vote="gpt">GPT oli parempi</button>
+              <button type="button" class="vote-btn" data-vote="tie">Tasapeli / eri vahvuudet</button>
+            </div>
+            <label class="field" for="loveWhy">Miksi? Mitä oli parempaa? (min. 80 merkkiä)</label>
+            <textarea id="loveWhy" placeholder="Esim. Claude säilytti minun rytmini; GPT:n synopsis oli terävämpi mutta jatko kuulosti geneeriseltä. Prompttini toimi paremmin kun…"></textarea>
+            <div class="char-row">
+              <span id="whyCharCount" class="char-count">0 / 80 merkkiä perusteluun</span>
+            </div>
+            <button type="button" class="btn-run" id="saveJudgment" style="max-width:280px;margin-top:0.5rem;">Tallenna tuomio</button>
+            <div id="judgeMsg" class="arena-msg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <label class="field" for="ownSynopsis">Oma synopsis — tiivistä AI-vertailun jälkeen (5–8 lausetta ITSE)</label>
+    <textarea id="ownSynopsis" placeholder="Nyt kun näit Clauden ja GPT:n synopsikset: kirjoita OMA versiosi omin sanoin. Älä kopioi AI:ta sellaisenaan."></textarea>
+  </div>
+</section>
+
+<!-- EXERCISE 2: AI plot → human rewrite -->
+<section class="section section-alt" id="humanize">
+  <div class="section-inner">
+    <div class="section-label">Harjoitus 2 · AI-idea → ihmisen sanat</div>
+    <h2>AI antaa juonen.<br><em>Sinä teet siitä tarinan.</em></h2>
+    <p class="intro">Alla on valmis juoni — alku, keski ja loppu — sellaisena kuin AI tyypillisesti sen kirjoittaa: toimiva, mutta hiukan geneerinen. Sinun työsi ei ole pelätä sitä. Sinun työsi on <strong>muuttaa se omiksi, inhimillisiksi sanoiksi</strong>.</p>
+
+    <div class="philosophy">
+      <h3>Teknologia ei varasta ääntäsi — ellei sinä anna sitä.</h3>
+      <p>AI voi antaa ideoita nopeasti. Se ei tee sinusta vähemmän kirjailijaa. Se tekee rakenteesta helpompaa — <em>jos</em> sinä pidät vallan ajatuksistasi.</p>
+      <p>Pelko (“AI vie ihmisyyden”) on turha, kun sääntö on selvä: AI ehdottaa juonen. <strong>Sinä kirjoitat tarinan.</strong> Alkuperäisyys syntyy siitä miten näet, kuulet ja tunnet — ei siitä että kieltäydyt työkalusta.</p>
+    </div>
+
+    <div class="arena-step">Vaihe 1 · Lue AI:n juoni (älä kopioi sellaisenaan)</div>
+    <div class="ai-plot" id="aiPlotBlock">
+      <div class="ai-label">AI:n tuottama juoni · alku · keski · loppu</div>
+      <div class="beat">
+        <strong>Alku</strong>
+        <p>Elias palaa lapsuudenkylään myymään vanhempiensa tyhjää taloa. Ensimmäisenä iltana hän löytää ullakolta lukitun laatikon, jossa on kirjeitä joita hän ei ole koskaan nähnyt — äidin kirjoittamia, osoitettuna “tyttärelle jota ei syntynyt”. Elias ei ymmärrä. Hän päättää selvittää asian ennen kuin talo myydään.</p>
+      </div>
+      <div class="beat">
+        <strong>Keski</strong>
+        <p>Kylän vanhat asukkaat välttävät Eliaan kysymyksiä. Naapuri, entinen kätilö, kertoo lopulta: äiti oli raskaana Eliaan jälkeen, mutta raskaus päättyi tragediaan josta ei koskaan puhuttu. Samalla Elias löytää nykyisen asukkaan — nuoren naisen joka vuokraa mökkiä rannasta — ja huomaa että tämä tietää kirjeistä enemmän kuin myöntää. Elias joutuu valitsemaan: myydä talo nopeasti vai avata menneisyys joka voi särkeä perheen kuvan.</p>
+      </div>
+      <div class="beat">
+        <strong>Loppu</strong>
+        <p>Elias lukee viimeisen kirjeen ääneen tyhjässä keittiössä. Hän ei saa kaikkia vastauksia, mutta hän kirjoittaa oman kirjeensä — ei myynti-ilmoitusta, vaan todistuksen siitä että salaisuus on ollut olemassa. Hän jättää talon myymättä toistaiseksi. Viimeisessä kuvassa hän kävelee rantaan, ja nainen odottaa siellä — ei selitystä varten, vaan siksi että joku vihdoin kuuntelee.</p>
+      </div>
+    </div>
+
+    <p class="hint" style="margin:0.5rem 0 1rem;color:var(--muted);font-size:0.9rem;">Haluatko toisen juonen? Kopioi alla oleva promptti Claudeen tai ChatGPT:hen, liitä saamasi juoni kenttään “Vaihtoehtoinen AI-juoni”, ja kirjoita silti oma versiosi.</p>
+    <div class="prompt-block">
+      <div class="lbl">Valinnainen · pyydä uusi juoni AI:lta</div>
+      <button type="button" class="copy-btn" onclick="copyPrompt(this)">kopioi</button>
+      <p>Kirjoita suomeksi lyhyt fiktiivinen juoni aikuiselle lukijalle. Rakenne pakollinen:
+1) ALKU — tilanne + misteri / halu (max 4 lausetta)
+2) KESKI — konflikti + valinta (max 5 lausetta)
+3) LOPPU — ratkaisu joka ei ole liian siisti (max 4 lausetta)
+Älä kirjoita dialogia. Pidä keltainen, hiukan geneerinen “AI-synopsis” -tyyli — minä kirjoitan sen uudelleen omin sanoin.</p>
+    </div>
+    <div class="open-row">
+      <a class="btn-secondary claude-link" href="https://claude.ai/new" target="_blank" rel="noopener">Avaa Claude →</a>
+      <a class="btn-secondary gpt-link" href="https://chatgpt.com/" target="_blank" rel="noopener">Avaa ChatGPT →</a>
+    </div>
+    <label class="field" for="altAiPlot">Vaihtoehtoinen AI-juoni (jos haimit uuden)</label>
+    <textarea id="altAiPlot" placeholder="Liitä tähän vain jos käytit omaa AI-juonta yllä olevan sijaan…"></textarea>
+
+    <div class="arena-step" style="margin-top:1.25rem;">Vaihe 2 · Muuta juoni omiksi sanoiksesi</div>
+    <p class="intro" style="margin-bottom:0.65rem;">Säilytä alku–keski–loppu. Vaihda nimet, paikka, aistit, rytmi, se mikä tuntuu sinulta. <strong>Kielto:</strong> älä kopioi AI:n lauseita. Min. <strong>800 merkkiä</strong>.</p>
+    <label class="field" for="humanRewrite">Minun versioni (ihmisen sanat)</label>
+    <textarea id="humanRewrite" style="min-height:240px" placeholder="Kirjoita sama juoni uudelleen — niin että lukija tuntee että sinä olit paikalla. Alku… Keski… Loppu…"></textarea>
+    <div class="char-row">
+      <span id="humanCharCount" class="char-count bad">0 / 800 merkkiä</span>
+      <span style="font-size:0.85rem;color:var(--muted);">AI antoi rakenteen — sinä annat elämän</span>
+    </div>
+
+    <div class="arena-step" style="margin-top:1.25rem;">Vaihe 3 · Mitä pidit, mitä teit omaksesi?</div>
+    <label class="field" for="humanKeep">Mitä säilytit AI:n ideasta? (1–3 asiaa)</label>
+    <textarea id="humanKeep" placeholder="Esim. ullakon kirjeet, valinta myydä vs. kohdata menneisyys…"></textarea>
+    <label class="field" for="humanChange">Mitä muutit jotta se kuulostaa sinulta?</label>
+    <textarea id="humanChange" placeholder="Esim. vaihdoin miljöön, lisäsin hajut/äänet, tein lopusta epävarmemman…"></textarea>
+    <label class="field" for="humanFear">Pelkäsitkö että AI “vie” tarinan? Mitä ajattelet nyt? (min. 60 merkkiä)</label>
+    <textarea id="humanFear" placeholder="Esim. Ensin tuntui että juoni on “liian valmis” — mutta kun kirjoitin sen uudelleen, huomasin että idea oli vain luuranko. Ääni oli minun…"></textarea>
+    <div class="char-row">
+      <span id="fearCharCount" class="char-count">0 / 60 merkkiä</span>
+    </div>
+    <button type="button" class="btn-run" id="saveHumanize" style="max-width:320px;margin-top:0.5rem;" disabled>Tallenna ihmisen versio</button>
+    <div id="humanizeMsg" class="arena-msg"></div>
+  </div>
+</section>
+
+<!-- EXERCISE 3: Gemini image → video -->
+<section class="section" id="gemini">
+  <div class="section-inner">
+    <div class="section-label">Harjoitus 3 · Gemini · kuva &amp; video</div>
+    <h2>Tee luvustasi <em>kuva</em> — sitten herätä se.</h2>
+    <p class="intro">Otit juonen omaksi. Nyt visualisoit <strong>yhden hetken</strong> siitä luvusta Geminin avulla: ensin still-kuva, sitten lyhyt video jossa kuva herää eloon (image → video / “bring this image to life”). Sinä ohjaat — Gemini toteuttaa.</p>
+
+    <div class="philosophy">
+      <h3>Kuva ei korvaa lukua. Se avaa oven.</h3>
+      <p>Äänikirja ja kansikuva / mood-video ovat eri kieli kuin proosa. Gemini (kuva + Veo-video) on nopea tapa testata: <em>näyttääkö</em> tarinasi siltä miltä se tuntuu kirjoitettuna?</p>
+    </div>
+
+    <div class="arena-step">Vaihe 1 · Valitse hetki luvustasi</div>
+    <p class="intro" style="margin-bottom:0.65rem;">Poimi <strong>yksi konkreettinen kuva</strong> oman versionisi (Harjoitus 2) alusta, keskeltä tai lopusta — ei koko juonta. Mitä näkyy? Kuka? Missä valo on? Mikä liike voisi herätä?</p>
+    <label class="field" for="geminiMoment">Hetki jonka visualisoit (min. 80 merkkiä)</label>
+    <textarea id="geminiMoment" placeholder="Esim. Elias keittiössä, iltavalo ikkunasta, avoin kirje pöydällä, pöly ilmassa — ei kasvoja lähikuvassa, tunnelma raskas mutta rauhallinen…"></textarea>
+    <div class="char-row">
+      <span id="momentCharCount" class="char-count">0 / 80 merkkiä</span>
+    </div>
+
+    <div class="arena-step" style="margin-top:1.25rem;">Vaihe 2 · Rakenna kuva-promptti → Gemini</div>
+    <label class="field" for="geminiImagePrompt">Kuva-promptti Geminin image-generointiin</label>
+    <textarea id="geminiImagePrompt" style="min-height:130px" placeholder="Kirjoita englanniksi tai suomeksi: tyyli (cinematic still / book cover mood), sommittelu, valo, värit, mitä EI saa olla (tekstiä kuvassa, watermark)…"></textarea>
+    <button type="button" class="btn-secondary" id="fillImagePrompt" style="margin:0.35rem 0 0.75rem;font-size:12px;padding:7px 12px;">Täytä esimerkki-promptti hetkestäni</button>
+
+    <div class="prompt-preview">
+      <div class="lbl">Kopioi tämä Geminiin · Create image / Luo kuva</div>
+      <button type="button" class="copy-btn" id="copyImagePrompt">kopioi</button>
+      <div id="imagePromptPreview">Täytä hetki + kuva-promptti — kopioitava teksti muodostuu tähän.</div>
+    </div>
+    <div class="open-row">
+      <a class="btn-secondary gemini-link" href="https://gemini.google.com/app" target="_blank" rel="noopener">Avaa Gemini →</a>
+      <button type="button" class="btn-secondary" id="copyImagePrompt2">Kopioi kuva-promptti</button>
+    </div>
+    <ol class="hint-list">
+      <li>Avaa Gemini → pyydä <strong>luomaan kuva</strong> (Create image / Image)</li>
+      <li>Liitä promptti → generoi 1–2 vaihtoehtoa → valitse paras</li>
+      <li>Lataa kuva itsellesi (tarvitset sen seuraavaan vaiheeseen)</li>
+    </ol>
+    <label class="field" for="geminiImageNotes">Miltä kuva näyttää? Mitä pidit / korjasit? (min. 40 merkkiä)</label>
+    <textarea id="geminiImageNotes" placeholder="Esim. Valo oli oikein, mutta Gemini lisäsi liikaa dramatiikkaa kasvoihin — pyysin uudelleen ‘no readable text, soft dusk light’…"></textarea>
+
+    <div class="arena-step" style="margin-top:1.5rem;">Vaihe 3 · Herätä kuva — lyhyt video</div>
+    <p class="intro" style="margin-bottom:0.65rem;">Vie sama kuva videoon Geminin kautta (Video / Veo / “animate this image” / “bring this image to life” — nimi vaihtelee tilillä). Tavoite: <strong>4–8 sekunnin</strong> klippi jossa kamera tai elementti liikkuu, ei uutta juonta.</p>
+    <label class="field" for="geminiVideoPrompt">Video-ohje (liike, ei uusi tarina)</label>
+    <textarea id="geminiVideoPrompt" style="min-height:110px" placeholder="Esim. Slow cinematic push-in, dust motes drifting in dusk light, curtain moves slightly, no new characters, no text on screen, quiet atmosphere…"></textarea>
+    <button type="button" class="btn-secondary" id="fillVideoPrompt" style="margin:0.35rem 0 0.75rem;font-size:12px;padding:7px 12px;">Täytä esimerkki video-ohje</button>
+
+    <div class="prompt-preview">
+      <div class="lbl">Kopioi video-ohje Geminiin (kuva liitteenä / valittuna)</div>
+      <button type="button" class="copy-btn" id="copyVideoPrompt">kopioi</button>
+      <div id="videoPromptPreview">Täytä video-ohje — kopioitava teksti muodostuu tähän.</div>
+    </div>
+    <div class="open-row">
+      <a class="btn-secondary gemini-link" href="https://gemini.google.com/app" target="_blank" rel="noopener">Avaa Gemini (video) →</a>
+      <a class="btn-secondary gemini-link" href="https://labs.google/fx/tools/flow" target="_blank" rel="noopener">tai Google Flow →</a>
+    </div>
+    <ol class="hint-list">
+      <li>Lataa / liitä <strong>juuri tekemäsi kuva</strong> Geminiin (tai Flow’hun)</li>
+      <li>Pyydä: <em>make a short video from this image</em> / <em>bring this image to life</em> + liitä video-ohje</li>
+      <li>Jos video ei ole saatavilla tililläsi: kokeile Flow’ta tai kuvaa puhelimella still + kerro alle mitä yritit</li>
+    </ol>
+
+    <label class="field" for="geminiVideoNotes">Mitä videossa tapahtui? Vastasiko se lukua? (min. 60 merkkiä)</label>
+    <textarea id="geminiVideoNotes" placeholder="Esim. Pöly liikkui ja valo oli oikea, mutta Gemini lisäsi henkilön käden jota en pyytänyt — liike vei huomiota tarinan tunnelmalta…"></textarea>
+    <div class="char-row">
+      <span id="videoNotesCount" class="char-count">0 / 60 merkkiä</span>
+    </div>
+
+    <label class="field" for="geminiLearn">Mitä opin: milloin kuva/video auttaa kirjailijaa — milloin se häiritsee? (min. 60 merkkiä)</label>
+    <textarea id="geminiLearn" placeholder="Esim. Kuva auttoi näkemään miljöön; video oli kiva mutta ei korvaa proosaa. Käyttäisin tätä moodboardiin / äänikirjan teaseriin, en juonen kirjoittamiseen…"></textarea>
+    <div class="char-row">
+      <span id="learnCharCount" class="char-count">0 / 60 merkkiä</span>
+    </div>
+    <button type="button" class="btn-run" id="saveGemini" style="max-width:320px;margin-top:0.5rem;" disabled>Tallenna Gemini-harjoitus</button>
+    <div id="geminiMsg" class="arena-msg"></div>
+  </div>
+</section>
 
 <section class="section section-alt" id="map">
   <div class="section-inner">
@@ -292,7 +665,9 @@ PE: Descript-leikkaus + päätös: mikä jää kirjaan.</p>
     </div>
     <div class="back-bar">
       <a class="btn-home" href="/">← Takaisin etusivulle</a>
-      <a class="btn-ghost" href="#map">↑ Tarinan kartta</a>
+      <a class="btn-ghost" href="#arena">↑ Claude vs GPT</a>
+      <a class="btn-ghost" href="#humanize">↑ AI → omat sanat</a>
+      <a class="btn-ghost" href="#gemini">↑ Gemini kuva→video</a>
       <a class="btn-ghost" href="#audio">↑ Äänikirja</a>
     </div>
   </div>
@@ -300,7 +675,7 @@ PE: Descript-leikkaus + päätös: mikä jää kirjaan.</p>
 
 <section class="final">
   <h2>Valta säilyy sinulla.</h2>
-  <p>22 työkalua. Yksi sääntö: AI ehdottaa, sinä päätät. Kun synopsis, kappale ja ääninäyte ovat sinun — olet käyttänyt tekoälyä kuin ammattilainen, et kuin automaatti.</p>
+  <p>Kirjoitit itse. Vertasit malleja. Muutit AI-juonen omiksi sanoiksesi. Herätit hetken Gemini-kuvalla ja videolla. Teknologia nopeutti — ääni jäi sinulle.</p>
   <a class="btn-home" href="/" style="background:#5eead4;color:#134e4a;">← Etusivu</a>
 </section>
 
@@ -318,6 +693,432 @@ function copyPrompt(btn) {
     setTimeout(function () { btn.textContent = 'kopioi'; }, 1800);
   });
 }
+
+(function arenaLab() {
+  var MIN_CHARS = 1000;
+  var MIN_PROMPT = 120;
+  var MIN_WHY = 80;
+  var MIN_PASTE = 40;
+  var KEY = 'kirjailija_aanikirja_v3';
+  var EXAMPLE_INSTR =
+    'Olet kirjoituskumppani, et ghostwriter. Älä kirjoita kirjaa tai lukua puolestani.\n' +
+    'Tekstini pohjalta tuota suomeksi nämä kolme osiota:\n' +
+    '1) JATKO — jatka tekstiäni noin 150 sanalla, säilytä minun ääneni ja konkretiani\n' +
+    '2) IDEOITA — 5 numeroitua, konkreettista ideaa (essee / novelli / luku)\n' +
+    '3) SYNOPSIS — 5–8 lausetta pidemmälle teokselle\n' +
+    'Älä kehu tyhjästi. Älä tee geneeristä mainostekstiä. Pidä aistihavainnot.';
+
+  var loveTopic = document.getElementById('loveTopic');
+  var loveText = document.getElementById('loveText');
+  var promptInstr = document.getElementById('promptInstr');
+  var loveWhy = document.getElementById('loveWhy');
+  var claudePaste = document.getElementById('claudePaste');
+  var gptPaste = document.getElementById('gptPaste');
+  var charEl = document.getElementById('loveCharCount');
+  var promptCharEl = document.getElementById('promptCharCount');
+  var whyEl = document.getElementById('whyCharCount');
+  var fullPromptText = document.getElementById('fullPromptText');
+  var promptSteps = document.getElementById('promptSteps');
+  var toolSteps = document.getElementById('toolSteps');
+  var judgeBox = document.getElementById('judgeBox');
+  var arenaMsg = document.getElementById('arenaMsg');
+  var judgeMsg = document.getElementById('judgeMsg');
+  var copyBtn = document.getElementById('copyAndUnlock');
+  var vote = '';
+  var state = {
+    loveTopic: '', loveText: '', promptInstr: '', loveWhy: '', vote: '',
+    claudePaste: '', gptPaste: '', toolsUnlocked: false, judged: false
+  };
+
+  function showMsg(el, text, kind) {
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'arena-msg' + (text ? ' show ' + (kind || '') : '');
+  }
+
+  function buildFullPrompt() {
+    var topic = (loveTopic.value || '').trim();
+    var instr = (promptInstr.value || '').trim();
+    var text = loveText.value || '';
+    if (!topic && !instr && text.length < 20) {
+      return 'Kirjoita ensin aihe + 1000 merkkiä + ohje — valmis promptti muodostuu tähän.';
+    }
+    return (
+      instr +
+      '\n\n---\n' +
+      'Aihe jota rakastan: ' + (topic || '[aihe]') + '\n\n' +
+      'Oma tekstini (älä korvaa tätä — käytä sitä pohjana):\n\n' +
+      text
+    );
+  }
+
+  function refreshPromptPreview() {
+    fullPromptText.textContent = buildFullPrompt();
+  }
+
+  function updateGates() {
+    var n = (loveText.value || '').length;
+    var topicOk = !!(loveTopic.value || '').trim();
+    charEl.textContent = n + ' / ' + MIN_CHARS + ' merkkiä' + (n >= MIN_CHARS ? ' ✓' : '');
+    charEl.className = 'char-count ' + (n >= MIN_CHARS ? 'ok' : 'bad');
+
+    var textReady = n >= MIN_CHARS && topicOk;
+    if (textReady) promptSteps.classList.add('unlocked');
+    else promptSteps.classList.remove('unlocked');
+
+    var p = (promptInstr.value || '').trim().length;
+    promptCharEl.textContent = p + ' / ' + MIN_PROMPT + ' merkkiä ohjeeseen' + (p >= MIN_PROMPT ? ' ✓' : '');
+    promptCharEl.className = 'char-count ' + (p >= MIN_PROMPT ? 'ok' : '');
+    copyBtn.disabled = !(textReady && p >= MIN_PROMPT);
+
+    if (state.toolsUnlocked) toolSteps.classList.add('unlocked');
+    else toolSteps.classList.remove('unlocked');
+
+    var pastesOk =
+      (claudePaste.value || '').trim().length >= MIN_PASTE &&
+      (gptPaste.value || '').trim().length >= MIN_PASTE;
+    if (pastesOk) judgeBox.classList.remove('judge-locked');
+    else judgeBox.classList.add('judge-locked');
+
+    refreshPromptPreview();
+  }
+
+  function updateWhy() {
+    var n = (loveWhy.value || '').length;
+    whyEl.textContent = n + ' / ' + MIN_WHY + ' merkkiä perusteluun' + (n >= MIN_WHY ? ' ✓' : '');
+    whyEl.className = 'char-count ' + (n >= MIN_WHY ? 'ok' : '');
+  }
+
+  function saveLocal() {
+    state.loveTopic = loveTopic.value;
+    state.loveText = loveText.value;
+    state.promptInstr = promptInstr.value;
+    state.loveWhy = loveWhy.value;
+    state.claudePaste = claudePaste.value;
+    state.gptPaste = gptPaste.value;
+    state.vote = vote;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function copyPromptToClipboard() {
+    var text = buildFullPrompt();
+    return navigator.clipboard.writeText(text).then(function () {
+      showMsg(arenaMsg, 'Promptti kopioitu! Avaa Claude ja ChatGPT, liitä sama promptti molempiin.', 'ok');
+      state.toolsUnlocked = true;
+      toolSteps.classList.add('unlocked');
+      saveLocal();
+    }).catch(function () {
+      showMsg(arenaMsg, 'Kopiointi epäonnistui — valitse promptti käsin ja kopioi Cmd/Ctrl+C.', 'err');
+    });
+  }
+
+  function load() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+      Object.keys(state).forEach(function (k) {
+        if (saved[k] != null) state[k] = saved[k];
+      });
+    } catch (e) {}
+    loveTopic.value = state.loveTopic || '';
+    loveText.value = state.loveText || '';
+    promptInstr.value = state.promptInstr || '';
+    loveWhy.value = state.loveWhy || '';
+    claudePaste.value = state.claudePaste || '';
+    gptPaste.value = state.gptPaste || '';
+    vote = state.vote || '';
+    if (vote) {
+      document.querySelectorAll('.vote-btn').forEach(function (b) {
+        b.classList.toggle('selected', b.getAttribute('data-vote') === vote);
+      });
+    }
+    if (state.judged) showMsg(judgeMsg, 'Tuomio tallennettu. Voit jatkaa päivän muihin blokkeihin.', 'ok');
+    updateGates();
+    updateWhy();
+  }
+
+  document.getElementById('fillPromptHint').addEventListener('click', function () {
+    if ((promptInstr.value || '').trim() && !confirm('Korvataanko nykyinen ohje esimerkillä?')) return;
+    promptInstr.value = EXAMPLE_INSTR;
+    updateGates();
+    saveLocal();
+  });
+
+  copyBtn.addEventListener('click', function () {
+    if ((loveText.value || '').length < MIN_CHARS) {
+      showMsg(arenaMsg, 'Kirjoita vähintään 1000 merkkiä ensin.', 'err');
+      return;
+    }
+    if ((promptInstr.value || '').trim().length < MIN_PROMPT) {
+      showMsg(arenaMsg, 'Kirjoita oma ohje AI:lle (min. 120 merkkiä) — tai täytä esimerkki ja muokkaa sitä.', 'err');
+      return;
+    }
+    copyPromptToClipboard();
+  });
+
+  document.getElementById('copyFullPrompt').addEventListener('click', function () {
+    copyPromptToClipboard();
+  });
+  document.getElementById('copyFullPrompt2').addEventListener('click', function () {
+    copyPromptToClipboard();
+  });
+
+  document.querySelectorAll('.vote-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      vote = btn.getAttribute('data-vote');
+      document.querySelectorAll('.vote-btn').forEach(function (b) {
+        b.classList.toggle('selected', b === btn);
+      });
+      saveLocal();
+    });
+  });
+
+  document.getElementById('saveJudgment').addEventListener('click', function () {
+    if ((claudePaste.value || '').trim().length < MIN_PASTE || (gptPaste.value || '').trim().length < MIN_PASTE) {
+      showMsg(judgeMsg, 'Liitä ensin molempien työkalujen vastaukset (tai tiivistelmät).', 'err');
+      return;
+    }
+    if (!vote) {
+      showMsg(judgeMsg, 'Valitse ensin kumpi oli parempi (tai tasapeli).', 'err');
+      return;
+    }
+    if ((loveWhy.value || '').trim().length < MIN_WHY) {
+      showMsg(judgeMsg, 'Kerro miksi — vähintään 80 merkkiä. Mitä prompttisi sai paremmin irti toisesta?', 'err');
+      return;
+    }
+    state.judged = true;
+    saveLocal();
+    showMsg(judgeMsg, 'Tuomio tallennettu. Sinä kirjoitit promptin — sinä päätit. Jatka tarinan karttaan.', 'ok');
+  });
+
+  [loveTopic, loveText, promptInstr].forEach(function (el) {
+    el.addEventListener('input', function () { updateGates(); saveLocal(); });
+  });
+  [claudePaste, gptPaste].forEach(function (el) {
+    el.addEventListener('input', function () { updateGates(); saveLocal(); });
+  });
+  loveWhy.addEventListener('input', function () { updateWhy(); saveLocal(); });
+
+  load();
+})();
+
+(function geminiLab() {
+  var KEY = 'kirjailija_gemini_v1';
+  var moment = document.getElementById('geminiMoment');
+  var imagePrompt = document.getElementById('geminiImagePrompt');
+  var videoPrompt = document.getElementById('geminiVideoPrompt');
+  var imageNotes = document.getElementById('geminiImageNotes');
+  var videoNotes = document.getElementById('geminiVideoNotes');
+  var learn = document.getElementById('geminiLearn');
+  var momentCount = document.getElementById('momentCharCount');
+  var videoNotesCount = document.getElementById('videoNotesCount');
+  var learnCount = document.getElementById('learnCharCount');
+  var imagePreview = document.getElementById('imagePromptPreview');
+  var videoPreview = document.getElementById('videoPromptPreview');
+  var saveBtn = document.getElementById('saveGemini');
+  var msg = document.getElementById('geminiMsg');
+  var state = {
+    geminiMoment: '', geminiImagePrompt: '', geminiVideoPrompt: '',
+    geminiImageNotes: '', geminiVideoNotes: '', geminiLearn: '', saved: false
+  };
+
+  function showMsg(text, kind) {
+    msg.textContent = text || '';
+    msg.className = 'arena-msg' + (text ? ' show ' + (kind || '') : '');
+  }
+
+  function buildImagePrompt() {
+    var m = (moment.value || '').trim();
+    var p = (imagePrompt.value || '').trim();
+    if (!m && !p) return 'Täytä hetki + kuva-promptti — kopioitava teksti muodostuu tähän.';
+    return (
+      'Create one cinematic still image for a literary chapter mood board. No text, no watermark, no logo in the image.\n\n' +
+      'Scene / moment from my chapter:\n' + m + '\n\n' +
+      'Art direction:\n' + (p || 'Cinematic still, soft natural light, book-cover mood, grounded realism, quiet emotion.')
+    );
+  }
+
+  function buildVideoPrompt() {
+    var p = (videoPrompt.value || '').trim();
+    if (!p) return 'Täytä video-ohje — kopioitava teksti muodostuu tähän.';
+    return (
+      'Using THIS image as the starting frame, make a short 4–8 second video. Bring the image to life gently.\n' +
+      'Do not invent a new plot or new characters. No on-screen text.\n\n' +
+      'Motion / camera:\n' + p
+    );
+  }
+
+  function refresh() {
+    imagePreview.textContent = buildImagePrompt();
+    videoPreview.textContent = buildVideoPrompt();
+    var m = (moment.value || '').length;
+    momentCount.textContent = m + ' / 80 merkkiä' + (m >= 80 ? ' ✓' : '');
+    momentCount.className = 'char-count ' + (m >= 80 ? 'ok' : '');
+    var vn = (videoNotes.value || '').trim().length;
+    videoNotesCount.textContent = vn + ' / 60 merkkiä' + (vn >= 60 ? ' ✓' : '');
+    videoNotesCount.className = 'char-count ' + (vn >= 60 ? 'ok' : '');
+    var ln = (learn.value || '').trim().length;
+    learnCount.textContent = ln + ' / 60 merkkiä' + (ln >= 60 ? ' ✓' : '');
+    learnCount.className = 'char-count ' + (ln >= 60 ? 'ok' : '');
+    saveBtn.disabled = !(
+      m >= 80 &&
+      (imagePrompt.value || '').trim().length >= 20 &&
+      (imageNotes.value || '').trim().length >= 40 &&
+      (videoPrompt.value || '').trim().length >= 20 &&
+      vn >= 60 &&
+      ln >= 60
+    );
+  }
+
+  function saveLocal() {
+    state.geminiMoment = moment.value;
+    state.geminiImagePrompt = imagePrompt.value;
+    state.geminiVideoPrompt = videoPrompt.value;
+    state.geminiImageNotes = imageNotes.value;
+    state.geminiVideoNotes = videoNotes.value;
+    state.geminiLearn = learn.value;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function copyText(text, okMsg) {
+    navigator.clipboard.writeText(text).then(function () {
+      showMsg(okMsg, 'ok');
+    }).catch(function () {
+      showMsg('Kopiointi epäonnistui — valitse teksti käsin.', 'err');
+    });
+  }
+
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+    Object.keys(state).forEach(function (k) { if (saved[k] != null) state[k] = saved[k]; });
+  } catch (e) {}
+  moment.value = state.geminiMoment || '';
+  imagePrompt.value = state.geminiImagePrompt || '';
+  videoPrompt.value = state.geminiVideoPrompt || '';
+  imageNotes.value = state.geminiImageNotes || '';
+  videoNotes.value = state.geminiVideoNotes || '';
+  learn.value = state.geminiLearn || '';
+  if (state.saved) showMsg('Gemini-harjoitus tallennettu. Kuva ja video ovat työkaluja — luku on edelleen sinun.', 'ok');
+  refresh();
+
+  document.getElementById('fillImagePrompt').addEventListener('click', function () {
+    if (!(moment.value || '').trim()) {
+      showMsg('Kirjoita ensin hetki luvustasi (vaihe 1).', 'err');
+      return;
+    }
+    imagePrompt.value =
+      'Cinematic literary still, grounded realism, soft dusk / natural window light, shallow depth of field, muted earth tones, quiet emotional tension. ' +
+      'Composition like a book cover mood frame. No faces in extreme close-up unless necessary. No text in the image, no watermark.';
+    refresh();
+    saveLocal();
+  });
+
+  document.getElementById('fillVideoPrompt').addEventListener('click', function () {
+    videoPrompt.value =
+      'Very slow cinematic push-in. Subtle atmospheric motion only (dust, light shift, fabric, breath of wind). ' +
+      'Keep the same composition and characters. Calm, literary, no dialogue captions, no sudden cuts.';
+    refresh();
+    saveLocal();
+  });
+
+  document.getElementById('copyImagePrompt').addEventListener('click', function () {
+    copyText(buildImagePrompt(), 'Kuva-promptti kopioitu — liitä Geminiin ja luo kuva.');
+  });
+  document.getElementById('copyImagePrompt2').addEventListener('click', function () {
+    copyText(buildImagePrompt(), 'Kuva-promptti kopioitu — liitä Geminiin ja luo kuva.');
+  });
+  document.getElementById('copyVideoPrompt').addEventListener('click', function () {
+    copyText(buildVideoPrompt(), 'Video-ohje kopioitu — liitä kuva Geminiin/Flow’hun ja herätä se.');
+  });
+
+  [moment, imagePrompt, videoPrompt, imageNotes, videoNotes, learn].forEach(function (el) {
+    el.addEventListener('input', function () { refresh(); saveLocal(); });
+  });
+
+  saveBtn.addEventListener('click', function () {
+    if (saveBtn.disabled) {
+      showMsg('Täytä hetki, kuva-promptti, kuvamuistiinpanot, video-ohje ja molemmat pohdinnat.', 'err');
+      return;
+    }
+    state.saved = true;
+    saveLocal();
+    showMsg('Tallennettu. Gemini teki kuvan ja liikkeen — tarinan valinnat olivat sinun.', 'ok');
+  });
+})();
+
+(function humanizeLab() {
+  var MIN_REWRITE = 800;
+  var MIN_FEAR = 60;
+  var KEY = 'kirjailija_humanize_v1';
+  var rewrite = document.getElementById('humanRewrite');
+  var keep = document.getElementById('humanKeep');
+  var change = document.getElementById('humanChange');
+  var fear = document.getElementById('humanFear');
+  var alt = document.getElementById('altAiPlot');
+  var countEl = document.getElementById('humanCharCount');
+  var fearCount = document.getElementById('fearCharCount');
+  var saveBtn = document.getElementById('saveHumanize');
+  var msg = document.getElementById('humanizeMsg');
+  var state = { humanRewrite: '', humanKeep: '', humanChange: '', humanFear: '', altAiPlot: '', saved: false };
+
+  function showMsg(text, kind) {
+    msg.textContent = text || '';
+    msg.className = 'arena-msg' + (text ? ' show ' + (kind || '') : '');
+  }
+
+  function update() {
+    var n = (rewrite.value || '').length;
+    countEl.textContent = n + ' / ' + MIN_REWRITE + ' merkkiä' + (n >= MIN_REWRITE ? ' ✓' : '');
+    countEl.className = 'char-count ' + (n >= MIN_REWRITE ? 'ok' : 'bad');
+    var f = (fear.value || '').trim().length;
+    fearCount.textContent = f + ' / ' + MIN_FEAR + ' merkkiä' + (f >= MIN_FEAR ? ' ✓' : '');
+    fearCount.className = 'char-count ' + (f >= MIN_FEAR ? 'ok' : '');
+    var ready =
+      n >= MIN_REWRITE &&
+      f >= MIN_FEAR &&
+      (keep.value || '').trim().length >= 10 &&
+      (change.value || '').trim().length >= 10;
+    saveBtn.disabled = !ready;
+  }
+
+  function saveLocal() {
+    state.humanRewrite = rewrite.value;
+    state.humanKeep = keep.value;
+    state.humanChange = change.value;
+    state.humanFear = fear.value;
+    state.altAiPlot = alt.value;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+    Object.keys(state).forEach(function (k) { if (saved[k] != null) state[k] = saved[k]; });
+  } catch (e) {}
+  rewrite.value = state.humanRewrite || '';
+  keep.value = state.humanKeep || '';
+  change.value = state.humanChange || '';
+  fear.value = state.humanFear || '';
+  alt.value = state.altAiPlot || '';
+  if (state.saved) showMsg('Tallennettu. AI antoi luurangon — sinä annoit lihan ja äänen.', 'ok');
+  update();
+
+  [rewrite, keep, change, fear, alt].forEach(function (el) {
+    el.addEventListener('input', function () { update(); saveLocal(); });
+  });
+
+  saveBtn.addEventListener('click', function () {
+    if ((rewrite.value || '').length < MIN_REWRITE) {
+      showMsg('Kirjoita oma versio vähintään 800 merkillä — älä kopioi AI:n lauseita.', 'err');
+      return;
+    }
+    if ((fear.value || '').trim().length < MIN_FEAR) {
+      showMsg('Kerro lyhyesti: pelkäsitkö AI:ta — ja mitä ajattelet nyt?', 'err');
+      return;
+    }
+    state.saved = true;
+    saveLocal();
+    showMsg('Tallennettu. Idea sai tulla AI:lta. Tarina on sinun. Se ei ole pelottavaa — se on ammattitaitoa.', 'ok');
+  });
+})();
 
 (function persist() {
   var ids = ['bookTitle', 'ownSynopsis', 'notesA', 'notesB', 'audioSample', 'notesC', 'stackPick', 'contract'];
