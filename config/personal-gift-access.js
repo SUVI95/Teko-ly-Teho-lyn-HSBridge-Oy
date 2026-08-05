@@ -1,7 +1,7 @@
 /**
  * Personal gift modules (Sonja, Satu, …).
  * Email allowlist + first-name fallback when registration email differs.
- * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL / VILLE_GIFT_EMAIL / MINNA_GIFT_EMAIL / SANTERI_GIFT_EMAIL / MUSIIKKI_GIFT_EMAIL (comma-separated).
+ * Override via SONJA_GIFT_EMAIL / SATU_GIFT_EMAIL / SOILE_GIFT_EMAIL (or ANTTI_GIFT_EMAIL) / VILLE_GIFT_EMAIL / MINNA_GIFT_EMAIL / SANTERI_GIFT_EMAIL / MUSIIKKI_GIFT_EMAIL (comma-separated).
  */
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -46,8 +46,11 @@ const GIFTS = {
   },
   soile: {
     moduleId: 'soile-ai-opas-2025',
-    firstName: 'soile',
-    emails: parseEmailList(process.env.SOILE_GIFT_EMAIL, ['soile.k.niskanen@gmail.com'])
+    firstName: 'antti',
+    emails: parseEmailList(process.env.SOILE_GIFT_EMAIL || process.env.ANTTI_GIFT_EMAIL, [
+      'antti.eskelinen63@gmail.com',
+      TEST_STUDENT_EMAIL // QA — admin already sees via isAdminUser
+    ])
   },
   minna_a: {
     moduleId: 'moduuli-minna-a',
