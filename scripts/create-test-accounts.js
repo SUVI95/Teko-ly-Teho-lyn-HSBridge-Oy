@@ -15,41 +15,47 @@ if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('sslmode=requi
 
 const pool = new Pool(dbConfig);
 
+async function upsertStudent({ email, password, name, label }) {
+  const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+  const hashPassword = await bcrypt.hash(password, 10);
+  if (existing.rows.length > 0) {
+    await pool.query(
+      'UPDATE users SET password_hash = $1, name = $2, is_admin = FALSE, is_approved = TRUE, is_active = TRUE WHERE email = $3',
+      [hashPassword, name, email]
+    );
+    console.log(`✅ Updated ${label}: ${email}`);
+  } else {
+    await pool.query(
+      'INSERT INTO users (email, password_hash, name, is_admin, is_approved) VALUES ($1, $2, $3, FALSE, TRUE)',
+      [email, hashPassword, name]
+    );
+    console.log(`✅ Created ${label}: ${email}`);
+  }
+  console.log(`\n📧 ${label} Credentials:`);
+  console.log(`   Email: ${email}`);
+  console.log(`   Password: ${password}`);
+  console.log(`   Name: ${name}`);
+}
+
 async function createTestAccounts() {
   try {
     console.log('Creating test accounts...\n');
-    
-    const testStudent = {
+
+    // QA student — sees Rivon / admin+test modules. Do NOT use when demoing Antti's view.
+    await upsertStudent({
       email: 'testi.opiskelija@example.com',
       password: 'testi123',
-      name: 'Testi Opiskelija'
-    };
-    
-    // Check if test student exists
-    const existingStudent = await pool.query('SELECT id FROM users WHERE email = $1', [testStudent.email]);
-    
-    if (existingStudent.rows.length > 0) {
-      // Update password
-      const hashPassword = await bcrypt.hash(testStudent.password, 10);
-      await pool.query(
-        'UPDATE users SET password_hash = $1, name = $2, is_approved = TRUE WHERE email = $3',
-        [hashPassword, testStudent.name, testStudent.email]
-      );
-      console.log(`✅ Updated test student: ${testStudent.email}`);
-    } else {
-      // Create new test student
-      const hashPassword = await bcrypt.hash(testStudent.password, 10);
-      await pool.query(
-        'INSERT INTO users (email, password_hash, name, is_admin, is_approved) VALUES ($1, $2, $3, FALSE, TRUE)',
-        [testStudent.email, hashPassword, testStudent.name]
-      );
-      console.log(`✅ Created test student: ${testStudent.email}`);
-    }
-    
-    console.log(`\n📧 Test Student Credentials:`);
-    console.log(`   Email: ${testStudent.email}`);
-    console.log(`   Password: ${testStudent.password}`);
-    console.log(`   Name: ${testStudent.name}`);
+      name: 'Testi Opiskelija',
+      label: 'QA test student'
+    });
+
+    // Teacher screen-share — same modules as Antti (incl. taloushallinto gift), no Rivon extras.
+    await upsertStudent({
+      email: 'opettaja.antti@example.com',
+      password: 'anttiDemo26',
+      name: 'Antti Demo',
+      label: 'Antti-view demo (teacher screen-share)'
+    });
     
     // Create admin if not exists
     const adminEmail = 'suvi@duunijobs.com';

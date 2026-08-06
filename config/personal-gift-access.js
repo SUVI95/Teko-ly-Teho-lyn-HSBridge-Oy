@@ -23,12 +23,22 @@ function parseEmailList(envRaw, defaults) {
 /** Test student account — sees Jani/Karpo gift modules for QA (see scripts/create-test-accounts.js). */
 const TEST_STUDENT_EMAIL = 'testi.opiskelija@example.com';
 
+/**
+ * Teacher screen-share demo — same dashboard as Antti (regular student + soile gift).
+ * NOT the QA test student (who also sees Rivon / admin+test modules).
+ */
+const ANTTI_DEMO_EMAIL = 'opettaja.antti@example.com';
+
 function isTestStudentEmail(email) {
   return normalizeEmail(email) === TEST_STUDENT_EMAIL;
 }
 
 function isTestStudentUser(user) {
   return !!(user && isTestStudentEmail(user.email));
+}
+
+function isAnttiDemoEmail(email) {
+  return normalizeEmail(email) === ANTTI_DEMO_EMAIL;
 }
 
 function nameMatchesFirstName(name, firstName) {
@@ -57,7 +67,8 @@ const GIFTS = {
     firstName: 'antti',
     emails: parseEmailList(process.env.SOILE_GIFT_EMAIL || process.env.ANTTI_GIFT_EMAIL, [
       'antti.eskelinen63@gmail.com',
-      TEST_STUDENT_EMAIL // QA — admin already sees via isAdminUser
+      ANTTI_DEMO_EMAIL, // teacher screen-share — same gift card as Antti
+      TEST_STUDENT_EMAIL // QA — also sees Rivon; do not use for Antti demo
     ])
   },
   minna_a: {
@@ -280,11 +291,13 @@ module.exports = {
   GIFTS,
   PUBLIC_STUDENT_MODULE_IDS,
   TEST_STUDENT_EMAIL,
+  ANTTI_DEMO_EMAIL,
   normalizeEmail,
   normalizeName,
   nameMatchesFirstName,
   isTestStudentEmail,
   isTestStudentUser,
+  isAnttiDemoEmail,
   getGiftKeyForModuleId,
   getGiftKeysForModuleId,
   isPublicStudentModule,

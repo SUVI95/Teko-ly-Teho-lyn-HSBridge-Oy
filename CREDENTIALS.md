@@ -5,10 +5,19 @@
 **Password:** `admin123`  
 **⚠️ IMPORTANT:** Change this password after first login!
 
-## Test Student Account
+## Antti-view demo (teacher screen-share)
+**Use this when projecting your screen next to Antti** — same dashboard as him (including his personal gift). Does **not** show Rivon / admin-only modules.
+
+**Email:** `opettaja.antti@example.com`  
+**Password:** `anttiDemo26`  
+**Name:** Antti Demo
+
+## QA Test Student Account
 **Email:** `testi.opiskelija@example.com`  
 **Password:** `testi123`  
-**Name:** Testi Opiskelija
+**Name:** Testi Opiskelija  
+
+⚠️ This QA account also sees Rivon / admin+test modules — **not** the same as Antti’s dashboard.
 
 ## Setup Instructions
 
