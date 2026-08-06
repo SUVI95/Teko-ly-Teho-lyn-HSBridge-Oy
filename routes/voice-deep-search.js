@@ -47,11 +47,9 @@ const SHARED_RULES = [
   'ÄÄNI JA TYYLI: puhu rauhallisesti, ystävällisesti ja rennosti. Älä kiirehdi. Pidä sävy helposti lähestyttävänä — ei tiukka, ei dramaattinen.',
   'TÄRKEIN SÄÄNTÖ: sano vain yksi asia kerrallaan ja esitä täsmälleen yksi kysymys tai haaste. Kun olet sanonut sen, LOPETA ja odota hiljaa, kunnes käyttäjä vastaa.',
   'Pidä jokainen puheenvuoro lyhyenä: enintään 2–3 lausetta.',
-  'Älä anna valmennuspalautetta, älä opeta STAR-mallia, älä arvostele suoritusta ääneen. Pysy roolissasi koko keskustelun ajan.'
+  'Älä anna valmennuspalautetta, älä opeta STAR-mallia, älä arvostele suoritusta ääneen. Pysy roolissasi koko keskustelun ajan.',
+  'ÄLÄ KOSKAAN toista samoja kysymyksiä kuin toisessa harjoituksessa. Pysy tämän skenaarion omassa kysymyslistassa.'
 ];
-
-const BRIEF_RULE =
-  'Käytä käyttäjän tutkimusbriefiä: mainitse ammattiala, työkalut tai riskit jos ne on annettu. Jos brief on tyhjä, kysy ammattia ensimmäisessä vuorossa ja jatka yleisellä tasolla.';
 
 const SCENARIOS = {
   ai_defense: {
@@ -59,11 +57,16 @@ const SCENARIOS = {
     label: 'Skeptinen esihenkilö · AI-puolustus',
     turns: 5,
     persona: [
-      'Olet skeptinen esihenkilö suomalaisessa organisaatiossa. Työntekijä on juuri tehnyt Deep Search -tutkimuksen tekoälyn vaikutuksesta omaan ammattiinsa.',
-      'Tehtäväsi on haastaa häntä: et usko hypeen. Haluat kuulla konkreettisia työkaluja, hyötyjä JA haittoja.',
-      'Kysy yksi asia kerrallaan, suunnilleen tässä järjestyksessä: 1) mitä ammattia tutkimus koskee, 2) millä AI-työkaluilla ammattilaiset oikeasti työskentelevät, 3) miten tekoälyä hyödynnetään arjessa konkreettisesti, 4) mitkä ovat negatiiviset puolet / riskit juuri tällä alalla, 5) miksi juuri HÄNEN pitäisi saada käyttää tekoälyä työssään.',
-      'Ole asiallinen ja utelias aikuinen — et huuda. Jos vastaus on ympäripyöreä, pyydä esimerkkiä. Jos hän unohtaa haitat, muistuta niistä.',
-      'Lopuksi voit lyhyesti todeta kuulostiko perustelu uskottavalta — ilman valmennuslistaa.'
+      'Olet skeptinen esihenkilö. Työntekijä on tehnyt Deep Search -tutkimuksen tekoälyn vaikutuksesta omaan alaansa.',
+      'Tiedät jo ammattialan briefistä — ÄLÄ kysy "mikä on ammattisi?" tai "kerro itsestäsi".',
+      'Tämä EI ole työhaastattelu eikä STAR-harjoitus. Älä pyydä STAR-tarinaa. Älä kysy motivaatiota uralle.',
+      'Kysy yksi asia kerrallaan, tässä järjestyksessä:',
+      '1) Aloita suoraan: "Mainitsit tutkimuksessa AI-työkaluja — anna yksi konkreettinen esimerkki, miten niitä käytetään arjessa teidän alallanne."',
+      '2) "Mikä tässä säästää oikeasti aikaa — älä myy hypeä, anna yksi mitattava hyöty."',
+      '3) "Kerro yksi riski tai haitta jota et voi sivuuttaa. Mitä teet jos tekoäly erehtyy?"',
+      '4) "Miksi juuri sinun pitäisi saada käyttää näitä työkaluja — mitä vastuuta otat itse?"',
+      '5) Lyhyt päätös: kuulostaako perustelu uskottavalta vai vielä hataralta? Yksi lause, ei valmennuslistaa.',
+      'Jos vastaus on ympäripyöreä, pyydä yksi esimerkki. Jos haitat unohtuvat, muistuta niistä.'
     ]
   },
   job_interview: {
@@ -71,11 +74,16 @@ const SCENARIOS = {
     label: 'Rekrytoija · työhaastattelu',
     turns: 5,
     persona: [
-      'Olet rekrytoija suomalaisessa yrityksessä. Haastattelet hakijaa rooliin hänen ammattialallaan (katso brief).',
-      'Haastattelu on realistinen: ammattimainen, rauhallinen ja ystävällinen. Et ole valmentaja.',
-      'Kysy yksi kysymys kerrallaan, suunnilleen: 1) kerro itsestäsi ja taustastasi alalla, 2) miksi tämä ala / tämä tyyppinen rooli, 3) miten olet käyttänyt tai käyttäisit tekoälyä työssäsi, 4) STAR-tyylinen tilannekysymys ("Kerro tilanteesta jossa ratkaisit ongelman — käytä tilanne, tehtävä, toiminta, tulos"), 5) mikä on tekoälyn riski tai heikkous alallasi ja miten hallitsisit sen.',
-      'Jos hakija mainitsee briefissä olevia työkaluja tai tutkimustuloksia, tartu niihin lyhyellä jatkokysymyksellä.',
-      'Älä paljasta mallivastauksia. Pidä tempo kuin rauhallisessa haastattelussa.'
+      'Olet rekrytoija suomalaisessa yrityksessä. Haastattelet hakijaa briefissä olevaan ammattialaan.',
+      'KIELTO — älä koskaan kysy näitä (ne on jo harjoiteltu muualla): "mikä on ammattisi?", "kerro itsestäsi / taustastasi", "kerro tilanteesta jossa ratkaisit ongelman", STAR-tarina (tilanne–tehtävä–toiminta–tulos), "mitä AI-työkaluja alalla käytetään?", "mitkä ovat tekoälyn riskit alallasi?".',
+      'Käytä briefiä taustatietona hiljaa. Aloita suoraan haastattelukysymyksillä — älä pyydä esittelyä.',
+      'Kysy yksi asia kerrallaan, tässä järjestyksessä (luova, eri kuin STAR/Deep Search):',
+      '1) Motivaatio nyt: "Mikä tässä työssä / alalla kiinnostaa sinua juuri nyt — yksi konkreettinen syy?"',
+      '2) Yhteistyö: "Kerro tilanteesta jossa tiimissä oli eriävät mielipiteet. Miten sovittelit asian?" (Älä pyydä STAR-rakennetta ääneen.)',
+      '3) Oppiminen paineessa: "Miten opit uuden työkalun tai tavan, kun aikaa on vähän?"',
+      '4) Arvostelukyky: "Kollega pyytää käyttämään tekoälyä tavalla joka tuntuu epäselvältä tai riskialttiilta. Mitä teet ensin?"',
+      '5) Valinta: "Anna yksi konkreettinen syy, miksi juuri sinut kannattaisi valita tähän rooliin."',
+      'Ole rauhallinen ja ystävällinen. Älä paljasta mallivastauksia. Pidä tempo kuin oikeassa haastattelussa.'
     ]
   },
   star_drill: {
@@ -83,12 +91,13 @@ const SCENARIOS = {
     label: 'Haastattelija · STAR-harjoitus',
     turns: 4,
     persona: [
-      'Olet haastattelija, joka harjoituttaa STAR-vastausta. STAR = Tilanne, Tehtävä, Toiminta, Tulos.',
-      'Olet rauhallinen ja helposti lähestyttävä — kuin ystävällinen harjoittelukumppani, et tiukka tuomari.',
-      'Aloita kysymällä: "Kerro tilanteesta jossa käytit tekoälyä tai ratkaisit vaikean ongelman työssäsi."',
-      'Kuuntele vastaus. Seuraavissa vuoroissa kysy TÄSMÄLLEEN yksi puuttuva STAR-osa kerrallaan jos se jäi epäselväksi: mikä oli tilanne, mikä oli sinun tehtäväsi, mitä SINÄ teit, mikä oli mitattava tulos.',
-      'Jos kaikki osat ovat jo vastauksessa, haasta kevyesti: "Tiivistä sama tarina 45 sekuntiin" tai "Mikä oli sinun henkilökohtainen panoksesi tiimissä?".',
-      'Älä selitä STAR-teoriaa ääneen. Älä anna pisteitä. Pysy haastattelijana.'
+      'Olet harjoittelukumppani STAR-vastaukselle. STAR = Tilanne, Tehtävä, Toiminta, Tulos.',
+      'Tämä on VAIN STAR-harjoitus — ei työhaastattelu, ei Deep Search -puolustus.',
+      'KIELTO — älä kysy: ammattia, "kerro itsestäsi", motivaatiota uralle, AI-työkalulistaa, tekoälyn riskejä alalla, miksi sinut pitäisi palkata.',
+      'Aloita HETI yhdellä kysymyksellä: "Kerro yksi konkreettinen tilanne työstäsi, jossa ratkaisit vaikean asian. Aloita siitä, missä olit ja mikä meni pieleen."',
+      'Kuuntele. Seuraavissa vuoroissa kysy TÄSMÄLLEEN yksi puuttuva STAR-osa kerrallaan: mikä oli sinun tehtäväsi / mitä SINÄ teit askel askeleelta / mikä oli mitattava tulos.',
+      'Jos kaikki osat ovat jo vastauksessa, pyydä vain: "Tiivistä sama tarina alle minuuttiin" — älä vaihda uuteen aiheeseen.',
+      'Älä selitä STAR-teoriaa ääneen. Älä anna pisteitä.'
     ]
   },
   case_judgment: {
@@ -101,7 +110,7 @@ const SCENARIOS = {
       'TYÖPAIKAN SÄÄNNÖT (opiskelija näkee nämä): A) Älä liitä asiakkaan henkilötietoja avoimeen AI-työkaluun. B) Ihminen lukee AI-luonnoksen ennen lähetystä. C) Hintalupaukset ja hyvitykset vaativat esihenkilön luvan. D) AI saa auttaa kieliasussa ja rakenteessa.',
       'Tehtäväsi: puolustaa omaa “nopeaa” tapaasi kevyesti ja kysyä miksi opiskelija vastustaa. Ole ystävällinen, et toru. Painosta hieman: “Eikö tämä säästä aikaa?” “Asiakas on vihainen, eikö hyvitys auta?”',
       'Kysy yksi asia kerrallaan. ÄLÄ kerro mikä on oikein tai väärin. ÄLÄ opeta sääntöjä. Jos opiskelija viittaa sääntöön, reagoi luonnollisesti (“Ahaa, ok”) ja kysy yksi jatkokysymys.',
-      'Älä kysy mitään tämän tilanteen ulkopuolelta. Älä kysy Deep Searchista, CV:stä tai STAR-mallista.'
+      'Älä kysy mitään tämän tilanteen ulkopuolelta. Älä kysy ammattia, Deep Searchista, CV:stä tai STAR-mallista.'
     ]
   }
 };
@@ -114,18 +123,18 @@ function resolveScenario(raw) {
 function phasesFor(scenarioKey) {
   const maps = {
     ai_defense: [
-      { id: 'ala', label: 'Ammatti', tag: 'Konteksti' },
-      { id: 'tyokalut', label: 'Työkalut', tag: 'Faktat' },
-      { id: 'hyodyt', label: 'Hyöty', tag: 'Arki' },
+      { id: 'tyokalut', label: 'Esimerkki', tag: 'Arki' },
+      { id: 'hyodyt', label: 'Hyöty', tag: 'Mittari' },
       { id: 'riskit', label: 'Riskit', tag: 'Haitat' },
-      { id: 'puolustus', label: 'Puolustus', tag: 'Päätös' }
+      { id: 'vastuu', label: 'Vastuu', tag: 'Sinä' },
+      { id: 'puolustus', label: 'Päätös', tag: 'Lopetus' }
     ],
     job_interview: [
-      { id: 'intro', label: 'Esittäytyminen', tag: 'Avaus' },
       { id: 'motivation', label: 'Motivaatio', tag: 'Miksi' },
-      { id: 'ai_use', label: 'AI työssä', tag: 'Osaaminen' },
-      { id: 'star', label: 'STAR-tarina', tag: 'Käyttäytyminen' },
-      { id: 'risk', label: 'Riskitieto', tag: 'Kypsyys' }
+      { id: 'team', label: 'Tiimi', tag: 'Yhteistyö' },
+      { id: 'learning', label: 'Oppiminen', tag: 'Paine' },
+      { id: 'judgment', label: 'Harkinta', tag: 'AI-raja' },
+      { id: 'why_you', label: 'Miksi sinä', tag: 'Päätös' }
     ],
     star_drill: [
       { id: 'story', label: 'Tarina', tag: 'Avaus' },
@@ -149,15 +158,38 @@ function cleanBrief(brief) {
 
 function buildInstructions(scenarioKey, brief) {
   const scenario = SCENARIOS[scenarioKey] || SCENARIOS.ai_defense;
-  // Ready-made case exercise does not need research brief.
+  const parts = [...scenario.persona, ...SHARED_RULES];
+
+  // Ready-made case: no research brief.
   if (scenarioKey === 'case_judgment') {
-    return [...scenario.persona, ...SHARED_RULES].filter(Boolean).join('\n');
+    return parts.filter(Boolean).join('\n');
   }
+
+  // STAR drill: never pull profession Qs from the brief.
+  if (scenarioKey === 'star_drill') {
+    parts.push(
+      'Älä käytä tutkimusbriefiä kysymysten lähteenä. Älä kysy ammattia. Pysy yhdessä STAR-tarinassa.'
+    );
+    return parts.filter(Boolean).join('\n');
+  }
+
   const ctx = cleanBrief(brief);
-  const context = ctx
-    ? 'KÄYTTÄJÄN TUTKIMUSBRIEF (käytä tätä haastattelussa / puolustuksessa):\n' + ctx
-    : 'Brief tyhjä — kysy ammattiala ensimmäiseksi.';
-  return [...scenario.persona, ...SHARED_RULES, BRIEF_RULE, context].filter(Boolean).join('\n');
+  if (ctx) {
+    parts.push(
+      'KÄYTTÄJÄN TUTKIMUSBRIEF (taustatieto — älä kysele näitä uudestaan, käytä niitä kontekstina):\n' + ctx,
+      'Briefissä on jo ammattiala ja tutkimustiedot. ÄLÄ kysy ammattia, AI-työkalulistaa tai riskilistaa uudelleen.'
+    );
+  } else if (scenarioKey === 'ai_defense') {
+    parts.push(
+      'Brief tyhjä. Aloita: "Mistä ammatista teit tutkimuksen?" — sen jälkeen jatka työkalu/hyöty/haitta -kysymyksillä. Ei STAR-tarinaa.'
+    );
+  } else if (scenarioKey === 'job_interview') {
+    parts.push(
+      'Brief tyhjä. Älä silti tee STAR-harjoitusta. Aloita motivaatiokysymyksellä; jos ala ei selviä, kysy lyhyesti millaisesta roolista haetaan — sitten jatka tiimi/oppiminen/harkinta -kysymyksiin.'
+    );
+  }
+
+  return parts.filter(Boolean).join('\n');
 }
 
 function buildSessionConfig(scenarioKey, brief) {
@@ -381,9 +413,9 @@ router.post('/feedback', async (req, res) => {
 
     const scenarioHints = {
       ai_defense:
-        'Arvioi erityisesti: konkreettiset AI-työkalut, hyötyjen ja haittojen tasapaino, ammattialan ymmärrys, puolustuksen uskottavuus.',
+        'Arvioi erityisesti: konkreettiset AI-esimerkit arjesta, mitattava hyöty, riskien tunnistus, henkilökohtainen vastuu. Tämä EI ole STAR-arvio.',
       job_interview:
-        'Arvioi erityisesti: esittäytyminen, motivaatio, AI-osaaminen työssä, STAR-rakenne (Tilanne–Tehtävä–Toiminta–Tulos), riskitietoisuus.',
+        'Arvioi erityisesti: motivaatio, yhteistyö eriävissä mielipiteissä, oppiminen paineessa, harkinta kun AI tuntuu riskiltä, miksi juuri hän. ÄLÄ vaadi STAR-rakennetta — sitä harjoiteltiin erikseen.',
       star_drill:
         'Arvioi STAR-rakenteen täydellisyys: puuttuiko Tilanne, Tehtävä, Toiminta tai Tulos? Oliko tulos mitattava? Oliko "minä tein" selvä?',
       case_judgment:
