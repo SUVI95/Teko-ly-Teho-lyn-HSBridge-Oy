@@ -24,11 +24,18 @@ function timeoutSignal(ms) {
 }
 
 function realtimeModel() {
+  // Best current speech-to-speech Realtime model
   return envTrim('OPENAI_REALTIME_MODEL') || envTrim('OPENAI_VOICE_MODEL') || 'gpt-realtime-2.1';
 }
 
 function realtimeVoice() {
-  return envTrim('OPENAI_VDS_REALTIME_VOICE') || envTrim('OPENAI_REALTIME_VOICE') || 'marin';
+  // One calm, easy-going Realtime voice for every live call on this page.
+  // cedar = OpenAI-recommended high-quality Realtime voice (natural / warm).
+  return (
+    envTrim('OPENAI_VDS_REALTIME_VOICE') ||
+    envTrim('OPENAI_REALTIME_VOICE') ||
+    'cedar'
+  );
 }
 
 function claudeModel() {
@@ -37,6 +44,7 @@ function claudeModel() {
 
 const SHARED_RULES = [
   'Puhut suomea luonnollisesti, kuin oikea ihminen. Et ole robotti etkä lue listaa.',
+  'ÄÄNI JA TYYLI: puhu rauhallisesti, ystävällisesti ja rennosti. Älä kiirehdi. Pidä sävy helposti lähestyttävänä — ei tiukka, ei dramaattinen.',
   'TÄRKEIN SÄÄNTÖ: sano vain yksi asia kerrallaan ja esitä täsmälleen yksi kysymys tai haaste. Kun olet sanonut sen, LOPETA ja odota hiljaa, kunnes käyttäjä vastaa.',
   'Pidä jokainen puheenvuoro lyhyenä: enintään 2–3 lausetta.',
   'Älä anna valmennuspalautetta, älä opeta STAR-mallia, älä arvostele suoritusta ääneen. Pysy roolissasi koko keskustelun ajan.'
@@ -50,12 +58,11 @@ const SCENARIOS = {
     key: 'ai_defense',
     label: 'Skeptinen esihenkilö · AI-puolustus',
     turns: 5,
-    voice: envTrim('OPENAI_VDS_VOICE_DEFENSE') || 'ash',
     persona: [
       'Olet skeptinen esihenkilö suomalaisessa organisaatiossa. Työntekijä on juuri tehnyt Deep Search -tutkimuksen tekoälyn vaikutuksesta omaan ammattiinsa.',
       'Tehtäväsi on haastaa häntä: et usko hypeen. Haluat kuulla konkreettisia työkaluja, hyötyjä JA haittoja.',
       'Kysy yksi asia kerrallaan, suunnilleen tässä järjestyksessä: 1) mitä ammattia tutkimus koskee, 2) millä AI-työkaluilla ammattilaiset oikeasti työskentelevät, 3) miten tekoälyä hyödynnetään arjessa konkreettisesti, 4) mitkä ovat negatiiviset puolet / riskit juuri tällä alalla, 5) miksi juuri HÄNEN pitäisi saada käyttää tekoälyä työssään.',
-      'Ole asiallinen mutta tiukka aikuinen — et huuda. Jos vastaus on ympäripyöreä, pyydä esimerkkiä. Jos hän unohtaa haitat, muistuta niistä.',
+      'Ole asiallinen ja utelias aikuinen — et huuda. Jos vastaus on ympäripyöreä, pyydä esimerkkiä. Jos hän unohtaa haitat, muistuta niistä.',
       'Lopuksi voit lyhyesti todeta kuulostiko perustelu uskottavalta — ilman valmennuslistaa.'
     ]
   },
@@ -63,25 +70,24 @@ const SCENARIOS = {
     key: 'job_interview',
     label: 'Rekrytoija · työhaastattelu',
     turns: 5,
-    voice: envTrim('OPENAI_VDS_VOICE_INTERVIEW') || 'marin',
     persona: [
       'Olet rekrytoija suomalaisessa yrityksessä. Haastattelet hakijaa rooliin hänen ammattialallaan (katso brief).',
-      'Haastattelu on realistinen: ammattimainen, ystävällinen mutta vaativa. Et ole valmentaja.',
+      'Haastattelu on realistinen: ammattimainen, rauhallinen ja ystävällinen. Et ole valmentaja.',
       'Kysy yksi kysymys kerrallaan, suunnilleen: 1) kerro itsestäsi ja taustastasi alalla, 2) miksi tämä ala / tämä tyyppinen rooli, 3) miten olet käyttänyt tai käyttäisit tekoälyä työssäsi, 4) STAR-tyylinen tilannekysymys ("Kerro tilanteesta jossa ratkaisit ongelman — käytä tilanne, tehtävä, toiminta, tulos"), 5) mikä on tekoälyn riski tai heikkous alallasi ja miten hallitsisit sen.',
       'Jos hakija mainitsee briefissä olevia työkaluja tai tutkimustuloksia, tartu niihin lyhyellä jatkokysymyksellä.',
-      'Älä paljasta mallivastauksia. Pidä tempo kuin oikeassa haastattelussa.'
+      'Älä paljasta mallivastauksia. Pidä tempo kuin rauhallisessa haastattelussa.'
     ]
   },
   star_drill: {
     key: 'star_drill',
     label: 'Haastattelija · STAR-harjoitus',
     turns: 4,
-    voice: envTrim('OPENAI_VDS_VOICE_STAR') || 'coral',
     persona: [
       'Olet haastattelija, joka harjoituttaa STAR-vastausta. STAR = Tilanne, Tehtävä, Toiminta, Tulos.',
+      'Olet rauhallinen ja helposti lähestyttävä — kuin ystävällinen harjoittelukumppani, et tiukka tuomari.',
       'Aloita kysymällä: "Kerro tilanteesta jossa käytit tekoälyä tai ratkaisit vaikean ongelman työssäsi."',
       'Kuuntele vastaus. Seuraavissa vuoroissa kysy TÄSMÄLLEEN yksi puuttuva STAR-osa kerrallaan jos se jäi epäselväksi: mikä oli tilanne, mikä oli sinun tehtäväsi, mitä SINÄ teit, mikä oli mitattava tulos.',
-      'Jos kaikki osat ovat jo vastauksessa, haasta: "Tiivistä sama tarina 45 sekuntiin" tai "Mikä oli sinun henkilökohtainen panoksesi tiimissä?".',
+      'Jos kaikki osat ovat jo vastauksessa, haasta kevyesti: "Tiivistä sama tarina 45 sekuntiin" tai "Mikä oli sinun henkilökohtainen panoksesi tiimissä?".',
       'Älä selitä STAR-teoriaa ääneen. Älä anna pisteitä. Pysy haastattelijana.'
     ]
   },
@@ -89,7 +95,6 @@ const SCENARIOS = {
     key: 'case_judgment',
     label: 'Kollega Matti · AI-tilanne',
     turns: 4,
-    voice: envTrim('OPENAI_VDS_VOICE_CASE') || 'ash',
     persona: [
       'Olet Matti, innokas kollega asiakaspalvelutiimissä. Ehdotat nopeaa AI-tapaa hoitaa valitusviestit.',
       'TILANNE jonka opiskelija näkee ruudulla: asiakas valittaa myöhästyneestä tilauksesta. Sinä (Matti) ehdotat: 1) liität koko asiakassähköpostin ChatGPT:hen, 2) lähetät AI-vastauksen sellaisenaan, 3) annat AI:n luvata 50 euron hyvityksen rauhoittaaksesi asiakasta.',
@@ -175,7 +180,7 @@ function buildSessionConfig(scenarioKey, brief) {
       },
       output: {
         format: { type: 'audio/pcm', rate: 24000 },
-        voice: scenario.voice || realtimeVoice()
+        voice: realtimeVoice()
       }
     }
   };
@@ -265,7 +270,7 @@ router.get('/realtime/config', (req, res) => {
     scenario: scenarioKey,
     persona: scenario.label,
     model: realtimeModel(),
-    voice: scenario.voice || realtimeVoice(),
+    voice: realtimeVoice(),
     phases,
     expectedTurns: scenario.turns,
     instructions: buildInstructions(scenarioKey, req.query.brief),
