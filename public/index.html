@@ -1391,6 +1391,17 @@
             requireGiftCompletion: false
           },
           {
+            id: 'moduuli-voice-deep-search',
+            title: 'Ääni ja Deep Search — live-harjoittelu',
+            description: 'Deep Search ammattisi + AI:sta, sitten live-ääni: puolusta tutkimuksesi, työhaastattelu ja STAR-drill. Claude-palaute.',
+            icon: 'microphone',
+            order: 8.08,
+            part: 2,
+            day: 'bridge',
+            cardBadge: '★',
+            requireGiftCompletion: false
+          },
+          {
             id: 'moduuli-ideasta-tuotteeksi',
             title: 'Ideasta tuotteeksi — NotebookLM → Claude/GPT → Base44',
             description: 'Tutkimusnotebookista työkaluun ja haastattelutarinaan. Think-gates, NotebookLM, Claude/GPT, Base44.',
@@ -1444,16 +1455,7 @@
             part: 2,
             day: 'bridge'
           },
-          // DAY 2 — "Rakenna hakemuksesi"
-          {
-            id: 'moduuli-voice-deep-search',
-            title: 'Ääni ja Deep Search — live-harjoittelu',
-            description: 'Deep Search ammattisi + AI:sta, sitten live-ääni: puolusta tutkimuksesi, työhaastattelu ja STAR-drill. Claude-palaute.',
-            icon: 'microphone',
-            order: 6,
-            part: 2,
-            day: 2
-          },
+          // DAY 2 (legacy job-search modules; voice-deep-search moved next to AI-maisema)
           {
             id: 'moduuli10-ai-tyonhakutyokalut',
             title: 'Moduuli 7: AI työnhakutyökalut',
@@ -2048,7 +2050,8 @@
           .filter(function (m) { return m && shouldShowInOmaPolku(m, 'anne'); });
         const hasAnneOmaPolku = anneOmaPolkuModules.length > 0;
 
-        // Group Part 2 modules by day (loppuosi injektoidaan AI-maisema -kortin jälkeen)
+        // Group Part 2 modules by day (loppuosi injektoidaan voice-deep-search -kortin jälkeen:
+        // AI-maisema → Kirjailija → Ääni & Deep Search → ★/lahjat…)
         // Hard sequence for key bridge cards (Lovable before Esitykset), then numeric order.
         const bridgeOrderOverride = {
           'moduuli-lovable': 5.65,
@@ -2083,7 +2086,7 @@
           { id: 'section-bridge', label: 'Käytännön AI-taidot', show: day1_5Modules.length > 0 || (!!loppumoduuliModule && !isStudentHidden(loppumoduuliModule)) },
           { id: 'section-oma-polku', label: viewerIsAdmin ? 'Jani / Karpo' : 'Oma polku', show: hasJaniOmaPolku },
           { id: 'section-oma-polku-anne', label: viewerIsAdmin ? 'Anne — Oma polku' : 'Oma polku', show: hasAnneOmaPolku },
-          { id: 'section-day2', label: 'DAY 2', show: day2Modules.length > 0 },
+          { id: 'section-day2', label: 'Työnhaku', show: day2Modules.length > 0 },
           { id: 'section-day3', label: 'DAY 3', show: day3Modules.length > 0 },
           { id: 'section-day4', label: 'DAY 4', show: day4Modules.length > 0 },
           { id: 'section-loppu', label: 'Tekoäly ja minä', show: !!loppumoduuliModule && !isStudentHidden(loppumoduuliModule) },
@@ -2201,7 +2204,7 @@
           let finalsPlaced = false;
           bridgeMainModules.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
-            if (!finalsPlaced && module.id === 'moduuli-ai-maisema') {
+            if (!finalsPlaced && module.id === 'moduuli-voice-deep-search') {
               html += renderFinalCluster(index + 1);
               finalsPlaced = true;
             }
@@ -2228,9 +2231,9 @@
         html += renderOmaPolkuSection();
         html += renderAnneOmaPolkuSection();
         
-        // Render DAY 2 — "Rakenna hakemuksesi"
+        // Remaining day-2 modules (no "DAY 2 — Rakenna hakemuksesi" heading)
         if (day2Modules.length > 0) {
-          html += '<div class="part-section" id="section-day2"><h2 class="part-title">DAY 2 — "Rakenna hakemuksesi"</h2><div class="modules-grid">';
+          html += '<div class="part-section" id="section-day2"><div class="modules-grid">';
           day2Modules.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
           });
