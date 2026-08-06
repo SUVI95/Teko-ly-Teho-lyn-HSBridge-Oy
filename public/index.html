@@ -192,6 +192,18 @@
     border-radius: 6px;
     margin-bottom: 0.75rem;
   }
+
+  .module-card.personal-gift-highlight {
+    border-color: rgba(199, 91, 58, 0.45);
+    background: linear-gradient(165deg, #fffaf7 0%, #fff 55%);
+    box-shadow: 0 8px 28px rgba(199, 91, 58, 0.12);
+  }
+
+  .module-card.personal-gift-highlight .module-card-tag {
+    background: rgba(199, 91, 58, 0.16);
+    border-color: rgba(199, 91, 58, 0.35);
+    font-weight: 700;
+  }
   
   .module-card {
     background: #fff;
@@ -1698,15 +1710,17 @@
           {
             id: 'soile-ai-opas-2025',
             title: 'Taloushallinnon AI-opas — sinulle',
-            description: 'Henkilökohtainen opas taloushallinnon AI-taitoihin — Antti Eskelinen.',
+            description: 'Henkilökohtainen lahja vain Antti Eskeliselle — ei näy muille opiskelijoille. Taloushallinnon AI-taidot, promptit ja take-home.',
             icon: 'sparkles',
             part: 2,
             day: 'bridge',
-            cardBadge: 'Sinulle',
-            statusLine: 'Henkilökohtainen lahja 🎁',
+            order: 8.09,
+            cardBadge: 'Vain Antille',
+            statusLine: 'Henkilökohtainen lahja 🎁 · vain Antille',
             personalGiftKey: 'soile',
             soileGiftOnly: true,
-            requireGiftCompletion: false
+            requireGiftCompletion: false,
+            personalGiftHighlight: true
           },
           {
             id: 'ville-ai-opas-2025',
@@ -2161,7 +2175,7 @@
             tyokalurakentajaModule,
             sonjaGiftModule,
             satuGiftModule,
-            soileGiftModule,
+            // soileGiftModule — rendered right after voice-deep-search (Antti)
             villeGiftModule,
             minnaGiftModuleA,
             minnaGiftModuleB,
@@ -2205,6 +2219,10 @@
           bridgeMainModules.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
             if (!finalsPlaced && module.id === 'moduuli-voice-deep-search') {
+              // Antti's personal gift — same section, immediately after Deep Search
+              if (soileGiftModule && shouldShowPersonalGiftModule(soileGiftModule)) {
+                html += renderModuleCard(soileGiftModule, index + 0.5, modules, summary, completedModules, module4Completed, allPart1Completed);
+              }
               html += renderFinalCluster(index + 1);
               finalsPlaced = true;
             }
@@ -2952,9 +2970,10 @@
       
       const moduleOpenHref = module.id === 'palaute' ? '/module/palaute?celebrate=1' : '/module/' + module.id;
       const palauteCardClass = module.id === 'palaute' ? ' feedback-module-card' : '';
+      const giftHighlightClass = module.personalGiftHighlight ? ' personal-gift-highlight' : '';
 
       return `
-        <div class="module-card${palauteCardClass} ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="window.location.href='${moduleOpenHref}'"` : ''}>
+        <div class="module-card${palauteCardClass}${giftHighlightClass} ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}" ${!isLocked ? `onclick="window.location.href='${moduleOpenHref}'"` : ''}>
           ${isCompleted ? '<div class="completion-badge">✓</div>' : ''}
           ${lockBadge}
           <div class="module-icon">${iconSVGs[module.icon]}</div>
