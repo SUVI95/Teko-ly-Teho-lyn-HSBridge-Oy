@@ -24,7 +24,8 @@ const {
   getGiftKeyForModuleId,
   isGiftRecipient,
   isModuleGiftRecipient,
-  isPublicStudentModule
+  isPublicStudentModule,
+  isTestStudentUser
 } = require('./config/personal-gift-access');
 const { resetKuopioDemoUserData } = require('./lib/reset-kuopio-demo-user-data');
 const { portfolioPublicUrl, isPortfolioSubdomain, portfolioUseSubdomain, portfolioAppOrigin, portfolioPublicHost } = require('./lib/portfolio-public-url');
@@ -583,11 +584,32 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   // moduuli-ai-maisema — open to all students (after Perplexity & NotebookLM)
   'moduuli-ai-liidien-hankinta',
   'moduuli-ai-simulation-lab',
+  // Admin + test student only (hidden from Antti and other students)
+  'moduuli-prompt-hiomo',
+  'moduuli-bottityypit',
+  'moduuli1-ai-automaatio',
+  'moduuli1b-ai-automaatio',
+  'moduuli1c-ai-automaatio',
+  'moduuli-eu-ai-act-moduuli5',
+  'moduuli-hitl-architect',
+  'moduuli-ai-laatulaboratorio',
+  'moduuli-gpt-claude-sprint',
+  'moduuli-gpt-claude-sprint-2',
 ]);
 
-/** Admin-only modules that also block personal-gift recipients (no /module/ bypass). */
+/** Admin-only modules that also block personal-gift recipients (no /module/ bypass). Test student still allowed. */
 const STRICT_ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-ella-myyntisprintti',
+  'moduuli-prompt-hiomo',
+  'moduuli-bottityypit',
+  'moduuli1-ai-automaatio',
+  'moduuli1b-ai-automaatio',
+  'moduuli1c-ai-automaatio',
+  'moduuli-eu-ai-act-moduuli5',
+  'moduuli-hitl-architect',
+  'moduuli-ai-laatulaboratorio',
+  'moduuli-gpt-claude-sprint',
+  'moduuli-gpt-claude-sprint-2',
 ]);
 
 /**
@@ -595,13 +617,8 @@ const STRICT_ADMIN_ONLY_MODULE_IDS = new Set([
  * Auki: Aloitus + M1–M5 (+ Tomi 1/2 giftille).
  */
 const STUDENT_LOCKED_MODULE_IDS = new Set([
-  // Soft-lock (näkyy lukittuna) — auki vain Tomille + testiopiskelijalle (musiikki) + adminille
-  'moduuli-prompt-hiomo',
-  'moduuli-bottityypit',
-  'moduuli1-ai-automaatio',
+  // Soft-lock modules moved to ADMIN_ONLY (admin + test only)
   'moduuli6-hallusinaatiot',
-  // moduuli8-ai-polku, moduuli9-haastattelu, moduuli-elava-cv, moduuli-hitl-architect:
-  // open to all students (part of the "Tekoäly työnhaun työkaluna" / bonus path).
   'moduuli-asiakaspalvelu-live-puhelu',
   'moduuli1b-ai-automaatio',
   'moduuli1c-ai-automaatio',
@@ -647,11 +664,7 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
  * Soft-lock early access on /module/:id (must match public/index.html).
  * Module stays locked for the group; these gift keys may open it.
  */
-const STUDENT_LOCKED_EARLY_ACCESS = {
-  'moduuli-prompt-hiomo': ['musiikki'],
-  'moduuli-bottityypit': ['musiikki'],
-  'moduuli1-ai-automaatio': ['musiikki']
-};
+const STUDENT_LOCKED_EARLY_ACCESS = {};
 
 // Personal gift HTML only via /module/:id (recipient + admin gate)
 Object.values(GIFTS).forEach((gift) => {
@@ -697,9 +710,6 @@ app.get('/module/:moduleId', async (req, res) => {
     if (moduleId === 'moduuli-ai-verkkosivustotyokalut') {
       return res.redirect(302, '/module/moduuli-elava-cv');
     }
-    if (STRICT_ADMIN_ONLY_MODULE_IDS.has(moduleId)) {
-      return res.redirect(302, '/');
-    }
     let giftUser = { email: '', name: '' };
     if (token) {
       try {
@@ -715,7 +725,12 @@ app.get('/module/:moduleId', async (req, res) => {
         console.error('Personal gift admin-only bypass:', e);
       }
     }
-    if (!isModuleGiftRecipient(moduleId, giftUser)) {
+    // QA test student may open admin+test modules
+    if (isTestStudentUser(giftUser)) {
+      // allow
+    } else if (STRICT_ADMIN_ONLY_MODULE_IDS.has(moduleId)) {
+      return res.redirect(302, '/');
+    } else if (!isModuleGiftRecipient(moduleId, giftUser)) {
       return res.redirect(302, '/');
     }
   }

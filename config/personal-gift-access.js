@@ -23,6 +23,14 @@ function parseEmailList(envRaw, defaults) {
 /** Test student account — sees Jani/Karpo gift modules for QA (see scripts/create-test-accounts.js). */
 const TEST_STUDENT_EMAIL = 'testi.opiskelija@example.com';
 
+function isTestStudentEmail(email) {
+  return normalizeEmail(email) === TEST_STUDENT_EMAIL;
+}
+
+function isTestStudentUser(user) {
+  return !!(user && isTestStudentEmail(user.email));
+}
+
 function nameMatchesFirstName(name, firstName) {
   const n = normalizeName(name);
   const first = normalizeName(firstName);
@@ -202,12 +210,8 @@ const PUBLIC_STUDENT_MODULE_IDS = new Set([
   'moduuli8-ai-polku',
   'moduuli9-haastattelu',
   'moduuli-elava-cv',
-  'moduuli-perplexity-notebooklm',
-  'moduuli-bottityypit',
-  'moduuli-ai-laatulaboratorio',
-  'moduuli1-ai-automaatio',
-  'moduuli1b-ai-automaatio',
-  'moduuli1c-ai-automaatio'
+  'moduuli-perplexity-notebooklm'
+  // bottityypit / Rivon / Automaatio A–C: admin + test student only (see ADMIN_AND_TEST in server + dashboard)
 ]);
 
 function isPublicStudentModule(moduleId) {
@@ -275,9 +279,12 @@ function isSonjaGiftEmail(email) {
 module.exports = {
   GIFTS,
   PUBLIC_STUDENT_MODULE_IDS,
+  TEST_STUDENT_EMAIL,
   normalizeEmail,
   normalizeName,
   nameMatchesFirstName,
+  isTestStudentEmail,
+  isTestStudentUser,
   getGiftKeyForModuleId,
   getGiftKeysForModuleId,
   isPublicStudentModule,

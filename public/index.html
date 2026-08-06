@@ -2330,21 +2330,15 @@
     const publicTyonhakuModuleIds = new Set([
       'moduuli8-ai-polku',
       'moduuli9-haastattelu',
-      'moduuli-gpt-claude-sprint',
-      'moduuli-gpt-claude-sprint-2',
       'moduuli-bottityypit-studio-intro',
       'moduuli-elava-cv',
-      'moduuli-ai-laatulaboratorio',
       'palaute',
       'moduuli-perplexity-notebooklm',
       'moduuli-ai-maisema',
       'moduuli-kirjailija-aanikirja',
-      'moduuli-voice-deep-search',
-      'moduuli-bottityypit',
-      'moduuli-eu-ai-act-moduuli5',
-      'moduuli-prompt-hiomo',
-      'moduuli-hitl-architect',
-      'moduuli1-ai-automaatio'
+      'moduuli-voice-deep-search'
+      // Rivon / bottityypit / prompt-hiomo / HITL / EU AI Act / Automaatio A /
+      // GPT+Claude Sprint 1–2: admin + test student only (see adminAndTestOnlyModuleIds)
     ]);
 
     /** Piilotettu opiskelijoilta — vain admin voi nähdä ja avata (poista id kun haluat julkaista). */
@@ -2387,6 +2381,29 @@
       'moduuli1b-ai-automaatio',
       'moduuli1c-ai-automaatio',
       'moduuli-asiakaspalvelu-live-puhelu',
+      // Admin + testiopiskelija only (piilotettu Antilta ja muilta)
+      'moduuli-prompt-hiomo',
+      'moduuli-bottityypit',
+      'moduuli1-ai-automaatio',
+      'moduuli-eu-ai-act-moduuli5',
+      'moduuli-hitl-architect',
+      'moduuli-ai-laatulaboratorio',
+      'moduuli-gpt-claude-sprint',
+      'moduuli-gpt-claude-sprint-2',
+    ]);
+
+    /** Admin-only IDs that the QA test student may still see/open. */
+    const adminAndTestOnlyModuleIds = new Set([
+      'moduuli-prompt-hiomo',
+      'moduuli-bottityypit',
+      'moduuli1-ai-automaatio',
+      'moduuli-eu-ai-act-moduuli5',
+      'moduuli-hitl-architect',
+      'moduuli-ai-laatulaboratorio',
+      'moduuli1b-ai-automaatio',
+      'moduuli1c-ai-automaatio',
+      'moduuli-gpt-claude-sprint',
+      'moduuli-gpt-claude-sprint-2',
     ]);
 
     /** Osaamistaidot moduulikorteilla — näytetään "Opit"-chipseinä kuvauksen sijaan. */
@@ -2492,23 +2509,16 @@
     ]);
 
     /**
-     * Päivä 1 — näkyy lukittuna (ei avaudu). Auki: Aloitus + M1–M5 (+ Tomi 1/2 giftille).
+     * Päivä 1 — näkyy lukittuna (ei avaudu).
+     * (prompt-hiomo / bottityypit / Automaatio A moved to admin+test only — not shown to Antti.)
      */
-    const studentSoftLockedModuleIds = new Set([
-      'moduuli-prompt-hiomo',
-      'moduuli-bottityypit',
-      'moduuli1-ai-automaatio'
-    ]);
+    const studentSoftLockedModuleIds = new Set([]);
 
     /**
      * Soft-lock early access: module stays "Ei käytössä tänään" for the group,
-     * but these gift keys can open it (Tomi + testi.opiskelija via musiikki_gift).
+     * but these gift keys can open it.
      */
-    const softLockEarlyAccessGiftKeys = {
-      'moduuli-prompt-hiomo': ['musiikki'],
-      'moduuli-bottityypit': ['musiikki'],
-      'moduuli1-ai-automaatio': ['musiikki']
-    };
+    const softLockEarlyAccessGiftKeys = {};
 
     /**
      * Piilotettu opiskelijoilta (vain admin näkee). Päivä 1.
@@ -2555,6 +2565,12 @@
       const u = window.currentUser;
       if (!u) return false;
       return u.is_admin === true || u.is_admin === 'true' || u.is_admin === 1 || u.is_admin === '1';
+    }
+
+    function isTestStudentUser() {
+      const u = window.currentUser;
+      if (!u || !u.email) return false;
+      return String(u.email).trim().toLowerCase() === 'testi.opiskelija@example.com';
     }
 
     function isKuopioDemoStudent() {
@@ -2664,6 +2680,8 @@
 
     function isModuleHiddenFromStudent(m) {
       if (isAdminUser()) return false;
+      // Admin + QA test student may see these; Antti and other students do not
+      if (adminAndTestOnlyModuleIds.has(m.id) && isTestStudentUser()) return false;
       // Päivä 1 -piilotus voittaa myös publicTyonhaku-listan
       if (temporarilyLockedModuleIds.has(m.id)) return true;
       if (publicTyonhakuModuleIds.has(m.id)) return false;
