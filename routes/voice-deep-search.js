@@ -448,6 +448,100 @@ router.post('/feedback', async (req, res) => {
   }
 });
 
+/**
+ * Claude coaching for the three recall writing exercises
+ * (prompt lab, no-code tools, fast presentation).
+ */
+router.post('/recall-feedback', async (req, res) => {
+  try {
+    const exercise = String(req.body.exercise || '').trim();
+    const allowed = new Set(['prompt', 'tools', 'gamma']);
+    if (!allowed.has(exercise)) {
+      return res.status(400).json({ error: 'Unknown recall exercise' });
+    }
+
+    const payload = req.body.payload && typeof req.body.payload === 'object' ? req.body.payload : {};
+
+    let system = '';
+    let user = '';
+
+    if (exercise === 'prompt') {
+      const promptText = String(payload.prompt || '').trim();
+      const why = String(payload.why || '').trim();
+      if (promptText.length < 200) {
+        return res.status(400).json({ error: 'Promptti on liian lyhyt palauteen.' });
+      }
+      system = [
+        'Olet tiukka mutta ystävällinen AI-valmentaja aikuisille Suomessa.',
+        'Opiskelija kirjoitti promptin fiktiiviselle myyntipäällikkö Lauralle (pk-yritys, palaveri johdon kanssa, tarjoukset, tietosuoja, sävy, budjetti, tiimin epävarmuus).',
+        'Arvioi VAIN opiskelijan kirjoittamaa prompttia ja perustelua — älä kirjoita valmista malliprompttia opiskelijan puolesta.',
+        'ÄLÄ paljasta mallivastausta. Älä anna kopioitavaa “täydellistä prompttia”.',
+        'Hyväksy että Laura voi käyttää ChatGPT:tä, Claudea, Geminiä, Copilotia tai vastaavaa — työkalun nimi ei ole tärkeä, promptin laatu on.',
+        'Anna palaute suomeksi. Käytä täsmälleen otsikoita:',
+        'VERDICT: ok | partial | bad',
+        '✓ TOIMI:',
+        '⚠ PARANNA:',
+        '→ SEURAAVA ASKEL: (yksi konkreettinen muutos)',
+        'Max 10 lausetta. Konkreettinen. Älä kehu tyhjää.'
+      ].join('\n');
+      user = 'OPISKELIJAN PROMPTTI:\n' + promptText + '\n\nOPISKELIJAN PERUSTELU:\n' + (why || '(puuttuu)');
+    } else if (exercise === 'tools') {
+      const tool1 = String(payload.tool1 || '').trim();
+      const tool2 = String(payload.tool2 || '').trim();
+      const why = String(payload.why || '').trim();
+      system = [
+        'Olet AI-valmentaja aikuisille Suomessa.',
+        'Asiakas Omar tarvitsee nettisivun / pienen sovelluksen ILMAN koodaustaitoa.',
+        'Odotetut kurssityökalut (pidä mielessäsi, älä paljasta jos vastaus on väärä): Lovable ja Base44.',
+        'Jos opiskelija nimesi molemmat (tai selkeät variantit), vahvista oikein.',
+        'Jos vain toinen osui tai vastaus on chat-työkalu (ChatGPT/Claude/Gemini), sano että ne ovat tekstityökaluja — ohjaa muistamaan kurssin no-code rakennustyökalut ILMAN että kirjoitat nimet “Lovable” tai “Base44” ennen kuin opiskelija on oikeassa.',
+        'Kun vastaus on oikein, saat nimetä Lovable ja Base44.',
+        'Anna palaute suomeksi. Käytä otsikoita:',
+        'VERDICT: ok | partial | bad',
+        '✓ TOIMI:',
+        '⚠ PARANNA:',
+        '→ SEURAAVA ASKEL:',
+        'Max 8 lausetta.'
+      ].join('\n');
+      user = 'Työkalu 1: ' + (tool1 || '(tyhjä)') + '\nTyökalu 2: ' + (tool2 || '(tyhjä)') + '\nPerustelu:\n' + (why || '(puuttuu)');
+    } else {
+      const tool = String(payload.tool || '').trim();
+      const why = String(payload.why || '').trim();
+      system = [
+        'Olet AI-valmentaja aikuisille Suomessa.',
+        'Asiakas Sanna tarvitsee NOPEAN diaesityksen kuvineen/visuaaleineen (kiire).',
+        'Odotettu kurssityökalu (pidä mielessäsi): Gamma.',
+        'Jos opiskelija vastasi Gamman (tai selkeän variantin), vahvista oikein.',
+        'Jos vastasi ChatGPT/Claude/Gemini/Copilot, sano että ne sopivat tekstiin mutta tämä tehtävä koskee esitystyökalua — ÄLÄ kirjoita sanaa “Gamma” ennen kuin vastaus on oikein.',
+        'Kun vastaus on oikein, saat nimetä Gamman.',
+        'Anna palaute suomeksi. Käytä otsikoita:',
+        'VERDICT: ok | partial | bad',
+        '✓ TOIMI:',
+        '⚠ PARANNA:',
+        '→ SEURAAVA ASKEL:',
+        'Max 8 lausetta.'
+      ].join('\n');
+      user = 'Työkalu: ' + (tool || '(tyhjä)') + '\nPerustelu:\n' + (why || '(puuttuu)');
+    }
+
+    const result = await callClaudeFeedback({ system, prompt: user });
+    const feedback = (result.text || '').trim();
+    let verdict = 'partial';
+    const vm = feedback.match(/VERDICT:\s*(ok|partial|bad)/i);
+    if (vm) verdict = vm[1].toLowerCase();
+
+    res.json({
+      feedback,
+      verdict,
+      provider: result.provider,
+      model: result.model
+    });
+  } catch (error) {
+    console.error('VDS recall feedback error:', error.message);
+    res.status(500).json({ error: 'Claude-palaute epäonnistui', message: error.message });
+  }
+});
+
 module.exports = router;
 module.exports.buildSessionConfig = buildSessionConfig;
 module.exports.SCENARIOS = SCENARIOS;
