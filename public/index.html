@@ -2093,6 +2093,7 @@
         const part3RenderList = visibleForStudent(part3Modules);
         
         let html = '';
+        let palauteShownEarly = false;
         
         // Quick jump nav — näytetään vain osiot joilla on näkyviä moduuleja tälle käyttäjälle
         const sectionIds = [
@@ -2105,7 +2106,7 @@
           { id: 'section-day4', label: 'DAY 4', show: day4Modules.length > 0 },
           { id: 'section-loppu', label: 'Tekoäly ja minä', show: !!loppumoduuliModule && !isStudentHidden(loppumoduuliModule) },
           { id: 'section-day5', label: 'Sovella omaan alaasi', show: part3RenderList.length > 0 },
-          { id: 'section-tyonhaku', label: 'Tekoäly työnhaun työkaluna', show: jobSearchModules.length > 0 }
+          { id: 'section-tyonhaku', label: 'Tekoäly työnhaun työkaluna', show: jobSearchModules.length > 0 || (palauteModule && !isStudentHidden(palauteModule)) }
         ].filter(s => s.show);
         html += '<div class="section-jump-nav" style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;margin-bottom:2rem;padding:1rem;background:var(--paper2);border-radius:12px;">';
         sectionIds.forEach(s => {
@@ -2222,6 +2223,11 @@
               // Antti's personal gift — same section, immediately after Deep Search
               if (soileGiftModule && shouldShowPersonalGiftModule(soileGiftModule)) {
                 html += renderModuleCard(soileGiftModule, index + 0.5, modules, summary, completedModules, module4Completed, allPart1Completed);
+                // Kurssipalaute right after Antti's gift so he always sees it
+                if (palauteModule && !isStudentHidden(palauteModule)) {
+                  html += renderModuleCard(palauteModule, index + 0.6, modules, summary, completedModules, module4Completed, allPart1Completed);
+                  palauteShownEarly = true;
+                }
               }
               html += renderFinalCluster(index + 1);
               finalsPlaced = true;
@@ -2296,7 +2302,7 @@
           jobSearchModules.forEach((module, index) => {
             html += renderModuleCard(module, index, modules, summary, completedModules, module4Completed, allPart1Completed);
           });
-          if (palauteModule && !isStudentHidden(palauteModule)) {
+          if (palauteModule && !isStudentHidden(palauteModule) && !palauteShownEarly) {
             html += renderModuleCard(palauteModule, jobSearchModules.length, modules, summary, completedModules, module4Completed, allPart1Completed);
           }
           html += '</div></div>';
@@ -2680,6 +2686,8 @@
 
     function isModuleHiddenFromStudent(m) {
       if (isAdminUser()) return false;
+      // Kurssipalaute — always visible to every student (including Antti)
+      if (m && m.id === 'palaute') return false;
       // Admin + QA test student may see these; Antti and other students do not
       if (adminAndTestOnlyModuleIds.has(m.id) && isTestStudentUser()) return false;
       // Päivä 1 -piilotus voittaa myös publicTyonhaku-listan
