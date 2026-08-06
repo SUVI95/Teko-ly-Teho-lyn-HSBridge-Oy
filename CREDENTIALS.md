@@ -10,7 +10,7 @@
 
 **Email:** `opettaja.antti@example.com`  
 **Password:** `anttiDemo26`  
-**Name:** Antti Demo
+**Name:** Demo Opiskelija
 
 ## QA Test Student Account
 **Email:** `testi.opiskelija@example.com`  

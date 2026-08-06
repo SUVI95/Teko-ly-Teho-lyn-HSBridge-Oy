@@ -53,7 +53,7 @@ async function createTestAccounts() {
     await upsertStudent({
       email: 'opettaja.antti@example.com',
       password: 'anttiDemo26',
-      name: 'Antti Demo',
+      name: 'Demo Opiskelija',
       label: 'Antti-view demo (teacher screen-share)'
     });
     
