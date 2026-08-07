@@ -591,11 +591,12 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-eu-ai-act-moduuli5',
   'moduuli-hitl-architect',
   'moduuli-ai-laatulaboratorio',
+  // GPT+Claude Sprint 1–2 — admin only
+  'moduuli-gpt-claude-sprint',
+  'moduuli-gpt-claude-sprint-2',
   // Admin + test student only (hidden from Antti and other students)
   'moduuli-prompt-hiomo',
   'moduuli-bottityypit',
-  'moduuli-gpt-claude-sprint',
-  'moduuli-gpt-claude-sprint-2',
   // Antti + admin only (soile gift recipients may open — not STRICT)
   'moduuli-kirjailija-aanikirja',
 ]);
@@ -610,19 +611,17 @@ const STRICT_ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-eu-ai-act-moduuli5',
   'moduuli-hitl-architect',
   'moduuli-ai-laatulaboratorio',
+  'moduuli-gpt-claude-sprint',
+  'moduuli-gpt-claude-sprint-2',
   // Admin + test student (see ADMIN_AND_TEST_MODULE_IDS bypass)
   'moduuli-prompt-hiomo',
   'moduuli-bottityypit',
-  'moduuli-gpt-claude-sprint',
-  'moduuli-gpt-claude-sprint-2',
 ]);
 
 /** QA test student may open these admin modules; everyone else (except admin) is blocked. */
 const ADMIN_AND_TEST_MODULE_IDS = new Set([
   'moduuli-prompt-hiomo',
   'moduuli-bottityypit',
-  'moduuli-gpt-claude-sprint',
-  'moduuli-gpt-claude-sprint-2',
 ]);
 
 /**
