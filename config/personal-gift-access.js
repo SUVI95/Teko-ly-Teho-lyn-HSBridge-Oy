@@ -63,12 +63,13 @@ const GIFTS = {
     emails: parseEmailList(process.env.SATU_GIFT_EMAIL, ['satukvoutilainen@gmail.com'])
   },
   soile: {
+    // Antti path: taloushallinto gift + Kirjailija lab (admin + Antti only)
     moduleId: 'soile-ai-opas-2025',
+    moduleIds: ['soile-ai-opas-2025', 'moduuli-kirjailija-aanikirja'],
     firstName: 'antti',
     emails: parseEmailList(process.env.SOILE_GIFT_EMAIL || process.env.ANTTI_GIFT_EMAIL, [
       'antti.eskelinen63@gmail.com',
-      ANTTI_DEMO_EMAIL, // teacher screen-share — same gift card as Antti
-      TEST_STUDENT_EMAIL // QA — also sees Rivon; do not use for Antti demo
+      ANTTI_DEMO_EMAIL // teacher screen-share — same Antti dashboard
     ])
   },
   minna_a: {

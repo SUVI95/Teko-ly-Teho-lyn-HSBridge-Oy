@@ -595,6 +595,8 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-ai-laatulaboratorio',
   'moduuli-gpt-claude-sprint',
   'moduuli-gpt-claude-sprint-2',
+  // Antti + admin only (soile gift recipients may open — not STRICT)
+  'moduuli-kirjailija-aanikirja',
 ]);
 
 /** Admin-only modules that also block personal-gift recipients (no /module/ bypass). Test student still allowed. */
