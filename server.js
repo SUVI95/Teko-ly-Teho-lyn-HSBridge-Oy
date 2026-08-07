@@ -584,32 +584,43 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   // moduuli-ai-maisema — open to all students (after Perplexity & NotebookLM)
   'moduuli-ai-liidien-hankinta',
   'moduuli-ai-simulation-lab',
-  // Admin + test student only (hidden from Antti and other students)
-  'moduuli-prompt-hiomo',
-  'moduuli-bottityypit',
+  // Admin only — Automaatio A–C, EU AI Act, HITL, Rivon
   'moduuli1-ai-automaatio',
   'moduuli1b-ai-automaatio',
   'moduuli1c-ai-automaatio',
   'moduuli-eu-ai-act-moduuli5',
   'moduuli-hitl-architect',
   'moduuli-ai-laatulaboratorio',
+  // Admin + test student only (hidden from Antti and other students)
+  'moduuli-prompt-hiomo',
+  'moduuli-bottityypit',
   'moduuli-gpt-claude-sprint',
   'moduuli-gpt-claude-sprint-2',
   // Antti + admin only (soile gift recipients may open — not STRICT)
   'moduuli-kirjailija-aanikirja',
 ]);
 
-/** Admin-only modules that also block personal-gift recipients (no /module/ bypass). Test student still allowed. */
+/** Admin-only modules that also block personal-gift recipients (no /module/ bypass). */
 const STRICT_ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-ella-myyntisprintti',
-  'moduuli-prompt-hiomo',
-  'moduuli-bottityypit',
+  // Admin only (not even QA test student)
   'moduuli1-ai-automaatio',
   'moduuli1b-ai-automaatio',
   'moduuli1c-ai-automaatio',
   'moduuli-eu-ai-act-moduuli5',
   'moduuli-hitl-architect',
   'moduuli-ai-laatulaboratorio',
+  // Admin + test student (see ADMIN_AND_TEST_MODULE_IDS bypass)
+  'moduuli-prompt-hiomo',
+  'moduuli-bottityypit',
+  'moduuli-gpt-claude-sprint',
+  'moduuli-gpt-claude-sprint-2',
+]);
+
+/** QA test student may open these admin modules; everyone else (except admin) is blocked. */
+const ADMIN_AND_TEST_MODULE_IDS = new Set([
+  'moduuli-prompt-hiomo',
+  'moduuli-bottityypit',
   'moduuli-gpt-claude-sprint',
   'moduuli-gpt-claude-sprint-2',
 ]);
@@ -727,8 +738,8 @@ app.get('/module/:moduleId', async (req, res) => {
         console.error('Personal gift admin-only bypass:', e);
       }
     }
-    // QA test student may open admin+test modules
-    if (isTestStudentUser(giftUser)) {
+    // QA test student may open only ADMIN_AND_TEST modules (not Automaatio/HITL/Rivon/etc.)
+    if (isTestStudentUser(giftUser) && ADMIN_AND_TEST_MODULE_IDS.has(moduleId)) {
       // allow
     } else if (STRICT_ADMIN_ONLY_MODULE_IDS.has(moduleId)) {
       return res.redirect(302, '/');
