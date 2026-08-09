@@ -846,6 +846,162 @@ window.Engine = (() => {
     };
   }
 
+  /* Situation phone — lock-screen + scene atmosphere */
+  const DISPATCH_SCENES = {
+    airport: {
+      title: 'Airport gate',
+      sub: 'Boarding now · Gate B12',
+      clock: '14:57',
+      art: `<svg class="dh-art" viewBox="0 0 320 120" aria-hidden="true"><defs><linearGradient id="skyA" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7eb6d9"/><stop offset="55%" stop-color="#c9dce8"/><stop offset="100%" stop-color="#e8e2d4"/></linearGradient></defs><rect width="320" height="120" fill="url(#skyA)"/><path d="M0 88 L40 70 L70 78 L110 55 L150 72 L190 48 L230 68 L270 52 L320 74 L320 120 L0 120Z" fill="#2a3538" opacity=".35"/><path d="M0 98 H320 V120 H0Z" fill="#1e2628"/><rect x="40" y="62" width="90" height="36" rx="2" fill="#243033"/><rect x="48" y="70" width="18" height="12" fill="#8ec8e8" opacity=".5"/><rect x="72" y="70" width="18" height="12" fill="#8ec8e8" opacity=".35"/><rect x="96" y="70" width="18" height="12" fill="#8ec8e8" opacity=".5"/><g transform="translate(210,40)"><ellipse cx="28" cy="22" rx="36" ry="8" fill="#1a1a18"/><path d="M-10 18 L70 18 L78 22 L70 26 L-10 26 Z" fill="#2c2c2a"/><path d="M20 10 L48 18 L20 18Z" fill="#3a3a38"/><circle cx="8" cy="26" r="3" fill="#e0783c"/></g><text x="16" y="28" fill="#1c1b18" font-size="11" font-family="Poppins,sans-serif" font-weight="600" opacity=".55">DEPARTURES</text></svg>`,
+    },
+    taxi: {
+      title: 'In a taxi',
+      sub: 'En route · partner meeting',
+      clock: '08:41',
+      art: `<svg class="dh-art" viewBox="0 0 320 120" aria-hidden="true"><defs><linearGradient id="skyT" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3d4a5c"/><stop offset="50%" stop-color="#6a7a8a"/><stop offset="100%" stop-color="#c4a882"/></linearGradient></defs><rect width="320" height="120" fill="url(#skyT)"/><rect x="0" y="78" width="320" height="42" fill="#2a2a28"/><rect x="0" y="92" width="320" height="6" fill="#e0b95a" opacity=".35"/><g opacity=".4"><rect x="20" y="40" width="28" height="40" fill="#1a1a18"/><rect x="60" y="28" width="36" height="52" fill="#1a1a18"/><rect x="110" y="36" width="24" height="44" fill="#1a1a18"/><rect x="250" y="30" width="40" height="50" fill="#1a1a18"/></g><g transform="translate(100,58)"><rect x="0" y="12" width="110" height="28" rx="6" fill="#e0b95a"/><rect x="18" y="0" width="70" height="20" rx="4" fill="#d4a84a"/><rect x="24" y="4" width="22" height="12" rx="2" fill="#7eb6d9" opacity=".7"/><rect x="52" y="4" width="22" height="12" rx="2" fill="#7eb6d9" opacity=".5"/><circle cx="22" cy="40" r="8" fill="#1a1a18"/><circle cx="88" cy="40" r="8" fill="#1a1a18"/><rect x="42" y="16" width="24" height="6" rx="1" fill="#1a1a18" opacity=".35"/></g><circle cx="280" cy="24" r="14" fill="#f0d090" opacity=".55"/></svg>`,
+    },
+    dinner: {
+      title: 'Industry dinner',
+      sub: 'Noisy table · competitor just spoke',
+      clock: '19:22',
+      art: `<svg class="dh-art" viewBox="0 0 320 120" aria-hidden="true"><defs><linearGradient id="skyD" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a221c"/><stop offset="100%" stop-color="#4a3a2e"/></linearGradient></defs><rect width="320" height="120" fill="url(#skyD)"/><ellipse cx="160" cy="95" rx="120" ry="28" fill="#1a1510" opacity=".6"/><ellipse cx="160" cy="88" rx="90" ry="18" fill="#3a2e24"/><circle cx="100" cy="70" r="16" fill="#5a4030" opacity=".5"/><circle cx="160" cy="62" r="18" fill="#5a4030" opacity=".55"/><circle cx="220" cy="70" r="16" fill="#5a4030" opacity=".5"/><circle cx="130" cy="82" r="5" fill="#e0783c" opacity=".7"/><circle cx="160" cy="78" r="6" fill="#e0b95a" opacity=".8"/><circle cx="190" cy="82" r="5" fill="#e0783c" opacity=".6"/><rect x="148" y="40" width="24" height="8" rx="2" fill="#e0b95a" opacity=".25"/><text x="16" y="28" fill="#e8dcc8" font-size="11" font-family="Poppins,sans-serif" font-weight="600" opacity=".4">LIVE PRESS DROP</text></svg>`,
+    },
+    convention: {
+      title: 'Convention floor',
+      sub: 'Between sessions · loud hall',
+      clock: '11:08',
+      art: `<svg class="dh-art" viewBox="0 0 320 120" aria-hidden="true"><defs><linearGradient id="skyC" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e8eef2"/><stop offset="100%" stop-color="#d0d8e0"/></linearGradient></defs><rect width="320" height="120" fill="url(#skyC)"/><rect x="0" y="70" width="320" height="50" fill="#b8c0c8"/><g opacity=".55"><rect x="20" y="35" width="50" height="40" rx="3" fill="#3a6ea5"/><rect x="85" y="28" width="55" height="47" rx="3" fill="#c45c3a"/><rect x="155" y="38" width="48" height="37" rx="3" fill="#3d7a4a"/><rect x="220" y="30" width="60" height="45" rx="3" fill="#6a5a9a"/></g><g fill="#2a2a28" opacity=".35"><circle cx="45" cy="95" r="6"/><circle cx="70" cy="98" r="5"/><circle cx="140" cy="94" r="6"/><circle cx="200" cy="97" r="5"/><circle cx="260" cy="95" r="6"/></g><text x="16" y="22" fill="#3a3830" font-size="10" font-family="Poppins,sans-serif" font-weight="700" opacity=".45">HALL B · BOOTHS</text></svg>`,
+    },
+    boardroom: {
+      title: 'Outside boardroom',
+      sub: 'Door opens in minutes',
+      clock: '09:58',
+      art: `<svg class="dh-art" viewBox="0 0 320 120" aria-hidden="true"><defs><linearGradient id="skyB" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e6e2d8"/><stop offset="100%" stop-color="#cfc9ba"/></linearGradient></defs><rect width="320" height="120" fill="url(#skyB)"/><rect x="90" y="20" width="140" height="100" fill="#8a8478"/><rect x="105" y="32" width="110" height="88" fill="#5a564c"/><rect x="118" y="48" width="36" height="55" rx="2" fill="#3a3830"/><rect x="162" y="48" width="36" height="55" rx="2" fill="#3a3830"/><circle cx="150" cy="78" r="3" fill="#e0b95a"/><rect x="0" y="100" width="320" height="20" fill="#b0aaa0"/><text x="16" y="28" fill="#3a3830" font-size="11" font-family="Poppins,sans-serif" font-weight="600" opacity=".4">FLOOR 12 · WAITING</text></svg>`,
+    },
+  };
+
+  function renderDispatchHud(host, opts={}){
+    const {
+      scene = 'airport',
+      location,
+      battery = 12,
+      timeLeft = '3 min',
+      note,
+      signal = 2,
+      /** Incoming phone content students must use in the Dispatch prompt */
+      sms = null, // {from, body, hint?}
+      /** Plain-language question the student should get answered (no jargon assumed) */
+      mission = null, // string
+    } = opts;
+    const sc = DISPATCH_SCENES[scene] || DISPATCH_SCENES.airport;
+    const bat = Math.max(0, Math.min(100, Number(battery) || 0));
+    const batWarn = bat <= 15;
+    const batCrit = bat <= 8;
+    const place = location || `${sc.title} · ${sc.sub}`;
+    const bars = [1,2,3,4].map(i =>
+      `<span class="dh-sig-bar ${i <= signal ? 'on' : ''}"></span>`
+    ).join('');
+
+    const smsBlock = sms ? `
+      <div class="dh-sms">
+        <div class="dh-sms-head">
+          <span class="dh-sms-badge">New message</span>
+          <span class="dh-sms-from">${sms.from || 'Unknown'}</span>
+        </div>
+        <p class="dh-sms-body">${sms.body}</p>
+        <p class="dh-sms-hint">${sms.hint || 'Copy this into your Dispatch prompt — Claude on the desktop has the files.'}</p>
+      </div>` : '';
+
+    const node = el(`
+      <div class="dispatch-hud scene-${scene}${batWarn ? ' bat-low' : ''}${batCrit ? ' bat-crit' : ''}${sms ? ' has-sms' : ''}">
+        <div class="dh-scene" aria-hidden="true">${sc.art}</div>
+        <div class="dh-overlay">
+          <div class="dh-phone">
+            <div class="dh-status-bar">
+              <span class="dh-clock">${sc.clock}</span>
+              <span class="dh-sig" title="Signal">${bars}</span>
+              <span class="dh-bat ${batWarn?'warn':''}" title="Battery">
+                <span class="dh-bat-body"><span class="dh-bat-fill" style="width:${bat}%"></span></span>
+                <span class="dh-bat-cap"></span>
+                <span class="dh-bat-pct">${bat}%</span>
+              </span>
+            </div>
+            <div class="dh-lock">
+              <div class="dh-place">
+                <span class="dh-pin" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                </span>
+                <div>
+                  <div class="dh-place-title">${sc.title}</div>
+                  <div class="dh-place-sub">${place}</div>
+                </div>
+              </div>
+              <div class="dh-meters">
+                <div class="dh-meter warn">
+                  <div class="dh-meter-k">Time left</div>
+                  <div class="dh-meter-v dh-countdown">${timeLeft}</div>
+                  <div class="dh-meter-bar"><span style="width:${batCrit?92:batWarn?78:55}%"></span></div>
+                </div>
+                <div class="dh-meter ${batWarn?'warn':''}">
+                  <div class="dh-meter-k">Phone battery</div>
+                  <div class="dh-meter-v">${bat}%${batWarn ? ' · dying' : ''}</div>
+                  <div class="dh-meter-bar bat"><span style="width:${bat}%"></span></div>
+                </div>
+              </div>
+              ${smsBlock}
+              ${mission ? `<div class="dh-mission"><span class="dh-mission-k">Ask Claude this</span><p>${mission}</p></div>` : ''}
+              ${note ? `<div class="dh-alert"><span class="dh-alert-dot"></span><p>${note}</p></div>` : ''}
+              <div class="dh-link-row">
+                <span class="dh-link-ok"></span>
+                Desktop awake · Dispatch ready
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`);
+    host.appendChild(node);
+    return node;
+  }
+
+  /* Right panel: desktop awake + peekable local files + live checklist */
+  function renderDispatchDesktopPanel(panel, {folderLabel='Desktop', pathHint='', files=[], desktopOk=true}={}){
+    const entries = files.map((f,i) => ({
+      id: f.id || ('df'+i),
+      kind: 'file',
+      name: f.name,
+      type: f.type || 'doc',
+      meta: f.meta || 'peek',
+      content: f.content || '(tyhjä)',
+      openable: true,
+    }));
+    panel.innerHTML = `
+      <div class="panel-header">Desktop <span class="path">${desktopOk ? 'awake · paired' : 'offline'}</span></div>
+      <div class="panel-body">
+        <div class="dd-status ${desktopOk?'ok':'off'}">${ICONS.desktop}<span>${desktopOk ? 'Claude Desktop hereillä — voit Dispatchata' : 'Ei yhteyttä pöytäkoneeseen'}</span></div>
+        <div class="dd-folder-label">${folderLabel} <span>${pathHint || ''}</span></div>
+        <p class="dd-peek-hint">Klikkaa tiedostoa → kurkista sisältö (tiedät mitä Claudella on käytössä).</p>
+        <div class="ws-tree" data-role="tree"></div>
+        <div class="doc-viewer" data-role="viewer" style="display:none;"></div>
+        <div class="pd-checklist" data-role="checklist" style="margin-top:12px;"></div>
+      </div>`;
+    const tree = panel.querySelector('[data-role="tree"]');
+    const viewer = panel.querySelector('[data-role="viewer"]');
+    const state = { entries };
+    function paint(){
+      tree.innerHTML = '';
+      renderTreeLevel(tree, state.entries, 0, viewer, state);
+    }
+    paint();
+    return {
+      checklist: panel.querySelector('[data-role="checklist"]'),
+      tree, viewer, state,
+      openFile(id){
+        const found = findEntry(state.entries, id);
+        if(found) showDocViewer(viewer, tree, found);
+      },
+    };
+  }
+
   async function runChecklist(checklistEl, steps){
     for(const step of steps){
       const item = el(`<div class="checklist-item"><span class="ci-dot"></span>${step}</div>`);
@@ -932,7 +1088,7 @@ window.Engine = (() => {
     renderChatShell, renderTerminalShell, renderDesignShell, termLine,
     renderScenarioPanel, renderFileExplorerPanel, animateSortIntoFolders,
     renderWorkspacePanel, askTextInput, updateArtifactRows, findEntry,
-    renderPhoneDesktopPanel, runChecklist, renderArtifactDashboardPanel,
+    renderPhoneDesktopPanel, renderDispatchHud, renderDispatchDesktopPanel, runChecklist, renderArtifactDashboardPanel,
     renderCalendarPanel, renderNotionPanel, renderInboxPanel, renderSkillPanel, renderSchedulePanel,
   };
 })();

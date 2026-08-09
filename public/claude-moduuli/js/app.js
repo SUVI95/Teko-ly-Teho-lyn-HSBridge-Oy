@@ -1,6 +1,7 @@
 /* =============================================================================
    APP.JS — kurssin navigointi ja näkymän vaihto.
    Ei tunne yhdenkään pilarin sisältöä — lukee kaiken window.PILLARS-listalta.
+   Optional: pillar.briefing(container) → screen between Teoria and Esimerkki.
    ============================================================================= */
 
 (() => {
@@ -11,8 +12,12 @@
   const practiceAreaEl = document.getElementById('practiceArea');
 
   let currentPillar = pillars[0];
-  let currentSection = 'theory'; // 'theory' | 'example' | number (exercise index)
-  const doneMap = {}; // "pillarId:exerciseIndex" -> true
+  let currentSection = 'theory'; // 'theory' | 'briefing' | 'example' | number
+  const doneMap = {};
+
+  function hasBriefing(){
+    return typeof currentPillar.briefing === 'function';
+  }
 
   function buildPillarNav(){
     pillarNavEl.innerHTML = '';
@@ -37,16 +42,23 @@
 
   function buildSubNav(){
     subNavEl.innerHTML = '';
-    const theoryBtn = Engine.el(`<button class="sub-pill"><span class="dot"></span>Teoria</button>`);
+    const theoryBtn = Engine.el(`<button class="sub-pill" data-sec="theory"><span class="dot"></span>Teoria</button>`);
     theoryBtn.addEventListener('click', () => { currentSection = 'theory'; render(); });
     subNavEl.appendChild(theoryBtn);
 
-    const exBtn = Engine.el(`<button class="sub-pill"><span class="dot"></span>Esimerkki</button>`);
+    if(hasBriefing()){
+      const label = currentPillar.briefingLabel || 'Malli';
+      const briefBtn = Engine.el(`<button class="sub-pill" data-sec="briefing"><span class="dot"></span>${label}</button>`);
+      briefBtn.addEventListener('click', () => { currentSection = 'briefing'; render(); });
+      subNavEl.appendChild(briefBtn);
+    }
+
+    const exBtn = Engine.el(`<button class="sub-pill" data-sec="example"><span class="dot"></span>Esimerkki</button>`);
     exBtn.addEventListener('click', () => { currentSection = 'example'; render(); });
     subNavEl.appendChild(exBtn);
 
     currentPillar.exercises.forEach((ex, i) => {
-      const btn = Engine.el(`<button class="sub-pill"><span class="dot"></span>${ex.label}</button>`);
+      const btn = Engine.el(`<button class="sub-pill" data-sec="ex-${i}"><span class="dot"></span>${ex.label}</button>`);
       btn.addEventListener('click', () => { currentSection = i; render(); });
       subNavEl.appendChild(btn);
     });
@@ -56,12 +68,13 @@
   function highlightSubNav(){
     const children = [...subNavEl.children];
     children.forEach(c => c.classList.remove('active'));
-    if(currentSection === 'theory') children[0].classList.add('active');
-    else if(currentSection === 'example') children[1].classList.add('active');
-    else children[2 + currentSection].classList.add('active');
+    const key = typeof currentSection === 'number' ? `ex-${currentSection}` : currentSection;
+    const active = children.find(c => c.dataset.sec === key);
+    if(active) active.classList.add('active');
 
     currentPillar.exercises.forEach((ex,i) => {
-      if(doneMap[currentPillar.id + ':' + i]) children[2+i].classList.add('done');
+      const btn = children.find(c => c.dataset.sec === `ex-${i}`);
+      if(btn && doneMap[currentPillar.id + ':' + i]) btn.classList.add('done');
     });
   }
 
@@ -78,6 +91,9 @@
             </div>`).join('')}
         </div>`
       : '';
+    const nextLabel = hasBriefing()
+      ? `Seuraava: ${currentPillar.briefingLabel || 'Malli'} →`
+      : 'Katso esimerkki →';
     theoryViewEl.innerHTML = `
       <div class="theory-card">
         <h2>${currentPillar.num}. ${currentPillar.name}</h2>
@@ -89,21 +105,31 @@
           <div class="theory-block"><h3>Mitä saat siitä</h3><p>${t.benefits}</p></div>
           <div class="theory-block"><h3>Milloin käytät</h3><p>${t.whereToUse}</p></div>
         </div>
-        <button type="button" class="btn primary theory-example-btn" id="goToExample">Katso esimerkki →</button>
+        <button type="button" class="btn primary theory-example-btn" id="goNextFromTheory">${nextLabel}</button>
       </div>`;
-    document.getElementById('goToExample').addEventListener('click', () => {
-      currentSection = 'example';
+    document.getElementById('goNextFromTheory').addEventListener('click', () => {
+      currentSection = hasBriefing() ? 'briefing' : 'example';
       render();
     });
   }
 
   function renderPracticeHeader(label, showReplay){
-    const header = Engine.el(`
+    return Engine.el(`
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <div style="font-size:13px;color:#5a5850;">${label}</div>
         ${showReplay ? '<button class="btn" id="replayBtn">↺ Toista</button>' : ''}
       </div>`);
-    return header;
+  }
+
+  async function renderBriefing(){
+    theoryViewEl.style.display = 'none';
+    practiceAreaEl.style.display = 'block';
+    practiceAreaEl.innerHTML = '';
+    const stage = Engine.el('<div class="briefing-stage"></div>');
+    practiceAreaEl.appendChild(stage);
+    await currentPillar.briefing(stage, {
+      goToExample: () => { currentSection = 'example'; render(); },
+    });
   }
 
   async function renderExample(){
@@ -139,6 +165,7 @@
   function render(){
     highlightSubNav();
     if(currentSection === 'theory') renderTheory();
+    else if(currentSection === 'briefing') renderBriefing();
     else if(currentSection === 'example') renderExample();
     else renderExercise(currentSection);
   }
