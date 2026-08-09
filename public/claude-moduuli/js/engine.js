@@ -197,7 +197,7 @@ window.Engine = (() => {
       return;
     }
     const must = (brief.mustInclude || []).map(x => `<li>${x}</li>`).join('');
-    const rightTitle = brief.outcome ? 'Tavoite' : 'Mitä teet';
+    const rightTitle = brief.outcome ? 'Valmis kun' : 'Mitä teet';
     const rightBody = brief.outcome || brief.task || '';
     const node = el(`
       <div class="card task-brief-card">
@@ -206,10 +206,11 @@ window.Engine = (() => {
           <div><h4>Tilanne</h4><div class="tb-body">${brief.situation || ''}</div></div>
           <div><h4>${rightTitle}</h4><div class="tb-body">${rightBody}</div></div>
         </div>
+        ${brief.job ? `<div class="tb-job"><h4>Tehtäväsi</h4><div class="tb-body">${brief.job}</div></div>` : ''}
         ${brief.folderNote ? `<p class="tb-folder">${brief.folderNote}</p>` : ''}
-        ${must ? `<h4>Huomioi</h4><ul class="tb-must">${must}</ul>` : ''}
+        ${must ? `<h4>Promptissasi pitää näkyä</h4><ul class="tb-must">${must}</ul>` : ''}
         ${brief.example ? `<div class="tb-example"><span>Vinkki / runko</span><code>${esc(brief.example)}</code></div>` : ''}
-        <p class="tb-next">${brief.nextHint || '↓ Valitse listasta, sitten kirjoita oma toimeksianto Claudelle — älä kopioi briiffiä.'}</p>
+        <p class="tb-next">${brief.nextHint || '↓ Kirjoita oma toimeksianto Claudelle — älä kopioi briiffiä sanasta sanaan.'}</p>
       </div>`);
     thread.appendChild(node);
     scrollDown(thread);
@@ -1026,6 +1027,143 @@ window.Engine = (() => {
     return { rowsEl, updatedEl: panel.querySelector('.dash-updated'), versionsEl: panel.querySelector('[data-role="versions"]') };
   }
 
+  /* Immersive scene strip above the Cowork shell (exercise context) */
+  function renderArtifactScene(container, {
+    scene = 'travel',
+    kicker = 'Live Artifact lab',
+    title = '',
+    sub = '',
+    chips = [],
+  } = {}){
+    const chipHtml = (chips || []).map(c => `<span class="la-scene-chip">${c}</span>`).join('');
+    const node = el(`
+      <div class="la-scene scene-${scene}">
+        <div class="la-scene-veil">
+          <p class="la-scene-kicker">${kicker}</p>
+          <h3 class="la-scene-title">${title}</h3>
+          <p class="la-scene-sub">${sub}</p>
+          ${chipHtml ? `<div class="la-scene-chips">${chipHtml}</div>` : ''}
+        </div>
+      </div>`);
+    if(container.firstChild) container.insertBefore(node, container.firstChild);
+    else container.appendChild(node);
+    return node;
+  }
+
+  /* After building: left = Live Artifact app, right = local file + guided edits */
+  function openLiveArtifactLab(container, {
+    scene = 'travel',
+    artifactTitle = 'Live artifact',
+    artifactSub = 'Linked to local file',
+    fileName = 'local.txt',
+    fileMeta = 'local · Cowork',
+    fileContent = '',
+    artifactHTML = '',
+    edits = [],
+    hint = 'Muuta paikallista tiedostoa — Live Artifact vasemmalla päivittyy heti.',
+  } = {}){
+    const app = container.querySelector('.app');
+    const main = container.querySelector('.main');
+    const panel = container.querySelector('.panel');
+    if(!app || !main || !panel) return null;
+    app.classList.add('la-lab-mode', `scene-${scene}`);
+
+    main.innerHTML = `
+      <div class="la-app-chrome">
+        <div class="la-app-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="la-app-meta">
+          <span class="la-app-live">LIVE</span>
+          <div>
+            <div class="la-app-title">${artifactTitle}</div>
+            <div class="la-app-sub">${artifactSub}</div>
+          </div>
+        </div>
+        <div class="la-app-tab">Live artifacts</div>
+      </div>
+      <div class="la-art-host scene-${scene}" data-role="art">${artifactHTML}</div>
+      <div class="la-lab-sync" data-role="sync">
+        <span class="la-sync-dot"></span>
+        Synkassa paikallisen tiedoston kanssa — muuta tiedostoa oikealla
+      </div>
+      <div class="thread la-lab-thread" data-role="lab-thread"></div>`;
+
+    panel.innerHTML = `
+      <div class="la-file-chrome">
+        <div class="la-file-badge">LOCAL FILE</div>
+        <div>
+          <div class="la-file-name">${fileName}</div>
+          <div class="la-file-meta">${fileMeta}</div>
+        </div>
+      </div>
+      <div class="panel-body la-file-body">
+        <p class="la-file-hint">${hint}</p>
+        <div class="la-file-window">
+          <div class="la-file-window-bar">
+            <span>${fileName}</span>
+            <span class="la-file-unsaved">saved</span>
+          </div>
+          <pre class="la-file-editor" data-role="file"></pre>
+        </div>
+        <div class="la-edits-label">Simuloi muutos tiedostoon</div>
+        <div class="la-edits" data-role="edits"></div>
+        <div class="la-flow-hint">
+          <span>1. Muuta tiedosto</span>
+          <span class="arrow">→</span>
+          <span>2. Artifact päivittyy</span>
+        </div>
+      </div>`;
+
+    const artHost = main.querySelector('[data-role="art"]');
+    const fileEl = panel.querySelector('[data-role="file"]');
+    const editsHost = panel.querySelector('[data-role="edits"]');
+    const syncEl = main.querySelector('[data-role="sync"]');
+    const thread = main.querySelector('[data-role="lab-thread"]');
+    const unsaved = panel.querySelector('.la-file-unsaved');
+    fileEl.textContent = fileContent;
+
+    let settle;
+    const whenEdited = new Promise(r => { settle = r; });
+
+    function paintEdit(edit){
+      unsaved.textContent = 'saving…';
+      unsaved.classList.add('busy');
+      fileEl.textContent = edit.fileContent;
+      fileEl.classList.remove('flash');
+      void fileEl.offsetWidth;
+      fileEl.classList.add('flash');
+      setTimeout(() => {
+        unsaved.textContent = 'saved';
+        unsaved.classList.remove('busy');
+        artHost.innerHTML = edit.artifactHTML;
+        artHost.classList.remove('la-art-refresh');
+        void artHost.offsetWidth;
+        artHost.classList.add('la-art-refresh');
+        syncEl.innerHTML = `<span class="la-sync-dot on"></span> ${edit.syncNote || 'Artifact päivitetty tiedoston muutoksesta'}`;
+        syncEl.classList.add('pulse');
+      }, 280);
+      [...editsHost.querySelectorAll('button')].forEach(b => {
+        if(b.dataset.id === edit.id){
+          b.disabled = true;
+          b.textContent = '✓ Käytetty';
+        }
+      });
+    }
+
+    (edits || []).forEach(edit => {
+      const btn = el(`<button type="button" class="btn la-edit-btn ${edit.primary === false ? '' : 'primary'}" data-id="${edit.id}">
+        <span class="la-edit-k">Edit file</span>
+        <span class="la-edit-v">${edit.label}</span>
+      </button>`);
+      btn.addEventListener('click', () => {
+        paintEdit(edit);
+        settle(edit.id);
+      });
+      editsHost.appendChild(btn);
+    });
+
+    return { artHost, fileEl, thread, whenEdited, applyEdit: paintEdit };
+  }
+
   function renderCalendarPanel(panel){
     panel.innerHTML = `
       <div class="panel-header">Google Calendar <span class="path">tämä viikko</span></div>
@@ -1088,7 +1226,7 @@ window.Engine = (() => {
     renderChatShell, renderTerminalShell, renderDesignShell, termLine,
     renderScenarioPanel, renderFileExplorerPanel, animateSortIntoFolders,
     renderWorkspacePanel, askTextInput, updateArtifactRows, findEntry,
-    renderPhoneDesktopPanel, renderDispatchHud, renderDispatchDesktopPanel, runChecklist, renderArtifactDashboardPanel,
+    renderPhoneDesktopPanel, renderDispatchHud, renderDispatchDesktopPanel, runChecklist, renderArtifactDashboardPanel, renderArtifactScene, openLiveArtifactLab,
     renderCalendarPanel, renderNotionPanel, renderInboxPanel, renderSkillPanel, renderSchedulePanel,
   };
 })();
