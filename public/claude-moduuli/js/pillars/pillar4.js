@@ -1,256 +1,491 @@
 window.PILLARS = window.PILLARS || [];
 
+const DESIGN_ASSETS = '/claude-moduuli/assets/design';
+
+async function waitDesignPrompt(canvas, {
+  placeholder = 'Kirjoita Design-pyyntösi…',
+  minChars = 35,
+  requireGroups = [],
+  banSnippets = [],
+} = {}){
+  const box = Engine.el(`
+    <div class="cd-prompt-bar">
+      <label>Oma Design-pyyntö</label>
+      <textarea rows="3" placeholder="${placeholder}"></textarea>
+      <div class="cd-prompt-actions">
+        <button type="button" class="btn primary" data-role="gen" disabled>Generate</button>
+        <span class="cd-prompt-hint" data-role="hint"></span>
+      </div>
+    </div>`);
+  canvas.appendChild(box);
+  const ta = box.querySelector('textarea');
+  const btn = box.querySelector('[data-role="gen"]');
+  const hint = box.querySelector('[data-role="hint"]');
+  ta.addEventListener('input', () => { btn.disabled = ta.value.trim().length < minChars; });
+  ta.focus();
+
+  return new Promise(resolve => {
+    btn.addEventListener('click', () => {
+      const text = ta.value.trim();
+      const check = Engine.scorePrompt(text, { minChars, requireGroups, banSnippets, requireSafety: [] });
+      if(!check.ok){
+        const map = {
+          short: 'Kirjoita hieman pidempi pyyntö.',
+          missing: 'Kerro mitä luodaan ja millä tyylillä / mistä kuvasta.',
+          copy: 'Älä kopioi briiffiä — kirjoita omin sanoin.',
+        };
+        hint.textContent = (check.reasons || []).map(r => map[r]).filter(Boolean)[0] || 'Täsmennä pyyntöä.';
+        return;
+      }
+      ta.disabled = true;
+      btn.disabled = true;
+      resolve(text);
+    });
+  });
+}
+
+function finishEx(container, msg){
+  const thread = Engine.el('<div class="thread cd-ex-thread"></div>');
+  container.appendChild(thread);
+  Engine.addComplete(thread, msg);
+}
+
 window.PILLARS.push({
   id: 'p4',
   num: 4,
   name: 'Claude Design',
   subtitle: 'Visuaalinen suunnittelu',
+  briefingLabel: 'Malli',
 
   theory: {
-    tagline: 'Oma näkymä visuaalista työtä varten — kommentoi suoraan luonnokseen.',
-    whatItDoes: 'Claude Design on erillinen näkymä (claude.ai/design) laskeutumissivujen, esitteiden ja prototyyppien tekoon. Se ei ole chat-ikkuna joka sattuu tuottamaan HTML:ää — se on oma pintansa muokkaamista varten.',
-    howItWorks: 'Kuvailet mitä tarvitset, tai lataat bränditiedoston. Claude piirtää ensimmäisen version. Sen jälkeen klikkaat suoraan elementtiä kankaalla ja kirjoitat kommentin — muutos näkyy heti, ilman että kirjoitat koko pyyntöä uudelleen.',
-    benefits: 'Iterointi on nopeaa: yhden värin tai lauseen muuttaminen ei vaadi uutta promptia alusta asti, vain kommentin siihen kohtaan mikä pitää muuttua.',
-    whereToUse: 'Kun tarvitset nopean, brändin näköisen visuaalisen luonnoksen — laskeutumissivun, esitteen, mainoksen — ilman että odotat graafikon aikataulua.',
+    tagline: 'Claude Design = kuva autosta. Claude Code = moottori konepellin alla.',
+    whatItDoes: 'Claude Design (claude.ai/design) on työtila <b>ideointiin, visualisointiin ja prototyyppeihin</b>. Näet miltä asia näyttää — ja muokkaat kuvaa kommentilla tai editillä. Se ei ole vielä toimiva sovellus.',
+    howItWorks: 'Valitse / lataa inspiraatiokuva → pyydä luonnos → klikkaa kohtaa kuvassa ja kommentoi / editoi. Muutos päivittyy kuvaan. Napin “sytytys” ei käynnistä moottoria.',
+    benefits: 'Hiottu kuva ennen kehitystä — et sekoita “näyttää valmiilta” ja “toimii oikeasti”.',
+    whereToUse: 'Menut, bannerit, flyerit, kannet, pitch-diat — visuaalinen luonnos ennen toteutusta.',
+    capabilities: [
+      {title: 'Kuva (Design)', body: 'Fotorealistinen mockup — muokkaat kerroksia. Sytytys ei käynnistä moottoria.'},
+      {title: 'Moottori (Code)', body: 'Oikea toiminnallisuus, prosessit, data.'},
+      {title: 'Miksi erottaa', body: 'Design = ideoi & prototyyppaa. Code = toteuta.'},
+    ],
+  },
+
+  briefing: async (container, { goToExample }) => {
+    container.innerHTML = `
+      <div class="cd-briefing">
+        <section class="cd-hero">
+          <p class="cd-kicker">Ennen Designia</p>
+          <h2>Kuva vs moottori</h2>
+          <p class="cd-lead">Designissa työskentelet <b>oikean näköisten kuvien</b> kanssa — ei leikkikentän CSS-laatikoiden. Muutat kuvaa kommenteilla. Moottori (Code) on erikseen.</p>
+        </section>
+        <section class="cd-compare">
+          <article class="cd-card picture">
+            <header>Claude Design = kuva</header>
+            <p style="margin:0;font-size:13.5px;line-height:1.5;color:#3a3830;">Näet menun, bannerin, flyerin kuten valokuvan. Kommentoit kohtaa → layout päivittyy. Nappi ei lähetä lomaketta.</p>
+            <button type="button" class="btn" id="cdIgnition">Klikkaa sytytystä</button>
+            <p class="cd-ignition-msg" id="cdIgnitionMsg" hidden>Moottori ei käynnisty. Tämä on kuva.</p>
+          </article>
+          <article class="cd-card engine">
+            <header>Claude Code = moottori</header>
+            <p style="margin:0;font-size:13.5px;line-height:1.5;color:#3a3830;">Kun kuva on valmis, toteutus (napit, data, prosessit) on Code / kehittäjä — ei Design.</p>
+            <p class="cd-engine-note">Harjoituksissa: valitse oikea kuva vasemmalta → pyydä muutos → editoi pinillä.</p>
+          </article>
+        </section>
+        <div class="cd-footer">
+          <button type="button" class="btn primary" id="cdGoExample">Katso esimerkki →</button>
+        </div>
+      </div>`;
+    container.querySelector('#cdIgnition').addEventListener('click', ev => {
+      container.querySelector('#cdIgnitionMsg').hidden = false;
+      ev.currentTarget.disabled = true;
+    });
+    container.querySelector('#cdGoExample').addEventListener('click', () => goToExample && goToExample());
   },
 
   example: async (container) => {
-    const { canvas, comments } = Engine.renderDesignShell(container, { title: 'Duunijobs — laskeutumissivu' });
+    const { canvas, comments } = Engine.renderDesignShell(container, { title: 'Design — kuva, ei moottori' });
     canvas.innerHTML = `
-      <div class="mock-landing">
-        <div class="hero" style="background:#6a9bcc;color:#fff;">
-          <h2>Löydä työ osaamisesi perusteella</h2>
-          <p>Anonyymi, taitopohjainen haku — ei CV:tä ensimmäisessä vaiheessa.</p>
-          <button style="background:#141413;color:#fff;">Aloita haku</button>
+      <p class="cd-example-note">Esimerkki: oikea valokuva menusta. Seuraavissa harjoituksissa teet saman — valitset kuvan ja editoit sitä.</p>
+      <div class="cd-photo-stage">
+        <div class="cd-photo-frame">
+          <img src="${DESIGN_ASSETS}/menu-reference.jpg" alt="Upscale menu reference">
         </div>
       </div>`;
-    await Engine.wait(700);
-    comments.innerHTML = `<div class="design-comment"><b>Opettaja:</b> "tästä väri lämpimämmäksi"</div>`;
-    await Engine.wait(900);
-    canvas.querySelector('.hero').style.background = 'var(--orange)';
     await Engine.wait(600);
-    comments.insertAdjacentHTML('beforeend', `<div class="design-comment">Muutettu. Ei uutta promptia — vain kommentti oikeaan kohtaan.</div>`);
+    comments.innerHTML = `<div class="design-comment"><b>Kommentti:</b> “align prices cleanly to the right”</div>`;
+    await Engine.wait(900);
+    comments.insertAdjacentHTML('beforeend', `<div class="design-comment">Design päivittää kuvaa — ei rakenna verkkokauppaa.</div>`);
   },
 
   exercises: [
+    /* H1 Menu */
     {
-      label: 'Harjoitus 1 · Yhden klikkauksen muutos',
+      label: 'H1 · Bistro menu',
+      outcome: 'Pick photo → redesign → comment prices',
       run: async (container) => {
-        const { canvas, comments } = Engine.renderDesignShell(container, { title: 'Duunijobs — laskeutumissivu' });
-        canvas.innerHTML = `
-          <p style="font-size:12.5px;color:#7a7768;margin-bottom:14px;">Klikkaa otsikkoa, väripintaa tai nappia kankaalla — jokainen avaa kommenttikentän.</p>
-          <div class="mock-landing">
-            <div class="hero pin-target" data-part="bg" style="background:#6a9bcc;color:#fff;">
-              <h2 class="pin-target" data-part="headline">Löydä työ osaamisesi perusteella</h2>
-              <p>Anonyymi, taitopohjainen haku — ei CV:tä ensimmäisessä vaiheessa.</p>
-              <button class="pin-target" data-part="button" style="background:#141413;color:#fff;">Aloita haku</button>
-            </div>
-          </div>`;
-        comments.innerHTML = `<div class="design-comment" style="color:#948f7c;">Kommentit ilmestyvät tähän kun klikkaat kankaalla.</div>`;
-
-        let remaining = 2;
-        return new Promise(resolve => {
-          canvas.querySelectorAll('.pin-target').forEach(node => {
-            node.style.cursor = 'pointer';
-            node.addEventListener('click', function onClick(){
-              if(node.dataset.used) return;
-              const row = Engine.el(`
-                <div class="comment-input-row">
-                  <input type="text" placeholder="Kirjoita kommentti tähän kohtaan…">
-                  <button class="btn primary">Lähetä</button>
-                </div>`);
-              node.after(row);
-              const input = row.querySelector('input');
-              const btn = row.querySelector('button');
-              input.focus();
-              btn.addEventListener('click', async () => {
-                const text = input.value.trim();
-                if(!text) return;
-                row.remove();
-                node.dataset.used = '1';
-                comments.querySelectorAll('.design-comment').forEach(c => { if(c.textContent.includes('ilmestyvät')) c.remove(); });
-                comments.insertAdjacentHTML('beforeend', `<div class="design-comment"><b>Sinä:</b> "${Engine.esc(text)}"</div>`);
-                await Engine.wait(500);
-                const part = node.dataset.part;
-                const lower = text.toLowerCase();
-                if(part === 'bg'){
-                  node.style.background = /lämpi|orans|puna/.test(lower) ? 'var(--orange)' : /vihre/.test(lower) ? 'var(--green)' : '#3a5a80';
-                } else if(part === 'button'){
-                  node.style.background = /lämpi|orans|puna/.test(lower) ? 'var(--orange)' : node.style.background;
-                } else if(part === 'headline'){
-                  if(text.length > 3) node.textContent = text;
-                }
-                comments.insertAdjacentHTML('beforeend', `<div class="design-comment">Muutettu suoraan kankaalla — ei uutta promptia.</div>`);
-                remaining--;
-                if(remaining <= 0){
-                  await Engine.wait(400);
-                  comments.insertAdjacentHTML('beforeend', `<div class="design-comment" style="border-color:var(--green);">✓ Harjoitus 1 suoritettu. Huomasitko, ettet kirjoittanut kertaakaan koko pyyntöä uudelleen?</div>`);
-                  resolve();
-                }
-              });
-            });
-          });
-        });
-      },
-    },
-    {
-      label: 'Harjoitus 2 · Bränditiedosto ohjaa tulosta',
-      run: async (container) => {
-        container.innerHTML = `
-          <div class="design-wrap" style="height:auto;">
-            <div class="design-topbar"><span class="design-title">Sama pyyntö, kaksi tulosta</span><span class="badge">claude.ai/design — simulaatio</span></div>
-            <div style="padding:20px;">
-              <p style="font-size:13px;color:#5a5850;margin-bottom:16px;">Pyyntö on molemmissa sama: "Tee mainosbanneri kevätkampanjalle." Ero on siinä, oliko Claudella käytössä yrityksen bränditiedosto.</p>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
-                <div>
-                  <div style="font-size:11px;color:#948f7c;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Ilman bränditiedostoa</div>
-                  <div class="mock-landing"><div class="hero" style="background:#8a5fd6;color:#fff;"><h2 style="font-size:17px;">Kevätkampanja</h2><p>Uudet tuotteet nyt saatavilla</p><button style="background:#222;color:#fff;">Osta nyt</button></div></div>
-                </div>
-                <div>
-                  <div style="font-size:11px;color:#948f7c;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Bränditiedoston kanssa</div>
-                  <div class="mock-landing"><div class="hero" style="background:var(--orange);color:#fff;"><h2 style="font-size:17px;">Kevätkampanja</h2><p>Uudet tuotteet nyt saatavilla</p><button style="background:var(--dark);color:#fff;">Osta nyt</button></div></div>
-                </div>
-              </div>
-            </div>
-          </div>`;
-        const thread = Engine.el(`<div class="thread" style="padding:0 20px 20px;"></div>`);
-        container.querySelector('.design-wrap').appendChild(thread);
-        await Engine.wait(600);
-        await Engine.addQuiz(thread, {
-          question: 'Molemmat kuvat ovat teknisesti oikein — teksti on paikallaan, banneri toimisi. Mikä ero niiden välillä oikeasti ratkaisee, kumman käyttäisit?',
-          options: [
-            {text:'Kumpi näyttää siltä, että se on juuri tämän yrityksen tekemä, ei minkä tahansa yrityksen', correct:true,
-             feedback:'Juuri tätä bränditiedosto tuottaa: värit, fontit ja sävy, jotka toistuvat kaikessa mitä yritys julkaisee. Ilman sitä Claude arvaa hyvän näköisen ratkaisun, mutta se ei ole erityisesti sinun.'},
-            {text:'Ei mitään merkittävää eroa, kumpi tahansa käy', correct:false,
-             feedback:'Tekninen laatu voi olla sama, mutta bränditunnistettavuus ei — asiakas oppii tunnistamaan yrityksen juuri toistuvien visuaalisten valintojen kautta.'},
-            {text:'Bränditiedoston kanssa tehty versio on aina teknisesti parempi', correct:false,
-             feedback:'Ei kyse ole teknisestä laadusta vaan siitä, vastaako lopputulos yrityksen omaa ilmettä.'},
+        const lab = Engine.renderDesignLab(container, {
+          title: 'The Green Olive Bistro — menu redesign',
+          assetsLabel: 'Your uploads',
+          assets: [
+            {id:'clutter', label: 'Current menu (messy)', meta: 'Before — hard to read', thumb: `${DESIGN_ASSETS}/menu-cluttered.jpg`, selected: true},
+            {id:'ref', label: 'Inspiration menu', meta: 'Upscale aesthetic you love', thumb: `${DESIGN_ASSETS}/menu-reference.jpg`},
           ],
+          tools: [{id:'comments', label: 'Comments', active: true}],
+          sideLabel: 'Tehtävä',
         });
-        Engine.addComplete(thread, 'Harjoitus 2 suoritettu.');
-      },
-    },
-    {
-      label: 'Harjoitus 3 · Ristiriitainen palaute',
-      run: async (container) => {
-        const { canvas, comments } = Engine.renderDesignShell(container, { title: 'Duunijobs — kevätkampanja' });
-        canvas.innerHTML = `
-          <div class="mock-landing"><div class="hero" style="background:#6a9bcc;color:#fff;">
-            <h2>Löydä seuraava tekijäsi</h2><p>Rekrytointi ilman CV-suodatinta.</p>
-            <button style="background:#141413;color:#fff;">Katso miten se toimii</button>
-          </div></div>`;
-        comments.innerHTML = `
-          <div class="design-comment"><b>Myynti:</b> "Otsikko liian pehmeä, pitäisi näkyä nopeat tulokset — myynti myy hyödyillä."</div>
-          <div class="design-comment"><b>Brändi:</b> "Emme koskaan puhu myynti-termein, pidetään ihmisläheinen sävy."</div>`;
-        const thread = Engine.el('<div class="thread" style="padding:16px 20px 0;"></div>');
-        container.querySelector('.design-wrap').appendChild(thread);
-        await Engine.wait(500);
-        await Engine.addReflection(thread, {
-          prompt: 'Kaksi sidosryhmää haluavat vastakkaisia asioita samaan otsikkoon. Kirjoita, minkä kommentin ottaisit ensisijaiseksi ohjeeksi Claudelle ja miksi — tai miten yhdistäisit molemmat yhdeksi selkeäksi pyynnöksi.',
-          placeholder: 'Ohjeistaisin Claudea…',
-        });
-        Engine.addComplete(thread, 'Harjoitus 3 suoritettu.');
-      },
-    },
-    {
-      label: 'Harjoitus 4 · Saavutettavuus',
-      run: async (container) => {
-        const { canvas, comments } = Engine.renderDesignShell(container, { title: 'Duunijobs — CTA-testi' });
-        canvas.innerHTML = `
-          <div class="mock-landing"><div class="hero pin-target" data-part="bg" style="background:#e8d9a8;color:#c9b673;">
-            <h2 style="color:#d8cba0;">Aloita hakusi tänään</h2>
-            <p style="color:#cdbf98;">Anonyymi, taitopohjainen haku.</p>
-            <button class="pin-target" data-part="button" style="background:#e0d4a6;color:#f0e8cc;">Aloita</button>
-          </div></div>`;
-        comments.innerHTML = `<div class="design-comment" style="color:#948f7c;">Klikkaa kankaalla kohtaa jossa on ongelma.</div>`;
 
-        return new Promise(resolve => {
-          canvas.querySelectorAll('.pin-target').forEach(node => {
-            node.style.cursor = 'pointer';
-            node.addEventListener('click', function onClick(){
-              if(node.dataset.used) return;
-              const row = Engine.el(`<div class="comment-input-row"><input type="text" placeholder="Miksi tämä on ongelma, ja mitä muuttaisit?"><button class="btn primary">Lähetä</button></div>`);
-              node.after(row);
-              const input = row.querySelector('input');
-              input.focus();
-              row.querySelector('button').addEventListener('click', async () => {
-                const text = input.value.trim();
-                if(!text) return;
-                row.remove();
-                node.dataset.used = '1';
-                comments.querySelectorAll('.design-comment').forEach(c => { if(c.textContent.includes('Klikkaa')) c.remove(); });
-                comments.insertAdjacentHTML('beforeend', `<div class="design-comment"><b>Sinä:</b> "${Engine.esc(text)}"</div>`);
-                await Engine.wait(500);
-                node.style.background = '#3a5a80';
-                node.style.color = '#fff';
-                canvas.querySelectorAll('h2, p').forEach(el2 => el2.style.color = '#fff');
-                if(node.dataset.part === 'button'){ node.style.background = 'var(--dark)'; }
-                comments.insertAdjacentHTML('beforeend', `<div class="design-comment">Kontrasti korjattu. Vaalea teksti vaalealla pohjalla ei erotu riittävästi — tämä ei ole vain makuasia, vaan osa sitä luetaanko sivua ylipäätään kunnolla.</div>`);
-                comments.insertAdjacentHTML('beforeend', `<div class="design-comment" style="border-color:var(--green);">✓ Harjoitus 4 suoritettu.</div>`);
-                resolve();
-              });
-            });
+        lab.side.innerHTML = `
+          <div class="cd-brief-side">
+            <h4>Tilanne</h4>
+            <p>Ravintola haluaa vaihtaa sekavan menun moderniin bistro-ilmeeseen.</p>
+            <h4>Tehtäväsi</h4>
+            <p>1) Valitse inspiraatiokuva vasemmalta.<br>
+            2) Pyydä uusi high-fidelity menu <b>The Green Olive Bistro</b>lle samalla estetiikalla.<br>
+            3) Comments → klikkaa hintapistettä kuvassa ja pyydä tasausta.</p>
+          </div>`;
+
+        const showSelected = () => {
+          const id = lab.getSelected()[0] || 'clutter';
+          const src = id === 'ref' ? `${DESIGN_ASSETS}/menu-reference.jpg` : `${DESIGN_ASSETS}/menu-cluttered.jpg`;
+          lab.showPhoto({
+            src,
+            alt: 'Menu photo',
+            caption: id === 'ref' ? 'Inspiraatio valittu' : 'Nykyinen sekava menu',
           });
+        };
+        showSelected();
+        lab.onAsset(showSelected);
+
+        // prompt area under photo
+        const promptHost = Engine.el('<div></div>');
+        lab.canvas.appendChild(promptHost);
+        await waitDesignPrompt(promptHost, {
+          placeholder: 'Redesign for The Green Olive Bistro matching the inspiration photo…',
+          minChars: 40,
+          requireGroups: [
+            ['olive', 'bistro', 'menu', 'green'],
+            ['design', 'redesign', 'aesthetic', 'inspira', 'reference', 'match', 'style', 'tyyli', 'modern'],
+          ],
+          banSnippets: ['Ravintola haluaa vaihtaa'],
         });
-      },
-    },
-    {
-      label: 'Harjoitus 5 · Rakenna kampanja alusta asti',
-      run: async (container) => {
-        const { canvas, comments } = Engine.renderDesignShell(container, { title: 'Uusi kampanja — tyhjästä' });
-        canvas.innerHTML = `<p style="font-size:12.5px;color:#7a7768;">Tässä ei ole valmista pohjaa. Kirjoita alla olevaan kenttään koko ensimmäinen pyyntösi — minkälaisen sivun tarvitset ja kenelle.</p>
-          <div style="margin-top:12px;"><textarea id="briefInput" rows="3" placeholder="Tarvitsen laskeutumissivun…" style="width:100%;border:1px solid var(--mid-gray);border-radius:8px;padding:9px 11px;font-family:'Poppins',sans-serif;font-size:13px;"></textarea>
-          <button class="btn primary" id="briefSend" style="margin-top:8px;">Lähetä briiffi</button></div>
-          <div id="canvasResult" style="margin-top:18px;"></div>`;
-        comments.innerHTML = `<div class="design-comment" style="color:#948f7c;">Kommentit ilmestyvät tähän kun luonnos on valmis.</div>`;
+
+        await Engine.wait(700);
+        lab.showPhoto({
+          src: `${DESIGN_ASSETS}/menu-green-olive.jpg`,
+          alt: 'Green Olive Bistro menu',
+          caption: 'Uusi luonnos — klikkaa punaista pinniä hinnoissa (Comments)',
+          hotspots: [{id:'prices', x: 78, y: 42, label: 'Prices'}],
+        });
+        lab.setSideLabel('Kommentit');
+        lab.side.innerHTML = `<div class="design-comment">Luonnos valmis. Comments → pinni hintoihin.</div>`;
 
         await new Promise(resolve => {
-          canvas.querySelector('#briefSend').addEventListener('click', async function once(){
-            const brief = canvas.querySelector('#briefInput').value.trim();
-            if(!brief) return;
-            canvas.querySelector('#briefSend').removeEventListener('click', once);
-            canvas.querySelector('#briefSend').disabled = true;
-            canvas.querySelector('#briefInput').disabled = true;
-            await Engine.wait(700);
-            canvas.querySelector('#canvasResult').innerHTML = `
-              <div class="mock-landing"><div class="hero" style="background:var(--blue);color:#fff;">
-                <h2 style="font-size:19px;">Ensimmäinen luonnos</h2>
-                <p>Briiffisi pohjalta rakennettu lähtökohta.</p>
-                <button style="background:var(--dark);color:#fff;">Toiminto</button>
-              </div></div>`;
-            comments.innerHTML = `<div class="design-comment">Luonnos valmis briiffisi pohjalta. Nyt sama työtapa kuin harjoituksessa 1: klikkaa elementtiä ja kommentoi, kunnes sivu vastaa mielikuvaasi.</div>`;
+          lab.canvas.querySelector('.cd-hotspot').addEventListener('click', () => {
+            const row = Engine.el(`
+              <div class="comment-input-row">
+                <input type="text" placeholder="align these cleanly to the right and make the font lighter">
+                <button class="btn primary">Send</button>
+              </div>`);
+            lab.canvas.querySelector('.cd-photo-stage').appendChild(row);
+            row.querySelector('input').focus();
+            row.querySelector('button').addEventListener('click', async () => {
+              const t = row.querySelector('input').value.trim();
+              if(t.length < 8) return;
+              row.remove();
+              lab.side.insertAdjacentHTML('beforeend', `<div class="design-comment"><b>Prices:</b> “${Engine.esc(t)}”</div>`);
+              await Engine.wait(400);
+              lab.canvas.querySelector('.cd-photo-frame').classList.add('cd-edited');
+              lab.side.insertAdjacentHTML('beforeend', `<div class="design-comment">Layout adjusted on the mockup — still a picture, not a live POS.</div>`);
+              finishEx(container, 'H1 valmis — oikea menu-kuva + Comments.');
+              resolve();
+            });
+          }, { once: true });
+        });
+      },
+    },
+
+    /* H2 Newsletter */
+    {
+      label: 'H2 · Newsletter header',
+      outcome: 'Vibe photos → banner → edit title',
+      run: async (container) => {
+        const lab = Engine.renderDesignLab(container, {
+          title: 'Newsletter header',
+          assetsLabel: 'Vibe photos',
+          multiSelect: true,
+          assets: [
+            {id:'office', label: 'Minimalist office', meta: 'Clean light', thumb: `${DESIGN_ASSETS}/vibe-office.jpg`, selected: true},
+            {id:'autumn', label: 'Warm autumn', meta: 'Terracotta tones', thumb: `${DESIGN_ASSETS}/vibe-autumn.jpg`, selected: true},
+          ],
+          tools: [{id:'edit', label: 'Edit', active: true}],
+          sideLabel: 'Tehtävä',
+        });
+
+        lab.side.innerHTML = `
+          <div class="cd-brief-side">
+            <h4>Tilanne</h4>
+            <p>Konsultti tarvitsee LinkedIn-uutiskirjeen bannerin — ei logoa vielä.</p>
+            <h4>Tehtäväsi</h4>
+            <p>1) Valitse vibe-kuvat.<br>2) Pyydä banner-mockupia (Claude poimii värit kuvista).<br>3) Edit → klikkaa otsikkoa ja vaihda teksti.</p>
+          </div>`;
+
+        lab.canvas.innerHTML = `
+          <div class="cd-vibe-row">
+            <img src="${DESIGN_ASSETS}/vibe-office.jpg" alt="">
+            <img src="${DESIGN_ASSETS}/vibe-autumn.jpg" alt="">
+          </div>`;
+        const promptHost = Engine.el('<div></div>');
+        lab.canvas.appendChild(promptHost);
+
+        await waitDesignPrompt(promptHost, {
+          placeholder: 'Create a newsletter banner from these vibe photos…',
+          minChars: 35,
+          requireGroups: [
+            ['newsletter', 'banner', 'header', 'uutiskirje'],
+            ['vibe', 'photo', 'image', 'kuva', 'color', 'brand', 'extract', 'tyyli', 'office', 'autumn'],
+          ],
+          banSnippets: ['Konsultti tarvitsee LinkedIn'],
+        });
+
+        await Engine.wait(700);
+        lab.canvas.innerHTML = `
+          <div class="cd-photo-stage">
+            <p class="cd-photo-cap">Banner mockup — Edit: klikkaa otsikkoaluetta</p>
+            <div class="cd-photo-frame">
+              <img src="${DESIGN_ASSETS}/newsletter-banner.jpg" alt="Newsletter banner">
+              <button type="button" class="cd-hotspot edit" data-hot="title" style="left:28%;top:48%;" title="Edit title"><span>T</span></button>
+            </div>
+            <div class="cd-inline-edit" hidden>
+              <label>Title text</label>
+              <input type="text" value="Leadership in Motion" maxlength="48">
+              <button type="button" class="btn primary">Apply on mockup</button>
+            </div>
+          </div>`;
+        lab.setSideLabel('Edit');
+        lab.side.innerHTML = `<div class="design-comment">Banneri valmis vibe-kuvista. Muuta otsikkoa Editillä.</div>`;
+
+        await new Promise(resolve => {
+          const pin = lab.canvas.querySelector('.cd-hotspot');
+          const panel = lab.canvas.querySelector('.cd-inline-edit');
+          pin.addEventListener('click', () => { panel.hidden = false; panel.querySelector('input').focus(); });
+          panel.querySelector('button').addEventListener('click', () => {
+            const v = panel.querySelector('input').value.trim();
+            if(v.length < 3) return;
+            panel.hidden = true;
+            lab.canvas.querySelector('.cd-photo-frame').classList.add('cd-edited');
+            lab.side.insertAdjacentHTML('beforeend', `<div class="design-comment">Title set to “${Engine.esc(v)}” on the mockup.</div>`);
+            finishEx(container, 'H2 valmis — vibe-kuvat → banner → Edit.');
             resolve();
           });
         });
+      },
+    },
 
-        const hero = canvas.querySelector('.hero');
-        hero.classList.add('pin-target');
-        hero.style.cursor = 'pointer';
-        let edits = 0;
+    /* H3 Flyer wire / hifi */
+    {
+      label: 'H3 · Charity flyer',
+      outcome: 'Wireframe photo ↔ print photo',
+      run: async (container) => {
+        const lab = Engine.renderDesignLab(container, {
+          title: 'Park cleanup flyer',
+          assetsLabel: 'Project files',
+          assets: [
+            {id:'wire', label: 'Wireframe scan', meta: 'Structure only', thumb: `${DESIGN_ASSETS}/flyer-wireframe.jpg`, selected: true},
+            {id:'hifi', label: 'Print flyer', meta: 'High-fidelity', thumb: `${DESIGN_ASSETS}/charity-flyer.jpg`},
+          ],
+          tools: [
+            {id:'wire', label: 'Wireframe', active: true},
+            {id:'hifi', label: 'High-fidelity'},
+          ],
+          sideLabel: 'Tehtävä',
+        });
+
+        lab.side.innerHTML = `
+          <div class="cd-brief-side">
+            <h4>Tilanne</h4>
+            <p>Puiston siivoustapahtuma tarvitsee tulostettavan flyerin.</p>
+            <h4>Tehtäväsi</h4>
+            <p>1) Katso wireframe-kuvaa (rakenne).<br>
+            2) Pyydä high-fidelity flyer samaan rakenteeseen.<br>
+            3) Vaihda Wireframe ↔ High-fidelity nähdäksesi eron.</p>
+          </div>`;
+
+        const paint = (mode) => {
+          const src = mode === 'hifi' ? `${DESIGN_ASSETS}/charity-flyer.jpg` : `${DESIGN_ASSETS}/flyer-wireframe.jpg`;
+          lab.showPhoto({
+            src,
+            caption: mode === 'hifi' ? 'High-fidelity print' : 'Wireframe — structure first',
+          });
+        };
+        paint('wire');
+
+        const promptHost = Engine.el('<div></div>');
+        lab.canvas.appendChild(promptHost);
+        await waitDesignPrompt(promptHost, {
+          placeholder: 'Turn this wireframe into a striking park cleanup flyer…',
+          minChars: 35,
+          requireGroups: [
+            ['flyer', 'wireframe', 'wire', 'poster', 'high'],
+            ['cleanup', 'park', 'charity', 'puisto', 'siivous', 'event'],
+          ],
+          banSnippets: ['Puiston siivoustapahtuma'],
+        });
+
+        paint('hifi');
+        lab.setTool('hifi');
+        lab.setSideLabel('Modes');
+        lab.side.innerHTML = `<div class="design-comment">High-fidelity valmis. Vaihda Wireframe / High-fidelity ylhäällä.</div>`;
+
         await new Promise(resolve => {
-          hero.addEventListener('click', function onClick(){
-            if(canvas.querySelector('.comment-input-row')) return;
-            const row = Engine.el(`<div class="comment-input-row"><input type="text" placeholder="Mitä muuttaisit?"><button class="btn primary">Lähetä</button></div>`);
-            hero.after(row);
+          let seenWire = false, seenHifi = true;
+          lab.onTool(tool => {
+            if(tool === 'wire'){ paint('wire'); seenWire = true; }
+            if(tool === 'hifi'){ paint('hifi'); seenHifi = true; }
+            if(seenWire && seenHifi){
+              lab.side.insertAdjacentHTML('beforeend', `<div class="design-comment">Sama rakenne, eri fidelity — näin pro-design etenee.</div>`);
+              finishEx(container, 'H3 valmis — wireframe-kuva ↔ print-kuva.');
+              resolve();
+            }
+          });
+        });
+      },
+    },
+
+    /* H4 Ebook cover */
+    {
+      label: 'H4 · E-book cover',
+      outcome: 'Cover photo → markup subtitle',
+      run: async (container) => {
+        const lab = Engine.renderDesignLab(container, {
+          title: 'E-book cover pitch',
+          assetsLabel: 'Style refs',
+          assets: [
+            {id:'navy', label: 'Navy trust cover', meta: 'Clean professional', thumb: `${DESIGN_ASSETS}/ebook-cover.jpg`, selected: true},
+          ],
+          tools: [{id:'markup', label: 'Markup', active: true}],
+          sideLabel: 'Tehtävä',
+        });
+
+        lab.side.innerHTML = `
+          <div class="cd-brief-side">
+            <h4>Tilanne</h4>
+            <p>Pitchaat kustantajalle opasta “Effective Remote Leadership”.</p>
+            <h4>Tehtäväsi</h4>
+            <p>1) Pyydä high-fidelity kansikonseptia (navy / trustworthy).<br>
+            2) Markup → klikkaa alaotsikkoaluetta ja pyydä ~20% pienempää kokoa.</p>
+          </div>`;
+
+        lab.showPhoto({ src: `${DESIGN_ASSETS}/ebook-cover.jpg`, caption: 'Style reference on desk' });
+        const promptHost = Engine.el('<div></div>');
+        lab.canvas.appendChild(promptHost);
+
+        await waitDesignPrompt(promptHost, {
+          placeholder: 'Book cover for Effective Remote Leadership, navy, trustworthy…',
+          minChars: 35,
+          requireGroups: [
+            ['cover', 'book', 'ebook', 'kansi', 'leadership', 'remote'],
+            ['navy', 'professional', 'trust', 'clean', 'style', 'design'],
+          ],
+          banSnippets: ['Pitchaat kustantajalle'],
+        });
+
+        await Engine.wait(600);
+        lab.showPhoto({
+          src: `${DESIGN_ASSETS}/ebook-cover.jpg`,
+          caption: 'Cover concept — Markup pin on subtitle',
+          hotspots: [{id:'sub', x: 50, y: 58, label: 'Subtitle'}],
+        });
+        lab.setSideLabel('Markup');
+        lab.side.innerHTML = `<div class="design-comment">Kansi valmis. Merkitse alaotsikko.</div>`;
+
+        await new Promise(resolve => {
+          lab.canvas.querySelector('.cd-hotspot').addEventListener('click', () => {
+            const row = Engine.el(`
+              <div class="comment-input-row">
+                <input type="text" placeholder="Make this subtitle 20% smaller…">
+                <button class="btn primary">Send markup</button>
+              </div>`);
+            lab.canvas.querySelector('.cd-photo-stage').appendChild(row);
             row.querySelector('input').focus();
             row.querySelector('button').addEventListener('click', async () => {
-              const text = row.querySelector('input').value.trim();
-              if(!text) return;
+              const t = row.querySelector('input').value.trim();
+              if(t.length < 6) return;
               row.remove();
-              comments.insertAdjacentHTML('beforeend', `<div class="design-comment"><b>Sinä:</b> "${Engine.esc(text)}"</div>`);
-              await Engine.wait(400);
-              const lower = text.toLowerCase();
-              if(/lämpi|orans|puna/.test(lower)) hero.style.background = 'var(--orange)';
-              else if(/vihre/.test(lower)) hero.style.background = 'var(--green)';
-              else if(/tumma|musta/.test(lower)) hero.style.background = 'var(--dark)';
-              edits++;
-              if(edits >= 2){
-                comments.insertAdjacentHTML('beforeend', `<div class="design-comment" style="border-color:var(--green);">✓ Harjoitus 5 suoritettu. Kaksi kommenttia, nolla uutta promptia alusta asti — koko sivu rakentui yhden keskustelun sisällä.</div>`);
-                resolve();
-              } else {
-                comments.insertAdjacentHTML('beforeend', `<div class="design-comment">Muutettu. Klikkaa vielä kerran, jos haluat hioa lisää.</div>`);
-              }
+              lab.side.insertAdjacentHTML('beforeend', `<div class="design-comment"><b>Markup:</b> “${Engine.esc(t)}”</div>`);
+              lab.canvas.querySelector('.cd-photo-frame').classList.add('cd-edited');
+              await Engine.wait(300);
+              finishEx(container, 'H4 valmis — kansikuva + Markup.');
+              resolve();
             });
+          }, { once: true });
+        });
+      },
+    },
+
+    /* H5 Pricing */
+    {
+      label: 'H5 · Pricing slide',
+      outcome: 'Slide screenshot → layers handoff',
+      run: async (container) => {
+        const lab = Engine.renderDesignLab(container, {
+          title: 'Pitch — Services & Pricing',
+          assetsLabel: 'Deck refs',
+          assets: [
+            {id:'slide', label: 'Pricing slide shot', meta: '3 columns on laptop', thumb: `${DESIGN_ASSETS}/pricing-slide.jpg`, selected: true},
+          ],
+          tools: [
+            {id:'comments', label: 'Comments', active: true},
+            {id:'layers', label: 'Layers'},
+          ],
+          sideLabel: 'Tehtävä',
+        });
+
+        lab.side.innerHTML = `
+          <div class="cd-brief-side">
+            <h4>Tilanne</h4>
+            <p>Tarvitset kauniin Services & Pricing -dian (Basic / Pro / Enterprise).</p>
+            <h4>Tehtäväsi</h4>
+            <p>1) Pyydä 3-sarakkeinen pricing-dia.<br>
+            2) Avaa <b>Layers</b> — näet miten tiedosto organisoituu luovutusta varten.</p>
+          </div>`;
+
+        lab.showPhoto({ src: `${DESIGN_ASSETS}/pricing-slide.jpg`, caption: 'Reference slide on screen' });
+        const promptHost = Engine.el('<div></div>');
+        lab.canvas.appendChild(promptHost);
+
+        await waitDesignPrompt(promptHost, {
+          placeholder: 'Create a 3-column Basic / Professional / Enterprise pricing slide…',
+          minChars: 35,
+          requireGroups: [
+            ['pricing', 'basic', 'professional', 'enterprise', 'package', 'hinno'],
+            ['column', 'slide', 'deck', 'checkmark', 'layout', 'design', 'sarake'],
+          ],
+          banSnippets: ['Tarvitset kauniin Services'],
+        });
+
+        await Engine.wait(600);
+        lab.showPhoto({
+          src: `${DESIGN_ASSETS}/pricing-slide.jpg`,
+          caption: 'Generated pricing mockup — open Layers',
+        });
+        lab.side.innerHTML = `<div class="design-comment">Dia valmis. Avaa Layers nähdäksesi tiedostorakenteen.</div>`;
+
+        await new Promise(resolve => {
+          lab.onTool(tool => {
+            if(tool !== 'layers') return;
+            lab.setSideLabel('Design files');
+            lab.side.innerHTML = `
+              <div class="cd-layers">
+                <div class="cd-layer folder">Pricing_slide/</div>
+                <div class="cd-layer">↳ Frame · Services & Pricing</div>
+                <div class="cd-layer">↳ Col / Basic</div>
+                <div class="cd-layer">↳ Col / Professional</div>
+                <div class="cd-layer">↳ Col / Enterprise</div>
+                <div class="cd-layer">↳ Icons / checks</div>
+              </div>
+              <div class="design-comment">Näin kuvan voi luovuttaa eteenpäin — Design = kuva, Code rakentaa sivun.</div>`;
+            finishEx(container, 'H5 valmis — pricing-kuva + layers.');
+            resolve();
           });
         });
       },

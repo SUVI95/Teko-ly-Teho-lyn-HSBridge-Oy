@@ -609,6 +609,116 @@ window.Engine = (() => {
     };
   }
 
+  /* Design lab: photo asset rail + canvas + tools + right panel */
+  function renderDesignLab(container, {
+    title = 'Claude Design',
+    assetsLabel = 'Uploads',
+    assets = [], // [{id, label, meta, thumb?, swatchClass?, selected?}]
+    tools = [], // [{id, label, active?}]
+    sideLabel = 'Kommentit',
+    multiSelect = false,
+  } = {}){
+    const toolsHtml = (tools || []).map(t =>
+      `<button type="button" class="cd-tool ${t.active ? 'active' : ''}" data-tool="${t.id}">${t.label}</button>`
+    ).join('');
+    const assetsHtml = (assets || []).map(a => `
+      <button type="button" class="cd-asset ${a.selected ? 'selected' : ''}" data-asset="${a.id}">
+        ${a.thumb
+          ? `<img class="cd-asset-thumb img" src="${a.thumb}" alt="">`
+          : `<span class="cd-asset-thumb ${a.swatchClass || ''}" aria-hidden="true"></span>`}
+        <span class="cd-asset-meta">
+          <b>${a.label}</b>
+          <small>${a.meta || ''}</small>
+        </span>
+      </button>`).join('');
+
+    container.innerHTML = `
+      <div class="design-wrap design-lab">
+        <div class="design-topbar">
+          <span class="design-title">${title}</span>
+          <div class="cd-tools" data-role="tools">${toolsHtml}</div>
+          <span class="badge">claude.ai/design</span>
+        </div>
+        <div class="design-body design-lab-body">
+          <aside class="cd-assets" data-role="assets">
+            <div class="design-side-label">${assetsLabel}</div>
+            <p class="cd-assets-hint">Valitse kuva (simuloitu upload)</p>
+            <div class="cd-asset-list">${assetsHtml}</div>
+          </aside>
+          <div class="design-canvas" data-role="canvas"></div>
+          <div class="design-side">
+            <div class="design-side-label" data-role="side-label">${sideLabel}</div>
+            <div class="design-comments" data-role="side"></div>
+          </div>
+        </div>
+      </div>`;
+
+    const canvas = container.querySelector('[data-role="canvas"]');
+    const side = container.querySelector('[data-role="side"]');
+    const sideLabelEl = container.querySelector('[data-role="side-label"]');
+    const selected = new Set((assets || []).filter(a => a.selected).map(a => a.id));
+
+    function paintAssets(){
+      container.querySelectorAll('.cd-asset').forEach(btn => {
+        btn.classList.toggle('selected', selected.has(btn.dataset.asset));
+      });
+    }
+
+    container.querySelectorAll('.cd-asset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.asset;
+        if(multiSelect){
+          if(selected.has(id)) selected.delete(id);
+          else selected.add(id);
+        } else {
+          selected.clear();
+          selected.add(id);
+        }
+        paintAssets();
+        container.dispatchEvent(new CustomEvent('cd-asset', { detail: { ids: [...selected] } }));
+      });
+    });
+
+    container.querySelectorAll('.cd-tool').forEach(btn => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('.cd-tool').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        container.dispatchEvent(new CustomEvent('cd-tool', { detail: { tool: btn.dataset.tool } }));
+      });
+    });
+
+    return {
+      canvas,
+      side,
+      comments: side,
+      setSideLabel(t){ if(sideLabelEl) sideLabelEl.textContent = t; },
+      getSelected(){ return [...selected]; },
+      setTool(id){
+        container.querySelectorAll('.cd-tool').forEach(b => b.classList.toggle('active', b.dataset.tool === id));
+      },
+      onAsset(fn){ container.addEventListener('cd-asset', e => fn(e.detail.ids)); },
+      onTool(fn){ container.addEventListener('cd-tool', e => fn(e.detail.tool)); },
+      root: container.querySelector('.design-lab'),
+      /** Show a real photo on the canvas with optional click hotspots */
+      showPhoto({src, alt='', hotspots=[], caption='', className=''}={}){
+        const pins = (hotspots || []).map((h,i) => `
+          <button type="button" class="cd-hotspot" data-hot="${h.id || ('h'+i)}"
+            style="left:${h.x}%;top:${h.y}%;" title="${h.label || 'Comment here'}">
+            <span>${i+1}</span>
+          </button>`).join('');
+        canvas.innerHTML = `
+          <div class="cd-photo-stage ${className}">
+            ${caption ? `<p class="cd-photo-cap">${caption}</p>` : ''}
+            <div class="cd-photo-frame">
+              <img src="${src}" alt="${alt || ''}">
+              ${pins}
+            </div>
+          </div>`;
+        return canvas.querySelector('.cd-photo-frame');
+      },
+    };
+  }
+
   /* ---------------------------------------------------------------------
      PANEELIT (oikean reunan sisältö chat-kuoressa)
      --------------------------------------------------------------------- */
@@ -1223,7 +1333,7 @@ window.Engine = (() => {
     waitForFreeText, armInput, typeText, scrollDown, simulateUserType,
     addTaskBrief, addPickerTask, runLiveWork, showOutcome, addDeliverable, runPromptStep,
     scorePrompt, runOwnPrompt, runSafetyGate,
-    renderChatShell, renderTerminalShell, renderDesignShell, termLine,
+    renderChatShell, renderTerminalShell, renderDesignShell, renderDesignLab, termLine,
     renderScenarioPanel, renderFileExplorerPanel, animateSortIntoFolders,
     renderWorkspacePanel, askTextInput, updateArtifactRows, findEntry,
     renderPhoneDesktopPanel, renderDispatchHud, renderDispatchDesktopPanel, runChecklist, renderArtifactDashboardPanel, renderArtifactScene, openLiveArtifactLab,

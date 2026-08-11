@@ -634,6 +634,8 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'moduuli-asiakaspalvelu-live-puhelu',
   'moduuli1b-ai-automaatio',
   'moduuli1c-ai-automaatio',
+  'moduuli-claude', // Claude 101 — soft-locked until ready
+
   // Hidden from students (admin only on dashboard)
   'moduuli-excel-copilot-masterclass',
   'moduuli-recap-game',
