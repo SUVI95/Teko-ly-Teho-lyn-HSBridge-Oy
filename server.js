@@ -109,6 +109,7 @@ const realtimeTokenRoutes = require('./routes/realtime-token');
 const audioRoutes = require('./routes/audio');
 const automaatioEmailRoutes = require('./routes/automaatio-email');
 const claudeDesignRoutes = require('./routes/claude-design');
+const claudeConnectorsRoutes = require('./routes/claude-connectors');
 const { authenticateToken, authenticatePage } = require('./middleware/auth');
 
 const app = express();
@@ -153,6 +154,7 @@ app.use('/api/voice-deep-search', voiceDeepSearchRoutes);
 app.use('/api/realtime-token', realtimeTokenRoutes);
 app.use('/api/audio', audioRoutes);
 app.use('/api/claude-design', claudeDesignRoutes);
+app.use('/api/claude-connectors', claudeConnectorsRoutes);
 app.use(
   '/audio-cache',
   express.static(audioRoutes.CACHE_DIR || path.join(__dirname, 'data', 'audio-cache'), {
