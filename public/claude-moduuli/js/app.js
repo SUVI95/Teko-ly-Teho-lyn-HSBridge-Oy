@@ -10,9 +10,11 @@
   const subNavEl = document.getElementById('subNav');
   const theoryViewEl = document.getElementById('theoryView');
   const practiceAreaEl = document.getElementById('practiceArea');
+  const query = new URLSearchParams(window.location.search);
+  const requestedPillar = Number(query.get('pillar'));
 
-  let currentPillar = pillars[0];
-  let currentSection = 'theory'; // 'theory' | 'briefing' | 'example' | number
+  let currentPillar = pillars.find(p => p.num === requestedPillar) || pillars[0];
+  let currentSection = query.get('section') === 'studio' && currentPillar.exercises.length ? 0 : 'theory'; // 'theory' | 'briefing' | 'example' | number
   const doneMap = {};
 
   function hasBriefing(){
