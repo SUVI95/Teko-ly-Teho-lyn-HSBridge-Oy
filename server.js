@@ -110,6 +110,7 @@ const audioRoutes = require('./routes/audio');
 const automaatioEmailRoutes = require('./routes/automaatio-email');
 const claudeDesignRoutes = require('./routes/claude-design');
 const claudeConnectorsRoutes = require('./routes/claude-connectors');
+const claudeAutomationRoutes = require('./routes/claude-automation');
 const { authenticateToken, authenticatePage } = require('./middleware/auth');
 
 const app = express();
@@ -155,6 +156,7 @@ app.use('/api/realtime-token', realtimeTokenRoutes);
 app.use('/api/audio', audioRoutes);
 app.use('/api/claude-design', claudeDesignRoutes);
 app.use('/api/claude-connectors', claudeConnectorsRoutes);
+app.use('/api/claude-automation', claudeAutomationRoutes);
 app.use(
   '/audio-cache',
   express.static(audioRoutes.CACHE_DIR || path.join(__dirname, 'data', 'audio-cache'), {
