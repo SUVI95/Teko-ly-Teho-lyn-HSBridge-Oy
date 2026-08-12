@@ -21,6 +21,8 @@
   var dirty = false;
   var lastSavedJson = '';
   var applyingState = false;
+  var restoredState = null;
+  var restoreTimer = null;
 
   function localStorageKey() {
     return 'gma_' + userId + '_' + moduleId;
@@ -60,20 +62,34 @@
     return false;
   }
 
+  function scopePrefix(el) {
+    if (!el || !el.closest) return '';
+    var scope = el.closest('[data-autosave-scope]');
+    var value = scope && scope.getAttribute('data-autosave-scope');
+    return value ? 'scope:' + String(value) + '|' : '';
+  }
+
   function getElementKey(el, idxMap) {
+    var prefix = scopePrefix(el);
     var tag = el.tagName.toLowerCase();
     var id = el.id ? String(el.id) : '';
-    if (id) return tag + '#'+ id;
+    if (id) return prefix + tag + '#'+ id;
     var name = el.name ? String(el.name) : '';
-    var bucket = tag + '|' + name;
+    var bucket = prefix + tag + '|' + name;
     var idx = idxMap[bucket] || 0;
     idxMap[bucket] = idx + 1;
-    return tag + '[name="' + name + '"]::' + idx;
+    return prefix + tag + '[name="' + name + '"]::' + idx;
+  }
+
+  function getClassKey(el, selector, index) {
+    return scopePrefix(el) + 'class:' + selector + '::' + index;
   }
 
   function collectState() {
     var idxMap = {};
-    var fields = {};
+    var fields = restoredState && restoredState.fields && typeof restoredState.fields === 'object'
+      ? Object.assign({}, restoredState.fields)
+      : {};
     var nodes = document.querySelectorAll('input, textarea, select, [contenteditable="true"]');
     for (var i = 0; i < nodes.length; i++) {
       var el = nodes[i];
@@ -98,12 +114,12 @@
 
     var checklist = document.querySelectorAll('.check-box');
     for (var c = 0; c < checklist.length; c++) {
-      fields['class:.check-box::' + c] = { kind: 'classChecked', value: checklist[c].classList.contains('checked') };
+      fields[getClassKey(checklist[c], '.check-box', c)] = { kind: 'classChecked', value: checklist[c].classList.contains('checked') };
     }
 
     var topicCards = document.querySelectorAll('.topic-card');
     for (var t = 0; t < topicCards.length; t++) {
-      fields['class:.topic-card::' + t] = { kind: 'classSelected', value: topicCards[t].classList.contains('selected') };
+      fields[getClassKey(topicCards[t], '.topic-card', t)] = { kind: 'classSelected', value: topicCards[t].classList.contains('selected') };
     }
 
     return {
@@ -178,7 +194,7 @@
 
       var checklist = document.querySelectorAll('.check-box');
       for (var c = 0; c < checklist.length; c++) {
-        var ck = fields['class:.check-box::' + c];
+        var ck = fields[getClassKey(checklist[c], '.check-box', c)];
         if (ck && ck.value === true && !checklist[c].classList.contains('checked')) {
           checklist[c].classList.add('checked');
         }
@@ -188,7 +204,7 @@
       if (selectedCards === 0) {
         var topicCards = document.querySelectorAll('.topic-card');
         for (var t = 0; t < topicCards.length; t++) {
-          var tc = fields['class:.topic-card::' + t];
+          var tc = fields[getClassKey(topicCards[t], '.topic-card', t)];
           if (tc && tc.value === true) {
             topicCards[t].classList.add('selected');
             break;
@@ -267,6 +283,7 @@
     var state = collectState();
     var jsonPayload = JSON.stringify(state);
     if (!preferBeacon && jsonPayload === lastSavedJson) return;
+    restoredState = state;
     lastSavedJson = jsonPayload;
     dirty = false;
     saveLocal(state);
@@ -279,7 +296,9 @@
     localDraftTimer = setTimeout(function () {
       localDraftTimer = null;
       try {
-        saveLocal(collectState());
+        var state = collectState();
+        restoredState = state;
+        saveLocal(state);
       } catch (e) {}
     }, 180);
   }
@@ -329,6 +348,18 @@
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'hidden') flushPendingSave();
     });
+
+    if (window.MutationObserver) {
+      var observer = new MutationObserver(function () {
+        if (!restoredState || applyingState) return;
+        if (restoreTimer) clearTimeout(restoreTimer);
+        restoreTimer = setTimeout(function () {
+          restoreTimer = null;
+          applyState(restoredState);
+        }, 120);
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
   }
 
   async function init() {
@@ -338,6 +369,7 @@
     var remoteState = await loadRemote();
     var state = pickNewest(localState, remoteState);
     if (state) {
+      restoredState = state;
       applyState(state);
       lastSavedJson = JSON.stringify(state);
     }

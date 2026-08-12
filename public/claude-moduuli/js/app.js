@@ -12,10 +12,79 @@
   const practiceAreaEl = document.getElementById('practiceArea');
   const query = new URLSearchParams(window.location.search);
   const requestedPillar = Number(query.get('pillar'));
+  const COURSE_STORAGE_KEY = 'claude101CourseProgressV1';
+  const COURSE_WORK_ID = 'moduuli-claude-course-progress';
+  const explicitLocation = query.has('pillar') || query.has('section');
+  let remoteSaveTimer = null;
+  let exerciseCompletionObserver = null;
 
-  let currentPillar = pillars.find(p => p.num === requestedPillar) || pillars[0];
-  let currentSection = query.get('section') === 'studio' && currentPillar.exercises.length ? 0 : 'theory'; // 'theory' | 'briefing' | 'example' | number
-  const doneMap = {};
+  function loadCourseProgress(){
+    try {
+      const parsed = JSON.parse(localStorage.getItem(COURSE_STORAGE_KEY) || 'null');
+      return parsed && parsed.version === 1 ? parsed : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function validSection(pillar, section){
+    if(['theory','briefing','example'].includes(section)) {
+      if(section === 'briefing' && typeof pillar.briefing !== 'function') return 'theory';
+      return section;
+    }
+    const index = Number(section);
+    return Number.isInteger(index) && index >= 0 && index < pillar.exercises.length ? index : 'theory';
+  }
+
+  const savedCourse = loadCourseProgress();
+  const savedPillar = pillars.find(p => p.id === savedCourse?.currentPillarId);
+  let currentPillar = pillars.find(p => p.num === requestedPillar) || savedPillar || pillars[0];
+  let currentSection = query.get('section') === 'studio' && currentPillar.exercises.length
+    ? 0
+    : validSection(currentPillar, savedCourse?.currentPillarId === currentPillar.id ? savedCourse?.currentSection : 'theory');
+  const doneMap = { ...(savedCourse?.doneMap || {}) };
+  const autosaveStatusEl = Engine.el('<div class="course-autosave-status"><span></span>Tallennetaan automaattisesti</div>');
+  subNavEl.insertAdjacentElement('afterend', autosaveStatusEl);
+
+  function coursePayload(){
+    return {
+      version: 1,
+      currentPillarId: currentPillar.id,
+      currentSection,
+      doneMap: { ...doneMap },
+      ts: Date.now()
+    };
+  }
+
+  function saveCourseProgress(){
+    const payload = coursePayload();
+    try {
+      localStorage.setItem(COURSE_STORAGE_KEY, JSON.stringify(payload));
+    } catch (_) {}
+    autosaveStatusEl.classList.add('saved');
+    autosaveStatusEl.innerHTML = '<span></span>Tallennettu automaattisesti';
+    if(remoteSaveTimer) clearTimeout(remoteSaveTimer);
+    remoteSaveTimer = setTimeout(() => {
+      remoteSaveTimer = null;
+      if(!window.moduleWork || typeof window.moduleWork.saveModuleWork !== 'function') return;
+      const completed = Object.values(doneMap).filter(Boolean).length;
+      window.moduleWork.saveModuleWork(COURSE_WORK_ID, payload, `Claude 101 · ${completed} harjoitusta suoritettu`).catch(() => {});
+    }, 500);
+  }
+
+  function setSection(section){
+    currentSection = validSection(currentPillar, section);
+    saveCourseProgress();
+    render();
+  }
+
+  function markExerciseDone(pillarId, index){
+    const key = pillarId + ':' + index;
+    if(doneMap[key]) return;
+    doneMap[key] = true;
+    saveCourseProgress();
+    highlightSubNav();
+  }
 
   function hasBriefing(){
     return typeof currentPillar.briefing === 'function';
@@ -37,6 +106,7 @@
   function selectPillar(p){
     currentPillar = p;
     currentSection = 'theory';
+    saveCourseProgress();
     highlightPillarNav();
     buildSubNav();
     render();
@@ -45,23 +115,23 @@
   function buildSubNav(){
     subNavEl.innerHTML = '';
     const theoryBtn = Engine.el(`<button class="sub-pill" data-sec="theory"><span class="dot"></span>Teoria</button>`);
-    theoryBtn.addEventListener('click', () => { currentSection = 'theory'; render(); });
+    theoryBtn.addEventListener('click', () => setSection('theory'));
     subNavEl.appendChild(theoryBtn);
 
     if(hasBriefing()){
       const label = currentPillar.briefingLabel || 'Malli';
       const briefBtn = Engine.el(`<button class="sub-pill" data-sec="briefing"><span class="dot"></span>${label}</button>`);
-      briefBtn.addEventListener('click', () => { currentSection = 'briefing'; render(); });
+      briefBtn.addEventListener('click', () => setSection('briefing'));
       subNavEl.appendChild(briefBtn);
     }
 
     const exBtn = Engine.el(`<button class="sub-pill" data-sec="example"><span class="dot"></span>Esimerkki</button>`);
-    exBtn.addEventListener('click', () => { currentSection = 'example'; render(); });
+    exBtn.addEventListener('click', () => setSection('example'));
     subNavEl.appendChild(exBtn);
 
     currentPillar.exercises.forEach((ex, i) => {
       const btn = Engine.el(`<button class="sub-pill" data-sec="ex-${i}"><span class="dot"></span>${ex.label}</button>`);
-      btn.addEventListener('click', () => { currentSection = i; render(); });
+      btn.addEventListener('click', () => setSection(i));
       subNavEl.appendChild(btn);
     });
     highlightSubNav();
@@ -110,8 +180,7 @@
         <button type="button" class="btn primary theory-example-btn" id="goNextFromTheory">${nextLabel}</button>
       </div>`;
     document.getElementById('goNextFromTheory').addEventListener('click', () => {
-      currentSection = hasBriefing() ? 'briefing' : 'example';
-      render();
+      setSection(hasBriefing() ? 'briefing' : 'example');
     });
   }
 
@@ -130,7 +199,7 @@
     const stage = Engine.el('<div class="briefing-stage"></div>');
     practiceAreaEl.appendChild(stage);
     await currentPillar.briefing(stage, {
-      goToExample: () => { currentSection = 'example'; render(); },
+      goToExample: () => setSection('example'),
     });
   }
 
@@ -154,18 +223,37 @@
     theoryViewEl.style.display = 'none';
     practiceAreaEl.style.display = 'block';
     practiceAreaEl.innerHTML = '';
+    const pillarId = currentPillar.id;
     const ex = currentPillar.exercises[i];
     const header = renderPracticeHeader(ex.label, false);
     const stage = Engine.el('<div></div>');
     practiceAreaEl.appendChild(header);
     practiceAreaEl.appendChild(stage);
+    const observer = new MutationObserver(() => {
+      if(stage.querySelector('.narrator.done')){
+        markExerciseDone(pillarId, i);
+        observer.disconnect();
+        if(exerciseCompletionObserver === observer) exerciseCompletionObserver = null;
+      }
+    });
+    exerciseCompletionObserver = observer;
+    observer.observe(stage, { childList: true, subtree: true });
     await ex.run(stage);
-    doneMap[currentPillar.id + ':' + i] = true;
-    highlightSubNav();
+    if(stage.querySelector('.narrator.done')){
+      markExerciseDone(pillarId, i);
+      observer.disconnect();
+      if(exerciseCompletionObserver === observer) exerciseCompletionObserver = null;
+    }
   }
 
   function render(){
+    if(exerciseCompletionObserver){
+      exerciseCompletionObserver.disconnect();
+      exerciseCompletionObserver = null;
+    }
+    practiceAreaEl.dataset.autosaveScope = currentPillar.id + ':' + String(currentSection);
     highlightSubNav();
+    saveCourseProgress();
     if(currentSection === 'theory') renderTheory();
     else if(currentSection === 'briefing') renderBriefing();
     else if(currentSection === 'example') renderExample();
@@ -175,4 +263,29 @@
   buildPillarNav();
   buildSubNav();
   render();
+
+  (async function hydrateCourseProgress(attempt = 0){
+    if(!window.moduleWork || typeof window.moduleWork.loadModuleWork !== 'function'){
+      if(attempt < 30) setTimeout(() => hydrateCourseProgress(attempt + 1), 100);
+      return;
+    }
+    try {
+      const remote = await window.moduleWork.loadModuleWork(COURSE_WORK_ID);
+      if(!remote || remote.version !== 1) return;
+      Object.assign(doneMap, remote.doneMap || {});
+      if(!explicitLocation && Number(remote.ts || 0) > Number(savedCourse?.ts || 0)){
+        const pillar = pillars.find(p => p.id === remote.currentPillarId);
+        if(pillar){
+          currentPillar = pillar;
+          currentSection = validSection(pillar, remote.currentSection);
+          highlightPillarNav();
+          buildSubNav();
+          render();
+          return;
+        }
+      }
+      highlightSubNav();
+      saveCourseProgress();
+    } catch (_) {}
+  })();
 })();

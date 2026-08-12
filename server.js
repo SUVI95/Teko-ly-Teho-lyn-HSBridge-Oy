@@ -76,7 +76,7 @@ function injectModulePersistenceScripts(html, moduleId) {
     !html.includes('/js/module-autosave.js');
   const tags = [bootScript];
   if (needsModuleWork) tags.push('<script src="/js/module-work.js"></script>');
-  if (needsAutoSave) tags.push('<script src="/js/module-autosave.js"></script>');
+  if (needsAutoSave) tags.push('<script src="/js/module-autosave.js?v=20260812scoped"></script>');
   // Auto-reload intentionally disabled: it caused a reload loop on a live
   // student tab. Do NOT re-inject /js/auto-reload.js here.
   const inject = tags.join('');
