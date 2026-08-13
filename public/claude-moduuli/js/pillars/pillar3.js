@@ -5,7 +5,6 @@ window.PILLARS.push({
   num: 3,
   name: 'Live Artifacts',
   subtitle: 'Elävät työkalut',
-  briefingLabel: 'Malli',
 
   theory: {
     tagline: 'Live Artifact (Cowork Artifact) on dynaaminen työkalu — ei kertavastaus chattiin.',
@@ -19,69 +18,6 @@ window.PILLARS.push({
       {title: 'Versiohistoria', body: 'Kokeile muutoksia turvallisesti ja palauta tarvittaessa.'},
       {title: 'Älykäs sovellus', body: 'Syötteet, laskenta ja vuorovaikutus selaimessa — ei pelkkä staattinen kaavio.'},
     ],
-  },
-
-  briefing: async (container, { goToExample }) => {
-    container.innerHTML = `
-      <div class="la-briefing">
-        <section class="la-hero">
-          <p class="la-kicker">Ennen harjoituksia</p>
-          <h2>Live Artifact ≠ kertavastaus chatissa</h2>
-          <p class="la-lead">Käytä sitä, kun tarvitset <b>dynaamisen työkalun paikallisen datan päälle</b>. Harjoituksissa näet kaavan: <b>yksinkertainen tiedosto oikealla → elävä Artifact vasemmalla</b>.</p>
-        </section>
-
-        <section class="la-cases">
-          <article class="la-case"><div class="la-case-num">1</div><div class="la-case-body">
-            <h3>Data elää ja muuttuu</h3>
-            <p>Projekti, pipeline, budjetti, matka — et rakenna näkymää joka viikko uudelleen.</p>
-            <div class="la-case-punch">Artifact hakee uusimman datan — <em>tänään, ei rakennuspäivänä</em>.</div>
-          </div></article>
-          <article class="la-case"><div class="la-case-num">2</div><div class="la-case-body">
-            <h3>Pysyvä työkalu, ei chat-widget</h3>
-            <p>Oma välilehti sivupalkissa — käytät sitä kuin dokumenttia kuukausia.</p>
-            <div class="la-case-punch">Tärkeä näkymä ei hautaudu <em>pitkään chat-historiaan</em>.</div>
-          </div></article>
-          <article class="la-case"><div class="la-case-num">3</div><div class="la-case-body">
-            <h3>Iterointi + versiohistoria</h3>
-            <p>Voit kokeilla ulkoasua ja ominaisuuksia turvallisesti.</p>
-            <div class="la-case-punch">Jokainen muutos tallentuu — <em>palauta milloin tahansa</em>.</div>
-          </div></article>
-          <article class="la-case"><div class="la-case-num">4</div><div class="la-case-body">
-            <h3>Vuorovaikutteinen sovellus</h3>
-            <p>Laskurit, kartat, checklistat — Claude “ajattelee” artefaktin sisällä.</p>
-            <div class="la-case-punch"><em>Dynaaminen työkalu selaimessa</em>, ei staattinen kuva.</div>
-          </div></article>
-        </section>
-
-        <section class="la-vs">
-          <h3>Harjoitusten kaava</h3>
-          <div class="la-vs-grid">
-            <div class="la-vs-card skip">
-              <header>Paikallinen tiedosto</header>
-              <p>Yksinkertainen .txt / .csv / kansio — sinä muutat rivejä.</p>
-            </div>
-            <div class="la-vs-card use">
-              <header>Live Artifact</header>
-              <p>Visuaalinen työkalu päivittyy heti — kalenteri, kartta, lista, kanban…</p>
-            </div>
-          </div>
-        </section>
-
-        <div class="la-footer">
-          <button type="button" class="btn primary" id="laGoExample">Katso esimerkki →</button>
-          <p class="la-footer-hint">H1–H5: matka · seating · ateriat · kanban · tiimin lomat — jokaisessa tiedosto ↔ Artifact.</p>
-        </div>
-      </div>`;
-    [...container.querySelectorAll('.la-case')].forEach((c, i) => {
-      c.style.opacity = '0';
-      c.style.transform = 'translateY(10px)';
-      setTimeout(() => {
-        c.style.transition = 'opacity .45s ease, transform .45s ease';
-        c.style.opacity = '1';
-        c.style.transform = 'none';
-      }, 180 + i * 140);
-    });
-    container.querySelector('#laGoExample').addEventListener('click', () => goToExample && goToExample());
   },
 
   example: async (container) => {
