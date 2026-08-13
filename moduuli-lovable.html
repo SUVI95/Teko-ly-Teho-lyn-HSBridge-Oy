@@ -108,8 +108,23 @@
   .copy-btn{appearance:none;border:0;border-radius:8px;padding:8px 12px;min-height:40px;background:var(--teal);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer;}
   .copy-btn:active{transform:translateY(1px);}
   .copy-btn.ok{background:#2a7a4b;}
+  .copy-btn:disabled{cursor:not-allowed;opacity:.45;}
   .prompt-pre{margin:0;padding:16px 16px 18px;white-space:pre-wrap;word-break:break-word;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:13.2px;line-height:1.55;color:#e7eef0;}
   .prompt-pre .blank{color:#ffd98a;}
+  .prompt-editor{padding:16px;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:13.2px;line-height:1.55;color:#e7eef0;}
+  .prompt-editor-static{margin:0;white-space:pre-wrap;}
+  .prompt-fields{display:grid;gap:12px;margin:16px 0;}
+  .prompt-field{display:grid;gap:5px;}
+  .prompt-field label{color:#ffd98a;font-weight:700;}
+  .prompt-field textarea{
+    width:100%;min-height:70px;resize:vertical;padding:10px 11px;
+    border:1px solid #53666f;border-radius:8px;background:#22323a;color:#fff;
+    font:inherit;line-height:1.5;
+  }
+  .prompt-field textarea::placeholder{color:#aebbc1;}
+  .prompt-field textarea:focus{outline:3px solid rgba(255,217,138,.35);border-color:#ffd98a;}
+  .prompt-editor-status{margin:12px 0 0;color:#c8d3d7;font-family:inherit;font-size:12.5px;}
+  .prompt-editor-status.ready{color:#8fddb0;}
 
   /* TIP / NOTE */
   .tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:11px;margin:16px 0 6px;}
@@ -358,22 +373,43 @@
       <p class="micro">Molemmissa on ilmainen versio. Avaa työkalu uuteen välilehteen. Kopioi alla olevat promptit järjestyksessä samaan keskusteluun.</p>
 
       <h3 class="mini">1 · Anna suunnitelmasi ja pyydä tarkentavat kysymykset</h3>
-      <p>Kopioi Prompt 1 Claudeen tai ChatGPT:hen. Korvaa keltaiset kohdat vaiheiden 1–2 vastauksillasi ennen lähettämistä.</p>
+      <p>Kirjoita vaiheiden 1–2 vastauksesi suoraan alla oleviin kenttiin. Kun kaikki kuusi kohtaa on täytetty, kopioi valmis Prompt 1 Claudeen tai ChatGPT:hen.</p>
       <div class="copy-block">
         <div class="copy-bar">
           <span class="copy-label">Prompt 1 · Claude / ChatGPT</span>
-          <button type="button" class="copy-btn" data-copy="lovPrompt1">📋 Kopioi</button>
+          <button type="button" class="copy-btn" data-copy="lovPrompt1" disabled>📋 Kopioi valmis prompt</button>
         </div>
-        <pre class="prompt-pre" id="lovPrompt1">Rakennan nettisivun Lovable-nimisellä työkalulla. Sinun tehtäväsi on myöhemmin kirjoittaa minulle valmis Lovable-prompt. Älä kirjoita sitä vielä.
-
-Sivun aihe: [oma vastauksesi]
-Kenelle se on: [oma vastauksesi]
-Mitä haluan kävijän tekevän: [oma vastauksesi]
-Sisältö joka minulla jo on: [oma vastauksesi]
-Sivut ja alasivut: [oma vastauksesi]
-Kysymykset joita kävijä kysyisi: [oma vastauksesi]
-
-Kysy minulta ensin 3–5 tarkentavaa kysymystä kohdista, jotka jäävät epäselviksi tai liian ympäripyöreiksi. Kysy yksi kerrallaan. Älä vielä tee esikatselua äläkä Lovable-promptia.</pre>
+        <div class="prompt-editor" id="lovPrompt1" data-prompt-editor="lovPrompt1">
+          <p class="prompt-editor-static">Rakennan nettisivun Lovable-nimisellä työkalulla. Sinun tehtäväsi on myöhemmin kirjoittaa minulle valmis Lovable-prompt. Älä kirjoita sitä vielä.</p>
+          <div class="prompt-fields">
+            <div class="prompt-field">
+              <label for="lovAnswerTopic">Sivun aihe</label>
+              <textarea id="lovAnswerTopic" data-prompt-answer="topic" placeholder="Kirjoita oma vastauksesi…"></textarea>
+            </div>
+            <div class="prompt-field">
+              <label for="lovAnswerAudience">Kenelle se on</label>
+              <textarea id="lovAnswerAudience" data-prompt-answer="audience" placeholder="Kirjoita oma vastauksesi…"></textarea>
+            </div>
+            <div class="prompt-field">
+              <label for="lovAnswerGoal">Mitä haluan kävijän tekevän</label>
+              <textarea id="lovAnswerGoal" data-prompt-answer="goal" placeholder="Kirjoita oma vastauksesi…"></textarea>
+            </div>
+            <div class="prompt-field">
+              <label for="lovAnswerContent">Sisältö, joka minulla jo on</label>
+              <textarea id="lovAnswerContent" data-prompt-answer="content" placeholder="Kirjoita oma vastauksesi…"></textarea>
+            </div>
+            <div class="prompt-field">
+              <label for="lovAnswerPages">Sivut ja alasivut</label>
+              <textarea id="lovAnswerPages" data-prompt-answer="pages" placeholder="Kirjoita oma vastauksesi…"></textarea>
+            </div>
+            <div class="prompt-field">
+              <label for="lovAnswerQuestions">Kysymykset, joita kävijä kysyisi</label>
+              <textarea id="lovAnswerQuestions" data-prompt-answer="questions" placeholder="Kirjoita oma vastauksesi…"></textarea>
+            </div>
+          </div>
+          <p class="prompt-editor-static">Kysy minulta ensin 3–5 tarkentavaa kysymystä kohdista, jotka jäävät epäselviksi tai liian ympäripyöreiksi. Kysy yksi kerrallaan. Älä vielä tee esikatselua äläkä Lovable-promptia.</p>
+          <p class="prompt-editor-status" id="lovPrompt1Status" aria-live="polite">Täytä kaikki kuusi kenttää. Vastaukset säilyvät tällä laitteella.</p>
+        </div>
       </div>
 
       <h3 class="mini">2 · Pyydä esikatselu</h3>
@@ -623,12 +659,76 @@ Palauta vain valmis Lovable-prompt, ei muuta tekstiä ympärille.</pre>
       });
     }
 
+    var prompt1Editor = document.getElementById('lovPrompt1');
+    var prompt1Fields = prompt1Editor ? Array.prototype.slice.call(prompt1Editor.querySelectorAll('[data-prompt-answer]')) : [];
+    var prompt1Button = document.querySelector('.copy-btn[data-copy="lovPrompt1"]');
+    var prompt1Status = document.getElementById('lovPrompt1Status');
+    var prompt1StorageKey = 'lovablePrompt1AnswersV1';
+    var prompt1Labels = {
+      topic: 'Sivun aihe',
+      audience: 'Kenelle se on',
+      goal: 'Mitä haluan kävijän tekevän',
+      content: 'Sisältö joka minulla jo on',
+      pages: 'Sivut ja alasivut',
+      questions: 'Kysymykset joita kävijä kysyisi'
+    };
+
+    function prompt1Answers(){
+      var answers = {};
+      prompt1Fields.forEach(function(field){
+        answers[field.getAttribute('data-prompt-answer')] = field.value.trim();
+      });
+      return answers;
+    }
+
+    function buildPrompt1(){
+      var answers = prompt1Answers();
+      var lines = Object.keys(prompt1Labels).map(function(key){
+        return prompt1Labels[key] + ': ' + answers[key];
+      });
+      return 'Rakennan nettisivun Lovable-nimisellä työkalulla. Sinun tehtäväsi on myöhemmin kirjoittaa minulle valmis Lovable-prompt. Älä kirjoita sitä vielä.\n\n'
+        + lines.join('\n')
+        + '\n\nKysy minulta ensin 3–5 tarkentavaa kysymystä kohdista, jotka jäävät epäselviksi tai liian ympäripyöreiksi. Kysy yksi kerrallaan. Älä vielä tee esikatselua äläkä Lovable-promptia.';
+    }
+
+    function updatePrompt1(){
+      var answers = prompt1Answers();
+      var completed = Object.keys(prompt1Labels).filter(function(key){ return answers[key]; }).length;
+      var ready = completed === Object.keys(prompt1Labels).length;
+      if (prompt1Button) prompt1Button.disabled = !ready;
+      if (prompt1Status) {
+        prompt1Status.textContent = ready
+          ? '✓ Valmis kopioitavaksi. Vastaukset säilyvät tällä laitteella.'
+          : 'Täytetty ' + completed + '/6. Vastaukset säilyvät tällä laitteella.';
+        prompt1Status.classList.toggle('ready', ready);
+      }
+      try {
+        localStorage.setItem(prompt1StorageKey, JSON.stringify(answers));
+      } catch (_) {}
+    }
+
+    if (prompt1Fields.length) {
+      try {
+        var savedPrompt1 = JSON.parse(localStorage.getItem(prompt1StorageKey) || '{}');
+        prompt1Fields.forEach(function(field){
+          var key = field.getAttribute('data-prompt-answer');
+          if (typeof savedPrompt1[key] === 'string') field.value = savedPrompt1[key];
+        });
+      } catch (_) {}
+      prompt1Fields.forEach(function(field){
+        field.addEventListener('input', updatePrompt1);
+      });
+      updatePrompt1();
+    }
+
     document.querySelectorAll('.copy-btn[data-copy]').forEach(function(button){
       button.addEventListener('click', function(){
         var id = button.getAttribute('data-copy');
         var el = document.getElementById(id);
         if (!el) return;
-        var text = (el.innerText || el.textContent || '').replace(/\u00a0/g, ' ').trim();
+        var text = id === 'lovPrompt1'
+          ? buildPrompt1()
+          : (el.value || el.innerText || el.textContent || '').replace(/\u00a0/g, ' ').trim();
         copyText(text).then(function(){
           var old = button.textContent;
           button.textContent = '✓ Kopioitu';
