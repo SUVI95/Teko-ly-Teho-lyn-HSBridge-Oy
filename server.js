@@ -592,8 +592,7 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
   // moduuli-ai-maisema — open to all students (after Perplexity & NotebookLM)
   'moduuli-ai-liidien-hankinta',
   'moduuli-ai-simulation-lab',
-  // Admin only — Automaatio A–C, EU AI Act, HITL, Rivon
-  'moduuli1-ai-automaatio',
+  // Admin only — Automaatio B–C, EU AI Act, HITL, Rivon
   'moduuli1b-ai-automaatio',
   'moduuli1c-ai-automaatio',
   'moduuli-eu-ai-act-moduuli5',
@@ -613,7 +612,6 @@ const ADMIN_ONLY_MODULE_IDS = new Set([
 const STRICT_ADMIN_ONLY_MODULE_IDS = new Set([
   'moduuli-ella-myyntisprintti',
   // Admin only (not even QA test student)
-  'moduuli1-ai-automaatio',
   'moduuli1b-ai-automaatio',
   'moduuli1c-ai-automaatio',
   'moduuli-eu-ai-act-moduuli5',
@@ -642,7 +640,6 @@ const STUDENT_LOCKED_MODULE_IDS = new Set([
   'moduuli-asiakaspalvelu-live-puhelu',
   'moduuli1b-ai-automaatio',
   'moduuli1c-ai-automaatio',
-  'moduuli-claude', // Claude 101 — soft-locked until ready
 
   // Hidden from students (admin only on dashboard)
   'moduuli-excel-copilot-masterclass',

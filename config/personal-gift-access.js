@@ -222,8 +222,10 @@ const PUBLIC_STUDENT_MODULE_IDS = new Set([
   'moduuli8-ai-polku',
   'moduuli9-haastattelu',
   'moduuli-elava-cv',
-  'moduuli-perplexity-notebooklm'
-  // bottityypit / Rivon / Automaatio A–C: admin + test student only (see ADMIN_AND_TEST in server + dashboard)
+  'moduuli-perplexity-notebooklm',
+  'moduuli1-ai-automaatio',
+  'moduuli-claude'
+  // bottityypit / Rivon / Automaatio B–C: admin + test student only (see ADMIN_AND_TEST in server + dashboard)
 ]);
 
 function isPublicStudentModule(moduleId) {
